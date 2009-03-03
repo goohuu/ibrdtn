@@ -585,7 +585,7 @@ namespace dtn
 
 		void BundleCore::unregisterSubNode(string eid)
 		{
-			// TODO: implement unregister
+			m_worker.erase(m_localeid + eid);
 		}
 
 		void BundleCore::triggerCustodyTimeout(CustodyTimer timer)

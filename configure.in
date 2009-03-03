@@ -35,5 +35,12 @@ AC_TYPE_SIGNAL
 AC_FUNC_STRTOD
 AC_CHECK_FUNCS([select socket sqrt])
 
+AC_ARG_ENABLE([debug],
+	[AC_HELP_STRING([--enable-debug],
+	[enable extra debugging output [default=no]])],
+	[AC_DEFINE([DO_DEBUG_OUTPUT], [],
+	[Define to enable extra debugging output.])],
+	[])
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

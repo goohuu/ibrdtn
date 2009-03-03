@@ -1,6 +1,8 @@
 #ifndef SEMAPHORE_H_
 #define SEMAPHORE_H_
 
+#include "config.h"
+
 #ifdef HAVE_LIBCOMMONCPP
 #include <cc++/thread.h>
 #else

@@ -1,3 +1,4 @@
+#include "config.h"
 #include "core/BundleCore.h"
 #include "core/StaticBundleRouter.h"
 //#include "core/SQLiteBundleStorage.h"

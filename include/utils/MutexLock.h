@@ -1,6 +1,8 @@
 #ifndef MUTEXLOCK_H_
 #define MUTEXLOCK_H_
 
+#include "config.h"
+
 #include "Mutex.h"
 
 #ifdef HAVE_LIBCOMMONCPP

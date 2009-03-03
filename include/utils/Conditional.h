@@ -1,6 +1,8 @@
 #ifndef CONDITIONAL_H_
 #define CONDITIONAL_H_
 
+#include "config.h"
+
 #ifdef HAVE_LIBCOMMONCPP
 #include <cc++/thread.h>
 #else

@@ -1,6 +1,8 @@
 #ifndef MUTEX_H_
 #define MUTEX_H_
 
+#include "config.h"
+
 #ifdef HAVE_LIBCOMMONCPP
 #include <cc++/thread.h>
 #else

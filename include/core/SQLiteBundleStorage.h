@@ -8,6 +8,8 @@
 #ifndef SQLITEBUNDLESTORAGE_H_
 #define SQLITEBUNDLESTORAGE_H_
 
+#include "config.h"
+
 #ifdef HAVE_LIBSQLITE3
 
 #include "core/BundleStorage.h"
