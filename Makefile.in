@@ -41,26 +41,26 @@ BUILD_DIRS := @builddir@/bin @builddir@/obj @builddir@/lib @builddir@/obj/utils 
 builddirs:
 	mkdir -p $(BUILD_DIRS)
 	
-utils: builddirs $(UTILS_OBJ)
+utils: builddirs $(UTILS_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -shared $(UTILS_BUILD_OBJ) -o"@builddir@/lib/libibrdtn-utils.so"
 	
-data: utils $(DATA_OBJ)
+data: utils $(DATA_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -shared -o"@builddir@/lib/libibrdtn-data.so" $(DATA_BUILD_OBJ)
 	
-core: utils data $(CORE_OBJ)
+core: utils data $(CORE_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -shared -o"@builddir@/lib/libibrdtn-core.so" $(CORE_BUILD_OBJ)
 	
-emma: utils data core $(EMMA_OBJ) 
+emma: utils data core $(EMMA_BUILD_OBJ) 
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -shared -o"@builddir@/lib/libibrdtn-emma.so" $(EMMA_BUILD_OBJ)
 
-testsuite: utils data core emma $(TESTSUITE_OBJ)
+testsuite: utils data core emma $(TESTSUITE_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -librdtn-emma -o"@builddir@/bin/testsuite" $(TESTSUITE_BUILD_OBJ)
 
-dtnd: utils data core $(DAEMON_OBJ)
+dtnd: utils data core $(DAEMON_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -o"@builddir@/bin/dtnd" $(DAEMON_BUILD_OBJ)
 	
-%.o: %.cpp
-	$(CXX) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $< -o $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $@))
+@builddir@/obj/%.o: @srcdir@/src/%.cpp
+	$(CXX) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $< -o $@
 
 clean:
 	rm -rf @builddir@/obj
