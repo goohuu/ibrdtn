@@ -1,0 +1,83 @@
+#
+# Makefile for IBR-DTN
+#
+# @author Johannes Morgenroth <morgenro@ibr.cs.tu-bs.de>
+#
+
+# 64bit fix
+CFLAGS += -fPIC -O3
+
+# utils sources
+UTILS_OBJ := $(patsubst %.cpp,%.o, $(wildcard @srcdir@/src/utils/*.cpp))
+UTILS_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(UTILS_OBJ) ) )
+
+# data sources
+DATA_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/data/*.cpp))
+DATA_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DATA_OBJ) ) )
+
+# core sources
+CORE_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/core/*.cpp))
+CORE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(CORE_OBJ) ) )
+
+# emma sources
+EMMA_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/emma/*.cpp))
+EMMA_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(EMMA_OBJ) ) )
+
+# testsuite sources
+TESTSUITE_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/testsuite/*.cpp))
+TESTSUITE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(TESTSUITE_OBJ) ) )
+
+# testsuite sources
+DAEMON_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/daemon/*.cpp))
+DAEMON_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DAEMON_OBJ) ) )
+
+# Main target
+all: testsuite dtnd selftest
+
+# build directory
+BUILD_DIRS := @builddir@/bin @builddir@/obj @builddir@/lib @builddir@/obj/utils @builddir@/obj/data @builddir@/obj/core @builddir@/obj/emma @builddir@/obj/testsuite @builddir@/obj/daemon
+
+# create a build directory
+builddirs:
+	mkdir -p $(BUILD_DIRS)
+	
+utils: builddirs $(UTILS_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -shared $(UTILS_BUILD_OBJ) -o"@builddir@/lib/libibrdtn-utils.so"
+	
+data: utils $(DATA_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -shared -o"@builddir@/lib/libibrdtn-data.so" $(DATA_BUILD_OBJ)
+	
+core: utils data $(CORE_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -shared -o"@builddir@/lib/libibrdtn-core.so" $(CORE_BUILD_OBJ)
+	
+emma: utils data core $(EMMA_OBJ) 
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -shared -o"@builddir@/lib/libibrdtn-emma.so" $(EMMA_BUILD_OBJ)
+
+testsuite: utils data core emma $(TESTSUITE_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -librdtn-emma -o"@builddir@/bin/testsuite" $(TESTSUITE_BUILD_OBJ)
+
+dtnd: utils data core $(DAEMON_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -o"@builddir@/bin/dtnd" $(DAEMON_BUILD_OBJ)
+	
+%.o: %.cpp
+	$(CXX) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $< -o $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $@))
+
+clean:
+	rm -rf @builddir@/obj
+	rm -rf @builddir@/lib
+	rm -rf @builddir@/bin
+
+selftest: testsuite
+	LD_LIBRARY_PATH=@builddir@/lib @builddir@/bin/testsuite
+
+install: install-libs dtnd
+	cp @builddir@/bin/dtnd $(prefix)/bin
+	
+install-libs:
+	cp @builddir@/lib/*.so $(libdir)
+
+install-devel: install-libs
+	mkdir -p $(includedir)/ibrdtn
+	cp @srcdir@/include/utils $(includedir)/ibrdtn/
+	cp @srcdir@/include/data $(includedir)/ibrdtn/
+	cp @srcdir@/include/core $(includedir)/ibrdtn/
