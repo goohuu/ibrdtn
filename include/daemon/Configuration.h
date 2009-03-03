@@ -29,11 +29,6 @@ private:
 public:
 	static Configuration &getInstance();
 
-	//void load(string filename);
-
-	bool getDebug();
-	void setDebug(bool value);
-
 	string getLocalUri();
 
 	vector<string> getNetList();
@@ -44,7 +39,6 @@ public:
 	string getNetBroadcast(const string name = "default");
 	unsigned int getNetMTU(const string name = "default");
 
-	//ConfigFile& getConfigFile();
 	void setConfigFile(ConfigFile &conf);
 
 	vector<Node> getStaticNodes();

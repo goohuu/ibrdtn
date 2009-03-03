@@ -21,30 +21,9 @@ namespace dtn
 			return conf;
 		}
 
-		//ConfigFile& Configuration::getConfigFile()
-		//{
-		//	return m_conf;
-		//}
-
 		void Configuration::setConfigFile(ConfigFile &conf)
 		{
 			m_conf = conf;
-		}
-
-		//void Configuration::load(string filename)
-		//{
-		//	m_conf = ConfigFile(filename);
-		//	m_debug = (m_conf.read<int>("debug", 0) == 1);
-		//}
-
-		bool Configuration::getDebug()
-		{
-			return m_debug;
-		}
-
-		void Configuration::setDebug(bool value)
-		{
-			m_debug = value;
 		}
 
 		string Configuration::getLocalUri()

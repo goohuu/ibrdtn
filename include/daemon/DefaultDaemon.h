@@ -5,6 +5,8 @@
  *      Author: morgenro
  */
 
+#include "config.h"
+
 #include "core/BundleCore.h"
 #include "core/BundleStorage.h"
 #include "core/StaticBundleRouter.h"
@@ -13,16 +15,17 @@
 #include "core/MultiplexConvergenceLayer.h"
 #include "core/Node.h"
 
+#include "utils/MutexLock.h"
+#include "utils/Mutex.h"
 #include "utils/Service.h"
+
 #include "daemon/Configuration.h"
+
 #include <vector>
 #include <iostream>
 #include <csignal>
-
 #include <unistd.h>
 #include <sys/types.h>
-#include "utils/MutexLock.h"
-#include "utils/Mutex.h"
 
 using namespace dtn::core;
 

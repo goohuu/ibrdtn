@@ -5,9 +5,10 @@
  *      Author: morgenro
  */
 
+#include "core/SQLiteBundleStorage.h"
+
 #ifdef HAVE_LIBSQLITE3
 
-#include "core/SQLiteBundleStorage.h"
 #include "data/BundleFactory.h"
 #include <iostream>
 #include <sstream>
@@ -15,10 +16,11 @@
 #include "utils/Utils.h"
 
 using namespace dtn::data;
+using namespace dtn::utils;
 
 namespace dtn
 {
-	namespace sqlite
+	namespace core
 	{
 		SQLiteBundleStorage::SQLiteBundleStorage(string dbfile, bool flush)
 		 : Service("SQLiteBundleStorage"), BundleStorage(), last_gettime(0)
@@ -46,17 +48,6 @@ namespace dtn
 
 			m_stmt_outdate_bundles = prepareStatement("DELETE FROM bundles WHERE (creation_ts + lifetime) < ?");
 			m_stmt_outdate_fragments = prepareStatement("DELETE FROM fragments WHERE (creation_ts + lifetime) < ?");
-
-			if ( dtn::_ENABLE_DEBUG )
-			{
-				Utils::getLogger() << getSize() << " schedules in database found" << endl;
-			}
-
-			if ( flush )
-			{
-				if ( dtn::_ENABLE_DEBUG ) Utils::getLogger() << "flushing the database" << endl;
-				clear();
-			}
 		}
 
 		SQLiteBundleStorage::~SQLiteBundleStorage()

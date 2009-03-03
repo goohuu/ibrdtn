@@ -15,7 +15,7 @@ namespace emma
 	const int EmmaConvergenceLayer::MAX_SIZE = 1024;
 
 	EmmaConvergenceLayer::EmmaConvergenceLayer(string eid, string bind_addr, unsigned short port, string broadcast, unsigned int mtu)
-		: Service("EmmaConvergenceLayer"), m_eid(eid), m_bindaddr(bind_addr), m_bindport(port), m_router(NULL), m_lastyell(0), m_direct_cl(NULL), m_broadcast_cl(NULL)
+		: Service("EmmaConvergenceLayer"), m_eid(eid), m_bindaddr(bind_addr), m_bindport(port), m_router(NULL), m_lastyell(0), m_direct_cl(NULL), m_broadcast_cl(NULL), m_gps(NULL)
 	{
 		// register DiscoverBlock structure at the bundle factory
 		m_dfactory = new DiscoverBlockFactory();
@@ -175,13 +175,13 @@ namespace emma
 		flags.setPriority(EXPEDITED);
 		bundle->setPrimaryFlags(flags);
 
-//		// Zusätzliche Daten einsetzen: GPS Position
-//		if ( (m_gps != NULL) && (m_gps->getState() == READY) )
-//		{
-//			// Hier GPS Daten einfügen
-//			block->setLatitude( m_gps->getLatitude() );
-//			block->setLongitude( m_gps->getLongitude() );
-//		}
+		// Zusätzliche Daten einsetzen: GPS Position
+		if ( (m_gps != NULL) && (m_gps->getState() == READY) )
+		{
+			// Hier GPS Daten einfügen
+			block->setLatitude( m_gps->getLatitude() );
+			block->setLongitude( m_gps->getLongitude() );
+		}
 
 		transmit( bundle );
 
@@ -219,21 +219,21 @@ namespace emma
 		flags.setPriority(EXPEDITED);
 		bundle->setPrimaryFlags(flags);
 
-//		// Zusätzliche Daten einsetzen: GPS Position
-//		if ( (m_gps != NULL) && (m_gps->getState() == READY) )
-//		{
-//			// Hier GPS Daten einfügen
-//			block->setLatitude( m_gps->getLatitude() );
-//			block->setLongitude( m_gps->getLongitude() );
-//		}
+		// Zusätzliche Daten einsetzen: GPS Position
+		if ( (m_gps != NULL) && (m_gps->getState() == READY) )
+		{
+			// Hier GPS Daten einfügen
+			block->setLatitude( m_gps->getLatitude() );
+			block->setLongitude( m_gps->getLongitude() );
+		}
 
 		transmit( bundle, node );
 
 		delete bundle;
 	}
 
-//	void EmmaConvergenceLayer::setGPSProvider(GPSProvider *gpsconn)
-//	{
-//		m_gps = gpsconn;
-//	}
+	void EmmaConvergenceLayer::setGPSProvider(GPSProvider *gpsconn)
+	{
+		m_gps = gpsconn;
+	}
 }

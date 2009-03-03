@@ -6,6 +6,7 @@
 #include "core/BundleReceiver.h"
 #include "data/BundleFactory.h"
 #include "emma/DiscoverBlockFactory.h"
+#include "emma/GPSProvider.h"
 #include "core/BundleRouter.h"
 #include "utils/Service.h"
 
@@ -64,6 +65,8 @@ namespace emma
 		 */
 		void setRouter(BundleRouter *router);
 
+		void setGPSProvider(GPSProvider *gpsconn);
+
 		void received(ConvergenceLayer *cl, Bundle *b);
 
 	protected:
@@ -98,6 +101,8 @@ namespace emma
 		UDPConvergenceLayer *m_broadcast_cl;
 
 		Mutex m_receivelock;
+
+		GPSProvider *m_gps;
 
 		DiscoverBlockFactory *m_dfactory;
 	};

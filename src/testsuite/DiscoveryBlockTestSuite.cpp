@@ -6,6 +6,9 @@
  */
 
 #include "testsuite/DiscoveryBlockTestSuite.h"
+
+#ifdef USE_EMMA_CODE
+
 #include "testsuite/SelfTestSuite.h"
 #include "testsuite/TestUtils.h"
 #include "data/Bundle.h"
@@ -211,3 +214,5 @@ namespace testsuite
 	}
 }
 }
+
+#endif

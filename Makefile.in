@@ -19,10 +19,6 @@ DATA_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%,
 CORE_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/core/*.cpp))
 CORE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(CORE_OBJ) ) )
 
-# emma sources
-EMMA_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/emma/*.cpp))
-EMMA_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(EMMA_OBJ) ) )
-
 # testsuite sources
 TESTSUITE_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/testsuite/*.cpp))
 TESTSUITE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(TESTSUITE_OBJ) ) )
@@ -30,6 +26,16 @@ TESTSUITE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst s
 # testsuite sources
 DAEMON_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/daemon/*.cpp))
 DAEMON_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DAEMON_OBJ) ) )
+
+ifeq (@WITH_EMMA@,emma)
+	WITH_EMMA := emma
+	EMMA_LIB := -librdtn-emma
+endif
+
+# emma sources
+EMMA_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/emma/*.cpp))
+EMMA_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(EMMA_OBJ) ) )
+
 
 # Main target
 all: testsuite dtnd selftest
@@ -49,15 +55,15 @@ data: utils $(DATA_BUILD_OBJ)
 	
 core: utils data $(CORE_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -shared -o"@builddir@/lib/libibrdtn-core.so" $(CORE_BUILD_OBJ)
-	
+
 emma: utils data core $(EMMA_BUILD_OBJ) 
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -shared -o"@builddir@/lib/libibrdtn-emma.so" $(EMMA_BUILD_OBJ)
 
-testsuite: utils data core emma $(TESTSUITE_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -librdtn-emma -o"@builddir@/bin/testsuite" $(TESTSUITE_BUILD_OBJ)
+testsuite: utils data core $(WITH_EMMA) $(TESTSUITE_BUILD_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core $(EMMA_LIB) -o"@builddir@/bin/testsuite" $(TESTSUITE_BUILD_OBJ)
 
-dtnd: utils data core $(DAEMON_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -o"@builddir@/bin/dtnd" $(DAEMON_BUILD_OBJ)
+dtnd: utils data core $(WITH_EMMA) $(DAEMON_BUILD_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core $(EMMA_LIB) -o"@builddir@/bin/dtnd" $(DAEMON_BUILD_OBJ)
 	
 @builddir@/obj/%.o: @srcdir@/src/%.cpp
 	$(CXX) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $< -o $@

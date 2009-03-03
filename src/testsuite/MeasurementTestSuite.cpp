@@ -1,4 +1,7 @@
 #include "testsuite/MeasurementTestSuite.h"
+
+#ifdef USE_EMMA_CODE
+
 #include "emma/GPSDummy.h"
 #include "emma/Measurement.h"
 #include <iostream>
@@ -92,3 +95,5 @@ namespace dtn
 		}
 	}
 }
+
+#endif

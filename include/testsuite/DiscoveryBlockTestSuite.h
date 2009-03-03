@@ -8,6 +8,10 @@
 #ifndef DISCOVERYBLOCKTESTSUITE_H_
 #define DISCOVERYBLOCKTESTSUITE_H_
 
+#include "config.h"
+
+#ifdef USE_EMMA_CODE
+
 #include "emma/DiscoverBlockFactory.h"
 
 namespace dtn
@@ -32,5 +36,7 @@ namespace testsuite
 	};
 }
 }
+
+#endif
 
 #endif /* DISCOVERYBLOCKTESTSUITE_H_ */

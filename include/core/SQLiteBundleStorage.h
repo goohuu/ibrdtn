@@ -24,7 +24,7 @@
 #include "utils/Mutex.h"
 
 using namespace dtn::data;
-using namespace dtn::core;
+using namespace dtn::utils;
 
 namespace dtn
 {
@@ -58,7 +58,7 @@ namespace exceptions
 
 namespace dtn
 {
-namespace sqlite
+namespace core
 {
 /**
  * Implementiert einen einfachen Kontainer für Bundles

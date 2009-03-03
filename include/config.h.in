@@ -1,3 +1,8 @@
+/* package information */ 
+#define PACKAGE_NAME
+#define PACKAGE_VERSION
+#define PACKAGE_STRING
+
 /* Define if you have unistd.h.  */
 #undef HAVE_UNISTD_H
 
@@ -9,3 +14,6 @@
 
 /* Define if you wish extra debugging output */
 #undef DO_DEBUG_OUTPUT
+
+/* Define if EMMA specific modules should be used */
+#undef USE_EMMA_CODE

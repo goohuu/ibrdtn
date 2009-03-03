@@ -36,10 +36,13 @@ AC_FUNC_STRTOD
 AC_CHECK_FUNCS([select socket sqrt])
 
 AC_ARG_ENABLE([debug],
-	[AC_HELP_STRING([--enable-debug],
-	[enable extra debugging output [default=no]])],
-	[AC_DEFINE([DO_DEBUG_OUTPUT], [],
-	[Define to enable extra debugging output.])],
+	[AC_HELP_STRING([--enable-debug], [enable extra debugging output [default=no]])],
+	[AC_DEFINE([DO_DEBUG_OUTPUT], [], [Define to enable extra debugging output.])],
+	[])
+
+AC_ARG_ENABLE([emma],
+	[AC_HELP_STRING([--enable-emma], [add extra EMMA specific code [default=no]])],
+	[AC_DEFINE([USE_EMMA_CODE], [], [Add extra EMMA specific code.]) AC_SUBST([WITH_EMMA],[emma])],
 	[])
 
 AC_CONFIG_FILES([Makefile])

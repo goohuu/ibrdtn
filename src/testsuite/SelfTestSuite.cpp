@@ -50,8 +50,13 @@ namespace testsuite
 		CustodySignalBlockTestSuite custodytest;
 		if ( !custodytest.runAllTests() ) ret = false;
 
+#ifdef USE_EMMA_CODE
 		MeasurementTestSuite measurementtest;
 		if ( !measurementtest.runAllTests() ) ret = false;
+
+		DiscoveryBlockTestSuite discoverytest;
+		if ( !discoverytest.runAllTests() ) ret = false;
+#endif
 
 		PerformanceTestSuite performtest;
 		if ( !performtest.runAllTests() ) ret = false;
@@ -61,8 +66,6 @@ namespace testsuite
 		if ( !sqlitetest.runAllTests() ) ret = false;
 #endif
 
-		DiscoveryBlockTestSuite discoverytest;
-		if ( !discoverytest.runAllTests() ) ret = false;
 
 		cout << "TestSuite completed!" << endl;
 

@@ -1,7 +1,8 @@
-#include "data/PayloadBlockFactory.h"
-
 #ifndef SELFTESTSUITE_H_
 #define SELFTESTSUITE_H_
+
+#include "data/PayloadBlockFactory.h"
+#include "config.h"
 
 namespace dtn
 {
