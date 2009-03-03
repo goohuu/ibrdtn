@@ -14,7 +14,7 @@
 /* #undef HAVE_LIBCOMMONCPP */
 
 /* Define if you wish extra debugging output */
-#define DO_DEBUG_OUTPUT 
+/* #undef DO_DEBUG_OUTPUT */
 
 /* Define if EMMA specific modules should be used */
-#define USE_EMMA_CODE 
+/* #undef USE_EMMA_CODE */

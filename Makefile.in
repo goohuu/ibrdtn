@@ -4,6 +4,9 @@
 # @author Johannes Morgenroth <morgenro@ibr.cs.tu-bs.de>
 #
 
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
 # 64bit fix
 CFLAGS += -fPIC -O3
 
@@ -76,14 +79,19 @@ clean:
 selftest: testsuite
 	LD_LIBRARY_PATH=@builddir@/lib @builddir@/bin/testsuite
 
-install: install-libs dtnd
-	cp @builddir@/bin/dtnd $(prefix)/bin
+install: install-libs install-devel dtnd
+	cp @builddir@/bin/dtnd @prefix@/bin
+	
+uninstall:
+	rm -rf @prefix@/bin/dtnd
+	rm -rf @libdir@/libibrdtn-*.so
+	rm -rf @includedir@/ibrdtn
 	
 install-libs:
-	cp @builddir@/lib/*.so $(libdir)
+	cp @builddir@/lib/*.so @libdir@
 
 install-devel: install-libs
-	mkdir -p $(includedir)/ibrdtn
-	cp @srcdir@/include/utils $(includedir)/ibrdtn/
-	cp @srcdir@/include/data $(includedir)/ibrdtn/
-	cp @srcdir@/include/core $(includedir)/ibrdtn/
+	mkdir -p @includedir@/ibrdtn
+	cp -R @srcdir@/include/utils @includedir@/ibrdtn/
+	cp -R @srcdir@/include/data @includedir@/ibrdtn/
+	cp -R @srcdir@/include/core @includedir@/ibrdtn/
