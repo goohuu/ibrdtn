@@ -12,6 +12,9 @@
 /* Define if you want to use CommonC++ Threading Objects */
 #undef HAVE_LIBCOMMONCPP
 
+/* Define if scripting language lua is available */
+#undef HAVE_LIBLUA5_1
+
 /* Define if you wish extra debugging output */
 #undef DO_DEBUG_OUTPUT
 

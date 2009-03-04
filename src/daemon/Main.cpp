@@ -42,6 +42,10 @@ using namespace dtn::utils;
 #include "daemon/Debugger.h"
 #endif
 
+#ifdef HAVE_LIBLUA5_1
+#include "daemon/LuaCore.h"
+#endif
+
 bool m_running = true;
 
 void term(int signal)
@@ -57,6 +61,10 @@ int main(int argc, char *argv[])
 	// catch process signals
 	signal(SIGINT, term);
 	signal(SIGTERM, term);
+
+#ifdef HAVE_LIBLUA5_1
+	dtn::lua::LuaCore luac;
+#endif
 
 	// create a configuration
 	Configuration &conf = Configuration::getInstance();
@@ -282,6 +290,10 @@ int main(int argc, char *argv[])
 			iter++;
 		}
 	}
+
+#ifdef HAVE_LIBLUA5_1
+	luac.run("demo.lua");
+#endif
 
 	while (m_running)
 	{
