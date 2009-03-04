@@ -75,6 +75,43 @@ namespace dtn
 
 		TransmitReport BundleCore::transmit(Bundle *b)
 		{
+			list<Block*> blocks = b->getBlocks();
+			list<Block*>::const_iterator iter = blocks.begin();
+
+			while (iter != blocks.end())
+			{
+				Block *block = (*iter);
+				BlockFlags flags = block->getBlockFlags();
+
+				if ( !block->isProcessed() )
+				{
+					if ( flags.getFlag(REPORT_IF_CANT_PROCESSED) )
+					{
+						// TODO: send a report
+					}
+
+					if ( flags.getFlag(DELETE_IF_CANT_PROCESSED) )
+					{
+						// discard the hole bundle!
+						dismissBundle(b);
+						return BUNDLE_ACCEPTED;
+					}
+
+					if ( flags.getFlag(DISCARD_IF_CANT_PROCESSED) )
+					{
+						// discard this block
+						b->removeBlock( block );
+						iter++;
+						continue;
+					}
+
+					// if forwarded without processed, mark it!
+					flags.setFlag(FORWARDED_WITHOUT_PROCESSED, true);
+				}
+
+				iter++;
+			}
+
 			try {
 				// Frage den Router nach den nächsten Empfänger und eine Sendezeit
 				BundleSchedule schedule = getBundleRouter()->getSchedule(b);

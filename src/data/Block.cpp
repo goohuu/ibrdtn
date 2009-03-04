@@ -9,13 +9,13 @@ namespace dtn
 {
 	namespace data
 	{
-		Block::Block(Block *block) : m_frame(block->m_frame)
+		Block::Block(Block *block) : m_processed(false), m_frame(block->m_frame)
 		{
 			block->dissociateNetworkFrame();
 			delete block;
 		}
 
-		Block::Block(NetworkFrame *frame) : m_frame(frame)
+		Block::Block(NetworkFrame *frame) : m_processed(false), m_frame(frame)
 		{
 		}
 
@@ -68,6 +68,11 @@ namespace dtn
 		unsigned char Block::getType() const
 		{
 			return m_frame->getChar( 0 );
+		}
+
+		bool Block::isProcessed() const
+		{
+			return m_processed;
 		}
 
 		unsigned int Block::getHeaderSize() const

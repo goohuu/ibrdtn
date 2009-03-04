@@ -47,6 +47,11 @@ namespace dtn
 			unsigned char getType() const;
 
 			/**
+			 * @return true, if the block can't be processed
+			 */
+			bool isProcessed() const;
+
+			/**
 			 * Get the processing flags of the block.
 			 * @return A BlockFlags object containing the processing flags.
 			 */
@@ -77,6 +82,7 @@ namespace dtn
 
 		protected:
 			unsigned int getBodyIndex() const;
+			bool m_processed;
 
 		private:
 			NetworkFrame *m_frame;

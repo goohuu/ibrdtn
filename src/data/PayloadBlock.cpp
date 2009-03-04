@@ -8,10 +8,12 @@ namespace data
 {
 	PayloadBlock::PayloadBlock(NetworkFrame *frame) : Block(frame)
 	{
+		this->m_processed = true;
 	}
 
 	PayloadBlock::PayloadBlock(Block *block) : Block(block)
 	{
+		this->m_processed = true;
 	}
 
 	PayloadBlock::~PayloadBlock()

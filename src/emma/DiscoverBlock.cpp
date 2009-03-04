@@ -8,10 +8,12 @@ namespace emma
 {
 	DiscoverBlock::DiscoverBlock(NetworkFrame *frame) : Block(frame)
 	{
+		this->m_processed = true;
 	}
 
 	DiscoverBlock::DiscoverBlock(Block *block) : Block(block)
 	{
+		this->m_processed = true;
 	}
 
 	DiscoverBlock::~DiscoverBlock()

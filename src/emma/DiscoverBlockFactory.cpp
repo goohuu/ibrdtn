@@ -102,6 +102,9 @@ namespace emma
 		// set block type
 		frame.set(0, (unsigned char)DiscoverBlock::BLOCK_TYPE);
 
+		// set DISCARD_IF_CANT_PROCESSED flag
+		block->getBlockFlags().setFlag(DISCARD_IF_CANT_PROCESSED, true);
+
 		// append port number
 		frame.append( 4556 );
 
