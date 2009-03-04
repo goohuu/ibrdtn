@@ -139,16 +139,6 @@ namespace dtn
 			return getStatusFlags().getFlag( 0 );
 		}
 
-		ProcessingFlags StatusReportBlock::getStatusFlag() const
-		{
-			return ProcessingFlags( getFrame().getChar( getField(STATUSREPORT_STATUS) ) );
-		}
-
-		void StatusReportBlock::setStatusFlag(ProcessingFlags value)
-		{
-			getFrame().set( getField(STATUSREPORT_STATUS), value.getValue() );
-		}
-
 		ProcessingFlags StatusReportBlock::getReasonCode() const
 		{
 			return ProcessingFlags( getFrame().getChar( getField(STATUSREPORT_REASON) ) );

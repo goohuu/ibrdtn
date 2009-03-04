@@ -127,7 +127,7 @@ namespace dtn
 
 			void transmitCustody(bool accept, Bundle *b);
 
-			Bundle* createStatusReport(Bundle *b, StatusReportType type);
+			Bundle* createStatusReport(Bundle *b, StatusReportType type, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);
 			Bundle* createCustodySignal(Bundle *b, bool accepted);
 
 			ConvergenceLayer *m_clayer;

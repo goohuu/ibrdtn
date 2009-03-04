@@ -36,6 +36,18 @@ namespace dtn
 			DELETION_OF_BUNDLE = 4
 		};
 
+		enum StatusReportReasonCode
+		{
+			NO_ADDITIONAL_INFORMATION = 0x00,
+			LIFETIME_EXPIRED = 0x01,
+			FORWARDED_OVER_UNIDIRECTIONAL_LINK = 0x02,
+			TRANSMISSION_CANCELED = 0x03,
+			DEPLETED_STORAGE = 0x04,
+			DESTINATION_ENDPOINT_ID_UNINTELLIGIBLE = 0x05,
+			NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE = 0x06,
+			NO_TIMELY_CONTACT_WITH_NEXT_NODE_ON_ROUTE = 0x07,
+			BLOCK_UNINTELLIGIBLE = 0x08
+		};
 
 		/**
 		 * Ein DiscoverBlock kann an den Primärblock angehängt werden und wird
@@ -62,10 +74,6 @@ namespace dtn
 
 			unsigned int getFragmentLength() const;
 			void setFragmentLength(unsigned int value);
-
-			// StatusFlag
-			ProcessingFlags getStatusFlag() const;
-			void setStatusFlag(ProcessingFlags value);
 
 			// ReasonCode
 			ProcessingFlags getReasonCode() const;

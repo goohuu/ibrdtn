@@ -75,6 +75,7 @@ namespace dtn
 
 		TransmitReport BundleCore::transmit(Bundle *b)
 		{
+			// check all block of the bundle for block flag actions
 			list<Block*> blocks = b->getBlocks();
 			list<Block*>::const_iterator iter = blocks.begin();
 
@@ -85,28 +86,10 @@ namespace dtn
 
 				if ( !block->isProcessed() )
 				{
-					if ( flags.getFlag(REPORT_IF_CANT_PROCESSED) )
-					{
-						// TODO: send a report
-					}
-
-					if ( flags.getFlag(DELETE_IF_CANT_PROCESSED) )
-					{
-						// discard the hole bundle!
-						dismissBundle(b);
-						return BUNDLE_ACCEPTED;
-					}
-
-					if ( flags.getFlag(DISCARD_IF_CANT_PROCESSED) )
-					{
-						// discard this block
-						b->removeBlock( block );
-						iter++;
-						continue;
-					}
-
 					// if forwarded without processed, mark it!
 					flags.setFlag(FORWARDED_WITHOUT_PROCESSED, true);
+					block->setBlockFlags(flags);
+					block->updateBlockSize();
 				}
 
 				iter++;
@@ -143,7 +126,7 @@ namespace dtn
 			};
 		}
 
-		Bundle* BundleCore::createStatusReport(Bundle *b, StatusReportType type)
+		Bundle* BundleCore::createStatusReport(Bundle *b, StatusReportType type, StatusReportReasonCode reason)
 		{
 			// create a new bundle
 			BundleFactory &fac = BundleFactory::getInstance();
@@ -155,10 +138,13 @@ namespace dtn
 			// add the report to the bundle
 			bundle->appendBlock(report);
 
-			// get the flags and set the reason code
-			ProcessingFlags flags = report->getReasonCode();
+			// get the flags and set the status flag
+			ProcessingFlags flags = report->getStatusFlags();
 			flags.setFlag(type, true);
-			report->setReasonCode(flags);
+			report->setStatusFlags(flags);
+
+			// set the reason code
+			report->setReasonCode(ProcessingFlags(reason));
 
 			switch (type)
 			{
@@ -355,6 +341,40 @@ namespace dtn
 			if ( b->getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_RECEPTION) )
 			{
 				transmit( createStatusReport(b, RECEIPT_OF_BUNDLE) );
+			}
+
+			// check all block of the bundle for block flag actions
+			list<Block*> blocks = b->getBlocks();
+			list<Block*>::const_iterator iter = blocks.begin();
+
+			while (iter != blocks.end())
+			{
+				Block *block = (*iter);
+				BlockFlags flags = block->getBlockFlags();
+
+				if ( !block->isProcessed() )
+				{
+					if ( flags.getFlag(REPORT_IF_CANT_PROCESSED) )
+					{
+						// transmit a status report if requested
+						transmit( createStatusReport(b, RECEIPT_OF_BUNDLE, BLOCK_UNINTELLIGIBLE) );
+					}
+
+					if ( flags.getFlag(DELETE_IF_CANT_PROCESSED) )
+					{
+						// discard the hole bundle!
+						dismissBundle(b);
+						return;
+					}
+
+					if ( flags.getFlag(DISCARD_IF_CANT_PROCESSED) )
+					{
+						// discard this block
+						b->removeBlock( block );
+					}
+				}
+
+				iter++;
 			}
 
 			try {
