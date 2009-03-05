@@ -1,3 +1,4 @@
+#include "config.h"
 #include "core/TCPConnection.h"
 #include "core/TCPMessage.h"
 #include "data/BundleFactory.h"
@@ -14,7 +15,6 @@
 #include <iostream>
 #include "utils/Utils.h"
 #include "data/SDNV.h"
-
 
 using namespace dtn::data;
 
@@ -334,7 +334,9 @@ namespace dtn
 						// set the state to IDLE
 						setState(m_incoming, STATE_IDLE);
 
+#ifdef DO_DEBUG_OUTPUT
 						cout << "handshake received from " << m_eid << endl;
+#endif
 					}
 
 					break;
@@ -564,12 +566,14 @@ namespace dtn
 			// set the state
 			setState(STATE_CLOSED);
 
+#ifdef DO_DEBUG_OUTPUT
 			// Debug
 			if (m_eid == "")
 			{
 				cout << "connection to unknown closed" << endl;
 			}
 			else	cout << "connection to " << m_eid << " closed" << endl;
+#endif
 
 			// outgoing transfer complete?
 			if (m_outgoing.data != NULL)

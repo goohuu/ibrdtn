@@ -109,19 +109,12 @@ namespace dtn
 
 
 		private:
-			/**
-			 * Funktion die zu Debugzwecken ein Bundle nach COUT ausgibt.
-			 * @param b Das Bundle welches angezeigt werden soll
-			 */
-			void debugBundle(Bundle *b);
-
 			void processStatusReport(Bundle *b);
 			void processCustody(Bundle *b);
 
 			bool transmitBundle(BundleSchedule schedule);
 
 			void forwardLocalBundle(Bundle *bundle);
-			//void checkNeighbours();
 
 			void dismissBundle(Bundle *b, string reason = "unknown");
 

@@ -1,3 +1,5 @@
+#include "config.h"
+
 #ifndef NETWORKFRAME_H_
 #define NETWORKFRAME_H_
 
@@ -275,7 +277,9 @@ namespace data
 			 */
 			void changeSize(unsigned int field, unsigned int size);
 
+#ifdef DO_DEBUG_OUTPUT
 			void debug() const;
+#endif
 
 			/**
 			 * re-new the value of m_size
@@ -306,7 +310,9 @@ namespace data
 			 */
 			void moveData(unsigned char* data, unsigned int size, int offset);
 
+#ifdef DO_DEBUG_OUTPUT
 			void debugData(unsigned char* data, unsigned int size) const;
+#endif
 	};
 }
 }

@@ -1,3 +1,4 @@
+#include "config.h"
 #include "core/TCPConvergenceLayer.h"
 #include "data/BundleFactory.h"
 #include "core/TCPConnection.h"
@@ -284,8 +285,10 @@ namespace dtn
 
 				if ( conn->isClosed() )
 				{
+#ifdef DO_DEBUG_OUTPUT
 					// Wegräumen
 					cout << "remove closed connection to " << conn->getRemoteURI() << endl;
+#endif
 
 					delete conn;
 					m_connections.erase(iter++);

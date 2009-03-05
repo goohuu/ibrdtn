@@ -553,6 +553,7 @@ namespace data
 		}
 	}
 
+#ifdef DO_DEBUG_OUTPUT
 	void NetworkFrame::debug() const
 	{
 		map<unsigned int, unsigned int> mcopy = m_fieldsizes;
@@ -578,5 +579,6 @@ namespace data
 		}
 		//dtn::Utils::getLogger() << "|" << endl;
 	}
+#endif
 }
 }
