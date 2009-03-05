@@ -291,9 +291,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
-#ifdef HAVE_LIBLUA5_1
-	luac.run("demo.lua");
-#endif
+//#ifdef HAVE_LIBLUA5_1
+//	luac.run("demo.lua");
+//#endif
 
 	while (m_running)
 	{

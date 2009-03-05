@@ -9,7 +9,8 @@
 
 #ifdef HAVE_LIBLUA5_1
 
-#include "daemon/LuaConfiguration.h"
+#include "daemon/LuaBundleCore.h"
+#include "daemon/LuaApplication.h"
 
 namespace dtn
 {
@@ -39,7 +40,8 @@ namespace dtn
 
 		void LuaCore::registerAllCommands()
 		{
-			Luna<LuaConfiguration>::Register(m_L);
+			Luna<LuaApplication>::Register(m_L);
+			Luna<LuaBundleCore>::Register(m_L);
 		}
 
 		int LuaCore::nodeAvailable(lua_State *L)
