@@ -1,6 +1,8 @@
 #include "core/BundleRouter.h"
 #include "data/BundleFactory.h"
 #include "utils/Utils.h"
+#include "core/NodeEvent.h"
+#include "core/EventSwitch.h"
 #include <iostream>
 #include <iomanip>
 
@@ -13,6 +15,8 @@ namespace dtn
 		BundleRouter::BundleRouter(string eid)
 			: Service("BundleRouter"), m_lastcheck(0), m_eid(eid)
 		{
+			// register at event switch
+			EventSwitch::registerEventReceiver(NodeEvent::className, this);
 		}
 
 		BundleRouter::~BundleRouter()
@@ -21,6 +25,19 @@ namespace dtn
 
 			// Alle Nodes löschen
 			m_neighbours.clear();
+		}
+
+		void BundleRouter::raiseEvent(const Event *evt)
+		{
+			const NodeEvent *nodeevent = dynamic_cast<const NodeEvent*>(evt);
+
+			if (nodeevent != NULL)
+			{
+				if (nodeevent->getAction() == NODE_INFO_UPDATED)
+				{
+					discovered(nodeevent->getNode());
+				}
+			}
 		}
 
 		/*

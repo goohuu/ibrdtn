@@ -8,6 +8,8 @@
 #include "core/BundleSchedule.h"
 #include "utils/MutexLock.h"
 #include "utils/Mutex.h"
+#include "core/EventReceiver.h"
+#include "core/Event.h"
 
 using namespace std;
 using namespace dtn::data;
@@ -22,7 +24,7 @@ namespace dtn
 		 * werden zu welchen Knoten ein Bundle als nächstes übertragen werden und
 		 * wann das statt finden soll.
 		 */
-		class BundleRouter : public Service
+		class BundleRouter : public Service, public EventReceiver
 		{
 		public:
 			/* Konstruktor
@@ -34,12 +36,6 @@ namespace dtn
 			 * Destruktor
 			 */
 			virtual ~BundleRouter();
-
-			/**
-			 * Gibt an, dass ein bestimmter Knoten nun in Kommunikationsreichweite ist.
-			 * @param node Ein Zeiger auf ein Node-Objekt der die Daten des in Reichweite gekommenen Knoten enthält.
-			 */
-			virtual void discovered(Node node);
 
 			/**
 			 * Gibt alle direkten nodegenceLayerbestimmtNachbarn zurück
@@ -69,7 +65,18 @@ namespace dtn
 
 			bool isLocal(Bundle *b);
 
+			/**
+			 * method to receive new events from the EventSwitch
+			 */
+			void raiseEvent(const Event *evt);
+
 		private:
+			/**
+			 * Gibt an, dass ein bestimmter Knoten nun in Kommunikationsreichweite ist.
+			 * @param node Ein Zeiger auf ein Node-Objekt der die Daten des in Reichweite gekommenen Knoten enthält.
+			 */
+			virtual void discovered(Node node);
+
 			list<Node> m_neighbours;
 			unsigned int m_lastcheck;
 			string m_eid;

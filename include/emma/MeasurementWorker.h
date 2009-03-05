@@ -4,6 +4,7 @@
 #include "emma/MeasurementJob.h"
 #include "emma/GPSProvider.h"
 #include "core/AbstractWorker.h"
+#include "core/EventReceiver.h"
 #include "utils/Service.h"
 #include <string>
 
@@ -22,14 +23,18 @@ namespace emma
 		vector<MeasurementJob*> jobs;
 	};
 
-	class MeasurementWorker : public AbstractWorker, public Service
+	class MeasurementWorker : public AbstractWorker, public Service, public EventReceiver
 	{
 	public:
 		MeasurementWorker(BundleCore *core, MeasurementWorkerConfig config);
 		~MeasurementWorker();
 		void tick();
 		unsigned char* needMore(unsigned char* data, unsigned int used, unsigned int needed);
-		void setGPSProvider(GPSProvider *gpsconn);
+
+		/**
+		 * method to receive PositionEvent from EventSwitch
+		 */
+		void raiseEvent(const Event *evt);
 
 	protected:
 		virtual void initialize();
@@ -40,8 +45,8 @@ namespace emma
 		unsigned int m_datasize;
 		string m_source;
 
-		GPSProvider *m_gps;
 		MeasurementWorkerConfig m_config;
+		pair<double,double> m_position;
 	};
 }
 

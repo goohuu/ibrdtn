@@ -1,11 +1,16 @@
 #include "emma/EmmaConvergenceLayer.h"
 #include "emma/DiscoverBlock.h"
 #include "utils/Utils.h"
+#include "core/EventSwitch.h"
+#include "core/NodeEvent.h"
+
+#include "emma/PositionEvent.h"
 
 #include <sys/socket.h>
 #include <errno.h>
 #include <iostream>
 
+using namespace dtn::core;
 using namespace dtn::data;
 using namespace dtn::utils;
 
@@ -14,8 +19,11 @@ namespace emma
 	const int EmmaConvergenceLayer::MAX_SIZE = 1024;
 
 	EmmaConvergenceLayer::EmmaConvergenceLayer(string eid, string bind_addr, unsigned short port, string broadcast, unsigned int mtu)
-		: Service("EmmaConvergenceLayer"), m_eid(eid), m_bindaddr(bind_addr), m_bindport(port), m_router(NULL), m_lastyell(0), m_direct_cl(NULL), m_broadcast_cl(NULL), m_gps(NULL)
+		: Service("EmmaConvergenceLayer"), m_eid(eid), m_bindaddr(bind_addr), m_bindport(port), m_lastyell(0), m_direct_cl(NULL), m_broadcast_cl(NULL)
 	{
+		// register at event switch
+		EventSwitch::registerEventReceiver(PositionEvent::className, this);
+
 		// register DiscoverBlock structure at the bundle factory
 		m_dfactory = new DiscoverBlockFactory();
 		BundleFactory::getInstance().registerExtensionBlock(m_dfactory);
@@ -75,7 +83,10 @@ namespace emma
 				n.setPosition( make_pair( discover->getLatitude(), discover->getLongitude() ) );
 			}
 
-			getRouter()->discovered(n);
+			// create a event
+			EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_INFO_UPDATED));
+
+			//getRouter()->discovered(n);
 
 			// Zurück rufen, wenn dies ein Broadcast war und nicht von uns selbst stammt
 			if ( ( b->getDestination() == "dtn:discovery" ) && ( b->getSource() != m_eid ) )
@@ -118,16 +129,6 @@ namespace emma
 		usleep(1000);
 	}
 
-	BundleRouter* EmmaConvergenceLayer::getRouter()
-	{
-		return m_router;
-	}
-
-	void EmmaConvergenceLayer::setRouter(BundleRouter *router)
-	{
-		m_router = router;
-	}
-
 	/*
 	 * Sendet eine Nachricht, welche anderen Teilnehmern ermöglicht diesen Teilnehmer
 	 * zu erkennen.
@@ -165,12 +166,8 @@ namespace emma
 		bundle->setPrimaryFlags(flags);
 
 		// Zusätzliche Daten einsetzen: GPS Position
-		if ( (m_gps != NULL) && (m_gps->getState() == READY) )
-		{
-			// Hier GPS Daten einfügen
-			block->setLatitude( m_gps->getLatitude() );
-			block->setLongitude( m_gps->getLongitude() );
-		}
+		block->setLatitude( m_position.first );
+		block->setLongitude( m_position.second );
 
 		transmit( bundle );
 
@@ -209,20 +206,21 @@ namespace emma
 		bundle->setPrimaryFlags(flags);
 
 		// Zusätzliche Daten einsetzen: GPS Position
-		if ( (m_gps != NULL) && (m_gps->getState() == READY) )
-		{
-			// Hier GPS Daten einfügen
-			block->setLatitude( m_gps->getLatitude() );
-			block->setLongitude( m_gps->getLongitude() );
-		}
+		block->setLatitude( m_position.first );
+		block->setLongitude( m_position.second );
 
 		transmit( bundle, node );
 
 		delete bundle;
 	}
 
-	void EmmaConvergenceLayer::setGPSProvider(GPSProvider *gpsconn)
+	void EmmaConvergenceLayer::raiseEvent(const Event *evt)
 	{
-		m_gps = gpsconn;
+		const PositionEvent *event = dynamic_cast<const PositionEvent*>(evt);
+
+		if (event != NULL)
+		{
+			m_position = event->getPosition();
+		}
 	}
 }

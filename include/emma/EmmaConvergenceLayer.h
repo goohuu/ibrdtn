@@ -10,6 +10,8 @@
 #include "core/BundleRouter.h"
 #include "utils/Service.h"
 
+#include "core/EventReceiver.h"
+
 #include "utils/MutexLock.h"
 #include "utils/Mutex.h"
 
@@ -25,7 +27,7 @@ namespace emma
 	 * Diese Klasse implementiert einen ConvergenceLayer für UDP/IP über IEEE 802.11
 	 * welche für die Kommunikation zwischen den Fahrzeugen im EMMA Projekt benötigt wird.
 	 */
-	class EmmaConvergenceLayer : public Service, public dtn::core::ConvergenceLayer, public BundleReceiver
+	class EmmaConvergenceLayer : public Service, public dtn::core::ConvergenceLayer, public BundleReceiver, public EventReceiver
 	{
 	public:
 		/**
@@ -53,21 +55,12 @@ namespace emma
 		 */
 		virtual TransmitReport transmit(Bundle *b, const Node &node);
 
-		/**
-		 * Gibt den zugewiesenen Router zurück
-		 * @return Ein Router-Objekt, welches für die Verarbeitung von eingehenden Bundles zuständig ist.
-		 */
-		BundleRouter* getRouter();
-
-		/**
-		 * Setzt den Router
-		 * @param router Ein Router an den eingehende Bundles weitergegeben werden sollen.
-		 */
-		void setRouter(BundleRouter *router);
-
-		void setGPSProvider(GPSProvider *gpsconn);
-
 		void received(ConvergenceLayer *cl, Bundle *b);
+
+		/**
+		 * method to receive PositionEvent from EventSwitch
+		 */
+		void raiseEvent(const Event *evt);
 
 	protected:
 		/**
@@ -93,8 +86,6 @@ namespace emma
 		string m_bindaddr;
 		unsigned int m_bindport;
 
-		BundleRouter *m_router;
-
 		unsigned int m_lastyell;
 
 		UDPConvergenceLayer *m_direct_cl;
@@ -102,7 +93,7 @@ namespace emma
 
 		Mutex m_receivelock;
 
-		GPSProvider *m_gps;
+		pair<double,double> m_position;
 
 		DiscoverBlockFactory *m_dfactory;
 	};

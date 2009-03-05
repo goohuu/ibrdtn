@@ -1,6 +1,8 @@
 #include "emma/MeasurementWorker.h"
 #include "emma/MeasurementJob.h"
 #include "emma/Measurement.h"
+#include "core/EventSwitch.h"
+#include "emma/PositionEvent.h"
 #include "data/BundleFactory.h"
 #include "data/PayloadBlockFactory.h"
 #include "data/Bundle.h"
@@ -11,9 +13,12 @@ using namespace dtn::core;
 namespace emma
 {
 	MeasurementWorker::MeasurementWorker(BundleCore *core, MeasurementWorkerConfig config)
-		: AbstractWorker(core, "/measurement"), Service("MeasurementWorker"), m_dtntime(0), m_datasize(0), m_gps(NULL), m_config(config)
+		: AbstractWorker(core, "/measurement"), Service("MeasurementWorker"), m_dtntime(0), m_datasize(0), m_config(config)
 	{
 		m_source = getWorkerURI();
+
+		// register at event switch
+		EventSwitch::registerEventReceiver(PositionEvent::className, this);
 	}
 
 	void MeasurementWorker::initialize()
@@ -22,11 +27,6 @@ namespace emma
 
 	void MeasurementWorker::terminate()
 	{
-	}
-
-	void MeasurementWorker::setGPSProvider(GPSProvider *gpsconn)
-	{
-		m_gps = gpsconn;
 	}
 
 	MeasurementWorker::~MeasurementWorker()
@@ -55,19 +55,19 @@ namespace emma
 
 			unsigned int jobcount = m_config.jobs.size();
 
-			if (m_gps != NULL)
-			{
-				jobcount++;
-			}
+//			if (m_gps != NULL)
+//			{
+//				jobcount++;
+//			}
 
 			// Vorherige Größe als Speichergröße verwenden
 			Measurement m( m_datasize, jobcount );
 
-			// Wenn wir GPS haben das als erste Messung
-			if (m_gps != NULL)
-			{
-				m.add( m_gps );
-			}
+//			// Wenn wir GPS haben das als erste Messung
+//			if (m_gps != NULL)
+//			{
+//				m.add( m_gps );
+//			}
 
 			// Alle Jobs abarbeiten
 			vector<MeasurementJob*>::iterator iter = m_config.jobs.begin();
@@ -122,5 +122,15 @@ namespace emma
 		}
 
 		usleep(50);
+	}
+
+	void MeasurementWorker::raiseEvent(const Event *evt)
+	{
+		const PositionEvent *event = dynamic_cast<const PositionEvent*>(evt);
+
+		if (event != NULL)
+		{
+			m_position = event->getPosition();
+		}
 	}
 }

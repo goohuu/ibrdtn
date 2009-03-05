@@ -7,6 +7,8 @@
 #include "core/UDPConvergenceLayer.h"
 #include "core/TCPConvergenceLayer.h"
 #include "core/Node.h"
+#include "core/EventSwitch.h"
+#include "core/NodeEvent.h"
 using namespace dtn::core;
 
 #ifdef HAVE_LIBSQLITE3
@@ -106,20 +108,18 @@ int main(int argc, char *argv[])
 
 #ifdef USE_EMMA_CODE
 	// GPSConnector hinzufügen
-	GPSProvider *gpsconnection = NULL;
-	GPSConnector *gpsd = NULL;
+	GPSProvider *gpsprov = NULL;
 
 	if ( conf.useGPSDaemon() )
 	{
-		gpsd = new GPSConnector( conf.getGPSHost(), conf.getGPSPort() );
-		daemon.addService( (Service*) gpsd );
-		gpsconnection = gpsd;
+		gpsprov = new GPSConnector( conf.getGPSHost(), conf.getGPSPort() );
+		daemon.addService( (Service*) gpsprov );
 	}
 	else
 	{
 		// Erstelle einen GPS Dummy mit den statischen Werten aus der Config
 		pair<double,double> position = conf.getStaticPosition();
-		gpsconnection = new GPSDummy( position.first, position.second );
+		gpsprov = new GPSDummy( position.first, position.second );
 	}
 #endif
 
@@ -150,13 +150,6 @@ int main(int argc, char *argv[])
 				// ConvergenceLayer für den Einsatz zwischen Fahrzeugen
 				EmmaConvergenceLayer *emma = new EmmaConvergenceLayer( conf.getLocalUri(), conf.getNetInterface(key), conf.getNetPort(key), conf.getNetBroadcast(key) );
 				netcl = emma;
-
-				// Verbinde Router und EmmaConvergenceLayer damit neu erkannte Knoten dem
-				// Router mitgeteilt werden können.
-				emma->setRouter(router);
-
-				// Mit GPSConnector verbinden um Positionsdaten in das DiscoveryBundle einzusetzen
-				emma->setGPSProvider( gpsconnection );
 
 				// Fügt den EMMA-CL dem Multiplexer hinzu
 				daemon.addConvergenceLayer(emma);
@@ -261,7 +254,6 @@ int main(int argc, char *argv[])
 
 		MeasurementWorker *mworker = new MeasurementWorker( core, config );
 		daemon.addService( (Service*)mworker );
-		mworker->setGPSProvider( gpsconnection );
 	}
 #endif
 
@@ -286,7 +278,8 @@ int main(int argc, char *argv[])
 
 		while (iter != static_nodes.end())
 		{
-			router->discovered(*iter);
+			// create a event
+			EventSwitch::raiseEvent(new NodeEvent( (*iter), dtn::core::NODE_INFO_UPDATED) );
 			iter++;
 		}
 	}
@@ -307,10 +300,10 @@ int main(int argc, char *argv[])
 
 #ifdef USE_EMMA_CODE
 	// GPS Wegräumen wenn es kein Service ist
-	Service *tmpservice = dynamic_cast<Service*>(gpsconnection);
+	Service *tmpservice = dynamic_cast<Service*>(gpsprov);
 	if (tmpservice == NULL)
 	{
-		delete gpsconnection;
+		delete gpsprov;
 	}
 #endif
 
