@@ -1,5 +1,4 @@
 #include "emma/EmmaConvergenceLayer.h"
-#include "emma/UDPConvergenceLayerWithFakeBroadcast.h"
 #include "emma/DiscoverBlock.h"
 #include "utils/Utils.h"
 
@@ -21,18 +20,8 @@ namespace emma
 		m_dfactory = new DiscoverBlockFactory();
 		BundleFactory::getInstance().registerExtensionBlock(m_dfactory);
 
-		//Configuration &conf = Configuration::getInstance();
-
-//		if (conf.doFakeBroadcast())
-//		{
-//			m_direct_cl = new UDPConvergenceLayerWithFakeBroadcast(bind_addr, port, true, mtu);
-//			m_broadcast_cl = m_direct_cl;
-//		}
-//		else
-//		{
-			m_direct_cl = new UDPConvergenceLayer(bind_addr, port, mtu);
-			m_broadcast_cl = new UDPConvergenceLayer(broadcast, port, true, mtu);
-//		}
+		m_direct_cl = new UDPConvergenceLayer(bind_addr, port, mtu);
+		m_broadcast_cl = new UDPConvergenceLayer(broadcast, port, true, mtu);
 
 		m_direct_cl->setBundleReceiver(this);
 		m_broadcast_cl->setBundleReceiver(this);
