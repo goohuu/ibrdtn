@@ -12,10 +12,10 @@ namespace dtn
 		class EchoWorker : public AbstractWorker
 		{
 		public:
-			EchoWorker(BundleCore *core);
+			EchoWorker(BundleCore &core);
 			~EchoWorker() {};
 
-			TransmitReport callbackBundleReceived(Bundle *b);
+			TransmitReport callbackBundleReceived(const Bundle &b);
 		private:
 			string m_localuri;
 		};

@@ -80,8 +80,8 @@ namespace testsuite
 		BundleFactory &fac = BundleFactory::getInstance();
 
 		unsigned int offset = 0;
-		Bundle *first = fac.cut(bundle, 512, offset);
-		Bundle *second = fac.cut(bundle, UINT_MAX, offset);
+		Bundle *first = fac.cut(*bundle, 512, offset);
+		Bundle *second = fac.cut(*bundle, UINT_MAX, offset);
 
 		PayloadBlock *p1 = first->getPayloadBlock();
 		PayloadBlock *p2 = second->getPayloadBlock();
@@ -141,12 +141,12 @@ namespace testsuite
 		list<Bundle*> bundles;
 
 		unsigned int offset = 0;
-		Bundle *fragment = BundleFactory::slice(bundle, 200, offset);
+		Bundle *fragment = BundleFactory::slice(*bundle, 200, offset);
 
 		while (fragment != NULL)
 		{
 			bundles.push_back(fragment);
-			fragment = BundleFactory::slice(bundle, 200, offset);
+			fragment = BundleFactory::slice(*bundle, 200, offset);
 		}
 
 		// Size test
@@ -200,11 +200,11 @@ namespace testsuite
 		BundleFactory &fac = BundleFactory::getInstance();
 
 		unsigned int offset = 0;
-		Bundle *first = fac.cut(bundle, 512, offset);
-		Bundle *second = fac.cut(bundle, UINT_MAX, offset);
+		Bundle *first = fac.cut(*bundle, 512, offset);
+		Bundle *second = fac.cut(*bundle, UINT_MAX, offset);
 
 		// Merge
-		Bundle *merge = fac.merge( first, second );
+		Bundle *merge = fac.merge( *first, *second );
 
 		delete first;
 		delete second;
@@ -224,13 +224,13 @@ namespace testsuite
 
 		// merge test, the second
 		offset = 0;
-		first = fac.cut(bundle, 512, offset);
-		second = fac.cut(bundle, 128, offset);
-		Bundle *third = fac.cut(bundle, 128, offset);
-		Bundle *fourth = fac.cut(bundle, UINT_MAX, offset);
+		first = fac.cut(*bundle, 512, offset);
+		second = fac.cut(*bundle, 128, offset);
+		Bundle *third = fac.cut(*bundle, 128, offset);
+		Bundle *fourth = fac.cut(*bundle, UINT_MAX, offset);
 
 		// first merge should give a new fragment
-		merge = fac.merge( first, second );
+		merge = fac.merge( *first, *second );
 
 		if ( !merge->getPrimaryFlags().isFragment())
 		{
@@ -240,11 +240,11 @@ namespace testsuite
 
 		// second merge should give the hole bundle
 		Bundle *tmp = merge;
-		merge = fac.merge( tmp, third );
+		merge = fac.merge( *tmp, *third );
 		delete tmp;
 
 		tmp = merge;
-		merge = fac.merge( tmp, fourth );
+		merge = fac.merge( *tmp, *fourth );
 		delete tmp;
 
 		if ( merge->getPrimaryFlags().isFragment())
@@ -279,7 +279,7 @@ namespace testsuite
 
 		BundleFactory &fac = BundleFactory::getInstance();
 
-		list<Bundle*> bundles = fac.split(bundle, 200);
+		list<Bundle*> bundles = fac.split(*bundle, 200);
 
 		if (bundles.size() != 7)
 		{

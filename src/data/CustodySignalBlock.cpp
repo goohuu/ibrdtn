@@ -209,32 +209,32 @@ namespace dtn
 			frame.set(getField(CUSTODY_BUNDLE_SOURCE), value);
 		}
 
-		bool CustodySignalBlock::match(Bundle *b) const
+		bool CustodySignalBlock::match(const Bundle &b) const
 		{
 			// Prüfe die Fragmentfelder, falls das hier ein Fragment ist.
-			if ( b->getPrimaryFlags().isFragment() )
+			if ( b.getPrimaryFlags().isFragment() )
 			{
-				if ( b->getInteger( FRAGMENTATION_OFFSET ) != getFragmentOffset() ) return false;
-				if ( b->getInteger( APPLICATION_DATA_LENGTH ) != getFragmentLength() ) return false;
+				if ( b.getInteger( FRAGMENTATION_OFFSET ) != getFragmentOffset() ) return false;
+				if ( b.getInteger( APPLICATION_DATA_LENGTH ) != getFragmentLength() ) return false;
 			}
 
-			if ( b->getInteger( CREATION_TIMESTAMP ) != getCreationTimestamp() ) return false;
-			if ( b->getInteger( CREATION_TIMESTAMP_SEQUENCE ) != getCreationTimestampSequence() ) return false;
-			if ( b->getSource() != getSource() ) return false;
+			if ( b.getInteger( CREATION_TIMESTAMP ) != getCreationTimestamp() ) return false;
+			if ( b.getInteger( CREATION_TIMESTAMP_SEQUENCE ) != getCreationTimestampSequence() ) return false;
+			if ( b.getSource() != getSource() ) return false;
 
 			return true;
 		}
 
-		void CustodySignalBlock::setMatch(Bundle *b)
+		void CustodySignalBlock::setMatch(const Bundle &b)
 		{
-			if (b->getPrimaryFlags().isFragment())
+			if (b.getPrimaryFlags().isFragment())
 			{
-				setFragmentOffset( b->getInteger(FRAGMENTATION_OFFSET) );
-				setFragmentLength( b->getInteger(APPLICATION_DATA_LENGTH) );
+				setFragmentOffset( b.getInteger(FRAGMENTATION_OFFSET) );
+				setFragmentLength( b.getInteger(APPLICATION_DATA_LENGTH) );
 			}
-			setCreationTimestamp( b->getInteger(CREATION_TIMESTAMP) );
-			setCreationTimestampSequence( b->getInteger(CREATION_TIMESTAMP_SEQUENCE) );
-			setSource( b->getSource() );
+			setCreationTimestamp( b.getInteger(CREATION_TIMESTAMP) );
+			setCreationTimestampSequence( b.getInteger(CREATION_TIMESTAMP_SEQUENCE) );
+			setSource( b.getSource() );
 
 			updateBlockSize();
 		}

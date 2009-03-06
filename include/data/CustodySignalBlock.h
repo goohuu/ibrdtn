@@ -64,8 +64,8 @@ public:
 	bool isAccepted() const;
 	void setAccepted(bool value);
 
-	bool match(Bundle *b) const;
-	void setMatch(Bundle *b);
+	bool match(const Bundle &b) const;
+	void setMatch(const Bundle &b);
 private:
 	unsigned int getField(CUSTODY_FIELDS field) const;
 };

@@ -13,8 +13,8 @@ namespace emma
 		~Measurement();
 
 		void add(unsigned char type, char* job_data, unsigned int job_length);
-		void add(MeasurementJob *job);
-		void add(GPSProvider *gps);
+		void add(MeasurementJob &job);
+		void add(GPSProvider &gps);
 		void add(unsigned char type, double value);
 
 		unsigned char* getData();

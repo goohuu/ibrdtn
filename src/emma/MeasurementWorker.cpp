@@ -12,7 +12,7 @@ using namespace dtn::core;
 
 namespace emma
 {
-	MeasurementWorker::MeasurementWorker(BundleCore *core, MeasurementWorkerConfig config)
+	MeasurementWorker::MeasurementWorker(BundleCore &core, MeasurementWorkerConfig config)
 		: AbstractWorker(core, "/measurement"), Service("MeasurementWorker"), m_dtntime(0), m_datasize(0), m_config(config)
 	{
 		m_source = getWorkerURI();
@@ -31,17 +31,6 @@ namespace emma
 
 	MeasurementWorker::~MeasurementWorker()
 	{
-		// Alle Jobs löschen
-		vector<MeasurementJob*>::iterator iter = m_config.jobs.begin();
-
-		while (iter != m_config.jobs.end())
-		{
-			// Job ausführen
-			delete (*iter);
-
-			// Zum nächsten Job
-			iter++;
-		}
 	}
 
 	void MeasurementWorker::tick()
@@ -70,12 +59,12 @@ namespace emma
 //			}
 
 			// Alle Jobs abarbeiten
-			vector<MeasurementJob*>::iterator iter = m_config.jobs.begin();
+			vector<MeasurementJob>::iterator iter = m_config.jobs.begin();
 
 			while (iter != m_config.jobs.end())
 			{
 				// Job ausführen
-				(*iter)->execute();
+				(*iter).execute();
 
 				// Füge Daten des Jobs hinzu
 				m.add( *iter );
@@ -106,7 +95,7 @@ namespace emma
 			}
 
 			// Bündel versenden
-			switch ( getCore()->transmit( bundle ) )
+			switch ( getCore().transmit( bundle ) )
 			{
 				case NO_ROUTE_FOUND:
 					delete bundle;
@@ -122,6 +111,11 @@ namespace emma
 		}
 
 		usleep(50);
+	}
+
+	TransmitReport MeasurementWorker::callbackBundleReceived(const Bundle &b)
+	{
+
 	}
 
 	void MeasurementWorker::raiseEvent(const Event *evt)

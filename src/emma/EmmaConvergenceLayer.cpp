@@ -48,13 +48,13 @@ namespace emma
 		delete m_direct_cl;
 	}
 
-	TransmitReport EmmaConvergenceLayer::transmit(Bundle *b)
+	TransmitReport EmmaConvergenceLayer::transmit(const Bundle &b)
 	{
 		// Verwende Node um das Ziel zu definieren
 		return m_broadcast_cl->transmit(b);
 	}
 
-	TransmitReport EmmaConvergenceLayer::transmit(Bundle *b, const Node &node)
+	TransmitReport EmmaConvergenceLayer::transmit(const Bundle &b, const Node &node)
 	{
 		return m_direct_cl->transmit(b, node);
 	}
@@ -169,7 +169,7 @@ namespace emma
 		block->setLatitude( m_position.first );
 		block->setLongitude( m_position.second );
 
-		transmit( bundle );
+		transmit( *bundle );
 
 		delete bundle;
 	}
@@ -209,7 +209,7 @@ namespace emma
 		block->setLatitude( m_position.first );
 		block->setLongitude( m_position.second );
 
-		transmit( bundle, node );
+		transmit( *bundle, node );
 
 		delete bundle;
 	}

@@ -10,14 +10,14 @@ namespace dtn
 {
 	namespace daemon
 	{
-		EchoWorker::EchoWorker(BundleCore *core) : AbstractWorker(core, "/echo")
+		EchoWorker::EchoWorker(BundleCore &core) : AbstractWorker(core, "/echo")
 		{
-			m_localuri = core->getLocalURI();
+			m_localuri = core.getLocalURI();
 		}
 
-		TransmitReport EchoWorker::callbackBundleReceived(Bundle *b)
+		TransmitReport EchoWorker::callbackBundleReceived(const Bundle &b)
 		{
-			PayloadBlock *payload = dynamic_cast<PayloadBlock*>( b->getPayloadBlock() );
+			const PayloadBlock *payload = dynamic_cast<PayloadBlock*>( b.getPayloadBlock() );
 
 			// Prüfen ob überhaupt ein PayloadBlock da ist.
 			if ( payload != NULL )
@@ -29,14 +29,13 @@ namespace dtn
 				echo->appendBlock(block);
 
 				// Empfänger und Absender setzen
-				echo->setDestination( b->getSource() );
+				echo->setDestination( b.getSource() );
 				echo->setSource( m_localuri + getWorkerURI() );
 
 				// Absenden
-				getCore()->transmit( echo );
+				getCore().transmit( echo );
 			}
 
-			delete b;
 			return BUNDLE_ACCEPTED;
 		}
 	}

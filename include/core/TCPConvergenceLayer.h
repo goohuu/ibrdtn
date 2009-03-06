@@ -57,12 +57,12 @@ namespace dtn
 			/**
 			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b)
 			 */
-			virtual TransmitReport transmit(Bundle *b);
+			virtual TransmitReport transmit(const Bundle &b);
 
 			/**
 			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b, Node &node)
 			 */
-			virtual TransmitReport transmit(Bundle *b, const Node &node);
+			virtual TransmitReport transmit(const Bundle &b, const Node &node);
 
 			/**
 			 * @sa Service::tick()
@@ -73,7 +73,7 @@ namespace dtn
 			void callbackBundleReceived(TCPConnection *conn, Bundle *b);
 
 		private:
-			TransmitReport transmit(TCPConnection *conn, Bundle *b);
+			TransmitReport transmit(TCPConnection *conn, const Bundle &b);
 			TCPConnection* newConnection(int socket);
 			bool build_select_list();
 			void setnonblocking(int sock);

@@ -58,8 +58,8 @@ namespace testsuite
 		if ( !discoverytest.runAllTests() ) ret = false;
 #endif
 
-		PerformanceTestSuite performtest;
-		if ( !performtest.runAllTests() ) ret = false;
+//		PerformanceTestSuite performtest;
+//		if ( !performtest.runAllTests() ) ret = false;
 
 #ifdef WITH_SQLITE
 		SQLiteTestSuite sqlitetest;

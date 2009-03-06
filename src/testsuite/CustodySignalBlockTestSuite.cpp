@@ -64,7 +64,7 @@ namespace testsuite
 		bool ret = true;
 
 		Bundle *out = TestUtils::createTestBundle(1000);
-		list<Bundle*> bundles = BundleFactory::split(out, 200);
+		list<Bundle*> bundles = BundleFactory::split(*out, 200);
 
 		Bundle *bundle = bundles.back();
 		BundleFactory &fac = BundleFactory::getInstance();
@@ -72,7 +72,7 @@ namespace testsuite
 		CustodySignalBlock *block = PayloadBlockFactory::newCustodySignalBlock( true );
 		cbundle->appendBlock( block );
 
-		block->setMatch( bundle );
+		block->setMatch( *bundle );
 
 		if (!bundle->getPrimaryFlags().isFragment())
 		{
@@ -94,7 +94,7 @@ namespace testsuite
 				ret = false;
 			}
 
-			if ( !block->match( bundle ) )
+			if ( !block->match( *bundle ) )
 			{
 				cout << "block-bundle match failed" << endl;
 				ret = false;
@@ -128,11 +128,11 @@ namespace testsuite
 		// Erstelle ein Signal für diese Bündel
 		CustodySignalBlock *signal = PayloadBlockFactory::newCustodySignalBlock(true);
 
-		signal->setMatch( b );
+		signal->setMatch( *b );
 
 		if (signal != NULL)
 		{
-			if ( !signal->match(b) )
+			if ( !signal->match(*b) )
 			{
 				cout << "Block don't match!" << endl;
 				ret = false;
@@ -168,7 +168,7 @@ namespace testsuite
 		out->setInteger( LIFETIME, 20 );
 
 		CustodySignalBlock *signal = PayloadBlockFactory::newCustodySignalBlock( true );
-		signal->setMatch( out );
+		signal->setMatch( *out );
 		out->appendBlock(signal);
 
 		unsigned char *data = out->getData();
@@ -238,7 +238,7 @@ namespace testsuite
 			return false;
 		}
 
-		signal->setMatch(out);
+		signal->setMatch(*out);
 
 		if ( signal->getSource() != "dtn://wks2" )
 		{

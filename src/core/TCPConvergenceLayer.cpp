@@ -110,12 +110,12 @@ namespace dtn
 			close(m_socket);
 		}
 
-		TransmitReport TCPConvergenceLayer::transmit(Bundle *b)
+		TransmitReport TCPConvergenceLayer::transmit(const Bundle &b)
 		{
 		    return NO_ROUTE_FOUND;
 		}
 
-		TransmitReport TCPConvergenceLayer::transmit(Bundle *b, const Node &node)
+		TransmitReport TCPConvergenceLayer::transmit(const Bundle &b, const Node &node)
 		{
 			// if we're not running, just do nothing.
 			if (!this->isRunning()) return CONVERGENCE_LAYER_BUSY;
@@ -177,13 +177,13 @@ namespace dtn
 		/**
 		 *
 		 */
-		TransmitReport TCPConvergenceLayer::transmit(TCPConnection *conn, Bundle *b)
+		TransmitReport TCPConvergenceLayer::transmit(TCPConnection *conn, const Bundle &b)
 		{
 			// send bundle data
-			size_t sent = conn->transmit((char*)b->getData(), b->getLength());
+			size_t sent = conn->transmit((char*)b.getData(), b.getLength());
 
 			// wait for transfer complete
-			if ( sent != b->getLength() )
+			if ( sent != b.getLength() )
 			{
 				// connection is closed and data may incomplete
 				return CONVERGENCE_LAYER_BUSY;

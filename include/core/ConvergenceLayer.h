@@ -48,7 +48,7 @@ namespace core
 		 * @param b Das zu übermittelnde Bundle
 		 * @return Ein TransmitReport der wiedergibt, ob ein Bundle zugestellt werden konnte oder nicht.
 		 */
-		virtual TransmitReport transmit(Bundle *b) = 0;
+		virtual TransmitReport transmit(const Bundle &b) = 0;
 
 		/**
 		 * Nimmt ein Bundle zur Übermittlung an einen bestimmten Knoten entgegen und
@@ -57,7 +57,7 @@ namespace core
 		 * @param node Der Knoten an den diese Bundle direkt ausgeliefert werden soll
 		 * @return Ein TransmitReport der wiedergibt, ob ein Bundle zugestellt werden konnte oder nicht.
 		 */
-		virtual TransmitReport transmit(Bundle *b, const Node &node) = 0;
+		virtual TransmitReport transmit(const Bundle &b, const Node &node) = 0;
 
 		void setBundleReceiver(BundleReceiver *receiver);
 		void eventBundleReceived(Bundle *bundle);

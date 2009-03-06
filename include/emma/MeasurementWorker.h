@@ -20,13 +20,13 @@ namespace emma
 		string destination;
 		unsigned int lifetime;
 		bool custody;
-		vector<MeasurementJob*> jobs;
+		vector<MeasurementJob> jobs;
 	};
 
 	class MeasurementWorker : public AbstractWorker, public Service, public EventReceiver
 	{
 	public:
-		MeasurementWorker(BundleCore *core, MeasurementWorkerConfig config);
+		MeasurementWorker(BundleCore &core, MeasurementWorkerConfig config);
 		~MeasurementWorker();
 		void tick();
 		unsigned char* needMore(unsigned char* data, unsigned int used, unsigned int needed);
@@ -35,6 +35,8 @@ namespace emma
 		 * method to receive PositionEvent from EventSwitch
 		 */
 		void raiseEvent(const Event *evt);
+
+		TransmitReport callbackBundleReceived(const Bundle &b);
 
 	protected:
 		virtual void initialize();

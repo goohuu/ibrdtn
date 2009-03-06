@@ -2,6 +2,11 @@
 #include "core/BundleSchedule.h"
 #include "core/AbstractWorker.h"
 #include "core/CustodyManager.h"
+#include "core/EventSwitch.h"
+#include "core/StorageEvent.h"
+#include "core/RouteEvent.h"
+#include "core/CustodyEvent.h"
+#include "core/BundleEvent.h"
 
 #include "data/Bundle.h"
 #include "data/Exceptions.h"
@@ -24,32 +29,16 @@ namespace dtn
 	namespace core
 	{
 		BundleCore::BundleCore(string localeid)
-		 : Service("BundleCore"), m_clayer(NULL), m_storage(NULL), m_router(NULL), m_custodymanager(NULL), m_bundlewaiting(false), m_localeid(localeid)
+		 : m_clayer(NULL), m_bundlewaiting(false), m_localeid(localeid)
 		{
+			// register me for events
+			EventSwitch::registerEventReceiver( RouteEvent::className, this );
+			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
+			EventSwitch::registerEventReceiver( BundleEvent::className, this );
 		}
 
 		BundleCore::~BundleCore()
 		{
-		}
-
-		void BundleCore::setStorage(BundleStorage *bs)
-		{
-			m_storage = bs;
-		}
-
-		BundleStorage* BundleCore::getStorage()
-		{
-			return m_storage;
-		}
-
-		void BundleCore::setCustodyManager(CustodyManager *custodymanager)
-		{
-			m_custodymanager = custodymanager;
-		}
-
-		CustodyManager* BundleCore::getCustodyManager()
-		{
-			return m_custodymanager;
 		}
 
 		void BundleCore::setConvergenceLayer(ConvergenceLayer *cl)
@@ -63,14 +52,133 @@ namespace dtn
 			return m_clayer;
 		}
 
-		void BundleCore::setBundleRouter(BundleRouter *router)
+		void BundleCore::raiseEvent(const Event *evt)
 		{
-			m_router = router;
-		}
+			const RouteEvent *routeevent = dynamic_cast<const RouteEvent*>(evt);
+			const CustodyEvent *custodyevent = dynamic_cast<const CustodyEvent*>(evt);
+			const BundleEvent *bundleevent = dynamic_cast<const BundleEvent*>(evt);
 
-		BundleRouter* BundleCore::getBundleRouter()
-		{
-			return m_router;
+			if (bundleevent != NULL)
+			{
+				const Bundle &b = bundleevent->getBundle();
+
+				switch (bundleevent->getAction())
+				{
+				case BUNDLE_RECEIVED:
+					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_RECEPTION) )
+					{
+						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+					}
+					break;
+				case BUNDLE_DELETED:
+					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELETION) )
+					{
+						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+					}
+					break;
+
+				case BUNDLE_FORWARDED:
+					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_FORWARDING) )
+					{
+						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+					}
+					break;
+
+				case BUNDLE_DELIVERED:
+					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY) )
+					{
+						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+					}
+					break;
+
+				case BUNDLE_CUSTODY_ACCEPTED:
+					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE) )
+					{
+						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+					}
+					break;
+				}
+			}
+			else if (custodyevent != NULL)
+			{
+				switch (custodyevent->getAction())
+				{
+					case CUSTODY_ACCEPTANCE:
+					{
+						// send a custody ack
+						transmitCustody(true, *custodyevent->getBundle());
+
+						// set us as custodian
+						//b->setCustodian( m_localeid );
+
+						// create a timer, if custody is requested
+						// TODO: create a timer without a node!
+						//m_custodymanager->setTimer( node, bundle, 1, 1 );
+
+						break;
+					}
+
+					case CUSTODY_TIMEOUT:
+					{
+//						if ( timer.getAttempt() >= 10 )
+//						{
+//							// Bundle nicht zustellbar, wir planen neu
+//							try {
+//								// Erstelle ein neuen Schedule
+//								EventSwitch::raiseEvent( new RouteEvent( timer.getBundle(), ROUTE_FIND_SCHEDULE ) );
+//							} catch (Exception ex) {
+//								// Kein Platz zum aufbewahren oder keine andere Route gefunden
+//								dismissBundle( timer.getBundle(), ex.what() );
+//							}
+//						}
+//						else
+//						{
+//							// Übertragungswiederholung durchführen
+//							switch ( getConvergenceLayer()->transmit( timer.getBundle(), timer.getCustodyNode() ) )
+//							{
+//								case TRANSMIT_SUCCESSFUL:
+//									// Übermittlung erfolgreich, erstelle einen Timer
+//									m_custodymanager->setTimer( timer.getCustodyNode(), timer.getBundle(), 1, timer.getAttempt() + 1 );
+//								break;
+//
+//								case BUNDLE_ACCEPTED:
+//									// Sollte nie auftreten!
+//								break;
+//
+//								default:
+//									// Bundle konnte nicht übertragen werden.
+//								break;
+//							};
+//						}
+						break;
+					}
+				}
+			}
+			else if (routeevent != NULL)
+			{
+				switch (routeevent->getAction())
+				{
+					case ROUTE_FIND_SCHEDULE:
+						break;
+					case ROUTE_LOCAL_BUNDLE:
+					{
+						// get the bundle of the event
+						Bundle *b = routeevent->getBundle();
+						PrimaryFlags flags = b->getPrimaryFlags();
+
+						// check for administrative records
+						if ( flags.isAdmRecord() )
+						{
+							processCustody( *b );
+						}
+
+						// forward the bundle to the application
+						forwardLocalBundle( b );
+						break;
+					}
+				}
+
+			}
 		}
 
 		TransmitReport BundleCore::transmit(Bundle *b)
@@ -96,9 +204,6 @@ namespace dtn
 			}
 
 			try {
-				// Frage den Router nach den nächsten Empfänger und eine Sendezeit
-				BundleSchedule schedule = getBundleRouter()->getSchedule(b);
-
 				// Wurde Custody angefordert?
 				PrimaryFlags flags( b->getInteger(PROCFLAGS) );
 
@@ -108,8 +213,8 @@ namespace dtn
 					b->setCustodian( m_localeid );
 				}
 
-				// Speichere Bundle im persistenten Speicher
-				getStorage()->store(schedule);
+				// find a next route for the bundle
+				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_FIND_SCHEDULE) );
 
 				// Signalisiere, dass ein Bündel wartet
 				m_bundlewaiting = true;
@@ -117,7 +222,8 @@ namespace dtn
 				return BUNDLE_ACCEPTED;
 			} catch (NoSpaceLeftException ex) {
 				// Bündel verwerfen
-				dismissBundle( b, ex.what() );
+				EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_DELETED) );
+				delete b;
 				return UNKNOWN;
 			} catch (BundleExpiredException ex) {
 				return UNKNOWN;
@@ -126,7 +232,7 @@ namespace dtn
 			};
 		}
 
-		Bundle* BundleCore::createStatusReport(Bundle *b, StatusReportType type, StatusReportReasonCode reason)
+		Bundle* BundleCore::createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason)
 		{
 			// create a new bundle
 			BundleFactory &fac = BundleFactory::getInstance();
@@ -175,7 +281,7 @@ namespace dtn
 
 			// set source and destination
 			bundle->setSource(m_localeid);
-			bundle->setDestination(b->getReportTo());
+			bundle->setDestination(b.getReportTo());
 
 			// set bundle parameter
 			report->setMatch(b);
@@ -183,7 +289,7 @@ namespace dtn
 			return bundle;
 		}
 
-		Bundle* BundleCore::createCustodySignal(Bundle *b, bool accepted)
+		Bundle* BundleCore::createCustodySignal(const Bundle &b, bool accepted)
 		{
 			// create a new bundle
 			BundleFactory &fac = BundleFactory::getInstance();
@@ -197,7 +303,7 @@ namespace dtn
 
 			// set source and destination
 			bundle->setSource(m_localeid);
-			bundle->setDestination(b->getCustodian());
+			bundle->setDestination(b.getCustodian());
 
 			// set bundle parameter
 			custody->setMatch(b);
@@ -205,22 +311,18 @@ namespace dtn
 			return bundle;
 		}
 
-		void BundleCore::transmitCustody(bool accept, Bundle *b)
+		void BundleCore::transmitCustody(bool accept, const Bundle &b)
 		{
-			PrimaryFlags flags = b->getPrimaryFlags();
-			Bundle *bundle;
+			PrimaryFlags flags = b.getPrimaryFlags();
 
 			// Senden an
-			string eid = b->getCustodian();
+			string eid = b.getCustodian();
 
-			// Custody-Acceptance Report senden?
-			if ( flags.getFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE) )
-			{
-				transmit( createStatusReport(b, CUSTODY_ACCEPTANCE_OF_BUNDLE) );
-			}
+			// Custody-Acceptance Event
+			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_CUSTODY_ACCEPTED) );
 
 			// Erstelle ein CustodySignal
-			bundle = createCustodySignal(b, accept);
+			Bundle *bundle = createCustodySignal(b, accept);
 
 			// Absender setzen
 			bundle->setSource( m_localeid );
@@ -249,53 +351,49 @@ namespace dtn
 				// Bündelparameter holen
 				PrimaryFlags flags = bundle->getPrimaryFlags();
 
-				if ( flags.isCustodyRequested() && !m_custodymanager->timerAvailable() )
+				if ( flags.isCustodyRequested() )
 				{
 					// Zurück in die Bundle Storage legen für eine Sekunde später
-					getStorage()->store( BundleSchedule( bundle, schedule.getTime() + 1, schedule.getEID() ) );
+					BundleSchedule schedule( bundle, schedule.getTime() + 1, schedule.getEID() );
+					EventSwitch::raiseEvent( new StorageEvent(schedule) );
 					return true;
 				}
 
 				try {
 					// Knoten an den gesendet werden soll
-					Node node = getBundleRouter()->getNeighbour( schedule.getEID() );
+					// TODO: correct this!
+					Node node(FLOATING); // = getBundleRouter()->getNeighbour( schedule.getEID() );
 
 					// transfer bundle to node
-					switch ( getConvergenceLayer()->transmit( bundle, node ) )
+					switch ( getConvergenceLayer()->transmit( *bundle, node ) )
 					{
 						case TRANSMIT_SUCCESSFUL:
 							// transmittion successful
 							if ( flags.isCustodyRequested() )
 							{
-								// create a timer, if custody is requested
-								m_custodymanager->setTimer( node, bundle, 1, 1 );
-							}
-							else
-							{
-								// report forwarded
-								if ( flags.getFlag(REQUEST_REPORT_OF_BUNDLE_FORWARDING) )
-								{
-									transmit( createStatusReport(bundle, FORWARDING_OF_BUNDLE) );
-								}
 
-								// delete the bundle, if no custody is requested
-								delete bundle;
 							}
+
+							// report forwarded event
+							EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_FORWARDED) );
+
+							// delete the bundle, if no custody is requested
+							delete bundle;
 						break;
 
 						case BUNDLE_ACCEPTED:
-							// should never happend!
+							// should never happen!
 						break;
 
 						default:
 							// create a new schedule
-							getStorage()->store( getBundleRouter()->getSchedule( bundle ) );
+							EventSwitch::raiseEvent( new RouteEvent( bundle, ROUTE_FIND_SCHEDULE ) );
 						break;
 					};
 
 				} catch (NoNeighbourFoundException ex) {
 					// target node not available, reschedule the bundle
-					getStorage()->store( getBundleRouter()->getSchedule( bundle ) );
+					EventSwitch::raiseEvent( new RouteEvent( bundle, ROUTE_FIND_SCHEDULE ) );
 				}
 
 				return true;
@@ -308,7 +406,8 @@ namespace dtn
 					if (fragment != NULL)
 					{
 						// Store the fragment in the storage.
-						getStorage()->store( BundleSchedule( fragment, schedule.getTime(), schedule.getEID() ) );
+						BundleSchedule schedule( fragment, schedule.getTime(), schedule.getEID() );
+						EventSwitch::raiseEvent( new StorageEvent( schedule ) );
 					}
 
 					// We have fragments, delete the origin bundle.
@@ -316,10 +415,12 @@ namespace dtn
 
 				} catch (DoNotFragmentBitSetException ex) {
 					// This bundle can't be fragmented. Dismiss it!
-					dismissBundle( fragment, ex.what() );
+					EventSwitch::raiseEvent( new BundleEvent(*fragment, BUNDLE_DELETED) );
+					delete fragment;
 				} catch (NoSpaceLeftException ex) {
 					// No space left in the storage. Dismiss the bundle!
-					dismissBundle( fragment, ex.what() );
+					EventSwitch::raiseEvent( new BundleEvent(*fragment, BUNDLE_DELETED) );
+					delete fragment;
 				}
 			} catch (Exception ex) {
 				// No space left in the storage.
@@ -327,7 +428,11 @@ namespace dtn
 				// Doesn't fit or not allowed.
 				// No receiption!?
 				// Dismiss the bundle. I don't know what to do.
-				if (bundle != NULL) dismissBundle( bundle, ex.what() );
+				if (bundle != NULL)
+				{
+					EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_DELETED) );
+					delete bundle;
+				}
 			}
 
 			return false;
@@ -337,11 +442,8 @@ namespace dtn
 		{
 			PrimaryFlags flags = b->getPrimaryFlags();
 
-			// Report received
-			if ( b->getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_RECEPTION) )
-			{
-				transmit( createStatusReport(b, RECEIPT_OF_BUNDLE) );
-			}
+			// received event
+			EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_RECEIVED) );
 
 			// check all block of the bundle for block flag actions
 			list<Block*> blocks = b->getBlocks();
@@ -357,13 +459,14 @@ namespace dtn
 					if ( flags.getFlag(REPORT_IF_CANT_PROCESSED) )
 					{
 						// transmit a status report if requested
-						transmit( createStatusReport(b, RECEIPT_OF_BUNDLE, BLOCK_UNINTELLIGIBLE) );
+						transmit( createStatusReport(*b, RECEIPT_OF_BUNDLE, BLOCK_UNINTELLIGIBLE) );
 					}
 
 					if ( flags.getFlag(DELETE_IF_CANT_PROCESSED) )
 					{
 						// discard the hole bundle!
-						dismissBundle(b);
+						EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_DELETED) );
+						delete b;
 						return;
 					}
 
@@ -378,47 +481,17 @@ namespace dtn
 			}
 
 			try {
-				// Ist das Bundle lokal?
-				if ( getBundleRouter()->isLocal( b ) )
+				// Wurde Custody angefordert?
+				PrimaryFlags flags( b->getInteger(PROCFLAGS) );
+
+				if (flags.isCustodyRequested())
 				{
-					// Wenn Custody angefordert ist
-					if (flags.isCustodyRequested())
-					{
-						// Sende ein Custody ACK
-						transmitCustody(true, b);
-
-						// Setze eigene EID als Custodian
-						b->setCustodian( m_localeid );
-					}
-
-					// Prüfe auf Custody-Signale und StatusReports
-					if ( flags.isAdmRecord() )
-					{
-						processCustody( b );
-						processStatusReport( b );
-					}
-
-					// Bundle ist lokal
-					forwardLocalBundle( b );
+					// Setze Custody EID auf die eigene EID
+					b->setCustodian( m_localeid );
 				}
-				else
-				{
-					// Frage den Router nach dem nächsten Empfänger und eine Sendezeit
-					BundleSchedule schedule = getBundleRouter()->getSchedule(b);
 
-					// Wenn Custody angefordert ist
-					if (flags.isCustodyRequested())
-					{
-						// Sende ein Custody ACK
-						transmitCustody(true, b);
-
-						// Setze eigene EID als Custodian
-						b->setCustodian( m_localeid );
-					}
-
-					// Lege es den Schedule in der Storage ab
-					getStorage()->store(schedule);
-				}
+				// find a route
+				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_FIND_SCHEDULE) );
 			} catch (InvalidBundleData ex) {
 				delete b;
 			} catch (Exception ex) {
@@ -428,208 +501,75 @@ namespace dtn
 				// Bei Custody noch ein Custody NACK senden
 				if (flags.isCustodyRequested())
 				{
-					transmitCustody(false, b);
+					transmitCustody(false, *b);
 				}
 
 				// Bündel verwerfen und ggf. Reports generieren
-				dismissBundle(b, ex.what() );
-			}
-		}
-
-		void BundleCore::dismissBundle(Bundle *b, string reason)
-		{
-			// Das Bundle wird verworfen. Das heißt es müssten eventuell passende
-			// StatusReports generiert werden.
-			if ( b->getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELETION) )
-			{
-				transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
-			}
-			delete b;
-		}
-
-		void BundleCore::tick()
-		{
-			// Aktuelle DTN Zeit holen
-			unsigned int dtntime = BundleFactory::getDTNTime();
-
-			// Setze das Bündelsignal auf false
-			m_bundlewaiting = false;
-
-			// Anzahl der Bündel in der Storage holen
-			unsigned int bcount = getStorage()->getCount();
-
-			list<Node> nodes = getBundleRouter()->getNeighbours();
-			list<Node>::iterator iter = nodes.begin();
-
-			while (iter != nodes.end())
-			{
-				try
-				{
-					while (bcount > 0)
-					{
-						transmitBundle( getStorage()->getSchedule( (*iter).getURI() ) );
-						bcount--;
-					}
-				} catch (exceptions::NoScheduleFoundException ex) {
-
-				}
-
-				iter++;
-			}
-
-			try {
-				while (bcount > 0)
-				{
-					// Hole ein Schedule aus der Storage von einem Bundle das jetzt versendet werden sollen
-					transmitBundle( getStorage()->getSchedule(dtntime) );
-					bcount--;
-				}
-			} catch (exceptions::NoScheduleFoundException ex) {
-
-			}
-
-			// Warte bis sich die DTNTime ändert oder eine Nachricht versendet wurde
-
-			while (true)
-			{
-				if ( (dtntime != BundleFactory::getDTNTime()) || m_bundlewaiting )
-				{
-					return;
-				}
-				usleep(1000);
+				EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_DELETED) );
+				delete b;
 			}
 		}
 
 		void BundleCore::forwardLocalBundle(Bundle *bundle)
 		{
-			AbstractWorker *worker = NULL;
+			if (bundle == NULL) return;
 
-			Bundle *deliveryReport = NULL;
-			Bundle *deletionReport = NULL;
+			// Flags speichern
+			PrimaryFlags flags = bundle->getPrimaryFlags();
 
-			PrimaryFlags flags;
-
-			if (bundle != NULL)
+			// Prüfen ob das Bundle ein Fragment ist
+			if ( flags.isFragment() )
 			{
-				// Flags speichern
-				flags = bundle->getPrimaryFlags();
+				// Bundle an die Storage zum reassemblieren übergeben
+				EventSwitch::raiseEvent( new StorageEvent( bundle ) );
 
-				// Prüfen ob das Bundle ein Fragment ist
-				if ( flags.isFragment() )
-				{
-					// Einen Report für dieses Bundle versenden
-					deliveryReport = createStatusReport(bundle, DELIVERY_OF_BUNDLE);
+				// TODO: receive reassembled fragments over Events
 
-					// Bundle an die Storage zum reassemblieren übergeben
-					bundle = getStorage()->storeFragment(bundle);
+				return;
+			};
 
-					// Report Bundle delivered
-					if ( flags.getFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY) )
-					{
-						transmit(deliveryReport);
-					}
-					else
-					{
-						delete deliveryReport;
-					}
+			MutexLock l(m_workerlock);
 
-					deliveryReport = NULL;
-				};
-			}
-
-			if (bundle != NULL)
+			AbstractWorker *worker = m_worker[ bundle->getDestination() ];
+			if (worker != NULL)
 			{
-				// Flags speichern
-				flags = bundle->getPrimaryFlags();
-
-				deliveryReport = createStatusReport(bundle, DELIVERY_OF_BUNDLE);
-				deletionReport = createStatusReport(bundle, DELETION_OF_BUNDLE);
-
-				MutexLock l(m_workerlock);
-
-				worker = m_worker[ bundle->getDestination() ];
-				if (worker != NULL)
+				switch ( worker->callbackBundleReceived( *bundle ) )
 				{
-					switch ( worker->callbackBundleReceived( bundle ) )
-					{
-						case BUNDLE_ACCEPTED:
-							// Report Bundle delivered
-							if ( flags.getFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY) )
-							{
-								transmit(deliveryReport);
-								deliveryReport = NULL;
-							}
-						break;
+					case BUNDLE_ACCEPTED:
+						// raise delivered event
+						EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_DELIVERED) );
+					break;
 
-						default:
-							// Report deleted
-							if ( flags.getFlag(REQUEST_REPORT_OF_BUNDLE_DELETION) )
-							{
-								transmit(deletionReport);
-								deletionReport = NULL;
-							}
-							delete bundle;
-						break;
-					}
-				}
-				else
-				{
-					// Report deleted
-					if ( flags.getFlag(REQUEST_REPORT_OF_BUNDLE_DELETION) )
-					{
-						transmit(deletionReport);
-						deletionReport = NULL;
-					}
-					delete bundle;
+					default:
+						// raise deleted event
+						EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_DELETED) );
+					break;
 				}
 			}
-
-			if (deletionReport != NULL) delete deletionReport;
-			if (deliveryReport != NULL) delete deliveryReport;
-		}
-
-		void BundleCore::processStatusReport(Bundle *b)
-		{
-			// Suche im Bundle nach StatusReport-Blöcken
-			Block *block = b->getPayloadBlock();
-			StatusReportBlock *report = NULL;
-
-			if (block != NULL)
+			else
 			{
-				report = dynamic_cast<StatusReportBlock*>( block );
+				// raise deleted event
+				EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_DELETED) );
 			}
+
+			// remove the bundle
+			delete bundle;
 		}
 
-		void BundleCore::processCustody(Bundle *b)
+		void BundleCore::processCustody(const Bundle &b)
 		{
 			// search for custody blocks
-			Block *block = b->getPayloadBlock();
+			Block *block = b.getPayloadBlock();
 			CustodySignalBlock *signal = NULL;
 
 			if (block != NULL)
 			{
 				signal = dynamic_cast<CustodySignalBlock*>( block );
 
-				if ( (signal != NULL) && (signal->isAccepted()) )
+				if ( signal != NULL )
 				{
 					// remove the timer for this bundle
-					Bundle *bundle = m_custodymanager->removeTimer( b->getSource(), signal );
-
-					if (bundle != NULL)
-					{
-						// report forwarded
-						if ( bundle->getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_FORWARDING) )
-						{
-							transmit( createStatusReport(bundle, FORWARDING_OF_BUNDLE) );
-						}
-
-						delete bundle;
-					}
-				}
-				else
-				{
-					// custody was rejected
-					// TODO: replaning the bundle route
+					EventSwitch::raiseEvent( new CustodyEvent( b.getSource(), signal ) );
 				}
 			}
 		}
@@ -643,40 +583,6 @@ namespace dtn
 		void BundleCore::unregisterSubNode(string eid)
 		{
 			m_worker.erase(m_localeid + eid);
-		}
-
-		void BundleCore::triggerCustodyTimeout(CustodyTimer timer)
-		{
-			if ( timer.getAttempt() >= 10 )
-			{
-				// Bundle nicht zustellbar, wir planen neu
-				try {
-					// Erstelle ein neuen Schedule
-					getStorage()->store( getBundleRouter()->getSchedule( timer.getBundle() ) );
-				} catch (Exception ex) {
-					// Kein Platz zum aufbewahren oder keine andere Route gefunden
-					dismissBundle( timer.getBundle(), ex.what() );
-				}
-			}
-			else
-			{
-				// Übertragungswiederholung durchführen
-				switch ( getConvergenceLayer()->transmit( timer.getBundle(), timer.getCustodyNode() ) )
-				{
-					case TRANSMIT_SUCCESSFUL:
-						// Übermittlung erfolgreich, erstelle einen Timer
-						m_custodymanager->setTimer( timer.getCustodyNode(), timer.getBundle(), 1, timer.getAttempt() + 1 );
-					break;
-
-					case BUNDLE_ACCEPTED:
-						// Sollte nie auftreten!
-					break;
-
-					default:
-						// Bundle konnte nicht übertragen werden.
-					break;
-				};
-			}
 		}
 
 		string BundleCore::getLocalURI() const

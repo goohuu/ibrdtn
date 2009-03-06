@@ -322,53 +322,53 @@ namespace dtn
 			return f.parse(data, size);
 		}
 
-		Bundle* BundleFactory::merge(const Bundle *fragment1, const Bundle *fragment2)
+		Bundle* BundleFactory::merge(const Bundle &fragment1, const Bundle &fragment2)
 		{
 			// PrimaryFlags (Fragment)
-			PrimaryFlags flags = fragment1->getPrimaryFlags();
+			PrimaryFlags flags = fragment1.getPrimaryFlags();
 			if (!flags.isFragment())
 			{
 				throw FragmentationException("At least one of the bundles isn't a fragment.");
 			}
 
-			if (!fragment2->getPrimaryFlags().isFragment())
+			if (!fragment2.getPrimaryFlags().isFragment())
 			{
 				throw FragmentationException("At least one of the bundles isn't a fragment.");
 			}
 
 			// check that they belongs together
-			if (( fragment1->getInteger(CREATION_TIMESTAMP) != fragment2->getInteger(CREATION_TIMESTAMP) ) ||
-				( fragment1->getInteger(CREATION_TIMESTAMP_SEQUENCE) != fragment2->getInteger(CREATION_TIMESTAMP_SEQUENCE) ) ||
-				( fragment1->getInteger(LIFETIME) != fragment2->getInteger(LIFETIME) ) ||
-				( fragment1->getInteger(APPLICATION_DATA_LENGTH) != fragment2->getInteger(APPLICATION_DATA_LENGTH) ) ||
-				( fragment1->getSource() != fragment2->getSource() ) )
+			if (( fragment1.getInteger(CREATION_TIMESTAMP) != fragment2.getInteger(CREATION_TIMESTAMP) ) ||
+				( fragment1.getInteger(CREATION_TIMESTAMP_SEQUENCE) != fragment2.getInteger(CREATION_TIMESTAMP_SEQUENCE) ) ||
+				( fragment1.getInteger(LIFETIME) != fragment2.getInteger(LIFETIME) ) ||
+				( fragment1.getInteger(APPLICATION_DATA_LENGTH) != fragment2.getInteger(APPLICATION_DATA_LENGTH) ) ||
+				( fragment1.getSource() != fragment2.getSource() ) )
 			{
 				// exception
 				throw FragmentationException("This fragments don't belongs together.");
 			}
 
 			// checks complete, now merge the blocks
-			PayloadBlock *payload1 = fragment1->getPayloadBlock();
-			PayloadBlock *payload2 = fragment2->getPayloadBlock();
+			PayloadBlock *payload1 = fragment1.getPayloadBlock();
+			PayloadBlock *payload2 = fragment2.getPayloadBlock();
 
 			// TODO: copy blocks other than the payload block!
 
-			unsigned int endof1 = fragment1->getInteger(FRAGMENTATION_OFFSET) + payload1->getLength();
+			unsigned int endof1 = fragment1.getInteger(FRAGMENTATION_OFFSET) + payload1->getLength();
 
-			if (endof1 < fragment2->getInteger(FRAGMENTATION_OFFSET))
+			if (endof1 < fragment2.getInteger(FRAGMENTATION_OFFSET))
 			{
 				// this aren't adjacency fragments
 				throw FragmentationException("This aren't adjacency fragments and can't be merged.");
 			}
 
 			// relative offset of payload1 to payload2
-			unsigned int p2offset = fragment2->getInteger(FRAGMENTATION_OFFSET) - fragment1->getInteger(FRAGMENTATION_OFFSET);
+			unsigned int p2offset = fragment2.getInteger(FRAGMENTATION_OFFSET) - fragment1.getInteger(FRAGMENTATION_OFFSET);
 
 			// merge the payloads
 			PayloadBlock *block = PayloadBlockFactory::merge(payload1, payload2, p2offset);
 
 			// get the frame of fragment1 and use it as base
-			const NetworkFrame &frame = fragment1->getFrame();
+			const NetworkFrame &frame = fragment1.getFrame();
 
 			// copy the frame of fragment1
 			NetworkFrame *framecopy = new NetworkFrame(frame);
@@ -377,7 +377,7 @@ namespace dtn
 			Bundle *bundle = new Bundle(framecopy);
 
 			// if the bundle is complete return a non-fragmented bundle instead of the fragment
-			if (block->getLength() == fragment1->getInteger(APPLICATION_DATA_LENGTH))
+			if (block->getLength() == fragment1.getInteger(APPLICATION_DATA_LENGTH))
 			{
 				// remove the fragment fields of the bundle data
 				bundle->setFragment(false);
@@ -389,7 +389,7 @@ namespace dtn
 			return bundle;
 		}
 
-		bool BundleFactory::compareFragments(Bundle *first, Bundle *second)
+		bool BundleFactory::compareFragments(const Bundle *first, const Bundle *second)
 		{
 			// Wenn der Offset des aktuellen Bundles kleiner ist als der des einzufügenden Bundles
 			if (first->getInteger(FRAGMENTATION_OFFSET) < second->getInteger(FRAGMENTATION_OFFSET))
@@ -421,7 +421,7 @@ namespace dtn
 
 			try {
 				// the first merge creates a new bundle object
-				bundle = merge(first, second);
+				bundle = merge(*first, *second);
 				bundles.pop_front();
 
 				delete first;
@@ -446,10 +446,10 @@ namespace dtn
 			}
 		}
 
-		pair<Bundle*, Bundle*> BundleFactory::cutAt(const Bundle *bundle, unsigned int position)
+		pair<Bundle*, Bundle*> BundleFactory::cutAt(const Bundle &bundle, unsigned int position)
 		{
 			// Get the payload of the bundle.
-			PayloadBlock *payload = bundle->getPayloadBlock();
+			PayloadBlock *payload = bundle.getPayloadBlock();
 
 			// Raise a exception if no payloadblock exists.
 			if (payload == NULL)
@@ -478,10 +478,10 @@ namespace dtn
 			return make_pair(b1, b2);
 		}
 
-		Bundle* BundleFactory::cut(const Bundle *bundle, unsigned int size, unsigned int& offset)
+		Bundle* BundleFactory::cut(const Bundle &bundle, unsigned int size, unsigned int& offset)
 		{
 			// Read the primary flags of the bundle.
-			PrimaryFlags flags = bundle->getPrimaryFlags();
+			PrimaryFlags flags = bundle.getPrimaryFlags();
 
 			// If fragmentation is forbidden, the just throw a exception.
 			if (flags.isFragmentationForbidden())
@@ -490,7 +490,7 @@ namespace dtn
 			}
 
 			// Get the payload of the bundle.
-			PayloadBlock *payload = bundle->getPayloadBlock();
+			PayloadBlock *payload = bundle.getPayloadBlock();
 
 			// Raise a exception if no payloadblock exists.
 			if (payload == NULL)
@@ -512,7 +512,7 @@ namespace dtn
 			}
 
 			// get the frame of fragment1 and use it as base
-			const NetworkFrame &frame = bundle->getFrame();
+			const NetworkFrame &frame = bundle.getFrame();
 
 			// copy the frame of bundle
 			NetworkFrame *framecopy = new NetworkFrame(frame);
@@ -526,7 +526,7 @@ namespace dtn
 			if (flags.isFragment())
 			{
 				fragment->setInteger( FRAGMENTATION_OFFSET,
-						bundle->getInteger(FRAGMENTATION_OFFSET) + offset );
+						bundle.getInteger(FRAGMENTATION_OFFSET) + offset );
 			}
 			else
 			{
@@ -547,10 +547,10 @@ namespace dtn
 			return fragment;
 		}
 
-		Bundle* BundleFactory::slice(const Bundle *bundle, unsigned int size, unsigned int& offset)
+		Bundle* BundleFactory::slice(const Bundle &bundle, unsigned int size, unsigned int& offset)
 		{
 			// Read the primary flags of the bundle.
-			PrimaryFlags flags = bundle->getPrimaryFlags();
+			PrimaryFlags flags = bundle.getPrimaryFlags();
 
 			// If fragmentation is forbidden, the just throw a exception.
 			if (flags.isFragmentationForbidden())
@@ -559,7 +559,7 @@ namespace dtn
 			}
 
 			// Get the payload of the bundle.
-			PayloadBlock *payload = bundle->getPayloadBlock();
+			PayloadBlock *payload = bundle.getPayloadBlock();
 
 			// Raise a exception if no payloadblock exists.
 			if (payload == NULL)
@@ -582,7 +582,7 @@ namespace dtn
 			else
 			{
 				// Overhead berechnen und von der Zielgroße abziehen
-				size -= bundle->getLength() - payload->getLength();
+				size -= bundle.getLength() - payload->getLength();
 
 				if (!flags.isFragment())
 				{
@@ -598,7 +598,7 @@ namespace dtn
 			}
 
 			// get the frame of fragment1 and use it as base
-			const NetworkFrame &frame = bundle->getFrame();
+			const NetworkFrame &frame = bundle.getFrame();
 
 			// copy the frame of bundle
 			NetworkFrame *framecopy = new NetworkFrame(frame);
@@ -615,7 +615,7 @@ namespace dtn
 			if (flags.isFragment())
 			{
 				fragment->setInteger( FRAGMENTATION_OFFSET,
-						bundle->getInteger(FRAGMENTATION_OFFSET) + offset );
+						bundle.getInteger(FRAGMENTATION_OFFSET) + offset );
 			}
 			else
 			{
@@ -636,7 +636,7 @@ namespace dtn
 			return fragment;
 		}
 
-		list<Bundle*> BundleFactory::split(const Bundle *bundle, unsigned int maxsize)
+		list<Bundle*> BundleFactory::split(const Bundle &bundle, unsigned int maxsize)
 		{
 			list<Bundle*> ret;
 			unsigned int offset = 0;

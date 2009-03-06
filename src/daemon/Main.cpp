@@ -1,14 +1,18 @@
 #include "config.h"
 
 #include "core/BundleCore.h"
+#include "core/BundleStorage.h"
+#include "core/SimpleBundleStorage.h"
 #include "core/StaticBundleRouter.h"
 #include "core/ConvergenceLayer.h"
 #include "core/DummyConvergenceLayer.h"
 #include "core/UDPConvergenceLayer.h"
 #include "core/TCPConvergenceLayer.h"
+#include "core/MultiplexConvergenceLayer.h"
 #include "core/Node.h"
 #include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
+#include "core/EventDebugger.h"
 using namespace dtn::core;
 
 #ifdef HAVE_LIBSQLITE3
@@ -27,7 +31,6 @@ using namespace emma;
 
 #include "daemon/Configuration.h"
 #include "daemon/EchoWorker.h"
-#include "daemon/DefaultDaemon.h"
 using namespace dtn::daemon;
 
 #include "utils/Utils.h"
@@ -103,17 +106,24 @@ int main(int argc, char *argv[])
 		setgid( _conf.read<unsigned int>( "group", 0 ) );
 	}
 
-	// DefaultDaemon initialisieren
-	DefaultDaemon daemon(conf);
+	// create event debugger
+	EventDebugger eventdebugger;
+
+	// create the bundle core object
+	BundleCore core(conf.getLocalUri());
+
+	// create a custody manager for handling custody transfers
+	CustodyManager custody_manager;
 
 #ifdef USE_EMMA_CODE
-	// GPSConnector hinzufügen
 	GPSProvider *gpsprov = NULL;
+	GPSConnector *gpsc = NULL;
 
 	if ( conf.useGPSDaemon() )
 	{
-		gpsprov = new GPSConnector( conf.getGPSHost(), conf.getGPSPort() );
-		daemon.addService( (Service*) gpsprov );
+		gpsc = new GPSConnector( conf.getGPSHost(), conf.getGPSPort() );
+		gpsc->start();
+		gpsprov = gpsc;
 	}
 	else
 	{
@@ -124,9 +134,11 @@ int main(int argc, char *argv[])
 #endif
 
 	// Erstelle einen Router für die Bundles
-	BundleRouter *router = new StaticBundleRouter( conf.getStaticRoutes(), conf.getLocalUri() );
-	//router->setGPSProvider(gpsconnection);
-	daemon.addService(router);
+	StaticBundleRouter router( conf.getStaticRoutes(), conf.getLocalUri() );
+
+	// create multiplex convergence layer
+	MultiplexConvergenceLayer multicl;
+	core.setConvergenceLayer(&multicl);
 
 	// Erstelle eine Liste von statischen Knoten
 	vector<Node> static_nodes = conf.getStaticNodes();
@@ -146,36 +158,27 @@ int main(int argc, char *argv[])
 			if (type == "emma")
 			{
 				cout << "Adding ConvergenceLayer for EMMA (" << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << ")" << endl;
-
-				// ConvergenceLayer für den Einsatz zwischen Fahrzeugen
-				EmmaConvergenceLayer *emma = new EmmaConvergenceLayer( conf.getLocalUri(), conf.getNetInterface(key), conf.getNetPort(key), conf.getNetBroadcast(key) );
-				netcl = emma;
-
-				// Fügt den EMMA-CL dem Multiplexer hinzu
-				daemon.addConvergenceLayer(emma);
+				netcl = new EmmaConvergenceLayer( conf.getLocalUri(), conf.getNetInterface(key), conf.getNetPort(key), conf.getNetBroadcast(key) );
 			}
 #endif
 
 			if (type == "udp")
 			{
 				cout << "Adding ConvergenceLayer for UDP (" << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << ")" << endl;
-				UDPConvergenceLayer *udp = new UDPConvergenceLayer( conf.getNetInterface(key), conf.getNetPort(key) );
-				netcl = udp;
-
-				daemon.addConvergenceLayer(udp);
+				netcl = new UDPConvergenceLayer( conf.getNetInterface(key), conf.getNetPort(key) );
 			}
 			else if (type == "tcp")
 			{
 				cout << "Adding ConvergenceLayer for TCP (" << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << ")" << endl;
-				TCPConvergenceLayer *tcp = new TCPConvergenceLayer( conf.getNetInterface(key), conf.getNetPort(key) );
-				netcl = tcp;
-
-				daemon.addConvergenceLayer(tcp);
+				netcl = new TCPConvergenceLayer( conf.getNetInterface(key), conf.getNetPort(key) );
 			}
 
 			// Suche in den statischen Knoten nach passenden DummyConvergenceLayern um diese zu ersetzen
 			if (netcl != NULL)
 			{
+				// add cl to the multiplex cl
+				multicl.add(netcl);
+
 				// Statische Knoten laden, DummyConvergenceLayer austauschen
 				// und am Router registrieren
 				vector<Node>::iterator iter = static_nodes.begin();
@@ -205,26 +208,24 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef WITH_SQLITE
+	BundleStorage *storage = NULL;
+
 	if ( conf.useSQLiteStorage() )
 	{
-		SQLiteBundleStorage *sqlite = new SQLiteBundleStorage(
+		storage = new SQLiteBundleStorage(
 					conf.getSQLiteDatabase(),
 					conf.doSQLiteFlush()
 					);
-
-		daemon.addService(sqlite);
-		daemon.setStorage(sqlite);
+	} else {
+		storage = new SimpleBundleStorage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
 	}
+#else
+	BundleStorage *storage = new SimpleBundleStorage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
 #endif
 
-	// Router zuweisen
-	daemon.setRouter(router);
-
-	// Lokale kopie vom BundleProtocol-Objekt
-	BundleCore *core = daemon.getCore();
-
-
 #ifdef USE_EMMA_CODE
+	MeasurementWorker *mworker = NULL;
+
 	// Dienst für Messungen hinzufügen
 	if ( _conf.read<int>( "measurement_jobs", 0 ) > 0 )
 	{
@@ -248,12 +249,11 @@ int main(int argc, char *argv[])
 			int type = _conf.read<int>( key1.str(), 0 );
 			string cmd = _conf.read<string>( key2.str(), "" );
 
-			MeasurementJob *job = new MeasurementJob( (unsigned char)type, cmd );
+			MeasurementJob job( (unsigned char)type, cmd );
 			config.jobs.push_back( job );
 		}
 
-		MeasurementWorker *mworker = new MeasurementWorker( core, config );
-		daemon.addService( (Service*)mworker );
+		mworker = new MeasurementWorker( core, config );
 	}
 #endif
 
@@ -268,12 +268,25 @@ int main(int argc, char *argv[])
 	// System initialisiert
 	cout << "dtn node ready" << endl;
 
-	// Daemon initialisieren
-	daemon.initialize();
+	// start the services
+	custody_manager.start();
+	router.start();
+	multicl.initialize();
 
-	// Eigener Gültigkeitsbereicht für den Iterator
+#ifdef USE_EMMA_CODE
+	if ( gpsc != NULL )
 	{
-		// Statische Knoten an den Router übergeben
+		gpsc->start();
+	}
+
+	if (mworker != NULL)
+	{
+		mworker->start();
+	}
+#endif
+
+	// announce static nodes
+	{
 		vector<Node>::iterator iter = static_nodes.begin();
 
 		while (iter != static_nodes.end())
@@ -293,21 +306,24 @@ int main(int argc, char *argv[])
 		usleep(10000);
 	}
 
-	cout << "shutdown dtn node" << endl;
-
-	// Daemon und damit alle Dienste stoppen
-	daemon.abort();
-
 #ifdef USE_EMMA_CODE
-	// GPS Wegräumen wenn es kein Service ist
-	Service *tmpservice = dynamic_cast<Service*>(gpsprov);
-	if (tmpservice == NULL)
+	if ( gpsc != NULL )
 	{
-		delete gpsprov;
+		gpsc->abort();
+	}
+
+	if (mworker != NULL)
+	{
+		mworker->abort();
 	}
 #endif
 
-	delete router;
+	// stop the services
+	custody_manager.abort();
+	multicl.terminate();
+	router.abort();
+
+	cout << "shutdown dtn node" << endl;
 
 	return 0;
 };

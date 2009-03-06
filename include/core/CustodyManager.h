@@ -5,26 +5,44 @@
 #include "data/CustodySignalBlock.h"
 #include "core/Node.h"
 #include "core/CustodyTimer.h"
-#include "core/CustodyManagerCallback.h"
+#include "core/EventReceiver.h"
+
+#include "utils/Service.h"
+#include "utils/Mutex.h"
+#include <list>
+
+using namespace dtn::utils;
 
 namespace dtn
 {
 	namespace core
 	{
-		class CustodyManager
+		class CustodyManager : public Service, public EventReceiver
 		{
 			public:
-				CustodyManager()
-				{};
-				
-				virtual ~CustodyManager() {};
-				
-				virtual bool timerAvailable() = 0;
-				
-				virtual void setTimer(Node node, Bundle *bundle, unsigned int time, unsigned int attempt) = 0;
-				virtual Bundle* removeTimer(string source, CustodySignalBlock *block) = 0;
-				
-				virtual void setCallbackClass(CustodyManagerCallback *callback) = 0;
+				CustodyManager();
+
+				virtual ~CustodyManager();
+
+				void tick();
+
+				virtual bool timerAvailable();
+
+				virtual void setTimer(Node node, Bundle *bundle, unsigned int time, unsigned int attempt);
+				virtual Bundle* removeTimer(string source, const CustodySignalBlock &block);
+
+				void raiseEvent(const Event *evt);
+
+			private:
+				void checkCustodyTimer();
+
+				Mutex m_custodylock;
+
+				// Der nächste Zeitpunkt zu dem ein CustodyTimer abläuft
+				// Frühestens zu diesem Zeitpunkt muss ein checkCustodyTimer() ausgeführt werden
+				unsigned int m_nextcustodytimer;
+
+				list<CustodyTimer> m_custodytimer;
 		};
 	}
 }

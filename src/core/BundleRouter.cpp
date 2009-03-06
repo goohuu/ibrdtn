@@ -2,7 +2,9 @@
 #include "data/BundleFactory.h"
 #include "utils/Utils.h"
 #include "core/NodeEvent.h"
+#include "core/RouteEvent.h"
 #include "core/EventSwitch.h"
+#include "core/StorageEvent.h"
 #include <iostream>
 #include <iomanip>
 
@@ -17,6 +19,7 @@ namespace dtn
 		{
 			// register at event switch
 			EventSwitch::registerEventReceiver(NodeEvent::className, this);
+			EventSwitch::registerEventReceiver(RouteEvent::className, this);
 		}
 
 		BundleRouter::~BundleRouter()
@@ -30,6 +33,7 @@ namespace dtn
 		void BundleRouter::raiseEvent(const Event *evt)
 		{
 			const NodeEvent *nodeevent = dynamic_cast<const NodeEvent*>(evt);
+			const RouteEvent *routeevent = dynamic_cast<const RouteEvent*>(evt);
 
 			if (nodeevent != NULL)
 			{
@@ -37,6 +41,29 @@ namespace dtn
 				{
 					discovered(nodeevent->getNode());
 				}
+			}
+			else if (routeevent != NULL)
+			{
+				switch (routeevent->getAction())
+				{
+					case ROUTE_FIND_SCHEDULE:
+					{
+						Bundle *b = routeevent->getBundle();
+						if (isLocal(b))
+						{
+							EventSwitch::raiseEvent( new RouteEvent( b, dtn::core::ROUTE_LOCAL_BUNDLE ) );
+						}
+						else
+						{
+							BundleSchedule schedule = getSchedule( routeevent->getBundle() );
+							EventSwitch::raiseEvent( new StorageEvent( schedule) );
+						}
+						break;
+					}
+					case ROUTE_LOCAL_BUNDLE:
+						break;
+				}
+
 			}
 		}
 
@@ -66,6 +93,9 @@ namespace dtn
 
 			// Nicht in der Liste. Füge hinzu.
 			m_neighbours.push_back( node );
+
+			// announce the new node
+			EventSwitch::raiseEvent(new NodeEvent(node, dtn::core::NODE_AVAILABLE));
 		}
 
 		/*
@@ -160,7 +190,7 @@ namespace dtn
 			throw NoScheduleFoundException("No route available");
 		}
 
-		bool BundleRouter::isLocal(Bundle *b)
+		bool BundleRouter::isLocal(const Bundle *b) const
 		{
 			string desteid = b->getDestination();
 
@@ -192,6 +222,10 @@ namespace dtn
 						list<Node>::iterator eraseme = iter;
 						iter++;
 						m_neighbours.erase( eraseme );
+
+						// announce the node unavailable event
+						EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_UNAVAILABLE));
+
 						continue;
 					}
 

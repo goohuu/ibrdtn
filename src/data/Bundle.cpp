@@ -409,7 +409,7 @@ bool Bundle::isExpired() const
 	return ( (getInteger(LIFETIME) + getInteger(CREATION_TIMESTAMP)) <= time );
 }
 
-string Bundle::toString()
+string Bundle::toString() const
 {
 	stringstream ss;
 	ss << "[" << getInteger(CREATION_TIMESTAMP) << "." << getInteger(CREATION_TIMESTAMP_SEQUENCE);

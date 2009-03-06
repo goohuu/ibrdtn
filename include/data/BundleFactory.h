@@ -67,7 +67,7 @@ namespace dtn
 			 * @param[in] maxsize The maximum size of a fragment.
 			 * @returns A list of bundle fragments.
 			 */
-			static list<Bundle*> split(const Bundle *bundle, unsigned int maxsize);
+			static list<Bundle*> split(const Bundle &bundle, unsigned int maxsize);
 
 			/**
 			 * Slices a bundle into a fragment bundles with a specific size and returns it.
@@ -77,7 +77,7 @@ namespace dtn
 			 * is moved forward to the end of the fragment.
 			 * @returns A bundle fragment.
 			 */
-			static Bundle* slice(const Bundle *bundle, unsigned int size, unsigned int& offset);
+			static Bundle* slice(const Bundle &bundle, unsigned int size, unsigned int& offset);
 
 			/**
 			 * Cut the payload of the bundle after a specific size and returns a fragment bundle.
@@ -87,7 +87,7 @@ namespace dtn
 			 * is moved forward to the end of the fragment.
 			 * @returns A bundle fragment.
 			 */
-			static Bundle* cut(const Bundle *bundle, unsigned int size, unsigned int& offset);
+			static Bundle* cut(const Bundle &bundle, unsigned int size, unsigned int& offset);
 
 			/**
 			 * Cut a bundle at a given position into two fragments. The position is absolutely,
@@ -97,7 +97,7 @@ namespace dtn
 			 * @param[in] position The position for the cut in the payload of the bundle.
 			 * @return a pair of two bundles. The first bundle is the first part of the bundle.
 			 */
-			static pair<Bundle*, Bundle*> cutAt(const Bundle *bundle, unsigned int position);
+			static pair<Bundle*, Bundle*> cutAt(const Bundle &bundle, unsigned int position);
 
 			/**
 			 * Merge a list of fragments to one bundle. If not all fragments are in the given
@@ -120,7 +120,7 @@ namespace dtn
 			 * @return	  A fragment if still fragments missing or a non-fragmented bundle if all
 			 * 		   	  fragments available.
 			 */
-			static Bundle* merge(const Bundle *fragment1, const Bundle *fragment2);
+			static Bundle* merge(const Bundle &fragment1, const Bundle &fragment2);
 
 		private:
 			BundleFactory();
@@ -136,7 +136,7 @@ namespace dtn
 			/**
 			 * compare method for sorting fragments
 			 */
-			static bool compareFragments(Bundle *first, Bundle *second);
+			static bool compareFragments(const Bundle *first, const Bundle *second);
 			static Block* getBlock(const unsigned char *data, unsigned int size);
 
 			static unsigned int SECONDS_TILL_2000;

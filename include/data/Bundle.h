@@ -240,7 +240,7 @@ namespace dtn
 			 * Create a short string to represent this bundle.
 			 * @returns a short string to represent this bundle.
 			 */
-			string toString();
+			string toString() const;
 
 			/**
 			 * Search and return the PayloadBlock of a bundle.

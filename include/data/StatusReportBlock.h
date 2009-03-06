@@ -107,8 +107,8 @@ namespace dtn
 			unsigned int getCreationTimestampSequence() const;
 			void setCreationTimestampSequence(unsigned int value);
 
-			bool match(Bundle *b) const;
-			void setMatch(Bundle *b);
+			bool match(const Bundle &b) const;
+			void setMatch(const Bundle &b);
 
 			// Source endpoint ID of Bundle
 			string getSource() const;

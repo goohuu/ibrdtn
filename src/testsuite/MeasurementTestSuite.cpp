@@ -83,7 +83,7 @@ namespace dtn
 				Measurement m(0, 2);
 
 				// GPS Koordination hinzufügen
-				m.add(&gps);
+				m.add(gps);
 
 				// Messwert hinzufügen
 				m.add(3, value);

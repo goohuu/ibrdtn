@@ -63,7 +63,7 @@ namespace dtn
 			 */
 			virtual BundleSchedule getSchedule(Bundle *b);
 
-			bool isLocal(Bundle *b);
+			bool isLocal(const Bundle *b) const;
 
 			/**
 			 * method to receive new events from the EventSwitch

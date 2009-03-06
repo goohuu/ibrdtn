@@ -6,16 +6,16 @@
 #include "data/BundleFactory.h"
 #include "core/BundleRouter.h"
 #include "core/CustodyTimer.h"
-#include "core/CustodyManager.h"
-#include "core/CustodyManagerCallback.h"
 #include "core/BundleReceiver.h"
+#include "core/EventReceiver.h"
+#include "core/Event.h"
+
 #include "data/CustodySignalBlock.h"
 #include "data/StatusReportBlock.h"
 #include <vector>
 #include <list>
 #include "utils/MutexLock.h"
 #include "utils/Mutex.h"
-#include "utils/Service.h"
 
 
 using namespace dtn::data;
@@ -32,7 +32,7 @@ namespace dtn
 		 * DTN Protocol nötig sind. Die Klasse benötigt ein BundleStorage und einen ConvergenceLayer
 		 * welche vor dem ersten Aufruf von tick() zugewiesen werden müssen.
 		 */
-		class BundleCore : public Service, public CustodyManagerCallback, public BundleReceiver
+		class BundleCore : public BundleReceiver, public EventReceiver
 		{
 		public:
 			/**
@@ -44,18 +44,6 @@ namespace dtn
 			 * Destruktor
 			 */
 			virtual ~BundleCore();
-
-			/**
-			 * Setzt eine BundleStorage
-			 * @param bs Eine Instanz einer BundleStorage
-			 */
-			void setStorage(BundleStorage *bs);
-
-			/**
-			 * Gibt die zugewiesene BundleStorage zurück
-			 * @return Eine Instanz einer BundleStorage oder NULL, wenn keine zugewiesen wurde
-			 */
-			BundleStorage* getStorage();
 
 			/**
 			 * Setzt ein ConvergenceLayer
@@ -70,26 +58,6 @@ namespace dtn
 			ConvergenceLayer* getConvergenceLayer();
 
 			/**
-			 * Setzt einen BundleRouter
-			 * @param router Eine Instanz eines BundleRouters
-			 */
-			void setBundleRouter(BundleRouter *router);
-
-			/**
-			 * Gibt den zugewiesenen BundleRouter zurück
-			 * @return Eine Instanz eines BundleRouters oder NULL, wenn keine zugewiesen wurde
-			 */
-			BundleRouter* getBundleRouter();
-
-			/**
-			 * Führt einen tick() aus. Dieses Model ermöglicht einen getakteten Ablauf ohne
-			 * Threads. Dabei wird von allen Service Klassen regelmäßig die Funktion tick()
-			 * aufgerufen.
-			 * @sa Service::tick()
-			 */
-			virtual void tick();
-
-			/**
 			 * Sendet ein Bundle
 			 */
 			TransmitReport transmit(Bundle *b);
@@ -97,42 +65,29 @@ namespace dtn
 			void registerSubNode(string eid, AbstractWorker *node);
 			void unregisterSubNode(string eid);
 
-			void triggerCustodyTimeout(CustodyTimer timer);
-
-			void setCustodyManager(CustodyManager *custodymanager);
-
-			CustodyManager* getCustodyManager();
-
 			virtual void received(ConvergenceLayer *cl, Bundle *b);
 
 			string getLocalURI() const;
 
+			/**
+			 * method to receive new events from the EventSwitch
+			 */
+			void raiseEvent(const Event *evt);
 
 		private:
-			void processStatusReport(Bundle *b);
-			void processCustody(Bundle *b);
-
+			void processCustody(const Bundle &b);
 			bool transmitBundle(BundleSchedule schedule);
-
 			void forwardLocalBundle(Bundle *bundle);
+			void transmitCustody(bool accept, const Bundle &b);
 
-			void dismissBundle(Bundle *b, string reason = "unknown");
-
-			void transmitCustody(bool accept, Bundle *b);
-
-			Bundle* createStatusReport(Bundle *b, StatusReportType type, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);
-			Bundle* createCustodySignal(Bundle *b, bool accepted);
+			Bundle* createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);
+			Bundle* createCustodySignal(const Bundle &b, bool accepted);
 
 			ConvergenceLayer *m_clayer;
-
-			BundleStorage *m_storage;
-			BundleRouter *m_router;
 
 			map<string, AbstractWorker*> m_worker;
 
 			Mutex m_workerlock;
-
-			CustodyManager *m_custodymanager;
 
 			bool m_bundlewaiting;
 

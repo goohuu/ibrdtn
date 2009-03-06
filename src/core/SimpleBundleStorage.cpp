@@ -1,6 +1,8 @@
 #include "core/SimpleBundleStorage.h"
 #include "data/BundleFactory.h"
 #include "utils/Utils.h"
+#include "core/NodeEvent.h"
+#include "core/EventSwitch.h"
 
 #include <iostream>
 
@@ -11,9 +13,11 @@ namespace dtn
 	namespace core
 	{
 		SimpleBundleStorage::SimpleBundleStorage(unsigned int size, unsigned int bundle_maxsize, bool merge)
-		 : Service("SimpleBundleStorage"), BundleStorage(), m_nextdeprecation(0), m_nextcustodytimer(0), m_last_compress(0), m_size(size),
-		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false), m_custodycb(NULL), m_merge(merge)
+		 : Service("SimpleBundleStorage"), BundleStorage(), m_nextdeprecation(0), m_last_compress(0), m_size(size),
+		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false), m_merge(merge)
 		{
+			// register me for events
+			EventSwitch::registerEventReceiver( NodeEvent::className, this );
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
@@ -46,6 +50,73 @@ namespace dtn
 			}
 
 		}
+
+		void SimpleBundleStorage::raiseEvent(const Event *evt)
+		{
+			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
+
+			if (node != NULL)
+			{
+				/**
+				 * TODO: send bundles
+				 * If a node is available send it all bundles we have for it.
+				 * @see BundleCore::tick()
+				 */
+			}
+		}
+
+//		void BundleCore::tick()
+//		{
+//			// Aktuelle DTN Zeit holen
+//			unsigned int dtntime = BundleFactory::getDTNTime();
+//
+//			// Setze das Bündelsignal auf false
+//			m_bundlewaiting = false;
+//
+//			// Anzahl der Bündel in der Storage holen
+//			unsigned int bcount = getStorage()->getCount();
+//
+//			list<Node> nodes = getBundleRouter()->getNeighbours();
+//			list<Node>::iterator iter = nodes.begin();
+//
+//			while (iter != nodes.end())
+//			{
+//				try
+//				{
+//					while (bcount > 0)
+//					{
+//						transmitBundle( getStorage()->getSchedule( (*iter).getURI() ) );
+//						bcount--;
+//					}
+//				} catch (exceptions::NoScheduleFoundException ex) {
+//
+//				}
+//
+//				iter++;
+//			}
+//
+//			try {
+//				while (bcount > 0)
+//				{
+//					// Hole ein Schedule aus der Storage von einem Bundle das jetzt versendet werden sollen
+//					transmitBundle( getStorage()->getSchedule(dtntime) );
+//					bcount--;
+//				}
+//			} catch (exceptions::NoScheduleFoundException ex) {
+//
+//			}
+//
+//			// Warte bis sich die DTNTime ändert oder eine Nachricht versendet wurde
+//
+//			while (true)
+//			{
+//				if ( (dtntime != BundleFactory::getDTNTime()) || m_bundlewaiting )
+//				{
+//					return;
+//				}
+//				usleep(1000);
+//			}
+//		}
 
 		void SimpleBundleStorage::store(BundleSchedule schedule)
 		{
@@ -134,8 +205,6 @@ namespace dtn
 		void SimpleBundleStorage::tick()
 		{
 			deleteDeprecated();
-			checkCustodyTimer();
-
 			usleep(5000);
 		}
 
@@ -374,123 +443,6 @@ namespace dtn
 			}
 
 			return NULL;
-		}
-
-		bool SimpleBundleStorage::timerAvailable()
-		{
-			MutexLock l(m_custodylock);
-
-			if (m_custodytimer.size() < 200)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		void SimpleBundleStorage::setTimer(Node node, Bundle *bundle, unsigned int time, unsigned int attempt)
-		{
-			MutexLock l(m_custodylock);
-
-			// Erstelle einen Timer
-			CustodyTimer timer(node, bundle, BundleFactory::getDTNTime() + time, attempt);
-
-			// Sortiert einfügen: Der als nächstes ablaufende Timer ist immer am Ende
-			list<CustodyTimer>::iterator iter = m_custodytimer.begin();
-
-			while (iter != m_custodytimer.end())
-			{
-				if ((*iter).getTime() <= timer.getTime())
-				{
-					break;
-				}
-
-				iter++;
-			}
-
-			m_custodytimer.insert(iter, timer);
-
-			// Die Zeit zur nächsten Custody Kontrolle anpassen
-			if ( m_nextcustodytimer > timer.getTime() )
-			{
-				m_nextcustodytimer = timer.getTime();
-			}
-		}
-
-		Bundle* SimpleBundleStorage::removeTimer(string source, CustodySignalBlock *block)
-		{
-			MutexLock l(m_custodylock);
-
-			// search for the timer match the signal
-			list<CustodyTimer>::iterator iter = m_custodytimer.begin();
-
-			while (iter != m_custodytimer.end())
-			{
-				Bundle *bundle = (*iter).getBundle();
-				Node node = (*iter).getCustodyNode();
-
-				if ( (node.getURI() == source) && block->match(bundle) )
-				{
-					// ... and remove it
-					m_custodytimer.erase( iter );
-					return bundle;
-				}
-
-				iter++;
-			}
-
-			return NULL;
-		}
-
-		void SimpleBundleStorage::setCallbackClass(CustodyManagerCallback *callback)
-		{
-			MutexLock l(m_custodylock);
-
-			m_custodycb = callback;
-		}
-
-		void SimpleBundleStorage::checkCustodyTimer()
-		{
-			unsigned int currenttime = BundleFactory::getDTNTime();
-
-			// wait till a timeout of a custody timer
-			if ( m_nextcustodytimer > currenttime ) return;
-
-			// wait a hour for a new check (or till a new timer is created)
-			m_nextcustodytimer = currenttime + 3600;
-
-			MutexLock l(m_custodylock);
-
-			list<CustodyTimer> totrigger;
-
-			while (!m_custodytimer.empty())
-			{
-				// the list is sorted, so only watch on the last item
-				CustodyTimer &timer = m_custodytimer.back();
-
-				if (timer.getTime() > BundleFactory::getDTNTime())
-				{
-					m_nextcustodytimer = timer.getTime();
-					break;
-				}
-
-				// Timeout! Do a callback...
-				totrigger.push_back(timer);
-
-				// delete the timer
-				m_custodytimer.pop_back();
-			}
-
-			m_custodylock.leaveMutex();
-
-			list<CustodyTimer>::iterator iter = totrigger.begin();
-			while (iter != totrigger.end())
-			{
-				m_custodycb->triggerCustodyTimeout( (*iter) );
-				iter++;
-			}
 		}
 	}
 }

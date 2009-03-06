@@ -19,12 +19,12 @@ namespace dtn
 			/**
 			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b)
 			 */
-			TransmitReport transmit(Bundle *b);
+			TransmitReport transmit(const Bundle &b);
 
 			/**
 			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b, Node &node)
 			 */
-			TransmitReport transmit(Bundle *b, const Node &node);
+			TransmitReport transmit(const Bundle &b, const Node &node);
 
 			string getName();
 

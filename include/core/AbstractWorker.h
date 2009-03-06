@@ -14,17 +14,17 @@ namespace dtn
 		class AbstractWorker
 		{
 			public:
-				AbstractWorker(BundleCore *core, const string uri) : m_core(core), m_uri(uri)
+				AbstractWorker(BundleCore &core, const string uri) : m_core(core), m_uri(uri)
 				{
 					// Registriere mich als Knoten der Bundle empfangen kann
-					m_core->registerSubNode( getWorkerURI(), this );
+					m_core.registerSubNode( getWorkerURI(), this );
 				};
 
 				virtual ~AbstractWorker() {
-					m_core->unregisterSubNode( getWorkerURI() );
+					m_core.unregisterSubNode( getWorkerURI() );
 				};
 
-				BundleCore *getCore()
+				BundleCore &getCore() const
 				{
 					return m_core;
 				};
@@ -34,18 +34,10 @@ namespace dtn
 					return m_uri;
 				}
 
-				virtual TransmitReport callbackBundleReceived(Bundle *b)
-				{
-					if (b == NULL)
-					{
-						return UNKNOWN;
-					}
-
-					return UNKNOWN;
-				};
+				virtual TransmitReport callbackBundleReceived(const Bundle &b) = 0;
 
 			private:
-				BundleCore *m_core;
+				BundleCore &m_core;
 				string m_uri;
 		};
 	}

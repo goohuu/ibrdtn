@@ -24,14 +24,14 @@ namespace dtn
 			}
 		}
 
-		TransmitReport MultiplexConvergenceLayer::transmit(Bundle *b)
+		TransmitReport MultiplexConvergenceLayer::transmit(const Bundle &b)
 		{
 			if (m_clayers.size() == 0) return UNKNOWN;
 			ConvergenceLayer *cl = m_clayers.front();
 			return cl->transmit(b);
 		}
 
-		TransmitReport MultiplexConvergenceLayer::transmit(Bundle *b, const Node &node)
+		TransmitReport MultiplexConvergenceLayer::transmit(const Bundle &b, const Node &node)
 		{
 			ConvergenceLayer *cl = node.getConvergenceLayer();
 			return cl->transmit(b, node);

@@ -46,19 +46,19 @@ namespace emma
 		}
 	}
 
-	void Measurement::add(GPSProvider *gps)
+	void Measurement::add(GPSProvider &gps)
 	{
 		NetworkFrame f;
-		f.append(gps->getTime());
-		f.append(gps->getLatitude());
-		f.append(gps->getLongitude());
+		f.append(gps.getTime());
+		f.append(gps.getLatitude());
+		f.append(gps.getLongitude());
 
 		add( 1, (char*)f.getData(), f.getSize() );
 	}
 
-	void Measurement::add(MeasurementJob *job)
+	void Measurement::add(MeasurementJob &job)
 	{
-		add( job->getType(), (char*)job->getData(), job->getLength() );
+		add( job.getType(), (char*)job.getData(), job.getLength() );
 	}
 
 	void Measurement::add(unsigned char type, double value)

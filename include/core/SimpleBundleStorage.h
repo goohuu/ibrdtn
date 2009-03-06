@@ -1,8 +1,8 @@
 #ifndef SIMPLEBUNDLESTORAGE_H_
 #define SIMPLEBUNDLESTORAGE_H_
 
-#include "BundleStorage.h"
-#include "CustodyManager.h"
+#include "core/BundleStorage.h"
+#include "core/EventReceiver.h"
 #include "data/Bundle.h"
 #include "utils/Service.h"
 #include "utils/MutexLock.h"
@@ -19,8 +19,10 @@ namespace core
 {
 /**
  * Implementiert einen einfachen Kontainer für Bundles
+ *
+ * TODO: Store copies of bundles in the storage NOT pointer!
  */
-class SimpleBundleStorage : public Service, public BundleStorage, public CustodyManager
+class SimpleBundleStorage : public Service, public BundleStorage, public EventReceiver
 {
 public:
 	/**
@@ -77,20 +79,15 @@ public:
 	Bundle* storeFragment(Bundle *bundle);
 
 	/**
-	 * Methoden des CustodyManager
+	 * receive event from the event switch
 	 */
-	bool timerAvailable();
-	void setTimer(Node node, Bundle *bundle, unsigned int time, unsigned int attempt);
-	Bundle* removeTimer(string source, CustodySignalBlock *block);
-	void setCallbackClass(CustodyManagerCallback *callback);
+	void raiseEvent(const Event *evt);
 
 private:
 	list<BundleSchedule> m_schedules;
 	list<list<Bundle*> > m_fragments;
 
 	list<list<BundleSchedule>::iterator> searchEquals(unsigned int maxsize, list<BundleSchedule>::iterator start, list<BundleSchedule>::iterator end);
-
-	void checkCustodyTimer();
 
 	/**
 	 * Löscht veraltete Bundles bzw. versucht Bundles zusammenzufassen,
@@ -101,10 +98,6 @@ private:
 	// Der nächste Zeitpunkt zu dem ein Bündel abläuft
 	// Frühestens zu diesem Zeitpunkt muss ein deleteDeprecated() ausgeführt werden
 	unsigned int m_nextdeprecation;
-
-	// Der nächste Zeitpunkt zu dem ein CustodyTimer abläuft
-	// Frühestens zu diesem Zeitpunkt muss ein checkCustodyTimer() ausgeführt werden
-	unsigned int m_nextcustodytimer;
 
 	time_t m_last_compress;
 
@@ -117,10 +110,6 @@ private:
 
 	Mutex m_readlock;
 	Mutex m_fragmentslock;
-	Mutex m_custodylock;
-
-	CustodyManagerCallback *m_custodycb;
-	list<CustodyTimer> m_custodytimer;
 
 	bool m_merge;
 };

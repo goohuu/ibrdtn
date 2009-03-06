@@ -61,7 +61,7 @@ namespace testsuite
 		Bundle *merged = NULL;
 
 		// Erzeuge dazu Fragmente
-		list<Bundle*> fragments = BundleFactory::split(origin, 1200);
+		list<Bundle*> fragments = BundleFactory::split(*origin, 1200);
 
 		unsigned int size = fragments.size();
 

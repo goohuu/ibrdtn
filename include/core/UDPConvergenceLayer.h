@@ -36,12 +36,12 @@ namespace dtn
 			/**
 			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b)
 			 */
-			virtual TransmitReport transmit(Bundle *b);
+			virtual TransmitReport transmit(const Bundle &b);
 
 			/**
 			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b, Node &node)
 			 */
-			virtual TransmitReport transmit(Bundle *b, const Node &node);
+			virtual TransmitReport transmit(const Bundle &b, const Node &node);
 
 			/**
 			 * @sa Service::tick()

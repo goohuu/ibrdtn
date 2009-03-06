@@ -13,12 +13,12 @@ namespace dtn
 		{
 		}
 
-		TransmitReport DummyConvergenceLayer::transmit(Bundle *b)
+		TransmitReport DummyConvergenceLayer::transmit(const Bundle &b)
 		{
 			return TRANSMIT_SUCCESSFUL;
 		}
 
-		TransmitReport DummyConvergenceLayer::transmit(Bundle *b, const Node &node)
+		TransmitReport DummyConvergenceLayer::transmit(const Bundle &b, const Node &node)
 		{
 			return TRANSMIT_SUCCESSFUL;
 		}

@@ -83,9 +83,9 @@ namespace dtn
 			close(m_socket);
 		}
 
-		TransmitReport UDPConvergenceLayer::transmit(Bundle *b)
+		TransmitReport UDPConvergenceLayer::transmit(const Bundle &b)
 		{
-			unsigned int size = b->getLength();
+			unsigned int size = b.getLength();
 
 			if (size > m_maxmsgsize)
 			{
@@ -94,7 +94,8 @@ namespace dtn
 				Bundle *fragment = BundleFactory::slice(b, m_maxmsgsize, offset);
 
 				// transfer the fragment
-				transmit(fragment);
+				transmit(*fragment);
+				delete fragment;
 
 				// create a fragment from the remaining data
 				fragment = BundleFactory::slice(b, UINT_MAX, offset);
@@ -103,7 +104,7 @@ namespace dtn
 				throw new TransferNotCompletedException(fragment);
 			}
 
-			unsigned char *data = b->getData();
+			unsigned char *data = b.getData();
 
 			struct sockaddr_in clientAddress;
 
@@ -128,9 +129,9 @@ namespace dtn
 		    return TRANSMIT_SUCCESSFUL;
 		}
 
-		TransmitReport UDPConvergenceLayer::transmit(Bundle *b, const Node &node)
+		TransmitReport UDPConvergenceLayer::transmit(const Bundle &b, const Node &node)
 		{
-			unsigned int size = b->getLength();
+			unsigned int size = b.getLength();
 
 			if (size > m_maxmsgsize)
 			{
@@ -139,7 +140,8 @@ namespace dtn
 				Bundle *fragment = BundleFactory::slice(b, m_maxmsgsize, offset);
 
 				// transfer the fragment
-				transmit(fragment, node);
+				transmit(*fragment, node);
+				delete fragment;
 
 				// create a fragment from the remaining data
 				fragment = BundleFactory::slice(b, UINT_MAX, offset);
@@ -148,7 +150,7 @@ namespace dtn
 				throw new TransferNotCompletedException(fragment);
 			}
 
-			unsigned char *data = b->getData();
+			unsigned char *data = b.getData();
 
 			struct sockaddr_in clientAddress;
 
