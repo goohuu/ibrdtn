@@ -1,14 +1,16 @@
 #ifndef SIMPLEBUNDLESTORAGE_H_
 #define SIMPLEBUNDLESTORAGE_H_
 
+#include "core/BundleCore.h"
 #include "core/BundleStorage.h"
 #include "core/EventReceiver.h"
 #include "data/Bundle.h"
 #include "utils/Service.h"
 #include "utils/MutexLock.h"
 #include "utils/Mutex.h"
+#include "core/Node.h"
 #include <list>
-#include <vector>
+#include <map>
 
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -31,17 +33,12 @@ public:
 	 * @param[in] bundle_maxsize Maximum size of one bundle in bytes.
 	 * @param[in] merge Do database cleanup and merging.
 	 */
-	SimpleBundleStorage(unsigned int size = 1024 * 1024, unsigned int bundle_maxsize = 1024, bool merge = false);
+	SimpleBundleStorage(BundleCore &core, unsigned int size = 1024 * 1024, unsigned int bundle_maxsize = 1024, bool merge = false);
 
 	/**
 	 * Destruktor
 	 */
 	virtual ~SimpleBundleStorage();
-
-	/**
-	 * @sa BundleStorage::store(BundleSchedule schedule)
-	 */
-	void store(BundleSchedule schedule);
 
 	/**
 	 * @sa BundleStorage::clear()
@@ -64,6 +61,17 @@ public:
 	virtual void tick();
 
 	/**
+	 * receive event from the event switch
+	 */
+	void raiseEvent(const Event *evt);
+
+private:
+	/**
+	 * @sa BundleStorage::store(BundleSchedule schedule)
+	 */
+	void store(BundleSchedule schedule);
+
+	/**
 	 * @sa getSchedule(unsigned int dtntime)
 	 */
 	BundleSchedule getSchedule(unsigned int dtntime);
@@ -78,12 +86,8 @@ public:
 	 */
 	Bundle* storeFragment(Bundle *bundle);
 
-	/**
-	 * receive event from the event switch
-	 */
-	void raiseEvent(const Event *evt);
+	BundleCore &m_core;
 
-private:
 	list<BundleSchedule> m_schedules;
 	list<list<Bundle*> > m_fragments;
 
@@ -112,6 +116,8 @@ private:
 	Mutex m_fragmentslock;
 
 	bool m_merge;
+
+	map<string,Node> m_neighbours;
 };
 
 }

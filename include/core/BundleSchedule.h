@@ -18,9 +18,9 @@ namespace core
 		public:
 			BundleSchedule(Bundle *b, unsigned int dtntime, string eid);
 
-			Bundle* getBundle();
-			unsigned int getTime();
-			string getEID();
+			Bundle* getBundle() const;
+			unsigned int getTime() const;
+			string getEID() const;
 
 			static const unsigned int MAX_TIME;
 

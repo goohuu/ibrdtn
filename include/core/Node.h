@@ -35,7 +35,7 @@ public:
 	 * @param type Bestimmt den Knotentypen
 	 * @sa NoteType
 	 */
-	Node(NodeType type);
+	Node(NodeType type = PERMANENT);
 
 	/**
 	 * Destruktor

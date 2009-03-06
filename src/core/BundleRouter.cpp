@@ -56,7 +56,7 @@ namespace dtn
 						else
 						{
 							BundleSchedule schedule = getSchedule( routeevent->getBundle() );
-							EventSwitch::raiseEvent( new StorageEvent( schedule) );
+							EventSwitch::raiseEvent( new StorageEvent( schedule ) );
 						}
 						break;
 					}

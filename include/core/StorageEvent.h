@@ -19,16 +19,23 @@ namespace dtn
 {
 	namespace core
 	{
+		enum EventStorageAction
+		{
+			STORE_BUNDLE = 0,
+			STORE_SCHEDULE = 1
+		};
+
 		class StorageEvent : public Event
 		{
 		public:
 			StorageEvent(const BundleSchedule &schedule);
-			StorageEvent(const Bundle *bundle);
+			StorageEvent(Bundle *bundle);
 
 			~StorageEvent();
 
+			EventStorageAction getAction() const;
 			BundleSchedule getSchedule() const;
-			const Bundle* getBundle() const;
+			Bundle* getBundle() const;
 
 			const string getName() const;
 
@@ -39,8 +46,9 @@ namespace dtn
 			static const string className;
 
 		private:
-			const Bundle *m_bundle;
+			Bundle *m_bundle;
 			const BundleSchedule &m_schedule;
+			EventStorageAction m_action;
 		};
 	}
 }

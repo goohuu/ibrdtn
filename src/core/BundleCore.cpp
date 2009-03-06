@@ -339,7 +339,7 @@ namespace dtn
 			}
 		}
 
-		bool BundleCore::transmitBundle(BundleSchedule schedule)
+		bool BundleCore::transmitBundle(const BundleSchedule &schedule, const Node &node)
 		{
 			// Variable für das Bündel initialisieren
 			Bundle *bundle = NULL;
@@ -351,19 +351,7 @@ namespace dtn
 				// Bündelparameter holen
 				PrimaryFlags flags = bundle->getPrimaryFlags();
 
-				if ( flags.isCustodyRequested() )
-				{
-					// Zurück in die Bundle Storage legen für eine Sekunde später
-					BundleSchedule schedule( bundle, schedule.getTime() + 1, schedule.getEID() );
-					EventSwitch::raiseEvent( new StorageEvent(schedule) );
-					return true;
-				}
-
 				try {
-					// Knoten an den gesendet werden soll
-					// TODO: correct this!
-					Node node(FLOATING); // = getBundleRouter()->getNeighbour( schedule.getEID() );
-
 					// transfer bundle to node
 					switch ( getConvergenceLayer()->transmit( *bundle, node ) )
 					{
@@ -528,8 +516,6 @@ namespace dtn
 				return;
 			};
 
-			MutexLock l(m_workerlock);
-
 			AbstractWorker *worker = m_worker[ bundle->getDestination() ];
 			if (worker != NULL)
 			{
@@ -576,7 +562,6 @@ namespace dtn
 
 		void BundleCore::registerSubNode(string eid, AbstractWorker *node)
 		{
-			MutexLock l(m_workerlock);
 			m_worker[m_localeid + eid] = node;
 		}
 

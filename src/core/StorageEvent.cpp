@@ -12,22 +12,27 @@ namespace dtn
 	namespace core
 	{
 		StorageEvent::StorageEvent(const BundleSchedule &schedule)
-		: m_schedule(schedule), m_bundle(NULL)
+		: m_schedule(schedule), m_bundle(NULL), m_action(STORE_SCHEDULE)
 		{}
 
-		StorageEvent::StorageEvent(const Bundle *bundle)
-		: m_bundle(bundle), m_schedule(BundleSchedule(NULL, 0, "dtn:none"))
+		StorageEvent::StorageEvent(Bundle *bundle)
+		: m_bundle(bundle), m_schedule(BundleSchedule(NULL, 0, "dtn:none")), m_action(STORE_BUNDLE)
 		{}
 
 		StorageEvent::~StorageEvent()
 		{}
+
+		EventStorageAction StorageEvent::getAction() const
+		{
+			return m_action;
+		}
 
 		BundleSchedule StorageEvent::getSchedule() const
 		{
 			return m_schedule;
 		}
 
-		const Bundle* StorageEvent::getBundle() const
+		Bundle* StorageEvent::getBundle() const
 		{
 			return m_bundle;
 		}

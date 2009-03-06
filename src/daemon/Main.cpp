@@ -31,6 +31,7 @@ using namespace emma;
 
 #include "daemon/Configuration.h"
 #include "daemon/EchoWorker.h"
+#include "daemon/TestApplication.h"
 using namespace dtn::daemon;
 
 #include "utils/Utils.h"
@@ -220,7 +221,7 @@ int main(int argc, char *argv[])
 		storage = new SimpleBundleStorage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
 	}
 #else
-	BundleStorage *storage = new SimpleBundleStorage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
+	BundleStorage *storage = new SimpleBundleStorage(core, conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
 #endif
 
 #ifdef USE_EMMA_CODE
@@ -297,6 +298,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	TestApplication app(core, "dtn://node1/debugger");
+	app.start();
+
 //#ifdef HAVE_LIBLUA5_1
 //	luac.run("demo.lua");
 //#endif
@@ -305,6 +309,8 @@ int main(int argc, char *argv[])
 	{
 		usleep(10000);
 	}
+
+	app.abort();
 
 #ifdef USE_EMMA_CODE
 	if ( gpsc != NULL )

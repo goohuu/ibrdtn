@@ -58,17 +58,17 @@ namespace dtn
 			 */
 			virtual unsigned int getCount() = 0;
 
-			/**
-			 * Gibt ein Schedule zurück welches zu dem angegebenen Zeitpunkt gesendet werden soll
-			 * und entfernt es aus dem Storage
-			 */
-			virtual BundleSchedule getSchedule(unsigned int dtntime) = 0;
-
-			/**
-			 * Gibt ein Bundle der für einen bestimmten Knoten bestimmt ist zurück
-			 * und entfernt das entsprechende Schedule aus der Storage
-			 */
-			virtual BundleSchedule getSchedule(string destination) = 0;
+//			/**
+//			 * Gibt ein Schedule zurück welches zu dem angegebenen Zeitpunkt gesendet werden soll
+//			 * und entfernt es aus dem Storage
+//			 */
+//			virtual BundleSchedule getSchedule(unsigned int dtntime) = 0;
+//
+//			/**
+//			 * Gibt ein Bundle der für einen bestimmten Knoten bestimmt ist zurück
+//			 * und entfernt das entsprechende Schedule aus der Storage
+//			 */
+//			virtual BundleSchedule getSchedule(string destination) = 0;
 		};
 	}
 }

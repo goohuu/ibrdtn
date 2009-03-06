@@ -74,9 +74,14 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt);
 
+			/**
+			 * transmit a bundle to a specific node
+			 * usually this is called by the storage
+			 */
+			bool transmitBundle(const BundleSchedule &schedule, const Node &node);
+
 		private:
 			void processCustody(const Bundle &b);
-			bool transmitBundle(BundleSchedule schedule);
 			void forwardLocalBundle(Bundle *bundle);
 			void transmitCustody(bool accept, const Bundle &b);
 
@@ -86,8 +91,6 @@ namespace dtn
 			ConvergenceLayer *m_clayer;
 
 			map<string, AbstractWorker*> m_worker;
-
-			Mutex m_workerlock;
 
 			bool m_bundlewaiting;
 

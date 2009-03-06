@@ -2,7 +2,9 @@
 #include "data/BundleFactory.h"
 #include "utils/Utils.h"
 #include "core/NodeEvent.h"
+#include "core/StorageEvent.h"
 #include "core/EventSwitch.h"
+#include "core/BundleEvent.h"
 
 #include <iostream>
 
@@ -12,12 +14,13 @@ namespace dtn
 {
 	namespace core
 	{
-		SimpleBundleStorage::SimpleBundleStorage(unsigned int size, unsigned int bundle_maxsize, bool merge)
-		 : Service("SimpleBundleStorage"), BundleStorage(), m_nextdeprecation(0), m_last_compress(0), m_size(size),
+		SimpleBundleStorage::SimpleBundleStorage(BundleCore &core, unsigned int size, unsigned int bundle_maxsize, bool merge)
+		 : Service("SimpleBundleStorage"), BundleStorage(), m_core(core), m_nextdeprecation(0), m_last_compress(0), m_size(size),
 		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false), m_merge(merge)
 		{
 			// register me for events
 			EventSwitch::registerEventReceiver( NodeEvent::className, this );
+			EventSwitch::registerEventReceiver( StorageEvent::className, this );
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
@@ -54,69 +57,42 @@ namespace dtn
 		void SimpleBundleStorage::raiseEvent(const Event *evt)
 		{
 			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
+			const StorageEvent *storage = dynamic_cast<const StorageEvent*>(evt);
 
-			if (node != NULL)
+			if (storage != NULL)
+			{
+				switch (storage->getAction())
+				{
+					case STORE_BUNDLE:
+						storeFragment(storage->getBundle());
+						break;
+
+					case STORE_SCHEDULE:
+						store(storage->getSchedule());
+						break;
+				}
+			}
+			else if (node != NULL)
 			{
 				/**
 				 * TODO: send bundles
 				 * If a node is available send it all bundles we have for it.
 				 * @see BundleCore::tick()
 				 */
+				const Node &n = node->getNode();
+
+				switch (node->getAction())
+				{
+					case NODE_AVAILABLE:
+						m_neighbours[n.getURI()] = n;
+						break;
+
+					case NODE_UNAVAILABLE:
+						m_neighbours.erase(n.getURI());
+						break;
+				}
 			}
 		}
-
-//		void BundleCore::tick()
-//		{
-//			// Aktuelle DTN Zeit holen
-//			unsigned int dtntime = BundleFactory::getDTNTime();
-//
-//			// Setze das Bündelsignal auf false
-//			m_bundlewaiting = false;
-//
-//			// Anzahl der Bündel in der Storage holen
-//			unsigned int bcount = getStorage()->getCount();
-//
-//			list<Node> nodes = getBundleRouter()->getNeighbours();
-//			list<Node>::iterator iter = nodes.begin();
-//
-//			while (iter != nodes.end())
-//			{
-//				try
-//				{
-//					while (bcount > 0)
-//					{
-//						transmitBundle( getStorage()->getSchedule( (*iter).getURI() ) );
-//						bcount--;
-//					}
-//				} catch (exceptions::NoScheduleFoundException ex) {
-//
-//				}
-//
-//				iter++;
-//			}
-//
-//			try {
-//				while (bcount > 0)
-//				{
-//					// Hole ein Schedule aus der Storage von einem Bundle das jetzt versendet werden sollen
-//					transmitBundle( getStorage()->getSchedule(dtntime) );
-//					bcount--;
-//				}
-//			} catch (exceptions::NoScheduleFoundException ex) {
-//
-//			}
-//
-//			// Warte bis sich die DTNTime ändert oder eine Nachricht versendet wurde
-//
-//			while (true)
-//			{
-//				if ( (dtntime != BundleFactory::getDTNTime()) || m_bundlewaiting )
-//				{
-//					return;
-//				}
-//				usleep(1000);
-//			}
-//		}
 
 		void SimpleBundleStorage::store(BundleSchedule schedule)
 		{
@@ -204,8 +180,42 @@ namespace dtn
 
 		void SimpleBundleStorage::tick()
 		{
-			deleteDeprecated();
-			usleep(5000);
+			// Aktuelle DTN Zeit holen
+			unsigned int dtntime = BundleFactory::getDTNTime();
+
+			if (m_neighbours.size() == 0)
+			{
+				usleep(5000);
+				return;
+			}
+
+			// Anzahl der Bündel in der Storage holen
+			unsigned int bcount = getCount();
+
+			// get the first neighbour
+			Node &node = m_neighbours[0];
+
+			try {
+				BundleSchedule schedule = getSchedule( node.getURI() );
+			} catch (exceptions::NoScheduleFoundException ex) {
+				// remove the neighbour
+				m_neighbours.erase(node.getURI());
+			}
+
+			// TODO: send timed schedules
+
+//			// Warte bis sich die DTNTime ändert oder eine Nachricht versendet wurde
+//
+//			while (true)
+//			{
+//				if ( (dtntime != BundleFactory::getDTNTime()) || m_bundlewaiting )
+//				{
+//					return;
+//				}
+//				usleep(1000);
+//			}
+
+			// TODO: deleteDeprecated();
 		}
 
 		BundleSchedule SimpleBundleStorage::getSchedule(string destination)
@@ -362,11 +372,10 @@ namespace dtn
 					// Gesamtgröße verkleinern
 					m_currentsize -= b->getLength();
 
-					// TODO: Wenn StatusReport bei Löschung angefordert sind müsste
-					// hier eigentlich ein solcher Report erstellt werden.
-					// Callback an das Bündelprotokoll über abgelaufenes Bündel
+					// announce bundle deleted event
+					EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_DELETED) );
 
-					// Bundle löschen
+					// delete the bundle
 					delete b;
 
 					list<BundleSchedule>::iterator iter2 = iter;
