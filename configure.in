@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.61)
 AC_INIT(IBR-DTN, 1.0, morgenro@ibr.cs.tu-bs.de)
-AC_CONFIG_SRCDIR([src/daemon/DefaultDaemon.cpp])
+AC_CONFIG_SRCDIR([src/daemon/Main.cpp])
 AC_CONFIG_HEADER([include/config.h])
 
 # Checks for programs.
