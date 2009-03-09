@@ -41,6 +41,12 @@ namespace data
 			NetworkFrame(const NetworkFrame& k);
 
 			/**
+			 * Copy constructor.
+			 * @param[in] k The NetworkFrame to copy.
+			 */
+			NetworkFrame(const NetworkFrame* k);
+
+			/**
 			 * Operator for assign a NetworkFrame.
 			 * @param[in] k The NetworkFrame to copy.
 			 * @return The copy of the given NetworkFrame.

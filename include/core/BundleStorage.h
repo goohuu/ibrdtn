@@ -32,14 +32,14 @@ namespace dtn
 			 * Speichert einen Schedule
 			 * @param schedule Den zu speichernden Schedule
 			 */
-			virtual void store(BundleSchedule schedule) = 0;
+			virtual void store(const BundleSchedule &schedule) = 0;
 
 			/**
 			 * Speichert ein Fragment eines Bundles. Falls dies das fehlende letzte
 			 * Fragment war, wird das Bundle zusammengesetzt und zurück gegeben,
 			 * ansonsten NULL.
 			 */
-			virtual Bundle* storeFragment(Bundle *bundle) = 0;
+			virtual Bundle* storeFragment(const Bundle *bundle) = 0;
 
 			/**
 			 * Leert den Speicher / Löscht alle Bundles

@@ -92,8 +92,6 @@ namespace dtn
 
 			map<string, AbstractWorker*> m_worker;
 
-			bool m_bundlewaiting;
-
 			string m_localeid;
 		};
 	}

@@ -14,6 +14,7 @@
 #include "core/EventSwitch.h"
 #include "core/CustodyEvent.h"
 #include "core/RouteEvent.h"
+#include "core/BundleEvent.h"
 
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -29,7 +30,9 @@ namespace dtn
 		}
 
 		CustodyManager::~CustodyManager()
-		{}
+		{
+			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
+		}
 
 		void CustodyManager::raiseEvent(const Event *evt)
 		{
@@ -42,7 +45,10 @@ namespace dtn
 					case CUSTODY_ACCEPTANCE:
 					{
 						// create a timer, if custody is requested
-						// TODO: create a timer
+						setTimer( new Bundle(*custodyevent->getBundle()), 1, 1 );
+
+						// raise the custody accepted event
+						EventSwitch::raiseEvent( new BundleEvent( *custodyevent->getBundle(), BUNDLE_CUSTODY_ACCEPTED ) );
 
 						break;
 					}
@@ -52,7 +58,7 @@ namespace dtn
 						const CustodySignalBlock *signal = custodyevent->getCustodySignal();
 
 						// remove a timer
-						Bundle *bundle = removeTimer(custodyevent->getEID(), *signal);
+						Bundle *bundle = removeTimer(*signal);
 
 						if ( signal->isAccepted() )
 						{
@@ -90,12 +96,12 @@ namespace dtn
 			}
 		}
 
-		void CustodyManager::setTimer(Node node, Bundle *bundle, unsigned int time, unsigned int attempt)
+		void CustodyManager::setTimer(Bundle *bundle, unsigned int time, unsigned int attempt)
 		{
 			MutexLock l(m_custodylock);
 
 			// Erstelle einen Timer
-			CustodyTimer timer(node, bundle, BundleFactory::getDTNTime() + time, attempt);
+			CustodyTimer timer(bundle, BundleFactory::getDTNTime() + time, attempt);
 
 			// Sortiert einfügen: Der als nächstes ablaufende Timer ist immer am Ende
 			list<CustodyTimer>::iterator iter = m_custodytimer.begin();
@@ -119,7 +125,7 @@ namespace dtn
 			}
 		}
 
-		Bundle* CustodyManager::removeTimer(string source, const CustodySignalBlock &block)
+		Bundle* CustodyManager::removeTimer(const CustodySignalBlock &block)
 		{
 			MutexLock l(m_custodylock);
 
@@ -129,9 +135,8 @@ namespace dtn
 			while (iter != m_custodytimer.end())
 			{
 				Bundle *bundle = (*iter).getBundle();
-				Node node = (*iter).getCustodyNode();
 
-				if ( (node.getURI() == source) && block.match(*bundle) )
+				if ( block.match(*bundle) )
 				{
 					// ... and remove it
 					m_custodytimer.erase( iter );

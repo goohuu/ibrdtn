@@ -63,7 +63,7 @@ namespace dtn
 			return m_extensions;
 		}
 
-		NetworkFrame* BundleFactory::parsePrimaryBlock(const unsigned char *data, unsigned int size)
+		NetworkFrame* BundleFactory::parsePrimaryBlock(const unsigned char *data, unsigned int size) const
 		{
 			// remind the origin data pointer
 			const unsigned char *datap = data;
@@ -177,7 +177,7 @@ namespace dtn
 
 			return frame;
 		}
-		Bundle* BundleFactory::parse(const unsigned char *data, unsigned int size)
+		Bundle* BundleFactory::parse(const unsigned char *data, unsigned int size) const
 		{
 			// parse the primary block and get a NetworkFrame object with its data.
 			NetworkFrame *frame = parsePrimaryBlock(data, size);
@@ -301,6 +301,14 @@ namespace dtn
 			bundle->updateBlockLength();
 
 			return bundle;
+		}
+
+		Block* BundleFactory::copyBlock(const Block &block) const
+		{
+			Block *ret = NULL;
+			NetworkFrame &frame = block.getFrame();
+			ret = getBlock( frame.getData(), frame.getSize() );
+			return ret;
 		}
 
 		unsigned int BundleFactory::getDTNTime()

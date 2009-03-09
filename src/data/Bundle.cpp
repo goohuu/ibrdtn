@@ -23,6 +23,21 @@ Bundle::Bundle(NetworkFrame *frame) : m_frame(frame)
 {
 }
 
+Bundle::Bundle(const Bundle &b) : m_frame(b.m_frame)
+{
+	// copy all blocks
+	list<Block*> blocks = b.m_blocks;
+	list<Block*>::const_iterator iter = blocks.begin();
+
+	BundleFactory &fac = BundleFactory::getInstance();
+
+	while (iter != blocks.end())
+	{
+		m_blocks.push_back( fac.copyBlock( *iter ) );
+		iter++;
+	}
+}
+
 Bundle::~Bundle()
 {
 	// iterate through all blocks

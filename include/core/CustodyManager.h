@@ -28,8 +28,8 @@ namespace dtn
 
 				virtual bool timerAvailable();
 
-				virtual void setTimer(Node node, Bundle *bundle, unsigned int time, unsigned int attempt);
-				virtual Bundle* removeTimer(string source, const CustodySignalBlock &block);
+				virtual void setTimer(Bundle *bundle, unsigned int time, unsigned int attempt);
+				virtual Bundle* removeTimer(const CustodySignalBlock &block);
 
 				void raiseEvent(const Event *evt);
 

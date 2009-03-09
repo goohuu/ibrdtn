@@ -29,7 +29,7 @@ namespace dtn
 	namespace core
 	{
 		BundleCore::BundleCore(string localeid)
-		 : m_clayer(NULL), m_bundlewaiting(false), m_localeid(localeid)
+		 : m_clayer(NULL), m_localeid(localeid)
 		{
 			// register me for events
 			EventSwitch::registerEventReceiver( RouteEvent::className, this );
@@ -39,6 +39,9 @@ namespace dtn
 
 		BundleCore::~BundleCore()
 		{
+			EventSwitch::unregisterEventReceiver( RouteEvent::className, this );
+			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
+			EventSwitch::unregisterEventReceiver( BundleEvent::className, this );
 		}
 
 		void BundleCore::setConvergenceLayer(ConvergenceLayer *cl)
@@ -110,10 +113,6 @@ namespace dtn
 
 						// set us as custodian
 						//b->setCustodian( m_localeid );
-
-						// create a timer, if custody is requested
-						// TODO: create a timer without a node!
-						//m_custodymanager->setTimer( node, bundle, 1, 1 );
 
 						break;
 					}
@@ -215,9 +214,6 @@ namespace dtn
 
 				// find a next route for the bundle
 				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_FIND_SCHEDULE) );
-
-				// Signalisiere, dass ein Bündel wartet
-				m_bundlewaiting = true;
 
 				return BUNDLE_ACCEPTED;
 			} catch (NoSpaceLeftException ex) {
@@ -359,13 +355,14 @@ namespace dtn
 							// transmittion successful
 							if ( flags.isCustodyRequested() )
 							{
-
+								// set custody timer
+								EventSwitch::raiseEvent( new CustodyEvent( bundle, CUSTODY_ACCEPTANCE ) );
 							}
 
 							// report forwarded event
 							EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_FORWARDED) );
 
-							// delete the bundle, if no custody is requested
+							// delete the bundle
 							delete bundle;
 						break;
 
@@ -510,8 +507,6 @@ namespace dtn
 			{
 				// Bundle an die Storage zum reassemblieren übergeben
 				EventSwitch::raiseEvent( new StorageEvent( bundle ) );
-
-				// TODO: receive reassembled fragments over Events
 
 				return;
 			};

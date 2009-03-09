@@ -261,7 +261,7 @@ namespace dtn
 			return s;
 		}
 
-		void SQLiteBundleStorage::store(BundleSchedule schedule)
+		void SQLiteBundleStorage::store(const BundleSchedule &schedule)
 		{
 			MutexLock l(m_dblock);
 
@@ -304,13 +304,9 @@ namespace dtn
 			} catch (DuplicateException ex) {
 
 			}
-
-			// Bundle wegräumen
-			delete b;
-
 		}
 
-		Bundle* SQLiteBundleStorage::storeFragment(Bundle *bundle)
+		Bundle* SQLiteBundleStorage::storeFragment(const Bundle *bundle)
 		{
 			MutexLock l(m_dblock);
 
@@ -366,7 +362,7 @@ namespace dtn
 
 				Bundle *b = NULL;
 				list<Bundle*> fragment_list;
-				fragment_list.push_back( bundle );
+				fragment_list.push_back( new Bundle(*bundle) );
 
 				// execute the statement
 				while ( sqlite3_step(st) == SQLITE_ROW ){
@@ -433,7 +429,7 @@ namespace dtn
 			return NULL;
 		}
 
-		sqlite3_int64 SQLiteBundleStorage::storeBundle(Bundle *b)
+		sqlite3_int64 SQLiteBundleStorage::storeBundle(const Bundle *b)
 		{
 			int rc;
 			sqlite3_stmt *st = m_stmt_store_bundle;

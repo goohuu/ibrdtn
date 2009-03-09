@@ -37,6 +37,8 @@ namespace emma
 
 	EmmaConvergenceLayer::~EmmaConvergenceLayer()
 	{
+		EventSwitch::unregisterEventReceiver(PositionEvent::className, this);
+
 		BundleFactory::getInstance().unregisterExtensionBlock(m_dfactory);
 		delete m_dfactory;
 

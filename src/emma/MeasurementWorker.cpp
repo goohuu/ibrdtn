@@ -23,6 +23,7 @@ namespace emma
 
 	void MeasurementWorker::initialize()
 	{
+		EventSwitch::unregisterEventReceiver(PositionEvent::className, this);
 	}
 
 	void MeasurementWorker::terminate()

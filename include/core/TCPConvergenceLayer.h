@@ -47,7 +47,7 @@ namespace dtn
 			 * @param bind_addr IP Adresse des Interface, welche zur Kommunikation genutzt werden soll
 			 * @param port Zu belegender TCP Port für die Kommunikation
 			 */
-			TCPConvergenceLayer(string bind_addr, unsigned short port);
+			TCPConvergenceLayer(string localeid, string bind_addr, unsigned short port);
 
 			/**
 			 * Desktruktor
@@ -96,6 +96,8 @@ namespace dtn
 			int m_highsock;
 
 			NetworkFrame m_contactheader;
+
+			string m_localeid;
 		};
 	}
 }

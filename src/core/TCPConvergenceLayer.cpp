@@ -32,8 +32,8 @@ namespace dtn
 	{
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		TCPConvergenceLayer::TCPConvergenceLayer(string bind_addr, unsigned short port)
-			: Service("TCPConvergenceLayer"), m_selfaddr(bind_addr), m_selfport(port), m_highsock(0)
+		TCPConvergenceLayer::TCPConvergenceLayer(string localeid, string bind_addr, unsigned short port)
+			: Service("TCPConvergenceLayer"), m_selfaddr(bind_addr), m_selfport(port), m_highsock(0), m_localeid(localeid)
 		{
 			/**
 			 * create the contact header
@@ -56,10 +56,9 @@ namespace dtn
 			unsigned int keepalive = 0;
 			m_contactheader.append((unsigned char*)&keepalive, 2);
 
-			// TODO: implement local eid!
-			string eid = "dtn:none";
-			m_contactheader.append(eid.length());
-			m_contactheader.append((unsigned char*)eid.data(), eid.length());
+			// put local eid to contact header
+			m_contactheader.append(m_localeid.length());
+			m_contactheader.append((unsigned char*)m_localeid.data(), m_localeid.length());
 
 			/** header complete **/
 

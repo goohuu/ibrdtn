@@ -21,8 +21,6 @@ namespace core
 {
 /**
  * Implementiert einen einfachen Kontainer für Bundles
- *
- * TODO: Store copies of bundles in the storage NOT pointer!
  */
 class SimpleBundleStorage : public Service, public BundleStorage, public EventReceiver
 {
@@ -69,7 +67,7 @@ private:
 	/**
 	 * @sa BundleStorage::store(BundleSchedule schedule)
 	 */
-	void store(BundleSchedule schedule);
+	void store(const BundleSchedule &schedule);
 
 	/**
 	 * @sa getSchedule(unsigned int dtntime)
@@ -84,7 +82,7 @@ private:
 	/**
 	 * @sa storeFragment();
 	 */
-	Bundle* storeFragment(Bundle *bundle);
+	Bundle* storeFragment(const Bundle *bundle);
 
 	BundleCore &m_core;
 
@@ -118,6 +116,8 @@ private:
 	bool m_merge;
 
 	map<string,Node> m_neighbours;
+
+	bool m_bundlewaiting;
 };
 
 }

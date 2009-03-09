@@ -17,6 +17,7 @@ namespace core
 	{
 		public:
 			BundleSchedule(Bundle *b, unsigned int dtntime, string eid);
+			BundleSchedule(const BundleSchedule &k);
 
 			Bundle* getBundle() const;
 			unsigned int getTime() const;

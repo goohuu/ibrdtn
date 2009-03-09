@@ -5,6 +5,7 @@
 #include "core/StorageEvent.h"
 #include "core/EventSwitch.h"
 #include "core/BundleEvent.h"
+#include "core/RouteEvent.h"
 
 #include <iostream>
 
@@ -16,7 +17,7 @@ namespace dtn
 	{
 		SimpleBundleStorage::SimpleBundleStorage(BundleCore &core, unsigned int size, unsigned int bundle_maxsize, bool merge)
 		 : Service("SimpleBundleStorage"), BundleStorage(), m_core(core), m_nextdeprecation(0), m_last_compress(0), m_size(size),
-		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false), m_merge(merge)
+		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false), m_merge(merge), m_bundlewaiting(false)
 		{
 			// register me for events
 			EventSwitch::registerEventReceiver( NodeEvent::className, this );
@@ -25,33 +26,9 @@ namespace dtn
 
 		SimpleBundleStorage::~SimpleBundleStorage()
 		{
-			MutexLock l(m_readlock);
-
-			// Lösche alle Bundles
-			list<BundleSchedule>::iterator iter = m_schedules.begin();
-
-			while (iter != m_schedules.end())
-			{
-				delete (*iter).getBundle();
-				iter++;
-			}
-
-			// delete all fragments
-			list<list<Bundle*> >::iterator list_iter = m_fragments.begin();
-
-			while (list_iter != m_fragments.end())
-			{
-				list<Bundle*>::iterator iter = (*list_iter).begin();
-
-				while (iter != (*list_iter).end())
-				{
-					delete (*iter);
-					iter++;
-				}
-
-				list_iter++;
-			}
-
+			EventSwitch::unregisterEventReceiver( NodeEvent::className, this );
+			EventSwitch::unregisterEventReceiver( StorageEvent::className, this );
+			clear();
 		}
 
 		void SimpleBundleStorage::raiseEvent(const Event *evt)
@@ -64,21 +41,27 @@ namespace dtn
 				switch (storage->getAction())
 				{
 					case STORE_BUNDLE:
-						storeFragment(storage->getBundle());
+					{
+						Bundle *ret = storeFragment(storage->getBundle());
+						m_bundlewaiting = true;
+
+						if (ret != NULL)
+						{
+							// route the joint bundle
+							EventSwitch::raiseEvent( new RouteEvent(ret, ROUTE_FIND_SCHEDULE) );
+						}
+
 						break;
+					}
 
 					case STORE_SCHEDULE:
 						store(storage->getSchedule());
+						m_bundlewaiting = true;
 						break;
 				}
 			}
 			else if (node != NULL)
 			{
-				/**
-				 * TODO: send bundles
-				 * If a node is available send it all bundles we have for it.
-				 * @see BundleCore::tick()
-				 */
 				const Node &n = node->getNode();
 
 				switch (node->getAction())
@@ -94,7 +77,7 @@ namespace dtn
 			}
 		}
 
-		void SimpleBundleStorage::store(BundleSchedule schedule)
+		void SimpleBundleStorage::store(const BundleSchedule &schedule)
 		{
 			MutexLock l(m_readlock);
 
@@ -163,7 +146,21 @@ namespace dtn
 				iter++;
 			}
 
-			m_schedules.clear();
+			// delete all fragments
+			list<list<Bundle*> >::iterator list_iter = m_fragments.begin();
+
+			while (list_iter != m_fragments.end())
+			{
+				list<Bundle*>::iterator iter = (*list_iter).begin();
+
+				while (iter != (*list_iter).end())
+				{
+					delete (*iter);
+					iter++;
+				}
+
+				list_iter++;
+			}
 		}
 
 		bool SimpleBundleStorage::isEmpty()
@@ -183,39 +180,44 @@ namespace dtn
 			// Aktuelle DTN Zeit holen
 			unsigned int dtntime = BundleFactory::getDTNTime();
 
-			if (m_neighbours.size() == 0)
+			if (m_neighbours.size() != 0)
 			{
-				usleep(5000);
+				// get the first neighbour
+				Node &node = m_neighbours[0];
+
+				try {
+					BundleSchedule schedule = getSchedule( node.getURI() );
+					EventSwitch::raiseEvent( new RouteEvent( schedule, node ) );
+				} catch (exceptions::NoScheduleFoundException ex) {
+					// remove the neighbour
+					m_neighbours.erase(node.getURI());
+				}
+
+				// send timed schedules
+				try {
+					BundleSchedule schedule = getSchedule( dtntime );
+					EventSwitch::raiseEvent( new RouteEvent( schedule ) );
+				} catch (exceptions::NoScheduleFoundException ex) {
+
+				}
+
 				return;
 			}
 
-			// Anzahl der Bündel in der Storage holen
-			unsigned int bcount = getCount();
+			// TODO: deleteDeprecated();
 
-			// get the first neighbour
-			Node &node = m_neighbours[0];
-
-			try {
-				BundleSchedule schedule = getSchedule( node.getURI() );
-			} catch (exceptions::NoScheduleFoundException ex) {
-				// remove the neighbour
-				m_neighbours.erase(node.getURI());
+			// wait till the dtntime has changed or a new bundles is stored (m_bundlewaiting)
+			while (true)
+			{
+				if ( (dtntime != BundleFactory::getDTNTime()) || m_bundlewaiting )
+				{
+					break;
+				}
+				usleep(1000);
 			}
 
-			// TODO: send timed schedules
-
-//			// Warte bis sich die DTNTime ändert oder eine Nachricht versendet wurde
-//
-//			while (true)
-//			{
-//				if ( (dtntime != BundleFactory::getDTNTime()) || m_bundlewaiting )
-//				{
-//					return;
-//				}
-//				usleep(1000);
-//			}
-
-			// TODO: deleteDeprecated();
+			// we react on signal bundlewaiting, set it to false
+			m_bundlewaiting = false;
 		}
 
 		BundleSchedule SimpleBundleStorage::getSchedule(string destination)
@@ -402,7 +404,7 @@ namespace dtn
 			}
 		}
 
-		Bundle* SimpleBundleStorage::storeFragment(Bundle *bundle)
+		Bundle* SimpleBundleStorage::storeFragment(const Bundle *bundle)
 		{
 			MutexLock l(m_fragmentslock);
 
@@ -433,7 +435,6 @@ namespace dtn
 					if ( (*iter)->getInteger(FRAGMENTATION_OFFSET) == bundle->getInteger(FRAGMENTATION_OFFSET) )
 					{
 						// bundle found, discard the current fragment.
-						delete bundle;
 						return NULL;
 					}
 					iter++;
@@ -441,11 +442,22 @@ namespace dtn
 			}	// end check for duplicates
 
 			// bundle isn't in this list, add it
-			fragment_list.push_back( bundle );
+			fragment_list.push_back( new Bundle(*bundle) );
 
 			try {
 				// try to merge the fragments
-				return BundleFactory::merge(fragment_list);
+				Bundle *ret = BundleFactory::merge(fragment_list);
+
+				// delete the bundle fragments
+				list<Bundle*>::iterator iter = fragment_list.begin();
+
+				while (iter != fragment_list.end())
+				{
+					delete (*iter);
+					iter++;
+				}
+
+				return ret;
 			} catch (dtn::exceptions::FragmentationException ex) {
 				// merge not possible, store the list in front of the list of lists.
 				m_fragments.push_front(fragment_list);

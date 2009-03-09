@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 			else if (type == "tcp")
 			{
 				cout << "Adding ConvergenceLayer for TCP (" << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << ")" << endl;
-				netcl = new TCPConvergenceLayer( conf.getNetInterface(key), conf.getNetPort(key) );
+				netcl = new TCPConvergenceLayer( conf.getLocalUri(), conf.getNetInterface(key), conf.getNetPort(key) );
 			}
 
 			// Suche in den statischen Knoten nach passenden DummyConvergenceLayern um diese zu ersetzen
@@ -298,7 +298,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	TestApplication app(core, "dtn://node1/debugger");
+	TestApplication app(core, "dtn://node2/debugger");
 	app.start();
 
 //#ifdef HAVE_LIBLUA5_1

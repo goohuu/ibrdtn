@@ -14,14 +14,14 @@ namespace dtn
 			public:
 				StaticBundleRouter(list<StaticRoute> routes, string eid);
 				~StaticBundleRouter();
-			
+
 				BundleSchedule getSchedule(Bundle *b);
-				
+
 			private:
 				string m_eid;
 				list<StaticRoute> m_routes;
 		};
 	}
 }
-	
+
 #endif /*STATICBUNDLEROUTER_H_*/

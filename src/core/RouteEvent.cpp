@@ -14,11 +14,28 @@ namespace dtn
 {
 	namespace core
 	{
-		RouteEvent::RouteEvent(Bundle *bundle, const EventRouteAction action) : m_bundle(bundle), m_action(action)
+		RouteEvent::RouteEvent(BundleSchedule &schedule)
+		: m_bundle(NULL), m_action(ROUTE_TRANSMIT_BUNDLE), m_schedule(schedule)
+		{
+
+		}
+		RouteEvent::RouteEvent(BundleSchedule &schedule, Node &node)
+		: m_action(ROUTE_TRANSMIT_BUNDLE), m_schedule(schedule)
+		{
+
+		}
+
+		RouteEvent::RouteEvent(Bundle *bundle, const EventRouteAction action)
+		: m_bundle(bundle), m_action(action), m_schedule(NULL, 0, "dtn:none")
 		{}
 
 		RouteEvent::~RouteEvent()
 		{}
+
+		BundleSchedule& RouteEvent::getSchedule()
+		{
+			return m_schedule;
+		}
 
 		Bundle* RouteEvent::getBundle() const
 		{

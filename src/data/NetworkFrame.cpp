@@ -42,6 +42,14 @@ namespace data
 		m_fieldsizes = k.m_fieldsizes;
 	}
 
+	NetworkFrame::NetworkFrame(const NetworkFrame* k)
+	 : m_data(NULL), m_size(k->m_size)
+	{
+		m_data = (unsigned char*)calloc(k->m_size, sizeof(unsigned char));
+		memcpy(m_data, k->m_data, k->m_size);
+		m_fieldsizes = k->m_fieldsizes;
+	}
+
 	NetworkFrame& NetworkFrame::operator=(const NetworkFrame &k)
 	{
 		if (this != &k)

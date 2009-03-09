@@ -26,6 +26,9 @@ namespace dtn
 		{
 			MutexLock l(m_lock);
 
+			EventSwitch::unregisterEventReceiver(NodeEvent::className, this);
+			EventSwitch::unregisterEventReceiver(RouteEvent::className, this);
+
 			// Alle Nodes löschen
 			m_neighbours.clear();
 		}

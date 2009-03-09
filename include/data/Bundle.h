@@ -66,6 +66,8 @@ namespace dtn
 			 */
 			Bundle(NetworkFrame *frame, const list<Block*> blocks);
 
+			Bundle(const Bundle &b);
+
 			/**
 			 * destructor, called if a bundle is destroyed
 			 */
@@ -269,7 +271,6 @@ namespace dtn
 			int getPosition(BUNDLE_FIELDS field) throw (FieldDoesNotExist, InvalidBundleData);
 
 			NetworkFrame *m_frame;
-			Block *m_nextblock;
 
 			Dictionary getDictionary() const;
 			void commitDictionary(const Dictionary &dict);

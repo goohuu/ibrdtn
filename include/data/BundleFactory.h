@@ -41,13 +41,20 @@ namespace dtn
 			 * @param[in] data A pointer to a data array of bundle data.
 			 * @param[in] size The size of the data array.
 			 */
-			Bundle* parse(const unsigned char *data, unsigned int size);
+			Bundle* parse(const unsigned char *data, unsigned int size) const;
 
 			/**
 			 * Create a new empty bundle object.
 			 * @return A empty bundle.
 			 */
 			Bundle* newBundle();
+
+			/**
+			 * Makes a copy of a block.
+			 * @param block The block to copy.
+			 * @return A copy of the block.
+			 */
+			Block* copyBlock(const Block &block) const;
 
 			/**
 			 * Get the current dtn time which is the seconds since the year 2000.
@@ -131,7 +138,7 @@ namespace dtn
 
 			Bundle* createBundle(bool fragmented = false);
 
-			NetworkFrame* parsePrimaryBlock(const unsigned char *data, unsigned int size);
+			NetworkFrame* parsePrimaryBlock(const unsigned char *data, unsigned int size) const;
 
 			/**
 			 * compare method for sorting fragments

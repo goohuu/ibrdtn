@@ -40,7 +40,7 @@ namespace dtn
 						}
 						else
 						{
-							// Nein. Erzeuge einen Schedule mit maximaler Zeit, nicht gesagt werden kann
+							// Nein. Erzeuge einen Schedule mit maximaler Zeit, da nicht gesagt werden kann
 							// wann man auf den Knoten trifft.
 							return BundleSchedule(b, BundleSchedule::MAX_TIME, route.getDestination());
 						}

@@ -46,6 +46,7 @@ namespace dtn
 
 		public:
 			static void registerEventReceiver(string eventName, EventReceiver *receiver);
+			static void unregisterEventReceiver(string eventName, EventReceiver *receiver);
 			static void raiseEvent(Event *evt);
 		};
 	}

@@ -38,6 +38,18 @@ namespace dtn
 			}
 		}
 
+		void EventSwitch::unregisterEventReceiver(string eventName, EventReceiver *receiver)
+		{
+			// get the list for this event
+			EventSwitch &s = EventSwitch::getInstance();
+
+			try {
+				list<EventReceiver*> &receivers = s.m_list.at(eventName);
+				receivers.remove( receiver );
+			} catch (std::out_of_range ex) {
+			}
+		}
+
 		void EventSwitch::raiseEvent(Event *evt)
 		{
 			try {
