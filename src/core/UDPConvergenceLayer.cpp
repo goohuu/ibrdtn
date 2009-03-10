@@ -101,7 +101,8 @@ namespace dtn
 				fragment = BundleFactory::slice(b, UINT_MAX, offset);
 
 				// throw exception
-				throw new TransferNotCompletedException(fragment);
+				//throw new TransferNotCompletedException(fragment);
+				// TODO: return the fragment to the router
 			}
 
 			unsigned char *data = b.getData();
@@ -147,7 +148,8 @@ namespace dtn
 				fragment = BundleFactory::slice(b, UINT_MAX, offset);
 
 				// throw exception
-				throw new TransferNotCompletedException(fragment);
+				//throw new TransferNotCompletedException(fragment);
+				// TODO: return the fragment to the router
 			}
 
 			unsigned char *data = b.getData();
@@ -221,8 +223,8 @@ namespace dtn
 					    // Wenn Daten da sind erstelle aus ihnen ein Bundle
 						BundleFactory &fac = BundleFactory::getInstance();
 						Bundle *b = fac.parse(data, len);
-
-					    ConvergenceLayer::eventBundleReceived(b);
+					    ConvergenceLayer::eventBundleReceived(*b);
+					    delete b;
 					} catch (InvalidBundleData ex) {
 						cerr << "Ungültiges Bundle empfangen: " << ex.what() << endl;
 					}

@@ -15,7 +15,7 @@ namespace dtn
 				StaticBundleRouter(list<StaticRoute> routes, string eid);
 				~StaticBundleRouter();
 
-				BundleSchedule getSchedule(Bundle *b);
+				BundleSchedule getSchedule(const Bundle &b);
 
 			private:
 				string m_eid;

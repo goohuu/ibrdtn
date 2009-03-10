@@ -13,7 +13,7 @@ namespace core
 	/**
 	 * Konstruktor
 	 */
-	CustodyTimer::CustodyTimer(Bundle *bundle, unsigned int timeout, unsigned int attempt)
+	CustodyTimer::CustodyTimer(const Bundle &bundle, unsigned int timeout, unsigned int attempt)
 	 : m_bundle(bundle), m_time(timeout), m_attempt(attempt)
 	{
 	}
@@ -30,7 +30,7 @@ namespace core
 		return m_time;
 	}
 
-	Bundle* CustodyTimer::getBundle() const
+	const Bundle& CustodyTimer::getBundle() const
 	{
 		return m_bundle;
 	}

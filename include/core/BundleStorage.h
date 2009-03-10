@@ -39,7 +39,7 @@ namespace dtn
 			 * Fragment war, wird das Bundle zusammengesetzt und zurück gegeben,
 			 * ansonsten NULL.
 			 */
-			virtual Bundle* storeFragment(const Bundle *bundle) = 0;
+			virtual Bundle* storeFragment(const Bundle &bundle) = 0;
 
 			/**
 			 * Leert den Speicher / Löscht alle Bundles

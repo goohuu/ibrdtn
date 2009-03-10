@@ -151,7 +151,8 @@ namespace dtn
 			vector<Bundle*>::iterator iter = bundles.begin();
 			while (iter != bundles.end())
 			{
-				store.store( BundleSchedule( (*iter), 5, "dtn://test" ) );
+				store.store( BundleSchedule( *(*iter), 5, "dtn://test" ) );
+				delete (*iter);
 				iter++;
 			}
 
@@ -172,7 +173,6 @@ namespace dtn
 				while (true)
 				{
 					BundleSchedule s = store.getSchedule(10);
-					delete s.getBundle();
 				}
 			} catch (dtn::exceptions::NoScheduleFoundException ex) {
 

@@ -6,6 +6,7 @@
  */
 
 #include "core/CustodyEvent.h"
+#include "data/Exceptions.h"
 
 using namespace dtn::core;
 using namespace std;
@@ -14,33 +15,40 @@ namespace dtn
 {
 	namespace core
 	{
-		CustodyEvent::CustodyEvent(Bundle *bundle, const EventCustodyAction action)
-		: m_bundle(bundle), m_action(action), m_timer(NULL)
-		{}
-
-		CustodyEvent::CustodyEvent(string eid, const CustodySignalBlock *signal)
-		: m_bundle(NULL), m_action(CUSTODY_REMOVE_TIMER), m_custody(signal), m_eid(eid), m_timer(NULL)
+		CustodyEvent::CustodyEvent(const Bundle &bundle, const EventCustodyAction action)
+		: m_bundle(NULL), m_action(action), m_timer(NULL)
 		{
-
+			m_bundle = new Bundle(bundle);
 		}
 
-		CustodyEvent::CustodyEvent(CustodyTimer *timer)
-		: m_bundle(NULL), m_action(CUSTODY_TIMEOUT), m_custody(NULL), m_eid(), m_timer(timer)
+		CustodyEvent::CustodyEvent(string eid, const CustodySignalBlock &signal)
+		: m_bundle(NULL), m_action(CUSTODY_REMOVE_TIMER), m_custody(NULL), m_eid(eid), m_timer(NULL)
 		{
+			m_custody = new CustodySignalBlock(signal);
+		}
 
+		CustodyEvent::CustodyEvent(CustodyTimer &timer)
+		: m_bundle(NULL), m_action(CUSTODY_TIMEOUT), m_custody(NULL), m_eid(), m_timer(NULL)
+		{
+			m_timer = new CustodyTimer (timer);
 		}
 
 		CustodyEvent::~CustodyEvent()
-		{}
-
-		const CustodyTimer* CustodyEvent::getTimer() const
 		{
-			return m_timer;
+			if (m_timer != NULL) delete m_timer;
+			if (m_custody != NULL) delete m_custody;
+			if (m_bundle != NULL) delete m_bundle;
 		}
 
-		const Bundle* CustodyEvent::getBundle() const
+		const CustodyTimer& CustodyEvent::getTimer() const
 		{
-			return m_bundle;
+			return *m_timer;
+		}
+
+		const Bundle& CustodyEvent::getBundle() const
+		{
+			if (m_bundle == NULL) throw exceptions::MissingObjectException();
+			return *m_bundle;
 		}
 
 		EventCustodyAction CustodyEvent::getAction() const
@@ -48,9 +56,9 @@ namespace dtn
 			return m_action;
 		}
 
-		const CustodySignalBlock* CustodyEvent::getCustodySignal() const
+		const CustodySignalBlock& CustodyEvent::getCustodySignal() const
 		{
-			return m_custody;
+			return *m_custody;
 		}
 
 		string CustodyEvent::getEID() const

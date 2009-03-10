@@ -520,7 +520,8 @@ namespace dtn
 									Bundle *b = fac.parse((unsigned char*)m_incoming.data, m_incoming.length);
 									free(m_incoming.data);
 									m_incoming.data = NULL;
-									m_clayer.callbackBundleReceived(this, b);
+									m_clayer.callbackBundleReceived(*this, *b);
+									delete b;
 								} catch (InvalidBundleData ex) {
 									free(m_incoming.data);
 									m_incoming.data = NULL;

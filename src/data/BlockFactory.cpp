@@ -135,9 +135,9 @@ namespace data
 			return new Block(frame);
 		}
 
-		Block* BlockFactory::copy(Block *block)
+		Block* BlockFactory::copy(const Block &block)
 		{
-			NetworkFrame *frame = new NetworkFrame(block->getFrame());
+			NetworkFrame *frame = new NetworkFrame(block.getFrame());
 			return new Block(frame);
 		}
 	}

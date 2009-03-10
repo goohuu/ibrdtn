@@ -45,26 +45,22 @@ namespace dtn
 					case CUSTODY_ACCEPTANCE:
 					{
 						// create a timer, if custody is requested
-						setTimer( new Bundle(*custodyevent->getBundle()), 1, 1 );
+						setTimer( custodyevent->getBundle(), 1, 1 );
 
 						// raise the custody accepted event
-						EventSwitch::raiseEvent( new BundleEvent( *custodyevent->getBundle(), BUNDLE_CUSTODY_ACCEPTED ) );
+						EventSwitch::raiseEvent( new BundleEvent( custodyevent->getBundle(), BUNDLE_CUSTODY_ACCEPTED ) );
 
 						break;
 					}
 
 					case CUSTODY_REMOVE_TIMER:
 					{
-						const CustodySignalBlock *signal = custodyevent->getCustodySignal();
+						const CustodySignalBlock &signal = custodyevent->getCustodySignal();
 
 						// remove a timer
-						Bundle *bundle = removeTimer(*signal);
+						const Bundle &bundle = removeTimer(signal);
 
-						if ( signal->isAccepted() )
-						{
-							delete bundle;
-						}
-						else
+						if ( !signal.isAccepted() )
 						{
 							// custody was rejected - find a new route
 							EventSwitch::raiseEvent( new RouteEvent( bundle, ROUTE_FIND_SCHEDULE ) );
@@ -96,7 +92,7 @@ namespace dtn
 			}
 		}
 
-		void CustodyManager::setTimer(Bundle *bundle, unsigned int time, unsigned int attempt)
+		void CustodyManager::setTimer(const Bundle &bundle, unsigned int time, unsigned int attempt)
 		{
 			MutexLock l(m_custodylock);
 
@@ -125,7 +121,7 @@ namespace dtn
 			}
 		}
 
-		Bundle* CustodyManager::removeTimer(const CustodySignalBlock &block)
+		const Bundle& CustodyManager::removeTimer(const CustodySignalBlock &block)
 		{
 			MutexLock l(m_custodylock);
 
@@ -134,9 +130,9 @@ namespace dtn
 
 			while (iter != m_custodytimer.end())
 			{
-				Bundle *bundle = (*iter).getBundle();
+				const Bundle &bundle = (*iter).getBundle();
 
-				if ( block.match(*bundle) )
+				if ( block.match(bundle) )
 				{
 					// ... and remove it
 					m_custodytimer.erase( iter );
@@ -146,7 +142,7 @@ namespace dtn
 				iter++;
 			}
 
-			return NULL;
+			throw NoTimerFoundException();
 		}
 
 		void CustodyManager::checkCustodyTimer()
@@ -186,7 +182,7 @@ namespace dtn
 			list<CustodyTimer>::iterator iter = totrigger.begin();
 			while (iter != totrigger.end())
 			{
-				EventSwitch::raiseEvent( new CustodyEvent(&(*iter)) );
+				EventSwitch::raiseEvent( new CustodyEvent(*iter) );
 				iter++;
 			}
 		}

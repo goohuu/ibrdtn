@@ -33,7 +33,7 @@ namespace dtn
 			~NodeEvent();
 
 			EventNodeAction getAction() const;
-			Node getNode() const;
+			const Node& getNode() const;
 			const string getName() const;
 
 #ifdef DO_DEBUG_OUTPUT
@@ -43,7 +43,7 @@ namespace dtn
 			static const string className;
 
 		private:
-			const Node &m_node;
+			const Node m_node;
 			const EventNodeAction m_action;
 		};
 	}

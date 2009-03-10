@@ -29,13 +29,13 @@ namespace dtn
 		{
 		public:
 			StorageEvent(const BundleSchedule &schedule);
-			StorageEvent(Bundle *bundle);
+			StorageEvent(const Bundle &bundle);
 
 			~StorageEvent();
 
 			EventStorageAction getAction() const;
-			BundleSchedule getSchedule() const;
-			Bundle* getBundle() const;
+			const BundleSchedule& getSchedule() const;
+			const Bundle& getBundle() const;
 
 			const string getName() const;
 
@@ -47,7 +47,7 @@ namespace dtn
 
 		private:
 			Bundle *m_bundle;
-			const BundleSchedule &m_schedule;
+			const BundleSchedule m_schedule;
 			EventStorageAction m_action;
 		};
 	}

@@ -118,12 +118,12 @@ public:
 	/**
 	 * @sa storeFragment();
 	 */
-	Bundle* storeFragment(const Bundle *bundle);
+	Bundle* storeFragment(const Bundle &bundle);
 
 private:
 	void sqlQuery(string query, int id1 = -1, int id2 = -1, int id3 = -1);
 	sqlite3_stmt* prepareStatement(string query);
-	sqlite3_int64 storeBundle(const Bundle *bundle);
+	sqlite3_int64 storeBundle(const Bundle &bundle);
 
 	sqlite3 *m_db;
 

@@ -27,14 +27,14 @@ namespace dtn { namespace data
 		 * @param[in] size The length of the data-array.
 		 * @return The consumed bytes of the data-array.
 		 */
-		Block* parse(const unsigned char *data, unsigned int size);
+		virtual Block* parse(const unsigned char *data, unsigned int size);
 
 		/**
 		 * Copy a existing block to a new block
 		 * @param[in] block The block to copy.
 		 * @return A copy of the given block.
 		 */
-		PayloadBlock* copy(PayloadBlock *block);
+		virtual Block* copy(const Block &block);
 
 		/**
 		 * Create a new PayloadBlock with the given data as payload.
@@ -64,7 +64,7 @@ namespace dtn { namespace data
 		 */
 		static AdministrativeBlock* castAdministrativeBlock(PayloadBlock *block);
 
-		char getBlockType() const;
+		virtual char getBlockType() const;
 	};
 } }
 

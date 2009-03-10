@@ -8,13 +8,15 @@
 #include "core/EventSwitch.h"
 
 #include <stdexcept>
+#include <iostream>
 using namespace std;
+using namespace dtn::utils;
 
 namespace dtn
 {
 	namespace core
 	{
-		EventSwitch::EventSwitch()
+		EventSwitch::EventSwitch() : Service("EventSwitch")
 		{
 
 		}
@@ -50,29 +52,70 @@ namespace dtn
 			}
 		}
 
+		void EventSwitch::push(Event *evt)
+		{
+			MutexLock l(m_queuelock);
+			m_queue.push(evt);
+		}
+
 		void EventSwitch::raiseEvent(Event *evt)
 		{
-			try {
-				// get the list for this event
-				EventSwitch &s = EventSwitch::getInstance();
-				const list<EventReceiver*> receivers = s.m_list.at(evt->getName());
-				list<EventReceiver*>::const_iterator iter = receivers.begin();
+			EventSwitch &s = EventSwitch::getInstance();
+			s.push(evt);
 
-				while (iter != receivers.end())
-				{
-					(*iter)->raiseEvent(evt);
-					iter++;
+//			try {
+//				// get the list for this event
+//				EventSwitch &s = EventSwitch::getInstance();
+//				const list<EventReceiver*> receivers = s.m_list.at(evt->getName());
+//				list<EventReceiver*>::const_iterator iter = receivers.begin();
+//
+//				while (iter != receivers.end())
+//				{
+//					(*iter)->raiseEvent(evt);
+//					iter++;
+//				}
+//			} catch (std::out_of_range ex) {
+//				// No receiver available!
+//			}
+//
+//			delete evt;
+		}
+
+		void EventSwitch::tick()
+		{
+			while (m_queue.size() != 0)
+			{
+				m_queuelock.lock();
+				// get the first element of the queue
+				Event *evt = m_queue.front();
+				m_queuelock.unlock();
+
+				try {
+					// get the list for this event
+					const list<EventReceiver*> receivers = m_list.at(evt->getName());
+					list<EventReceiver*>::const_iterator iter = receivers.begin();
+
+					while (iter != receivers.end())
+					{
+						(*iter)->raiseEvent(evt);
+						iter++;
+					}
+				} catch (std::out_of_range ex) {
+					// No receiver available!
 				}
-			} catch (std::out_of_range ex) {
-				// No receiver available!
-			}
 
-			delete evt;
+				m_queuelock.lock();
+				m_queue.pop();
+				m_queuelock.unlock();
+				delete evt;
+			}
+			usleep(50);
 		}
 
 		EventSwitch& EventSwitch::getInstance()
 		{
 			static EventSwitch instance;
+			if (!instance.isRunning()) instance.start();
 			return instance;
 		}
 	}

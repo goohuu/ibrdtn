@@ -13,7 +13,7 @@ namespace dtn
 			StaticRoute(string route, string dest);
 			~StaticRoute();
 
-			bool match(dtn::data::Bundle *b);
+			bool match(const dtn::data::Bundle &b);
 			string getDestination();
 
 			private:

@@ -19,6 +19,10 @@ namespace dtn
 		{
 		}
 
+		Block::Block(const Block &k)
+		: m_processed(k.m_processed), m_frame(new NetworkFrame(*k.m_frame))
+		{}
+
 		Block::~Block()
 		{
 			if (m_frame != NULL) delete m_frame;
@@ -104,6 +108,11 @@ namespace dtn
 
 			// Setze neue Bodylänge
 			frame.set(Block::getBodyIndex() - 1, size);
+		}
+
+		bool Block::isAdministrativeBlock() const
+		{
+			return false;
 		}
 	}
 }

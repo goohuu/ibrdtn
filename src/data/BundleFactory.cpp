@@ -305,10 +305,9 @@ namespace dtn
 
 		Block* BundleFactory::copyBlock(const Block &block) const
 		{
-			Block *ret = NULL;
-			NetworkFrame &frame = block.getFrame();
-			ret = getBlock( frame.getData(), frame.getSize() );
-			return ret;
+			BundleFactory &fac = BundleFactory::getInstance();
+			BlockFactory &f = fac.getExtension(block.getType());
+			return f.copy( block );
 		}
 
 		unsigned int BundleFactory::getDTNTime()
@@ -397,10 +396,10 @@ namespace dtn
 			return bundle;
 		}
 
-		bool BundleFactory::compareFragments(const Bundle *first, const Bundle *second)
+		bool BundleFactory::compareFragments(const Bundle &first, const Bundle &second)
 		{
 			// Wenn der Offset des aktuellen Bundles kleiner ist als der des einzufügenden Bundles
-			if (first->getInteger(FRAGMENTATION_OFFSET) < second->getInteger(FRAGMENTATION_OFFSET))
+			if (first.getInteger(FRAGMENTATION_OFFSET) < second.getInteger(FRAGMENTATION_OFFSET))
 			{
 				return true;
 			}
@@ -410,7 +409,7 @@ namespace dtn
 			}
 		}
 
-		Bundle* BundleFactory::merge(list<Bundle*> &bundles)
+		Bundle* BundleFactory::merge(list<Bundle> &bundles)
 		{
 			// no bundle, raise a exception
 			if (bundles.size() <= 1)
@@ -422,18 +421,15 @@ namespace dtn
 			bundles.sort(BundleFactory::compareFragments);
 
 			// take a copy of the first bundle as base and merge it with the others
-			Bundle *first = bundles.front();
+			Bundle first = bundles.front();
 			bundles.pop_front();
-			Bundle *second = bundles.front();
+			Bundle second = bundles.front();
 			Bundle *bundle = NULL;
 
 			try {
 				// the first merge creates a new bundle object
-				bundle = merge(*first, *second);
+				bundle = merge(first, second);
 				bundles.pop_front();
-
-				delete first;
-				delete second;
 			} catch (FragmentationException ex) {
 				bundles.push_front(first);
 				throw ex;
@@ -443,7 +439,8 @@ namespace dtn
 			if (flags.isFragment())
 			{
 				// put the new fragment into the list
-				bundles.push_back(bundle);
+				bundles.push_back(*bundle);
+				delete bundle;
 
 				// call merge recursive
 				return merge(bundles);
@@ -617,9 +614,6 @@ namespace dtn
 			// set the new bundle to a fragment
 			fragment->setFragment(true);
 
-			// set the new bundle to a fragment
-			fragment->setFragment(true);
-
 			if (flags.isFragment())
 			{
 				fragment->setInteger( FRAGMENTATION_OFFSET,
@@ -644,16 +638,17 @@ namespace dtn
 			return fragment;
 		}
 
-		list<Bundle*> BundleFactory::split(const Bundle &bundle, unsigned int maxsize)
+		list<Bundle> BundleFactory::split(const Bundle &bundle, unsigned int maxsize)
 		{
-			list<Bundle*> ret;
+			list<Bundle> ret;
 			unsigned int offset = 0;
 
 			Bundle *fragment = BundleFactory::slice(bundle, maxsize, offset);
 
 			while (fragment != NULL)
 			{
-				ret.push_back(fragment);
+				ret.push_back(*fragment);
+				delete fragment;
 				fragment = BundleFactory::slice(bundle, maxsize, offset);
 			}
 

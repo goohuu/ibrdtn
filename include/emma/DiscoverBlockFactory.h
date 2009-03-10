@@ -34,7 +34,7 @@ namespace emma
 		 * @param[in] block The block to copy.
 		 * @return A copy of the given block.
 		 */
-		DiscoverBlock* copy(DiscoverBlock *block);
+		Block* copy(const Block &block);
 
 		static DiscoverBlock* newDiscoverBlock();
 

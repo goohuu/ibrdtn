@@ -39,23 +39,26 @@ namespace dtn
 			return payloadblock;
 		}
 
-		PayloadBlock* PayloadBlockFactory::copy(PayloadBlock *block)
+		Block* PayloadBlockFactory::copy(const Block &block)
 		{
-			NetworkFrame *frame = new NetworkFrame(block->getFrame());
+			NetworkFrame *frame = new NetworkFrame(block.getFrame());
 			PayloadBlock *payload = new PayloadBlock(frame);
 
-			switch (AdministrativeBlock::identify( payload ))
+			if (block.isAdministrativeBlock())
 			{
-				case CUSTODY_SIGNAL:
-					return castAdministrativeBlock(payload);
-				break;
+				switch (AdministrativeBlock::identify( payload ))
+				{
+					case CUSTODY_SIGNAL:
+						return castAdministrativeBlock(payload);
+					break;
 
-				case STATUS_REPORT:
-					return castAdministrativeBlock(payload);
-				break;
+					case STATUS_REPORT:
+						return castAdministrativeBlock(payload);
+					break;
 
-				default:
-				break;
+					default:
+					break;
+				}
 			}
 
 			return payload;

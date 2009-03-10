@@ -55,7 +55,7 @@ namespace emma
 		 */
 		virtual TransmitReport transmit(const Bundle &b, const Node &node);
 
-		void received(ConvergenceLayer *cl, Bundle *b);
+		void received(const ConvergenceLayer &cl, Bundle &b);
 
 		/**
 		 * method to receive PositionEvent from EventSwitch

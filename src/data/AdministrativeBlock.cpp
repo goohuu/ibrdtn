@@ -24,7 +24,7 @@ namespace data
 	{
 	}
 
-	AdministrativeBlockType AdministrativeBlock::getType() const
+	AdministrativeBlockType AdministrativeBlock::getAdministrativeType() const
 	{
 		return m_type;
 	}
@@ -43,6 +43,11 @@ namespace data
 		unsigned char value = (unsigned char)flags.getValue();
 
 		getFrame().set( getBodyIndex(), value );
+	}
+
+	bool AdministrativeBlock::isAdministrativeBlock() const
+	{
+		return true;
 	}
 
 	AdministrativeBlockType AdministrativeBlock::identify(PayloadBlock *block)

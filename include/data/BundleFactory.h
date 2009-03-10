@@ -74,7 +74,7 @@ namespace dtn
 			 * @param[in] maxsize The maximum size of a fragment.
 			 * @returns A list of bundle fragments.
 			 */
-			static list<Bundle*> split(const Bundle &bundle, unsigned int maxsize);
+			static list<Bundle> split(const Bundle &bundle, unsigned int maxsize);
 
 			/**
 			 * Slices a bundle into a fragment bundles with a specific size and returns it.
@@ -115,7 +115,7 @@ namespace dtn
 			 * 				  fragments. If not, a FragmentationException is thrown.
 			 * @return 		  A non-fragmented bundle object.
 			 */
-			static Bundle* merge(list<Bundle*> &bundles);
+			static Bundle* merge(list<Bundle> &bundles);
 
 			/**
 			 * Merge two fragments to one bundle or a new fragment. If the fragments aren't
@@ -143,7 +143,7 @@ namespace dtn
 			/**
 			 * compare method for sorting fragments
 			 */
-			static bool compareFragments(const Bundle *first, const Bundle *second);
+			static bool compareFragments(const Bundle &first, const Bundle &second);
 			static Block* getBlock(const unsigned char *data, unsigned int size);
 
 			static unsigned int SECONDS_TILL_2000;

@@ -11,9 +11,13 @@
 #include "data/Exceptions.h"
 #include "core/Event.h"
 #include "core/EventReceiver.h"
+#include "utils/Service.h"
+#include "utils/Mutex.h"
+#include "utils/MutexLock.h"
 
 #include <map>
 #include <list>
+#include <queue>
 
 using namespace std;
 using namespace dtn::exceptions;
@@ -35,7 +39,7 @@ namespace dtn
 
 	namespace core
 	{
-		class EventSwitch
+		class EventSwitch : public dtn::utils::Service
 		{
 		private:
 			EventSwitch();
@@ -43,6 +47,13 @@ namespace dtn
 			static EventSwitch& getInstance();
 
 			map<string,list<EventReceiver*> > m_list;
+			queue<Event*> m_queue;
+			dtn::utils::Mutex m_queuelock;
+
+			void push(Event *evt);
+
+		protected:
+			void tick();
 
 		public:
 			static void registerEventReceiver(string eventName, EventReceiver *receiver);

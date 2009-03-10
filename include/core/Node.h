@@ -38,6 +38,11 @@ public:
 	Node(NodeType type = PERMANENT);
 
 	/**
+	 * copy the object
+	 */
+	Node(const Node &k);
+
+	/**
 	 * Destruktor
 	 */
 	virtual ~Node();

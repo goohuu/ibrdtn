@@ -61,9 +61,9 @@ namespace dtn
 			/**
 			 * Gibt einen Schedule für ein bestimmtes Bundle zurück
 			 */
-			virtual BundleSchedule getSchedule(Bundle *b);
+			virtual BundleSchedule getSchedule(const Bundle &b);
 
-			bool isLocal(const Bundle *b) const;
+			bool isLocal(const Bundle &b) const;
 
 			/**
 			 * method to receive new events from the EventSwitch

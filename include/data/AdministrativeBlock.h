@@ -48,7 +48,7 @@ namespace data
 			 * Get the type of a AdministrativeBlock-Instance.
 			 * @return A type of the AdministrationBlockType enumeration.
 			 */
-			AdministrativeBlockType getType() const;
+			virtual AdministrativeBlockType getAdministrativeType() const;
 
 			/**
 			 * Get the StatusFlags as a ProcessingFlags-Object.
@@ -69,6 +69,11 @@ namespace data
 			 * AdministrationBlockType enumeration.
 			 */
 			static AdministrativeBlockType identify(PayloadBlock *block);
+
+			/**
+			 * returns true, if this is a administrative block like CustodySignalBlock.
+			 */
+			bool isAdministrativeBlock() const;
 
 		private:
 			AdministrativeBlockType m_type;

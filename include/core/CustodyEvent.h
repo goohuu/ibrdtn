@@ -33,25 +33,25 @@ namespace dtn
 		class CustodyEvent : public Event
 		{
 		public:
-			CustodyEvent(Bundle *bundle, const EventCustodyAction action);
+			CustodyEvent(const Bundle &bundle, const EventCustodyAction action);
 
 			/**
 			 * remove a custody timer
 			 */
-			CustodyEvent(string eid, const CustodySignalBlock *signal);
+			CustodyEvent(string eid, const CustodySignalBlock &signal);
 
 			/**
 			 * announce a custody timeout
 			 */
-			CustodyEvent(CustodyTimer *timer);
+			CustodyEvent(CustodyTimer &timer);
 
 			~CustodyEvent();
 
 			EventCustodyAction getAction() const;
-			const Bundle* getBundle() const;
-			const CustodySignalBlock* getCustodySignal() const;
+			const Bundle& getBundle() const;
+			const CustodySignalBlock& getCustodySignal() const;
 			string getEID() const;
-			const CustodyTimer* getTimer() const;
+			const CustodyTimer& getTimer() const;
 			const string getName() const;
 
 #ifdef DO_DEBUG_OUTPUT

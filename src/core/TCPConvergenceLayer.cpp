@@ -432,9 +432,9 @@ namespace dtn
 			return conn;
 		}
 
-		void TCPConvergenceLayer::callbackBundleReceived(TCPConnection *conn, Bundle *b)
+		void TCPConvergenceLayer::callbackBundleReceived(const TCPConnection &conn, Bundle &b)
 		{
-			if (b != NULL) eventBundleReceived(b);
+			eventBundleReceived(b);
 		}
 	}
 }

@@ -85,9 +85,9 @@ namespace emma
 		return discoverblock;
 	}
 
-	DiscoverBlock* DiscoverBlockFactory::copy(DiscoverBlock *block)
+	Block* DiscoverBlockFactory::copy(const Block &block)
 	{
-		NetworkFrame *frame = new NetworkFrame(block->getFrame());
+		NetworkFrame *frame = new NetworkFrame(block.getFrame());
 		return new DiscoverBlock(frame);
 	}
 

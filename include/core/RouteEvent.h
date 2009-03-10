@@ -32,14 +32,15 @@ namespace dtn
 		class RouteEvent : public Event
 		{
 		public:
-			RouteEvent(BundleSchedule &schedule);
-			RouteEvent(BundleSchedule &schedule, Node &node);
-			RouteEvent(Bundle *bundle, const EventRouteAction action);
+			RouteEvent(const BundleSchedule &schedule);
+			RouteEvent(const BundleSchedule &schedule, const Node &node);
+			RouteEvent(const Bundle &bundle, const EventRouteAction action);
 			~RouteEvent();
 
 			EventRouteAction getAction() const;
-			Bundle* getBundle() const;
-			BundleSchedule& getSchedule();
+			const Bundle& getBundle() const;
+			const Node& getNode() const;
+			const BundleSchedule& getSchedule() const;
 			const string getName() const;
 
 #ifdef DO_DEBUG_OUTPUT
@@ -49,9 +50,10 @@ namespace dtn
 			static const string className;
 
 		private:
-			Bundle *m_bundle;
+			const Bundle *m_bundle;
 			const EventRouteAction m_action;
 			BundleSchedule m_schedule;
+			Node m_node;
 		};
 	}
 }

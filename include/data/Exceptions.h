@@ -284,28 +284,28 @@ namespace dtn
 				};
 		};
 
-		/**
-		 * If a transfer couldn't completed, this exception is thrown.
-		 * Optional: A fragment of the not transferred part is returned with this exception.
-		 */
-		class TransferNotCompletedException: public Exception
+		class NoTimerFoundException : public Exception
 		{
-			public:
-				TransferNotCompletedException(data::Bundle *fragment) : Exception("Transfer not completed."), m_fragment(fragment)
-				{
-				};
+		public:
+			NoTimerFoundException() : Exception("No matching timer was found.")
+			{
+			};
 
-				TransferNotCompletedException(string what, data::Bundle *fragment) : Exception(what), m_fragment(fragment)
-				{
-				};
+			NoTimerFoundException(string what) : Exception(what)
+			{
+			};
+		};
 
-				data::Bundle *getFragment()
-				{
-					return m_fragment;
-				}
+		class MissingObjectException : public Exception
+		{
+		public:
+			MissingObjectException() : Exception("Object not available.")
+			{
+			};
 
-			private:
-				data::Bundle *m_fragment;
+			MissingObjectException(string what) : Exception(what)
+			{
+			};
 		};
 	}
 }

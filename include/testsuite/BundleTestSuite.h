@@ -20,6 +20,7 @@ namespace testsuite
 
 		private:
 			bool createTest();
+			bool copyTest();
 			bool instanceTest();
 			bool compareTest();
 			bool splitTest();

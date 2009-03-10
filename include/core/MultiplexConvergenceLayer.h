@@ -48,7 +48,7 @@ namespace dtn
 			 */
 			void add(ConvergenceLayer *cl);
 
-			void received(ConvergenceLayer *cl, dtn::data::Bundle *b);
+			void received(const ConvergenceLayer &cl, dtn::data::Bundle &b);
 
 			void initialize();
 			void terminate();

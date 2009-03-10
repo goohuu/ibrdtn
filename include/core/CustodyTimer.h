@@ -21,7 +21,7 @@ namespace core
 			/**
 			 * Konstruktor
 			 */
-			CustodyTimer(Bundle *bundle, unsigned int timeout, unsigned int attempt);
+			CustodyTimer(const Bundle &bundle, unsigned int timeout, unsigned int attempt);
 
 			/**
 			 * Destruktor
@@ -30,12 +30,12 @@ namespace core
 
 			unsigned int getTime() const;
 
-			Bundle* getBundle() const;
+			const Bundle& getBundle() const;
 
 			unsigned int getAttempt() const;
 
 		private:
-			Bundle *m_bundle;
+			Bundle m_bundle;
 			unsigned int m_time;
 			unsigned int m_attempt;
 	};

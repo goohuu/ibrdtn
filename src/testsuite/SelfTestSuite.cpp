@@ -9,6 +9,7 @@
 #include "testsuite/MeasurementTestSuite.h"
 #include "testsuite/SQLiteTestSuite.h"
 #include "testsuite/DiscoveryBlockTestSuite.h"
+#include "testsuite/BlockTestSuite.h"
 #include "utils/Utils.h"
 #include "data/BundleFactory.h"
 
@@ -40,6 +41,9 @@ namespace testsuite
 
 		DictionaryTestSuite dicttest;
 		if ( !dicttest.runAllTests() ) ret = false;
+
+		BlockTestSuite blocktest;
+		if ( !blocktest.runAllTests() ) ret = false;
 
 		BundleTestSuite bundletest;
 		if ( !bundletest.runAllTests() ) ret = false;

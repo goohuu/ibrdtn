@@ -30,6 +30,11 @@ namespace dtn
 			Block(NetworkFrame *frame);
 
 			/**
+			 * copy the block
+			 */
+			Block(const Block &k);
+
+			/**
 			 * Destructor
 			 */
 			virtual ~Block();
@@ -44,7 +49,7 @@ namespace dtn
 			 * Get the type of the block.
 			 * @return The type of the block as char value.
 			 */
-			unsigned char getType() const;
+			virtual unsigned char getType() const;
 
 			/**
 			 * @return true, if the block can't be processed
@@ -79,6 +84,11 @@ namespace dtn
 			 * Updates the length field. This function should called after a set()-function.
 			 */
 			void updateBlockSize();
+
+			/**
+			 * returns true, if this is a administrative block like CustodySignalBlock.
+			 */
+			virtual bool isAdministrativeBlock() const;
 
 		protected:
 			unsigned int getBodyIndex() const;

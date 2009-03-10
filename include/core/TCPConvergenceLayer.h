@@ -70,7 +70,7 @@ namespace dtn
 			virtual void tick();
 
 		protected:
-			void callbackBundleReceived(TCPConnection *conn, Bundle *b);
+			void callbackBundleReceived(const TCPConnection &conn, Bundle &b);
 
 		private:
 			TransmitReport transmit(TCPConnection *conn, const Bundle &b);

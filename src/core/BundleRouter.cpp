@@ -5,6 +5,7 @@
 #include "core/RouteEvent.h"
 #include "core/EventSwitch.h"
 #include "core/StorageEvent.h"
+#include "data/EID.h"
 #include <iostream>
 #include <iomanip>
 
@@ -51,16 +52,25 @@ namespace dtn
 				{
 					case ROUTE_FIND_SCHEDULE:
 					{
-						Bundle *b = routeevent->getBundle();
+						const Bundle &b = routeevent->getBundle();
+						EID dest(b.getDestination());
+
 						if (isLocal(b))
 						{
 							EventSwitch::raiseEvent( new RouteEvent( b, dtn::core::ROUTE_LOCAL_BUNDLE ) );
 						}
-						else
-						{
+
+						try {
+							// search for the destination in the neighbourhood
+							Node node = getNeighbour(dest.getNodeEID());
+							BundleSchedule sched( b, 0, dest.getNodeEID() );
+							EventSwitch::raiseEvent( new RouteEvent( sched, node ) );
+						} catch (NoNeighbourFoundException ex) {
+							// not in the neighbourhood, create a schedule
 							BundleSchedule schedule = getSchedule( routeevent->getBundle() );
 							EventSwitch::raiseEvent( new StorageEvent( schedule ) );
 						}
+
 						break;
 					}
 					case ROUTE_LOCAL_BUNDLE:
@@ -165,22 +175,22 @@ namespace dtn
 			return false;
 		}
 
-		BundleSchedule BundleRouter::getSchedule(Bundle *b)
+		BundleSchedule BundleRouter::getSchedule(const Bundle &b)
 		{
-			if ( b->getDestination() == "dtn:none" )
+			if ( b.getDestination() == "dtn:none" )
 			{
 				throw NoScheduleFoundException("No destination set");
 			}
 
 			// Überprüfe die Lebenszeit des Bundles
-			if ( b->isExpired() )
+			if ( b.isExpired() )
 			{
 				throw BundleExpiredException();
 			}
 
-			if 	( isNeighbour( b->getDestination() ) )
+			if 	( isNeighbour( b.getDestination() ) )
 			{
-				return BundleSchedule(b, 0, b->getDestination() );
+				return BundleSchedule(b, 0, EID(b.getDestination()).getNodeEID() );
 			}
 
 			if 	( isLocal( b ) )
@@ -193,9 +203,9 @@ namespace dtn
 			throw NoScheduleFoundException("No route available");
 		}
 
-		bool BundleRouter::isLocal(const Bundle *b) const
+		bool BundleRouter::isLocal(const Bundle &b) const
 		{
-			string desteid = b->getDestination();
+			string desteid = b.getDestination();
 
 			if (desteid == m_eid) return true;
 

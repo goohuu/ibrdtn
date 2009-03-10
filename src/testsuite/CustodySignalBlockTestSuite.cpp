@@ -64,17 +64,17 @@ namespace testsuite
 		bool ret = true;
 
 		Bundle *out = TestUtils::createTestBundle(1000);
-		list<Bundle*> bundles = BundleFactory::split(*out, 200);
+		list<Bundle> bundles = BundleFactory::split(*out, 200);
 
-		Bundle *bundle = bundles.back();
+		Bundle &bundle = bundles.back();
 		BundleFactory &fac = BundleFactory::getInstance();
 		Bundle *cbundle = fac.newBundle();
 		CustodySignalBlock *block = PayloadBlockFactory::newCustodySignalBlock( true );
 		cbundle->appendBlock( block );
 
-		block->setMatch( *bundle );
+		block->setMatch( bundle );
 
-		if (!bundle->getPrimaryFlags().isFragment())
+		if (!bundle.getPrimaryFlags().isFragment())
 		{
 			cout << "generated bundle is not a fragment" << endl;
 			ret = false;
@@ -88,13 +88,13 @@ namespace testsuite
 				ret = false;
 			}
 
-			if ( bundle->getInteger(APPLICATION_DATA_LENGTH) != block->getFragmentLength() )
+			if ( bundle.getInteger(APPLICATION_DATA_LENGTH) != block->getFragmentLength() )
 			{
-				cout << "Application data size not equal: " << bundle->getInteger(APPLICATION_DATA_LENGTH) << " == " << block->getFragmentLength() << endl;
+				cout << "Application data size not equal: " << bundle.getInteger(APPLICATION_DATA_LENGTH) << " == " << block->getFragmentLength() << endl;
 				ret = false;
 			}
 
-			if ( !block->match( *bundle ) )
+			if ( !block->match( bundle ) )
 			{
 				cout << "block-bundle match failed" << endl;
 				ret = false;
@@ -103,16 +103,6 @@ namespace testsuite
 		else	ret = false;
 
 		delete cbundle;
-
-		// Aufräumen
-		list<Bundle*>::iterator iter = bundles.begin();
-
-		while ( iter != bundles.end() )
-		{
-			delete (*iter);
-			iter++;
-		}
-
 		delete out;
 
 		return ret;

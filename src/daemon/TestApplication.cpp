@@ -61,7 +61,7 @@ namespace dtn
 			if (m_dtntime <= curtime)
 			{
 				// Alle 5 Sekunden aktiv werden
-				m_dtntime = curtime + 30;
+				m_dtntime = curtime + 5;
 
 				reportIt();
 			}

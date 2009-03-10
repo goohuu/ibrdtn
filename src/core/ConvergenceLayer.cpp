@@ -9,12 +9,12 @@ namespace dtn
 		{
 			m_receiver = receiver;
 		}
-		
-		void ConvergenceLayer::eventBundleReceived(Bundle *bundle)
+
+		void ConvergenceLayer::eventBundleReceived(Bundle &bundle)
 		{
 			if (m_receiver != NULL)
 			{
-				m_receiver->received(this, bundle);
+				m_receiver->received(*this, bundle);
 			}
 		}
 	}

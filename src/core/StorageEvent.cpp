@@ -6,35 +6,41 @@
  */
 
 #include "core/StorageEvent.h"
+#include "data/Exceptions.h"
 
 namespace dtn
 {
 	namespace core
 	{
 		StorageEvent::StorageEvent(const BundleSchedule &schedule)
-		: m_schedule(schedule), m_bundle(NULL), m_action(STORE_SCHEDULE)
+		: m_bundle(NULL), m_schedule(schedule), m_action(STORE_SCHEDULE)
 		{}
 
-		StorageEvent::StorageEvent(Bundle *bundle)
-		: m_bundle(bundle), m_schedule(BundleSchedule(NULL, 0, "dtn:none")), m_action(STORE_BUNDLE)
-		{}
+		StorageEvent::StorageEvent(const Bundle &bundle)
+		: m_bundle(NULL), m_schedule(BundleSchedule(NULL, 0, "dtn:none")), m_action(STORE_BUNDLE)
+		{
+			m_bundle = new Bundle(bundle);
+		}
 
 		StorageEvent::~StorageEvent()
-		{}
+		{
+			if (m_bundle != NULL) delete m_bundle;
+		}
 
 		EventStorageAction StorageEvent::getAction() const
 		{
 			return m_action;
 		}
 
-		BundleSchedule StorageEvent::getSchedule() const
+		const BundleSchedule& StorageEvent::getSchedule() const
 		{
 			return m_schedule;
 		}
 
-		Bundle* StorageEvent::getBundle() const
+		const Bundle& StorageEvent::getBundle() const
 		{
-			return m_bundle;
+			throw exceptions::MissingObjectException();
+			return *m_bundle;
 		}
 
 		const string StorageEvent::getName() const

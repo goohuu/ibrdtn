@@ -211,7 +211,8 @@ namespace dtn
 			// delete the schedule and the bundle in the database
 			sqlQuery("DELETE FROM bundles WHERE rowid = ?", bundleid);
 
-			BundleSchedule s(b, scheduletime, eid);
+			BundleSchedule s(*b, scheduletime, eid);
+			delete b;
 			return s;
 		}
 
@@ -257,7 +258,8 @@ namespace dtn
 			// delete the schedule and the bundle in the database
 			sqlQuery("DELETE FROM bundles WHERE rowid = ?", bundleid);
 
-			BundleSchedule s(b, scheduletime, eid);
+			BundleSchedule s(*b, scheduletime, eid);
+			delete b;
 			return s;
 		}
 
@@ -271,7 +273,7 @@ namespace dtn
 			int rc;
 			sqlite3_stmt *st = m_stmt_store_schedule;
 
-			Bundle *b = schedule.getBundle();
+			const Bundle &b = schedule.getBundle();
 
 			if ( b == NULL ) return;
 
@@ -306,7 +308,7 @@ namespace dtn
 			}
 		}
 
-		Bundle* SQLiteBundleStorage::storeFragment(const Bundle *bundle)
+		Bundle* SQLiteBundleStorage::storeFragment(const Bundle &bundle)
 		{
 			MutexLock l(m_dblock);
 
@@ -315,10 +317,10 @@ namespace dtn
 			unsigned int ret = 0;
 
 			// search for other fragments in the database
-			sqlite3_bind_int64(st, 1, sqlite3_uint64(bundle->getInteger(CREATION_TIMESTAMP)));
-			sqlite3_bind_int64(st, 2, sqlite3_uint64(bundle->getInteger(CREATION_TIMESTAMP_SEQUENCE)));
+			sqlite3_bind_int64(st, 1, sqlite3_uint64(bundle.getInteger(CREATION_TIMESTAMP)));
+			sqlite3_bind_int64(st, 2, sqlite3_uint64(bundle.getInteger(CREATION_TIMESTAMP_SEQUENCE)));
 
-			string source = bundle->getSource();
+			string source = bundle.getSource();
 			sqlite3_bind_text(st, 3, source.c_str(), source.length(), SQLITE_TRANSIENT);
 
 			// execute the statement
@@ -336,7 +338,7 @@ namespace dtn
 			// reset statement
 			sqlite3_reset(st);
 
-			PayloadBlock *payload = bundle->getPayloadBlock();
+			PayloadBlock *payload = bundle.getPayloadBlock();
 
 			if (payload == NULL)
 			{
@@ -348,21 +350,21 @@ namespace dtn
 			ret += payload->getLength();
 
 			// if "ret" is equal to the application data size
-			if ( ret == bundle->getInteger(APPLICATION_DATA_LENGTH) )
+			if ( ret == bundle.getInteger(APPLICATION_DATA_LENGTH) )
 			{
 				// ... then all fragments available, merge and return
 				st = m_stmt_get_fragment;
 
 				// search for other fragments in the database
-				sqlite3_bind_int64(st, 1, sqlite3_uint64(bundle->getInteger(CREATION_TIMESTAMP)));
-				sqlite3_bind_int64(st, 2, sqlite3_uint64(bundle->getInteger(CREATION_TIMESTAMP_SEQUENCE)));
+				sqlite3_bind_int64(st, 1, sqlite3_uint64(bundle.getInteger(CREATION_TIMESTAMP)));
+				sqlite3_bind_int64(st, 2, sqlite3_uint64(bundle.getInteger(CREATION_TIMESTAMP_SEQUENCE)));
 
-				string source = bundle->getSource();
+				string source = bundle.getSource();
 				sqlite3_bind_text(st, 3, source.c_str(), source.length(), SQLITE_TRANSIENT);
 
 				Bundle *b = NULL;
-				list<Bundle*> fragment_list;
-				fragment_list.push_back( new Bundle(*bundle) );
+				list<Bundle> fragment_list;
+				fragment_list.push_back( bundle );
 
 				// execute the statement
 				while ( sqlite3_step(st) == SQLITE_ROW ){
@@ -371,15 +373,15 @@ namespace dtn
 
 					BundleFactory &fac = BundleFactory::getInstance();
 					b = fac.parse(data, size);
-					fragment_list.push_back( b );
+					fragment_list.push_back( *b );
 				}
 
 				// reset statement
 				sqlite3_reset(st);
 
 				// delete all fragments in database
-				sqlite3_bind_int64(m_stmt_delete_fragment, 1, sqlite3_uint64(bundle->getInteger(CREATION_TIMESTAMP)));
-				sqlite3_bind_int64(m_stmt_delete_fragment, 2, sqlite3_uint64(bundle->getInteger(CREATION_TIMESTAMP_SEQUENCE)));
+				sqlite3_bind_int64(m_stmt_delete_fragment, 1, sqlite3_uint64(bundle.getInteger(CREATION_TIMESTAMP)));
+				sqlite3_bind_int64(m_stmt_delete_fragment, 2, sqlite3_uint64(bundle.getInteger(CREATION_TIMESTAMP_SEQUENCE)));
 				sqlite3_bind_text(m_stmt_delete_fragment, 3, source.c_str(), source.length(), SQLITE_TRANSIENT);
 				sqlite3_step(m_stmt_delete_fragment);
 
@@ -389,29 +391,21 @@ namespace dtn
 				// merge all bundle fragments to one bundle
 				Bundle *merged = BundleFactory::getInstance().merge(fragment_list);
 
-				// free all fragments
-				list<Bundle*>::const_iterator iter = fragment_list.begin();
-				while (iter != fragment_list.end() )
-				{
-					delete (*iter);
-					iter++;
-				}
-
 				return merged;
 			}
 
 			// ... else insert the fragment into the database
 			st = m_stmt_store_fragment;
 
-			sqlite3_bind_int(st, 1, bundle->getInteger(CREATION_TIMESTAMP));
-			sqlite3_bind_int(st, 2, bundle->getInteger(CREATION_TIMESTAMP_SEQUENCE));
+			sqlite3_bind_int(st, 1, bundle.getInteger(CREATION_TIMESTAMP));
+			sqlite3_bind_int(st, 2, bundle.getInteger(CREATION_TIMESTAMP_SEQUENCE));
 			sqlite3_bind_text(st, 3, source.c_str(), source.length(), SQLITE_TRANSIENT);
-			sqlite3_bind_int(st, 4, bundle->getInteger(LIFETIME));
-			sqlite3_bind_int(st, 5, bundle->getInteger(FRAGMENTATION_OFFSET));
+			sqlite3_bind_int(st, 4, bundle.getInteger(LIFETIME));
+			sqlite3_bind_int(st, 5, bundle.getInteger(FRAGMENTATION_OFFSET));
 			sqlite3_bind_int(st, 6, payload->getLength());
 
-			unsigned char *data = bundle->getData();
-			sqlite3_bind_blob(st, 7, data, bundle->getLength(), SQLITE_TRANSIENT);
+			unsigned char *data = bundle.getData();
+			sqlite3_bind_blob(st, 7, data, bundle.getLength(), SQLITE_TRANSIENT);
 			free(data);
 
 			// insert bundle into database
@@ -425,32 +419,31 @@ namespace dtn
 				throw exceptions::NoSpaceLeftException("database error while storing fragment");
 			}
 
-			delete bundle;
 			return NULL;
 		}
 
-		sqlite3_int64 SQLiteBundleStorage::storeBundle(const Bundle *b)
+		sqlite3_int64 SQLiteBundleStorage::storeBundle(const Bundle &b)
 		{
 			int rc;
 			sqlite3_stmt *st = m_stmt_store_bundle;
 
 			if ( b == NULL ) return 0;
 
-			sqlite3_bind_int(st, 1, b->getInteger(CREATION_TIMESTAMP));
-			sqlite3_bind_int(st, 2, b->getInteger(CREATION_TIMESTAMP_SEQUENCE));
+			sqlite3_bind_int(st, 1, b.getInteger(CREATION_TIMESTAMP));
+			sqlite3_bind_int(st, 2, b.getInteger(CREATION_TIMESTAMP_SEQUENCE));
 
-			string source = b->getSource();
+			string source = b.getSource();
 			sqlite3_bind_text(st, 3, source.c_str(), source.length(), SQLITE_TRANSIENT);
 
-			string destination = b->getDestination();
+			string destination = b.getDestination();
 			sqlite3_bind_text(st, 4, destination.c_str(), destination.length(), SQLITE_TRANSIENT);
 
-			sqlite3_bind_int(st, 5, b->getInteger(LIFETIME));
+			sqlite3_bind_int(st, 5, b.getInteger(LIFETIME));
 
-			if ( b->getPrimaryFlags().isFragment() )
+			if ( b.getPrimaryFlags().isFragment() )
 			{
-				sqlite3_bind_int(st, 6, b->getInteger(FRAGMENTATION_OFFSET));
-				sqlite3_bind_int(st, 7, b->getInteger(APPLICATION_DATA_LENGTH));
+				sqlite3_bind_int(st, 6, b.getInteger(FRAGMENTATION_OFFSET));
+				sqlite3_bind_int(st, 7, b.getInteger(APPLICATION_DATA_LENGTH));
 			}
 			else
 			{
@@ -458,13 +451,13 @@ namespace dtn
 				sqlite3_bind_null(st, 7);
 			}
 
-			PrimaryFlags flags = b->getPrimaryFlags();
+			PrimaryFlags flags = b.getPrimaryFlags();
 			sqlite3_bind_int(st, 8, flags.getPriority());
 			if ( flags.isAdmRecord() ) 	sqlite3_bind_int(st, 9, 1);
 			else						sqlite3_bind_int(st, 9, 0);
 
-			unsigned char *data = b->getData();
-			sqlite3_bind_blob(st, 10, data, b->getLength(), SQLITE_TRANSIENT);
+			unsigned char *data = b.getData();
+			sqlite3_bind_blob(st, 10, data, b.getLength(), SQLITE_TRANSIENT);
 			free(data);
 
 			// insert bundle into database

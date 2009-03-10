@@ -7,30 +7,33 @@ using namespace dtn::data;
 
 namespace dtn
 {
-namespace core
-{
-	/**
-	 * Ein BundleSchedule ist ein Zeitplan für ein Bundle. Mit ihm wird festgelegt,
-	 * wann ein Bundle zu wem versendet werden soll.
-	 */
-	class BundleSchedule
+	namespace core
 	{
-		public:
-			BundleSchedule(Bundle *b, unsigned int dtntime, string eid);
-			BundleSchedule(const BundleSchedule &k);
+		/**
+		 * Ein BundleSchedule ist ein Zeitplan für ein Bundle. Mit ihm wird festgelegt,
+		 * wann ein Bundle zu wem versendet werden soll.
+		 */
+		class BundleSchedule
+		{
+			public:
+				BundleSchedule();
+				BundleSchedule(const Bundle &b, unsigned int dtntime, string eid);
+				BundleSchedule(const BundleSchedule &k);
 
-			Bundle* getBundle() const;
-			unsigned int getTime() const;
-			string getEID() const;
+				~BundleSchedule();
 
-			static const unsigned int MAX_TIME;
+				const Bundle& getBundle() const;
+				unsigned int getTime() const;
+				string getEID() const;
 
-		private:
-			string m_eid;
-			unsigned int m_time;
-			Bundle *m_bundle;
-	};
-}
+				static const unsigned int MAX_TIME;
+
+			private:
+				string m_eid;
+				unsigned int m_time;
+				Bundle *m_bundle;
+		};
+	}
 }
 
 

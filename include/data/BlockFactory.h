@@ -38,7 +38,7 @@ namespace dtn
 			 * @param[in] block The block to copy.
 			 * @return A copy of the given block.
 			 */
-			virtual Block* copy(Block *block);
+			virtual Block* copy(const Block &block);
 
 			/**
 			 * Create a new empty block.

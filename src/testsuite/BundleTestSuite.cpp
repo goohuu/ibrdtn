@@ -37,6 +37,12 @@ namespace testsuite
 			ret = false;
 		}
 
+		if ( !copyTest() )
+		{
+			cout << endl << "copyTest failed" << endl;
+			ret = false;
+		}
+
 		if ( !compareTest() )
 		{
 			cout << endl << "compareTest failed" << endl;
@@ -138,23 +144,24 @@ namespace testsuite
 		// Erstelle ein "großes" Bundle
 		Bundle *bundle = TestUtils::createTestBundle(1024);
 
-		list<Bundle*> bundles;
+		list<Bundle> bundles;
 
 		unsigned int offset = 0;
 		Bundle *fragment = BundleFactory::slice(*bundle, 200, offset);
 
 		while (fragment != NULL)
 		{
-			bundles.push_back(fragment);
+			bundles.push_back(*fragment);
 			fragment = BundleFactory::slice(*bundle, 200, offset);
 		}
 
 		// Size test
 		unsigned int payload_sum = 0;
-		list<Bundle*>::iterator iter = bundles.begin();
+		list<Bundle>::iterator iter = bundles.begin();
 		while (iter != bundles.end())
 		{
-			payload_sum += (*iter)->getPayloadBlock()->getLength();
+			PayloadBlock *pblock = (*iter).getPayloadBlock();
+			payload_sum += pblock->getLength();
 			iter++;
 		}
 
@@ -172,14 +179,6 @@ namespace testsuite
 
 		// Merge
 		Bundle *merged = BundleFactory::getInstance().merge( bundles );
-
-		// delete the fragments
-		iter = bundles.begin();
-		while (iter != bundles.end())
-		{
-			delete (*iter);
-			iter++;
-		}
 
 		if (!TestUtils::compareBundles(bundle, merged))
 		{
@@ -279,7 +278,7 @@ namespace testsuite
 
 		BundleFactory &fac = BundleFactory::getInstance();
 
-		list<Bundle*> bundles = fac.split(*bundle, 200);
+		list<Bundle> bundles = fac.split(*bundle, 200);
 
 		if (bundles.size() != 7)
 		{
@@ -289,14 +288,6 @@ namespace testsuite
 
 		// Merge
 		Bundle *merged = fac.merge( bundles );
-
-		// delete the fragments
-		list<Bundle*>::const_iterator iter = bundles.begin();
-		while (iter != bundles.end())
-		{
-			delete (*iter);
-			iter++;
-		}
 
 		if (merged == NULL)
 		{
@@ -341,6 +332,58 @@ namespace testsuite
 		return ret;
 	}
 
+	bool BundleTestSuite::copyTest()
+	{
+		BundleFactory &fac = BundleFactory::getInstance();
+
+		// Erstellt ein Testbundle
+		Bundle *out = TestUtils::createTestBundle();
+
+		// Setze den Empfänger und den Absender ein
+		out->setDestination( "dtn://wks1" );
+		out->setSource( "dtn:local" );
+		out->setInteger( LIFETIME, 20 );
+
+		// make a copy
+		Bundle in(*out);
+
+		if (in != *out)
+		{
+			cout << "copy failed!" << endl;
+			return false;
+		}
+
+		unsigned char *data1 = out->getData();
+		unsigned int length1 = out->getLength();
+
+		delete out;
+
+		unsigned char *data2 = in.getData();
+		unsigned int length2 = in.getLength();
+
+		if (!TestUtils::compareData(data1, data2, length1))
+		{
+			free(data1);
+			free(data2);
+
+			return false;
+		}
+
+		free(data1);
+		free(data2);
+
+		PayloadBlock *pblock = in.getPayloadBlock();
+
+		if (pblock == NULL)
+		{
+			cout << "No payload block available!" << endl;
+
+			return false;
+		}
+
+		return true;
+	}
+
 	bool BundleTestSuite::createTest()
 	{
 		BundleFactory &fac = BundleFactory::getInstance();
@@ -363,6 +406,16 @@ namespace testsuite
 			if (in->getLength() != length)
 			{
 				cout << "didn't parsed the hole bundle" << endl;
+				delete in;
+				delete out;
+				return false;
+			}
+
+			PayloadBlock *pblock = in->getPayloadBlock();
+
+			if (pblock == NULL)
+			{
+				cout << "No payload block available!" << endl;
 				delete in;
 				delete out;
 				return false;
@@ -396,8 +449,6 @@ namespace testsuite
 			delete out;
 			return false;
 		}
-
-
 	}
 }
 }

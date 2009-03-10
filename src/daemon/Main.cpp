@@ -209,19 +209,17 @@ int main(int argc, char *argv[])
 	}
 
 #ifdef WITH_SQLITE
-	BundleStorage *storage = NULL;
-
 	if ( conf.useSQLiteStorage() )
 	{
-		storage = new SQLiteBundleStorage(
+		SQLiteBundleStorage storage(
 					conf.getSQLiteDatabase(),
 					conf.doSQLiteFlush()
 					);
 	} else {
-		storage = new SimpleBundleStorage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
+		SimpleBundleStorage storage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
 	}
 #else
-	BundleStorage *storage = new SimpleBundleStorage(core, conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
+	SimpleBundleStorage storage(core, conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
 #endif
 
 #ifdef USE_EMMA_CODE
@@ -273,6 +271,7 @@ int main(int argc, char *argv[])
 	custody_manager.start();
 	router.start();
 	multicl.initialize();
+	storage.start();
 
 #ifdef USE_EMMA_CODE
 	if ( gpsc != NULL )
@@ -298,7 +297,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	TestApplication app(core, "dtn://node2/debugger");
+	TestApplication app(core, "dtn://mini-debian/debugger");
 	app.start();
 
 //#ifdef HAVE_LIBLUA5_1
@@ -325,6 +324,7 @@ int main(int argc, char *argv[])
 #endif
 
 	// stop the services
+	storage.abort();
 	custody_manager.abort();
 	multicl.terminate();
 	router.abort();

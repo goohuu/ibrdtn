@@ -60,7 +60,7 @@ namespace core
 		virtual TransmitReport transmit(const Bundle &b, const Node &node) = 0;
 
 		void setBundleReceiver(BundleReceiver *receiver);
-		void eventBundleReceived(Bundle *bundle);
+		void eventBundleReceived(Bundle &bundle);
 
 		private:
 		BundleReceiver *m_receiver;

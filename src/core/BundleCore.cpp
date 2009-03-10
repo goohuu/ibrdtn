@@ -70,7 +70,7 @@ namespace dtn
 				case BUNDLE_RECEIVED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_RECEPTION) )
 					{
-						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+						transmit( createStatusReport(b, RECEIPT_OF_BUNDLE) );
 					}
 					break;
 				case BUNDLE_DELETED:
@@ -83,21 +83,21 @@ namespace dtn
 				case BUNDLE_FORWARDED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_FORWARDING) )
 					{
-						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+						transmit( createStatusReport(b, FORWARDING_OF_BUNDLE) );
 					}
 					break;
 
 				case BUNDLE_DELIVERED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY) )
 					{
-						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+						transmit( createStatusReport(b, DELIVERY_OF_BUNDLE) );
 					}
 					break;
 
 				case BUNDLE_CUSTODY_ACCEPTED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE) )
 					{
-						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+						transmit( createStatusReport(b, CUSTODY_ACCEPTANCE_OF_BUNDLE) );
 					}
 					break;
 				}
@@ -109,7 +109,7 @@ namespace dtn
 					case CUSTODY_ACCEPTANCE:
 					{
 						// send a custody ack
-						transmitCustody(true, *custodyevent->getBundle());
+						transmitCustody(true, custodyevent->getBundle());
 
 						// set us as custodian
 						//b->setCustodian( m_localeid );
@@ -162,17 +162,22 @@ namespace dtn
 					case ROUTE_LOCAL_BUNDLE:
 					{
 						// get the bundle of the event
-						Bundle *b = routeevent->getBundle();
-						PrimaryFlags flags = b->getPrimaryFlags();
+						const Bundle &b = routeevent->getBundle();
+						PrimaryFlags flags = b.getPrimaryFlags();
 
 						// check for administrative records
 						if ( flags.isAdmRecord() )
 						{
-							processCustody( *b );
+							processCustody( b );
 						}
 
 						// forward the bundle to the application
 						forwardLocalBundle( b );
+						break;
+					}
+					case ROUTE_TRANSMIT_BUNDLE:
+					{
+						transmitBundle(routeevent->getSchedule(), routeevent->getNode());
 						break;
 					}
 				}
@@ -213,8 +218,9 @@ namespace dtn
 				}
 
 				// find a next route for the bundle
-				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_FIND_SCHEDULE) );
+				EventSwitch::raiseEvent( new RouteEvent(*b, ROUTE_FIND_SCHEDULE) );
 
+				delete b;
 				return BUNDLE_ACCEPTED;
 			} catch (NoSpaceLeftException ex) {
 				// Bündel verwerfen
@@ -337,19 +343,16 @@ namespace dtn
 
 		bool BundleCore::transmitBundle(const BundleSchedule &schedule, const Node &node)
 		{
-			// Variable für das Bündel initialisieren
-			Bundle *bundle = NULL;
+			// Bündel holen
+			const Bundle &bundle = schedule.getBundle();
 
 			try {
-				// Bündel holen
-				bundle = schedule.getBundle();
-
 				// Bündelparameter holen
-				PrimaryFlags flags = bundle->getPrimaryFlags();
+				PrimaryFlags flags = bundle.getPrimaryFlags();
 
 				try {
 					// transfer bundle to node
-					switch ( getConvergenceLayer()->transmit( *bundle, node ) )
+					switch ( getConvergenceLayer()->transmit( bundle, node ) )
 					{
 						case TRANSMIT_SUCCESSFUL:
 							// transmittion successful
@@ -360,10 +363,7 @@ namespace dtn
 							}
 
 							// report forwarded event
-							EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_FORWARDED) );
-
-							// delete the bundle
-							delete bundle;
+							EventSwitch::raiseEvent( new BundleEvent(bundle, BUNDLE_FORWARDED) );
 						break;
 
 						case BUNDLE_ACCEPTED:
@@ -382,56 +382,27 @@ namespace dtn
 				}
 
 				return true;
-			} catch (TransferNotCompletedException ex) {
-				Bundle *fragment = NULL;
-				try {
-					// Get the fragment of the remaining data.
-					fragment = ex.getFragment();
-
-					if (fragment != NULL)
-					{
-						// Store the fragment in the storage.
-						BundleSchedule schedule( fragment, schedule.getTime(), schedule.getEID() );
-						EventSwitch::raiseEvent( new StorageEvent( schedule ) );
-					}
-
-					// We have fragments, delete the origin bundle.
-					delete bundle;
-
-				} catch (DoNotFragmentBitSetException ex) {
-					// This bundle can't be fragmented. Dismiss it!
-					EventSwitch::raiseEvent( new BundleEvent(*fragment, BUNDLE_DELETED) );
-					delete fragment;
-				} catch (NoSpaceLeftException ex) {
-					// No space left in the storage. Dismiss the bundle!
-					EventSwitch::raiseEvent( new BundleEvent(*fragment, BUNDLE_DELETED) );
-					delete fragment;
-				}
 			} catch (Exception ex) {
 				// No space left in the storage.
 				// No route found.
 				// Doesn't fit or not allowed.
 				// No receiption!?
 				// Dismiss the bundle. I don't know what to do.
-				if (bundle != NULL)
-				{
-					EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_DELETED) );
-					delete bundle;
-				}
+				EventSwitch::raiseEvent( new BundleEvent(bundle, BUNDLE_DELETED) );
 			}
 
 			return false;
 		}
 
-		void BundleCore::received(ConvergenceLayer *cl, Bundle *b)
+		void BundleCore::received(const ConvergenceLayer &cl, Bundle &b)
 		{
-			PrimaryFlags flags = b->getPrimaryFlags();
+			PrimaryFlags flags = b.getPrimaryFlags();
 
 			// received event
-			EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_RECEIVED) );
+			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
 
 			// check all block of the bundle for block flag actions
-			list<Block*> blocks = b->getBlocks();
+			list<Block*> blocks = b.getBlocks();
 			list<Block*>::const_iterator iter = blocks.begin();
 
 			while (iter != blocks.end())
@@ -444,41 +415,47 @@ namespace dtn
 					if ( flags.getFlag(REPORT_IF_CANT_PROCESSED) )
 					{
 						// transmit a status report if requested
-						transmit( createStatusReport(*b, RECEIPT_OF_BUNDLE, BLOCK_UNINTELLIGIBLE) );
+						transmit( createStatusReport(b, RECEIPT_OF_BUNDLE, BLOCK_UNINTELLIGIBLE) );
 					}
 
 					if ( flags.getFlag(DELETE_IF_CANT_PROCESSED) )
 					{
 						// discard the hole bundle!
-						EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_DELETED) );
-						delete b;
+						EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
 						return;
 					}
 
 					if ( flags.getFlag(DISCARD_IF_CANT_PROCESSED) )
 					{
 						// discard this block
-						b->removeBlock( block );
+						b.removeBlock( block );
 					}
 				}
 
 				iter++;
 			}
 
+			// delete if the lifetime has expired
+			if (b.isExpired())
+			{
+				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
+				return;
+			}
+
 			try {
 				// Wurde Custody angefordert?
-				PrimaryFlags flags( b->getInteger(PROCFLAGS) );
+				PrimaryFlags flags( b.getInteger(PROCFLAGS) );
 
 				if (flags.isCustodyRequested())
 				{
 					// Setze Custody EID auf die eigene EID
-					b->setCustodian( m_localeid );
+					b.setCustodian( m_localeid );
 				}
 
 				// find a route
 				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_FIND_SCHEDULE) );
 			} catch (InvalidBundleData ex) {
-				delete b;
+
 			} catch (Exception ex) {
 				// Alle anderen Ausnahmen: NoSpaceLeftException, BundleExpiredException
 				// und NoScheduleFoundException führen zum ablehnen des Bündel.
@@ -486,21 +463,18 @@ namespace dtn
 				// Bei Custody noch ein Custody NACK senden
 				if (flags.isCustodyRequested())
 				{
-					transmitCustody(false, *b);
+					transmitCustody(false, b);
 				}
 
 				// Bündel verwerfen und ggf. Reports generieren
-				EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_DELETED) );
-				delete b;
+				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
 			}
 		}
 
-		void BundleCore::forwardLocalBundle(Bundle *bundle)
+		void BundleCore::forwardLocalBundle(const Bundle &bundle)
 		{
-			if (bundle == NULL) return;
-
 			// Flags speichern
-			PrimaryFlags flags = bundle->getPrimaryFlags();
+			PrimaryFlags flags = bundle.getPrimaryFlags();
 
 			// Prüfen ob das Bundle ein Fragment ist
 			if ( flags.isFragment() )
@@ -511,30 +485,27 @@ namespace dtn
 				return;
 			};
 
-			AbstractWorker *worker = m_worker[ bundle->getDestination() ];
+			AbstractWorker *worker = m_worker[ bundle.getDestination() ];
 			if (worker != NULL)
 			{
-				switch ( worker->callbackBundleReceived( *bundle ) )
+				switch ( worker->callbackBundleReceived( bundle ) )
 				{
 					case BUNDLE_ACCEPTED:
 						// raise delivered event
-						EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_DELIVERED) );
+						EventSwitch::raiseEvent( new BundleEvent(bundle, BUNDLE_DELIVERED) );
 					break;
 
 					default:
 						// raise deleted event
-						EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_DELETED) );
+						EventSwitch::raiseEvent( new BundleEvent(bundle, BUNDLE_DELETED) );
 					break;
 				}
 			}
 			else
 			{
 				// raise deleted event
-				EventSwitch::raiseEvent( new BundleEvent(*bundle, BUNDLE_DELETED) );
+				EventSwitch::raiseEvent( new BundleEvent(bundle, BUNDLE_DELETED) );
 			}
-
-			// remove the bundle
-			delete bundle;
 		}
 
 		void BundleCore::processCustody(const Bundle &b)

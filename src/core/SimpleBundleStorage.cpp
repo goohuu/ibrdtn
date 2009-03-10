@@ -48,7 +48,8 @@ namespace dtn
 						if (ret != NULL)
 						{
 							// route the joint bundle
-							EventSwitch::raiseEvent( new RouteEvent(ret, ROUTE_FIND_SCHEDULE) );
+							EventSwitch::raiseEvent( new RouteEvent(*ret, ROUTE_FIND_SCHEDULE) );
+							delete ret;
 						}
 
 						break;
@@ -85,16 +86,16 @@ namespace dtn
 			unsigned int remain = m_size - m_currentsize;
 
 			// Hole Referenz auf das Bundle im Schedule
-			Bundle *bundle = schedule.getBundle();
+			const Bundle &bundle = schedule.getBundle();
 
-			if ( remain < bundle->getLength() )
+			if ( remain < bundle.getLength() )
 			{
 				// Nicht genug Platz vorhanden
 				throw NoSpaceLeftException();
 			}
 			else
 			{
-				m_currentsize += bundle->getLength();
+				m_currentsize += bundle.getLength();
 			}
 
 			// Storage ändert sich, aufräumen wieder erlaubt
@@ -103,7 +104,7 @@ namespace dtn
 			// Prüfe ob dieses Bündel vor dem nächsten geplanten Durchlauf abläuft
 			// Wobei wir planen immer 5 Sekunden nach Ablauf des nächsten Bündel zu reagieren
 			// um eventuell mehrere Bündel gleichzeitig zu entsorgen.
-			unsigned int lifedtn = bundle->getInteger(LIFETIME) + bundle->getInteger(CREATION_TIMESTAMP);
+			unsigned int lifedtn = bundle.getInteger(LIFETIME) + bundle.getInteger(CREATION_TIMESTAMP);
 
 			if ( m_nextdeprecation > (lifedtn + 5) )
 			{
@@ -137,30 +138,9 @@ namespace dtn
 
 			m_currentsize = 0;
 
-			// Lösche alle Bundles
-			list<BundleSchedule>::iterator iter = m_schedules.begin();
-
-			while (iter != m_schedules.end())
-			{
-				delete (*iter).getBundle();
-				iter++;
-			}
-
 			// delete all fragments
-			list<list<Bundle*> >::iterator list_iter = m_fragments.begin();
-
-			while (list_iter != m_fragments.end())
-			{
-				list<Bundle*>::iterator iter = (*list_iter).begin();
-
-				while (iter != (*list_iter).end())
-				{
-					delete (*iter);
-					iter++;
-				}
-
-				list_iter++;
-			}
+			m_schedules.clear();
+			m_fragments.clear();
 		}
 
 		bool SimpleBundleStorage::isEmpty()
@@ -183,7 +163,8 @@ namespace dtn
 			if (m_neighbours.size() != 0)
 			{
 				// get the first neighbour
-				Node &node = m_neighbours[0];
+				map<string,Node>::iterator iter = m_neighbours.begin();
+				Node &node = (*iter).second;
 
 				try {
 					BundleSchedule schedule = getSchedule( node.getURI() );
@@ -225,7 +206,6 @@ namespace dtn
 			MutexLock l(m_readlock);
 
 			list<BundleSchedule>::iterator iter = m_schedules.begin();
-			Bundle *b;
 			bool ret = false;
 
 			// Suche nach passenden Bundles
@@ -237,10 +217,10 @@ namespace dtn
 				}
 				else
 				{
-					b = (*iter).getBundle();
+					const Bundle &b = (*iter).getBundle();
 
 					// Prüfe ob der Schedule für die Destination ist.
-					if (b->getDestination().find( destination, 0 ) == 0)
+					if (b.getDestination().find( destination, 0 ) == 0)
 					{
 						ret = true;
 					}
@@ -255,7 +235,7 @@ namespace dtn
 					m_schedules.erase(iter);
 
 					// Gesamtgröße verkleinern
-					m_currentsize -= schedule.getBundle()->getLength();
+					m_currentsize -= schedule.getBundle().getLength();
 
 					// Zurückgeben
 					return schedule;
@@ -284,7 +264,7 @@ namespace dtn
 			}
 
 			// Gesamtgröße verkleinern
-			m_currentsize -= ret.getBundle()->getLength();
+			m_currentsize -= ret.getBundle().getLength();
 
 			// Letzte Element löschen
 			m_schedules.pop_back();
@@ -307,25 +287,22 @@ namespace dtn
 				BundleSchedule schedule = (*iter);
 
 				// Erstes Kriterium: Keine StatusReports
-				if ((*iter).getBundle()->getLength() < maxsize)
-				if ((*iter).getBundle()->getReportTo() == "dtn:none")
+				if ((*iter).getBundle().getLength() < maxsize)
+				if ((*iter).getBundle().getReportTo() == "dtn:none")
 				{
 					if ( bundle == NULL )
 					{
 						// Dieses Bündel merken wir uns legen es in die marked-Liste
 						marked.push_back( iter );
-						bundle = schedule.getBundle();
-						cursize += bundle->getLength();
+						const Bundle &bundle = schedule.getBundle();
+						cursize += bundle.getLength();
 					}
 					else
 					{
-						Bundle *tmp = (*iter).getBundle();
+						const Bundle &tmp = (*iter).getBundle();
+
 						// Vergleiche das zuvor gefundene Bündel mit dem aktuellen
-						if ( (cursize + tmp->getLength()) <= maxsize )
-						if ( bundle->getSource() == tmp->getSource() )
-						if ( bundle->getDestination() == tmp->getDestination() )
-						if ( bundle->getCustodian() == tmp->getCustodian() )
-						if ( bundle->getInteger(LIFETIME) == tmp->getInteger(LIFETIME) )
+						if (*bundle == tmp)
 						{
 							// Bündel sind identisch genug, dieses nehmen wir mit
 							marked.push_back( iter );
@@ -359,26 +336,22 @@ namespace dtn
 			m_nextdeprecation = currenttime + 3600;
 
 			list<BundleSchedule>::iterator iter = m_schedules.begin();
-			Bundle *b;
 
 			// Suche nach veralteten Bundles
 			while (iter != m_schedules.end())
 			{
-				b = (*iter).getBundle();
+				const Bundle &b = (*iter).getBundle();
 
-				unsigned int lifedtn = b->getInteger(LIFETIME) + b->getInteger(CREATION_TIMESTAMP);
+				unsigned int lifedtn = b.getInteger(LIFETIME) + b.getInteger(CREATION_TIMESTAMP);
 
 				// Prüfe ob die Lebenszeit für das Paket abgelaufen ist
 				if (lifedtn < currenttime)
 				{
 					// Gesamtgröße verkleinern
-					m_currentsize -= b->getLength();
+					m_currentsize -= b.getLength();
 
 					// announce bundle deleted event
-					EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_DELETED) );
-
-					// delete the bundle
-					delete b;
+					EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
 
 					list<BundleSchedule>::iterator iter2 = iter;
 
@@ -404,13 +377,13 @@ namespace dtn
 			}
 		}
 
-		Bundle* SimpleBundleStorage::storeFragment(const Bundle *bundle)
+		Bundle* SimpleBundleStorage::storeFragment(const Bundle &bundle)
 		{
 			MutexLock l(m_fragmentslock);
 
 			// iterate through the list of fragment-lists.
-			list<list<Bundle*> >::iterator iter = m_fragments.begin();
-			list<Bundle*> fragment_list;
+			list<list<Bundle> >::iterator iter = m_fragments.begin();
+			list<Bundle> fragment_list;
 
 			// search for a existing list for this fragment
 			while (iter != m_fragments.end())
@@ -418,7 +391,7 @@ namespace dtn
 				fragment_list = (*iter);
 
 				// list found?
-				if ( *bundle == (*(fragment_list.front())) )
+				if ( bundle == fragment_list.front() )
 				{
 					m_fragments.erase( iter );
 					break;
@@ -429,10 +402,10 @@ namespace dtn
 			}
 
 			{	// check for duplicates. do this bundle already exists in the list?
-				list<Bundle*>::const_iterator iter = fragment_list.begin();
+				list<Bundle>::const_iterator iter = fragment_list.begin();
 				while (iter != fragment_list.end())
 				{
-					if ( (*iter)->getInteger(FRAGMENTATION_OFFSET) == bundle->getInteger(FRAGMENTATION_OFFSET) )
+					if ( (*iter).getInteger(FRAGMENTATION_OFFSET) == bundle.getInteger(FRAGMENTATION_OFFSET) )
 					{
 						// bundle found, discard the current fragment.
 						return NULL;
@@ -442,20 +415,11 @@ namespace dtn
 			}	// end check for duplicates
 
 			// bundle isn't in this list, add it
-			fragment_list.push_back( new Bundle(*bundle) );
+			fragment_list.push_back( bundle );
 
 			try {
 				// try to merge the fragments
 				Bundle *ret = BundleFactory::merge(fragment_list);
-
-				// delete the bundle fragments
-				list<Bundle*>::iterator iter = fragment_list.begin();
-
-				while (iter != fragment_list.end())
-				{
-					delete (*iter);
-					iter++;
-				}
 
 				return ret;
 			} catch (dtn::exceptions::FragmentationException ex) {

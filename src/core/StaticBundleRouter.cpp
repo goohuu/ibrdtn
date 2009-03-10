@@ -1,6 +1,7 @@
 #include "core/StaticBundleRouter.h"
 #include "core/BundleSchedule.h"
 #include "data/BundleFactory.h"
+#include "data/EID.h"
 
 #include <iostream>
 
@@ -17,7 +18,7 @@ namespace dtn
 		{
 		}
 
-		BundleSchedule StaticBundleRouter::getSchedule(Bundle *b)
+		BundleSchedule StaticBundleRouter::getSchedule(const Bundle &b)
 		{
 			try {
 				// Gebe einen Schedule zurück, wenn der StandardRouter einen weg gefunden hat.
@@ -32,24 +33,26 @@ namespace dtn
 					StaticRoute route = (*iter);
 					if ( route.match(b) )
 					{
+						EID target = EID(route.getDestination());
+
 						// Ist der nächste Knoten ein Nachbar?
 						if ( BundleRouter::isNeighbour(route.getDestination()) )
 						{
 							// Ja. Erstelle eine Schedule für jetzt
-							return BundleSchedule(b, BundleFactory::getDTNTime(), route.getDestination());
+							return BundleSchedule(b, BundleFactory::getDTNTime(), target.getNodeEID());
 						}
 						else
 						{
 							// Nein. Erzeuge einen Schedule mit maximaler Zeit, da nicht gesagt werden kann
 							// wann man auf den Knoten trifft.
-							return BundleSchedule(b, BundleSchedule::MAX_TIME, route.getDestination());
+							return BundleSchedule(b, BundleSchedule::MAX_TIME, target.getNodeEID());
 						}
 					}
 					iter++;
 				}
 
 				// Keine Route passt. Lege das Bundle in die Storage mit maximaler Zeit und mit direkter Adressierung.
-				return BundleSchedule(b, BundleSchedule::MAX_TIME, b->getDestination() );
+				return BundleSchedule(b, BundleSchedule::MAX_TIME, EID(b.getDestination()).getNodeEID() );
 			}
 		}
 	}

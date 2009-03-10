@@ -9,8 +9,16 @@ namespace dtn
 namespace core
 {
 
-Node::Node(NodeType type) : m_address("dtn:unknown"), m_type(type), m_port(4556), m_cl(NULL)
+Node::Node(NodeType type)
+: m_address("dtn:unknown"), m_type(type), m_port(4556), m_cl(NULL)
 {
+}
+
+Node::Node(const Node &k)
+: m_address(k.m_address), m_type(k.m_type), m_port(k.m_port), m_cl(k.m_cl),
+m_description(k.m_description), m_position(k.m_position), m_uri(k.m_uri)
+{
+
 }
 
 Node::~Node()

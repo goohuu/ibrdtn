@@ -65,7 +65,7 @@ namespace dtn
 			void registerSubNode(string eid, AbstractWorker *node);
 			void unregisterSubNode(string eid);
 
-			virtual void received(ConvergenceLayer *cl, Bundle *b);
+			virtual void received(const ConvergenceLayer &cl, Bundle &b);
 
 			string getLocalURI() const;
 
@@ -82,7 +82,7 @@ namespace dtn
 
 		private:
 			void processCustody(const Bundle &b);
-			void forwardLocalBundle(Bundle *bundle);
+			void forwardLocalBundle(const Bundle &bundle);
 			void transmitCustody(bool accept, const Bundle &b);
 
 			Bundle* createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);

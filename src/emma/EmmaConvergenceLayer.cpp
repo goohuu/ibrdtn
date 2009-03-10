@@ -61,12 +61,12 @@ namespace emma
 		return m_direct_cl->transmit(b, node);
 	}
 
-	void EmmaConvergenceLayer::received(ConvergenceLayer *cl, Bundle *b)
+	void EmmaConvergenceLayer::received(const ConvergenceLayer &cl, Bundle &b)
 	{
 		MutexLock l(m_receivelock);
 
 		// Wenn es ein DiscoverBundle ist dann verarbeite es gleich.
-		list<Block*> blocks = b->getBlocks(DiscoverBlock::BLOCK_TYPE);
+		list<Block*> blocks = b.getBlocks(DiscoverBlock::BLOCK_TYPE);
 
 		DiscoverBlock *discover = dynamic_cast<DiscoverBlock*>( blocks.front() );
 
@@ -76,7 +76,7 @@ namespace emma
 			Node n(FLOATING);
 			n.setAddress( discover->getConnectionAddress() );
 			n.setPort( discover->getConnectionPort() );
-			n.setURI( b->getSource() );
+			n.setURI( b.getSource() );
 			n.setTimeout( 5 ); // 5 Sekunden Timeout
 			n.setConvergenceLayer(this);
 
@@ -88,13 +88,11 @@ namespace emma
 			// create a event
 			EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_INFO_UPDATED));
 
-			//getRouter()->discovered(n);
-
-			// Zurück rufen, wenn dies ein Broadcast war und nicht von uns selbst stammt
-			if ( ( b->getDestination() == "dtn:discovery" ) && ( b->getSource() != m_eid ) )
-			{
-				yell( n );
-			}
+//			// Zurück rufen, wenn dies ein Broadcast war und nicht von uns selbst stammt
+//			if ( ( b->getDestination() == "dtn:discovery" ) && ( b->getSource() != m_eid ) )
+//			{
+//				yell( n );
+//			}
 		}
 
 		ConvergenceLayer::eventBundleReceived(b);
@@ -197,7 +195,7 @@ namespace emma
 		bundle->setSource( m_eid );
 
 		// Destination
-		bundle->setDestination("dtn:discovery");
+		bundle->setDestination( node.getURI() );
 
 		// Avoid storing & forwarding
 		bundle->setInteger(LIFETIME, 0);

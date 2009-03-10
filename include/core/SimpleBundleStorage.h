@@ -82,12 +82,12 @@ private:
 	/**
 	 * @sa storeFragment();
 	 */
-	Bundle* storeFragment(const Bundle *bundle);
+	Bundle* storeFragment(const Bundle &bundle);
 
 	BundleCore &m_core;
 
 	list<BundleSchedule> m_schedules;
-	list<list<Bundle*> > m_fragments;
+	list<list<Bundle> > m_fragments;
 
 	list<list<BundleSchedule>::iterator> searchEquals(unsigned int maxsize, list<BundleSchedule>::iterator start, list<BundleSchedule>::iterator end);
 

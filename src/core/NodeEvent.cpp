@@ -14,13 +14,14 @@ namespace dtn
 {
 	namespace core
 	{
-		NodeEvent::NodeEvent(const Node &n, const EventNodeAction action) : m_node(n), m_action(action)
+		NodeEvent::NodeEvent(const Node &n, const EventNodeAction action)
+		: m_node(n), m_action(action)
 		{}
 
 		NodeEvent::~NodeEvent()
 		{}
 
-		Node NodeEvent::getNode() const
+		const Node& NodeEvent::getNode() const
 		{
 			return m_node;
 		}
