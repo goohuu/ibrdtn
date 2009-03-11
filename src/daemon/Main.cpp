@@ -13,6 +13,7 @@
 #include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
 #include "core/EventDebugger.h"
+#include "core/CustodyManager.h"
 using namespace dtn::core;
 
 #ifdef HAVE_LIBSQLITE3
@@ -107,8 +108,10 @@ int main(int argc, char *argv[])
 		setgid( _conf.read<unsigned int>( "group", 0 ) );
 	}
 
+#ifdef DO_DEBUG_OUTPUT 
 	// create event debugger
 	EventDebugger eventdebugger;
+#endif
 
 	// create the bundle core object
 	BundleCore core(conf.getLocalUri());
@@ -297,9 +300,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	TestApplication app(core, "dtn://mini-debian/debugger");
-	app.start();
-
 //#ifdef HAVE_LIBLUA5_1
 //	luac.run("demo.lua");
 //#endif
@@ -308,8 +308,6 @@ int main(int argc, char *argv[])
 	{
 		usleep(10000);
 	}
-
-	app.abort();
 
 #ifdef USE_EMMA_CODE
 	if ( gpsc != NULL )
