@@ -50,6 +50,7 @@ namespace dtn
 			queue<Event*> m_queue;
 			dtn::utils::Mutex m_queuelock;
 
+			void direct(const Event *evt);
 			void push(Event *evt);
 			void private_flush();
 

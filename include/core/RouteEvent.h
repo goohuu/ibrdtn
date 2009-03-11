@@ -42,6 +42,7 @@ namespace dtn
 			const Node& getNode() const;
 			const BundleSchedule& getSchedule() const;
 			const string getName() const;
+			const EventType getType() const;
 
 #ifdef DO_DEBUG_OUTPUT
 			string toString();

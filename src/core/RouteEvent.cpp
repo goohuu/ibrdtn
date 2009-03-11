@@ -37,6 +37,11 @@ namespace dtn
 			if (m_bundle != NULL) delete m_bundle;
 		}
 
+		const EventType RouteEvent::getType() const
+		{
+			return EVENT_SYNC;
+		}
+
 		const BundleSchedule& RouteEvent::getSchedule() const
 		{
 			return m_schedule;

@@ -103,6 +103,8 @@ namespace dtn
 				// throw exception
 				//throw new TransferNotCompletedException(fragment);
 				// TODO: return the fragment to the router
+
+				return TRANSMIT_SUCCESSFUL;
 			}
 
 			unsigned char *data = b.getData();
@@ -150,6 +152,8 @@ namespace dtn
 				// throw exception
 				//throw new TransferNotCompletedException(fragment);
 				// TODO: return the fragment to the router
+
+				return TRANSMIT_SUCCESSFUL;
 			}
 
 			unsigned char *data = b.getData();
@@ -226,7 +230,7 @@ namespace dtn
 					    ConvergenceLayer::eventBundleReceived(*b);
 					    delete b;
 					} catch (InvalidBundleData ex) {
-						cerr << "Ungültiges Bundle empfangen: " << ex.what() << endl;
+						cerr << "Received a invalid bundle: " << ex.what() << endl;
 					}
 				break;
 			}

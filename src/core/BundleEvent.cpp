@@ -25,6 +25,11 @@ namespace dtn
 			return m_bundle;
 		}
 
+		const EventType BundleEvent::getType() const
+		{
+			return EVENT_ASYNC;
+		}
+
 		EventBundleAction BundleEvent::getAction() const
 		{
 			return m_action;

@@ -438,5 +438,23 @@ namespace dtn
 			ret.append("]");
 			return ret;
 		}
+
+#ifdef DO_DEBUG_OUTPUT
+		void Bundle::debug() const
+		{
+			cout << "-- Primary Block --" << endl;
+			getFrame().debug();
+
+			list<Block*>::const_iterator iter = m_blocks.begin();
+
+			while (iter != m_blocks.end())
+			{
+				cout << "-- Extension Block (" << (unsigned int)(*iter)->getType() << ") --" << endl;
+				(*iter)->getFrame().debug();
+				iter++;
+			}
+		}
+#endif
+
 	}
 }

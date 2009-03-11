@@ -34,6 +34,7 @@ namespace dtn
 		TransmitReport MultiplexConvergenceLayer::transmit(const Bundle &b, const Node &node)
 		{
 			ConvergenceLayer *cl = node.getConvergenceLayer();
+			if (cl == NULL) return transmit(b);
 			return cl->transmit(b, node);
 		}
 

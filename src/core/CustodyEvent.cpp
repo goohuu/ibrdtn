@@ -7,7 +7,9 @@
 
 #include "core/CustodyEvent.h"
 #include "data/Exceptions.h"
+#include "data/BundleFactory.h"
 
+using namespace dtn::data;
 using namespace dtn::core;
 using namespace std;
 
@@ -16,7 +18,7 @@ namespace dtn
 	namespace core
 	{
 		CustodyEvent::CustodyEvent(const Bundle &bundle, const EventCustodyAction action)
-		: m_bundle(NULL), m_action(action), m_timer(NULL)
+		: m_bundle(NULL), m_action(action), m_custody(NULL), m_timer(NULL)
 		{
 			m_bundle = new Bundle(bundle);
 		}
@@ -24,7 +26,8 @@ namespace dtn
 		CustodyEvent::CustodyEvent(string eid, const CustodySignalBlock &signal)
 		: m_bundle(NULL), m_action(CUSTODY_REMOVE_TIMER), m_custody(NULL), m_eid(eid), m_timer(NULL)
 		{
-			m_custody = new CustodySignalBlock(signal);
+			BundleFactory &fac = BundleFactory::getInstance();
+			m_custody = dynamic_cast<CustodySignalBlock*>(fac.copyBlock( signal ));
 		}
 
 		CustodyEvent::CustodyEvent(CustodyTimer &timer)
@@ -38,6 +41,11 @@ namespace dtn
 			if (m_timer != NULL) delete m_timer;
 			if (m_custody != NULL) delete m_custody;
 			if (m_bundle != NULL) delete m_bundle;
+		}
+
+		const EventType CustodyEvent::getType() const
+		{
+			return EVENT_SYNC;
 		}
 
 		const CustodyTimer& CustodyEvent::getTimer() const

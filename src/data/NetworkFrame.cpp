@@ -37,16 +37,16 @@ namespace data
 	NetworkFrame::NetworkFrame(const NetworkFrame& k)
 	 : m_data(NULL), m_size(k.m_size)
 	{
-		m_data = (unsigned char*)calloc(k.m_size, sizeof(unsigned char));
-		memcpy(m_data, k.m_data, k.m_size);
+		m_data = (unsigned char*)calloc(m_size, sizeof(unsigned char));
+		memcpy(m_data, k.m_data, m_size);
 		m_fieldsizes = k.m_fieldsizes;
 	}
 
 	NetworkFrame::NetworkFrame(const NetworkFrame* k)
 	 : m_data(NULL), m_size(k->m_size)
 	{
-		m_data = (unsigned char*)calloc(k->m_size, sizeof(unsigned char));
-		memcpy(m_data, k->m_data, k->m_size);
+		m_data = (unsigned char*)calloc(m_size, sizeof(unsigned char));
+		memcpy(m_data, k->m_data, m_size);
 		m_fieldsizes = k->m_fieldsizes;
 	}
 
@@ -566,26 +566,44 @@ namespace data
 	{
 		map<unsigned int, unsigned int> mcopy = m_fieldsizes;
 
-		// Neue Felder kopieren
+		// print a header
+		cout << "|";
+
+		for (unsigned int i = 0; i < mcopy.size(); i++)
+		{
+			for (unsigned int j = 0; j < mcopy[i]; j++)
+			{
+				if (j == 0)
+				{
+					cout << i;
+					if (i < 10) cout << " ";
+				}
+				else
+					cout << "  ";
+			}
+
+			cout << "|";
+		}
+
+		cout << endl;
+
 		for (unsigned int i = 0; i < mcopy.size(); i++)
 		{
 			unsigned char *data = get(i);
-			cout << i << ": ";
+			cout << "|";
 			debugData(data, mcopy[i]);
-			cout << endl;
 		}
+
+		cout << "|" << endl;
 	}
 
 	void NetworkFrame::debugData(unsigned char* data, unsigned int size) const
 	{
-		//dtn::Utils::getLogger() << "|";
 		for (unsigned int i = 0; i < size; i++)
 		{
 			printf("%02X", (*data));
-			//Utils::getLogger() << (*data);
 			data++;
 		}
-		//dtn::Utils::getLogger() << "|" << endl;
 	}
 #endif
 }

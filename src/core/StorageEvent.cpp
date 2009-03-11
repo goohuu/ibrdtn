@@ -27,6 +27,11 @@ namespace dtn
 			if (m_bundle != NULL) delete m_bundle;
 		}
 
+		const EventType StorageEvent::getType() const
+		{
+			return EVENT_ASYNC;
+		}
+
 		EventStorageAction StorageEvent::getAction() const
 		{
 			return m_action;

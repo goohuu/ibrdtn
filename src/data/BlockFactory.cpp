@@ -70,6 +70,7 @@ namespace data
 
 			// check for error
 			if (ret == -1) throw InvalidBundleData("Error while decoding a SDNV.");
+			if (ret > (size - block_length)) throw InvalidBundleData("Decoded SDNV is too long.");
 
 			// remind the length of this SDNV
 			mapping[1] = ret;
@@ -90,6 +91,7 @@ namespace data
 
 				// check for error
 				if (ret == -1) throw InvalidBundleData("Error while decoding a SDNV.");
+				if (ret > (size - block_length)) throw InvalidBundleData("Decoded SDNV is too long.");
 
 				// remind the length of this SDNV
 				mapping[position] = ret;
@@ -112,6 +114,7 @@ namespace data
 
 			// check for error
 			if (ret == -1) throw InvalidBundleData("Error while decoding a SDNV.");
+			if (ret > (size - block_length)) throw InvalidBundleData("Decoded SDNV is too long.");
 
 			// Merke die Länge des Payloadlängenfeld
 			mapping[position] = ret;
@@ -119,6 +122,8 @@ namespace data
 
 			data += ret;	// Springe zu den block-spezifischen Daten
 			block_length += ret;
+
+			if (value > (size - block_length)) throw InvalidBundleData("Decoded block length is too long.");
 
 			// put the length of the last field in the mapping
 			mapping[position] = value;

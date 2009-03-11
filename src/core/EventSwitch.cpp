@@ -61,24 +61,33 @@ namespace dtn
 		void EventSwitch::raiseEvent(Event *evt)
 		{
 			EventSwitch &s = EventSwitch::getInstance();
-			s.push(evt);
 
-//			try {
-//				// get the list for this event
-//				EventSwitch &s = EventSwitch::getInstance();
-//				const list<EventReceiver*> receivers = s.m_list.at(evt->getName());
-//				list<EventReceiver*>::const_iterator iter = receivers.begin();
-//
-//				while (iter != receivers.end())
-//				{
-//					(*iter)->raiseEvent(evt);
-//					iter++;
-//				}
-//			} catch (std::out_of_range ex) {
-//				// No receiver available!
+//			if (evt->getType() == EVENT_SYNC)
+//			{
+				s.direct(evt);
+				delete evt;
 //			}
-//
-//			delete evt;
+//			else
+//			{
+//				s.push(evt);
+//			}
+		}
+
+		void EventSwitch::direct(const Event *evt)
+		{
+			try {
+				// get the list for this event
+				const list<EventReceiver*> receivers = m_list.at(evt->getName());
+				list<EventReceiver*>::const_iterator iter = receivers.begin();
+
+				while (iter != receivers.end())
+				{
+					(*iter)->raiseEvent(evt);
+					iter++;
+				}
+			} catch (std::out_of_range ex) {
+				// No receiver available!
+			}
 		}
 
 		void EventSwitch::tick()
@@ -90,19 +99,8 @@ namespace dtn
 				Event *evt = m_queue.front();
 				m_queuelock.unlock();
 
-				try {
-					// get the list for this event
-					const list<EventReceiver*> receivers = m_list.at(evt->getName());
-					list<EventReceiver*>::const_iterator iter = receivers.begin();
-
-					while (iter != receivers.end())
-					{
-						(*iter)->raiseEvent(evt);
-						iter++;
-					}
-				} catch (std::out_of_range ex) {
-					// No receiver available!
-				}
+				// send event
+				direct(evt);
 
 				m_queuelock.lock();
 				m_queue.pop();

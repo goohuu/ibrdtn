@@ -21,6 +21,11 @@ namespace dtn
 		NodeEvent::~NodeEvent()
 		{}
 
+		const EventType NodeEvent::getType() const
+		{
+			return EVENT_ASYNC;
+		}
+
 		const Node& NodeEvent::getNode() const
 		{
 			return m_node;

@@ -35,6 +35,7 @@ namespace dtn
 			EventNodeAction getAction() const;
 			const Node& getNode() const;
 			const string getName() const;
+			const EventType getType() const;
 
 #ifdef DO_DEBUG_OUTPUT
 			string toString();

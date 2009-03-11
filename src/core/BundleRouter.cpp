@@ -58,6 +58,7 @@ namespace dtn
 						if (isLocal(b))
 						{
 							EventSwitch::raiseEvent( new RouteEvent( b, dtn::core::ROUTE_LOCAL_BUNDLE ) );
+							return;
 						}
 
 						try {
@@ -73,8 +74,6 @@ namespace dtn
 
 						break;
 					}
-					case ROUTE_LOCAL_BUNDLE:
-						break;
 				}
 
 			}

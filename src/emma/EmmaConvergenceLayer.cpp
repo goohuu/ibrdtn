@@ -68,31 +68,34 @@ namespace emma
 		// Wenn es ein DiscoverBundle ist dann verarbeite es gleich.
 		list<Block*> blocks = b.getBlocks(DiscoverBlock::BLOCK_TYPE);
 
-		DiscoverBlock *discover = dynamic_cast<DiscoverBlock*>( blocks.front() );
-
-		if ( discover != NULL)
+		if (!blocks.empty())
 		{
-			// Erstelle eine Node und leite dieses Objekt an den Router weiter
-			Node n(FLOATING);
-			n.setAddress( discover->getConnectionAddress() );
-			n.setPort( discover->getConnectionPort() );
-			n.setURI( b.getSource() );
-			n.setTimeout( 5 ); // 5 Sekunden Timeout
-			n.setConvergenceLayer(this);
+			DiscoverBlock *discover = dynamic_cast<DiscoverBlock*>( blocks.front() );
 
-			if (discover->getOptionals() > 1)
+			if ( discover != NULL)
 			{
-				n.setPosition( make_pair( discover->getLatitude(), discover->getLongitude() ) );
+				// Erstelle eine Node und leite dieses Objekt an den Router weiter
+				Node n(FLOATING);
+				n.setAddress( discover->getConnectionAddress() );
+				n.setPort( discover->getConnectionPort() );
+				n.setURI( b.getSource() );
+				n.setTimeout( 5 ); // 5 Sekunden Timeout
+				n.setConvergenceLayer(this);
+
+				if (discover->getOptionals() > 1)
+				{
+					n.setPosition( make_pair( discover->getLatitude(), discover->getLongitude() ) );
+				}
+
+				// create a event
+				EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_INFO_UPDATED));
+
+	//			// Zurück rufen, wenn dies ein Broadcast war und nicht von uns selbst stammt
+	//			if ( ( b->getDestination() == "dtn:discovery" ) && ( b->getSource() != m_eid ) )
+	//			{
+	//				yell( n );
+	//			}
 			}
-
-			// create a event
-			EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_INFO_UPDATED));
-
-//			// Zurück rufen, wenn dies ein Broadcast war und nicht von uns selbst stammt
-//			if ( ( b->getDestination() == "dtn:discovery" ) && ( b->getSource() != m_eid ) )
-//			{
-//				yell( n );
-//			}
 		}
 
 		ConvergenceLayer::eventBundleReceived(b);
@@ -149,8 +152,6 @@ namespace emma
 		block->setConnectionAddress(m_bindaddr);
 		block->setConnectionPort(m_bindport);
 
-		bundle->appendBlock(block);
-
 		// Setzte den Absender ein
 		bundle->setSource( m_eid );
 
@@ -168,6 +169,9 @@ namespace emma
 		// Zusätzliche Daten einsetzen: GPS Position
 		block->setLatitude( m_position.first );
 		block->setLongitude( m_position.second );
+
+		// append the discover block
+		bundle->appendBlock(block);
 
 		transmit( *bundle );
 
@@ -208,6 +212,9 @@ namespace emma
 		// Zusätzliche Daten einsetzen: GPS Position
 		block->setLatitude( m_position.first );
 		block->setLongitude( m_position.second );
+
+		// append the discover block
+		bundle->appendBlock(block);
 
 		transmit( *bundle, node );
 

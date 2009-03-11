@@ -162,8 +162,6 @@ namespace dtn
 			{
 				switch (routeevent->getAction())
 				{
-					case ROUTE_FIND_SCHEDULE:
-						break;
 					case ROUTE_LOCAL_BUNDLE:
 					{
 						// get the bundle of the event

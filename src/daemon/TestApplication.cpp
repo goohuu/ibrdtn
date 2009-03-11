@@ -9,6 +9,7 @@
 #include "data/BundleFactory.h"
 #include "data/PayloadBlock.h"
 #include "data/PayloadBlockFactory.h"
+#include <iostream>
 
 using namespace dtn::data;
 
@@ -33,9 +34,9 @@ namespace dtn
 
 			// Custody erforderlich!
 			PrimaryFlags flags = out->getPrimaryFlags();
-			flags.setCustodyRequested(true);
-			flags.setFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE, true);
-			flags.setFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
+			//flags.setCustodyRequested(true);
+			//flags.setFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE, true);
+			//flags.setFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
 			out->setPrimaryFlags( flags );
 
 			// add payloadblock to bundle
@@ -75,6 +76,7 @@ namespace dtn
 
 		TransmitReport TestApplication::callbackBundleReceived(const Bundle &b)
 		{
+			cout << "got it!" << endl;
 			return BUNDLE_ACCEPTED;
 		}
 	}

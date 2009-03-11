@@ -38,6 +38,7 @@ namespace dtn
 			const Bundle& getBundle() const;
 
 			const string getName() const;
+			const EventType getType() const;
 
 		#ifdef DO_DEBUG_OUTPUT
 			string toString();

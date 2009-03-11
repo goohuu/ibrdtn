@@ -256,6 +256,10 @@ namespace dtn
 			 */
 			list<Block*> getBlocks(const unsigned char type) const;
 
+#ifdef DO_DEBUG_OUTPUT
+			void debug() const;
+#endif
+
 		private:
 			/**
 			 * Get the position of a field in the raw data.
