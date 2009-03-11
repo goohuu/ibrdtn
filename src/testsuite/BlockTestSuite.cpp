@@ -62,6 +62,8 @@ namespace dtn
 				ret = false;
 			}
 
+			delete block;
+
 			return ret;
 		}
 
@@ -86,6 +88,9 @@ namespace dtn
 			} catch (std::bad_cast) {
 				ret = false;
 			}
+
+			delete copy;
+			delete block;
 
 			return ret;
 		}

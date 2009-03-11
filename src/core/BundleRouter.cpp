@@ -83,7 +83,7 @@ namespace dtn
 		/*
 		 * Gibt an, dass ein bestimmter Knoten nun in Kommunikationsreichweite ist.
 		 */
-		void BundleRouter::discovered(Node node)
+		void BundleRouter::discovered(const Node &node)
 		{
 			MutexLock l(m_lock);
 

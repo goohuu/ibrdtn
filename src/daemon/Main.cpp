@@ -329,6 +329,14 @@ int main(int argc, char *argv[])
 	multicl.terminate();
 	router.abort();
 
+	// flush the event queue
+	EventSwitch::flush();
+
+#ifdef USE_EMMA_CODE
+	delete gpsprov;
+	delete mworker;
+#endif
+
 	cout << "shutdown dtn node" << endl;
 
 	return 0;

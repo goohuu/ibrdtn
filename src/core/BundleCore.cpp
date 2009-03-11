@@ -70,34 +70,39 @@ namespace dtn
 				case BUNDLE_RECEIVED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_RECEPTION) )
 					{
-						transmit( createStatusReport(b, RECEIPT_OF_BUNDLE) );
+						Bundle bundle = createStatusReport(b, RECEIPT_OF_BUNDLE);
+						transmit( bundle );
 					}
 					break;
 				case BUNDLE_DELETED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELETION) )
 					{
-						transmit( createStatusReport(b, DELETION_OF_BUNDLE) );
+						Bundle bundle = createStatusReport(b, DELETION_OF_BUNDLE);
+						transmit( bundle );
 					}
 					break;
 
 				case BUNDLE_FORWARDED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_FORWARDING) )
 					{
-						transmit( createStatusReport(b, FORWARDING_OF_BUNDLE) );
+						Bundle bundle = createStatusReport(b, FORWARDING_OF_BUNDLE);
+						transmit( bundle );
 					}
 					break;
 
 				case BUNDLE_DELIVERED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY) )
 					{
-						transmit( createStatusReport(b, DELIVERY_OF_BUNDLE) );
+						Bundle bundle = createStatusReport(b, DELIVERY_OF_BUNDLE);
+						transmit( bundle );
 					}
 					break;
 
 				case BUNDLE_CUSTODY_ACCEPTED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE) )
 					{
-						transmit( createStatusReport(b, CUSTODY_ACCEPTANCE_OF_BUNDLE) );
+						Bundle bundle = createStatusReport(b, CUSTODY_ACCEPTANCE_OF_BUNDLE);
+						transmit( bundle );
 					}
 					break;
 				}
@@ -185,10 +190,10 @@ namespace dtn
 			}
 		}
 
-		TransmitReport BundleCore::transmit(Bundle *b)
+		TransmitReport BundleCore::transmit(Bundle &b)
 		{
 			// check all block of the bundle for block flag actions
-			list<Block*> blocks = b->getBlocks();
+			list<Block*> blocks = b.getBlocks();
 			list<Block*>::const_iterator iter = blocks.begin();
 
 			while (iter != blocks.end())
@@ -209,23 +214,21 @@ namespace dtn
 
 			try {
 				// Wurde Custody angefordert?
-				PrimaryFlags flags( b->getInteger(PROCFLAGS) );
+				PrimaryFlags flags( b.getInteger(PROCFLAGS) );
 
 				if (flags.isCustodyRequested())
 				{
 					// Setze Custody EID auf die eigene EID
-					b->setCustodian( m_localeid );
+					b.setCustodian( m_localeid );
 				}
 
 				// find a next route for the bundle
-				EventSwitch::raiseEvent( new RouteEvent(*b, ROUTE_FIND_SCHEDULE) );
+				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_FIND_SCHEDULE) );
 
-				delete b;
 				return BUNDLE_ACCEPTED;
 			} catch (NoSpaceLeftException ex) {
 				// Bündel verwerfen
-				EventSwitch::raiseEvent( new BundleEvent(*b, BUNDLE_DELETED) );
-				delete b;
+				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
 				return UNKNOWN;
 			} catch (BundleExpiredException ex) {
 				return UNKNOWN;
@@ -234,7 +237,7 @@ namespace dtn
 			};
 		}
 
-		Bundle* BundleCore::createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason)
+		Bundle BundleCore::createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason)
 		{
 			// create a new bundle
 			BundleFactory &fac = BundleFactory::getInstance();
@@ -288,10 +291,13 @@ namespace dtn
 			// set bundle parameter
 			report->setMatch(b);
 
-			return bundle;
+			Bundle ret = *bundle;
+			delete bundle;
+
+			return ret;
 		}
 
-		Bundle* BundleCore::createCustodySignal(const Bundle &b, bool accepted)
+		Bundle BundleCore::createCustodySignal(const Bundle &b, bool accepted)
 		{
 			// create a new bundle
 			BundleFactory &fac = BundleFactory::getInstance();
@@ -310,7 +316,10 @@ namespace dtn
 			// set bundle parameter
 			custody->setMatch(b);
 
-			return bundle;
+			Bundle ret = *bundle;
+			delete bundle;
+
+			return ret;
 		}
 
 		void BundleCore::transmitCustody(bool accept, const Bundle &b)
@@ -324,10 +333,10 @@ namespace dtn
 			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_CUSTODY_ACCEPTED) );
 
 			// Erstelle ein CustodySignal
-			Bundle *bundle = createCustodySignal(b, accept);
+			Bundle bundle = createCustodySignal(b, accept);
 
 			// Absender setzen
-			bundle->setSource( m_localeid );
+			bundle.setSource( m_localeid );
 
 			switch ( transmit( bundle ) )
 			{
@@ -415,7 +424,8 @@ namespace dtn
 					if ( flags.getFlag(REPORT_IF_CANT_PROCESSED) )
 					{
 						// transmit a status report if requested
-						transmit( createStatusReport(b, RECEIPT_OF_BUNDLE, BLOCK_UNINTELLIGIBLE) );
+						Bundle bundle = createStatusReport(b, RECEIPT_OF_BUNDLE, BLOCK_UNINTELLIGIBLE);
+						transmit( bundle );
 					}
 
 					if ( flags.getFlag(DELETE_IF_CANT_PROCESSED) )

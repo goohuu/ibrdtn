@@ -107,6 +107,8 @@ namespace dtn
 				m_queuelock.lock();
 				m_queue.pop();
 				m_queuelock.unlock();
+
+				// delete the event
 				delete evt;
 			}
 			usleep(50);
@@ -117,6 +119,30 @@ namespace dtn
 			static EventSwitch instance;
 			if (!instance.isRunning()) instance.start();
 			return instance;
+		}
+
+		void EventSwitch::flush()
+		{
+			EventSwitch &s = EventSwitch::getInstance();
+			s.private_flush();
+		}
+
+		void EventSwitch::private_flush()
+		{
+			MutexLock l(m_queuelock);
+
+			// delete all objects in the queue
+			while (!m_queue.empty())
+			{
+				cout << "delete " << m_queue.front()->getName() << endl;
+				delete m_queue.front();
+				m_queue.pop();
+			}
+		}
+
+		void EventSwitch::terminate()
+		{
+			flush();
 		}
 	}
 }

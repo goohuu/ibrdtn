@@ -38,14 +38,18 @@ namespace dtn
 			flags.setFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
 			out->setPrimaryFlags( flags );
 
+			// add payloadblock to bundle
+			out->appendBlock(payload);
+
 			// Versende das Bundle
-			TransmitReport status = getCore().transmit(out);
+			TransmitReport status = getCore().transmit(*out);
+			delete out;
 
 			// Status auswerten
 			switch ( status )
 			{
 				case NO_ROUTE_FOUND:
-					delete out;
+
 				break;
 
 				default:

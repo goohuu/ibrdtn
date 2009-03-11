@@ -60,7 +60,7 @@ namespace dtn
 			/**
 			 * Sendet ein Bundle
 			 */
-			TransmitReport transmit(Bundle *b);
+			TransmitReport transmit(Bundle &b);
 
 			void registerSubNode(string eid, AbstractWorker *node);
 			void unregisterSubNode(string eid);
@@ -85,8 +85,8 @@ namespace dtn
 			void forwardLocalBundle(const Bundle &bundle);
 			void transmitCustody(bool accept, const Bundle &b);
 
-			Bundle* createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);
-			Bundle* createCustodySignal(const Bundle &b, bool accepted);
+			Bundle createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);
+			Bundle createCustodySignal(const Bundle &b, bool accepted);
 
 			ConvergenceLayer *m_clayer;
 

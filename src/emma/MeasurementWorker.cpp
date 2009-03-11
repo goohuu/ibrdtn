@@ -96,16 +96,18 @@ namespace emma
 			}
 
 			// Bündel versenden
-			switch ( getCore().transmit( bundle ) )
+			switch ( getCore().transmit( *bundle ) )
 			{
 				case NO_ROUTE_FOUND:
-					delete bundle;
+
 				break;
 
 				default:
 
 				break;
 			}
+
+			delete bundle;
 
 			// Speichergröße merken
 			m_datasize = m.getLength();

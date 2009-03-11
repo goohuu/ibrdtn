@@ -51,14 +51,17 @@ namespace dtn
 			dtn::utils::Mutex m_queuelock;
 
 			void push(Event *evt);
+			void private_flush();
 
 		protected:
+			void terminate();
 			void tick();
 
 		public:
 			static void registerEventReceiver(string eventName, EventReceiver *receiver);
 			static void unregisterEventReceiver(string eventName, EventReceiver *receiver);
 			static void raiseEvent(Event *evt);
+			static void flush();
 		};
 	}
 }

@@ -152,8 +152,10 @@ namespace testsuite
 		while (fragment != NULL)
 		{
 			bundles.push_back(*fragment);
+			delete fragment;
 			fragment = BundleFactory::slice(*bundle, 200, offset);
 		}
+
 
 		// Size test
 		unsigned int payload_sum = 0;

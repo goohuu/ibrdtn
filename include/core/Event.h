@@ -19,6 +19,7 @@ namespace dtn
 		class Event
 		{
 		public:
+			virtual ~Event() {};
 			virtual const string getName() const = 0;
 
 #ifdef DO_DEBUG_OUTPUT

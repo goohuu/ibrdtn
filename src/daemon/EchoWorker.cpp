@@ -33,7 +33,8 @@ namespace dtn
 				echo->setSource( m_localuri + getWorkerURI() );
 
 				// Absenden
-				getCore().transmit( echo );
+				getCore().transmit( *echo );
+				delete echo;
 			}
 
 			return BUNDLE_ACCEPTED;

@@ -75,7 +75,7 @@ namespace dtn
 			 * Gibt an, dass ein bestimmter Knoten nun in Kommunikationsreichweite ist.
 			 * @param node Ein Zeiger auf ein Node-Objekt der die Daten des in Reichweite gekommenen Knoten enthält.
 			 */
-			virtual void discovered(Node node);
+			virtual void discovered(const Node &node);
 
 			list<Node> m_neighbours;
 			unsigned int m_lastcheck;
