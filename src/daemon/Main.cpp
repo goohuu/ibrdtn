@@ -297,8 +297,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	TestApplication app("dtn://mini-debian/debugger");
-	app.start();
+//	TestApplication app("dtn://mini-debian/debugger");
+//	app.start();
 
 //#ifdef HAVE_LIBLUA5_1
 //	luac.run("demo.lua");
@@ -331,7 +331,7 @@ int main(int argc, char *argv[])
 	delete mworker;
 #endif
 
-	core.abort();
+//	core.abort();
 
 //	// flush the event queue
 //	EventSwitch::flush();

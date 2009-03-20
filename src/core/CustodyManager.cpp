@@ -11,6 +11,7 @@
 #include "core/CustodyTimer.h"
 #include "data/BundleFactory.h"
 #include "data/PayloadBlockFactory.h"
+#include "core/BundleCore.h"
 
 #include "core/TimeEvent.h"
 #include "core/EventSwitch.h"
@@ -49,7 +50,7 @@ namespace dtn
 					m_breakwait.signal();
 				}
 			}
-			else if (custody == NULL)
+			else if (custody != NULL)
 			{
 				switch (evt->getType())
 				{
@@ -74,6 +75,9 @@ namespace dtn
 				Bundle *b = BundleFactory::getInstance().newBundle();
 				b->appendBlock(signal);
 
+				b->setDestination(bundle.getCustodian());
+				b->setSource(BundleCore::getInstance().getLocalURI());
+
 				// raise the custody accepted event
 				EventSwitch::raiseEvent(new RouteEvent(*b, ROUTE_PROCESS_BUNDLE));
 				delete b;
@@ -90,6 +94,9 @@ namespace dtn
 
 				Bundle *b = BundleFactory::getInstance().newBundle();
 				b->appendBlock(signal);
+
+				b->setDestination(bundle.getCustodian());
+				b->setSource(BundleCore::getInstance().getLocalURI());
 
 				// raise the custody accepted event
 				EventSwitch::raiseEvent(new RouteEvent(*b, ROUTE_PROCESS_BUNDLE));

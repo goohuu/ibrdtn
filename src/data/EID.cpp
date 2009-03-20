@@ -32,11 +32,19 @@ namespace dtn
 			// start of application part
 			size_t application_start = ssp.find_first_of("/", first_char);
 
-			// extract application
-			m_application = ssp.substr(application_start, ssp.length() - application_start);
+			if (application_start == string::npos)
+			{
+				m_application = "";
+				m_node = ssp;
+			}
+			else
+			{
+				// extract application
+				m_application = ssp.substr(application_start, ssp.length() - application_start);
 
-			// extract node
-			m_node = ssp.substr(0, application_start);
+				// extract node
+				m_node = ssp.substr(0, application_start);
+			}
 		}
 
 		EID::~EID()
