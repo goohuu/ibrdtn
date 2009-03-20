@@ -297,8 +297,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-//	TestApplication app("dtn://mini-debian/debugger");
-//	app.start();
+	TestApplication app("dtn://mini-debian/debugger");
+	app.start();
 
 //#ifdef HAVE_LIBLUA5_1
 //	luac.run("demo.lua");
@@ -308,6 +308,8 @@ int main(int argc, char *argv[])
 	{
 		usleep(10000);
 	}
+
+	app.abort();
 
 #ifdef USE_EMMA_CODE
 	if ( gpsc != NULL )

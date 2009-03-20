@@ -194,7 +194,7 @@ namespace dtn
 
 			unsigned char data[m_maxmsgsize];
 
-			// Erst gucken ob Daten da sind und dabei maximal 100ms warten
+			// first peek if data is incoming, wait max. 100ms
 			struct pollfd psock[1];
 
 			psock[0].fd = m_socket;
@@ -214,17 +214,17 @@ namespace dtn
 				break;
 
 				default:
-					// Data waiting
+					// data waiting
 				    int len = recvfrom(m_socket, data, m_maxmsgsize, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
 
 				    if (len < 0)
 				    {
-				    	// Kein Bundle da.
+				    	// no data received
 				    	return;
 				    }
 
 					try {
-					    // Wenn Daten da sind erstelle aus ihnen ein Bundle
+					    // if we get data, then create a bundle
 						BundleFactory &fac = BundleFactory::getInstance();
 						Bundle *b = fac.parse(data, len);
 					    ConvergenceLayer::eventBundleReceived(*b);

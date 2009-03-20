@@ -217,7 +217,7 @@ namespace dtn
 				throw NoScheduleFoundException("No destination set");
 			}
 
-			// Überprüfe die Lebenszeit des Bundles
+			// check the lifetime of the bundle
 			if ( b.isExpired() )
 			{
 				throw BundleExpiredException();
@@ -232,8 +232,6 @@ namespace dtn
 			{
 				return BundleSchedule(b, 0, m_eid );
 			}
-
-			//return BundleSchedule(b, BundleSchedule::MAX_TIME, b->getDestination() );
 
 			throw NoScheduleFoundException("No route available");
 		}

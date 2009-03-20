@@ -13,7 +13,7 @@ namespace dtn
 			m_receiver = receiver;
 		}
 
-		void ConvergenceLayer::eventBundleReceived(Bundle &bundle)
+		void ConvergenceLayer::eventBundleReceived(const Bundle &bundle)
 		{
 			if (m_receiver != NULL)
 			{

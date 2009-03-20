@@ -15,7 +15,7 @@ namespace dtn
 			public:
 			BundleReceiver() {};
 			virtual ~BundleReceiver() {};
-			virtual void received(const ConvergenceLayer &cl, Bundle &b) = 0;
+			virtual void received(const ConvergenceLayer &cl, const Bundle &b) = 0;
 		};
 	}
 }

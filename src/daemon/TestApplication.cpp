@@ -37,7 +37,7 @@ namespace dtn
 			PrimaryFlags flags = out->getPrimaryFlags();
 			flags.setCustodyRequested(true);
 //			flags.setFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE, true);
-//			flags.setFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
+			flags.setFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
 			out->setPrimaryFlags( flags );
 
 			// add payloadblock to bundle

@@ -148,7 +148,7 @@ namespace dtn
 			}
 		}
 
-		const Bundle& CustodyManager::removeTimer(const CustodySignalBlock &block)
+		const Bundle CustodyManager::removeTimer(const CustodySignalBlock &block)
 		{
 			MutexLock l(m_custodylock);
 
@@ -161,9 +161,10 @@ namespace dtn
 
 				if ( block.match(bundle) )
 				{
+					Bundle b_copy = (*iter).getBundle();
 					// ... and remove it
 					m_custodytimer.erase( iter );
-					return bundle;
+					return b_copy;
 				}
 
 				iter++;

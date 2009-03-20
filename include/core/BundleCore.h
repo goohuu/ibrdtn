@@ -60,7 +60,7 @@ namespace dtn
 			void registerSubNode(string eid, AbstractWorker *node);
 			void unregisterSubNode(string eid);
 
-			virtual void received(const ConvergenceLayer &cl, Bundle &b);
+			virtual void received(const ConvergenceLayer &cl, const Bundle &b);
 
 			string getLocalURI() const;
 

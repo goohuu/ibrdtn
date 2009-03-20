@@ -68,7 +68,7 @@ namespace emma
 		return m_direct_cl->transmit(b, node);
 	}
 
-	void EmmaConvergenceLayer::received(const ConvergenceLayer &cl, Bundle &b)
+	void EmmaConvergenceLayer::received(const ConvergenceLayer &cl, const Bundle &b)
 	{
 		MutexLock l(m_receivelock);
 

@@ -27,7 +27,7 @@ namespace dtn
 				void tick();
 
 				virtual void setTimer(const Bundle &bundle, unsigned int time, unsigned int attempt);
-				virtual const Bundle& removeTimer(const CustodySignalBlock &block);
+				virtual const Bundle removeTimer(const CustodySignalBlock &block);
 
 				virtual void acceptCustody(const Bundle &bundle);
 				virtual void rejectCustody(const Bundle &bundle);

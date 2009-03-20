@@ -38,7 +38,7 @@ namespace dtn
 			return cl->transmit(b, node);
 		}
 
-		void MultiplexConvergenceLayer::received(const ConvergenceLayer &cl, dtn::data::Bundle &b)
+		void MultiplexConvergenceLayer::received(const ConvergenceLayer &cl, const dtn::data::Bundle &b)
 		{
 			dtn::utils::MutexLock l(m_receivelock);
 			ConvergenceLayer::eventBundleReceived(b);

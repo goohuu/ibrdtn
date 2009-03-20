@@ -250,8 +250,12 @@ namespace dtn
 
 				if ( signal != NULL )
 				{
-					// remove the timer for this bundle
-					m_cm.removeTimer( signal );
+					try {
+						// remove the timer for this bundle
+						m_cm.removeTimer( *signal );
+					} catch (NoTimerFoundException ex) {
+
+					}
 				}
 			}
 		}
@@ -341,7 +345,7 @@ namespace dtn
 			return ret;
 		}
 
-		void BundleCore::received(const ConvergenceLayer &cl, Bundle &b)
+		void BundleCore::received(const ConvergenceLayer &cl, const Bundle &b)
 		{
 			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
 			EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
