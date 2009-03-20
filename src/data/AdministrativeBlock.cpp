@@ -53,7 +53,7 @@ namespace data
 	AdministrativeBlockType AdministrativeBlock::identify(PayloadBlock *block)
 	{
 		unsigned char* data = block->getPayload();
-		AdministrativeBlockType type = AdministrativeBlockType(data[0] & 3);
+		AdministrativeBlockType type = AdministrativeBlockType(data[0] >> 4);
 		return type;
 	}
 

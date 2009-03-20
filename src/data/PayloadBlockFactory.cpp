@@ -97,9 +97,7 @@ namespace dtn
 
 			// set the block type to CUSTODY_SIGNAL
 			// first field is administrative TypeCode 4bit + RecordFlags 4bit
-			AdministrativeBlockType type(STATUS_REPORT);
-			unsigned char field1 = (type << 4);
-			frame.append( field1 );
+			frame.append( (unsigned char)STATUS_REPORT << 4 );
 
 			// Status Flags (1 byte)
 			frame.append( (unsigned char)0 );
@@ -128,6 +126,9 @@ namespace dtn
 			// Copy of bundles creation timestamp sequence number
 			frame.append( 0 );
 
+			// length of source endpoint ID
+			frame.append( 8 );
+
 			// source endpoint ID
 			frame.append( "dtn:none" );
 
@@ -150,7 +151,7 @@ namespace dtn
 
 			// set the type to custody signal
 			// first field is administrative TypeCode 4bit + RecordFlags 4bit
-			frame.append( (unsigned char)CUSTODY_SIGNAL );
+			frame.append( (unsigned char)CUSTODY_SIGNAL << 4 );
 
 			// Status Flags (1 bit) + 7bit Reason Code
 			ProcessingFlags flags;

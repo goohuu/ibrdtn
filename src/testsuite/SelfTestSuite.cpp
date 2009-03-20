@@ -9,6 +9,7 @@
 #include "testsuite/MeasurementTestSuite.h"
 #include "testsuite/SQLiteTestSuite.h"
 #include "testsuite/DiscoveryBlockTestSuite.h"
+#include "testsuite/StatusReportTestSuite.h"
 #include "testsuite/BlockTestSuite.h"
 #include "utils/Utils.h"
 #include "data/BundleFactory.h"
@@ -53,6 +54,9 @@ namespace testsuite
 
 		CustodySignalBlockTestSuite custodytest;
 		if ( !custodytest.runAllTests() ) ret = false;
+
+		StatusReportTestSuite statustest;
+		if ( !statustest.runAllTests() ) ret = false;
 
 #ifdef USE_EMMA_CODE
 		MeasurementTestSuite measurementtest;
