@@ -12,7 +12,6 @@
 #include "core/StorageEvent.h"
 #include "core/CustodyEvent.h"
 #include "core/BundleEvent.h"
-#include "core/TimeEvent.h"
 #include <iostream>
 
 using namespace std;
@@ -28,7 +27,6 @@ namespace dtn
 			EventSwitch::registerEventReceiver( StorageEvent::className, this );
 			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
 			EventSwitch::registerEventReceiver( BundleEvent::className, this );
-			EventSwitch::registerEventReceiver( TimeEvent::className, this );
 		}
 
 		EventDebugger::~EventDebugger()
@@ -38,7 +36,6 @@ namespace dtn
 			EventSwitch::unregisterEventReceiver( StorageEvent::className, this );
 			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
 			EventSwitch::unregisterEventReceiver( BundleEvent::className, this );
-			EventSwitch::unregisterEventReceiver( TimeEvent::className, this );
 		}
 
 		void EventDebugger::raiseEvent(const Event *evt)
@@ -50,17 +47,7 @@ namespace dtn
 			const StorageEvent *store = dynamic_cast<const StorageEvent*>(evt);
 			const BundleEvent *bundle = dynamic_cast<const BundleEvent*>(evt);
 			const CustodyEvent *custody = dynamic_cast<const CustodyEvent*>(evt);
-			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
 
-			if (time != NULL)
-			{
-				switch (time->getAction())
-				{
-					case TIME_SECOND_TICK:
-						cout << "time changed to " << time->getTimestamp() << endl;
-						break;
-				};
-			}
 			if (custody != NULL)
 			{
 				switch (custody->getAction())
