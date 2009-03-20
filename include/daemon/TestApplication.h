@@ -21,8 +21,8 @@ namespace dtn
 		class TestApplication : public AbstractWorker, public Service
 		{
 			public:
-				TestApplication(BundleCore &core, string destination)
-					: AbstractWorker(core, "/test"), Service("TestApplication"), m_dtntime(0), m_destination(destination) {}
+				TestApplication(string destination)
+					: AbstractWorker("/test"), Service("TestApplication"), m_dtntime(0), m_destination(destination) {}
 				~TestApplication() {};
 				void tick();
 

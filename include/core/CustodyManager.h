@@ -3,12 +3,12 @@
 
 #include "data/Bundle.h"
 #include "data/CustodySignalBlock.h"
-#include "core/Node.h"
 #include "core/CustodyTimer.h"
 #include "core/EventReceiver.h"
 
 #include "utils/Service.h"
 #include "utils/Mutex.h"
+#include "utils/Conditional.h"
 #include <list>
 
 using namespace dtn::utils;
@@ -26,23 +26,25 @@ namespace dtn
 
 				void tick();
 
-				virtual bool timerAvailable();
-
 				virtual void setTimer(const Bundle &bundle, unsigned int time, unsigned int attempt);
 				virtual const Bundle& removeTimer(const CustodySignalBlock &block);
 
+				virtual void acceptCustody(const Bundle &bundle);
+				virtual void rejectCustody(const Bundle &bundle);
+
 				void raiseEvent(const Event *evt);
 
+			protected:
+				void terminate();
+
 			private:
+				void retransmitBundle(const Bundle &bundle);
 				void checkCustodyTimer();
 
 				Mutex m_custodylock;
-
-				// Der nächste Zeitpunkt zu dem ein CustodyTimer abläuft
-				// Frühestens zu diesem Zeitpunkt muss ein checkCustodyTimer() ausgeführt werden
 				unsigned int m_nextcustodytimer;
-
 				list<CustodyTimer> m_custodytimer;
+				Conditional m_breakwait;
 		};
 	}
 }

@@ -18,7 +18,7 @@ namespace dtn
 		class Debugger : AbstractWorker
 		{
 			public:
-				Debugger(BundleCore &core) : AbstractWorker(core, "/debugger") {};
+				Debugger() : AbstractWorker("/debugger") {};
 				~Debugger() {};
 
 				TransmitReport callbackBundleReceived(const Bundle &b);

@@ -21,6 +21,7 @@ namespace dtn
 		{
 			BundleFactory &fac = BundleFactory::getInstance();
 			Bundle *out = fac.newBundle();
+			BundleCore &core = BundleCore::getInstance();
 
 			string data = "Hello World!";
 
@@ -28,35 +29,23 @@ namespace dtn
 
 			// Setze den Empfänger und den Absender ein
 			out->setDestination( m_destination );
-			out->setSource( getCore().getLocalURI() + getWorkerURI() );
-			out->setReportTo( getCore().getLocalURI() + getWorkerURI() );
+			out->setSource( core.getLocalURI() + getWorkerURI() );
+			out->setReportTo( core.getLocalURI() + getWorkerURI() );
 			out->setInteger( LIFETIME, 200 );
 
 			// Custody erforderlich!
 			PrimaryFlags flags = out->getPrimaryFlags();
-			//flags.setCustodyRequested(true);
-			//flags.setFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE, true);
-			//flags.setFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
+			flags.setCustodyRequested(true);
+//			flags.setFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE, true);
+//			flags.setFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
 			out->setPrimaryFlags( flags );
 
 			// add payloadblock to bundle
 			out->appendBlock(payload);
 
 			// Versende das Bundle
-			TransmitReport status = getCore().transmit(*out);
+			transmit(*out);
 			delete out;
-
-			// Status auswerten
-			switch ( status )
-			{
-				case NO_ROUTE_FOUND:
-
-				break;
-
-				default:
-
-				break;
-			}
 		}
 
 		void TestApplication::tick()

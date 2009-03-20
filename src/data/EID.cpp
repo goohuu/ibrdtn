@@ -67,5 +67,10 @@ namespace dtn
 		{
 			return m_scheme + ":" + m_node;
 		}
+
+		bool EID::hasApplication() const
+		{
+			return (m_application != "");
+		}
 	}
 }

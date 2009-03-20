@@ -13,8 +13,11 @@
 /* Define if you want to use CommonC++ Threading Objects */
 /* #undef HAVE_LIBCOMMONCPP */
 
+/* Define if scripting language lua is available */
+#define HAVE_LIBLUA5_1 1
+
 /* Define if you wish extra debugging output */
-/* #undef DO_DEBUG_OUTPUT */
+#define DO_DEBUG_OUTPUT 
 
 /* Define if EMMA specific modules should be used */
-/* #undef USE_EMMA_CODE */
+#define USE_EMMA_CODE 

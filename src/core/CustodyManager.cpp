@@ -10,11 +10,12 @@
 #include "utils/MutexLock.h"
 #include "core/CustodyTimer.h"
 #include "data/BundleFactory.h"
+#include "data/PayloadBlockFactory.h"
 
+#include "core/TimeEvent.h"
 #include "core/EventSwitch.h"
 #include "core/CustodyEvent.h"
 #include "core/RouteEvent.h"
-#include "core/BundleEvent.h"
 
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -25,71 +26,82 @@ namespace dtn
 	{
 		CustodyManager::CustodyManager() : Service("CustodyManager"), m_nextcustodytimer(0)
 		{
-			// register me for events
-			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
 		}
 
 		CustodyManager::~CustodyManager()
 		{
-			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
 		}
 
 		void CustodyManager::raiseEvent(const Event *evt)
 		{
-			const CustodyEvent *custodyevent = dynamic_cast<const CustodyEvent*>(evt);
+			const CustodyEvent *custody = dynamic_cast<const CustodyEvent*>(evt);
+			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
 
-			if (custodyevent != NULL)
+			if (time != NULL)
 			{
-				switch (custodyevent->getAction())
+				if (time->getAction() == TIME_SECOND_TICK)
 				{
-					case CUSTODY_ACCEPTANCE:
-					{
-						// create a timer, if custody is requested
-						setTimer( custodyevent->getBundle(), 1, 1 );
-
-						// raise the custody accepted event
-						EventSwitch::raiseEvent( new BundleEvent( custodyevent->getBundle(), BUNDLE_CUSTODY_ACCEPTED ) );
-
-						break;
-					}
-
-					case CUSTODY_REMOVE_TIMER:
-					{
-						const CustodySignalBlock &signal = custodyevent->getCustodySignal();
-
-						// remove a timer
-						const Bundle &bundle = removeTimer(signal);
-
-						if ( !signal.isAccepted() )
-						{
-							// custody was rejected - find a new route
-							EventSwitch::raiseEvent( new RouteEvent( bundle, ROUTE_FIND_SCHEDULE ) );
-						}
-
-						break;
-					}
+					// the time has changed
+					m_breakwait.signal();
 				}
+			}
+			else if (custody == NULL)
+			{
+				switch (evt->getType())
+				{
+				case CUSTODY_ACCEPT:
+					acceptCustody(custody->getBundle());
+					break;
+				case CUSTODY_REJECT:
+					rejectCustody(custody->getBundle());
+					break;
+				}
+			}
+		}
+
+		void CustodyManager::acceptCustody(const Bundle &bundle)
+		{
+			if (bundle.getPrimaryFlags().isCustodyRequested())
+			{
+				// send a custody signal with accept flag
+				CustodySignalBlock *signal = PayloadBlockFactory::newCustodySignalBlock(true);
+				signal->setMatch(bundle);
+
+				Bundle *b = BundleFactory::getInstance().newBundle();
+				b->appendBlock(signal);
+
+				// raise the custody accepted event
+				EventSwitch::raiseEvent(new RouteEvent(*b, ROUTE_PROCESS_BUNDLE));
+				delete b;
+			}
+		}
+
+		void CustodyManager::rejectCustody(const Bundle &bundle)
+		{
+			if (bundle.getPrimaryFlags().isCustodyRequested())
+			{
+				// send a custody signal with reject flag
+				CustodySignalBlock *signal = PayloadBlockFactory::newCustodySignalBlock(false);
+				signal->setMatch(bundle);
+
+				Bundle *b = BundleFactory::getInstance().newBundle();
+				b->appendBlock(signal);
+
+				// raise the custody accepted event
+				EventSwitch::raiseEvent(new RouteEvent(*b, ROUTE_PROCESS_BUNDLE));
+				delete b;
 			}
 		}
 
 		void CustodyManager::tick()
 		{
 			checkCustodyTimer();
-			usleep(5000);
+			m_breakwait.wait();
 		}
 
-		bool CustodyManager::timerAvailable()
+		void CustodyManager::terminate()
 		{
-			MutexLock l(m_custodylock);
-
-			if (m_custodytimer.size() < 200)
-			{
-				return true;
-			}
-			else
-			{
-				return false;
-			}
+			m_breakwait.signal();
 		}
 
 		void CustodyManager::setTimer(const Bundle &bundle, unsigned int time, unsigned int attempt)
@@ -182,9 +194,15 @@ namespace dtn
 			list<CustodyTimer>::iterator iter = totrigger.begin();
 			while (iter != totrigger.end())
 			{
-				EventSwitch::raiseEvent( new CustodyEvent(*iter) );
+				retransmitBundle( (*iter).getBundle() );
 				iter++;
 			}
+		}
+
+		void CustodyManager::retransmitBundle(const Bundle &bundle)
+		{
+			// retransmit the bundle
+			EventSwitch::raiseEvent(new RouteEvent(bundle, ROUTE_PROCESS_BUNDLE));
 		}
 	}
 }

@@ -108,16 +108,14 @@ int main(int argc, char *argv[])
 		setgid( _conf.read<unsigned int>( "group", 0 ) );
 	}
 
-#ifdef DO_DEBUG_OUTPUT 
+#ifdef DO_DEBUG_OUTPUT
 	// create event debugger
 	EventDebugger eventdebugger;
 #endif
 
 	// create the bundle core object
-	BundleCore core(conf.getLocalUri());
-
-	// create a custody manager for handling custody transfers
-	CustodyManager custody_manager;
+	BundleCore& core = BundleCore::getInstance(conf.getLocalUri());
+	core.start();
 
 #ifdef USE_EMMA_CODE
 	GPSProvider *gpsprov = NULL;
@@ -164,8 +162,8 @@ int main(int argc, char *argv[])
 				cout << "Adding ConvergenceLayer for EMMA (" << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << ")" << endl;
 				netcl = new EmmaConvergenceLayer( conf.getLocalUri(), conf.getNetInterface(key), conf.getNetPort(key), conf.getNetBroadcast(key) );
 			}
+			else
 #endif
-
 			if (type == "udp")
 			{
 				cout << "Adding ConvergenceLayer for UDP (" << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << ")" << endl;
@@ -222,7 +220,7 @@ int main(int argc, char *argv[])
 		SimpleBundleStorage storage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
 	}
 #else
-	SimpleBundleStorage storage(core, conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
+	SimpleBundleStorage storage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
 #endif
 
 #ifdef USE_EMMA_CODE
@@ -255,23 +253,22 @@ int main(int argc, char *argv[])
 			config.jobs.push_back( job );
 		}
 
-		mworker = new MeasurementWorker( core, config );
+		mworker = new MeasurementWorker( config );
 	}
 #endif
 
 #ifdef DO_DEBUG_OUTPUT
 	// Debugger
-	Debugger debugger( core );
+	Debugger debugger;
 #endif
 
 	// Echo-Modul
-	EchoWorker echo( core );
+	EchoWorker echo;
 
 	// System initialisiert
 	cout << "dtn node ready" << endl;
 
 	// start the services
-	custody_manager.start();
 	router.start();
 	multicl.initialize();
 	storage.start();
@@ -300,6 +297,9 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	TestApplication app("dtn://mini-debian/debugger");
+	app.start();
+
 //#ifdef HAVE_LIBLUA5_1
 //	luac.run("demo.lua");
 //#endif
@@ -323,17 +323,18 @@ int main(int argc, char *argv[])
 
 	// stop the services
 	storage.abort();
-	custody_manager.abort();
 	multicl.terminate();
 	router.abort();
-
-	// flush the event queue
-	EventSwitch::flush();
 
 #ifdef USE_EMMA_CODE
 	delete gpsprov;
 	delete mworker;
 #endif
+
+	core.abort();
+
+//	// flush the event queue
+//	EventSwitch::flush();
 
 	cout << "shutdown dtn node" << endl;
 

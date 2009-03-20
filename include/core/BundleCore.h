@@ -8,6 +8,7 @@
 #include "core/CustodyTimer.h"
 #include "core/BundleReceiver.h"
 #include "core/EventReceiver.h"
+#include "core/CustodyManager.h"
 #include "core/Event.h"
 
 #include "data/CustodySignalBlock.h"
@@ -16,6 +17,7 @@
 #include <list>
 #include "utils/MutexLock.h"
 #include "utils/Mutex.h"
+#include "utils/Service.h"
 
 
 using namespace dtn::data;
@@ -32,18 +34,11 @@ namespace dtn
 		 * DTN Protocol nötig sind. Die Klasse benötigt ein BundleStorage und einen ConvergenceLayer
 		 * welche vor dem ersten Aufruf von tick() zugewiesen werden müssen.
 		 */
-		class BundleCore : public BundleReceiver, public EventReceiver
+		class BundleCore : public Service, public BundleReceiver, public EventReceiver
 		{
 		public:
-			/**
-			 * Standardkonstruktor
-			 */
-			BundleCore(string localeid);
-
-			/**
-			 * Destruktor
-			 */
-			virtual ~BundleCore();
+			static BundleCore& getInstance(string eid);
+			static BundleCore& getInstance();
 
 			/**
 			 * Setzt ein ConvergenceLayer
@@ -58,9 +53,9 @@ namespace dtn
 			ConvergenceLayer* getConvergenceLayer();
 
 			/**
-			 * Sendet ein Bundle
+			 * get the current custody manager
 			 */
-			TransmitReport transmit(Bundle &b);
+			CustodyManager& getCustodyManager();
 
 			void registerSubNode(string eid, AbstractWorker *node);
 			void unregisterSubNode(string eid);
@@ -74,25 +69,55 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt);
 
+//			/**
+//			 * transmit a bundle to a specific node
+//			 * usually this is called by the storage
+//			 */
+//			bool transmitBundle(const BundleSchedule &schedule, const Node &node);
+
 			/**
-			 * transmit a bundle to a specific node
-			 * usually this is called by the storage
+			 * transmit a bundle directly to a reachable node
 			 */
-			bool transmitBundle(const BundleSchedule &schedule, const Node &node);
+			void transmit(const Node &n, const Bundle &b);
+
+			/**
+			 * deliver a bundle to a application
+			 */
+			void deliver(const Bundle &b);
+
+		protected:
+			void tick();
 
 		private:
-			void processCustody(const Bundle &b);
-			void forwardLocalBundle(const Bundle &bundle);
+			/**
+			 * Standardkonstruktor
+			 */
+			BundleCore();
+
+			/**
+			 * Destruktor
+			 */
+			virtual ~BundleCore();
+
+			void transmit(Bundle &b);
+
+			/**
+			 * Forbidden copy constructor
+			 */
+			BundleCore operator=(const BundleCore &k) {};
+
+			void setLocalEID(string eid);
+
 			void transmitCustody(bool accept, const Bundle &b);
 
 			Bundle createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);
 			Bundle createCustodySignal(const Bundle &b, bool accepted);
 
 			ConvergenceLayer *m_clayer;
-
 			map<string, AbstractWorker*> m_worker;
-
 			string m_localeid;
+			CustodyManager m_cm;
+			unsigned int m_dtntime;
 		};
 	}
 }

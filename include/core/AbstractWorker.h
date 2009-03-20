@@ -4,7 +4,8 @@
 #include "core/BundleCore.h"
 #include "core/ConvergenceLayer.h"
 #include "data/Bundle.h"
-
+#include "core/EventSwitch.h"
+#include "core/RouteEvent.h"
 using namespace dtn::data;
 
 namespace dtn
@@ -14,19 +15,17 @@ namespace dtn
 		class AbstractWorker
 		{
 			public:
-				AbstractWorker(BundleCore &core, const string uri) : m_core(core), m_uri(uri)
+				AbstractWorker(const string uri) : m_uri(uri)
 				{
+					BundleCore &core = BundleCore::getInstance();
+
 					// Registriere mich als Knoten der Bundle empfangen kann
-					m_core.registerSubNode( getWorkerURI(), this );
+					core.registerSubNode( getWorkerURI(), this );
 				};
 
 				virtual ~AbstractWorker() {
-					m_core.unregisterSubNode( getWorkerURI() );
-				};
-
-				BundleCore &getCore() const
-				{
-					return m_core;
+					BundleCore &core = BundleCore::getInstance();
+					core.unregisterSubNode( getWorkerURI() );
 				};
 
 				virtual const string getWorkerURI() const
@@ -36,8 +35,13 @@ namespace dtn
 
 				virtual TransmitReport callbackBundleReceived(const Bundle &b) = 0;
 
+			protected:
+				void transmit(const Bundle &bundle)
+				{
+					EventSwitch::raiseEvent(new RouteEvent(bundle, ROUTE_PROCESS_BUNDLE));
+				}
+
 			private:
-				BundleCore &m_core;
 				string m_uri;
 		};
 	}

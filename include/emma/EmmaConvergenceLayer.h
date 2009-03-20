@@ -27,7 +27,7 @@ namespace emma
 	 * Diese Klasse implementiert einen ConvergenceLayer für UDP/IP über IEEE 802.11
 	 * welche für die Kommunikation zwischen den Fahrzeugen im EMMA Projekt benötigt wird.
 	 */
-	class EmmaConvergenceLayer : public Service, public dtn::core::ConvergenceLayer, public BundleReceiver, public EventReceiver
+	class EmmaConvergenceLayer : public dtn::core::ConvergenceLayer, public BundleReceiver, public EventReceiver
 	{
 	public:
 		/**
@@ -62,14 +62,13 @@ namespace emma
 		 */
 		void raiseEvent(const Event *evt);
 
-	protected:
-		/**
-		 * @sa Service::tick()
-		 */
-		virtual void tick();
+//	protected:
+//		/**
+//		 * @sa Service::tick()
+//		 */
+//		virtual void tick();
 
 		virtual void initialize();
-
 		virtual void terminate();
 
 	private:
@@ -85,8 +84,6 @@ namespace emma
 		string m_eid;
 		string m_bindaddr;
 		unsigned int m_bindport;
-
-		unsigned int m_lastyell;
 
 		UDPConvergenceLayer *m_direct_cl;
 		UDPConvergenceLayer *m_broadcast_cl;

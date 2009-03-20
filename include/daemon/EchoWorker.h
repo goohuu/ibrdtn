@@ -12,7 +12,7 @@ namespace dtn
 		class EchoWorker : public AbstractWorker
 		{
 		public:
-			EchoWorker(BundleCore &core);
+			EchoWorker();
 			~EchoWorker() {};
 
 			TransmitReport callbackBundleReceived(const Bundle &b);

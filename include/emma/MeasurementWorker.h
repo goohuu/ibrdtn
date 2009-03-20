@@ -26,7 +26,7 @@ namespace emma
 	class MeasurementWorker : public AbstractWorker, public Service, public EventReceiver
 	{
 	public:
-		MeasurementWorker(BundleCore &core, MeasurementWorkerConfig config);
+		MeasurementWorker(MeasurementWorkerConfig config);
 		~MeasurementWorker();
 		void tick();
 		unsigned char* needMore(unsigned char* data, unsigned int used, unsigned int needed);

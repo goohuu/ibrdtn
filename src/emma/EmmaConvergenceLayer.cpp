@@ -3,6 +3,7 @@
 #include "utils/Utils.h"
 #include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
+#include "core/TimeEvent.h"
 
 #include "emma/PositionEvent.h"
 
@@ -19,10 +20,11 @@ namespace emma
 	const int EmmaConvergenceLayer::MAX_SIZE = 1024;
 
 	EmmaConvergenceLayer::EmmaConvergenceLayer(string eid, string bind_addr, unsigned short port, string broadcast, unsigned int mtu)
-		: Service("EmmaConvergenceLayer"), m_eid(eid), m_bindaddr(bind_addr), m_bindport(port), m_lastyell(0), m_direct_cl(NULL), m_broadcast_cl(NULL)
+		: m_eid(eid), m_bindaddr(bind_addr), m_bindport(port), m_direct_cl(NULL), m_broadcast_cl(NULL)
 	{
 		// register at event switch
 		EventSwitch::registerEventReceiver(PositionEvent::className, this);
+		EventSwitch::registerEventReceiver(TimeEvent::className, this);
 
 		// register DiscoverBlock structure at the bundle factory
 		m_dfactory = new DiscoverBlockFactory();
@@ -33,11 +35,16 @@ namespace emma
 
 		m_direct_cl->setBundleReceiver(this);
 		m_broadcast_cl->setBundleReceiver(this);
+
+		initialize();
 	}
 
 	EmmaConvergenceLayer::~EmmaConvergenceLayer()
 	{
+		terminate();
+
 		EventSwitch::unregisterEventReceiver(PositionEvent::className, this);
+		EventSwitch::unregisterEventReceiver(TimeEvent::className, this);
 
 		BundleFactory::getInstance().unregisterExtensionBlock(m_dfactory);
 		delete m_dfactory;
@@ -115,22 +122,22 @@ namespace emma
 		m_broadcast_cl->abort();
 	}
 
-	void EmmaConvergenceLayer::tick()
-	{
-		// Jede Sekunde wollen wir ein yell() ausführen
-		unsigned int current_time = BundleFactory::getDTNTime();
-
-		if ( m_lastyell < current_time )
-		{
-			// Dazu merken wir uns die Zeit zu der wir zuletzt ein yell() ausgeführt haben.
-			m_lastyell = BundleFactory::getDTNTime();
-
-			// ... und führen ein yell() aus.
-			yell();
-		}
-
-		usleep(1000);
-	}
+//	void EmmaConvergenceLayer::tick()
+//	{
+//		// Jede Sekunde wollen wir ein yell() ausführen
+//		unsigned int current_time = BundleFactory::getDTNTime();
+//
+//		if ( m_lastyell < current_time )
+//		{
+//			// Dazu merken wir uns die Zeit zu der wir zuletzt ein yell() ausgeführt haben.
+//			m_lastyell = BundleFactory::getDTNTime();
+//
+//			// ... und führen ein yell() aus.
+//			yell();
+//		}
+//
+//		usleep(1000);
+//	}
 
 	/*
 	 * Sendet eine Nachricht, welche anderen Teilnehmern ermöglicht diesen Teilnehmer
@@ -224,10 +231,15 @@ namespace emma
 	void EmmaConvergenceLayer::raiseEvent(const Event *evt)
 	{
 		const PositionEvent *event = dynamic_cast<const PositionEvent*>(evt);
+		const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
 
 		if (event != NULL)
 		{
 			m_position = event->getPosition();
+		}
+		else if (time != NULL)
+		{
+			yell();
 		}
 	}
 }

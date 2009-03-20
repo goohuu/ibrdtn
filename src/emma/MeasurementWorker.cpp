@@ -12,8 +12,8 @@ using namespace dtn::core;
 
 namespace emma
 {
-	MeasurementWorker::MeasurementWorker(BundleCore &core, MeasurementWorkerConfig config)
-		: AbstractWorker(core, "/measurement"), Service("MeasurementWorker"), m_dtntime(0), m_datasize(0), m_config(config)
+	MeasurementWorker::MeasurementWorker(MeasurementWorkerConfig config)
+		: AbstractWorker("/measurement"), Service("MeasurementWorker"), m_dtntime(0), m_datasize(0), m_config(config)
 	{
 		m_source = getWorkerURI();
 
@@ -96,17 +96,7 @@ namespace emma
 			}
 
 			// Bündel versenden
-			switch ( getCore().transmit( *bundle ) )
-			{
-				case NO_ROUTE_FOUND:
-
-				break;
-
-				default:
-
-				break;
-			}
-
+			transmit( *bundle );
 			delete bundle;
 
 			// Speichergröße merken

@@ -24,8 +24,10 @@ namespace utils
 	{
 		pthread_mutex_lock( m_mutex );
 		pthread_cond_destroy(m_cond);
+		delete m_cond;
 		pthread_mutex_unlock( m_mutex );
 		pthread_mutex_destroy( m_mutex );
+		delete m_mutex;
 	}
 
 	void Conditional::signal (bool broadcast)

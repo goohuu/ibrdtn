@@ -32,6 +32,8 @@ namespace dtn
 
 			string getNodeEID() const;
 
+			bool hasApplication() const;
+
 		private:
 			string m_value;
 			string m_scheme;

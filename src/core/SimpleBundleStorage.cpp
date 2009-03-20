@@ -6,6 +6,8 @@
 #include "core/EventSwitch.h"
 #include "core/BundleEvent.h"
 #include "core/RouteEvent.h"
+#include "core/CustodyEvent.h"
+#include "core/TimeEvent.h"
 
 #include <iostream>
 
@@ -15,9 +17,9 @@ namespace dtn
 {
 	namespace core
 	{
-		SimpleBundleStorage::SimpleBundleStorage(BundleCore &core, unsigned int size, unsigned int bundle_maxsize, bool merge)
-		 : Service("SimpleBundleStorage"), BundleStorage(), m_core(core), m_nextdeprecation(0), m_last_compress(0), m_size(size),
-		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false), m_merge(merge), m_bundlewaiting(false)
+		SimpleBundleStorage::SimpleBundleStorage(unsigned int size, unsigned int bundle_maxsize, bool merge)
+		 : Service("SimpleBundleStorage"), BundleStorage(), m_nextdeprecation(0), m_last_compress(0), m_size(size),
+		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false), m_merge(merge)
 		{
 			// register me for events
 			EventSwitch::registerEventReceiver( NodeEvent::className, this );
@@ -35,20 +37,29 @@ namespace dtn
 		{
 			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
 			const StorageEvent *storage = dynamic_cast<const StorageEvent*>(evt);
+			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
 
-			if (storage != NULL)
+			if (time != NULL)
+			{
+				if (time->getAction() == TIME_SECOND_TICK)
+				{
+					// the time has changed
+					m_breakwait.signal();
+				}
+			}
+			else if (storage != NULL)
 			{
 				switch (storage->getAction())
 				{
 					case STORE_BUNDLE:
 					{
 						Bundle *ret = storeFragment(storage->getBundle());
-						m_bundlewaiting = true;
+						m_breakwait.signal();
 
 						if (ret != NULL)
 						{
 							// route the joint bundle
-							EventSwitch::raiseEvent( new RouteEvent(*ret, ROUTE_FIND_SCHEDULE) );
+							EventSwitch::raiseEvent( new RouteEvent(*ret, ROUTE_PROCESS_BUNDLE) );
 							delete ret;
 						}
 
@@ -56,8 +67,18 @@ namespace dtn
 					}
 
 					case STORE_SCHEDULE:
-						store(storage->getSchedule());
-						m_bundlewaiting = true;
+						const BundleSchedule &sched = storage->getSchedule();
+
+						// store the bundle
+						store(sched);
+
+						// accept custody
+						if (sched.getBundle().getPrimaryFlags().isCustodyRequested())
+						{
+							EventSwitch::raiseEvent( new CustodyEvent( sched.getBundle(), CUSTODY_ACCEPT ) );
+						}
+
+						m_breakwait.signal();
 						break;
 				}
 			}
@@ -157,9 +178,6 @@ namespace dtn
 
 		void SimpleBundleStorage::tick()
 		{
-			// Aktuelle DTN Zeit holen
-			unsigned int dtntime = BundleFactory::getDTNTime();
-
 			if (m_neighbours.size() != 0)
 			{
 				// get the first neighbour
@@ -168,16 +186,19 @@ namespace dtn
 
 				try {
 					BundleSchedule schedule = getSchedule( node.getURI() );
-					EventSwitch::raiseEvent( new RouteEvent( schedule, node ) );
+					EventSwitch::raiseEvent( new RouteEvent( schedule.getBundle(), ROUTE_PROCESS_BUNDLE ) );
 				} catch (exceptions::NoScheduleFoundException ex) {
 					// remove the neighbour
 					m_neighbours.erase(node.getURI());
 				}
 
+				// get current time
+				unsigned int dtntime = BundleFactory::getDTNTime();
+
 				// send timed schedules
 				try {
 					BundleSchedule schedule = getSchedule( dtntime );
-					EventSwitch::raiseEvent( new RouteEvent( schedule ) );
+					EventSwitch::raiseEvent( new RouteEvent( schedule.getBundle(), ROUTE_PROCESS_BUNDLE ) );
 				} catch (exceptions::NoScheduleFoundException ex) {
 
 				}
@@ -188,17 +209,12 @@ namespace dtn
 			// TODO: deleteDeprecated();
 
 			// wait till the dtntime has changed or a new bundles is stored (m_bundlewaiting)
-			while (true)
-			{
-				if ( (dtntime != BundleFactory::getDTNTime()) || m_bundlewaiting )
-				{
-					break;
-				}
-				usleep(1000);
-			}
+			m_breakwait.wait();
+		}
 
-			// we react on signal bundlewaiting, set it to false
-			m_bundlewaiting = false;
+		void SimpleBundleStorage::terminate()
+		{
+			m_breakwait.signal();
 		}
 
 		BundleSchedule SimpleBundleStorage::getSchedule(string destination)

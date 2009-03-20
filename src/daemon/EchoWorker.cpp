@@ -10,9 +10,9 @@ namespace dtn
 {
 	namespace daemon
 	{
-		EchoWorker::EchoWorker(BundleCore &core) : AbstractWorker(core, "/echo")
+		EchoWorker::EchoWorker() : AbstractWorker("/echo")
 		{
-			m_localuri = core.getLocalURI();
+			m_localuri = BundleCore::getInstance().getLocalURI();
 		}
 
 		TransmitReport EchoWorker::callbackBundleReceived(const Bundle &b)
@@ -33,7 +33,7 @@ namespace dtn
 				echo->setSource( m_localuri + getWorkerURI() );
 
 				// Absenden
-				getCore().transmit( *echo );
+				transmit( *echo );
 				delete echo;
 			}
 

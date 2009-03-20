@@ -5,6 +5,9 @@
 #include "core/RouteEvent.h"
 #include "core/EventSwitch.h"
 #include "core/StorageEvent.h"
+#include "core/BundleEvent.h"
+#include "core/CustodyEvent.h"
+#include "core/BundleCore.h"
 #include "data/EID.h"
 #include <iostream>
 #include <iomanip>
@@ -50,32 +53,59 @@ namespace dtn
 			{
 				switch (routeevent->getAction())
 				{
-					case ROUTE_FIND_SCHEDULE:
+					case ROUTE_PROCESS_BUNDLE:
 					{
 						const Bundle &b = routeevent->getBundle();
+						BundleCore &core = BundleCore::getInstance();
+
+						// extract and parse eid
 						EID dest(b.getDestination());
 
 						if (isLocal(b))
 						{
-							EventSwitch::raiseEvent( new RouteEvent( b, dtn::core::ROUTE_LOCAL_BUNDLE ) );
+							core.deliver( b );
 							return;
 						}
 
 						try {
 							// search for the destination in the neighbourhood
 							Node node = getNeighbour(dest.getNodeEID());
-							BundleSchedule sched( b, 0, dest.getNodeEID() );
-							EventSwitch::raiseEvent( new RouteEvent( sched, node ) );
-						} catch (NoNeighbourFoundException ex) {
-							// not in the neighbourhood, create a schedule
-							BundleSchedule schedule = getSchedule( routeevent->getBundle() );
-							EventSwitch::raiseEvent( new StorageEvent( schedule ) );
-						}
 
+							// transmit to neighbour node
+							core.transmit(node, b);
+
+							// we're done
+							return;
+						} catch (NoNeighbourFoundException ex) {
+							try {
+								// not in the neighbourhood, create a schedule
+								BundleSchedule schedule = getSchedule( routeevent->getBundle() );
+
+								try {
+									// check if we can transmit it directly
+									Node node = getNeighbour( schedule.getEID() );
+
+									// transmit to the neighbouring node
+									core.transmit(node, b);
+
+									// we're done
+									return;
+								} catch (NoNeighbourFoundException ex) {
+								};
+
+								// store the schedule for later delivery
+								EventSwitch::raiseEvent( new StorageEvent( schedule ) );
+							} catch (NoScheduleFoundException ex) {
+								EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_REJECT ) );
+								EventSwitch::raiseEvent( new BundleEvent( b, BUNDLE_DELETED ) );
+							} catch (BundleExpiredException ex) {
+								EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_REJECT ) );
+								EventSwitch::raiseEvent( new BundleEvent( b, BUNDLE_DELETED ) );
+							};
+						};
 						break;
 					}
 				}
-
 			}
 		}
 

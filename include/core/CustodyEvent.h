@@ -24,34 +24,18 @@ namespace dtn
 	{
 		enum EventCustodyAction
 		{
-			CUSTODY_ACCEPTANCE = 0,
-			CUSTODY_REJECT = 1,
-			CUSTODY_TIMEOUT = 2,
-			CUSTODY_REMOVE_TIMER = 3
+			CUSTODY_REJECT = 0,
+			CUSTODY_ACCEPT = 1
 		};
 
 		class CustodyEvent : public Event
 		{
 		public:
 			CustodyEvent(const Bundle &bundle, const EventCustodyAction action);
-
-			/**
-			 * remove a custody timer
-			 */
-			CustodyEvent(string eid, const CustodySignalBlock &signal);
-
-			/**
-			 * announce a custody timeout
-			 */
-			CustodyEvent(CustodyTimer &timer);
-
 			~CustodyEvent();
 
 			EventCustodyAction getAction() const;
 			const Bundle& getBundle() const;
-			const CustodySignalBlock& getCustodySignal() const;
-			string getEID() const;
-			const CustodyTimer& getTimer() const;
 			const string getName() const;
 			const EventType getType() const;
 
@@ -62,11 +46,8 @@ namespace dtn
 			static const string className;
 
 		private:
-			string m_eid;
-			const CustodySignalBlock *m_custody;
-			Bundle *m_bundle;
+			const Bundle &m_bundle;
 			const EventCustodyAction m_action;
-			CustodyTimer *m_timer;
 		};
 	}
 }

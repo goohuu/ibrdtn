@@ -40,10 +40,8 @@ namespace testsuite
 	{
 		bool ret = true;
 
-		BundleCore core("dtn://node1");
-
 		// Erstelle eine SimpleBundleStorage
-		SimpleBundleStorage storage(core);
+		SimpleBundleStorage storage;
 
 		if (!fragmentationTest(storage))
 		{

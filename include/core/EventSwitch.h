@@ -39,7 +39,7 @@ namespace dtn
 
 	namespace core
 	{
-		class EventSwitch : public dtn::utils::Service
+		class EventSwitch //: public dtn::utils::Service
 		{
 		private:
 			EventSwitch();
@@ -51,8 +51,8 @@ namespace dtn
 			dtn::utils::Mutex m_queuelock;
 
 			void direct(const Event *evt);
-			void push(Event *evt);
-			void private_flush();
+//			void push(Event *evt);
+//			void private_flush();
 
 		protected:
 			void terminate();
@@ -62,7 +62,8 @@ namespace dtn
 			static void registerEventReceiver(string eventName, EventReceiver *receiver);
 			static void unregisterEventReceiver(string eventName, EventReceiver *receiver);
 			static void raiseEvent(Event *evt);
-			static void flush();
+//			static void flush();
+//			static void shutdown();
 		};
 	}
 }
