@@ -26,10 +26,14 @@ namespace dtn
 	{
 		CustodyManager::CustodyManager() : Service("CustodyManager"), m_nextcustodytimer(0)
 		{
+			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
+			EventSwitch::registerEventReceiver( TimeEvent::className, this );
 		}
 
 		CustodyManager::~CustodyManager()
 		{
+			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
+			EventSwitch::unregisterEventReceiver( TimeEvent::className, this );
 		}
 
 		void CustodyManager::raiseEvent(const Event *evt)
