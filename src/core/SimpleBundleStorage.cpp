@@ -69,13 +69,37 @@ namespace dtn
 					case STORE_SCHEDULE:
 						const BundleSchedule &sched = storage->getSchedule();
 
-						// store the bundle
-						store(sched);
+						try {
+							// local eid
+							string localeid = BundleCore::getInstance().getLocalURI();
+							const Bundle &b = sched.getBundle();
 
-						// accept custody
-						if (sched.getBundle().getPrimaryFlags().isCustodyRequested())
-						{
+							if ( ( b.getPrimaryFlags().isCustodyRequested() ) && (b.getCustodian() != localeid) )
+							{
+								// here i need a copy
+								Bundle b_copy = b;
+
+								// set me as custody
+								b_copy.setCustodian(localeid);
+
+								// Make a new schedule
+								BundleSchedule sched_new(b_copy, sched.getTime(), sched.getEID());
+
+								// store the schedule
+								store(sched_new);
+							}
+							else
+							{
+								// store the schedule
+								store(sched);
+							}
+
+							// accept custody
 							EventSwitch::raiseEvent( new CustodyEvent( sched.getBundle(), CUSTODY_ACCEPT ) );
+
+						} catch (NoSpaceLeftException ex) {
+							// reject custody
+							EventSwitch::raiseEvent( new CustodyEvent( sched.getBundle(), CUSTODY_REJECT ) );
 						}
 
 						m_breakwait.signal();
@@ -103,15 +127,15 @@ namespace dtn
 		{
 			MutexLock l(m_readlock);
 
-			// Prüfen ob genug Platz vorhanden ist
+			// check if there is enough space
 			unsigned int remain = m_size - m_currentsize;
 
-			// Hole Referenz auf das Bundle im Schedule
+			// get reference of the bundle in the schedule
 			const Bundle &bundle = schedule.getBundle();
 
 			if ( remain < bundle.getLength() )
 			{
-				// Nicht genug Platz vorhanden
+				// not enough space left
 				throw NoSpaceLeftException();
 			}
 			else
@@ -119,7 +143,7 @@ namespace dtn
 				m_currentsize += bundle.getLength();
 			}
 
-			// Storage ändert sich, aufräumen wieder erlaubt
+			// storage change, clean-up allowed
 			m_nocleanup = false;
 
 			// Prüfe ob dieses Bündel vor dem nächsten geplanten Durchlauf abläuft
@@ -430,8 +454,28 @@ namespace dtn
 				}
 			}	// end check for duplicates
 
-			// bundle isn't in this list, add it
-			fragment_list.push_back( bundle );
+			// local eid
+			string localeid = BundleCore::getInstance().getLocalURI();
+
+			if ( ( bundle.getPrimaryFlags().isCustodyRequested() ) && (bundle.getCustodian() != localeid) )
+			{
+				// here i need a copy
+				Bundle b_copy = bundle;
+
+				// set me as custody
+				b_copy.setCustodian(localeid);
+
+				// accept custody
+				EventSwitch::raiseEvent( new CustodyEvent( bundle, CUSTODY_ACCEPT ) );
+
+				// bundle isn't in this list, add it
+				fragment_list.push_back( b_copy );
+			}
+			else
+			{
+				// bundle isn't in this list, add it
+				fragment_list.push_back( bundle );
+			}
 
 			try {
 				// try to merge the fragments

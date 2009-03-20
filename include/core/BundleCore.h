@@ -69,12 +69,6 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt);
 
-//			/**
-//			 * transmit a bundle to a specific node
-//			 * usually this is called by the storage
-//			 */
-//			bool transmitBundle(const BundleSchedule &schedule, const Node &node);
-
 			/**
 			 * transmit a bundle directly to a reachable node
 			 */
@@ -99,7 +93,7 @@ namespace dtn
 			 */
 			virtual ~BundleCore();
 
-			void transmit(Bundle &b);
+			void transmit(const Bundle &b);
 
 			/**
 			 * Forbidden copy constructor

@@ -149,62 +149,44 @@ namespace dtn
 			}
 		}
 
-		void BundleCore::transmit(Bundle &b)
+		void BundleCore::transmit(const Bundle &b)
 		{
 			EventSwitch::raiseEvent( new RouteEvent( b, ROUTE_PROCESS_BUNDLE ) );
 		}
-
-//		TransmitReport BundleCore::transmit(Bundle &b)
-//		{
-//			// check all block of the bundle for block flag actions
-//			list<Block*> blocks = b.getBlocks();
-//			list<Block*>::const_iterator iter = blocks.begin();
-//
-//			while (iter != blocks.end())
-//			{
-//				Block *block = (*iter);
-//				BlockFlags flags = block->getBlockFlags();
-//
-//				if ( !block->isProcessed() )
-//				{
-//					// if forwarded without processed, mark it!
-//					flags.setFlag(FORWARDED_WITHOUT_PROCESSED, true);
-//					block->setBlockFlags(flags);
-//					block->updateBlockSize();
-//				}
-//
-//				iter++;
-//			}
-//
-//			try {
-//				// Wurde Custody angefordert?
-//				PrimaryFlags flags( b.getInteger(PROCFLAGS) );
-//
-//				if (flags.isCustodyRequested())
-//				{
-//					// Setze Custody EID auf die eigene EID
-//					b.setCustodian( m_localeid );
-//				}
-//
-//				// find a next route for the bundle
-//				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_FIND_SCHEDULE) );
-//
-//				return BUNDLE_ACCEPTED;
-//			} catch (NoSpaceLeftException ex) {
-//				// Bündel verwerfen
-//				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
-//				return UNKNOWN;
-//			} catch (BundleExpiredException ex) {
-//				return UNKNOWN;
-//			} catch (NoScheduleFoundException ex) {
-//				return NO_ROUTE_FOUND;
-//			};
-//		}
 
 		void BundleCore::transmit(const Node &n, const Bundle &b)
 		{
 			// get convergence layer to reach the node
 			ConvergenceLayer *clayer = n.getConvergenceLayer();
+
+			if (b.getPrimaryFlags().isCustodyRequested())
+			{
+				if (b.getCustodian() == m_localeid)
+				{
+					// set custody timer
+					m_cm.setTimer(b, 5, 1);
+				}
+				else
+				{
+					// here i need a copy
+					Bundle b_copy = b;
+
+					// set me as custody
+					b_copy.setCustodian(m_localeid);
+
+					// accept custody
+					EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_ACCEPT ) );
+
+					// set custody timer
+					m_cm.setTimer(b_copy, 5, 1);
+
+					// send the bundle
+					clayer->transmit(b_copy, n);
+
+					// bundle forwarded event
+					EventSwitch::raiseEvent( new BundleEvent( b_copy, BUNDLE_FORWARDED ) );
+				}
+			}
 
 			// send the bundle
 			clayer->transmit(b, n);
@@ -357,171 +339,11 @@ namespace dtn
 			return ret;
 		}
 
-//		void BundleCore::transmitCustody(bool accept, const Bundle &b)
-//		{
-//			PrimaryFlags flags = b.getPrimaryFlags();
-//
-//			// Senden an
-//			string eid = b.getCustodian();
-//
-//			// Custody-Acceptance Event
-//			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_CUSTODY_ACCEPTED) );
-//
-//			// Erstelle ein CustodySignal
-//			Bundle bundle = createCustodySignal(b, accept);
-//
-//			// Absender setzen
-//			bundle.setSource( m_localeid );
-//
-//			switch ( transmit( bundle ) )
-//			{
-//				case NO_ROUTE_FOUND:
-//
-//				break;
-//
-//				default:
-//
-//				break;
-//			}
-//		}
-
-//		bool BundleCore::transmitBundle(const BundleSchedule &schedule, const Node &node)
-//		{
-//			// Bündel holen
-//			const Bundle &bundle = schedule.getBundle();
-//
-//			try {
-//				// Bündelparameter holen
-//				PrimaryFlags flags = bundle.getPrimaryFlags();
-//
-//				try {
-//					// transfer bundle to node
-//					switch ( getConvergenceLayer()->transmit( bundle, node ) )
-//					{
-//						case TRANSMIT_SUCCESSFUL:
-//							// transmittion successful
-//							if ( flags.isCustodyRequested() )
-//							{
-//								// set custody timer
-//								m_cm.setTimer( bundle, 5, 0 );
-//							}
-//
-//							// report forwarded event
-//							EventSwitch::raiseEvent( new BundleEvent(bundle, BUNDLE_FORWARDED) );
-//						break;
-//
-//						case BUNDLE_ACCEPTED:
-//							// should never happen!
-//						break;
-//
-//						default:
-//							// create a new schedule
-//							EventSwitch::raiseEvent( new RouteEvent( bundle, ROUTE_FIND_SCHEDULE ) );
-//						break;
-//					};
-//
-//				} catch (NoNeighbourFoundException ex) {
-//					// target node not available, reschedule the bundle
-//					EventSwitch::raiseEvent( new RouteEvent( bundle, ROUTE_FIND_SCHEDULE ) );
-//				}
-//
-//				return true;
-//			} catch (Exception ex) {
-//				// No space left in the storage.
-//				// No route found.
-//				// Doesn't fit or not allowed.
-//				// No receiption!?
-//				// Dismiss the bundle. I don't know what to do.
-//				EventSwitch::raiseEvent( new BundleEvent(bundle, BUNDLE_DELETED) );
-//			}
-//
-//			return false;
-//		}
-
 		void BundleCore::received(const ConvergenceLayer &cl, Bundle &b)
 		{
 			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
 			EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
 		}
-
-
-//		void BundleCore::received(const ConvergenceLayer &cl, Bundle &b)
-//		{
-//			PrimaryFlags flags = b.getPrimaryFlags();
-//
-//			// received event
-//			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
-//
-//			// check all block of the bundle for block flag actions
-//			list<Block*> blocks = b.getBlocks();
-//			list<Block*>::const_iterator iter = blocks.begin();
-//
-//			while (iter != blocks.end())
-//			{
-//				Block *block = (*iter);
-//				BlockFlags flags = block->getBlockFlags();
-//
-//				if ( !block->isProcessed() )
-//				{
-//					if ( flags.getFlag(REPORT_IF_CANT_PROCESSED) )
-//					{
-//						// transmit a status report if requested
-//						Bundle bundle = createStatusReport(b, RECEIPT_OF_BUNDLE, BLOCK_UNINTELLIGIBLE);
-//						transmit( bundle );
-//					}
-//
-//					if ( flags.getFlag(DELETE_IF_CANT_PROCESSED) )
-//					{
-//						// discard the hole bundle!
-//						EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
-//						return;
-//					}
-//
-//					if ( flags.getFlag(DISCARD_IF_CANT_PROCESSED) )
-//					{
-//						// discard this block
-//						b.removeBlock( block );
-//					}
-//				}
-//
-//				iter++;
-//			}
-//
-//			// delete if the lifetime has expired
-//			if (b.isExpired())
-//			{
-//				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
-//				return;
-//			}
-//
-//			try {
-//				// Wurde Custody angefordert?
-//				PrimaryFlags flags( b.getInteger(PROCFLAGS) );
-//
-//				if (flags.isCustodyRequested())
-//				{
-//					// Setze Custody EID auf die eigene EID
-//					b.setCustodian( m_localeid );
-//				}
-//
-//				// find a route
-//				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_FIND_SCHEDULE) );
-//			} catch (InvalidBundleData ex) {
-//
-//			} catch (Exception ex) {
-//				// Alle anderen Ausnahmen: NoSpaceLeftException, BundleExpiredException
-//				// und NoScheduleFoundException führen zum ablehnen des Bündel.
-//
-//				// Bei Custody noch ein Custody NACK senden
-//				if (flags.isCustodyRequested())
-//				{
-//					transmitCustody(false, b);
-//				}
-//
-//				// Bündel verwerfen und ggf. Reports generieren
-//				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
-//			}
-//		}
 
 		void BundleCore::registerSubNode(string eid, AbstractWorker *node)
 		{
