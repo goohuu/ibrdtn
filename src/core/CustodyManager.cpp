@@ -66,6 +66,8 @@ namespace dtn
 
 		void CustodyManager::acceptCustody(const Bundle &bundle)
 		{
+			if (bundle.getCustodian() == "dtn:none") return;
+
 			if (bundle.getPrimaryFlags().isCustodyRequested())
 			{
 				// send a custody signal with accept flag
@@ -86,6 +88,8 @@ namespace dtn
 
 		void CustodyManager::rejectCustody(const Bundle &bundle)
 		{
+			if (bundle.getCustodian() == "dtn:none") return;
+
 			if (bundle.getPrimaryFlags().isCustodyRequested())
 			{
 				// send a custody signal with reject flag

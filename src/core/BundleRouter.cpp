@@ -58,6 +58,12 @@ namespace dtn
 						const Bundle &b = routeevent->getBundle();
 						BundleCore &core = BundleCore::getInstance();
 
+						if (b.getDestination() == "dtn:none")
+						{
+							// drop the invalid bundle
+							return;
+						}
+
 						// extract and parse eid
 						EID dest(b.getDestination());
 
