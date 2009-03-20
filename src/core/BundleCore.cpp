@@ -185,6 +185,8 @@ namespace dtn
 
 					// bundle forwarded event
 					EventSwitch::raiseEvent( new BundleEvent( b_copy, BUNDLE_FORWARDED ) );
+
+					return;
 				}
 			}
 
