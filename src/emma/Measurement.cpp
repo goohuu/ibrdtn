@@ -14,21 +14,21 @@ namespace emma
 	{
 		unsigned int time = BundleFactory::getDTNTime();
 
-		// Etwas Speicher reservieren
+		// reserve some memory
 		m_data = (unsigned char*)calloc(datasize, sizeof(unsigned char));
 
-		// Eventuell Größe anpassen
+		// adjust the size
 		need( SDNV::encoding_len( time ) + SDNV::encoding_len( jobs ) );
 
-		// Zeiger kopieren
+		// copy pointer
 		char* data = (char*)m_data;
 
-		// Zeitpunkt hinzufügen
+		// add time
 		unsigned int len = SDNV::encode( time, data, SDNV::encoding_len( time ) );
 		m_length += len;
 		data += len;
 
-		// Anzahl der Jobs hinzufügen
+		// add count of jobs
 		m_length += SDNV::encode( jobs, data, SDNV::encoding_len( jobs ) );
 	}
 
@@ -46,12 +46,11 @@ namespace emma
 		}
 	}
 
-	void Measurement::add(GPSProvider &gps)
+	void Measurement::add(pair<double,double> &position)
 	{
 		NetworkFrame f;
-		f.append(gps.getTime());
-		f.append(gps.getLatitude());
-		f.append(gps.getLongitude());
+		f.append(position.first);
+		f.append(position.second);
 
 		add( 1, (char*)f.getData(), f.getSize() );
 	}
@@ -68,29 +67,29 @@ namespace emma
 
 	void Measurement::add(unsigned char type, char* job_data, unsigned int job_length)
 	{
-		// Datensatzgröße
+		// size of dataset
 		unsigned int size = sizeof(char) + SDNV::encoding_len( job_length ) + job_length;
 
-		// Eventuell Größe anpassen
+		// adjust size
 		need( size );
 
-		// Zeiger kopieren
+		// copy pointer
 		char* data = (char*)m_data;
 
-		// An das Ende setzen
+		// set to the end
 		data += m_length;
 
-		// Messdatentyp
+		// measurement type
 		data[0] = type;
 		data++;
 
-		// Datenlänge
+		// length of data
 		data += SDNV::encode( job_length, data, SDNV::encoding_len( job_length ) );
 
-		// Messdaten
+		// measurement data
 		memcpy( data, job_data, job_length );
 
-		// Datengröße erweitern
+		// extend data size
 		m_length += size;
 	}
 

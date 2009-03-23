@@ -109,18 +109,18 @@ namespace data
 				}
 			}
 
-			// Decodiere die Länge der block-spezifischen Daten
+			// decode the length of the block specific data
 			ret = SDNV::decode(data, SDNV::len(data), &value);
 
 			// check for error
 			if (ret == -1) throw InvalidBundleData("Error while decoding a SDNV.");
 			if (ret > (size - block_length)) throw InvalidBundleData("Decoded SDNV is too long.");
 
-			// Merke die Länge des Payloadlängenfeld
+			// save the length of the payload field
 			mapping[position] = ret;
 			position++;
 
-			data += ret;	// Springe zu den block-spezifischen Daten
+			data += ret;	// jump to the block specific data
 			block_length += ret;
 
 			if (value > (size - block_length)) throw InvalidBundleData("Decoded block length is too long.");

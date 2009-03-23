@@ -59,7 +59,6 @@ namespace emma
 
 	TransmitReport EmmaConvergenceLayer::transmit(const Bundle &b)
 	{
-		// Verwende Node um das Ziel zu definieren
 		return m_broadcast_cl->transmit(b);
 	}
 
@@ -72,7 +71,7 @@ namespace emma
 	{
 		MutexLock l(m_receivelock);
 
-		// Wenn es ein DiscoverBundle ist dann verarbeite es gleich.
+		// check for discovery blocks to process
 		list<Block*> blocks = b.getBlocks(DiscoverBlock::BLOCK_TYPE);
 
 		if (!blocks.empty())
@@ -81,12 +80,12 @@ namespace emma
 
 			if ( discover != NULL)
 			{
-				// Erstelle eine Node und leite dieses Objekt an den Router weiter
+				// create a node and announce it to the router
 				Node n(FLOATING);
 				n.setAddress( discover->getConnectionAddress() );
 				n.setPort( discover->getConnectionPort() );
 				n.setURI( b.getSource() );
-				n.setTimeout( 5 ); // 5 Sekunden Timeout
+				n.setTimeout( 5 ); // 5 seconds timeout
 				n.setConvergenceLayer(this);
 
 				if (discover->getOptionals() > 1)
@@ -96,12 +95,6 @@ namespace emma
 
 				// create a event
 				EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_INFO_UPDATED));
-
-	//			// Zurück rufen, wenn dies ein Broadcast war und nicht von uns selbst stammt
-	//			if ( ( b->getDestination() == "dtn:discovery" ) && ( b->getSource() != m_eid ) )
-	//			{
-	//				yell( n );
-	//			}
 			}
 		}
 
@@ -110,47 +103,23 @@ namespace emma
 
 	void EmmaConvergenceLayer::initialize()
 	{
-		// ConvergenceLayer starten
 		m_direct_cl->start();
 		m_broadcast_cl->start();
 	}
 
 	void EmmaConvergenceLayer::terminate()
 	{
-		// ConvergenceLayer stoppen
 		m_direct_cl->abort();
 		m_broadcast_cl->abort();
 	}
 
-//	void EmmaConvergenceLayer::tick()
-//	{
-//		// Jede Sekunde wollen wir ein yell() ausführen
-//		unsigned int current_time = BundleFactory::getDTNTime();
-//
-//		if ( m_lastyell < current_time )
-//		{
-//			// Dazu merken wir uns die Zeit zu der wir zuletzt ein yell() ausgeführt haben.
-//			m_lastyell = BundleFactory::getDTNTime();
-//
-//			// ... und führen ein yell() aus.
-//			yell();
-//		}
-//
-//		usleep(1000);
-//	}
-
-	/*
-	 * Sendet eine Nachricht, welche anderen Teilnehmern ermöglicht diesen Teilnehmer
-	 * zu erkennen.
-	 */
 	void EmmaConvergenceLayer::yell()
 	{
 		/*
-		 * Versende ein Broadcast DiscoverPaket mit Daten über Dich selbst.
-		 * Damit haben andere DTN Knoten die Möglichkeit Dich zu entdecken.
+		 * send a discovery bundle with broadcast to neighboring nodes
 		 */
 
-		// Erstelle ein DiscoverBundle
+		// create a discovery bundle
 		BundleFactory &fac = BundleFactory::getInstance();
 		Bundle *bundle = fac.newBundle();
 		DiscoverBlock *block = DiscoverBlockFactory::newDiscoverBlock();
@@ -159,21 +128,21 @@ namespace emma
 		block->setConnectionAddress(m_bindaddr);
 		block->setConnectionPort(m_bindport);
 
-		// Setzte den Absender ein
+		// set the source eid
 		bundle->setSource( m_eid );
 
-		// Destination
+		// set the destination eid
 		bundle->setDestination("dtn:discovery");
 
-		// Avoid storing & forwarding
+		// avoid storing & forwarding
 		bundle->setInteger(LIFETIME, 0);
 
-		// Priority expedited
+		// priority expedited
 		PrimaryFlags flags = bundle->getPrimaryFlags();
 		flags.setPriority(EXPEDITED);
 		bundle->setPrimaryFlags(flags);
 
-		// Zusätzliche Daten einsetzen: GPS Position
+		// add aditional data: GPS position
 		block->setLatitude( m_position.first );
 		block->setLongitude( m_position.second );
 
@@ -188,10 +157,10 @@ namespace emma
 	void EmmaConvergenceLayer::yell(Node node)
 	{
 		/*
-		 * Versende ein Broadcast DiscoverPaket mit Daten über Dich selbst.
-		 * Damit haben andere DTN Knoten die Möglichkeit Dich zu entdecken.
+		 * send a discovery bundle with broadcast to neighboring nodes
 		 */
-		// Erstelle ein DiscoverBundle
+
+		// create a discovery bundle
 		BundleFactory &fac = BundleFactory::getInstance();
 		Bundle *bundle = fac.newBundle();
 		DiscoverBlock *block = DiscoverBlockFactory::newDiscoverBlock();
@@ -202,10 +171,10 @@ namespace emma
 
 		bundle->appendBlock(block);
 
-		// Setzte den Absender ein
+		// set the source eid
 		bundle->setSource( m_eid );
 
-		// Destination
+		// set the destination eid
 		bundle->setDestination( node.getURI() );
 
 		// Avoid storing & forwarding
@@ -216,7 +185,7 @@ namespace emma
 		flags.setPriority(EXPEDITED);
 		bundle->setPrimaryFlags(flags);
 
-		// Zusätzliche Daten einsetzen: GPS Position
+		// add aditional data: GPS position
 		block->setLatitude( m_position.first );
 		block->setLongitude( m_position.second );
 

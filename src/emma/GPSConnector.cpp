@@ -82,7 +82,7 @@ namespace emma
 
 	bool GPSConnector::readData()
 	{
-		// Erst gucken ob Daten da sind und dabei maximal 100ms warten
+		// First look for data, wait max. 100ms
 		struct pollfd psock[1];
 
 		psock[0].fd = m_socket;
@@ -114,7 +114,7 @@ namespace emma
 					return false;
 				}
 
-				// Nachsehen ob eine ganze Zeile im Puffer steht
+				// look for a whole line in the buffer
 				int lineend = -1;
 				for (int i = 0; i < len; i++)
 				{
@@ -125,17 +125,17 @@ namespace emma
 					}
 				}
 
-				// Wenn keine Zeile da ist, abbrechen.
+				// if there is no line, abor.
 				if ( lineend < 0 )
 				{
 					return false;
 				}
 
-				// Ganze Zeile lesen
+				// read the line
 				len = recv(m_socket, data, lineend + 1, 0);
 				data[lineend] = '\0';
 
-				// Daten parsen
+				// parse data
 				parseData(data, lineend);
 
 				return true;
@@ -147,24 +147,24 @@ namespace emma
 
 	void GPSConnector::parseData(char *data, unsigned int size)
 	{
-		// Beispiel:
+		// Example:
 		// GPSD,O=RMC 1211456745.44 0.005 52.273185 10.525763
 		// string gpsdata("GPSD,O=RMC 1211456745.44 0.005 52.273185 10.525763");
 		string gpsdata(data);
 
-		// Daten zerteilen
+		// split data
 		vector<string> token = Utils::tokenize(" ", gpsdata);
 
-		// Wir brauchen mindestens 5 Datenfelder
+		// at least 5 data fields
 		if (token.size() < 5) return;
 
-		// Am Anfang steht "GPSD,O="
+		// Prefix of the important line "GPSD,O="
 		if (token[0].find("GPSD,O=") != 0) return;
 
-		// Type lesen
+		// read type
 		string datatype = token[0].substr(7, 3);
 
-		// Daten lesen
+		// read daten
 		string time = token[1];
 		string x = token[2];
 		string latitude = token[3];
@@ -190,7 +190,7 @@ namespace emma
 	{
 		if (getState() == DISCONNECTED)
 		{
-			// Neu verbinden
+			// reconnect
 			if ( !connect() )
 			{
 				sleep(2);

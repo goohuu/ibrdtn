@@ -24,30 +24,30 @@ namespace emma
 		FILE *fp;
 		int status;
 
-		// Führe das Kommando aus
+		// execute the command
 		fp = popen(m_command.c_str(), "r");
 
-		// Wenn der Handle NULL ist dann gibts hier nix.
+		// if handle is NULL then return.
 		if (fp == NULL) return;
 
 		int data = 0;
 		int i = 0;
 
-		// Daten lesen
+		// read data
 		do {
 			data = fgetc(fp);
 			buffer[i] = (char)data;
 			i++;
 		} while (data != EOF);
 
-		// Handle schließen
+		// close handle
 		status = pclose(fp);
 
 		if (status == -1) {
 			/* Error reported by pclose() */
 
 		} else {
-			// Neue Daten kopieren
+			// copy new data
 			m_size = i - 1;
 			free(m_data);
 			m_data = (unsigned char*)calloc(m_size, sizeof(char));

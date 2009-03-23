@@ -98,13 +98,13 @@ namespace dtn
 			// variable for the dictionary length
 			u_int64_t dict_length = 0;
 
-			// Durchlaufe alle Felder von Proc. Flags bis Directory Length
+			// process all fields, from proc. flags till directory Length
 			for (int i = PROCFLAGS; i <= DICTIONARY_LENGTH; i++)
 			{
 				// SDNV: Proc. Flags
 				field_len = SDNV::len(data);
 
-				// Wenn kein neues Feld gefunden wurde, abbrechen
+				// if now field is found, break out.
 				if (field_len <= 0)
 				{
 					throw InvalidBundleData();
@@ -136,10 +136,10 @@ namespace dtn
 					break;
 				}
 
-				// Feldlänge merken
+				// save field length
 				fieldsizes[i] = field_len;
 
-				// Position weiterrücken
+				// go to the next field
 				data += field_len;
 				parsedsize += field_len;
 			}
@@ -154,20 +154,20 @@ namespace dtn
 
 			if ( flags.isFragment() )
 			{
-				// Wenn dies ein Fragment ist, dann auch Fragment Offset lesen
+				// if this is a fragment, then read the offset
 				field_len = SDNV::len(data);
 
 				fieldsizes[FRAGMENTATION_OFFSET] = field_len;
 
-				// Position weiterrücken
+				// go to the next field
 				data += field_len;
 
-				// ... und die Gesamtgröße
+				// ... and the application length
 				field_len = SDNV::len(data);
 
 				fieldsizes[APPLICATION_DATA_LENGTH] = field_len;
 
-				// Position weiterrücken
+				// go to the next field
 				data += field_len;
 				parsedsize += field_len;
 			}
@@ -231,25 +231,25 @@ namespace dtn
 		{
 			NetworkFrame *frame = new NetworkFrame();
 
-			// Bundleversion hinzufügen
+			// add bundle version
 			frame->append( data::BUNDLE_VERSION );
 
-			// Durchlaufen der Felder bis Dictionary ByteArray
+			// walk through all fields
 			int maxfield = DICTIONARY_BYTEARRAY;
 
-			// Schreibe ProcFlags
+			// write proc. flags
 			PrimaryFlags procflags;
 
 			procflags.setEIDSingleton(true);
 			frame->append( procflags.getValue() );
 
-			// Vorläufige Blocklänge eintragen
+			// set interim block size
 			frame->append( (u_int64_t)0 );
 
-			// Positionen der Dictionary Einträge errechnen
+			// create a new dictionary
 			Dictionary dict;
 
-			// Dictionary Offsets schreiben
+			// write dictionary offsets
 			for (int i = 0; i < 4; i++)
 			{
 				pair<int, int> offsets = dict.add( "dtn:none" );
@@ -264,7 +264,7 @@ namespace dtn
 			unsigned char* dict_data = (unsigned char*)calloc(dict.getLength(), sizeof(unsigned char));
 			unsigned int dict_size = dict.write(dict_data);
 
-			// Durchlaufe alle Felder von Proc. Flags bis Directory Length
+			// process all fields, from proc. flags till maxfield
 			for (int i = CREATION_TIMESTAMP; i <= maxfield; i++)
 			{
 				switch (i)
@@ -398,7 +398,7 @@ namespace dtn
 
 		bool BundleFactory::compareFragments(const Bundle &first, const Bundle &second)
 		{
-			// Wenn der Offset des aktuellen Bundles kleiner ist als der des einzufügenden Bundles
+			// if the offset of the first bundle is lower than the second...
 			if (first.getInteger(FRAGMENTATION_OFFSET) < second.getInteger(FRAGMENTATION_OFFSET))
 			{
 				return true;

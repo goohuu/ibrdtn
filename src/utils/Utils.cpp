@@ -32,7 +32,7 @@ namespace dtn
 		}
 
 		/**
-		 * Berechnet die Distanz zwischen zwei Punkten (Latitude, Longitude)
+		 * calculate the distance between two coordinates. (Latitude, Longitude)
 		 */
 		 double Utils::distance(double lat1, double lon1, double lat2, double lon2)
 		 {

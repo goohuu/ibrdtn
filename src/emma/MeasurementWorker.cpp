@@ -40,52 +40,45 @@ namespace emma
 
 		if (m_dtntime <= curtime)
 		{
-			// Alle 5 Sekunden aktiv werden
+			// run every 5 seconds
 			m_dtntime = curtime + m_config.interval;
 
 			unsigned int jobcount = m_config.jobs.size();
 
-//			if (m_gps != NULL)
-//			{
-//				jobcount++;
-//			}
-
-			// Vorherige Größe als Speichergröße verwenden
+			// use previous size
 			Measurement m( m_datasize, jobcount );
 
-//			// Wenn wir GPS haben das als erste Messung
-//			if (m_gps != NULL)
-//			{
-//				m.add( m_gps );
-//			}
+			// Add GPS position to the measurement
+			jobcount++;
+			m.add( m_position );
 
-			// Alle Jobs abarbeiten
+			// walk through all jobs
 			vector<MeasurementJob>::iterator iter = m_config.jobs.begin();
 
 			while (iter != m_config.jobs.end())
 			{
-				// Job ausführen
+				// execute job
 				(*iter).execute();
 
-				// Füge Daten des Jobs hinzu
+				// add data of the jobs
 				m.add( *iter );
 
-				// Zum nächsten Job
+				// next job
 				iter++;
 			}
 
 			BundleFactory &fac = BundleFactory::getInstance();
 
-			// Erstelle ein Bundle mit den Messdaten als Payload
+			// create a bundle with the measurement data as payload
 			Bundle *bundle = fac.newBundle();
 			bundle->appendBlock( PayloadBlockFactory::newPayloadBlock(m.getData(), m.getLength()) );
 
-			// Adressen und Lifetime setzen
+			// set adresses and lifetime
 			bundle->setDestination( m_config.destination );
 			bundle->setSource( m_source );
 			bundle->setInteger( LIFETIME, m_config.lifetime );
 
-			// Custody erforderlich?
+			// Custody required?
 			if (m_config.custody)
 			{
 				PrimaryFlags flags = bundle->getPrimaryFlags();
@@ -95,11 +88,11 @@ namespace emma
 				bundle->setPrimaryFlags( flags );
 			}
 
-			// Bündel versenden
+			// transmit the bundle
 			transmit( *bundle );
 			delete bundle;
 
-			// Speichergröße merken
+			// remind the size of the measurement
 			m_datasize = m.getLength();
 		}
 

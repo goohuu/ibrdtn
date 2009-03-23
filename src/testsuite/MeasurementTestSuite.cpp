@@ -52,7 +52,7 @@ namespace dtn
 			double lon = 10.520240;
 			double value = 50;
 
-			for (int i = 0; i < 10000; i++)
+			for (int i = 0; i < 100; i++)
 			{
 				// Verändere die Werte zufällig
 				// GPS Veränderungen im Bereich von -0.001 bis +0.001
@@ -77,7 +77,7 @@ namespace dtn
 				}
 
 				// Erstelle ein Fake GPS
-				GPSDummy gps(lat, lon);
+				pair<double,double> gps(lat, lon);
 
 				// Messdatensatz erstellen
 				Measurement m(0, 2);

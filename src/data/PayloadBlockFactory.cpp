@@ -213,7 +213,7 @@ namespace dtn
 			// return value
 			AdministrativeBlock *ret = NULL;
 
-			// PayloadBlock in einen AdmRecord umwandeln
+			// translate PayloadBlock into a administrative Record
 			AdministrativeBlockType type = AdministrativeBlock::identify( block );
 
 			// dissociate the NetworkFrame from the old object

@@ -17,7 +17,6 @@ namespace dtn
 
 		CustodySignalBlock::CustodySignalBlock(NetworkFrame *frame) : AdministrativeBlock(frame, CUSTODY_SIGNAL)
 		{
-			// Feldmapping des Subframe zum bearbeiten holen
 			map<unsigned int, unsigned int> &mapping = frame->getFieldSizeMap();
 
 			// get payload for parsing
@@ -26,7 +25,7 @@ namespace dtn
 			// field index of the body
 			unsigned int position = Block::getBodyIndex();
 
-			// Aktuelle Feldlänge
+			// current field length
 			unsigned int len = 0;
 
 			// first field is administrative TypeCode 4bit + RecordFlags 4bit
@@ -56,8 +55,7 @@ namespace dtn
 				data += len;
 			}
 
-			// Das nun folgende Feld ist "Source endpoint ID of Bundle". Die Länge des Felder wird
-			// durch den zuletzt decodierten SDNV bestimmt.
+			// the length of the next field is the value of the previous field
 			mapping[position] = frame->getSDNV(position - 1);
 
 			// update the size of the frame
@@ -139,10 +137,10 @@ namespace dtn
 		{
 			NetworkFrame &frame = Block::getFrame();
 
-			// Hole das StatusFeld
+			// get status field
 			ProcessingFlags flags( (unsigned int)frame.getChar( getField(CUSTODY_STATUS) ));
 
-			// Das 8te Bit gibt an ob Custody akzeptiert wurde oder nicht
+			// The first bit tells if custody is accepted or not
 			return flags.getFlag( 0 );
 		}
 
@@ -150,10 +148,10 @@ namespace dtn
 		{
 			NetworkFrame &frame = Block::getFrame();
 
-			// Hole das StatusFeld
+			// get status field
 			ProcessingFlags flags( (unsigned int)frame.getChar( getField(CUSTODY_STATUS) ));
 
-			// Das 8te Bit gibt an ob Custody akzeptiert wurde oder nicht
+			// The first bit tells if custody is accepted or not
 			flags.setFlag( 0, value );
 
 			frame.set( getField(CUSTODY_STATUS), (char)flags.getValue() );
@@ -211,7 +209,6 @@ namespace dtn
 
 		bool CustodySignalBlock::match(const Bundle &b) const
 		{
-			// Prüfe die Fragmentfelder, falls das hier ein Fragment ist.
 			if ( b.getPrimaryFlags().isFragment() )
 			{
 				if ( b.getInteger( FRAGMENTATION_OFFSET ) != getFragmentOffset() ) return false;

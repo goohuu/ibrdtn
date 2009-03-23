@@ -31,7 +31,7 @@ namespace emma
 
 		NetworkFrame &frame = discoverblock->getFrame();
 
-		// Feldmapping des Subframe zum bearbeiten holen
+		// get the field mapping of the frame
 		map<unsigned int, unsigned int> &mapping = frame.getFieldSizeMap();
 
 		// field index of the body
@@ -40,7 +40,7 @@ namespace emma
 		// get payload for parsing
 		unsigned char *datap = frame.get(position);
 
-		// Aktuelle Feldlänge
+		// current field size
 		unsigned int len = 0;
 
 		// port

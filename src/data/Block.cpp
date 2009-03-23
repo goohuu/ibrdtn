@@ -35,7 +35,7 @@ namespace dtn
 
 			if ( getBlockFlags().getFlag(CONTAINS_EID_FIELD) )
 			{
-				// Addiere die Anzahl der EIDs
+				// add count of EID references
 				position += m_frame->getSDNV( 2 ) * 2;
 
 				// and the field for the eid count
@@ -59,7 +59,7 @@ namespace dtn
 
 		BlockFlags Block::getBlockFlags() const
 		{
-			// Hole die Block Processing Flags
+			// get the block processing flags
 			BlockFlags blockflags( m_frame->getSDNV(1) );
 			return blockflags;
 		}
@@ -106,7 +106,7 @@ namespace dtn
 				size += frame.getSize(i);
 			}
 
-			// Setze neue Bodylänge
+			// set the new body length
 			frame.set(Block::getBodyIndex() - 1, size);
 		}
 

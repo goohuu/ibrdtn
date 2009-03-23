@@ -2,7 +2,6 @@
 #define MEASUREMENT_H_
 
 #include "emma/MeasurementJob.h"
-#include "emma/GPSProvider.h"
 
 namespace emma
 {
@@ -14,7 +13,7 @@ namespace emma
 
 		void add(unsigned char type, char* job_data, unsigned int job_length);
 		void add(MeasurementJob &job);
-		void add(GPSProvider &gps);
+		void add(pair<double,double> &position);
 		void add(unsigned char type, double value);
 
 		unsigned char* getData();

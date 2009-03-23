@@ -108,8 +108,7 @@ namespace dtn
 
 		void Bundle::updateBlockLength()
 		{
-			// Berechne die Blocklänge, alle Felder zwischen
-			// DESTINATION_SCHEME und DICTIONARY_BYTEARRAY bzw. APPLICATION_DATA_LENGTH
+			// calculate the block length
 			unsigned int length = 0;
 			unsigned int maxfield = DICTIONARY_BYTEARRAY;
 
@@ -137,27 +136,25 @@ namespace dtn
 
 		u_int64_t Bundle::getInteger(const BUNDLE_FIELDS field) const throw (InvalidFieldException, FieldDoesNotExist)
 		{
-			// Überprüfen ob das angeforderte Feld überhaupt als Integer zurückgegeben werden kann.
+			// check if the field is a numeric value
 			if ( (field == VERSION) ||
 				 (field == DICTIONARY_BYTEARRAY) )
 			{
 				throw InvalidFieldException("Das angegebene Feld ist für diese Operation nicht gültig.");
 			}
 
-			// Wert zurückgeben
 			return m_frame->getSDNV(field);
 		}
 
 		void Bundle::setInteger(BUNDLE_FIELDS field, u_int64_t value) throw (InvalidFieldException, FieldDoesNotExist)
 		{
-			// Überprüfen ob das angeforderte Feld überhaupt als Integer zurückgegeben werden kann.
+			// check if the field is a numeric value
 			if ( (field == VERSION) ||
 				 (field == DICTIONARY_BYTEARRAY) )
 			{
 				throw InvalidFieldException("Das angegebene Feld ist für diese Operation nicht gültig.");
 			}
 
-			// Wert schreiben
 			m_frame->set(field, value);
 
 			updateBlockLength();
@@ -172,10 +169,9 @@ namespace dtn
 		{
 			Dictionary dict;
 
-			// Dictionary neu lesen
+			// re-read the dictionary
 			dict.read( m_frame->get(DICTIONARY_BYTEARRAY), m_frame->getSDNV(DICTIONARY_LENGTH) );
 
-			// Referenz zurückgeben
 			return dict;
 		}
 
