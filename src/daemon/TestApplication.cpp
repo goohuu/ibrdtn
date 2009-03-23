@@ -27,13 +27,13 @@ namespace dtn
 
 			PayloadBlock *payload = PayloadBlockFactory::newPayloadBlock((unsigned char*)data.c_str(), data.length());
 
-			// Setze den Empfänger und den Absender ein
+			// set destination and source
 			out->setDestination( m_destination );
 			out->setSource( core.getLocalURI() + getWorkerURI() );
 			out->setReportTo( core.getLocalURI() + getWorkerURI() );
 			out->setInteger( LIFETIME, 200 );
 
-			// Custody erforderlich!
+			// custody required
 			PrimaryFlags flags = out->getPrimaryFlags();
 			flags.setCustodyRequested(true);
 //			flags.setFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE, true);
@@ -43,7 +43,7 @@ namespace dtn
 			// add payloadblock to bundle
 			out->appendBlock(payload);
 
-			// Versende das Bundle
+			// send the bundle
 			transmit(*out);
 			delete out;
 		}
@@ -54,7 +54,7 @@ namespace dtn
 
 			if (m_dtntime <= curtime)
 			{
-				// Alle 5 Sekunden aktiv werden
+				// get active every 5 seconds
 				m_dtntime = curtime + 5;
 
 				reportIt();

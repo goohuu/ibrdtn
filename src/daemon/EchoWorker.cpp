@@ -19,20 +19,20 @@ namespace dtn
 		{
 			const PayloadBlock *payload = dynamic_cast<PayloadBlock*>( b.getPayloadBlock() );
 
-			// Prüfen ob überhaupt ein PayloadBlock da ist.
+			// check if a payload block exists
 			if ( payload != NULL )
 			{
-				// Echo generieren
+				// generate a echo
 				BundleFactory &fac = BundleFactory::getInstance();
 				Bundle *echo = fac.newBundle();
 				PayloadBlock *block = PayloadBlockFactory::newPayloadBlock( payload->getPayload(), payload->getLength() );
 				echo->appendBlock(block);
 
-				// Empfänger und Absender setzen
+				// set destination and source
 				echo->setDestination( b.getSource() );
 				echo->setSource( m_localuri + getWorkerURI() );
 
-				// Absenden
+				// send it
 				transmit( *echo );
 				delete echo;
 			}

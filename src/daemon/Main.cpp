@@ -90,18 +90,18 @@ int main(int argc, char *argv[])
 
 	cout << "Configuration: " << configurationfile << endl;
 
-	// Konfiguration laden
+	// load configuration
 	ConfigFile _conf(configurationfile);
 	conf.setConfigFile(_conf);
 
-	// Benutzer ID setzen
+	// set user id
 	if ( _conf.keyExists("user") )
 	{
 		cout << "Switching UID to " << _conf.read<unsigned int>( "user", 0 ) << endl;
 		setuid( _conf.read<unsigned int>( "user", 0 ) );
 	}
 
-	// Group ID setzen
+	// set group id
 	if ( _conf.keyExists("group") )
 	{
 		cout << "Switching GID to " << _conf.read<unsigned int>( "group", 0 ) << endl;
@@ -129,23 +129,23 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-		// Erstelle einen GPS Dummy mit den statischen Werten aus der Config
+		// create a gps dummy with static values
 		pair<double,double> position = conf.getStaticPosition();
 		gpsprov = new GPSDummy( position.first, position.second );
 	}
 #endif
 
-	// Erstelle einen Router für die Bundles
+	// create a static router
 	StaticBundleRouter router( conf.getStaticRoutes(), conf.getLocalUri() );
 
 	// create multiplex convergence layer
 	MultiplexConvergenceLayer multicl;
 	core.setConvergenceLayer(&multicl);
 
-	// Erstelle eine Liste von statischen Knoten
+	// create a list of static nodes
 	vector<Node> static_nodes = conf.getStaticNodes();
 
-	// Schlüssel der Netzwerkverbindungen abrufen
+	// get names of the convergence layers
 	vector<string> netlist = conf.getNetList();
 	{
 		vector<string>::iterator iter = netlist.begin();
@@ -175,14 +175,14 @@ int main(int argc, char *argv[])
 				netcl = new TCPConvergenceLayer( conf.getLocalUri(), conf.getNetInterface(key), conf.getNetPort(key) );
 			}
 
-			// Suche in den statischen Knoten nach passenden DummyConvergenceLayern um diese zu ersetzen
+			// replace DummyConvergenceLayer in the static nodes with real convergence layers
 			if (netcl != NULL)
 			{
 				// add cl to the multiplex cl
 				multicl.add(netcl);
 
-				// Statische Knoten laden, DummyConvergenceLayer austauschen
-				// und am Router registrieren
+				// load static nodes, replace DummyConvergenceLayer
+				// and register at the router
 				vector<Node>::iterator iter = static_nodes.begin();
 
 				while (iter != static_nodes.end())
@@ -226,7 +226,7 @@ int main(int argc, char *argv[])
 #ifdef USE_EMMA_CODE
 	MeasurementWorker *mworker = NULL;
 
-	// Dienst für Messungen hinzufügen
+	// add service for measurements (EMMA)
 	if ( _conf.read<int>( "measurement_jobs", 0 ) > 0 )
 	{
 		MeasurementWorkerConfig config;
@@ -262,10 +262,10 @@ int main(int argc, char *argv[])
 	Debugger debugger;
 #endif
 
-	// Echo-Modul
+	// add echo module
 	EchoWorker echo;
 
-	// System initialisiert
+	// init system
 	cout << "dtn node ready" << endl;
 
 	// start the services

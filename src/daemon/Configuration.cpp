@@ -108,7 +108,7 @@ namespace dtn
 		{
 			vector<Node> nodes;
 
-			// Anzahl der Knoten lesen
+			// read the node count
 			int count = 1;
 
 			stringstream key1;
