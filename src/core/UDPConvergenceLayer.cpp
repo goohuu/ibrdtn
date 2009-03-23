@@ -44,7 +44,7 @@ namespace dtn
 				exit(1);
 			}
 
-			// Senden von Broadcasts ermöglichen
+			// enable broadcast
 			int b = 1;
 
 			if (broadcast)
@@ -55,18 +55,9 @@ namespace dtn
 					exit(1);
 				}
 
-				// Broadcastadressen sollten mehrfach verwendet werden können
+				// broadcast addresses should be usable more than once.
 				setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&b, sizeof(b));
 			}
-
-			// Maximale Größe von Paketen ermitteln
-			//  int uint_size = sizeof(m_maxmsgsize);
-			//
-			//  if ( getsockopt( listenSocket, SOL_SOCKET, SO_MAX_MSG_SIZE, (char*)&m_maxmsgsize, &uint_size ) == SOCKET_ERROR )
-			//  {
-			//	cerr <<  "UDPConvergenceLayer: can't determine udp message size" << endl;
-			//	exit(1);
-			//  }
 
 			address.sin_family = AF_INET;
 
@@ -111,16 +102,16 @@ namespace dtn
 
 			struct sockaddr_in clientAddress;
 
-			// Zielparameter
+			// destination parameter
 			clientAddress.sin_family = AF_INET;
 
-			// Broadcast
+			// broadcast
 			clientAddress.sin_addr.s_addr = inet_addr(m_selfaddr.c_str());
 			clientAddress.sin_port = htons(m_selfport);
 
 			MutexLock l(m_writelock);
 
-		    // Send converted line back to client.
+		    // send converted line back to client.
 		    int ret = sendto(m_socket, data, size, 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));
 		    free(data);
 
@@ -160,11 +151,10 @@ namespace dtn
 
 			struct sockaddr_in clientAddress;
 
-			// Zielparameter
+			// destination parameter
 			clientAddress.sin_family = AF_INET;
 
-			// Verwende Node um das Ziel zu definieren
-			// Direkte Adressierung
+			// use node to define the destination
 			clientAddress.sin_addr.s_addr = inet_addr(node.getAddress().c_str());
 			clientAddress.sin_port = htons(node.getPort());
 

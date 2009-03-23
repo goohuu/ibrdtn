@@ -8,14 +8,14 @@ namespace dtn
 		StaticRoute::StaticRoute(string route, string dest)
 			: m_route(route), m_dest(dest)
 		{
-			// Für schnelles Matching vorbereiten
+			// prepare for fast matching
 			size_t splitter = m_route.find_first_of("*");
 
-			// Unterscheide unterschiedliche Fälle
-			// 0. Kein * vorhanden, exaktes Matching
-			// 1. * steht am Anfang
-			// 2. * steht in der Mitte
-			// 3. * steht am Ende
+			// four types of matching possible
+			// 0. no asterisk exists, do exact matching
+			// 1. asterisk at the begin
+			// 2. asterisk in the middle
+			// 3. asterisk at the end
 			if ( splitter == string::npos )					m_matchmode = 0;
 			else if ( splitter == 0 ) 						m_matchmode = 1;
 			else if ( splitter == (m_route.length() -1) ) 	m_matchmode = 3;
@@ -53,12 +53,12 @@ namespace dtn
 			switch (m_matchmode)
 			{
 				default:
-					// Exaktes Matching
+					// exact matching
 					if ( dest == m_route ) return true;
 				break;
 
 				case 3:
-					// Mit Stern am Ende. Der Anfang muss gleich sein.
+					// asterisk at the end. the begining must be equal.
 					if ( dest.find(m_route1, 0) == 0 ) return true;
 				break;
 
@@ -71,7 +71,7 @@ namespace dtn
 				break;
 
 				case 1:
-					// Stern am Anfang. Das Ende muss also gleich sein.
+					// asterisk at begin. the end must be equal.
 					if ( dest.rfind(m_route1) == (dest.length() - m_route1.length()) ) return true;
 				break;
 			}

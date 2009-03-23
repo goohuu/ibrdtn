@@ -91,8 +91,6 @@ namespace dtn
 			list<BundleSchedule> m_schedules;
 			list<list<Bundle> > m_fragments;
 
-			list<list<BundleSchedule>::iterator> searchEquals(unsigned int maxsize, list<BundleSchedule>::iterator start, list<BundleSchedule>::iterator end);
-
 			/**
 			 * Try to find outdated bundles and delete them.
 			 * Additional a deleted report is created if necessary.

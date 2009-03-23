@@ -84,7 +84,7 @@ namespace dtn
 		{
 			cl->setBundleReceiver(this);
 
-			// ConvergenceLayer der Liste hinzufügen
+			// add ConvergenceLayer to the list
 			m_clayers.push_back(cl);
 		}
 	}

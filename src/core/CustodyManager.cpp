@@ -123,10 +123,10 @@ namespace dtn
 		{
 			MutexLock l(m_custodylock);
 
-			// Erstelle einen Timer
+			// create a new timer
 			CustodyTimer timer(bundle, BundleFactory::getDTNTime() + time, attempt);
 
-			// Sortiert einfügen: Der als nächstes ablaufende Timer ist immer am Ende
+			// sorted insert: the next expiring timer is at the end
 			list<CustodyTimer>::iterator iter = m_custodytimer.begin();
 
 			while (iter != m_custodytimer.end())
@@ -141,7 +141,7 @@ namespace dtn
 
 			m_custodytimer.insert(iter, timer);
 
-			// Die Zeit zur nächsten Custody Kontrolle anpassen
+			// modify the next time to check
 			if ( m_nextcustodytimer > timer.getTime() )
 			{
 				m_nextcustodytimer = timer.getTime();

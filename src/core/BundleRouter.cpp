@@ -115,14 +115,11 @@ namespace dtn
 			}
 		}
 
-		/*
-		 * Gibt an, dass ein bestimmter Knoten nun in Kommunikationsreichweite ist.
-		 */
 		void BundleRouter::discovered(const Node &node)
 		{
 			MutexLock l(m_lock);
 
-			// Suche nach dem DTN Knoten
+			// search for the dtn node
 			list<Node>::iterator iter = m_neighbours.begin();
 			Node n(PERMANENT);
 
@@ -131,7 +128,7 @@ namespace dtn
 				n = (*iter);
 				if ( n.getURI() ==  node.getURI() )
 				{
-					// Speichern
+					// save the node
 					(*iter) = node;
 					return;
 				}
@@ -139,16 +136,13 @@ namespace dtn
 				iter++;
 			}
 
-			// Nicht in der Liste. Füge hinzu.
+			// not in list, add it.
 			m_neighbours.push_back( node );
 
 			// announce the new node
 			EventSwitch::raiseEvent(new NodeEvent(node, dtn::core::NODE_AVAILABLE));
 		}
 
-		/*
-		 * Gibt alle direkten Nachbarn zurück
-		 */
 		const list<Node>& BundleRouter::getNeighbours()
 		{
 			MutexLock l(m_lock);
@@ -249,7 +243,7 @@ namespace dtn
 
 		void BundleRouter::tick()
 		{
-			// Suche nach abgelaufenen Nodes
+			// search for outdated nodes
 			unsigned int current_time = data::BundleFactory::getDTNTime();
 
 			if ( m_lastcheck != current_time )
@@ -264,7 +258,7 @@ namespace dtn
 
 					if ( !n.decrementTimeout(1) )
 					{
-						// Knoten ist abgelaufen -> entfernen
+						// node is outdated -> remove it
 						list<Node>::iterator eraseme = iter;
 						iter++;
 						m_neighbours.erase( eraseme );

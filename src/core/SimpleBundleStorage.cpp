@@ -146,24 +146,24 @@ namespace dtn
 			// storage change, clean-up allowed
 			m_nocleanup = false;
 
-			// Prüfe ob dieses Bündel vor dem nächsten geplanten Durchlauf abläuft
-			// Wobei wir planen immer 5 Sekunden nach Ablauf des nächsten Bündel zu reagieren
-			// um eventuell mehrere Bündel gleichzeitig zu entsorgen.
+			// lifetime of the bundle
 			unsigned int lifedtn = bundle.getInteger(LIFETIME) + bundle.getInteger(CREATION_TIMESTAMP);
 
+			// check if this bundle expires bevor the next cycle.
+			// the clean-up is scheduled 5 seconds after the expiration.
 			if ( m_nextdeprecation > (lifedtn + 5) )
 			{
 				m_nextdeprecation = lifedtn + 5;
 			}
 
-			// Schedules sortiert einfügen
-			// Das als nächstes zu versendende Bundle ist immer unten
+			// sorted insertion
+			// the bundle which should be sent as next is at the end
 			list<BundleSchedule>::iterator iter = m_schedules.begin();
 			unsigned int time;
 
 			while (iter != m_schedules.end())
 			{
-				// Zeit des aktuellen Items lesen
+				// read the time of the current item
 				time = (*iter).getTime();
 
 				if (time <= schedule.getTime())
@@ -248,7 +248,7 @@ namespace dtn
 			list<BundleSchedule>::iterator iter = m_schedules.begin();
 			bool ret = false;
 
-			// Suche nach passenden Bundles
+			// search for matching bundles
 			while (iter != m_schedules.end())
 			{
 				if ( (*iter).getEID() == destination )
@@ -259,7 +259,7 @@ namespace dtn
 				{
 					const Bundle &b = (*iter).getBundle();
 
-					// Prüfe ob der Schedule für die Destination ist.
+					// check if the destination of the bundle match
 					if (b.getDestination().find( destination, 0 ) == 0)
 					{
 						ret = true;
@@ -268,16 +268,16 @@ namespace dtn
 
 				if (ret)
 				{
-					// Bundle gefunden
+					// bundle found
 					BundleSchedule schedule = (*iter);
 
-					// Entfernen
+					// remove it from the list
 					m_schedules.erase(iter);
 
-					// Gesamtgröße verkleinern
+					// shrink the size
 					m_currentsize -= schedule.getBundle().getLength();
 
-					// Zurückgeben
+					// return
 					return schedule;
 				}
 
@@ -303,91 +303,41 @@ namespace dtn
 				throw exceptions::NoScheduleFoundException("No schedule for this time available");
 			}
 
-			// Gesamtgröße verkleinern
+			// shrink the size of the storage
 			m_currentsize -= ret.getBundle().getLength();
 
-			// Letzte Element löschen
+			// remove the last element
 			m_schedules.pop_back();
 
 			return ret;
 		}
 
-		list<list<BundleSchedule>::iterator> SimpleBundleStorage::searchEquals(unsigned int maxsize, list<BundleSchedule>::iterator start, list<BundleSchedule>::iterator end)
-		{
-			MutexLock l(m_readlock);
-
-			list<BundleSchedule>::iterator iter = start;
-			list<list<BundleSchedule>::iterator> marked;
-			Bundle *bundle = NULL;
-
-			unsigned int cursize = 0;
-
-			while (iter != end)
-			{
-				BundleSchedule schedule = (*iter);
-
-				// Erstes Kriterium: Keine StatusReports
-				if ((*iter).getBundle().getLength() < maxsize)
-				if ((*iter).getBundle().getReportTo() == "dtn:none")
-				{
-					if ( bundle == NULL )
-					{
-						// Dieses Bündel merken wir uns legen es in die marked-Liste
-						marked.push_back( iter );
-						const Bundle &bundle = schedule.getBundle();
-						cursize += bundle.getLength();
-					}
-					else
-					{
-						const Bundle &tmp = (*iter).getBundle();
-
-						// Vergleiche das zuvor gefundene Bündel mit dem aktuellen
-						if (*bundle == tmp)
-						{
-							// Bündel sind identisch genug, dieses nehmen wir mit
-							marked.push_back( iter );
-							cursize += bundle->getLength();
-						}
-					}
-				}
-
-				iter++;
-			}
-
-			return marked;
-		}
-
-		/*
-		 * Löscht Bundles um Platz zu schaffen
-		 */
 		void SimpleBundleStorage::deleteDeprecated()
 		{
 			// TODO: search for deprecated bundles in m_fragments
 
 			unsigned int currenttime = BundleFactory::getDTNTime();
 
-			// Frühestens durchführen wenn ein veraltetes Bundle existiert
+			// only run if we expect a outdated bundle
 			if ( m_nextdeprecation > currenttime ) return;
 
 			MutexLock l(m_readlock);
 
-			// Setzt den nächsten Durchlauf auf spätestens +1 Std.
-			// Dieser Wert wird im folgenden Algorithmus möglicherweise verringert
+			// set the next cycle to +1h
+			// this value could be lowered in the following algorithm
 			m_nextdeprecation = currenttime + 3600;
 
 			list<BundleSchedule>::iterator iter = m_schedules.begin();
 
-			// Suche nach veralteten Bundles
+			// search for expired bundles
 			while (iter != m_schedules.end())
 			{
 				const Bundle &b = (*iter).getBundle();
 
-				unsigned int lifedtn = b.getInteger(LIFETIME) + b.getInteger(CREATION_TIMESTAMP);
-
-				// Prüfe ob die Lebenszeit für das Paket abgelaufen ist
-				if (lifedtn < currenttime)
+				// check if the bundle is expired
+				if (b.isExpired())
 				{
-					// Gesamtgröße verkleinern
+					// shrink the size of the database
 					m_currentsize -= b.getLength();
 
 					// announce bundle deleted event
@@ -395,18 +345,19 @@ namespace dtn
 
 					list<BundleSchedule>::iterator iter2 = iter;
 
+					// next bundle
 					iter++;
 
-					// Zeit ist abgelaufen -> Löschen
+					// remove the bundle
 					m_schedules.erase(iter2);
 
 					continue;
 				}
 				else
 				{
-					// Prüfe ob dieses Bündel vor dem nächsten geplanten Durchlauf abläuft
-					// Wobei wir planen immer 5 Sekunden nach Ablauf des nächsten Bündel zu reagieren
-					// um eventuell mehrere Bündel gleichzeitig zu entsorgen.
+					// check if the bundle expiring bevor the next scheduled cycle
+					unsigned int lifedtn = b.getInteger(LIFETIME) + b.getInteger(CREATION_TIMESTAMP);
+
 					if ( m_nextdeprecation > (lifedtn + 5) )
 					{
 						m_nextdeprecation = lifedtn + 5;
