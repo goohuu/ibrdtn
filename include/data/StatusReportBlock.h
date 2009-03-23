@@ -1,9 +1,9 @@
 #ifndef STATUSREPORTBLOCK_H_
 #define STATUSREPORTBLOCK_H_
 
-#include "AdministrativeBlock.h"
-#include "ProcessingFlags.h"
-#include "Exceptions.h"
+#include "data/AdministrativeBlock.h"
+#include "data/ProcessingFlags.h"
+#include "data/Exceptions.h"
 
 namespace dtn
 {
@@ -49,15 +49,11 @@ namespace dtn
 			BLOCK_UNINTELLIGIBLE = 0x08
 		};
 
-		/**
-		 * Ein DiscoverBlock kann an den Primärblock angehängt werden und wird
-		 * verwendet um sich selbst gegenüber anderen DTN Knoten bemerkbar zu machen.
-		 */
 		class StatusReportBlock : public data::AdministrativeBlock
 		{
 		public:
 			/**
-			 * Konstruktor
+			 * constructor
 			 */
 			StatusReportBlock(Block *block);
 			StatusReportBlock(NetworkFrame *frame);
