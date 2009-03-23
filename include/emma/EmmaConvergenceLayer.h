@@ -24,8 +24,10 @@ using namespace dtn::utils;
 namespace emma
 {
 	/**
-	 * Diese Klasse implementiert einen ConvergenceLayer für UDP/IP über IEEE 802.11
-	 * welche für die Kommunikation zwischen den Fahrzeugen im EMMA Projekt benötigt wird.
+	 * This class implements a ConvergenceLayer for UDP/IP.
+	 * The integrated discovery mechanism detects neighboring nodes and notify the
+	 * BundleRouter with the detected node. For this mechanism a broadcast is necessary
+	 * (like in IEEE 802.11).
 	 */
 	class EmmaConvergenceLayer : public dtn::core::ConvergenceLayer, public BundleReceiver, public EventReceiver
 	{
@@ -62,21 +64,18 @@ namespace emma
 		 */
 		void raiseEvent(const Event *evt);
 
-//	protected:
-//		/**
-//		 * @sa Service::tick()
-//		 */
-//		virtual void tick();
-
 		virtual void initialize();
 		virtual void terminate();
 
 	private:
 		/**
-		 * Sendet eine Nachricht, welche anderen Teilnehmern ermöglicht diesen Teilnehmer
-		 * zu erkennen.
+		 * sends a bundle with a DiscoverBlock to the neighborhood (broadcast).
 		 */
 		void yell();
+
+		/**
+		 * sends a bundle with a DiscoverBlock to a specific node
+		 */
 		void yell(Node node);
 
 		static const int MAX_SIZE;

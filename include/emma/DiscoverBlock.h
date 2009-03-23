@@ -10,8 +10,9 @@ using namespace dtn::data;
 namespace emma
 {
 	/**
-	 * Ein DiscoverBlock kann an den Primärblock angehängt werden und wird
-	 * verwendet um sich selbst gegenüber anderen DTN Knoten bemerkbar zu machen.
+	 * A DiscoverBlock carry some information about the sending node and can be
+	 * attached to a bundle. The lifetime of a bundle carrying this block should be
+	 * set to zero to avoid a forwarding to other nodes than direct neighbors.
 	 */
 	class DiscoverBlock : public Block
 	{
@@ -19,7 +20,7 @@ namespace emma
 		static const unsigned char BLOCK_TYPE = 200;
 
 		/**
-		 * Konstruktor
+		 * constructor
 		 */
 		DiscoverBlock(NetworkFrame *frame);
 		DiscoverBlock(Block *block);

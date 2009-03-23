@@ -5,9 +5,13 @@
 #include <string>
 
 /**
- * Wird eine Klasse von Service abgeleitet ist es möglich diese in einen Zyklus von
- * Ablaufen einzuordnen in denen jede Klasse nach einander agieren darf. Dieser Mechanismus
- * wird verwendet um auf Threads verzichten zu können.
+ * A child of the class Service is possible to run as a thread.
+ *
+ * The tick() method is called in a loop until the abort() method is called. To do
+ * your own stuff you have to overload this method.
+ *
+ * Additionally the methods initialize() and terminate() could be overloaded to to things
+ * before the first tick() call and do stuff after the last call of tick().
  */
 
 using namespace std;
@@ -20,7 +24,7 @@ namespace dtn
 		{
 			public:
 				/**
-				 * Service Konstruktor
+				 * constructor with a name to identify the service or make debugging easier.
 				 */
 				Service(string name);
 
@@ -37,9 +41,7 @@ namespace dtn
 
 			protected:
 				/**
-				 * Führt einen tick() aus. Dieses Model ermöglicht einen getakteten Ablauf ohne
-				 * Threads. Dabei wird von allen Service Klassen regelmäßig die Funktion tick()
-				 * aufgerufen.
+				 * overload this method to do your own stuff.
 				 */
 				virtual void tick() = 0;
 
