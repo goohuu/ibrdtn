@@ -18,18 +18,19 @@ namespace dtn
 	namespace core
 	{
 		/**
-		 * Diese Klasse implementiert einen ConvergenceLayer für UDP/IP
+		 * This class provider a multiplexing component for several ConvergenceLayer
+		 * instances.
 		 */
 		class MultiplexConvergenceLayer : public ConvergenceLayer, public BundleReceiver
 		{
 		public:
 			/**
-			 * Konstruktor
+			 * constructor
 			 */
 			MultiplexConvergenceLayer();
 
 			/**
-			 * Desktruktor
+			 * destructor
 			 */
 			virtual ~MultiplexConvergenceLayer();
 
@@ -44,7 +45,7 @@ namespace dtn
 			virtual TransmitReport transmit(const Bundle &b, const Node &node);
 
 			/**
-			 * Fügt dem Multiplexer einen ConvergenceLayer hinzu
+			 * Add a ConvergenceLayer instance.
 			 */
 			void add(ConvergenceLayer *cl);
 

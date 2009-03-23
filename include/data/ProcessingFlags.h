@@ -20,7 +20,7 @@ namespace data
 			ProcessingFlags(unsigned int value);
 			
 			/**
-			 * Destruktor
+			 * destructor
 			 */
 			~ProcessingFlags();
 			

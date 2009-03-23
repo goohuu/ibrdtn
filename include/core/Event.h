@@ -35,5 +35,4 @@ namespace dtn
 	}
 }
 
-
 #endif /* EVENT_H_ */

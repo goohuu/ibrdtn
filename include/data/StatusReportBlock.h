@@ -63,7 +63,7 @@ namespace dtn
 			StatusReportBlock(NetworkFrame *frame);
 
 			/**
-			 * Destruktor
+			 * destructor
 			 */
 			virtual ~StatusReportBlock();
 

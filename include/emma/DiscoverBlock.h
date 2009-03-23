@@ -25,7 +25,7 @@ namespace emma
 		DiscoverBlock(Block *block);
 
 		/**
-		 * Destruktor
+		 * destructor
 		 */
 		virtual ~DiscoverBlock();
 

@@ -21,7 +21,7 @@ namespace dtn
 	namespace core
 	{
 		/**
-		 * Implementiert einen einfachen Kontainer für Bundles
+		 * This storage holds all bundles, fragments and schedules in the system memory.
 		 */
 		class SimpleBundleStorage : public Service, public BundleStorage, public EventReceiver
 		{
@@ -35,7 +35,7 @@ namespace dtn
 			SimpleBundleStorage(unsigned int size = 1024 * 1024, unsigned int bundle_maxsize = 1024, bool merge = false);
 
 			/**
-			 * Destruktor
+			 * Destructor
 			 */
 			virtual ~SimpleBundleStorage();
 
@@ -94,13 +94,14 @@ namespace dtn
 			list<list<BundleSchedule>::iterator> searchEquals(unsigned int maxsize, list<BundleSchedule>::iterator start, list<BundleSchedule>::iterator end);
 
 			/**
-			 * Löscht veraltete Bundles bzw. versucht Bundles zusammenzufassen,
-			 * so dass diese weniger Speicherplatz verbrauchen
+			 * Try to find outdated bundles and delete them.
+			 * Additional a deleted report is created if necessary.
 			 */
 			void deleteDeprecated();
 
-			// Der nächste Zeitpunkt zu dem ein Bündel abläuft
-			// Frühestens zu diesem Zeitpunkt muss ein deleteDeprecated() ausgeführt werden
+			/**
+			 * A variable to hold the next timeout of a bundle in the storage.
+			 */
 			unsigned int m_nextdeprecation;
 
 			time_t m_last_compress;

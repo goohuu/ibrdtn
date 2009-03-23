@@ -10,8 +10,8 @@ namespace dtn
 	namespace core
 	{
 		/**
-		 * Ein BundleSchedule ist ein Zeitplan für ein Bundle. Mit ihm wird festgelegt,
-		 * wann ein Bundle zu wem versendet werden soll.
+		 * A bundle schedule holds some information about the next route
+		 * for a bundle.
 		 */
 		class BundleSchedule
 		{
@@ -35,7 +35,5 @@ namespace dtn
 		};
 	}
 }
-
-
 
 #endif /*BUNDLESCHEDULE_H_*/

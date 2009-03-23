@@ -1,17 +1,10 @@
 /**
  *
- * TCPConvergenceLayer überträgt ein Bündel über TCP/IP an einen
- * anderen TCPConvergenceLayer.
+ * A TCPConvergenceLayer implements a convergence layer for TCP/IP
+ * according to draft-irtf-dtnrg-tcp-clayer-02.
  *
- * Für jedes Ziel (Node) wird genau eine Verbindung aufgebaut, über die
- * Bündel übertragen werden können. Verbindungen bleiben prinzipiell offen
- * solange es möglich ist.
- *
- * Rahmenformat:
- * | Länge (SDNV) | EID | Länge (SDNV) | Bündel | Länge (SDNV) | Bündel | usw.
- *
- * Tritt ein Dekodierungsfehler bei der Bündeldekodierung auf wird die
- * Verbindung abgebrochen.
+ * The TCPConnection class is used to manage multiple concurrent
+ * connections.
  *
  */
 
@@ -35,7 +28,7 @@ namespace dtn
 		class TCPConnection;
 
 		/**
-		 * Diese Klasse implementiert einen ConvergenceLayer für TCP/IP
+		 * This class implements a ConvergenceLayer for TCP/IP.
 		 */
 		class TCPConvergenceLayer : public Service, public ConvergenceLayer
 		{
@@ -43,14 +36,14 @@ namespace dtn
 
 		public:
 			/**
-			 * Konstruktor
-			 * @param bind_addr IP Adresse des Interface, welche zur Kommunikation genutzt werden soll
-			 * @param port Zu belegender TCP Port für die Kommunikation
+			 * Constructor
+			 * @param bind_addr The IP address to listen on for the TCP communication.
+			 * @param port The port to listen on for the TCP communication.
 			 */
 			TCPConvergenceLayer(string localeid, string bind_addr, unsigned short port);
 
 			/**
-			 * Desktruktor
+			 * Destructor
 			 */
 			virtual ~TCPConvergenceLayer();
 

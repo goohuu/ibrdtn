@@ -12,63 +12,48 @@ namespace dtn
 	namespace core
 	{
 		/**
-		 * Die BundleStorage verwahrt Bundles wenn diese nicht direkt weitergeleitet werden
-		 * können oder eine Kopie des Bundles aufgehoben wird.
+		 * A BundleStorage can store bundles and fragments for later use.
 		 */
 		class BundleStorage
 		{
 			public:
 			/**
-			 * Konstruktor
+			 * constructor
 			 */
 			BundleStorage() {};
 
 			/**
-			 * Desktruktor
+			 * destructor
 			 */
 			virtual ~BundleStorage() {};
 
 			/**
-			 * Speichert einen Schedule
-			 * @param schedule Den zu speichernden Schedule
+			 * store a schedule for later use
+			 * @param schedule the schedule to store
 			 */
 			virtual void store(const BundleSchedule &schedule) = 0;
 
 			/**
-			 * Speichert ein Fragment eines Bundles. Falls dies das fehlende letzte
-			 * Fragment war, wird das Bundle zusammengesetzt und zurück gegeben,
-			 * ansonsten NULL.
+			 * Store a bundle fragment in the storage. If all fragments are available
+			 * in the storage, they are merged and return by this method. If not, only
+			 * NULL is returned.
 			 */
 			virtual Bundle* storeFragment(const Bundle &bundle) = 0;
 
 			/**
-			 * Leert den Speicher / Löscht alle Bundles
+			 * Clears all bundles, schedules and fragments in the storage.
 			 */
 			virtual void clear() = 0;
 
 			/**
-			 * Bestimmt ob der Speicher keine Bundles enthält
-			 * @return True, wenn keine Bundles im Speicher sind, sonst False
+			 * @return True, if no bundles in the storage.
 			 */
 			virtual bool isEmpty() = 0;
 
 			/**
-			 * Returns the count of bundles in the storage
 			 * @return the count of bundles in the storage
 			 */
 			virtual unsigned int getCount() = 0;
-
-//			/**
-//			 * Gibt ein Schedule zurück welches zu dem angegebenen Zeitpunkt gesendet werden soll
-//			 * und entfernt es aus dem Storage
-//			 */
-//			virtual BundleSchedule getSchedule(unsigned int dtntime) = 0;
-//
-//			/**
-//			 * Gibt ein Bundle der für einen bestimmten Knoten bestimmt ist zurück
-//			 * und entfernt das entsprechende Schedule aus der Storage
-//			 */
-//			virtual BundleSchedule getSchedule(string destination) = 0;
 		};
 	}
 }

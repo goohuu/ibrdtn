@@ -19,7 +19,7 @@ namespace core
 	}
 
 	/**
-	 * Destruktor
+	 * destructor
 	 */
 	CustodyTimer::~CustodyTimer()
 	{

@@ -149,7 +149,7 @@ namespace dtn
 		/*
 		 * Gibt alle direkten Nachbarn zurück
 		 */
-		list<Node> BundleRouter::getNeighbours()
+		const list<Node>& BundleRouter::getNeighbours()
 		{
 			MutexLock l(m_lock);
 			return m_neighbours;

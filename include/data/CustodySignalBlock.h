@@ -37,7 +37,7 @@ public:
 	CustodySignalBlock(NetworkFrame *frame);
 
 	/**
-	 * Destruktor
+	 * destructor
 	 */
 	virtual ~CustodySignalBlock();
 

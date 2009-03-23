@@ -25,7 +25,7 @@ namespace dtn
 				Service(string name);
 
 				/**
-				 * Destruktor
+				 * destructor
 				 */
 				virtual ~Service();
 

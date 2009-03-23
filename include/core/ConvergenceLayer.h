@@ -39,7 +39,7 @@ namespace core
 		{};
 
 		/**
-		 * Destruktor
+		 * destructor
 		 */
 		virtual ~ConvergenceLayer() {};
 

@@ -28,125 +28,121 @@ using namespace dtn::utils;
 
 namespace dtn
 {
-namespace exceptions
-{
-	class SQLitePrepareException : public Exception
+	namespace exceptions
 	{
-		public:
-			SQLitePrepareException() : Exception("error while prepare the sql statement")
-			{
-			};
+		class SQLitePrepareException : public Exception
+		{
+			public:
+				SQLitePrepareException() : Exception("error while prepare the sql statement")
+				{
+				};
 
-			SQLitePrepareException(string what) : Exception(what)
-			{
-			};
-	};
+				SQLitePrepareException(string what) : Exception(what)
+				{
+				};
+		};
 
-	class DuplicateException : public Exception
+		class DuplicateException : public Exception
+		{
+			public:
+				DuplicateException() : Exception("this item already exists!")
+				{
+				};
+
+				DuplicateException(string what) : Exception(what)
+				{
+				};
+		};
+	}
+
+	namespace core
 	{
+		/**
+		 * This storage holds all bundles, fragments and schedules in a SQLite database.
+		 */
+		class SQLiteBundleStorage : public Service, public BundleStorage
+		{
 		public:
-			DuplicateException() : Exception("this item already exists!")
-			{
-			};
+			/**
+			 * construktor
+			 * @param dbfile database filename
+			 * @param flush clear the database on initialization
+			 */
+			SQLiteBundleStorage(string dbfile, bool flush = false);
 
-			DuplicateException(string what) : Exception(what)
-			{
-			};
-	};
-}
-};
+			/**
+			 * destructor
+			 */
+			virtual ~SQLiteBundleStorage();
 
-namespace dtn
-{
-namespace core
-{
-/**
- * Implementiert einen einfachen Kontainer für Bundles
- */
-class SQLiteBundleStorage : public Service, public BundleStorage
-{
-public:
-	/**
-	 * Konstruktor
-	 * @param dbfile database filename
-	 * @param flush clear the database on initialization
-	 */
-	SQLiteBundleStorage(string dbfile, bool flush = false);
+			/**
+			 * @sa BundleStorage::store(BundleSchedule schedule)
+			 */
+			void store(const BundleSchedule &schedule);
 
-	/**
-	 * Destruktor
-	 */
-	virtual ~SQLiteBundleStorage();
+			/**
+			 * @sa BundleStorage::clear()
+			 */
+			void clear();
 
-	/**
-	 * @sa BundleStorage::store(BundleSchedule schedule)
-	 */
-	void store(const BundleSchedule &schedule);
+			/**
+			 * @sa BundleStorage::isEmpty()
+			 */
+			bool isEmpty();
 
-	/**
-	 * @sa BundleStorage::clear()
-	 */
-	void clear();
+			/**
+			 * @sa Service::tick()
+			 */
+			virtual void tick();
 
-	/**
-	 * @sa BundleStorage::isEmpty()
-	 */
-	bool isEmpty();
+			unsigned int getSize();
 
-	/**
-	 * @sa Service::tick()
-	 */
-	virtual void tick();
+			/**
+			 * @sa BundleStorage::getCount()
+			 */
+			unsigned int getCount();
 
-	unsigned int getSize();
+			/**
+			 * @sa getSchedule(unsigned int dtntime)
+			 */
+			BundleSchedule getSchedule(unsigned int dtntime);
 
-	/**
-	 * @sa BundleStorage::getCount()
-	 */
-	unsigned int getCount();
+			/**
+			 * @sa getSchedule(string destination)
+			 */
+			BundleSchedule getSchedule(string destination);
 
-	/**
-	 * @sa getSchedule(unsigned int dtntime)
-	 */
-	BundleSchedule getSchedule(unsigned int dtntime);
+			/**
+			 * @sa storeFragment();
+			 */
+			Bundle* storeFragment(const Bundle &bundle);
 
-	/**
-	 * @sa getSchedule(string destination)
-	 */
-	BundleSchedule getSchedule(string destination);
+		private:
+			void sqlQuery(string query, int id1 = -1, int id2 = -1, int id3 = -1);
+			sqlite3_stmt* prepareStatement(string query);
+			sqlite3_int64 storeBundle(const Bundle &bundle);
 
-	/**
-	 * @sa storeFragment();
-	 */
-	Bundle* storeFragment(const Bundle &bundle);
+			sqlite3 *m_db;
 
-private:
-	void sqlQuery(string query, int id1 = -1, int id2 = -1, int id3 = -1);
-	sqlite3_stmt* prepareStatement(string query);
-	sqlite3_int64 storeBundle(const Bundle &bundle);
+			Mutex m_dblock;
+			unsigned int last_gettime;
 
-	sqlite3 *m_db;
+			sqlite3_stmt *m_stmt_size;
+			sqlite3_stmt *m_stmt_getbytime;
+			sqlite3_stmt *m_stmt_getbyeid;
+			sqlite3_stmt *m_stmt_store_bundle;
+			sqlite3_stmt *m_stmt_store_schedule;
 
-	Mutex m_dblock;
-	unsigned int last_gettime;
+			sqlite3_stmt *m_stmt_store_fragment;
+			sqlite3_stmt *m_stmt_check_fragment;
+			sqlite3_stmt *m_stmt_get_fragment;
+			sqlite3_stmt *m_stmt_delete_fragment;
 
-	sqlite3_stmt *m_stmt_size;
-	sqlite3_stmt *m_stmt_getbytime;
-	sqlite3_stmt *m_stmt_getbyeid;
-	sqlite3_stmt *m_stmt_store_bundle;
-	sqlite3_stmt *m_stmt_store_schedule;
+			sqlite3_stmt *m_stmt_outdate_fragments;
+			sqlite3_stmt *m_stmt_outdate_bundles;
 
-	sqlite3_stmt *m_stmt_store_fragment;
-	sqlite3_stmt *m_stmt_check_fragment;
-	sqlite3_stmt *m_stmt_get_fragment;
-	sqlite3_stmt *m_stmt_delete_fragment;
-
-	sqlite3_stmt *m_stmt_outdate_fragments;
-	sqlite3_stmt *m_stmt_outdate_bundles;
-
-};
-
-}
+		};
+	}
 }
 
 #endif

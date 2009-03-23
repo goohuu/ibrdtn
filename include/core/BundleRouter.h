@@ -20,33 +20,35 @@ namespace dtn
 	namespace core
 	{
 		/**
-		 * Ein BundleRouter entscheidet über die weitergabe der Pakete. Er kann gefragt
-		 * werden zu welchen Knoten ein Bundle als nächstes übertragen werden und
-		 * wann das statt finden soll.
+		 * A bundle router search a route for given bundle and return a BundleSchedule.
+		 * Additional manage a list of currently reachable nodes.
+		 *
+		 * This is a base class which can be extended to implement several routing
+		 * protocols.
 		 */
 		class BundleRouter : public Service, public EventReceiver
 		{
 		public:
-			/* Konstruktor
-			 * @param eid Spezifiziert die eigene EID
+			/* constructor
+			 * @param eid Own node eid.
 			 */
 			BundleRouter(string eid);
 
 			/**
-			 * Destruktor
+			 * destructor
 			 */
 			virtual ~BundleRouter();
 
 			/**
-			 * Gibt alle direkten nodegenceLayerbestimmtNachbarn zurück
-			 * @return Ein vector der Zeiger auf alle Nachbarn beinhaltet die entdeckt wurden.
+			 * Returns a list of currently reachable nodes.
+			 * @return The list of currently reachable nodes.
 			 */
-			virtual list<Node> getNeighbours();
+			virtual const list<Node>& getNeighbours();
 
 			/**
-			 * Emittelt ob ein bestimmter Knoten ein direkter Nachbar ist oder nicht
-			 * @param node Der zu bestimmende Knoten
-			 * @return True, wenn der Knoten ein direkter Nachbar ist
+			 * Determine of a specific node is currently reachable.
+			 * @param node The node to reach.
+			 * @return true, if the given node is reachable.
 			 */
 			virtual bool isNeighbour(Node &node);
 			bool isNeighbour(string eid);
@@ -59,7 +61,9 @@ namespace dtn
 			virtual void tick();
 
 			/**
-			 * Gibt einen Schedule für ein bestimmtes Bundle zurück
+			 * Search for a route and return a schedule for the given bundle
+			 * @param b A bundle to route.
+			 * @return A schedule for the given bundle.
 			 */
 			virtual BundleSchedule getSchedule(const Bundle &b);
 
@@ -72,8 +76,9 @@ namespace dtn
 
 		private:
 			/**
-			 * Gibt an, dass ein bestimmter Knoten nun in Kommunikationsreichweite ist.
-			 * @param node Ein Zeiger auf ein Node-Objekt der die Daten des in Reichweite gekommenen Knoten enthält.
+			 * Updates the list of reachable nodes. If the node is currently unknown
+			 * a NODE_AVAILABLE event will be raised.
+			 * @param node The node with new information.
 			 */
 			virtual void discovered(const Node &node);
 

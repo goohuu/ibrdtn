@@ -30,9 +30,7 @@ namespace dtn
 		class AbstractWorker;
 
 		/**
-		 * Das BundleCore übernimmt die Funktionen die zum korrekten Ablauf des
-		 * DTN Protocol nötig sind. Die Klasse benötigt ein BundleStorage und einen ConvergenceLayer
-		 * welche vor dem ersten Aufruf von tick() zugewiesen werden müssen.
+		 * The BundleCore manage the Bundle Protocol basics
 		 */
 		class BundleCore : public Service, public BundleReceiver, public EventReceiver
 		{
@@ -41,14 +39,16 @@ namespace dtn
 			static BundleCore& getInstance();
 
 			/**
-			 * Setzt ein ConvergenceLayer
-			 * @param cl Eine Instanz eines ConvergenceLayer
+			 * Set a ConvergenceLayer Object which is used to send and receive bundles.
+			 * If you want to use more than only one ConvergenceLayer the MultiplexCongerenceLayer
+			 * is needed.
+			 * @param cl A instance of a ConvergenceLayer class.
 			 */
 			void setConvergenceLayer(ConvergenceLayer *cl);
 
 			/**
-			 * Gibt den zugewiesenen timerConvergenceLayer zurück
-			 * @return Eine Instanz eines ConvergenceLayer oder NULL, wenn keine zugewiesen wurde
+			 * Get the currently used ConvergenceLayer instance.
+			 * @return The currently used ConvergenceLayer or NULL if nothing is assigned.
 			 */
 			ConvergenceLayer* getConvergenceLayer();
 
@@ -84,12 +84,12 @@ namespace dtn
 
 		private:
 			/**
-			 * Standardkonstruktor
+			 * default constructor
 			 */
 			BundleCore();
 
 			/**
-			 * Destruktor
+			 * destructor
 			 */
 			virtual ~BundleCore();
 

@@ -14,7 +14,8 @@ namespace dtn
 	namespace core
 	{
 		/**
-		 * Diese Klasse implementiert einen ConvergenceLayer für UDP/IP
+		 * This class implement a ConvergenceLayer for UDP/IP.
+		 * Each bundle is sent in exact one UDP datagram.
 		 */
 		class UDPConvergenceLayer : public Service, public ConvergenceLayer
 		{
@@ -50,7 +51,7 @@ namespace dtn
 
 		private:
 			/**
-			 * Empfängt ein Bundle aus der Netzwerkschicht
+			 * Receives a bundle from the socket.
 			 */
 			void receiveBundle();
 

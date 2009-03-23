@@ -24,7 +24,7 @@ public:
 	Dictionary();
 
 	/**
-	 * Destruktor
+	 * destructor
 	 */
 	virtual ~Dictionary();
 

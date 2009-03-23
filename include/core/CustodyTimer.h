@@ -14,17 +14,17 @@ namespace core
 	{
 		public:
 			/**
-			 * Defaultkonstuktor
+			 * default constructor
 			 */
 			CustodyTimer();
 
 			/**
-			 * Konstruktor
+			 * constructor with a given bundle, timeout and attempt of retransmit.
 			 */
 			CustodyTimer(const Bundle &bundle, unsigned int timeout, unsigned int attempt);
 
 			/**
-			 * Destruktor
+			 * destructor
 			 */
 			~CustodyTimer();
 

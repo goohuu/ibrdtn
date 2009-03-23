@@ -25,7 +25,7 @@ public:
 	PayloadBlock(Block *block);
 
 	/**
-	 * Destruktor
+	 * destructor
 	 */
 	virtual ~PayloadBlock();
 

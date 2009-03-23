@@ -47,7 +47,7 @@ namespace dtn
 		};
 
 		/**
-		 * Diese Klasse verwaltet eine TCP/IP Verbindung
+		 * This class impements a TCP/IP connection.
 		 */
 		class TCPConnection
 		{
@@ -55,7 +55,7 @@ namespace dtn
 
 		public:
 			/**
-			 * Konstruktor
+			 * Constructor
 			 * @param[in] clayer The parent TCPConvergenceLayer which this Connection belongs to.
 			 * @param[in] socket The socket to work with.
 			 * @param[in] chunksize The default chunk size for data transmission.
@@ -63,7 +63,7 @@ namespace dtn
 			TCPConnection(TCPConvergenceLayer &clayer, int socket, size_t chunksize = 128);
 
 			/**
-			 * Desktruktor
+			 * Destructor
 			 */
 			~TCPConnection();
 

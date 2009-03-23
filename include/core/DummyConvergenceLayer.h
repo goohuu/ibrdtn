@@ -8,7 +8,8 @@ namespace dtn
 	namespace core
 	{
 		/**
-		 * Diese Klasse implementiert einen ConvergenceLayer als Platzhalter
+		 * This is a dummy of a ConvergenceLayer, it is used as a placeholder for
+		 * a later association of a real ConvergenceLayer
 		 */
 		class DummyConvergenceLayer : public ConvergenceLayer
 		{
