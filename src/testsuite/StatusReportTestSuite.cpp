@@ -165,8 +165,6 @@ namespace testsuite
 		unsigned char *data = out->getData();
 		unsigned int length = out->getLength();
 
-		out->debug();
-
 		delete out;
 
 		out = fac.parse(data, length);
