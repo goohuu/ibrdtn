@@ -53,11 +53,25 @@ namespace dtn
 				switch (custody->getAction())
 				{
 					case CUSTODY_ACCEPT:
-						cout << "custody acceptance" << endl;
+						if (custody->getBundle().getPrimaryFlags().isCustodyRequested())
+						{
+							cout << "custody acceptance" << endl;
+						}
+						else
+						{
+							cout << "custody possible" << endl;
+						}
 						break;
 
 					case CUSTODY_REJECT:
-						cout << "custody reject" << endl;
+						if (custody->getBundle().getPrimaryFlags().isCustodyRequested())
+						{
+							cout << "custody reject" << endl;
+						}
+						else
+						{
+							cout << "custody not possible" << endl;
+						}
 						break;
 				};
 			}

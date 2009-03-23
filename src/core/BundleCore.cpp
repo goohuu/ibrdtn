@@ -252,7 +252,11 @@ namespace dtn
 				{
 					try {
 						// remove the timer for this bundle
-						m_cm.removeTimer( *signal );
+						Bundle bundle = m_cm.removeTimer( *signal );
+
+						// and requeue the bundle for later delivery
+						BundleSchedule sched(bundle, BundleFactory::getDTNTime() + 60, EID(bundle.getDestination()).getNodeEID());
+						EventSwitch::raiseEvent( new StorageEvent( sched ) );
 					} catch (NoTimerFoundException ex) {
 
 					}
