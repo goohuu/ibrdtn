@@ -14,57 +14,56 @@ using namespace dtn::data;
 
 namespace dtn
 {
-namespace daemon
-{
-/**
- * Eine Klasse die sich ausschließlich mir der Konfiguration des
- * DTN Layers befasst.
- */
-class Configuration
-{
-private:
-	Configuration();
-	~Configuration();
+	namespace daemon
+	{
+		/**
+		 * This class contains the hole configuration for the daemon.
+		 */
+		class Configuration
+		{
+		private:
+			Configuration();
+			~Configuration();
 
-public:
-	static Configuration &getInstance();
+		public:
+			static Configuration &getInstance();
 
-	string getLocalUri();
+			string getLocalUri();
 
-	vector<string> getNetList();
+			vector<string> getNetList();
 
-	string getNetType(const string name = "default");
-	unsigned int getNetPort(const string name = "default");
-	string getNetInterface(const string name = "default");
-	string getNetBroadcast(const string name = "default");
-	unsigned int getNetMTU(const string name = "default");
+			string getNetType(const string name = "default");
+			unsigned int getNetPort(const string name = "default");
+			string getNetInterface(const string name = "default");
+			string getNetBroadcast(const string name = "default");
+			unsigned int getNetMTU(const string name = "default");
 
-	void setConfigFile(ConfigFile &conf);
+			void setConfigFile(ConfigFile &conf);
 
-	vector<Node> getStaticNodes();
-	list<StaticRoute> getStaticRoutes();
+			vector<Node> getStaticNodes();
+			list<StaticRoute> getStaticRoutes();
 
-	unsigned int getStorageMaxSize();
-	bool doStorageMerge();
+			unsigned int getStorageMaxSize();
+			bool doStorageMerge();
 
-	list<Node> getFakeBroadcastNodes();
-	bool doFakeBroadcast();
+			list<Node> getFakeBroadcastNodes();
+			bool doFakeBroadcast();
 
-	pair<double, double> getStaticPosition();
-	string getGPSHost();
-	unsigned int getGPSPort();
-	bool useGPSDaemon();
+			pair<double, double> getStaticPosition();
+			string getGPSHost();
+			unsigned int getGPSPort();
+			bool useGPSDaemon();
 
-	bool useSQLiteStorage();
-	string getSQLiteDatabase();
-	bool doSQLiteFlush();
+			bool useSQLiteStorage();
+			string getSQLiteDatabase();
+			bool doSQLiteFlush();
 
-private:
-	ConfigFile m_conf;
-	bool m_debug;
+		private:
+			ConfigFile m_conf;
+			bool m_debug;
 
-};
-}
+		};
+	}
 }
 
 #endif /*CONFIGURATION_H_*/

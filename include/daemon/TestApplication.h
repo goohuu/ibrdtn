@@ -18,6 +18,13 @@ namespace dtn
 {
 	namespace daemon
 	{
+		/**
+		 * This is a implementation of AbstractWorker and is comparable with
+		 * a application. This application can send/receive bundles and
+		 * send every 5 seconds a bundle for testing purpose.
+		 *
+		 * The application suffix to the node eid is /test.
+		 */
 		class TestApplication : public AbstractWorker, public Service
 		{
 			public:
