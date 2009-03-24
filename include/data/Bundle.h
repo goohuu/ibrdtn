@@ -45,7 +45,7 @@ namespace dtn
 		/**
 		 * version of this bundle protocol implementation
 		 */
-		static const unsigned char BUNDLE_VERSION = 0x05;
+		static const unsigned char BUNDLE_VERSION = 0x06;
 
 		/**
 		 * create a bundle object to manage the parameter and blocks of a bundle.

@@ -161,8 +161,8 @@ namespace dtn
 			// Time of Signal
 			frame.append( BundleFactory::getDTNTime() );
 
-	//		// unbekanntes Feld
-	//		frame.append( 0 );
+			// unknown field
+			frame.append( 0 );
 
 			// Copy of bundles creation timestamp
 			frame.append( 0 );

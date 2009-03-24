@@ -228,7 +228,7 @@ namespace dtn
 					size -= block_size;
 				}
 				else
-					break;
+					throw InvalidBundleData();
 			}
 
 			return new Bundle(frame, blocks);
