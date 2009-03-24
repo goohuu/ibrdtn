@@ -2,6 +2,7 @@
 #include "data/BundleFactory.h"
 #include "utils/Utils.h"
 #include "core/NodeEvent.h"
+#include "core/TimeEvent.h"
 #include "core/RouteEvent.h"
 #include "core/EventSwitch.h"
 #include "core/StorageEvent.h"
@@ -19,11 +20,12 @@ namespace dtn
 	namespace core
 	{
 		BundleRouter::BundleRouter(string eid)
-			: Service("BundleRouter"), m_lastcheck(0), m_eid(eid)
+			: Service("BundleRouter"), m_eid(eid)
 		{
 			// register at event switch
 			EventSwitch::registerEventReceiver(NodeEvent::className, this);
 			EventSwitch::registerEventReceiver(RouteEvent::className, this);
+			EventSwitch::registerEventReceiver( TimeEvent::className, this );
 		}
 
 		BundleRouter::~BundleRouter()
@@ -32,6 +34,7 @@ namespace dtn
 
 			EventSwitch::unregisterEventReceiver(NodeEvent::className, this);
 			EventSwitch::unregisterEventReceiver(RouteEvent::className, this);
+			EventSwitch::unregisterEventReceiver( TimeEvent::className, this );
 
 			// Alle Nodes löschen
 			m_neighbours.clear();
@@ -41,8 +44,17 @@ namespace dtn
 		{
 			const NodeEvent *nodeevent = dynamic_cast<const NodeEvent*>(evt);
 			const RouteEvent *routeevent = dynamic_cast<const RouteEvent*>(evt);
+			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
 
-			if (nodeevent != NULL)
+			if (time != NULL)
+			{
+				if (time->getAction() == TIME_SECOND_TICK)
+				{
+					// the time has changed
+					m_nexttime.signal();
+				}
+			}
+			else if (nodeevent != NULL)
 			{
 				if (nodeevent->getAction() == NODE_INFO_UPDATED)
 				{
@@ -244,41 +256,35 @@ namespace dtn
 		void BundleRouter::tick()
 		{
 			// search for outdated nodes
-			unsigned int current_time = data::BundleFactory::getDTNTime();
+			MutexLock l(m_lock);
+			list<Node>::iterator iter = m_neighbours.begin();
+			Node n(PERMANENT);
 
-			if ( m_lastcheck != current_time )
+			while (iter != m_neighbours.end())
 			{
-				MutexLock l(m_lock);
-				list<Node>::iterator iter = m_neighbours.begin();
-				Node n(PERMANENT);
+				n = (*iter);
 
-				while (iter != m_neighbours.end())
+				if ( !n.decrementTimeout(1) )
 				{
-					n = (*iter);
-
-					if ( !n.decrementTimeout(1) )
-					{
-						// node is outdated -> remove it
-						list<Node>::iterator eraseme = iter;
-						iter++;
-						m_neighbours.erase( eraseme );
-
-						// announce the node unavailable event
-						EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_UNAVAILABLE));
-
-						continue;
-					}
-
-					(*iter) = n;
-
+					// node is outdated -> remove it
+					list<Node>::iterator eraseme = iter;
 					iter++;
+					m_neighbours.erase( eraseme );
+
+					// announce the node unavailable event
+					EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_UNAVAILABLE));
+
+					continue;
 				}
 
-				m_lastcheck = current_time;
-				m_lock.leaveMutex();
+				(*iter) = n;
+
+				iter++;
 			}
 
-			usleep(5000);
+			l.unlock();
+
+			m_nexttime.wait();
 		}
 	}
 }

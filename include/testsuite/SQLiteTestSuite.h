@@ -5,6 +5,8 @@
  *      Author: morgenro
  */
 
+#include "config.h"
+
 #ifndef SQLITETESTSUITE_H_
 #define SQLITETESTSUITE_H_
 

@@ -10,6 +10,7 @@
 #include "utils/Mutex.h"
 #include "core/EventReceiver.h"
 #include "core/Event.h"
+#include "utils/Conditional.h"
 
 using namespace std;
 using namespace dtn::data;
@@ -83,9 +84,10 @@ namespace dtn
 			virtual void discovered(const Node &node);
 
 			list<Node> m_neighbours;
-			unsigned int m_lastcheck;
 			string m_eid;
 			dtn::utils::Mutex m_lock;
+
+			Conditional m_nexttime;
 		};
 	}
 }
