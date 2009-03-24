@@ -124,7 +124,7 @@ namespace dtn
 				switch (node->getAction())
 				{
 				case NODE_INFO_UPDATED:
-					cout << evt->getName() << ": Info updated for " << node->getNode().getURI() << endl;
+					//cout << evt->getName() << ": Info updated for " << node->getNode().getURI() << endl;
 					break;
 				case NODE_AVAILABLE:
 					cout << evt->getName() << ": Node " << node->getNode().getURI() << " available" << endl;
