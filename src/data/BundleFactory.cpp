@@ -179,6 +179,9 @@ namespace dtn
 		}
 		Bundle* BundleFactory::parse(const unsigned char *data, unsigned int size) const
 		{
+			// init overflow protection
+			unsigned int init_size = size;
+
 			// parse the primary block and get a NetworkFrame object with its data.
 			NetworkFrame *frame = parsePrimaryBlock(data, size);
 
@@ -193,8 +196,12 @@ namespace dtn
 			// decode the primary processing flags
 			PrimaryFlags flags( frame->getSDNV(PROCFLAGS) );
 
-			while (0 < size)
+			while (0 != size)
 			{
+				// check for overflow
+				if (init_size < size)
+					throw InvalidBundleData();
+
 				Block *block = getBlock(data, size);
 				if (block != NULL)
 				{
