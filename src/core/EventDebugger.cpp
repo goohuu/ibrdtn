@@ -40,8 +40,6 @@ namespace dtn
 
 		void EventDebugger::raiseEvent(const Event *evt)
 		{
-			cout << evt->getName() << ": ";
-
 			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
 			const RouteEvent *route = dynamic_cast<const RouteEvent*>(evt);
 			const StorageEvent *store = dynamic_cast<const StorageEvent*>(evt);
@@ -55,22 +53,14 @@ namespace dtn
 					case CUSTODY_ACCEPT:
 						if (custody->getBundle().getPrimaryFlags().isCustodyRequested())
 						{
-							cout << "custody acceptance" << endl;
-						}
-						else
-						{
-							cout << "custody possible" << endl;
+							cout << evt->getName() << ": custody acceptance" << endl;
 						}
 						break;
 
 					case CUSTODY_REJECT:
 						if (custody->getBundle().getPrimaryFlags().isCustodyRequested())
 						{
-							cout << "custody reject" << endl;
-						}
-						else
-						{
-							cout << "custody not possible" << endl;
+							cout << evt->getName() << ": custody reject" << endl;
 						}
 						break;
 				};
@@ -80,22 +70,22 @@ namespace dtn
 				switch (bundle->getAction())
 				{
 				case BUNDLE_DELETED:
-					cout << "bundle " << bundle->getBundle().toString() << " deleted" << endl;
+					cout << evt->getName() << ": bundle " << bundle->getBundle().toString() << " deleted" << endl;
 					break;
 				case BUNDLE_CUSTODY_ACCEPTED:
-					cout << "custody accepted for " << bundle->getBundle().toString() << endl;
+					cout << evt->getName() << ": custody accepted for " << bundle->getBundle().toString() << endl;
 					break;
 				case BUNDLE_FORWARDED:
-					cout << "bundle " << bundle->getBundle().toString() << " forwarded" << endl;
+					cout << evt->getName() << ": bundle " << bundle->getBundle().toString() << " forwarded" << endl;
 					break;
 				case BUNDLE_DELIVERED:
-					cout << "bundle " << bundle->getBundle().toString() << " delivered" << endl;
+					cout << evt->getName() << ": bundle " << bundle->getBundle().toString() << " delivered" << endl;
 					break;
 				case BUNDLE_RECEIVED:
-					cout << "bundle " << bundle->getBundle().toString() << " received" << endl;
+					cout << evt->getName() << ": bundle " << bundle->getBundle().toString() << " received" << endl;
 					break;
 				default:
-					cout << "unknown" << endl;
+					cout << evt->getName() << ": unknown" << endl;
 					break;
 				}
 			}
@@ -104,16 +94,16 @@ namespace dtn
 				switch (store->getAction())
 				{
 				case STORE_BUNDLE:
-					cout << "Store the bundle " << store->getBundle().toString() << " in the storage." << endl;
+					cout << evt->getName() << ": Store the bundle " << store->getBundle().toString() << " in the storage." << endl;
 					break;
 				case STORE_SCHEDULE:
 				{
 					BundleSchedule sched = store->getSchedule();
-					cout << "Store a schedule for bundle " << sched.getBundle().toString() << ", next hop: " << sched.getEID() << endl;
+					cout << evt->getName() << ": Store a schedule for bundle " << sched.getBundle().toString() << ", next hop: " << sched.getEID() << endl;
 					break;
 				}
 				default:
-					cout << "unknown" << endl;
+					cout << evt->getName() << ": unknown" << endl;
 					break;
 				}
 			}
@@ -122,10 +112,10 @@ namespace dtn
 				switch (route->getAction())
 				{
 				case ROUTE_PROCESS_BUNDLE:
-					cout << "process bundle " << route->getBundle().toString() << endl;
+					cout << evt->getName() << ": process bundle " << route->getBundle().toString() << endl;
 					break;
 				default:
-					cout << "unknown" << endl;
+					cout << evt->getName() << ": unknown" << endl;
 					break;
 				}
 			}
@@ -134,16 +124,16 @@ namespace dtn
 				switch (node->getAction())
 				{
 				case NODE_INFO_UPDATED:
-					cout << "Info updated for " << node->getNode().getURI() << endl;
+					cout << evt->getName() << ": Info updated for " << node->getNode().getURI() << endl;
 					break;
 				case NODE_AVAILABLE:
-					cout << "Node " << node->getNode().getURI() << " available" << endl;
+					cout << evt->getName() << ": Node " << node->getNode().getURI() << " available" << endl;
 					break;
 				case NODE_UNAVAILABLE:
-					cout << "Node " << node->getNode().getURI() << " unavailable" << endl;
+					cout << evt->getName() << ": Node " << node->getNode().getURI() << " unavailable" << endl;
 					break;
 				default:
-					cout << "unknown" << endl;
+					cout << evt->getName() << ": unknown" << endl;
 					break;
 				}
 			}
