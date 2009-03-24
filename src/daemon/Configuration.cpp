@@ -111,32 +111,25 @@ namespace dtn
 			// read the node count
 			int count = 1;
 
-			stringstream key1;
-			stringstream key2;
-			stringstream key3;
-			stringstream key4;
+			// initial prefix
+			string prefix = "static1_";
 
-			key1 << "static" << count << "_address";
-			key2 << "static" << count << "_port";
-			key3 << "static" << count << "_uri";
-			key4 << "static" << count << "_net";
-
-			while (m_conf.keyExists(key3.str()))
+			while ( m_conf.keyExists(prefix + "uri") )
 			{
 				Node n(PERMANENT);
 
-				n.setAddress( m_conf.read<string>(key1.str(), "127.0.0.1") );
-				n.setPort( m_conf.read<unsigned int>(key2.str(), 4556) );
-				n.setURI( m_conf.read<string>(key3.str(), "dtn:none") );
-				n.setConvergenceLayer( new DummyConvergenceLayer( m_conf.read<string>(key4.str(), "default") ) );
+				n.setAddress( m_conf.read<string>(prefix + "address", "127.0.0.1") );
+				n.setPort( m_conf.read<unsigned int>(prefix + "port", 4556) );
+				n.setURI( m_conf.read<string>(prefix + "uri", "dtn:none") );
+				n.setConvergenceLayer( new DummyConvergenceLayer( m_conf.read<string>(prefix + "net", "default") ) );
 
-				key1.clear(); key1 << "static" << count << "_address";
-				key2.clear(); key2 << "static" << count << "_port";
-				key3.clear(); key3 << "static" << count << "_uri";
-				key4.clear(); key4 << "static" << count << "_net";
+				count++;
+
+				stringstream prefix_stream;
+				prefix_stream << "static" << count << "_";
+				prefix_stream >> prefix;
 
 				nodes.push_back(n);
-				count++;
 			}
 
 			return nodes;
