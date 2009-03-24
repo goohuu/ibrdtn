@@ -69,7 +69,7 @@ namespace testsuite
 //		PerformanceTestSuite performtest;
 //		if ( !performtest.runAllTests() ) ret = false;
 
-#ifdef WITH_SQLITE
+#ifdef HAVE_LIBSQLITE3
 		SQLiteTestSuite sqlitetest;
 		if ( !sqlitetest.runAllTests() ) ret = false;
 #endif

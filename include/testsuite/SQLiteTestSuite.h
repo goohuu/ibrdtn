@@ -8,7 +8,7 @@
 #ifndef SQLITETESTSUITE_H_
 #define SQLITETESTSUITE_H_
 
-#include "core/BundleStorage.h"
+#include "core/SQLiteBundleStorage.h"
 #include "data/Bundle.h"
 
 using namespace dtn::data;
@@ -29,8 +29,8 @@ namespace testsuite
 
 		private:
 			bool testSimpleBundleStorage();
-			bool StoreAndRetrieveTest(BundleStorage &storage);
-			bool fragmentationTest(BundleStorage &storage);
+			bool StoreAndRetrieveTest(SQLiteBundleStorage &storage);
+			bool fragmentationTest(SQLiteBundleStorage &storage);
 	};
 }
 }

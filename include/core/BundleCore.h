@@ -1,7 +1,7 @@
 #ifndef BUNDLECORE_H_
 #define BUNDLECORE_H_
 
-#include "core/BundleStorage.h"
+#include "core/AbstractBundleStorage.h"
 #include "core/ConvergenceLayer.h"
 #include "data/BundleFactory.h"
 #include "core/BundleRouter.h"

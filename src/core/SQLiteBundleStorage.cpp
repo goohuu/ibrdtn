@@ -10,6 +10,15 @@
 #ifdef HAVE_LIBSQLITE3
 
 #include "data/BundleFactory.h"
+
+#include "core/EventSwitch.h"
+#include "core/BundleEvent.h"
+#include "core/RouteEvent.h"
+#include "core/CustodyEvent.h"
+#include "core/TimeEvent.h"
+#include "core/NodeEvent.h"
+#include "core/StorageEvent.h"
+
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -23,7 +32,7 @@ namespace dtn
 	namespace core
 	{
 		SQLiteBundleStorage::SQLiteBundleStorage(string dbfile, bool flush)
-		 : Service("SQLiteBundleStorage"), BundleStorage(), last_gettime(0)
+		 : Service("SQLiteBundleStorage"), last_gettime(0)
 		{
 			int rc;
 			rc = sqlite3_open(dbfile.c_str(), &m_db);
@@ -64,6 +73,16 @@ namespace dtn
 			sqlite3_finalize(m_stmt_delete_fragment);
 
 			sqlite3_close(m_db);
+		}
+
+		void SQLiteBundleStorage::eventNodeAvailable(const Node &node)
+		{
+			m_neighbours[node.getURI()] = node;
+		}
+
+		void SQLiteBundleStorage::eventNodeUnavailable(const Node &node)
+		{
+			m_neighbours.erase(node.getURI());
 		}
 
 		sqlite3_stmt* SQLiteBundleStorage::prepareStatement(string query)
@@ -154,9 +173,36 @@ namespace dtn
 
 		void SQLiteBundleStorage::tick()
 		{
-			sleep(5);
+			if (m_neighbours.size() != 0)
+			{
+				// get the first neighbour
+				map<string,Node>::iterator iter = m_neighbours.begin();
+				Node &node = (*iter).second;
+
+				try {
+					BundleSchedule schedule = getSchedule( node.getURI() );
+					EventSwitch::raiseEvent( new RouteEvent( schedule.getBundle(), ROUTE_PROCESS_BUNDLE ) );
+				} catch (exceptions::NoScheduleFoundException ex) {
+					// remove the neighbour
+					m_neighbours.erase(node.getURI());
+				}
+
+				// get current time
+				unsigned int dtntime = BundleFactory::getDTNTime();
+
+				// send timed schedules
+				try {
+					BundleSchedule schedule = getSchedule( dtntime );
+					EventSwitch::raiseEvent( new RouteEvent( schedule.getBundle(), ROUTE_PROCESS_BUNDLE ) );
+				} catch (exceptions::NoScheduleFoundException ex) {
+
+				}
+
+				return;
+			}
+
 			MutexLock l(m_dblock);
-			// check every 5 seconds for outdated bundles and fragments
+			// check for outdated bundles and fragments
 			unsigned int dtntime = BundleFactory::getDTNTime();
 			sqlite3_bind_int64(m_stmt_outdate_bundles, 1, sqlite3_uint64(dtntime));
 			sqlite3_bind_int64(m_stmt_outdate_fragments, 1, sqlite3_uint64(dtntime));
@@ -164,6 +210,10 @@ namespace dtn
 			sqlite3_step(m_stmt_outdate_fragments);
 			sqlite3_reset(m_stmt_outdate_bundles);
 			sqlite3_reset(m_stmt_outdate_fragments);
+			l.unlock();
+
+			// wait till the dtntime has changed or new bundles are stored
+			wait();
 		}
 
 		BundleSchedule SQLiteBundleStorage::getSchedule(unsigned int dtntime)
@@ -274,8 +324,6 @@ namespace dtn
 			sqlite3_stmt *st = m_stmt_store_schedule;
 
 			const Bundle &b = schedule.getBundle();
-
-			if ( b == NULL ) return;
 
 			try {
 				// get id for the stored bundle
@@ -426,8 +474,6 @@ namespace dtn
 		{
 			int rc;
 			sqlite3_stmt *st = m_stmt_store_bundle;
-
-			if ( b == NULL ) return 0;
 
 			sqlite3_bind_int(st, 1, b.getInteger(CREATION_TIMESTAMP));
 			sqlite3_bind_int(st, 2, b.getInteger(CREATION_TIMESTAMP_SEQUENCE));

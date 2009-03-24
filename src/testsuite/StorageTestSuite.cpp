@@ -52,7 +52,7 @@ namespace testsuite
 		return ret;
 	}
 
-	bool StorageTestSuite::fragmentationTest(BundleStorage &storage)
+	bool StorageTestSuite::fragmentationTest(AbstractBundleStorage &storage)
 	{
 		bool ret = true;
 

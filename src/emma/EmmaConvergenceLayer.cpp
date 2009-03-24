@@ -78,6 +78,8 @@ namespace emma
 		{
 			DiscoverBlock *discover = dynamic_cast<DiscoverBlock*>( blocks.front() );
 
+			if ( b.getSource() == m_eid ) return;
+
 			if ( discover != NULL)
 			{
 				// create a node and announce it to the router
@@ -95,6 +97,8 @@ namespace emma
 
 				// create a event
 				EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_INFO_UPDATED));
+
+				if ( b.getDestination() == "dtn:discovery" ) return;
 			}
 		}
 

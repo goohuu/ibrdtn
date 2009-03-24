@@ -12,7 +12,7 @@
 
 #ifdef HAVE_LIBSQLITE3
 
-#include "core/BundleStorage.h"
+#include "core/AbstractBundleStorage.h"
 #include "core/CustodyManager.h"
 #include "data/Bundle.h"
 #include "utils/Service.h"
@@ -22,6 +22,7 @@
 #include "data/Exceptions.h"
 #include "utils/MutexLock.h"
 #include "utils/Mutex.h"
+#include <map>
 
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -60,7 +61,7 @@ namespace dtn
 		/**
 		 * This storage holds all bundles, fragments and schedules in a SQLite database.
 		 */
-		class SQLiteBundleStorage : public Service, public BundleStorage
+		class SQLiteBundleStorage : public Service, public AbstractBundleStorage
 		{
 		public:
 			/**
@@ -76,31 +77,14 @@ namespace dtn
 			virtual ~SQLiteBundleStorage();
 
 			/**
-			 * @sa BundleStorage::store(BundleSchedule schedule)
+			 * @sa AbstractBundleStorage::store(BundleSchedule &schedule)
 			 */
 			void store(const BundleSchedule &schedule);
 
 			/**
-			 * @sa BundleStorage::clear()
+			 * @sa storeFragment();
 			 */
-			void clear();
-
-			/**
-			 * @sa BundleStorage::isEmpty()
-			 */
-			bool isEmpty();
-
-			/**
-			 * @sa Service::tick()
-			 */
-			virtual void tick();
-
-			unsigned int getSize();
-
-			/**
-			 * @sa BundleStorage::getCount()
-			 */
-			unsigned int getCount();
+			Bundle* storeFragment(const Bundle &bundle);
 
 			/**
 			 * @sa getSchedule(unsigned int dtntime)
@@ -113,9 +97,30 @@ namespace dtn
 			BundleSchedule getSchedule(string destination);
 
 			/**
-			 * @sa storeFragment();
+			 * @sa AbstractBundleStorage::clear()
 			 */
-			Bundle* storeFragment(const Bundle &bundle);
+			void clear();
+
+			/**
+			 * @sa AbstractBundleStorage::isEmpty()
+			 */
+			bool isEmpty();
+
+			unsigned int getSize();
+
+			/**
+			 * @sa BundleStorage::getCount()
+			 */
+			unsigned int getCount();
+
+		protected:
+			/**
+			 * @sa Service::tick()
+			 */
+			virtual void tick();
+
+			void eventNodeAvailable(const Node &node);
+			void eventNodeUnavailable(const Node &node);
 
 		private:
 			void sqlQuery(string query, int id1 = -1, int id2 = -1, int id3 = -1);
@@ -141,6 +146,7 @@ namespace dtn
 			sqlite3_stmt *m_stmt_outdate_fragments;
 			sqlite3_stmt *m_stmt_outdate_bundles;
 
+			map<string,Node> m_neighbours;
 		};
 	}
 }

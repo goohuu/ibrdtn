@@ -1,13 +1,10 @@
 #include "core/SimpleBundleStorage.h"
 #include "data/BundleFactory.h"
 #include "utils/Utils.h"
-#include "core/NodeEvent.h"
-#include "core/StorageEvent.h"
 #include "core/EventSwitch.h"
 #include "core/BundleEvent.h"
 #include "core/RouteEvent.h"
 #include "core/CustodyEvent.h"
-#include "core/TimeEvent.h"
 
 #include <iostream>
 
@@ -17,110 +14,25 @@ namespace dtn
 {
 	namespace core
 	{
-		SimpleBundleStorage::SimpleBundleStorage(unsigned int size, unsigned int bundle_maxsize, bool merge)
-		 : Service("SimpleBundleStorage"), BundleStorage(), m_nextdeprecation(0), m_last_compress(0), m_size(size),
-		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false), m_merge(merge)
+		SimpleBundleStorage::SimpleBundleStorage(unsigned int size, unsigned int bundle_maxsize)
+		 : Service("SimpleBundleStorage"), m_nextdeprecation(0), m_last_compress(0), m_size(size),
+		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false)
 		{
-			// register me for events
-			EventSwitch::registerEventReceiver( NodeEvent::className, this );
-			EventSwitch::registerEventReceiver( StorageEvent::className, this );
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
 		{
-			EventSwitch::unregisterEventReceiver( NodeEvent::className, this );
-			EventSwitch::unregisterEventReceiver( StorageEvent::className, this );
 			clear();
 		}
 
-		void SimpleBundleStorage::raiseEvent(const Event *evt)
+		void SimpleBundleStorage::eventNodeAvailable(const Node &node)
 		{
-			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
-			const StorageEvent *storage = dynamic_cast<const StorageEvent*>(evt);
-			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
+			m_neighbours[node.getURI()] = node;
+		}
 
-			if (time != NULL)
-			{
-				if (time->getAction() == TIME_SECOND_TICK)
-				{
-					// the time has changed
-					m_breakwait.signal();
-				}
-			}
-			else if (storage != NULL)
-			{
-				switch (storage->getAction())
-				{
-					case STORE_BUNDLE:
-					{
-						Bundle *ret = storeFragment(storage->getBundle());
-						m_breakwait.signal();
-
-						if (ret != NULL)
-						{
-							// route the joint bundle
-							EventSwitch::raiseEvent( new RouteEvent(*ret, ROUTE_PROCESS_BUNDLE) );
-							delete ret;
-						}
-
-						break;
-					}
-
-					case STORE_SCHEDULE:
-						const BundleSchedule &sched = storage->getSchedule();
-
-						try {
-							// local eid
-							string localeid = BundleCore::getInstance().getLocalURI();
-							const Bundle &b = sched.getBundle();
-
-							if ( ( b.getPrimaryFlags().isCustodyRequested() ) && (b.getCustodian() != localeid) )
-							{
-								// here i need a copy
-								Bundle b_copy = b;
-
-								// set me as custody
-								b_copy.setCustodian(localeid);
-
-								// Make a new schedule
-								BundleSchedule sched_new(b_copy, sched.getTime(), sched.getEID());
-
-								// store the schedule
-								store(sched_new);
-							}
-							else
-							{
-								// store the schedule
-								store(sched);
-							}
-
-							// accept custody
-							EventSwitch::raiseEvent( new CustodyEvent( sched.getBundle(), CUSTODY_ACCEPT ) );
-
-						} catch (NoSpaceLeftException ex) {
-							// reject custody
-							EventSwitch::raiseEvent( new CustodyEvent( sched.getBundle(), CUSTODY_REJECT ) );
-						}
-
-						m_breakwait.signal();
-						break;
-				}
-			}
-			else if (node != NULL)
-			{
-				const Node &n = node->getNode();
-
-				switch (node->getAction())
-				{
-					case NODE_AVAILABLE:
-						m_neighbours[n.getURI()] = n;
-						break;
-
-					case NODE_UNAVAILABLE:
-						m_neighbours.erase(n.getURI());
-						break;
-				}
-			}
+		void SimpleBundleStorage::eventNodeUnavailable(const Node &node)
+		{
+			m_neighbours.erase(node.getURI());
 		}
 
 		void SimpleBundleStorage::store(const BundleSchedule &schedule)
@@ -232,13 +144,13 @@ namespace dtn
 
 			// TODO: deleteDeprecated();
 
-			// wait till the dtntime has changed or a new bundles is stored (m_bundlewaiting)
-			m_breakwait.wait();
+			// wait till the dtntime has changed or new bundles are stored
+			wait();
 		}
 
 		void SimpleBundleStorage::terminate()
 		{
-			m_breakwait.signal();
+			stopWait();
 		}
 
 		BundleSchedule SimpleBundleStorage::getSchedule(string destination)

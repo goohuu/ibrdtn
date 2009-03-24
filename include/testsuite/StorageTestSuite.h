@@ -1,7 +1,7 @@
 #ifndef STORAGETESTSUITE_H_
 #define STORAGETESTSUITE_H_
 
-#include "core/BundleStorage.h"
+#include "core/AbstractBundleStorage.h"
 #include "data/Bundle.h"
 
 using namespace dtn::data;
@@ -22,7 +22,7 @@ namespace testsuite
 
 		private:
 			bool testSimpleBundleStorage();
-			bool fragmentationTest(BundleStorage &storage);
+			bool fragmentationTest(AbstractBundleStorage &storage);
 	};
 }
 }

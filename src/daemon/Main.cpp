@@ -1,7 +1,7 @@
 #include "config.h"
 
 #include "core/BundleCore.h"
-#include "core/BundleStorage.h"
+#include "core/AbstractBundleStorage.h"
 #include "core/SimpleBundleStorage.h"
 #include "core/StaticBundleRouter.h"
 #include "core/ConvergenceLayer.h"
@@ -209,18 +209,20 @@ int main(int argc, char *argv[])
 		}
 	}
 
-#ifdef WITH_SQLITE
+#ifdef HAVE_LIBSQLITE3
+	AbstractBundleStorage *storage = NULL;
+
 	if ( conf.useSQLiteStorage() )
 	{
-		SQLiteBundleStorage storage(
+		storage = new SQLiteBundleStorage(
 					conf.getSQLiteDatabase(),
 					conf.doSQLiteFlush()
 					);
 	} else {
-		SimpleBundleStorage storage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
+		storage = new SimpleBundleStorage(conf.getStorageMaxSize() * 1024, 4096);
 	}
 #else
-	SimpleBundleStorage storage(conf.getStorageMaxSize() * 1024, 4096, conf.doStorageMerge());
+	AbstractBundleStorage *storage = new SimpleBundleStorage(conf.getStorageMaxSize() * 1024, 4096);
 #endif
 
 #ifdef USE_EMMA_CODE
@@ -271,7 +273,9 @@ int main(int argc, char *argv[])
 	// start the services
 	router.start();
 	multicl.initialize();
-	storage.start();
+
+	Service *storage_service = dynamic_cast<Service*>(storage);
+	if (storage_service != NULL) storage_service->start();
 
 #ifdef USE_EMMA_CODE
 	if ( gpsc != NULL )
@@ -297,8 +301,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	TestApplication app("dtn://mini-debian/debugger");
-	app.start();
+	//TestApplication app("dtn://dtn2-node.dtn/echo");
+	//app.start();
 
 //#ifdef HAVE_LIBLUA5_1
 //	luac.run("demo.lua");
@@ -309,7 +313,7 @@ int main(int argc, char *argv[])
 		usleep(10000);
 	}
 
-	app.abort();
+	//app.abort();
 
 #ifdef USE_EMMA_CODE
 	if ( gpsc != NULL )
@@ -324,7 +328,8 @@ int main(int argc, char *argv[])
 #endif
 
 	// stop the services
-	storage.abort();
+	if (storage_service != NULL) storage_service->abort();
+
 	multicl.terminate();
 	router.abort();
 
