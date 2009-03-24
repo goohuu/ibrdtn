@@ -110,14 +110,14 @@ namespace dtn
 				case BUNDLE_RECEIVED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_RECEPTION) )
 					{
-						Bundle bundle = createStatusReport(b, RECEIPT_OF_BUNDLE);
+						Bundle bundle = createStatusReport(b, RECEIPT_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
 				case BUNDLE_DELETED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELETION) )
 					{
-						Bundle bundle = createStatusReport(b, DELETION_OF_BUNDLE);
+						Bundle bundle = createStatusReport(b, DELETION_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
@@ -125,7 +125,7 @@ namespace dtn
 				case BUNDLE_FORWARDED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_FORWARDING) )
 					{
-						Bundle bundle = createStatusReport(b, FORWARDING_OF_BUNDLE);
+						Bundle bundle = createStatusReport(b, FORWARDING_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
@@ -133,7 +133,7 @@ namespace dtn
 				case BUNDLE_DELIVERED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY) )
 					{
-						Bundle bundle = createStatusReport(b, DELIVERY_OF_BUNDLE);
+						Bundle bundle = createStatusReport(b, DELIVERY_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
@@ -141,7 +141,7 @@ namespace dtn
 				case BUNDLE_CUSTODY_ACCEPTED:
 					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE) )
 					{
-						Bundle bundle = createStatusReport(b, CUSTODY_ACCEPTANCE_OF_BUNDLE);
+						Bundle bundle = createStatusReport(b, CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;

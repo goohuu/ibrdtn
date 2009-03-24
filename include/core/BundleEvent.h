@@ -11,6 +11,7 @@
 #include <string>
 #include "data/Bundle.h"
 #include "core/Event.h"
+#include "data/StatusReportBlock.h"
 
 using namespace dtn::data;
 using namespace dtn::core;
@@ -32,10 +33,11 @@ namespace dtn
 		class BundleEvent : public Event
 		{
 		public:
-			BundleEvent(const Bundle &bundle, EventBundleAction action);
+			BundleEvent(const Bundle &bundle, EventBundleAction action, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);
 
 			~BundleEvent();
 
+			StatusReportReasonCode getReason() const;
 			EventBundleAction getAction() const;
 			const Bundle& getBundle() const;
 			const string getName() const;
@@ -50,6 +52,7 @@ namespace dtn
 		private:
 			const Bundle m_bundle;
 			EventBundleAction m_action;
+			StatusReportReasonCode m_reason;
 		};
 	}
 }

@@ -115,10 +115,10 @@ namespace dtn
 								EventSwitch::raiseEvent( new StorageEvent( schedule ) );
 							} catch (NoScheduleFoundException ex) {
 								EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_REJECT ) );
-								EventSwitch::raiseEvent( new BundleEvent( b, BUNDLE_DELETED ) );
+								EventSwitch::raiseEvent( new BundleEvent( b, BUNDLE_DELETED, NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE ) );
 							} catch (BundleExpiredException ex) {
 								EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_REJECT ) );
-								EventSwitch::raiseEvent( new BundleEvent( b, BUNDLE_DELETED ) );
+								EventSwitch::raiseEvent( new BundleEvent( b, BUNDLE_DELETED, LIFETIME_EXPIRED ) );
 							};
 						};
 						break;

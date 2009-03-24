@@ -253,7 +253,7 @@ namespace dtn
 					m_currentsize -= b.getLength();
 
 					// announce bundle deleted event
-					EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED) );
+					EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED, LIFETIME_EXPIRED) );
 
 					list<BundleSchedule>::iterator iter2 = iter;
 
