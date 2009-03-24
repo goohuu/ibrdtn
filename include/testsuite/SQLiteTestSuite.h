@@ -8,6 +8,8 @@
 #ifndef SQLITETESTSUITE_H_
 #define SQLITETESTSUITE_H_
 
+#ifdef HAVE_LIBSQLITE3
+
 #include "core/SQLiteBundleStorage.h"
 #include "data/Bundle.h"
 
@@ -35,4 +37,5 @@ namespace testsuite
 }
 }
 
+#endif
 #endif /* SQLITETESTSUITE_H_ */
