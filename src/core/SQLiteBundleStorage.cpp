@@ -72,6 +72,9 @@ namespace dtn
 			sqlite3_finalize(m_stmt_get_fragment);
 			sqlite3_finalize(m_stmt_delete_fragment);
 
+			sqlite3_finalize(m_stmt_outdate_bundles);
+			sqlite3_finalize(m_stmt_outdate_fragments);
+
 			sqlite3_close(m_db);
 		}
 
@@ -427,6 +430,7 @@ namespace dtn
 					BundleFactory &fac = BundleFactory::getInstance();
 					b = fac.parse(data, size);
 					fragment_list.push_back( *b );
+					delete b;
 				}
 
 				// reset statement
