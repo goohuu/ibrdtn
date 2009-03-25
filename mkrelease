@@ -1,8 +1,18 @@
 #!/bin/bash
 #
 
-TARGET=..
-VERSION=0.1
+if [ "$1" == "" ]; then
+	VERSION=test
+else
+	VERSION=$1
+fi
+
+if [ "$2" == "" ]; then
+	TARGET=..
+else
+	TARGET=$2
+fi
+
 RELEASE_DIR=$TARGET/ibrdtn-$VERSION
 
 echo "copy prerequisits"
@@ -47,5 +57,6 @@ rm -rf `find . -name .svn`
 
 # make a archive
 echo "make a archive"
-tar czf ../ibrdtn-$VERSION.tar.gz ./
+cd ..
+tar czf ibrdtn-$VERSION.tar.gz ibrdtn-$VERSION/
 

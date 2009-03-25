@@ -301,19 +301,10 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	//TestApplication app("dtn://dtn2-node.dtn/echo");
-	//app.start();
-
-//#ifdef HAVE_LIBLUA5_1
-//	luac.run("demo.lua");
-//#endif
-
 	while (m_running)
 	{
 		usleep(10000);
 	}
-
-	//app.abort();
 
 #ifdef USE_EMMA_CODE
 	if ( gpsc != NULL )
@@ -337,11 +328,6 @@ int main(int argc, char *argv[])
 	delete gpsprov;
 	delete mworker;
 #endif
-
-//	core.abort();
-
-//	// flush the event queue
-//	EventSwitch::flush();
 
 	cout << "shutdown dtn node" << endl;
 
