@@ -26,7 +26,7 @@ CORE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%,
 TESTSUITE_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/testsuite/*.cpp))
 TESTSUITE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(TESTSUITE_OBJ) ) )
 
-# testsuite sources
+# daemon sources
 DAEMON_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/daemon/*.cpp))
 DAEMON_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DAEMON_OBJ) ) )
 

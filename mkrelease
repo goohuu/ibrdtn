@@ -32,7 +32,7 @@ cp ibrdtn.doxygen $RELEASE_DIR/
 # copy default config
 echo "default config"
 mkdir $RELEASE_DIR/etc
-cp etc/config.ini $RELEASE_DIR/etc/default.ini
+cp etc/default-config.ini $RELEASE_DIR/etc/default.ini
 
 # run autoconf
 echo "run autoconf"
