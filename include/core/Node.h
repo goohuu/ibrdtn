@@ -33,7 +33,7 @@ namespace dtn
 			 * @param type set the node type
 			 * @sa NoteType
 			 */
-			Node(NodeType type = PERMANENT);
+			Node(NodeType type = PERMANENT, unsigned int rtt = 2700);
 
 			/**
 			 * copy the object
@@ -105,6 +105,11 @@ namespace dtn
 			int getTimeout() const;
 
 			/**
+			 * Get the roundtrip time for this contact
+			 */
+			unsigned int getRoundTripTime() const;
+
+			/**
 			 * Decrement the timeout by <step>.
 			 * @param step Decrement the timeout by this value.
 			 * @return false, if the timeout steps below zero. Timeout is reached.
@@ -130,6 +135,7 @@ namespace dtn
 			string m_description;
 			string m_uri;
 			int m_timeout;
+			unsigned int m_rtt;
 			NodeType m_type;
 			unsigned int m_port;
 			ConvergenceLayer *m_cl;

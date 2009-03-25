@@ -164,7 +164,7 @@ namespace dtn
 				if (b.getCustodian() == m_localeid)
 				{
 					// set custody timer
-					m_cm.setTimer(b, 5, 1);
+					m_cm.setTimer(b, n.getRoundTripTime(), 1);
 				}
 				else
 				{
@@ -178,7 +178,7 @@ namespace dtn
 					EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_ACCEPT ) );
 
 					// set custody timer
-					m_cm.setTimer(b_copy, 5, 1);
+					m_cm.setTimer(b_copy, n.getRoundTripTime(), 1);
 
 					// send the bundle
 					clayer->transmit(b_copy, n);

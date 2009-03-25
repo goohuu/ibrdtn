@@ -8,8 +8,8 @@ namespace dtn
 {
 	namespace core
 	{
-		Node::Node(NodeType type)
-		: m_address("dtn:unknown"), m_timeout(5), m_type(type), m_port(4556), m_cl(NULL)
+		Node::Node(NodeType type, unsigned int rtt)
+		: m_address("dtn:unknown"), m_timeout(5), m_rtt(rtt), m_type(type), m_port(4556), m_cl(NULL)
 		{
 		}
 
@@ -79,6 +79,11 @@ namespace dtn
 		int Node::getTimeout() const
 		{
 			return m_timeout;
+		}
+
+		unsigned int Node::getRoundTripTime() const
+		{
+			return m_rtt;
 		}
 
 		bool Node::decrementTimeout(int step)

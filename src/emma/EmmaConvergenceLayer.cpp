@@ -83,7 +83,8 @@ namespace emma
 			if ( discover != NULL)
 			{
 				// create a node and announce it to the router
-				Node n(FLOATING);
+				// max. 5 seconds round trip time
+				Node n(FLOATING, 5);
 				n.setAddress( discover->getConnectionAddress() );
 				n.setPort( discover->getConnectionPort() );
 				n.setURI( b.getSource() );
