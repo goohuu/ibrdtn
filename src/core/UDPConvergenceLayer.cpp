@@ -1,5 +1,7 @@
 #include "core/UDPConvergenceLayer.h"
 #include "data/BundleFactory.h"
+#include "core/EventSwitch.h"
+#include "core/RouteEvent.h"
 
 #include "utils/Utils.h"
 #include <sys/socket.h>
@@ -91,9 +93,9 @@ namespace dtn
 				// create a fragment from the remaining data
 				fragment = BundleFactory::slice(b, UINT_MAX, offset);
 
-				// throw exception
-				//throw new TransferNotCompletedException(fragment);
-				// TODO: return the fragment to the router
+				// return the fragment to the router
+				EventSwitch::raiseEvent( new RouteEvent(*fragment, ROUTE_PROCESS_BUNDLE) );
+				delete fragment;
 
 				return TRANSMIT_SUCCESSFUL;
 			}
@@ -140,9 +142,9 @@ namespace dtn
 				// create a fragment from the remaining data
 				fragment = BundleFactory::slice(b, UINT_MAX, offset);
 
-				// throw exception
-				//throw new TransferNotCompletedException(fragment);
-				// TODO: return the fragment to the router
+				// return the fragment to the router
+				EventSwitch::raiseEvent( new RouteEvent(*fragment, ROUTE_PROCESS_BUNDLE) );
+				delete fragment;
 
 				return TRANSMIT_SUCCESSFUL;
 			}
