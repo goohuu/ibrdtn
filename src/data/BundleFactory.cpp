@@ -7,6 +7,7 @@
 #include "data/CustodySignalBlock.h"
 #include "data/StatusReportBlock.h"
 #include <stdio.h>
+#include <time.h>
 #include <cstdlib>
 #include <cstring>
 #include <limits.h>
@@ -319,7 +320,12 @@ namespace dtn
 
 		unsigned int BundleFactory::getDTNTime()
 		{
-			return time(NULL) - SECONDS_TILL_2000;
+			time_t rawtime = time(NULL);
+			tm * ptm;
+
+			ptm = gmtime ( &rawtime );
+
+			return mktime(ptm) - SECONDS_TILL_2000;
 		}
 
 		unsigned int BundleFactory::getSequenceNumber()

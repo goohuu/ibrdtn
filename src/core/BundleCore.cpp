@@ -78,7 +78,7 @@ namespace dtn
 				EventSwitch::raiseEvent( new TimeEvent(dtntime, TIME_SECOND_TICK) );
 				m_dtntime = dtntime;
 			}
-			usleep(5000);
+			usleep(50000);
 		}
 
 		void BundleCore::setConvergenceLayer(ConvergenceLayer *cl)

@@ -75,6 +75,9 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt);
 
+		protected:
+			void terminate();
+
 		private:
 			/**
 			 * Updates the list of reachable nodes. If the node is currently unknown

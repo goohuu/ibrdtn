@@ -40,6 +40,11 @@ namespace dtn
 			m_neighbours.clear();
 		}
 
+		void BundleRouter::terminate()
+		{
+			m_nexttime.signal();
+		}
+
 		void BundleRouter::raiseEvent(const Event *evt)
 		{
 			const NodeEvent *nodeevent = dynamic_cast<const NodeEvent*>(evt);

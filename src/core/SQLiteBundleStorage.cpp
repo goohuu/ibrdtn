@@ -75,6 +75,11 @@ namespace dtn
 			sqlite3_close(m_db);
 		}
 
+		void SQLiteBundleStorage::terminate()
+		{
+			stopWait();
+		}
+
 		void SQLiteBundleStorage::eventNodeAvailable(const Node &node)
 		{
 			m_neighbours[node.getURI()] = node;

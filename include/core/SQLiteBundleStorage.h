@@ -119,6 +119,8 @@ namespace dtn
 			 */
 			virtual void tick();
 
+			void terminate();
+
 			void eventNodeAvailable(const Node &node);
 			void eventNodeUnavailable(const Node &node);
 
