@@ -59,7 +59,7 @@ emma: utils data core $(EMMA_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -shared -o"@builddir@/lib/libibrdtn-emma.so" $(EMMA_BUILD_OBJ)
 
 dtnd: utils data core $(WITH_EMMA) $(DAEMON_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core $(EMMA_LIB) -o"@builddir@/bin/dtnd" $(DAEMON_BUILD_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -Wl,-rpath,@libdir@:@builddir@/lib -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core $(EMMA_LIB) -o"@builddir@/bin/dtnd" $(DAEMON_BUILD_OBJ)
 	
 @builddir@/obj/%.o: @srcdir@/src/%.cpp
 	$(CXX) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $< -o $@
