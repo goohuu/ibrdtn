@@ -17,7 +17,7 @@ namespace dtn
 		{}
 
 		StorageEvent::StorageEvent(const Bundle &bundle)
-		: m_bundle(NULL), m_schedule(BundleSchedule(NULL, 0, "dtn:none")), m_action(STORE_BUNDLE)
+		: m_bundle(NULL), m_schedule(BundleSchedule(bundle, 0, "dtn:none")), m_action(STORE_BUNDLE)
 		{
 			m_bundle = new Bundle(bundle);
 		}
@@ -44,7 +44,8 @@ namespace dtn
 
 		const Bundle& StorageEvent::getBundle() const
 		{
-			throw exceptions::MissingObjectException();
+			if (m_action != STORE_BUNDLE)
+				throw exceptions::MissingObjectException();
 			return *m_bundle;
 		}
 
