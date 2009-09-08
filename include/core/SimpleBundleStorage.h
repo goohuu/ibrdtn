@@ -5,6 +5,7 @@
 #include "core/AbstractBundleStorage.h"
 #include "core/Node.h"
 #include "data/Bundle.h"
+#include "data/DefragmentContainer.h"
 #include "utils/Service.h"
 #include "utils/MutexLock.h"
 #include "utils/Mutex.h"
@@ -85,7 +86,7 @@ namespace dtn
 
 		private:
 			list<BundleSchedule> m_schedules;
-			list<list<Bundle> > m_fragments;
+			list<DefragmentContainer* > _fragments;
 
 			/**
 			 * Try to find outdated bundles and delete them.

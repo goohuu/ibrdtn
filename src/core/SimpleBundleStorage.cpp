@@ -95,9 +95,19 @@ namespace dtn
 
 			m_currentsize = 0;
 
-			// delete all fragments
+			// delete all schedules
 			m_schedules.clear();
-			m_fragments.clear();
+
+			// delete all fragments
+			list<DefragmentContainer* >::iterator iter = _fragments.begin();
+
+			while (iter != _fragments.end())
+			{
+				delete (*iter);
+				iter++;
+			}
+
+			_fragments.clear();
 		}
 
 		bool SimpleBundleStorage::isEmpty()
@@ -284,71 +294,52 @@ namespace dtn
 		{
 			MutexLock l(m_fragmentslock);
 
-			// iterate through the list of fragment-lists.
-			list<list<Bundle> >::iterator iter = m_fragments.begin();
-			list<Bundle> fragment_list;
-
-			// search for a existing list for this fragment
-			while (iter != m_fragments.end())
-			{
-				fragment_list = (*iter);
-
-				// list found?
-				if ( bundle == fragment_list.front() )
-				{
-					m_fragments.erase( iter );
-					break;
-				}
-
-				// next list
-				iter++;
-			}
-
-			{	// check for duplicates. do this bundle already exists in the list?
-				list<Bundle>::const_iterator iter = fragment_list.begin();
-				while (iter != fragment_list.end())
-				{
-					if ( (*iter).getInteger(FRAGMENTATION_OFFSET) == bundle.getInteger(FRAGMENTATION_OFFSET) )
-					{
-						// bundle found, discard the current fragment.
-						return NULL;
-					}
-					iter++;
-				}
-			}	// end check for duplicates
+			// get a local copy
+			Bundle b_copy = bundle;
 
 			// local eid
 			string localeid = BundleCore::getInstance().getLocalURI();
 
-			if ( ( bundle.getPrimaryFlags().isCustodyRequested() ) && (bundle.getCustodian() != localeid) )
+			if ( ( b_copy.getPrimaryFlags().isCustodyRequested() ) && (b_copy.getCustodian() != localeid) )
 			{
-				// here i need a copy
-				Bundle b_copy = bundle;
-
-				// set me as custody
-				b_copy.setCustodian(localeid);
-
 				// accept custody
-				EventSwitch::raiseEvent( new CustodyEvent( bundle, CUSTODY_ACCEPT ) );
+				EventSwitch::raiseEvent( new CustodyEvent( b_copy, CUSTODY_ACCEPT ) );
 
-				// bundle isn't in this list, add it
-				fragment_list.push_back( b_copy );
+				// set me as custodian
+				b_copy.setCustodian(localeid);
 			}
-			else
+
+			// iterate through the container
+			list<DefragmentContainer* >::iterator iter = _fragments.begin();
+
+			while (iter != _fragments.end())
 			{
-				// bundle isn't in this list, add it
-				fragment_list.push_back( bundle );
+				DefragmentContainer *container = (*iter);
+
+				// is this container for the current fragment
+				if (container->match(b_copy))
+				{
+					// add the fragment
+					container->add(b_copy);
+
+					// all fragments available?
+					if (container->isComplete())
+					{
+						Bundle *b = container->getBundle();
+
+						// delete the container
+						_fragments.erase(iter);
+						delete container;
+
+						return b;
+					}
+				}
+
+				iter++;
 			}
 
-			try {
-				// try to merge the fragments
-				Bundle *ret = BundleFactory::merge(fragment_list);
-
-				return ret;
-			} catch (dtn::exceptions::FragmentationException ex) {
-				// merge not possible, store the list in front of the list of lists.
-				m_fragments.push_front(fragment_list);
-			}
+			// no container exists, create a new one
+			_fragments.push_back(new DefragmentContainer(b_copy));
 
 			return NULL;
 		}
