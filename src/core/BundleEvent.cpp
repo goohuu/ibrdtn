@@ -14,7 +14,7 @@ namespace dtn
 {
 	namespace core
 	{
-		BundleEvent::BundleEvent(const Bundle &b, const EventBundleAction action, StatusReportReasonCode reason) : m_bundle(b), m_action(action), m_reason(reason)
+		BundleEvent::BundleEvent(const Bundle &b, const EventBundleAction action, StatusReportBlock::REASON_CODE reason) : m_bundle(b), m_action(action), m_reason(reason)
 		{}
 
 		BundleEvent::~BundleEvent()
@@ -35,7 +35,7 @@ namespace dtn
 			return m_action;
 		}
 
-		StatusReportReasonCode BundleEvent::getReason() const
+		StatusReportBlock::REASON_CODE BundleEvent::getReason() const
 		{
 			return m_reason;
 		}

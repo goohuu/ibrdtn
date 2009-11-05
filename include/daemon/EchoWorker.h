@@ -1,6 +1,7 @@
 #ifndef ECHOWORKER_H_
 #define ECHOWORKER_H_
 
+#include "ibrdtn/default.h"
 #include "core/AbstractWorker.h"
 
 using namespace dtn::core;
@@ -21,11 +22,9 @@ namespace dtn
 		{
 		public:
 			EchoWorker();
-			~EchoWorker() {};
+			virtual ~EchoWorker() {};
 
-			TransmitReport callbackBundleReceived(const Bundle &b);
-		private:
-			string m_localuri;
+			dtn::net::TransmitReport callbackBundleReceived(const Bundle &b);
 		};
 	}
 }

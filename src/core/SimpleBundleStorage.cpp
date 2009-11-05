@@ -1,347 +1,200 @@
 #include "core/SimpleBundleStorage.h"
-#include "data/BundleFactory.h"
-#include "utils/Utils.h"
 #include "core/EventSwitch.h"
-#include "core/BundleEvent.h"
-#include "core/RouteEvent.h"
-#include "core/CustodyEvent.h"
+#include "core/TimeEvent.h"
+
+#include "ibrdtn/utils/Utils.h"
 
 #include <iostream>
-
-
 
 namespace dtn
 {
 	namespace core
 	{
-		SimpleBundleStorage::SimpleBundleStorage(unsigned int size, unsigned int bundle_maxsize)
-		 : Service("SimpleBundleStorage"), m_nextdeprecation(0), m_last_compress(0), m_size(size),
-		 	m_bundle_maxsize(bundle_maxsize), m_currentsize(0), m_nocleanup(false)
+		SimpleBundleStorage::SimpleBundleStorage()
+		 : _running(true)
 		{
+			EventSwitch::registerEventReceiver(TimeEvent::className, this);
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
 		{
-			clear();
+			EventSwitch::unregisterEventReceiver(TimeEvent::className, this);
+
+			_running = false;
+			_timecond.go();
+			join();
 		}
 
-		void SimpleBundleStorage::eventNodeAvailable(const Node &node)
+		void SimpleBundleStorage::raiseEvent(const Event *evt)
 		{
-			m_neighbours[node.getURI()] = node;
-		}
+			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
 
-		void SimpleBundleStorage::eventNodeUnavailable(const Node &node)
-		{
-			m_neighbours.erase(node.getURI());
-		}
-
-		void SimpleBundleStorage::store(const BundleSchedule &schedule)
-		{
-			MutexLock l(m_readlock);
-
-			// check if there is enough space
-			unsigned int remain = m_size - m_currentsize;
-
-			// get reference of the bundle in the schedule
-			const Bundle &bundle = schedule.getBundle();
-
-			if ( remain < bundle.getLength() )
+			if (time != NULL)
 			{
-				// not enough space left
-				throw NoSpaceLeftException();
-			}
-			else
-			{
-				m_currentsize += bundle.getLength();
-			}
-
-			// storage change, clean-up allowed
-			m_nocleanup = false;
-
-			// lifetime of the bundle
-			unsigned int lifedtn = bundle.getInteger(LIFETIME) + bundle.getInteger(CREATION_TIMESTAMP);
-
-			// check if this bundle expires bevor the next cycle.
-			// the clean-up is scheduled 5 seconds after the expiration.
-			if ( m_nextdeprecation > (lifedtn + 5) )
-			{
-				m_nextdeprecation = lifedtn + 5;
-			}
-
-			// sorted insertion
-			// the bundle which should be sent as next is at the end
-			list<BundleSchedule>::iterator iter = m_schedules.begin();
-			unsigned int time;
-
-			while (iter != m_schedules.end())
-			{
-				// read the time of the current item
-				time = (*iter).getTime();
-
-				if (time <= schedule.getTime())
+				if (time->getAction() == dtn::core::TIME_SECOND_TICK)
 				{
-					break;
+					_timecond.go();
 				}
-
-				iter++;
 			}
-
-			m_schedules.insert(iter, schedule);
 		}
 
 		void SimpleBundleStorage::clear()
 		{
-			MutexLock l(m_readlock);
-
-			m_currentsize = 0;
-
-			// delete all schedules
-			m_schedules.clear();
-
-			// delete all fragments
-			list<DefragmentContainer* >::iterator iter = _fragments.begin();
-
-			while (iter != _fragments.end())
-			{
-				delete (*iter);
-				iter++;
-			}
-
+			// delete all bundles
+			_bundles.clear();
 			_fragments.clear();
 		}
 
-		bool SimpleBundleStorage::isEmpty()
+		bool SimpleBundleStorage::empty()
 		{
-			MutexLock l(m_readlock);
-			return m_schedules.empty();
+			return (_bundles.empty() && _fragments.empty());
 		}
 
-		unsigned int SimpleBundleStorage::getCount()
+		unsigned int SimpleBundleStorage::count()
 		{
-			MutexLock l(m_readlock);
-			return m_schedules.size();
+			return (_bundles.size() + _fragments.size());
 		}
 
-		void SimpleBundleStorage::tick()
+		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
-			if (m_neighbours.size() != 0)
+			_bundles.push_back(bundle);
+		}
+
+		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)
+		{
+			list<Bundle>::iterator iter = _bundles.begin();
+
+			while (iter != _bundles.end())
 			{
-				// get the first neighbour
-				map<string,Node>::iterator iter = m_neighbours.begin();
-				Node &node = (*iter).second;
-
-				try {
-					BundleSchedule schedule = getSchedule( node.getURI() );
-					EventSwitch::raiseEvent( new RouteEvent( schedule.getBundle(), ROUTE_PROCESS_BUNDLE ) );
-				} catch (exceptions::NoScheduleFoundException ex) {
-					// remove the neighbour
-					m_neighbours.erase(node.getURI());
-				}
-
-				// get current time
-				unsigned int dtntime = BundleFactory::getDTNTime();
-
-				// send timed schedules
-				try {
-					BundleSchedule schedule = getSchedule( dtntime );
-					EventSwitch::raiseEvent( new RouteEvent( schedule.getBundle(), ROUTE_PROCESS_BUNDLE ) );
-				} catch (exceptions::NoScheduleFoundException ex) {
-
-				}
-
-				return;
-			}
-
-			// TODO: deleteDeprecated();
-
-			// wait till the dtntime has changed or new bundles are stored
-			wait();
-		}
-
-		void SimpleBundleStorage::terminate()
-		{
-			stopWait();
-		}
-
-		BundleSchedule SimpleBundleStorage::getSchedule(string destination)
-		{
-			MutexLock l(m_readlock);
-
-			list<BundleSchedule>::iterator iter = m_schedules.begin();
-			bool ret = false;
-
-			// search for matching bundles
-			while (iter != m_schedules.end())
-			{
-				if ( (*iter).getEID() == destination )
+				Bundle &bundle = (*iter);
+				if (id == bundle)
 				{
-					ret = true;
-				}
-				else
-				{
-					const Bundle &b = (*iter).getBundle();
-
-					// check if the destination of the bundle match
-					if (b.getDestination().find( destination, 0 ) == 0)
-					{
-						ret = true;
-					}
-				}
-
-				if (ret)
-				{
-					// bundle found
-					BundleSchedule schedule = (*iter);
-
-					// remove it from the list
-					m_schedules.erase(iter);
-
-					// shrink the size
-					m_currentsize -= schedule.getBundle().getLength();
-
-					// return
-					return schedule;
+					return bundle;
 				}
 
 				iter++;
 			}
 
-			throw exceptions::NoScheduleFoundException("No schedule for this destination available");
+			throw dtn::exceptions::NoBundleFoundException();
 		}
 
-		BundleSchedule SimpleBundleStorage::getSchedule(unsigned int dtntime)
+		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
-			if ( isEmpty() )
+			list<Bundle>::iterator iter = _bundles.begin();
+
+			while (iter != _bundles.end())
 			{
-				throw exceptions::NoScheduleFoundException("No schedule available");
-			}
-
-			MutexLock l(m_readlock);
-
-			BundleSchedule ret = m_schedules.back();
-
-			if (ret.getTime() > dtntime)
-			{
-				throw exceptions::NoScheduleFoundException("No schedule for this time available");
-			}
-
-			// shrink the size of the storage
-			m_currentsize -= ret.getBundle().getLength();
-
-			// remove the last element
-			m_schedules.pop_back();
-
-			return ret;
-		}
-
-		void SimpleBundleStorage::deleteDeprecated()
-		{
-			// TODO: search for deprecated bundles in m_fragments
-
-			unsigned int currenttime = BundleFactory::getDTNTime();
-
-			// only run if we expect a outdated bundle
-			if ( m_nextdeprecation > currenttime ) return;
-
-			MutexLock l(m_readlock);
-
-			// set the next cycle to +1h
-			// this value could be lowered in the following algorithm
-			m_nextdeprecation = currenttime + 3600;
-
-			list<BundleSchedule>::iterator iter = m_schedules.begin();
-
-			// search for expired bundles
-			while (iter != m_schedules.end())
-			{
-				const Bundle &b = (*iter).getBundle();
-
-				// check if the bundle is expired
-				if (b.isExpired())
+				Bundle &bundle = (*iter);
+				if (id == bundle)
 				{
-					// shrink the size of the database
-					m_currentsize -= b.getLength();
+					_bundles.erase(iter);
+					return;
+				}
 
-					// announce bundle deleted event
-					EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_DELETED, LIFETIME_EXPIRED) );
+				iter++;
+			}
 
-					list<BundleSchedule>::iterator iter2 = iter;
+			throw dtn::exceptions::NoBundleFoundException();
+		}
 
-					// next bundle
+		void SimpleBundleStorage::run()
+		{
+			while (_running)
+			{
+				list<dtn::data::BundleID> expired;
+				list<dtn::data::Bundle>::const_iterator iter = _bundles.begin();
+
+				// seek for expired bundles
+				while (iter != _bundles.end())
+				{
+					const dtn::data::Bundle &bundle = (*iter);
+
+					if ( bundle.isExpired() )
+					{
+						expired.push_back( BundleID(bundle) );
+					}
+
 					iter++;
-
-					// remove the bundle
-					m_schedules.erase(iter2);
-
-					continue;
 				}
-				else
+
+				// remove the expired bundles
+				list<dtn::data::BundleID>::const_iterator e_iter = expired.begin();
+				while (e_iter != expired.end())
 				{
-					// check if the bundle expiring bevor the next scheduled cycle
-					unsigned int lifedtn = b.getInteger(LIFETIME) + b.getInteger(CREATION_TIMESTAMP);
-
-					if ( m_nextdeprecation > (lifedtn + 5) )
-					{
-						m_nextdeprecation = lifedtn + 5;
-					}
+					remove( *iter );
+					cout << "bundle " << (*iter).toString() << " has been expired and removed" << endl;
+					e_iter++;
 				}
 
-				iter++;
+				yield();
+				_timecond.wait();
 			}
 		}
 
-		Bundle* SimpleBundleStorage::storeFragment(const Bundle &bundle)
-		{
-			MutexLock l(m_fragmentslock);
-
-			// get a local copy
-			Bundle b_copy = bundle;
-
-			// local eid
-			string localeid = BundleCore::getInstance().getLocalURI();
-
-			if ( ( b_copy.getPrimaryFlags().isCustodyRequested() ) && (b_copy.getCustodian() != localeid) )
-			{
-				// accept custody
-				EventSwitch::raiseEvent( new CustodyEvent( b_copy, CUSTODY_ACCEPT ) );
-
-				// set me as custodian
-				b_copy.setCustodian(localeid);
-			}
-
-			// iterate through the container
-			list<DefragmentContainer* >::iterator iter = _fragments.begin();
-
-			while (iter != _fragments.end())
-			{
-				DefragmentContainer *container = (*iter);
-
-				// is this container for the current fragment
-				if (container->match(b_copy))
-				{
-					// add the fragment
-					container->add(b_copy);
-
-					// all fragments available?
-					if (container->isComplete())
-					{
-						Bundle *b = container->getBundle();
-
-						// delete the container
-						_fragments.erase(iter);
-						delete container;
-
-						return b;
-					}
-				}
-
-				iter++;
-			}
-
-			// no container exists, create a new one
-			_fragments.push_back(new DefragmentContainer(b_copy));
-
-			return NULL;
-		}
+//		Bundle SimpleBundleStorage::storeFragment(const Bundle &bundle)
+//		{
+//			// iterate through the list of fragment-lists.
+//			list<list<Bundle> >::iterator iter = m_fragments.begin();
+//			list<Bundle> fragment_list;
+//
+//			// search for a existing list for this fragment
+//			while (iter != m_fragments.end())
+//			{
+//				fragment_list = (*iter);
+//
+//				// list found?
+//				if ( bundle == fragment_list.front() )
+//				{
+//					m_fragments.erase( iter );
+//					break;
+//				}
+//
+//				// next list
+//				iter++;
+//			}
+//
+//			{	// check for duplicates. do this bundle already exists in the list?
+//				list<Bundle>::const_iterator iter = fragment_list.begin();
+//				while (iter != fragment_list.end())
+//				{
+//					if ( (*iter)._fragmentoffset == bundle._fragmentoffset )
+//					{
+//						// bundle found, discard the current fragment.
+//						throw exceptions::DuplicateBundleException();
+//					}
+//					iter++;
+//				}
+//			}	// end check for duplicates
+//
+//			if ( ( bundle._procflags & data::Bundle::CUSTODY_REQUESTED ) && (bundle._custodian != BundleCore::local) )
+//			{
+//				// here i need a copy
+//				Bundle b_copy = bundle;
+//
+//				// set me as custody
+//				b_copy._custodian = BundleCore::local;
+//
+//				// accept custody
+//				EventSwitch::raiseEvent( new CustodyEvent( bundle, CUSTODY_ACCEPT ) );
+//
+//				// bundle isn't in this list, add it
+//				fragment_list.push_back( b_copy );
+//			}
+//			else
+//			{
+//				// bundle isn't in this list, add it
+//				fragment_list.push_back( bundle );
+//			}
+//
+//			try {
+//				// try to merge the fragments
+//				return utils::Utils::merge(fragment_list);
+//			} catch (exceptions::FragmentationException ex) {
+//				// merge not possible, store the list in front of the list of lists.
+//				m_fragments.push_front(fragment_list);
+//			}
+//
+//			throw exceptions::MissingObjectException();
+//		}
 	}
 }

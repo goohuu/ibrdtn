@@ -5,13 +5,13 @@
  *      Author: morgenro
  */
 
-#include "config.h"
+#include "ibrdtn/default.h"
 
 #ifndef BLOCKTESTSUITE_H_
 #define BLOCKTESTSUITE_H_
 
 
-#include "data/Block.h"
+#include "ibrdtn/data/Block.h"
 
 using namespace dtn::data;
 
@@ -24,13 +24,12 @@ namespace testsuite
 		public:
 			BlockTestSuite();
 
-			~BlockTestSuite();
+			virtual ~BlockTestSuite();
 
 			bool runAllTests();
 
 		private:
 			bool createTest();
-			bool copyTest();
 	};
 }
 }

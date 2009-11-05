@@ -1,456 +1,223 @@
-#include "data/Bundle.h"
-#include "data/SDNV.h"
-#include "data/PrimaryFlags.h"
-#include "data/BundleFactory.h"
-#include "data/StatusReportBlock.h"
-#include "data/CustodySignalBlock.h"
-#include <sstream>
-#include <stdio.h>
-#include <cstdlib>
-#include <cstring>
+/*
+ * Bundle.cpp
+ *
+ *  Created on: 29.05.2009
+ *      Author: morgenro
+ */
 
-using namespace std;
+#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/StatusReportBlock.h"
+#include "ibrdtn/data/CustodySignalBlock.h"
+#include "ibrdtn/utils/Utils.h"
+#include "ibrdtn/streams/BundleStreamReader.h"
+#include "ibrdtn/streams/BundleStreamWriter.h"
+#include "ibrdtn/streams/BundleCopier.h"
 
 namespace dtn
 {
 	namespace data
 	{
-		Bundle::Bundle(NetworkFrame *frame, const list<Block*> blocks) : m_frame(frame), m_blocks(blocks)
+		size_t Bundle::__sequencenumber = 0;
+
+		Bundle::Bundle()
+		 : _procflags(0), _timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
-		}
-
-		Bundle::Bundle(NetworkFrame *frame) : m_frame(frame)
-		{
-		}
-
-		Bundle::Bundle(const Bundle &b) : m_frame(NULL)
-		{
-			m_frame = new NetworkFrame(b.m_frame);
-
-			// copy all blocks
-			list<Block*> blocks = b.m_blocks;
-			list<Block*>::const_iterator iter = blocks.begin();
-
-			BundleFactory &fac = BundleFactory::getInstance();
-
-			while (iter != blocks.end())
-			{
-				m_blocks.push_back( fac.copyBlock( *(*iter) ) );
-				iter++;
-			}
+			_timestamp = utils::Utils::get_current_dtn_time();
+			_sequencenumber = __sequencenumber;
+			__sequencenumber++;
 		}
 
 		Bundle::~Bundle()
 		{
-			// iterate through all blocks
-			list<Block*>::const_iterator iter = m_blocks.begin();
-
-			while (iter != m_blocks.end())
-			{
-				delete (*iter);
-				iter++;
-			}
-
-			delete m_frame;
-		}
-
-		unsigned int Bundle::getLength() const
-		{
-			unsigned int size = 0;
-
-			// add the size of the primary block
-			size += m_frame->getSize();
-
-			// iterate through all blocks
-			list<Block*>::const_iterator iter = m_blocks.begin();
-
-			while (iter != m_blocks.end())
-			{
-				size += (*iter)->getFrame().getSize();
-				iter++;
-			}
-
-			return size;
-		}
-
-		unsigned char* Bundle::getData() const
-		{
-			// get the length of the data
-			unsigned int length = getLength();
-
-			// create a new data-array with enough space
-			unsigned char *data = (unsigned char*)calloc(length, sizeof(char));
-			unsigned char *ret = data;
-
-			// copy the data of the primary block
-			memcpy(data, m_frame->getData(), m_frame->getSize());
-			data += m_frame->getSize();
-
-			// iterate through all blocks
-			list<Block*>::const_iterator iter = m_blocks.begin();
-
-			while (iter != m_blocks.end())
-			{
-				// Update the block size
-				(*iter)->updateBlockSize();
-
-				NetworkFrame &frame = (*iter)->getFrame();
-
-				// copy the data of the block
-				memcpy(data, frame.getData(), frame.getSize());
-
-				data += frame.getSize();
-				iter++;
-			}
-
-			return ret;
-		}
-
-		void Bundle::updateBlockLength()
-		{
-			// calculate the block length
-			unsigned int length = 0;
-			unsigned int maxfield = DICTIONARY_BYTEARRAY;
-
-			PrimaryFlags primflags( getInteger( PROCFLAGS ) );
-			if (primflags.isFragment()) maxfield = APPLICATION_DATA_LENGTH;
-
-			for (unsigned int i = DESTINATION_SCHEME; i <= maxfield; i++)
-			{
-				length += m_frame->getSize(i);
-			}
-
-			m_frame->set(BLOCKLENGTH, length);
-		}
-
-		PrimaryFlags Bundle::getPrimaryFlags() const
-		{
-			PrimaryFlags flags( getInteger(PROCFLAGS) );
-			return flags;
-		}
-
-		void Bundle::setPrimaryFlags(PrimaryFlags &flags)
-		{
-			setInteger( PROCFLAGS, flags.getValue() );
-		}
-
-		u_int64_t Bundle::getInteger(const BUNDLE_FIELDS field) const throw (InvalidFieldException, FieldDoesNotExist)
-		{
-			// check if the field is a numeric value
-			if ( (field == VERSION) ||
-				 (field == DICTIONARY_BYTEARRAY) )
-			{
-				throw InvalidFieldException("Das angegebene Feld ist für diese Operation nicht gültig.");
-			}
-
-			return m_frame->getSDNV(field);
-		}
-
-		void Bundle::setInteger(BUNDLE_FIELDS field, u_int64_t value) throw (InvalidFieldException, FieldDoesNotExist)
-		{
-			// check if the field is a numeric value
-			if ( (field == VERSION) ||
-				 (field == DICTIONARY_BYTEARRAY) )
-			{
-				throw InvalidFieldException("Das angegebene Feld ist für diese Operation nicht gültig.");
-			}
-
-			m_frame->set(field, value);
-
-			updateBlockLength();
-		}
-
-		int Bundle::getPosition(BUNDLE_FIELDS field) throw (FieldDoesNotExist, InvalidBundleData)
-		{
-			return m_frame->getPosition(field);
-		}
-
-		Dictionary Bundle::getDictionary() const
-		{
-			Dictionary dict;
-
-			// re-read the dictionary
-			dict.read( m_frame->get(DICTIONARY_BYTEARRAY), m_frame->getSDNV(DICTIONARY_LENGTH) );
-
-			return dict;
-		}
-
-		void Bundle::commitDictionary(const Dictionary &dict)
-		{
-			// change the size of the field
-			m_frame->changeSize(DICTIONARY_BYTEARRAY, dict.getLength());
-
-			// get the pointer to the dict bytearray
-			unsigned char *data = m_frame->get(DICTIONARY_BYTEARRAY);
-
-			// write the dictionary length
-			m_frame->set(DICTIONARY_LENGTH, dict.getLength());
-
-			// write data
-			dict.write(data);
-
-			updateBlockLength();
-		}
-
-		string Bundle::getDestination() const
-		{
-			const Dictionary &dict = getDictionary();
-			return dict.get( getInteger(DESTINATION_SCHEME) ) + ":" + dict.get( getInteger(DESTINATION_SSP) );
-		}
-
-		string Bundle::getSource() const
-		{
-			const Dictionary &dict = getDictionary();
-			return dict.get( getInteger(SOURCE_SCHEME) ) + ":" + dict.get( getInteger(SOURCE_SSP) );
-		}
-
-		string Bundle::getReportTo() const
-		{
-			const Dictionary &dict = getDictionary();
-			return dict.get( getInteger(REPORTTO_SCHEME) ) + ":" + dict.get( getInteger(REPORTTO_SSP) );
-		}
-
-		string Bundle::getCustodian() const
-		{
-			const Dictionary &dict = getDictionary();
-			return dict.get( getInteger(CUSTODIAN_SCHEME) ) + ":" + dict.get( getInteger(CUSTODIAN_SSP) );
-		}
-
-		void Bundle::setDestination(string destination)
-		{
-			Dictionary dict = getDictionary();
-			pair<unsigned int, unsigned int> positions = dict.add( destination );
-
-			m_frame->set( (unsigned int)DESTINATION_SCHEME, positions.first );
-			m_frame->set( (unsigned int)DESTINATION_SSP, positions.second );
-
-			commitDictionary(dict);
-		}
-
-		void Bundle::setSource(string source)
-		{
-			Dictionary dict = getDictionary();
-			pair<unsigned int, unsigned int> positions = dict.add( source );
-
-			m_frame->set( (unsigned int)SOURCE_SCHEME, positions.first );
-			m_frame->set( (unsigned int)SOURCE_SSP, positions.second );
-
-			commitDictionary(dict);
-		}
-
-		void Bundle::setReportTo(string reportto)
-		{
-			Dictionary dict = getDictionary();
-			pair<unsigned int, unsigned int> positions = dict.add( reportto );
-
-			m_frame->set( (unsigned int)REPORTTO_SCHEME, positions.first );
-			m_frame->set( (unsigned int)REPORTTO_SSP, positions.second );
-
-			commitDictionary(dict);
-		}
-
-		void Bundle::setCustodian(string custodian)
-		{
-			Dictionary dict = getDictionary();
-			pair<unsigned int, unsigned int> positions = dict.add( custodian );
-
-			m_frame->set( (unsigned int)CUSTODIAN_SCHEME, positions.first );
-			m_frame->set( (unsigned int)CUSTODIAN_SSP, positions.second );
-
-			commitDictionary(dict);
-		}
-
-		list<Block*> Bundle::getBlocks(const unsigned char type) const
-		{
-			list<Block*>::const_iterator iter = m_blocks.begin();
-			list<Block*> ret;
-
-			while (iter != m_blocks.end())
-			{
-				Block *block = (*iter);
-				if (block->getType() == type)
-				{
-					ret.push_back(block);
-				}
-
-				iter++;
-			}
-
-			return ret;
-		}
-
-		PayloadBlock* Bundle::getPayloadBlock() const
-		{
-			list<Block*>::const_iterator iter = m_blocks.begin();
-
-			while (iter != m_blocks.end())
-			{
-				PayloadBlock *payload = dynamic_cast<PayloadBlock*>(*iter);
-				if (payload != NULL) return payload;
-
-				iter++;
-			}
-
-			return NULL;
-		}
-
-		const list<Block*>& Bundle::getBlocks() const
-		{
-			return m_blocks;
-		}
-
-		void Bundle::appendBlock(Block *block)
-		{
-			if (m_blocks.size() > 0)
-			{
-				// get the last block
-				Block *last = m_blocks.back();
-
-				// set the last block flag to false
-				BlockFlags flags = last->getBlockFlags();
-				flags.setFlag(LAST_BLOCK, false);
-				last->setBlockFlags(flags);
-			}
-
-			// set the last block flag to true
-			BlockFlags flags = block->getBlockFlags();
-			flags.setFlag(LAST_BLOCK, true);
-			block->setBlockFlags(flags);
-
-			// add the new block to the end
-			m_blocks.push_back(block);
-
-			// if this is a administrative block, set the required flags
-			AdministrativeBlock *admblock = dynamic_cast<AdministrativeBlock*>(block);
-
-			if (admblock != NULL)
-			{
-				PrimaryFlags pflags = getPrimaryFlags();
-				pflags.setAdmRecord(true);
-				setPrimaryFlags(pflags);
-			}
-		}
-
-		void Bundle::insertBlock(Block *block)
-		{
-			m_blocks.push_front(block);
-
-			// if this is a administrative block, set the required flags
-			AdministrativeBlock *admblock = dynamic_cast<AdministrativeBlock*>(block);
-
-			if (admblock != NULL)
-			{
-				PrimaryFlags pflags = getPrimaryFlags();
-				pflags.setAdmRecord(true);
-				setPrimaryFlags(pflags);
-			}
-		}
-
-		void Bundle::removeBlock(Block *block)
-		{
-			// remove the block
-			m_blocks.remove(block);
-
-			if (!m_blocks.empty())
-			{
-				// get the last block
-				Block *last = m_blocks.back();
-
-				// maybe we removed the last block, so set the last block flag to true
-				BlockFlags flags = last->getBlockFlags();
-				flags.setFlag(LAST_BLOCK, true);
-				last->setBlockFlags(flags);
-			}
-		}
-
-		const NetworkFrame& Bundle::getFrame() const
-		{
-			return *m_frame;
-		}
-
-		void Bundle::setFragment(bool value)
-		{
-			PrimaryFlags flags = this->getPrimaryFlags();
-
-			// nothing to do, if this is still a fragmented/non-fragmented bundle
-			if (flags.isFragment() == value) return;
-
-			if (value)
-			{
-				flags.setFragment(true);
-
-				// add the fragmentation fields
-				m_frame->append(0); // FRAGMENTATION_OFFSET
-				m_frame->append(0); // APPLICATION_DATA_LENGTH
-			}
-			else
-			{
-				flags.setFragment(false);
-
-				// remove the fragmentation fields
-				m_frame->remove(APPLICATION_DATA_LENGTH);
-				m_frame->remove(FRAGMENTATION_OFFSET);
-			}
-
-			// set the primary flags
-			this->setPrimaryFlags(flags);
-
-			updateBlockLength();
 		}
 
 		bool Bundle::operator!=(const Bundle& other) const
 		{
-			if (getSource() == other.getSource()) return false;
-			if (getInteger(CREATION_TIMESTAMP) == other.getInteger(CREATION_TIMESTAMP)) return false;
-			if (getInteger(CREATION_TIMESTAMP_SEQUENCE) == other.getInteger(CREATION_TIMESTAMP_SEQUENCE)) return false;
-
-			return true;
+			return !((*this) == other);
 		}
 
 		bool Bundle::operator==(const Bundle& other) const
 		{
-			if (getSource() != other.getSource()) return false;
-			if (getInteger(CREATION_TIMESTAMP) != other.getInteger(CREATION_TIMESTAMP)) return false;
-			if (getInteger(CREATION_TIMESTAMP_SEQUENCE) != other.getInteger(CREATION_TIMESTAMP_SEQUENCE)) return false;
+			if (other._timestamp != _timestamp) return false;
+			if (other._sequencenumber != _sequencenumber) return false;
+			if (other._source != _source) return false;
+
+			if (other._procflags & Bundle::FRAGMENT)
+			{
+				if (!(_procflags & Bundle::FRAGMENT)) return false;
+
+				//if (other._fragmentoffset != _fragmentoffset) return false;
+				if (other._appdatalength != _appdatalength) return false;
+			}
 
 			return true;
 		}
 
+		void Bundle::relabel()
+		{
+			_timestamp = utils::Utils::get_current_dtn_time();
+			_sequencenumber = __sequencenumber;
+			__sequencenumber++;
+		}
+
+		void Bundle::addBlock(Block *b)
+		{
+			if ((dynamic_cast<CustodySignalBlock*>(b) != NULL) || (dynamic_cast<StatusReportBlock*>(b) != NULL))
+			{
+				if (!(_procflags & Bundle::APPDATA_IS_ADMRECORD))
+				{
+					_procflags += Bundle::APPDATA_IS_ADMRECORD;
+				}
+			}
+
+			// set the last block flag
+			if (!(b->_procflags & 0x08)) b->_procflags += 0x08;
+
+			if (_blocks.size() > 0)
+			{
+				// remove the last block flag of the previous block
+				refcnt_ptr<Block> lastblock = _blocks.back();
+				if (!(lastblock->_procflags & 0x08)) lastblock->_procflags -= 0x08;
+			}
+
+			refcnt_ptr<Block> ref(b);
+			_blocks.push_back( ref );
+		}
+
+		const list<Block*> Bundle::getBlocks(char type) const
+		{
+			// create a list of blocks
+			list<Block*> ret;
+
+			// copy all blocks to the list
+			list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
+
+			while (iter != _blocks.end())
+			{
+				refcnt_ptr<Block> blockref = (*iter);
+				if (blockref->_blocktype == type) ret.push_back( blockref.getPointer() );
+				iter++;
+			}
+
+			return ret;
+		}
+
+		const list<Block*> Bundle::getBlocks() const
+		{
+			// create a list of blocks
+			list<Block*> ret;
+
+			// copy all blocks to the list
+			list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
+
+			while (iter != _blocks.end())
+			{
+				refcnt_ptr<Block> blockref = (*iter);
+				ret.push_back( blockref.getPointer() );
+				iter++;
+			}
+
+			return ret;
+		}
+
+		void Bundle::removeBlock(Block *b)
+		{
+		}
+
+		void Bundle::clearBlocks()
+		{
+			// clear the list of objects
+			_blocks.clear();
+		}
+
 		bool Bundle::isExpired() const
 		{
-			unsigned int time = BundleFactory::getDTNTime();
-			return ( (getInteger(LIFETIME) + getInteger(CREATION_TIMESTAMP)) <= time );
+			if (utils::Utils::get_current_dtn_time() > (_lifetime + _timestamp)) return true;
+			return false;
 		}
 
 		string Bundle::toString() const
 		{
 			stringstream ss;
-			ss << "[" << getInteger(CREATION_TIMESTAMP) << "." << getInteger(CREATION_TIMESTAMP_SEQUENCE);
-			string ret; ss >> ret;
-			ret.append(" ");
-			ret.append(getSource());
-			ret.append(" -> ");
-			ret.append(getDestination());
-			ret.append("]");
-			return ret;
+			ss << "[" << _timestamp << "." << _sequencenumber << "] " << _source.getString() << " -> " << _destination.getString() << " [size: " << getSize() << "]";
+			return ss.str();
 		}
 
-#ifdef DO_DEBUG_OUTPUT
-		void Bundle::debug() const
+		size_t Bundle::getSize() const
 		{
-			cout << "-- Primary Block --" << endl;
-			getFrame().debug();
+			BundleStreamWriter writer(cout);
+			size_t len = 0;
 
-			list<Block*>::const_iterator iter = m_blocks.begin();
+			len += writer.getSizeOf(BUNDLE_VERSION);		// bundle version
+			len += writer.getSizeOf(_procflags);			// processing flags
 
-			while (iter != m_blocks.end())
+			// create a dictionary
+			Dictionary dict;
+
+			// add own eids of the primary block
+			dict.add(_source);
+			dict.add(_destination);
+			dict.add(_reportto);
+			dict.add(_custodian);
+
+			// add eids of attached blocks
+			list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
+
+			while (iter != _blocks.end())
 			{
-				cout << "-- Extension Block (" << (unsigned int)(*iter)->getType() << ") --" << endl;
-				(*iter)->getFrame().debug();
+				refcnt_ptr<Block> ref = (*iter);
+				list<EID> eids = ref->getEIDList();
+				dict.add( eids );
 				iter++;
 			}
-		}
-#endif
 
+			// predict the block length
+			u_int64_t length =
+				writer.getSizeOf( dict.getRef(_destination) ) +
+				writer.getSizeOf( dict.getRef(_source) ) +
+				writer.getSizeOf( dict.getRef(_reportto) ) +
+				writer.getSizeOf( dict.getRef(_custodian) ) +
+				writer.getSizeOf(_timestamp) +
+				writer.getSizeOf(_sequencenumber) +
+				writer.getSizeOf(_lifetime) +
+				writer.getSizeOf( dict.getSize() ) +
+				dict.getSize();
+
+			if (_procflags & Bundle::FRAGMENT)
+			{
+				length += writer.getSizeOf(_fragmentoffset) + writer.getSizeOf(_appdatalength);
+			}
+
+			/*
+			 * secondary blocks
+			 */
+			iter = _blocks.begin();
+
+			while (iter != _blocks.end())
+			{
+				refcnt_ptr<Block> ref = (*iter);
+				length += ref->getSize();
+				iter++;
+			}
+
+			return length;
+		}
+
+		std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &b)
+		{
+			dtn::streams::BundleStreamWriter writer(stream);
+			writer.write(b);
+			return stream;
+		}
+
+		std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b)
+		{
+			dtn::streams::BundleCopier copier(dtn::blob::BLOBManager::_instance, b);
+			dtn::streams::BundleStreamReader reader(stream, copier);
+			reader.readBundle();
+
+			return stream;
+		}
 	}
 }
+

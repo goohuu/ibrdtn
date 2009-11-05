@@ -1,30 +1,25 @@
 #ifndef CUSTODYMANAGER_H_
 #define CUSTODYMANAGER_H_
 
-#include "data/Bundle.h"
-#include "data/CustodySignalBlock.h"
+#include "ibrdtn/default.h"
+#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/CustodySignalBlock.h"
 #include "core/CustodyTimer.h"
 #include "core/EventReceiver.h"
 
-#include "utils/Service.h"
-#include "utils/Mutex.h"
-#include "utils/Conditional.h"
 #include <list>
 
-using namespace dtn::utils;
 
 namespace dtn
 {
 	namespace core
 	{
-		class CustodyManager : public Service, public EventReceiver
+		class CustodyManager : public dtn::utils::JoinableThread, public EventReceiver
 		{
 			public:
 				CustodyManager();
 
 				virtual ~CustodyManager();
-
-				void tick();
 
 				virtual void setTimer(const Bundle &bundle, unsigned int time, unsigned int attempt);
 				virtual const Bundle removeTimer(const CustodySignalBlock &block);
@@ -35,16 +30,18 @@ namespace dtn
 				void raiseEvent(const Event *evt);
 
 			protected:
-				void terminate();
+				void run();
 
 			private:
 				void retransmitBundle(const Bundle &bundle);
 				void checkCustodyTimer();
 
-				Mutex m_custodylock;
+				dtn::utils::Mutex m_custodylock;
 				unsigned int m_nextcustodytimer;
 				list<CustodyTimer> m_custodytimer;
-				Conditional m_breakwait;
+				dtn::utils::WaitForConditional m_breakwait;
+
+				bool _running;
 		};
 	}
 }

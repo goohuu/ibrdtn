@@ -8,15 +8,15 @@
 #ifndef CUSTODYEVENT_H_
 #define CUSTODYEVENT_H_
 
+#include "ibrdtn/default.h"
 #include <string>
-#include "data/Bundle.h"
+#include "ibrdtn/data/Bundle.h"
 #include "core/Event.h"
-#include "data/CustodySignalBlock.h"
+#include "ibrdtn/data/CustodySignalBlock.h"
 #include "core/CustodyTimer.h"
 
 using namespace dtn::data;
 using namespace dtn::core;
-using namespace std;
 
 namespace dtn
 {
@@ -32,7 +32,7 @@ namespace dtn
 		{
 		public:
 			CustodyEvent(const Bundle &bundle, const EventCustodyAction action);
-			~CustodyEvent();
+			virtual ~CustodyEvent();
 
 			EventCustodyAction getAction() const;
 			const Bundle& getBundle() const;

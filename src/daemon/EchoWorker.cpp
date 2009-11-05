@@ -1,7 +1,6 @@
 #include "daemon/EchoWorker.h"
-#include "data/BundleFactory.h"
-#include "core/ConvergenceLayer.h"
-#include "data/PayloadBlockFactory.h"
+#include "net/ConvergenceLayer.h"
+#include "ibrdtn/utils/Utils.h"
 
 using namespace dtn::core;
 using namespace dtn::data;
@@ -12,32 +11,37 @@ namespace dtn
 	{
 		EchoWorker::EchoWorker() : AbstractWorker("/echo")
 		{
-			m_localuri = BundleCore::getInstance().getLocalURI();
 		}
 
-		TransmitReport EchoWorker::callbackBundleReceived(const Bundle &b)
+		dtn::net::TransmitReport EchoWorker::callbackBundleReceived(const Bundle &b)
 		{
-			const PayloadBlock *payload = dynamic_cast<PayloadBlock*>( b.getPayloadBlock() );
+			PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
 
 			// check if a payload block exists
 			if ( payload != NULL )
 			{
 				// generate a echo
-				BundleFactory &fac = BundleFactory::getInstance();
-				Bundle *echo = fac.newBundle();
-				PayloadBlock *block = PayloadBlockFactory::newPayloadBlock( payload->getPayload(), payload->getLength() );
-				echo->appendBlock(block);
+				Bundle echo;
+
+				// make a copy of the payload block
+				PayloadBlock *payload_copy = new PayloadBlock(payload->getBLOBReference());
+
+				// append to the bundle
+				echo.addBlock(payload_copy);
 
 				// set destination and source
-				echo->setDestination( b.getSource() );
-				echo->setSource( m_localuri + getWorkerURI() );
+				echo._destination = b._source;
+				echo._source = getWorkerURI();
+
+#ifdef DO_DEBUG_OUTPUT
+				cout << "echo request received, replying!" << endl;
+#endif
 
 				// send it
-				transmit( *echo );
-				delete echo;
+				transmit( echo );
 			}
 
-			return BUNDLE_ACCEPTED;
+			return dtn::net::BUNDLE_ACCEPTED;
 		}
 	}
 }

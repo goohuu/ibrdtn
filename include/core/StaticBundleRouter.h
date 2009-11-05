@@ -12,13 +12,17 @@ namespace dtn
 		class StaticBundleRouter : public BundleRouter
 		{
 			public:
-				StaticBundleRouter(list<StaticRoute> routes, string eid);
-				~StaticBundleRouter();
+				StaticBundleRouter(list<StaticRoute> routes);
+				virtual ~StaticBundleRouter();
 
-				BundleSchedule getSchedule(const Bundle &b);
+				virtual void route(const dtn::data::Bundle &b);
+
+			protected:
+				virtual void signalAvailable(const Node &n) {};
+				virtual void signalUnavailable(const Node &n) {};
+				virtual void signalTimeTick(size_t timestamp) {};
 
 			private:
-				string m_eid;
 				list<StaticRoute> m_routes;
 		};
 	}

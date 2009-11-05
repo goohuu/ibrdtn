@@ -18,7 +18,7 @@ namespace dtn
 		{
 		public:
 			EventDebugger();
-			~EventDebugger();
+			virtual ~EventDebugger();
 
 			void raiseEvent(const Event *evt);
 		};

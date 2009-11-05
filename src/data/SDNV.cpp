@@ -18,8 +18,8 @@
 
 using namespace std;
 
-#include "data/SDNV.h"
-#include "data/Exceptions.h"
+#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Exceptions.h"
 #include <cstdlib>
 #include <cstring>
 
@@ -27,6 +27,107 @@ namespace dtn
 {
 	namespace data
 	{
+
+		SDNV::SDNV(const u_int64_t value) : _value(value)
+		{}
+
+		SDNV::SDNV() : _value(0)
+		{}
+
+		size_t SDNV::getLength() const
+		{
+			return getLength(_value);
+		}
+
+		size_t SDNV::getLength(const u_int64_t &value)
+		{
+			return encoding_len(value);
+		}
+
+		size_t SDNV::getLength(const unsigned char *data)
+		{
+			return len(data);
+		}
+
+		u_int64_t SDNV::getValue() const
+		{
+			return _value;
+		}
+
+		size_t SDNV::decode(const char *data, const size_t len)
+		{
+			return decode((unsigned char*)data, len, &_value);
+		}
+
+		size_t SDNV::encode(char *data, const size_t len) const
+		{
+			return encode(_value, (unsigned char*)data, len);
+		}
+
+		bool SDNV::operator==(const SDNV &value) const
+		{
+			return (_value == value._value);
+		}
+
+		bool SDNV::operator!=(const SDNV &value) const
+		{
+			return (_value != value._value);
+		}
+
+		SDNV SDNV::operator+(const SDNV &value)
+		{
+			return SDNV(value.getValue() + getValue());
+		}
+
+		SDNV& SDNV::operator+=(const SDNV &value)
+		{
+			_value += value._value;
+			return (*this);
+		}
+
+		SDNV SDNV::operator-(const SDNV &value)
+		{
+			return SDNV(value.getValue() - getValue());
+		}
+
+		SDNV& SDNV::operator-=(const SDNV &value)
+		{
+			_value -= value._value;
+			return (*this);
+		}
+
+		std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV &obj)
+		{
+			size_t len = obj.getLength();
+			char* data = (char*)calloc(len, sizeof(char));
+			obj.encode(data, len);
+			stream.write(data, len);
+			free(data);
+
+			return stream;
+		}
+
+		std::istream &operator>>(std::istream &stream, dtn::data::SDNV &obj)
+		{
+			char sdnv[dtn::data::SDNV::MAX_LENGTH];
+			char *sdnv_buf = sdnv;
+			size_t sdnv_length = 0;
+
+			stream.read(sdnv_buf, sizeof(char));
+			sdnv_length++;
+
+			while ( *sdnv_buf & 0x80)
+			{
+				sdnv_buf++;
+				stream.read(sdnv_buf, sizeof(char));
+				sdnv_length++;
+			}
+
+			dtn::data::SDNV::decode(sdnv, sdnv_length, &obj._value);
+
+			return stream;
+		}
+
 		/**
 		* Convert the given float into an SDNV.
 		*

@@ -1,12 +1,12 @@
 #include "core/CustodyTimer.h"
-#include "data/BundleFactory.h"
+
 
 namespace dtn
 {
 	namespace core
 	{
 		CustodyTimer::CustodyTimer()
-		 : m_bundle(NULL), m_time(0), m_attempt(0)
+		 : m_time(0), m_attempt(0)
 		{
 		}
 

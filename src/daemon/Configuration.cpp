@@ -1,6 +1,6 @@
 #include "daemon/Configuration.h"
-#include "core/DummyConvergenceLayer.h"
-#include "utils/Utils.h"
+#include "ibrdtn/utils/Utils.h"
+#include "core/Node.h"
 
 using namespace dtn::core;
 using namespace dtn::utils;
@@ -121,7 +121,10 @@ namespace dtn
 				n.setAddress( m_conf.read<string>(prefix + "address", "127.0.0.1") );
 				n.setPort( m_conf.read<unsigned int>(prefix + "port", 4556) );
 				n.setURI( m_conf.read<string>(prefix + "uri", "dtn:none") );
-				n.setConvergenceLayer( new DummyConvergenceLayer( m_conf.read<string>(prefix + "net", "default") ) );
+
+				string protocol = m_conf.read<string>(prefix + "proto", "tcp");
+				if (protocol == "tcp") n.setProtocol(TCP_CONNECTION);
+				if (protocol == "udp") n.setProtocol(UDP_CONNECTION);
 
 				count++;
 

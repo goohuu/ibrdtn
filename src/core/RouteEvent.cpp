@@ -6,7 +6,7 @@
  */
 
 #include "core/RouteEvent.h"
-#include "data/Exceptions.h"
+#include "ibrdtn/data/Exceptions.h"
 
 using namespace dtn::core;
 using namespace std;

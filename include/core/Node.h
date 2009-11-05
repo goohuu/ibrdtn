@@ -1,16 +1,17 @@
 #ifndef NODE_H_
 #define NODE_H_
 
-#include <string>
-
-using namespace std;
+#include "ibrdtn/default.h"
 
 namespace dtn
 {
-	namespace core
+	namespace net
 	{
 		class ConvergenceLayer;
+	}
 
+	namespace core
+	{
 		/**
 		 * Specify a node type.
 		 * FLOATING is a node, if it's not statically reachable.
@@ -20,6 +21,14 @@ namespace dtn
 		{
 			FLOATING = 0,
 			PERMANENT = 1
+		};
+
+		enum NodeProtocol
+		{
+			UNSUPPORTED = -1,
+			UNDEFINED = 0,
+			UDP_CONNECTION = 1,
+			TCP_CONNECTION = 2
 		};
 
 		/**
@@ -51,6 +60,9 @@ namespace dtn
 			 * @sa NoteType
 			 */
 			NodeType getType() const;
+
+			void setProtocol(NodeProtocol protocol);
+			NodeProtocol getProtocol() const;
 
 			/**
 			 * Set the address of the node.
@@ -122,13 +134,7 @@ namespace dtn
 			 * @param node A other node to compare.
 			 * @return true, if the given node is equal to this node.
 			 */
-			 bool equals(Node &node);
-
-			 ConvergenceLayer* getConvergenceLayer() const;
-			 void setConvergenceLayer(ConvergenceLayer *cl);
-
-			 void setPosition(pair<double,double> value);
-			 pair<double,double> getPosition() const;
+			 bool equals(const Node &node) const;
 
 		private:
 			string m_address;
@@ -138,9 +144,7 @@ namespace dtn
 			unsigned int m_rtt;
 			NodeType m_type;
 			unsigned int m_port;
-			ConvergenceLayer *m_cl;
-
-			pair<double,double> m_position;
+			NodeProtocol _protocol;
 		};
 	}
 }

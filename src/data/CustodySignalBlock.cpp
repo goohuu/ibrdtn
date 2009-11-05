@@ -1,239 +1,143 @@
-#include "data/CustodySignalBlock.h"
-#include "data/SDNV.h"
-#include "data/BundleFactory.h"
-#include "data/ProcessingFlags.h"
-#include <cstdlib>
-#include <cstring>
+/*
+ * CustodySignalBlock.cpp
+ *
+ *  Created on: 05.06.2009
+ *      Author: morgenro
+ */
 
+#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/CustodySignalBlock.h"
+#include <stdlib.h>
+#include <sstream>
 
 namespace dtn
 {
 	namespace data
 	{
-		CustodySignalBlock::CustodySignalBlock(Block *block) : AdministrativeBlock(block, CUSTODY_SIGNAL)
+		CustodySignalBlock::CustodySignalBlock()
+		 : PayloadBlock(blob::BLOBManager::BLOB_MEMORY), _admfield(32), _status(0), _fragment_offset(0),
+		 _fragment_length(0), _timeofsignal(0), _bundle_timestamp(0), _unknown(0),
+		 _bundle_sequence(0)
 		{
-
 		}
 
-		CustodySignalBlock::CustodySignalBlock(NetworkFrame *frame) : AdministrativeBlock(frame, CUSTODY_SIGNAL)
+		CustodySignalBlock::CustodySignalBlock(Block *block)
+		 : PayloadBlock(block->getBLOBReference()), _admfield(32), _status(0), _fragment_offset(0),
+		 _fragment_length(0), _timeofsignal(0), _bundle_timestamp(0), _unknown(0),
+		 _bundle_sequence(0)
 		{
-			map<unsigned int, unsigned int> &mapping = frame->getFieldSizeMap();
+			read();
+		}
 
-			// get payload for parsing
-			unsigned char *data = PayloadBlock::getPayload();
-
-			// field index of the body
-			unsigned int position = Block::getBodyIndex();
-
-			// current field length
-			unsigned int len = 0;
-
-			// first field is administrative TypeCode 4bit + RecordFlags 4bit
-			mapping[position] = 1;
-			position++;
-			data++;
-
-			// Status Flags (1 bit) + 7bit Reason Code
-			mapping[position] = 1;
-			position++;
-			data++;
-
-			// start at time of signal field for decoding
-			unsigned int fields = CUSTODY_TIMEOFSIGNAL;
-
-			// start 2 field earlier if we have fragmentation fields
-			if ( forFragment() )
-			{
-				fields -= 2;
-			}
-
-			for (int i = fields; i < CUSTODY_BUNDLE_SOURCE; i++)
-			{
-				len = SDNV::len(data);
-				mapping[position] = len;
-				position++;
-				data += len;
-			}
-
-			// the length of the next field is the value of the previous field
-			mapping[position] = frame->getSDNV(position - 1);
-
-			// update the size of the frame
-			frame->updateSize();
+		CustodySignalBlock::CustodySignalBlock(BLOBReference ref)
+		 : PayloadBlock(ref), _admfield(32), _status(0), _fragment_offset(0),
+		 _fragment_length(0), _timeofsignal(0), _bundle_timestamp(0), _unknown(0),
+		 _bundle_sequence(0)
+		{
 		}
 
 		CustodySignalBlock::~CustodySignalBlock()
 		{
 		}
 
-		unsigned int CustodySignalBlock::getField(CUSTODY_FIELDS field) const
+		void CustodySignalBlock::read()
 		{
-			unsigned int ret = getBodyIndex();
+			// read the attributes out of the BLOBReference
+			BLOBReference ref = Block::getBLOBReference();
+			size_t remain = ref.getSize();
+			char buffer[remain];
 
-			if ( (field > CUSTODY_FRAGMENT_LENGTH) && (!forFragment()) )
+			// read the data into the buffer
+			ref.read(buffer, 0, remain);
+
+			// make a useable pointer
+			char *data = buffer;
+
+			SDNV value = 0;
+			size_t len = 0;
+
+			_admfield = data[0]; 	remain--; data++;
+			_status = data[0]; 		remain--; data++;
+
+			if ( _admfield & 0x01 )
 			{
-				ret -= 2;
+				len = _fragment_offset.decode(data, remain); remain -= len; data += len;
+				len = _fragment_length.decode(data, remain); remain -= len; data += len;
 			}
 
-			return ret + field;
+			len = _timeofsignal.decode(data, remain); 		remain -= len; data += len;
+			len = _bundle_timestamp.decode(data, remain); 	remain -= len; data += len;
+			len = _unknown.decode(data, remain); 			remain -= len; data += len;
+			len = _bundle_sequence.decode(data, remain); 	remain -= len; data += len;
+			len = value.decode(data, remain); 				remain -= len; data += len;
+
+			string source;
+			source.assign(data, remain);
+			_source = EID(source);
 		}
 
-		unsigned int CustodySignalBlock::getFragmentOffset() const
+		void CustodySignalBlock::commit()
 		{
-			if ( !forFragment() ) return 0;
-			return getFrame().getSDNV( getField(CUSTODY_FRAGMENT_OFFSET) );
-		}
+			stringstream ss;
+			BundleStreamWriter w(ss);
 
-		void CustodySignalBlock::setFragmentOffset(unsigned int value)
-		{
-			NetworkFrame &frame = getFrame();
+			w.write(_admfield);
+			w.write(_status);
 
-			if ( !forFragment() )
+			if ( _admfield & 0x01 )
 			{
-				// create fragmentation fields
-				frame.insert(getField(CUSTODY_FRAGMENT_OFFSET));
-				frame.insert(getField(CUSTODY_FRAGMENT_LENGTH));
-
-				// set the fragmentation flag
-				ProcessingFlags flags = getStatusFlags();
-				flags.setFlag(0, true);
-				setStatusFlags(flags);
+				w.write(_fragment_offset);
+				w.write(_fragment_length);
 			}
 
-			frame.set(getField(CUSTODY_FRAGMENT_OFFSET), value);
+			w.write(_timeofsignal);
+			w.write(_bundle_timestamp);
+			w.write(_unknown);
+			w.write(_bundle_sequence);
+			w.write(_source.getString().length());
+			w.write(_source.getString());
+
+			// clear the blob
+			BLOBReference ref = Block::getBLOBReference();
+			ref.clear();
+
+			// copy the content of ss to the blob
+			string data = ss.str();
+			ref.append(data.c_str(), data.length());
 		}
 
-		unsigned int CustodySignalBlock::getFragmentLength() const
+		void CustodySignalBlock::setMatch(const Bundle& other)
 		{
-			if ( !forFragment() ) return 0;
-			return getFrame().getSDNV( getField(CUSTODY_FRAGMENT_LENGTH) );
-		}
-
-		void CustodySignalBlock::setFragmentLength(unsigned int value)
-		{
-			NetworkFrame &frame = getFrame();
-
-			if ( !forFragment() )
+			// set bundle parameter
+			if (other._procflags & Bundle::FRAGMENT)
 			{
-				// create fragmentation fields
-				frame.insert(getField(CUSTODY_FRAGMENT_OFFSET));
-				frame.insert(getField(CUSTODY_FRAGMENT_LENGTH));
+				_fragment_offset = other._fragmentoffset;
+				_fragment_length = other._appdatalength;
 
-				// set the fragmentation flag
-				ProcessingFlags flags = getStatusFlags();
-				flags.setFlag(0, true);
-				setStatusFlags(flags);
+				if (!(_admfield & 1)) _admfield += 1;
 			}
 
-			frame.set(getField(CUSTODY_FRAGMENT_LENGTH), value);
+			_bundle_timestamp = other._timestamp;
+			_bundle_sequence = other._sequencenumber;
+			_source = other._source;
 		}
 
-		bool CustodySignalBlock::forFragment() const
+		bool CustodySignalBlock::match(const Bundle& other) const
 		{
-			return getStatusFlags().getFlag( 0 );
-		}
+			if (_bundle_timestamp != other._timestamp) return false;
+			if (_bundle_sequence != other._sequencenumber) return false;
+			if (_source != other._source) return false;
 
-		bool CustodySignalBlock::isAccepted() const
-		{
-			NetworkFrame &frame = Block::getFrame();
-
-			// get status field
-			ProcessingFlags flags( (unsigned int)frame.getChar( getField(CUSTODY_STATUS) ));
-
-			// The first bit tells if custody is accepted or not
-			return flags.getFlag( 0 );
-		}
-
-		void CustodySignalBlock::setAccepted(bool value)
-		{
-			NetworkFrame &frame = Block::getFrame();
-
-			// get status field
-			ProcessingFlags flags( (unsigned int)frame.getChar( getField(CUSTODY_STATUS) ));
-
-			// The first bit tells if custody is accepted or not
-			flags.setFlag( 0, value );
-
-			frame.set( getField(CUSTODY_STATUS), (char)flags.getValue() );
-		}
-
-		unsigned int CustodySignalBlock::getTimeOfSignal() const
-		{
-			NetworkFrame &frame = Block::getFrame();
-			return frame.getSDNV( getField(CUSTODY_TIMEOFSIGNAL) );
-		}
-
-		void CustodySignalBlock::setTimeOfSignal(unsigned int value)
-		{
-			NetworkFrame &frame = Block::getFrame();
-			frame.set( getField(CUSTODY_TIMEOFSIGNAL), value );
-		}
-
-		unsigned int CustodySignalBlock::getCreationTimestamp() const
-		{
-			NetworkFrame &frame = Block::getFrame();
-			return frame.getSDNV( getField(CUSTODY_BUNDLE_TIMESTAMP) );
-		}
-
-		void CustodySignalBlock::setCreationTimestamp(unsigned int value)
-		{
-			NetworkFrame &frame = Block::getFrame();
-			frame.set( getField(CUSTODY_BUNDLE_TIMESTAMP), value );
-		}
-
-		unsigned int CustodySignalBlock::getCreationTimestampSequence() const
-		{
-			NetworkFrame &frame = Block::getFrame();
-			return frame.getSDNV( getField(CUSTODY_BUNDLE_SEQUENCE) );
-		}
-
-		void CustodySignalBlock::setCreationTimestampSequence(unsigned int value)
-		{
-			NetworkFrame &frame = Block::getFrame();
-			frame.set( getField(CUSTODY_BUNDLE_SEQUENCE), value );
-		}
-
-		string CustodySignalBlock::getSource() const
-		{
-			NetworkFrame &frame = Block::getFrame();
-			size_t field = getField(CUSTODY_BUNDLE_SOURCE);
-			return frame.getString(field);
-		}
-
-		void CustodySignalBlock::setSource(string value)
-		{
-			NetworkFrame &frame = Block::getFrame();
-			frame.set(getField(CUSTODY_BUNDLE_SOURCE_LENGTH), value.length());
-			frame.set(getField(CUSTODY_BUNDLE_SOURCE), value);
-		}
-
-		bool CustodySignalBlock::match(const Bundle &b) const
-		{
-			if ( b.getPrimaryFlags().isFragment() )
+			// set bundle parameter
+			if (other._procflags & Bundle::FRAGMENT)
 			{
-				if ( b.getInteger( FRAGMENTATION_OFFSET ) != getFragmentOffset() ) return false;
-				if ( b.getInteger( APPLICATION_DATA_LENGTH ) != getFragmentLength() ) return false;
+				if (!(_admfield & 1)) return false;
+				if (_fragment_offset != other._fragmentoffset) return false;
+				if (_fragment_length != other._appdatalength) return false;
 			}
-
-			if ( b.getInteger( CREATION_TIMESTAMP ) != getCreationTimestamp() ) return false;
-			if ( b.getInteger( CREATION_TIMESTAMP_SEQUENCE ) != getCreationTimestampSequence() ) return false;
-			if ( b.getSource() != getSource() ) return false;
 
 			return true;
 		}
 
-		void CustodySignalBlock::setMatch(const Bundle &b)
-		{
-			if (b.getPrimaryFlags().isFragment())
-			{
-				setFragmentOffset( b.getInteger(FRAGMENTATION_OFFSET) );
-				setFragmentLength( b.getInteger(APPLICATION_DATA_LENGTH) );
-			}
-			setCreationTimestamp( b.getInteger(CREATION_TIMESTAMP) );
-			setCreationTimestampSequence( b.getInteger(CREATION_TIMESTAMP_SEQUENCE) );
-			setSource( b.getSource() );
-
-			updateBlockSize();
-		}
 	}
 }

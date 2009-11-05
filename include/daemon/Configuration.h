@@ -1,14 +1,11 @@
 #ifndef CONFIGURATION_H_
 #define CONFIGURATION_H_
 
+#include "ibrdtn/default.h"
 #include "ConfigFile.h"
 #include "core/Node.h"
 #include "core/StaticRoute.h"
-#include <string>
-#include <vector>
-#include <list>
 
-using namespace std;
 using namespace dtn::core;
 using namespace dtn::data;
 
@@ -23,7 +20,7 @@ namespace dtn
 		{
 		private:
 			Configuration();
-			~Configuration();
+			virtual ~Configuration();
 
 		public:
 			static Configuration &getInstance();

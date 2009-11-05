@@ -6,8 +6,8 @@
  */
 
 #include "core/CustodyEvent.h"
-#include "data/Exceptions.h"
-#include "data/BundleFactory.h"
+#include "ibrdtn/data/Exceptions.h"
+
 
 using namespace dtn::data;
 using namespace dtn::core;

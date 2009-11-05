@@ -8,9 +8,7 @@
 #ifndef EVENT_H_
 #define EVENT_H_
 
-#include <string>
-
-using namespace std;
+#include "ibrdtn/default.h"
 
 namespace dtn
 {

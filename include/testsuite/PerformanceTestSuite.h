@@ -1,7 +1,7 @@
 #ifndef PERFORMANCETESTSUITE_H_
 #define PERFORMANCETESTSUITE_H_
 
-#include "config.h"
+#include "ibrdtn/default.h"
 
 namespace dtn
 {
@@ -12,7 +12,7 @@ namespace testsuite
 		public:
 			PerformanceTestSuite();
 
-			~PerformanceTestSuite();
+			virtual ~PerformanceTestSuite();
 
 			bool runAllTests();
 

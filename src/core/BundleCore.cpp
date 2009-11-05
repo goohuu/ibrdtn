@@ -1,26 +1,26 @@
 #include "core/BundleCore.h"
-#include "core/BundleSchedule.h"
 #include "core/AbstractWorker.h"
 #include "core/CustodyManager.h"
 #include "core/EventSwitch.h"
-#include "core/StorageEvent.h"
 #include "core/RouteEvent.h"
 #include "core/CustodyEvent.h"
+#include "core/NodeEvent.h"
 #include "core/BundleEvent.h"
 #include "core/TimeEvent.h"
+#include "core/GlobalEvent.h"
 
-#include "data/Bundle.h"
-#include "data/Exceptions.h"
-#include "data/AdministrativeBlock.h"
-#include "data/PrimaryFlags.h"
-#include "data/PayloadBlockFactory.h"
-#include "data/EID.h"
+#include "ibrdtn/data/BLOBManager.h"
+#include "ibrdtn/data/BLOBReference.h"
+#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/Exceptions.h"
+#include "ibrdtn/data/EID.h"
 
-#include "utils/Utils.h"
+#include "ibrdtn/utils/Utils.h"
+#include "ibrdtn/utils/tcpserver.h"
 #include "limits.h"
 #include <iostream>
 
-
+using namespace dtn::blob;
 using namespace dtn::exceptions;
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -30,12 +30,7 @@ namespace dtn
 {
 	namespace core
 	{
-		BundleCore& BundleCore::getInstance(string eid)
-		{
-			BundleCore &core = BundleCore::getInstance();
-			core.setLocalEID(eid);
-			return core;
-		}
+		dtn::data::EID BundleCore::local;
 
 		BundleCore& BundleCore::getInstance()
 		{
@@ -43,53 +38,31 @@ namespace dtn
 			return instance;
 		}
 
-		void BundleCore::setLocalEID(string eid)
-		{
-			m_localeid = eid;
-		}
-
 		BundleCore::BundleCore()
-		 : Service("BundleCore"), m_clayer(NULL), m_localeid("dtn:none"), m_dtntime(0)
+		 : _clock(1), _shutdown(false)
 		{
 			// register me for events
-			EventSwitch::registerEventReceiver( RouteEvent::className, this );
-			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
+			EventSwitch::registerEventReceiver( NodeEvent::className, this );
 			EventSwitch::registerEventReceiver( BundleEvent::className, this );
+			EventSwitch::registerEventReceiver( TimeEvent::className, this );
 
 			// start the custody manager
 			m_cm.start();
+
+			// start a clock
+			_clock.start();
 		}
 
 		BundleCore::~BundleCore()
 		{
-			EventSwitch::unregisterEventReceiver( RouteEvent::className, this );
-			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
+			EventSwitch::unregisterEventReceiver( NodeEvent::className, this );
 			EventSwitch::unregisterEventReceiver( BundleEvent::className, this );
-
-			// stop the custody manager
-			m_cm.abort();
+			EventSwitch::unregisterEventReceiver( TimeEvent::className, this );
 		}
 
-		void BundleCore::tick()
+		Clock& BundleCore::getClock()
 		{
-			unsigned int dtntime = BundleFactory::getDTNTime();
-			if (m_dtntime != dtntime)
-			{
-				EventSwitch::raiseEvent( new TimeEvent(dtntime, TIME_SECOND_TICK) );
-				m_dtntime = dtntime;
-			}
-			usleep(50000);
-		}
-
-		void BundleCore::setConvergenceLayer(ConvergenceLayer *cl)
-		{
-			cl->setBundleReceiver(this);
-			m_clayer = cl;
-		}
-
-		ConvergenceLayer* BundleCore::getConvergenceLayer()
-		{
-			return m_clayer;
+			return _clock;
 		}
 
 		CustodyManager& BundleCore::getCustodyManager()
@@ -100,48 +73,73 @@ namespace dtn
 		void BundleCore::raiseEvent(const Event *evt)
 		{
 			const BundleEvent *bundleevent = dynamic_cast<const BundleEvent*>(evt);
+			const NodeEvent *nodeevent = dynamic_cast<const NodeEvent*>(evt);
+			const TimeEvent *timeevent = dynamic_cast<const TimeEvent*>(evt);
+			const GlobalEvent *globalevent = dynamic_cast<const GlobalEvent*>(evt);
 
-			if (bundleevent != NULL)
+			if (globalevent != NULL)
+			{
+				dtn::utils::MutexLock l(_register_action);
+				_shutdown = true;
+				_register_action.signal(true);
+			}
+			else if (timeevent != NULL)
+			{
+				if (timeevent->getAction() == TIME_SECOND_TICK)
+				{
+					check_discovered();
+				}
+			}
+			else if (nodeevent != NULL)
+			{
+				Node n = nodeevent->getNode();
+
+				if (nodeevent->getAction() == NODE_INFO_UPDATED)
+				{
+					discovered(n);
+				}
+			}
+			else if (bundleevent != NULL)
 			{
 				const Bundle &b = bundleevent->getBundle();
 
 				switch (bundleevent->getAction())
 				{
 				case BUNDLE_RECEIVED:
-					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_RECEPTION) )
+					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION )
 					{
-						Bundle bundle = createStatusReport(b, RECEIPT_OF_BUNDLE, bundleevent->getReason());
+						Bundle bundle = createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
 				case BUNDLE_DELETED:
-					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELETION) )
+					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION )
 					{
-						Bundle bundle = createStatusReport(b, DELETION_OF_BUNDLE, bundleevent->getReason());
+						Bundle bundle = createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
 
 				case BUNDLE_FORWARDED:
-					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_FORWARDING) )
+					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING )
 					{
-						Bundle bundle = createStatusReport(b, FORWARDING_OF_BUNDLE, bundleevent->getReason());
+						Bundle bundle = createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
 
 				case BUNDLE_DELIVERED:
-					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_BUNDLE_DELIVERY) )
+					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY )
 					{
-						Bundle bundle = createStatusReport(b, DELIVERY_OF_BUNDLE, bundleevent->getReason());
+						Bundle bundle = createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
 
 				case BUNDLE_CUSTODY_ACCEPTED:
-					if ( b.getPrimaryFlags().getFlag(REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE) )
+					if ( b._procflags & Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE )
 					{
-						Bundle bundle = createStatusReport(b, CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
+						Bundle bundle = createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
 						transmit( bundle );
 					}
 					break;
@@ -154,69 +152,80 @@ namespace dtn
 			EventSwitch::raiseEvent( new RouteEvent( b, ROUTE_PROCESS_BUNDLE ) );
 		}
 
-		void BundleCore::transmit(const Node &n, const Bundle &b)
+		void BundleCore::transmit(const dtn::data::EID &eid, const Bundle &b)
 		{
-			// get convergence layer to reach the node
-			ConvergenceLayer *clayer = n.getConvergenceLayer();
-
-			if (b.getPrimaryFlags().isCustodyRequested())
-			{
-				if (b.getCustodian() == m_localeid)
-				{
-					// set custody timer
-					m_cm.setTimer(b, n.getRoundTripTime(), 1);
-				}
-				else
-				{
-					// here i need a copy
-					Bundle b_copy = b;
-
-					// set me as custody
-					b_copy.setCustodian(m_localeid);
-
-					// accept custody
-					EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_ACCEPT ) );
-
-					// set custody timer
-					m_cm.setTimer(b_copy, n.getRoundTripTime(), 1);
-
-					// send the bundle
-					clayer->transmit(b_copy, n);
-
-					// bundle forwarded event
-					EventSwitch::raiseEvent( new BundleEvent( b_copy, BUNDLE_FORWARDED ) );
-
-					return;
-				}
+			try {
+				// send the bundle with the ConnectionManager
+				ConnectionManager::send(eid, b);
+			} catch (dtn::utils::tcpserver::SocketException ex) {
+				// connection not possible
+				// TODO: requeue!
+				throw dtn::exceptions::NotImplementedException("connection not possible, requeue!");
 			}
-
-			// send the bundle
-			clayer->transmit(b, n);
-
-			// bundle forwarded event
-			EventSwitch::raiseEvent( new BundleEvent( b, BUNDLE_FORWARDED ) );
 		}
+
+//		void BundleCore::transmit(const Node &n, const Bundle &b)
+//		{
+//			// get convergence layer to reach the node
+//			dtn::net::ConvergenceLayer *clayer = n.getConvergenceLayer();
+//
+//			if (b._procflags & Bundle::CUSTODY_REQUESTED )
+//			{
+//				if (b._custodian == m_localeid)
+//				{
+//					// set custody timer
+//					m_cm.setTimer(b, n.getRoundTripTime(), 1);
+//				}
+//				else
+//				{
+//					// here i need a copy
+//					Bundle b_copy = b;
+//
+//					// set me as custody
+//					b_copy._custodian = m_localeid;
+//
+//					// accept custody
+//					EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_ACCEPT ) );
+//
+//					// set custody timer
+//					m_cm.setTimer(b_copy, n.getRoundTripTime(), 1);
+//
+//					// send the bundle
+//					clayer->transmit(b_copy, n);
+//
+//					// bundle forwarded event
+//					EventSwitch::raiseEvent( new BundleEvent( b_copy, BUNDLE_FORWARDED ) );
+//
+//					return;
+//				}
+//			}
+//
+//			// send the bundle
+//			clayer->transmit(b, n);
+//
+//			// bundle forwarded event
+//			EventSwitch::raiseEvent( new BundleEvent( b, BUNDLE_FORWARDED ) );
+//		}
 
 		void BundleCore::deliver(const Bundle &b)
 		{
-			PrimaryFlags flags = b.getPrimaryFlags();
-
-			if (flags.isFragment())
+			if (b._procflags & Bundle::FRAGMENT)
 			{
-				EventSwitch::raiseEvent( new StorageEvent(b) );
+				// TODO: put a fragment into the storage!
 				return;
 			}
 
-			EID eid(b.getDestination());
-
-			if (eid.hasApplication())
+			if (b._destination.hasApplication())
 			{
-				AbstractWorker *worker = m_worker[ b.getDestination() ];
+				AbstractWorker *worker = getSubNode(b._destination);
+
 				if (worker != NULL)
 				{
+					dtn::utils::MutexLock l(*worker);
+
 					switch ( worker->callbackBundleReceived( b ) )
 					{
-						case BUNDLE_ACCEPTED:
+						case dtn::net::BUNDLE_ACCEPTED:
 							// accept custody
 							EventSwitch::raiseEvent( new CustodyEvent( b, CUSTODY_ACCEPT ) );
 
@@ -245,8 +254,7 @@ namespace dtn
 			else
 			{
 				// process bundles for the daemon (e.g. custody signals)
-				Block *block = b.getPayloadBlock();
-				CustodySignalBlock *signal = dynamic_cast<CustodySignalBlock*>( block );
+				CustodySignalBlock *signal = Utils::getCustodySignalBlock(b);
 
 				if ( signal != NULL )
 				{
@@ -255,8 +263,10 @@ namespace dtn
 						Bundle bundle = m_cm.removeTimer( *signal );
 
 						// and requeue the bundle for later delivery
-						BundleSchedule sched(bundle, BundleFactory::getDTNTime() + 60, EID(bundle.getDestination()).getNodeEID());
-						EventSwitch::raiseEvent( new StorageEvent( sched ) );
+						//BundleSchedule sched(bundle, Utils::get_current_dtn_time() + 60, EID(bundle._destination.getNodeEID()));
+
+						// TODO: put the bundle into the storage for a new attempt later.
+
 					} catch (NoTimerFoundException ex) {
 
 					}
@@ -264,46 +274,40 @@ namespace dtn
 			}
 		}
 
-		Bundle BundleCore::createStatusReport(const Bundle &b, StatusReportType type, StatusReportReasonCode reason)
+		Bundle BundleCore::createStatusReport(const Bundle &b, StatusReportBlock::TYPE type, StatusReportBlock::REASON_CODE reason)
 		{
 			// create a new bundle
-			BundleFactory &fac = BundleFactory::getInstance();
-			Bundle *bundle = fac.newBundle();
+			Bundle bundle;
 
 			// create a new statusreport block
-			StatusReportBlock *report = PayloadBlockFactory::newStatusReportBlock();
-
-			// add the report to the bundle
-			bundle->appendBlock(report);
+			StatusReportBlock *report = new StatusReportBlock();
 
 			// get the flags and set the status flag
-			ProcessingFlags flags = report->getStatusFlags();
-			flags.setFlag(type, true);
-			report->setStatusFlags(flags);
+			if (!(report->_status & type)) report->_status += type;
 
 			// set the reason code
-			report->setReasonCode(ProcessingFlags(reason));
+			if (!(report->_reasoncode & reason)) report->_reasoncode += reason;
 
 			switch (type)
 			{
-				case RECEIPT_OF_BUNDLE:
-					report->setTimeOfReceipt( BundleFactory::getDTNTime() );
+				case StatusReportBlock::RECEIPT_OF_BUNDLE:
+					report->_timeof_receipt = Utils::get_current_dtn_time();
 				break;
 
-				case CUSTODY_ACCEPTANCE_OF_BUNDLE:
-					report->setTimeOfCustodyAcceptance( BundleFactory::getDTNTime() );
+				case StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE:
+					report->_timeof_custodyaccept = Utils::get_current_dtn_time();
 				break;
 
-				case FORWARDING_OF_BUNDLE:
-					report->setTimeOfForwarding( BundleFactory::getDTNTime() );
+				case StatusReportBlock::FORWARDING_OF_BUNDLE:
+					report->_timeof_forwarding = Utils::get_current_dtn_time();
 				break;
 
-				case DELIVERY_OF_BUNDLE:
-					report->setTimeOfDelivery( BundleFactory::getDTNTime() );
+				case StatusReportBlock::DELIVERY_OF_BUNDLE:
+					report->_timeof_delivery = Utils::get_current_dtn_time();
 				break;
 
-				case DELETION_OF_BUNDLE:
-					report->setTimeOfDeletion( BundleFactory::getDTNTime() );
+				case StatusReportBlock::DELETION_OF_BUNDLE:
+					report->_timeof_deletion = Utils::get_current_dtn_time();
 				break;
 
 				default:
@@ -312,62 +316,101 @@ namespace dtn
 			}
 
 			// set source and destination
-			bundle->setSource(m_localeid);
-			bundle->setDestination(b.getReportTo());
+			bundle._source = BundleCore::local;
+			bundle._destination = b._reportto;
 
 			// set bundle parameter
-			report->setMatch(b);
+			if (b._procflags & Bundle::FRAGMENT)
+			{
+				report->_fragment_offset = b._fragmentoffset;
+				report->_fragment_length = b._appdatalength;
 
-			Bundle ret = *bundle;
-			delete bundle;
+				if (!(report->_admfield & 1)) report->_admfield += 1;
+			}
 
-			return ret;
+			report->_bundle_timestamp = b._timestamp;
+			report->_bundle_sequence = b._sequencenumber;
+			report->_source = b._source;
+
+			// commit the data
+			report->commit();
+
+			// add the report to the bundle
+			bundle.addBlock(report);
+
+			return bundle;
 		}
 
 		Bundle BundleCore::createCustodySignal(const Bundle &b, bool accepted)
 		{
 			// create a new bundle
-			BundleFactory &fac = BundleFactory::getInstance();
-			Bundle *bundle = fac.newBundle();
+			Bundle bundle;
 
-			// create a new CustodySignalBlock block
-			CustodySignalBlock *custody = PayloadBlockFactory::newCustodySignalBlock(accepted);
+			// create a new statusreport block
+			CustodySignalBlock *custody = new CustodySignalBlock();
 
-			// add the block to the bundle
-			bundle->appendBlock(custody);
+			// set accepted
+			if (accepted)
+			{
+				if (!(custody->_status & 1)) custody->_status += 1;
+			}
 
 			// set source and destination
-			bundle->setSource(m_localeid);
-			bundle->setDestination(b.getCustodian());
+			custody->match(b);
 
-			// set bundle parameter
-			custody->setMatch(b);
+			// commit the data
+			custody->commit();
 
-			Bundle ret = *bundle;
-			delete bundle;
+			// add the report to the bundle
+			bundle.addBlock(custody);
 
-			return ret;
+			return bundle;
 		}
 
-		void BundleCore::received(const ConvergenceLayer &cl, const Bundle &b)
+		AbstractWorker* BundleCore::getSubNode(EID eid)
 		{
-			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
-			EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
+			dtn::utils::Mutex l(_register_action);
+			return m_worker[ eid ];
 		}
 
-		void BundleCore::registerSubNode(string eid, AbstractWorker *node)
+		void BundleCore::registerSubNode(EID eid, AbstractWorker *node)
 		{
-			m_worker[m_localeid + eid] = node;
+			dtn::utils::Mutex l(_register_action);
+
+			while (!_shutdown)
+			{
+				std::map<EID, AbstractWorker*>::iterator iter = m_worker.find(eid);
+
+				// if this node is already registered, you have to wait
+				if (m_worker.end() == iter)
+				{
+					break;
+				}
+
+				_register_action.wait();
+			}
+
+			m_worker[eid] = node;
+
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			cout << "Node registered " << eid.getString() << endl;
+#endif
+
+			// signal that something has changed
+			_register_action.signal(true);
 		}
 
-		void BundleCore::unregisterSubNode(string eid)
+		void BundleCore::unregisterSubNode(EID eid)
 		{
-			m_worker.erase(m_localeid + eid);
-		}
+			dtn::utils::MutexLock l(_register_action);
+			m_worker.erase(eid);
 
-		string BundleCore::getLocalURI() const
-		{
-			return m_localeid;
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			cout << "Node unregistered " << eid.getString() << endl;
+#endif
+
+			// signal that something has changed
+			_register_action.signal(true);
 		}
 	}
 }

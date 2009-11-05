@@ -1,5 +1,5 @@
 #include "core/Node.h"
-#include "core/ConvergenceLayer.h"
+#include "net/ConvergenceLayer.h"
 
 #include <iostream>
 using namespace std;
@@ -9,13 +9,13 @@ namespace dtn
 	namespace core
 	{
 		Node::Node(NodeType type, unsigned int rtt)
-		: m_address("dtn:unknown"), m_timeout(5), m_rtt(rtt), m_type(type), m_port(4556), m_cl(NULL)
+		: m_address("dtn:unknown"), m_timeout(5), m_rtt(rtt), m_type(type), m_port(4556), _protocol(UNDEFINED)
 		{
 		}
 
 		Node::Node(const Node &k)
-		: m_address(k.m_address), m_timeout(5), m_rtt(k.m_rtt), m_type(k.m_type), m_port(k.m_port), m_cl(k.m_cl),
-		m_description(k.m_description), m_position(k.m_position), m_uri(k.m_uri)
+		: m_address(k.m_address), m_timeout(k.m_timeout), m_type(k.m_type), m_port(k.m_port),
+		m_description(k.m_description), m_uri(k.m_uri), _protocol(k._protocol)
 		{
 
 		}
@@ -27,6 +27,16 @@ namespace dtn
 		NodeType Node::getType() const
 		{
 			return m_type;
+		}
+
+		void Node::setProtocol(NodeProtocol protocol)
+		{
+			_protocol = protocol;
+		}
+
+		NodeProtocol Node::getProtocol() const
+		{
+			return _protocol;
 		}
 
 		void Node::setAddress(string address)
@@ -95,31 +105,13 @@ namespace dtn
 			return true;
 		}
 
-		bool Node::equals(Node &node)
+		bool Node::equals(const Node &node) const
 		{
 			if (node.getURI() != getURI()) return false;
-			if (node.getAddress() != getAddress()) return false;
+			if (node.getProtocol() != getProtocol()) return false;
+			// TODO: enable after testing
+			//if (node.getAddress() != getAddress()) return false;
 			return true;
-		}
-
-		ConvergenceLayer* Node::getConvergenceLayer() const
-		{
-			return m_cl;
-		}
-
-		void Node::setConvergenceLayer(ConvergenceLayer *cl)
-		{
-			m_cl = cl;
-		}
-
-		void Node::setPosition(pair<double,double> value)
-		{
-			m_position = value;
-		}
-
-		pair<double,double> Node::getPosition() const
-		{
-			return m_position;
 		}
 	}
 }

@@ -1,7 +1,8 @@
 #include "core/StaticBundleRouter.h"
-#include "core/BundleSchedule.h"
-#include "data/BundleFactory.h"
-#include "data/EID.h"
+#include "core/BundleCore.h"
+#include "ibrdtn/data/EID.h"
+#include "ibrdtn/data/Exceptions.h"
+#include "ibrdtn/utils/Utils.h"
 
 #include <iostream>
 
@@ -9,8 +10,8 @@ namespace dtn
 {
 	namespace core
 	{
-		StaticBundleRouter::StaticBundleRouter(list<StaticRoute> routes, string eid)
-			: BundleRouter(eid), m_eid(eid), m_routes(routes)
+		StaticBundleRouter::StaticBundleRouter(list<StaticRoute> routes)
+			: BundleRouter(), m_routes(routes)
 		{
 		}
 
@@ -18,12 +19,11 @@ namespace dtn
 		{
 		}
 
-		BundleSchedule StaticBundleRouter::getSchedule(const Bundle &b)
+		void StaticBundleRouter::route(const dtn::data::Bundle &b)
 		{
-			try {
-				// return a schedule if the default router had found one.
-				return BundleRouter::getSchedule(b);
-			} catch (NoScheduleFoundException ex) {
+			try{
+				BundleRouter::route(b);
+			} catch (exceptions::NoRouteFoundException ex) {
 				// no default route found, search a route with static informations
 				list<StaticRoute>::const_iterator iter = m_routes.begin();
 
@@ -36,22 +36,23 @@ namespace dtn
 						EID target = EID(route.getDestination());
 
 						// is the next node a neighbor?
-						if ( BundleRouter::isNeighbour(route.getDestination()) )
+						if ( BundleRouter::isNeighbor(target) )
 						{
-							// Yes, make a schedule for now!
-							return BundleSchedule(b, BundleFactory::getDTNTime(), target.getNodeEID());
+							// Yes, make transmit it now!
+							BundleCore::getInstance().transmit( target, b );
+							return;
 						}
 						else
 						{
-							// No. Create a schedule with MAX_TIME as time, because it isn't predictable when we meet the node.
-							return BundleSchedule(b, BundleSchedule::MAX_TIME, target.getNodeEID());
+							// No. Say that there is no route.
+							throw exceptions::NoRouteFoundException("No route available");
 						}
 					}
 					iter++;
 				}
 
-				// No route possible. Create a schedule with MAX_TIME as time, because it isn't predictable when we meet the node.
-				return BundleSchedule(b, BundleSchedule::MAX_TIME, EID(b.getDestination()).getNodeEID() );
+				// No route possible.
+				throw exceptions::NoRouteFoundException("No route available");
 			}
 		}
 	}

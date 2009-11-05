@@ -9,7 +9,6 @@
 #include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
 #include "core/RouteEvent.h"
-#include "core/StorageEvent.h"
 #include "core/CustodyEvent.h"
 #include "core/BundleEvent.h"
 #include <iostream>
@@ -24,7 +23,6 @@ namespace dtn
 		{
 			EventSwitch::registerEventReceiver( NodeEvent::className, this );
 			EventSwitch::registerEventReceiver( RouteEvent::className, this );
-			EventSwitch::registerEventReceiver( StorageEvent::className, this );
 			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
 			EventSwitch::registerEventReceiver( BundleEvent::className, this );
 		}
@@ -33,7 +31,6 @@ namespace dtn
 		{
 			EventSwitch::unregisterEventReceiver( NodeEvent::className, this );
 			EventSwitch::unregisterEventReceiver( RouteEvent::className, this );
-			EventSwitch::unregisterEventReceiver( StorageEvent::className, this );
 			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
 			EventSwitch::unregisterEventReceiver( BundleEvent::className, this );
 		}
@@ -42,7 +39,6 @@ namespace dtn
 		{
 			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
 			const RouteEvent *route = dynamic_cast<const RouteEvent*>(evt);
-			const StorageEvent *store = dynamic_cast<const StorageEvent*>(evt);
 			const BundleEvent *bundle = dynamic_cast<const BundleEvent*>(evt);
 			const CustodyEvent *custody = dynamic_cast<const CustodyEvent*>(evt);
 
@@ -51,14 +47,14 @@ namespace dtn
 				switch (custody->getAction())
 				{
 					case CUSTODY_ACCEPT:
-						if (custody->getBundle().getPrimaryFlags().isCustodyRequested())
+						if (custody->getBundle()._procflags & Bundle::CUSTODY_REQUESTED)
 						{
 							cout << evt->getName() << ": custody acceptance" << endl;
 						}
 						break;
 
 					case CUSTODY_REJECT:
-						if (custody->getBundle().getPrimaryFlags().isCustodyRequested())
+						if (custody->getBundle()._procflags & Bundle::CUSTODY_REQUESTED)
 						{
 							cout << evt->getName() << ": custody reject" << endl;
 						}
@@ -89,24 +85,6 @@ namespace dtn
 					break;
 				}
 			}
-			if (store != NULL)
-			{
-				switch (store->getAction())
-				{
-				case STORE_BUNDLE:
-					cout << evt->getName() << ": Store the bundle " << store->getBundle().toString() << " in the storage." << endl;
-					break;
-				case STORE_SCHEDULE:
-				{
-					BundleSchedule sched = store->getSchedule();
-					cout << evt->getName() << ": Store a schedule for bundle " << sched.getBundle().toString() << ", next hop: " << sched.getEID() << endl;
-					break;
-				}
-				default:
-					cout << evt->getName() << ": unknown" << endl;
-					break;
-				}
-			}
 			if (route != NULL)
 			{
 				switch (route->getAction())
@@ -127,7 +105,21 @@ namespace dtn
 					//cout << evt->getName() << ": Info updated for " << node->getNode().getURI() << endl;
 					break;
 				case NODE_AVAILABLE:
-					cout << evt->getName() << ": Node " << node->getNode().getURI() << " available" << endl;
+					cout << evt->getName() << ": Node " << node->getNode().getURI() << " available over ";
+
+					if (node->getNode().getProtocol() == dtn::core::UDP_CONNECTION)
+					{
+						cout << "UDP";
+					}
+					else if (node->getNode().getProtocol() == dtn::core::TCP_CONNECTION)
+					{
+						cout << "TCP";
+					}
+					else
+					{
+						cout << "a unsupported connection";
+					}
+					cout << endl;
 					break;
 				case NODE_UNAVAILABLE:
 					cout << evt->getName() << ": Node " << node->getNode().getURI() << " unavailable" << endl;

@@ -5,12 +5,11 @@
  *      Author: morgenro
  */
 
+#include "ibrdtn/data/BLOBManager.h"
 #include "core/CustodyManager.h"
-#include "data/Bundle.h"
-#include "utils/MutexLock.h"
+#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/utils/Utils.h"
 #include "core/CustodyTimer.h"
-#include "data/BundleFactory.h"
-#include "data/PayloadBlockFactory.h"
 #include "core/BundleCore.h"
 
 #include "core/TimeEvent.h"
@@ -18,6 +17,7 @@
 #include "core/CustodyEvent.h"
 #include "core/RouteEvent.h"
 
+using namespace dtn::blob;
 using namespace dtn::data;
 using namespace dtn::utils;
 
@@ -25,7 +25,7 @@ namespace dtn
 {
 	namespace core
 	{
-		CustodyManager::CustodyManager() : Service("CustodyManager"), m_nextcustodytimer(0)
+		CustodyManager::CustodyManager() : m_nextcustodytimer(0), _running(true)
 		{
 			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
 			EventSwitch::registerEventReceiver( TimeEvent::className, this );
@@ -33,6 +33,10 @@ namespace dtn
 
 		CustodyManager::~CustodyManager()
 		{
+			_running = false;
+			m_breakwait.go();
+			join();
+
 			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
 			EventSwitch::unregisterEventReceiver( TimeEvent::className, this );
 		}
@@ -47,7 +51,7 @@ namespace dtn
 				if (time->getAction() == TIME_SECOND_TICK)
 				{
 					// the time has changed
-					m_breakwait.signal();
+					m_breakwait.go();
 				}
 			}
 			else if (custody != NULL)
@@ -66,65 +70,71 @@ namespace dtn
 
 		void CustodyManager::acceptCustody(const Bundle &bundle)
 		{
-			if (bundle.getCustodian() == "dtn:none") return;
+			if (bundle._custodian == EID()) return;
 
-			if (bundle.getPrimaryFlags().isCustodyRequested())
+			if (bundle._procflags & Bundle::CUSTODY_REQUESTED)
 			{
 				// send a custody signal with accept flag
-				CustodySignalBlock *signal = PayloadBlockFactory::newCustodySignalBlock(true);
+				CustodySignalBlock *signal = new CustodySignalBlock();
+
+				// set the bundle to match
 				signal->setMatch(bundle);
 
-				Bundle *b = BundleFactory::getInstance().newBundle();
-				b->appendBlock(signal);
+				// set accepted
+				if (!(signal->_status & 1)) signal->_status += 1;
 
-				b->setDestination(bundle.getCustodian());
-				b->setSource(BundleCore::getInstance().getLocalURI());
+				// create a new bundle
+				Bundle b;
+				b.addBlock(signal);
+
+				b._destination = bundle._custodian;
+				b._source = BundleCore::local;
 
 				// raise the custody accepted event
-				EventSwitch::raiseEvent(new RouteEvent(*b, ROUTE_PROCESS_BUNDLE));
-				delete b;
+				EventSwitch::raiseEvent(new RouteEvent(b, ROUTE_PROCESS_BUNDLE));
 			}
 		}
 
 		void CustodyManager::rejectCustody(const Bundle &bundle)
 		{
-			if (bundle.getCustodian() == "dtn:none") return;
+			if (bundle._custodian == EID()) return;
 
-			if (bundle.getPrimaryFlags().isCustodyRequested())
+			if (bundle._procflags & Bundle::CUSTODY_REQUESTED)
 			{
-				// send a custody signal with reject flag
-				CustodySignalBlock *signal = PayloadBlockFactory::newCustodySignalBlock(false);
+				// send a custody signal with accept flag
+				CustodySignalBlock *signal = new CustodySignalBlock();
+
+				// set the bundle to match
 				signal->setMatch(bundle);
 
-				Bundle *b = BundleFactory::getInstance().newBundle();
-				b->appendBlock(signal);
+				// create a new bundle
+				Bundle b;
+				b.addBlock(signal);
 
-				b->setDestination(bundle.getCustodian());
-				b->setSource(BundleCore::getInstance().getLocalURI());
+				b._destination = bundle._custodian;
+				b._source = BundleCore::local;
 
 				// raise the custody accepted event
-				EventSwitch::raiseEvent(new RouteEvent(*b, ROUTE_PROCESS_BUNDLE));
-				delete b;
+				EventSwitch::raiseEvent(new RouteEvent(b, ROUTE_PROCESS_BUNDLE));
 			}
 		}
 
-		void CustodyManager::tick()
+		void CustodyManager::run()
 		{
-			checkCustodyTimer();
-			m_breakwait.wait();
-		}
-
-		void CustodyManager::terminate()
-		{
-			m_breakwait.signal();
+			while (_running)
+			{
+				checkCustodyTimer();
+				m_breakwait.wait();
+				yield();
+			}
 		}
 
 		void CustodyManager::setTimer(const Bundle &bundle, unsigned int time, unsigned int attempt)
 		{
-			MutexLock l(m_custodylock);
+			dtn::utils::MutexLock l(m_custodylock);
 
 			// create a new timer
-			CustodyTimer timer(bundle, BundleFactory::getDTNTime() + time, attempt);
+			CustodyTimer timer(bundle, Utils::get_current_dtn_time() + time, attempt);
 
 			// sorted insert: the next expiring timer is at the end
 			list<CustodyTimer>::iterator iter = m_custodytimer.begin();
@@ -150,7 +160,7 @@ namespace dtn
 
 		const Bundle CustodyManager::removeTimer(const CustodySignalBlock &block)
 		{
-			MutexLock l(m_custodylock);
+			dtn::utils::MutexLock l(m_custodylock);
 
 			// search for the timer match the signal
 			list<CustodyTimer>::iterator iter = m_custodytimer.begin();
@@ -175,7 +185,7 @@ namespace dtn
 
 		void CustodyManager::checkCustodyTimer()
 		{
-			unsigned int currenttime = BundleFactory::getDTNTime();
+			unsigned int currenttime = Utils::get_current_dtn_time();
 
 			// wait till a timeout of a custody timer
 			if ( m_nextcustodytimer > currenttime ) return;
@@ -183,7 +193,7 @@ namespace dtn
 			// wait a hour for a new check (or till a new timer is created)
 			m_nextcustodytimer = currenttime + 3600;
 
-			MutexLock l(m_custodylock);
+			m_custodylock.enter();
 
 			list<CustodyTimer> totrigger;
 
@@ -192,7 +202,7 @@ namespace dtn
 				// the list is sorted, so only watch on the last item
 				CustodyTimer &timer = m_custodytimer.back();
 
-				if (timer.getTime() > BundleFactory::getDTNTime())
+				if (timer.getTime() > Utils::get_current_dtn_time())
 				{
 					m_nextcustodytimer = timer.getTime();
 					break;
@@ -205,7 +215,7 @@ namespace dtn
 				m_custodytimer.pop_back();
 			}
 
-			m_custodylock.leaveMutex();
+			m_custodylock.leave();
 
 			list<CustodyTimer>::iterator iter = totrigger.begin();
 			while (iter != totrigger.end())

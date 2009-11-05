@@ -1,7 +1,7 @@
 #ifndef MEASUREMENTTESTSUITE_H_
 #define MEASUREMENTTESTSUITE_H_
 
-#include "config.h"
+#include "ibrdtn/default.h"
 
 #ifdef USE_EMMA_CODE
 
@@ -14,7 +14,7 @@ namespace dtn
 			public:
 				MeasurementTestSuite();
 
-				~MeasurementTestSuite();
+				virtual ~MeasurementTestSuite();
 
 				bool runAllTests();
 

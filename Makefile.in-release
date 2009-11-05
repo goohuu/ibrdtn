@@ -7,8 +7,15 @@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 
+# SVN Version
+SVNDEF := -D'SVN_REV="$(shell cat REVISION)"'
+
 # 64bit fix
-CFLAGS += -fPIC -O3
+CFLAGS += -fPIC -O3 $(SVNDEF)
+
+# api sources
+API_OBJ := $(patsubst %.cpp,%.o, $(wildcard @srcdir@/src/api/*.cpp))
+API_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(API_OBJ) ) )
 
 # utils sources
 UTILS_OBJ := $(patsubst %.cpp,%.o, $(wildcard @srcdir@/src/utils/*.cpp))
@@ -18,48 +25,83 @@ UTILS_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%
 DATA_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/data/*.cpp))
 DATA_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DATA_OBJ) ) )
 
+# streams sources
+STREAMS_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/streams/*.cpp))
+STREAMS_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(STREAMS_OBJ) ) )
+
 # core sources
 CORE_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/core/*.cpp))
 CORE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(CORE_OBJ) ) )
+
+# api sources
+API_OBJ := $(patsubst %.cpp,%.o, $(wildcard @srcdir@/src/api/*.cpp))
+API_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(API_OBJ) ) )
+
+# net sources
+NET_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/net/*.cpp))
+NET_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(NET_OBJ) ) )
 
 # daemon sources
 DAEMON_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/daemon/*.cpp))
 DAEMON_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DAEMON_OBJ) ) )
 
-ifeq (@WITH_EMMA@,emma)
-	WITH_EMMA := emma
-	EMMA_LIB := -librdtn-emma
-endif
-
-# emma sources
-EMMA_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/emma/*.cpp))
-EMMA_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(EMMA_OBJ) ) )
-
-
 # Main target
-all: dtnd
+all: dtnd dtnping iptunnel
 
 # build directory
-BUILD_DIRS := @builddir@/bin @builddir@/obj @builddir@/lib @builddir@/obj/utils @builddir@/obj/data @builddir@/obj/core @builddir@/obj/emma @builddir@/obj/daemon
+BUILD_DIRS := 	@builddir@/bin \
+				@builddir@/lib \
+				@builddir@/obj \
+				@builddir@/obj/apps \
+				@builddir@/obj/api \
+				@builddir@/obj/streams \
+				@builddir@/obj/utils \
+				@builddir@/obj/data \
+				@builddir@/obj/core \
+				@builddir@/obj/net \
+				@builddir@/obj/daemon
 
 # create a build directory
 builddirs:
 	mkdir -p $(BUILD_DIRS)
 	
-utils: builddirs $(UTILS_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -shared $(UTILS_BUILD_OBJ) -o"@builddir@/lib/libibrdtn-utils.so"
-	
-data: utils $(DATA_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -shared -o"@builddir@/lib/libibrdtn-data.so" $(DATA_BUILD_OBJ)
-	
-core: utils data $(CORE_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -shared -o"@builddir@/lib/libibrdtn-core.so" $(CORE_BUILD_OBJ)
+libdata: builddirs $(UTILS_BUILD_OBJ) $(DATA_BUILD_OBJ) $(STREAMS_BUILD_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-shared \
+		$(UTILS_BUILD_OBJ) $(DATA_BUILD_OBJ) $(STREAMS_BUILD_OBJ) \
+		-o"@builddir@/lib/libibrdtn-data.so"
 
-emma: utils data core $(EMMA_BUILD_OBJ) 
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core -shared -o"@builddir@/lib/libibrdtn-emma.so" $(EMMA_BUILD_OBJ)
+libclient: libdata $(API_BUILD_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-shared \
+		$(API_BUILD_OBJ) \
+		-o"@builddir@/lib/libibrdtn-client.so"
 
-dtnd: utils data core $(WITH_EMMA) $(DAEMON_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -Wl,-rpath,@libdir@:@builddir@/lib -L@builddir@/lib/ -librdtn-utils -librdtn-data -librdtn-core $(EMMA_LIB) -o"@builddir@/bin/dtnd" $(DAEMON_BUILD_OBJ)
+dtnping: libdata libclient @builddir@/obj/apps/dtnping.o
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnping.o \
+		-Wl,-rpath,@libdir@:@builddir@/lib \
+		-o"@builddir@/bin/dtnping"
+		
+iptunnel: libdata libclient @builddir@/obj/apps/iptunnel.o
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		$(API_BUILD_OBJ) @builddir@/obj/apps/iptunnel.o \
+		-Wl,-rpath,@libdir@:@builddir@/lib \
+		-o"@builddir@/bin/iptunnel"
+
+dtnd: libdata $(NET_BUILD_OBJ) $(CORE_BUILD_OBJ) $(DAEMON_BUILD_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-librdtn-data \
+		$(NET_BUILD_OBJ) $(CORE_BUILD_OBJ) $(DAEMON_BUILD_OBJ) \
+		-Wl,-rpath,@libdir@:@builddir@/lib \
+		-o"@builddir@/bin/dtnd"
 	
 @builddir@/obj/%.o: @srcdir@/src/%.cpp
 	$(CXX) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $< -o $@
@@ -69,19 +111,34 @@ clean:
 	rm -rf @builddir@/lib
 	rm -rf @builddir@/bin
 
-install: install-libs install-devel dtnd
+distclean: clean
+	rm -rf Makefile
+	rm -rf include/ibrdtn/config.h
+
+selftest: testsuite
+	LD_LIBRARY_PATH=@builddir@/lib @builddir@/bin/testsuite
+
+install: install-lib
 	cp @builddir@/bin/dtnd @prefix@/bin
+	cp @builddir@/bin/dtnping @prefix@/bin
 	
 uninstall:
 	rm -rf @prefix@/bin/dtnd
+	rm -rf @prefix@/bin/dtnping
 	rm -rf @libdir@/libibrdtn-*.so
 	rm -rf @includedir@/ibrdtn
 	
-install-libs:
+install-lib:
 	cp @builddir@/lib/*.so @libdir@
+	chmod 755 @libdir@/libibrdtn-*.so
 
-install-devel: install-libs
+install-dev: install-lib
 	mkdir -p @includedir@/ibrdtn
-	cp -R @srcdir@/include/utils @includedir@/ibrdtn/
-	cp -R @srcdir@/include/data @includedir@/ibrdtn/
-	cp -R @srcdir@/include/core @includedir@/ibrdtn/
+	cp -R @srcdir@/include/ibrdtn/api @includedir@/ibrdtn/api
+	cp -R @srcdir@/include/ibrdtn/data @includedir@/ibrdtn/data
+	cp -R @srcdir@/include/ibrdtn/streams @includedir@/ibrdtn/streams
+	cp -R @srcdir@/include/ibrdtn/utils @includedir@/ibrdtn/utils
+	cp @srcdir@/include/ibrdtn/config.h @includedir@/ibrdtn
+	cp @srcdir@/include/ibrdtn/default.h @includedir@/ibrdtn
+
+	

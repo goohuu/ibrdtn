@@ -1,48 +1,36 @@
 #ifndef ABSTRACTWORKER_H_
 #define ABSTRACTWORKER_H_
 
-#include "core/BundleCore.h"
-#include "core/ConvergenceLayer.h"
-#include "data/Bundle.h"
-#include "core/EventSwitch.h"
-#include "core/RouteEvent.h"
+#include "ibrdtn/default.h"
+#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/EID.h"
+#include "ibrdtn/utils/Mutex.h"
+#include "net/ConvergenceLayer.h"
+
 using namespace dtn::data;
 
 namespace dtn
 {
 	namespace core
 	{
-		class AbstractWorker
+		class AbstractWorker : public dtn::utils::Mutex
 		{
 			public:
-				AbstractWorker(const string uri) : m_uri(uri)
-				{
-					BundleCore &core = BundleCore::getInstance();
+				AbstractWorker();
 
-					// Registriere mich als Knoten der Bundle empfangen kann
-					core.registerSubNode( getWorkerURI(), this );
-				};
+				AbstractWorker(const string uri);
 
-				virtual ~AbstractWorker() {
-					BundleCore &core = BundleCore::getInstance();
-					core.unregisterSubNode( getWorkerURI() );
-				};
+				virtual ~AbstractWorker();
 
-				virtual const string getWorkerURI() const
-				{
-					return m_uri;
-				}
+				virtual const EID getWorkerURI() const;
 
-				virtual TransmitReport callbackBundleReceived(const Bundle &b) = 0;
+				virtual dtn::net::TransmitReport callbackBundleReceived(const Bundle &b) = 0;
 
 			protected:
-				void transmit(const Bundle &bundle)
-				{
-					EventSwitch::raiseEvent(new RouteEvent(bundle, ROUTE_PROCESS_BUNDLE));
-				}
+				void transmit(const Bundle &bundle);
 
 			private:
-				string m_uri;
+				EID m_uri;
 		};
 	}
 }

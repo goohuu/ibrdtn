@@ -1,30 +1,49 @@
 #!/bin/bash
 #
 
+# check version
 if [ "$1" == "" ]; then
 	VERSION=test
 else
 	VERSION=$1
 fi
 
-if [ "$2" == "" ]; then
+# check target path
+if [ "$3" == "" ]; then
 	TARGET=..
 else
-	TARGET=$2
+	TARGET=$3
 fi
 
-RELEASE_DIR=$TARGET/ibrdtn-$VERSION
+# check revision
+if [ "$2" == "" ]; then
+	REVISION="none"
+else
+	REVISION=$2
+fi
+
+FQN=ibrdtn-$VERSION
+if [ "$REVISION" != "none" ]; then
+	FQN+="-r$REVISION"
+fi
+
+RELEASE_DIR=$TARGET/$FQN
 
 echo "copy prerequisits"
 mkdir $RELEASE_DIR
 cp configure.in $RELEASE_DIR/
 cp Makefile.in-release $RELEASE_DIR/Makefile.in
 
+if [ "$REVISION" != "none" ]; then
+	echo $REVISION > $RELEASE_DIR/REVISION
+fi
+
+
 # copy include
 echo "copy include"
 cp -R include/ $RELEASE_DIR/
 rm -rf $RELEASE_DIR/include/testsuite
-rm $RELEASE_DIR/include/config.h
+rm $RELEASE_DIR/include/ibrdtn/config.h
 
 # copy source
 echo "copy source"
@@ -32,21 +51,26 @@ cp -R src/ $RELEASE_DIR/
 rm -rf $RELEASE_DIR/src/testsuite
 
 # copy default database
-echo "copy default database"
-cp database-clean.db $RELEASE_DIR/database.db
+#echo "copy default database"
+#cp database-clean.db $RELEASE_DIR/database.db
 
 # copy doxygen
 echo "doxygen"
-cp ibrdtn.doxygen $RELEASE_DIR/
+cp api.doxygen $RELEASE_DIR/
 
 # copy default config
 echo "default config"
 mkdir $RELEASE_DIR/etc
 cp etc/default-config.ini $RELEASE_DIR/etc/default.ini
 
+# copy LICENSE
+echo "copy license"
+cp LICENSE $RELEASE_DIR/
+
 # run autoconf
 echo "run autoconf"
 cd $RELEASE_DIR/
+autoheader
 autoconf --include=include
 rm configure.in
 rm -rf autom4te.cache
@@ -55,8 +79,13 @@ rm -rf autom4te.cache
 echo "remove all .svn directories"
 rm -rf `find . -name .svn`
 
+# make doxygen for API
+#mkdir doc
+#doxygen api.doxygen
+#rm api.doxygen
+
 # make a archive
 echo "make a archive"
 cd ..
-tar czf ibrdtn-$VERSION.tar.gz ibrdtn-$VERSION/
+tar czf $FQN.tar.gz $FQN/
 

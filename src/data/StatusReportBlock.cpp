@@ -1,264 +1,118 @@
-#include "data/StatusReportBlock.h"
-#include "data/SDNV.h"
-#include "data/BundleFactory.h"
-#include <cstdlib>
-#include <cstring>
+/*
+ * StatusReportBlock.cpp
+ *
+ *  Created on: 05.06.2009
+ *      Author: morgenro
+ */
 
+#include "ibrdtn/data/StatusReportBlock.h"
+#include "ibrdtn/streams/BundleStreamWriter.h"
+#include "ibrdtn/data/SDNV.h"
+#include <stdlib.h>
+#include <sstream>
 
-namespace dtn
+namespace dtn {
+namespace data
 {
-	namespace data
+	StatusReportBlock::StatusReportBlock()
+	 : PayloadBlock(blob::BLOBManager::BLOB_MEMORY), _admfield(16), _status(0), _reasoncode(0),
+	 _fragment_offset(0), _fragment_length(0), _timeof_receipt(0),
+	 _timeof_custodyaccept(0), _timeof_forwarding(0), _timeof_delivery(0),
+	 _timeof_deletion(0), _bundle_timestamp(0), _bundle_sequence(0)
 	{
-		StatusReportBlock::StatusReportBlock(Block *block) : AdministrativeBlock(block, STATUS_REPORT)
-		{
-
-		}
-
-		StatusReportBlock::StatusReportBlock(NetworkFrame *frame) : AdministrativeBlock(frame, STATUS_REPORT)
-		{
-			// get the fieldmapping of the frame
-			map<unsigned int, unsigned int> &mapping = frame->getFieldSizeMap();
-
-			// get payload for parsing
-			unsigned char *data = PayloadBlock::getPayload();
-
-			// field index of the body
-			unsigned int position = Block::getBodyIndex();
-
-			// current field length
-			unsigned int len = 0;
-
-			// first field is administrative TypeCode 4bit + RecordFlags 4bit
-			mapping[position] = 1;
-			position++;
-			data++;
-
-			// Status Flags (1 byte)
-			mapping[position] = 1;
-			position++;
-			data++;
-
-			// Reason Code (1 byte)
-			mapping[position] = 1;
-			position++;
-			data++;
-
-			// start at time of signal field for decoding
-			unsigned int fields = STATUSREPORT_TIMEOF_RECEIPT;
-
-			// start 2 field earlier if we have fragmentation fields
-			if ( forFragment() )
-			{
-				fields -= 2;
-			}
-
-			for (int i = fields; i < STATUSREPORT_BUNDLE_SOURCE; i++)
-			{
-				len = SDNV::len(data);
-				mapping[position] = len;
-				position++;
-				data += len;
-			}
-
-			// the length of the next field is the value of the previous field
-			mapping[position] = frame->getSDNV(position - 1);
-
-			// update the size of the frame
-			frame->updateSize();
-		}
-
-		StatusReportBlock::~StatusReportBlock()
-		{
-		}
-
-		unsigned int StatusReportBlock::getField(STATUSREPORT_FIELDS field) const
-		{
-			unsigned int ret = getBodyIndex();
-
-			if ( (field > STATUSREPORT_FRAGMENT_LENGTH) && (!forFragment()) )
-			{
-				ret -= 2;
-			}
-
-			return ret + field;
-		}
-
-		unsigned int StatusReportBlock::getFragmentOffset() const
-		{
-			if ( !forFragment() ) return 0;
-			return getFrame().getSDNV( getField(STATUSREPORT_FRAGMENT_OFFSET) );
-		}
-
-		void StatusReportBlock::setFragmentOffset(unsigned int value)
-		{
-			NetworkFrame &frame = getFrame();
-
-			if ( !forFragment() )
-			{
-				// create fragmentation fields
-				frame.insert(getField(STATUSREPORT_FRAGMENT_OFFSET));
-				frame.insert(getField(STATUSREPORT_FRAGMENT_LENGTH));
-
-				// set the fragmentation flag
-				ProcessingFlags flags = getStatusFlags();
-				flags.setFlag(0, true);
-				setStatusFlags(flags);
-			}
-
-			frame.set(getField(STATUSREPORT_FRAGMENT_OFFSET), value);
-		}
-
-		unsigned int StatusReportBlock::getFragmentLength() const
-		{
-			if ( !forFragment() ) return 0;
-			return getFrame().getSDNV( getBodyIndex() + 4 );
-		}
-
-		void StatusReportBlock::setFragmentLength(unsigned int value)
-		{
-			NetworkFrame &frame = getFrame();
-
-			if ( !forFragment() )
-			{
-				// create fragmentation fields
-				frame.insert(getField(STATUSREPORT_FRAGMENT_OFFSET));
-				frame.insert(getField(STATUSREPORT_FRAGMENT_LENGTH));
-
-				// set the fragmentation flag
-				ProcessingFlags flags = getStatusFlags();
-				flags.setFlag(0, true);
-				setStatusFlags(flags);
-			}
-
-			frame.set(getField(STATUSREPORT_FRAGMENT_LENGTH), value);
-		}
-
-		bool StatusReportBlock::forFragment() const
-		{
-			return getStatusFlags().getFlag( 0 );
-		}
-
-		ProcessingFlags StatusReportBlock::getReasonCode() const
-		{
-			return ProcessingFlags( getFrame().getChar( getField(STATUSREPORT_REASON) ) );
-		}
-
-		void StatusReportBlock::setReasonCode(ProcessingFlags value)
-		{
-			getFrame().set( getField(STATUSREPORT_REASON), value.getValue() );
-		}
-
-		unsigned int StatusReportBlock::getTimeOfReceipt() const
-		{
-			return getFrame().getSDNV( getField(STATUSREPORT_TIMEOF_RECEIPT) );
-		}
-
-		void StatusReportBlock::setTimeOfReceipt(unsigned int value)
-		{
-			getFrame().set( getField(STATUSREPORT_TIMEOF_RECEIPT), value );
-		}
-
-		// Time of custody acceptance of bundle
-		unsigned int StatusReportBlock::getTimeOfCustodyAcceptance() const
-		{
-			return getFrame().getSDNV( getField(STATUSREPORT_TIMEOF_CUSTODYACCEPT) );
-		}
-		void StatusReportBlock::setTimeOfCustodyAcceptance(unsigned int value)
-		{
-			getFrame().set( getField(STATUSREPORT_TIMEOF_CUSTODYACCEPT), value );
-		}
-
-		// Time of forwarding of bundle
-		unsigned int StatusReportBlock::getTimeOfForwarding() const
-		{
-			return getFrame().getSDNV( getField(STATUSREPORT_TIMEOF_FORWARDING) );
-		}
-		void StatusReportBlock::setTimeOfForwarding(unsigned int value)
-		{
-			getFrame().set( getField(STATUSREPORT_TIMEOF_FORWARDING), value );
-		}
-
-		// Time of delivery of bundle
-		unsigned int StatusReportBlock::getTimeOfDelivery() const
-		{
-			return getFrame().getSDNV( getField(STATUSREPORT_TIMEOF_DELIVERY) );
-		}
-		void StatusReportBlock::setTimeOfDelivery(unsigned int value)
-		{
-			getFrame().set( getField(STATUSREPORT_TIMEOF_DELIVERY), value );
-		}
-
-		// Time of deletion
-		unsigned int StatusReportBlock::getTimeOfDeletion() const
-		{
-			return getFrame().getSDNV( getField(STATUSREPORT_TIMEOF_DELETION) );
-		}
-		void StatusReportBlock::setTimeOfDeletion(unsigned int value)
-		{
-			getFrame().set( getField(STATUSREPORT_TIMEOF_DELETION), value );
-		}
-
-		void StatusReportBlock::setCreationTimestamp(unsigned int value)
-		{
-			getFrame().set( getField(STATUSREPORT_BUNDLE_TIMESTAMP), value );
-		}
-
-		unsigned int StatusReportBlock::getCreationTimestamp() const
-		{
-			return getFrame().getSDNV( getField(STATUSREPORT_BUNDLE_TIMESTAMP) );
-		}
-
-		void StatusReportBlock::setCreationTimestampSequence(unsigned int value)
-		{
-			getFrame().set( getField(STATUSREPORT_BUNDLE_SEQUENCE), value );
-		}
-
-		unsigned int StatusReportBlock::getCreationTimestampSequence() const
-		{
-			return getFrame().getSDNV( getField(STATUSREPORT_BUNDLE_SEQUENCE) );
-		}
-
-		void StatusReportBlock::setSource(string value)
-		{
-			NetworkFrame &frame = Block::getFrame();
-			frame.set(getField(STATUSREPORT_BUNDLE_SOURCE_LENGTH), value.length());
-			frame.set(getField(STATUSREPORT_BUNDLE_SOURCE), value);
-		}
-
-		string StatusReportBlock::getSource() const
-		{
-			NetworkFrame &frame = Block::getFrame();
-			return frame.getString(getField(STATUSREPORT_BUNDLE_SOURCE));
-		}
-
-		bool StatusReportBlock::match(const Bundle &b) const
-		{
-			// check the fragmentation fields if necessary
-			if ( b.getPrimaryFlags().isFragment() )
-			{
-				if ( b.getInteger( FRAGMENTATION_OFFSET ) != getFragmentOffset() ) return false;
-				if ( b.getInteger( APPLICATION_DATA_LENGTH ) != getFragmentLength() ) return false;
-			}
-
-			if ( b.getInteger( CREATION_TIMESTAMP ) != getCreationTimestamp() ) return false;
-			if ( b.getInteger( CREATION_TIMESTAMP_SEQUENCE ) != getCreationTimestampSequence() ) return false;
-			if ( b.getSource() != getSource() ) return false;
-
-			return true;
-		}
-
-		void StatusReportBlock::setMatch(const Bundle &b)
-		{
-			if (b.getPrimaryFlags().isFragment())
-			{
-				setFragmentOffset( b.getInteger(FRAGMENTATION_OFFSET) );
-				setFragmentLength( b.getInteger(APPLICATION_DATA_LENGTH) );
-			}
-			setCreationTimestamp( b.getInteger(CREATION_TIMESTAMP) );
-			setCreationTimestampSequence( b.getInteger(CREATION_TIMESTAMP_SEQUENCE) );
-			setSource( b.getSource() );
-
-			updateBlockSize();
-		}
 	}
+
+	StatusReportBlock::StatusReportBlock(Block *block)
+	 : PayloadBlock(block->getBLOBReference()), _admfield(16), _status(0), _reasoncode(0),
+	 _fragment_offset(0), _fragment_length(0), _timeof_receipt(0),
+	 _timeof_custodyaccept(0), _timeof_forwarding(0), _timeof_delivery(0),
+	 _timeof_deletion(0), _bundle_timestamp(0), _bundle_sequence(0)
+	{
+		read();
+	}
+
+	StatusReportBlock::StatusReportBlock(BLOBReference ref)
+	 : PayloadBlock(ref), _admfield(16), _status(0), _reasoncode(0),
+	 _fragment_offset(0), _fragment_length(0), _timeof_receipt(0),
+	 _timeof_custodyaccept(0), _timeof_forwarding(0), _timeof_delivery(0),
+	 _timeof_deletion(0), _bundle_timestamp(0), _bundle_sequence(0)
+	{
+	}
+
+	StatusReportBlock::~StatusReportBlock()
+	{
+	}
+
+	void StatusReportBlock::read()
+	{
+		// read the attributes out of the BLOBReference
+		BLOBReference ref = Block::getBLOBReference();
+		size_t remain = ref.getSize();
+		char buffer[remain];
+
+		// read the data into the buffer
+		ref.read(buffer, 0, remain);
+
+		// make a useable pointer
+		char *data = buffer;
+
+		SDNV value = 0;
+		size_t len = 0;
+
+		_admfield = data[0]; 	remain--; data++;
+		_status = data[0]; 		remain--; data++;
+
+		if ( _admfield & 0x01 )
+		{
+			len = _fragment_offset.decode(data, remain); remain -= len; data += len;
+			len = _fragment_length.decode(data, remain); remain -= len; data += len;
+		}
+
+		len = _timeof_receipt.decode(data, remain); remain -= len; data += len;
+		len = _timeof_custodyaccept.decode(data, remain); remain -= len; data += len;
+		len = _timeof_forwarding.decode(data, remain); remain -= len; data += len;
+		len = _timeof_delivery.decode(data, remain); remain -= len; data += len;
+		len = _timeof_deletion.decode(data, remain); remain -= len; data += len;
+		len = _bundle_timestamp.decode(data, remain); remain -= len; data += len;
+		len = _bundle_sequence.decode(data, remain); remain -= len; data += len;
+		len = value.decode(data, remain); remain -= len; data += len;
+
+		string source;
+		source.assign(data, remain);
+		_source = EID(source);
+	}
+
+	void StatusReportBlock::commit()
+	{
+		stringstream ss;
+		dtn::streams::BundleStreamWriter w(ss);
+
+		w.write(_admfield);
+		w.write(_status);
+
+		if ( _admfield & 0x01 )
+		{
+			w.write(_fragment_offset);
+			w.write(_fragment_length);
+		}
+
+		w.write(_timeof_receipt);
+		w.write(_timeof_custodyaccept);
+		w.write(_timeof_forwarding);
+		w.write(_timeof_delivery);
+		w.write(_timeof_deletion);
+		w.write(_bundle_timestamp);
+		w.write(_bundle_sequence);
+		w.write(_source.getString().length());
+		w.write(_source.getString());
+
+		// clear the blob
+		BLOBReference ref = Block::getBLOBReference();
+		ref.clear();
+
+		// copy the content of ss to the blob
+		string data = ss.str();
+		ref.append(data.c_str(), data.length());
+	}
+}
 }

@@ -8,15 +8,13 @@
 #ifndef ROUTEEVENT_H_
 #define ROUTEEVENT_H_
 
-#include <string>
-#include "data/Bundle.h"
+#include "ibrdtn/default.h"
+#include "ibrdtn/data/Bundle.h"
 #include "core/Event.h"
-#include "core/BundleSchedule.h"
 #include "core/Node.h"
 
 using namespace dtn::data;
 using namespace dtn::core;
-using namespace std;
 
 namespace dtn
 {
@@ -31,7 +29,7 @@ namespace dtn
 		{
 		public:
 			RouteEvent(const Bundle &bundle, const EventRouteAction action);
-			~RouteEvent();
+			virtual ~RouteEvent();
 
 			EventRouteAction getAction() const;
 			const Bundle& getBundle() const;

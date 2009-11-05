@@ -5,16 +5,11 @@
  *      Author: morgenro
  */
 
-#include "config.h"
-
 #ifndef TIMEEVENT_H_
 #define TIMEEVENT_H_
 
-
-#include <string>
+#include "ibrdtn/default.h"
 #include "core/Event.h"
-
-using namespace std;
 
 namespace dtn
 {
@@ -29,7 +24,7 @@ namespace dtn
 		{
 		public:
 			TimeEvent(const size_t timestamp, const TimeEventAction action);
-			~TimeEvent();
+			virtual ~TimeEvent();
 
 			TimeEventAction getAction() const;
 			size_t getTimestamp() const;

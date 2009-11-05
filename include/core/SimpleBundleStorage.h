@@ -1,37 +1,32 @@
 #ifndef SIMPLEBUNDLESTORAGE_H_
 #define SIMPLEBUNDLESTORAGE_H_
 
+#include "ibrdtn/default.h"
+
 #include "core/BundleCore.h"
-#include "core/AbstractBundleStorage.h"
+#include "core/BundleStorage.h"
 #include "core/Node.h"
-#include "data/Bundle.h"
-#include "data/DefragmentContainer.h"
-#include "utils/Service.h"
-#include "utils/MutexLock.h"
-#include "utils/Mutex.h"
-#include "utils/Conditional.h"
-#include <list>
-#include <map>
+#include "ibrdtn/utils/WaitForConditional.h"
+#include "core/EventReceiver.h"
+
+#include "ibrdtn/data/Bundle.h"
 
 using namespace dtn::data;
-using namespace dtn::utils;
 
 namespace dtn
 {
 	namespace core
 	{
 		/**
-		 * This storage holds all bundles, fragments and schedules in the system memory.
+		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public Service, public AbstractBundleStorage
+		class SimpleBundleStorage : public dtn::utils::JoinableThread, public BundleStorage, public EventReceiver
 		{
 		public:
 			/**
 			 * Constructor
-			 * @param[in] size Size of the memory storage in kBytes. (e.g. 1024*1024 = 1MB)
-			 * @param[in] bundle_maxsize Maximum size of one bundle in bytes.
 			 */
-			SimpleBundleStorage(unsigned int size = 1024 * 1024, unsigned int bundle_maxsize = 1024);
+			SimpleBundleStorage();
 
 			/**
 			 * Destructor
@@ -39,24 +34,25 @@ namespace dtn
 			virtual ~SimpleBundleStorage();
 
 			/**
-			 * @sa AbstractBundleStorage::store(BundleSchedule &schedule)
+			 * Stores a bundle in the storage.
+			 * @param bundle The bundle to store.
 			 */
-			void store(const BundleSchedule &schedule);
+			virtual void store(const dtn::data::Bundle &bundle);
 
 			/**
-			 * @sa storeFragment();
+			 * This method returns a specific bundle which is identified by
+			 * its id.
+			 * @param id The ID of the bundle to return.
+			 * @return A bundle object of the
 			 */
-			Bundle* storeFragment(const Bundle &bundle);
+			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
 
 			/**
-			 * @sa getSchedule(unsigned int dtntime)
+			 * This method deletes a specific bundle in the storage.
+			 * No reports will be generated here.
+			 * @param id The ID of the bundle to remove.
 			 */
-			BundleSchedule getSchedule(unsigned int dtntime);
-
-			/**
-			 * @sa getSchedule(string destination)
-			 */
-			BundleSchedule getSchedule(string destination);
+			void remove(const dtn::data::BundleID &id);
 
 			/**
 			 * @sa BundleStorage::clear()
@@ -64,54 +60,36 @@ namespace dtn
 			void clear();
 
 			/**
-			 * @sa BundleStorage::isEmpty()
+			 * @sa BundleStorage::empty()
 			 */
-			bool isEmpty();
+			bool empty();
 
 			/**
-			 * @sa BundleStorage::getCount()
+			 * @sa BundleStorage::count()
 			 */
-			unsigned int getCount();
+			unsigned int count();
+
+			/**
+			 * This method is used to receive events.
+			 * @param evt
+			 */
+			void raiseEvent(const Event *evt);
 
 		protected:
-			/**
-			 * @sa Service::tick()
-			 */
-			virtual void tick();
-
-			void terminate();
-
-			void eventNodeAvailable(const Node &node);
-			void eventNodeUnavailable(const Node &node);
+			virtual void run();
 
 		private:
-			list<BundleSchedule> m_schedules;
-			list<DefragmentContainer* > _fragments;
+			list<Bundle> _bundles;
+			list<list<Bundle> > _fragments;
 
-			/**
-			 * Try to find outdated bundles and delete them.
-			 * Additional a deleted report is created if necessary.
-			 */
-			void deleteDeprecated();
+//			/**
+//			 * Try to find outdated bundles and delete them.
+//			 * Additional a deleted report is created if necessary.
+//			 */
+//			void deleteDeprecated();
 
-			/**
-			 * A variable to hold the next timeout of a bundle in the storage.
-			 */
-			unsigned int m_nextdeprecation;
-
-			time_t m_last_compress;
-
-			unsigned int m_size;
-			unsigned int m_bundle_maxsize;
-
-			unsigned int m_currentsize;
-
-			bool m_nocleanup;
-
-			Mutex m_readlock;
-			Mutex m_fragmentslock;
-
-			map<string,Node> m_neighbours;
+			dtn::utils::WaitForConditional _timecond;
+			bool _running;
 		};
 	}
 }

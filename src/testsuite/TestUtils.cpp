@@ -1,9 +1,8 @@
 #include "testsuite/TestUtils.h"
-#include "data/PayloadBlockFactory.h"
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
-#include "utils/Utils.h"
+#include "ibrdtn/utils/Utils.h"
 
 namespace dtn
 {
@@ -27,28 +26,29 @@ namespace testsuite
 		return true;
 	}
 
-	Bundle* TestUtils::createTestBundle(unsigned int size)
+	Bundle TestUtils::createTestBundle(unsigned int size)
 	{
 		// Sende ein Testbundle
-		unsigned char *data = (unsigned char*)calloc(size, sizeof(unsigned char));
+		char *data = (char*)calloc(size, sizeof(char));
 
 		// DEADBEEF, DE = 222, AD = 173, BE = 190, EF = 239
-		unsigned char deadbeef[5];
-		deadbeef[0] = (unsigned char)(222);
-		deadbeef[1] = (unsigned char)(173);
-		deadbeef[2] = (unsigned char)(190);
-		deadbeef[3] = (unsigned char)(239);
-		deadbeef[4] = (unsigned char)(0);
+		char deadbeef[5];
+		deadbeef[0] = (char)(222);
+		deadbeef[1] = (char)(173);
+		deadbeef[2] = (char)(190);
+		deadbeef[3] = (char)(239);
+		deadbeef[4] = (char)(0);
 
 		for (unsigned int i = 0; i < size; i++)
 		{
 			data[i] = deadbeef[i % 5];
 		}
 
-		BundleFactory &fac = BundleFactory::getInstance();
+		dtn::data::Bundle out;
+		Block *block = new PayloadBlock(blob::BLOBManager::BLOB_HARDDISK);
+		block->getBLOBReference().append(data, size);
 
-		dtn::data::Bundle *out = fac.newBundle();
-		out->appendBlock( PayloadBlockFactory::newPayloadBlock(data, size) );
+		out.addBlock( block );
 		free(data);
 
 		return out;
@@ -66,90 +66,69 @@ namespace testsuite
 		//dtn::cout << "|" << endl;
 	}
 
-	bool TestUtils::compareBundles(Bundle *b1, Bundle *b2)
+	bool TestUtils::compareBundles(Bundle b1, Bundle b2)
 	{
 		bool ret = true;
 
-		dtn::data::PrimaryFlags pb1 = b1->getPrimaryFlags();
-		dtn::data::PrimaryFlags pb2 = b2->getPrimaryFlags();
-
-		if (pb1.getValue() != pb2.getValue())
+		if (b1._procflags != b2._procflags)
 		{
 			ret = false;
 			cout << "primary flags not equal." << endl;
 		}
 
-		if (pb1.isFragment())
+		if (b1._procflags & Bundle::FRAGMENT)
 		{
-			if (b1->getInteger(FRAGMENTATION_OFFSET) != b2->getInteger(FRAGMENTATION_OFFSET))
+			if (b1._fragmentoffset != b2._fragmentoffset)
 			{
 				ret = false;
 				cout << "fragmentation offset not equal." << endl;
 			}
 
-			if (b1->getInteger(APPLICATION_DATA_LENGTH) != b2->getInteger(APPLICATION_DATA_LENGTH))
+			if (b1._appdatalength != b2._appdatalength)
 			{
 				ret = false;
 				cout << "application data length not equal." << endl;
 			}
 		}
 
-		if (b1->getSource() != b2->getSource())
+		if (b1._source != b2._source)
 		{
 			ret = false;
 			cout << "source eid not equal." << endl;
 		}
 
-		if (b1->getDestination() != b2->getDestination())
+		if (b1._destination != b2._destination)
 		{
 			ret = false;
 			cout << "destination eid not equal." << endl;
 		}
 
-		if (b1->getReportTo() != b2->getReportTo())
+		if (b1._reportto != b2._reportto)
 		{
 			ret = false;
 			cout << "reportto eid not equal." << endl;
 		}
 
-		if (b1->getCustodian() != b2->getCustodian())
+		if (b1._custodian != b2._custodian)
 		{
 			ret = false;
 			cout << "custodian eid not equal." << endl;
 		}
 
-		dtn::data::PayloadBlock *p1 = b1->getPayloadBlock();
-		dtn::data::PayloadBlock *p2 = b2->getPayloadBlock();
+		dtn::data::PayloadBlock *p1 = utils::Utils::getPayloadBlock( b1 );
+		dtn::data::PayloadBlock *p2 = utils::Utils::getPayloadBlock( b2 );
 
-		if (p1->getLength() != p2->getLength())
+		if (p1->getSize() != p2->getSize())
 		{
 			ret = false;
 			cout << "size of payload not equal." << endl;
 		}
 
-		if (p1->getBlockFlags().getValue() != p2->getBlockFlags().getValue())
+		if (p1->_procflags != p2->_procflags)
 		{
 			ret = false;
 			cout << "block flags of the payload block not equal." << endl;
 		}
-
-		unsigned char *data1 = b1->getData();
-		unsigned char *data2 = b2->getData();
-
-		if ( !TestUtils::compareData(data1, data2, b1->getLength() ) )
-		{
-			ret = false;
-			cout << endl;
-			TestUtils::debugData(data1, 60);
-			cout << endl;
-			TestUtils::debugData(data2, 60);
-			cout << endl;
-
-			cout << "bundle data not equal!" << endl;
-		}
-
-		free(data1);
-		free(data2);
 
 		return ret;
 	}

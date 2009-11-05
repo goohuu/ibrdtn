@@ -8,14 +8,14 @@
 #ifndef BUNDLEEVENT_H_
 #define BUNDLEEVENT_H_
 
+#include "ibrdtn/default.h"
 #include <string>
-#include "data/Bundle.h"
+#include "ibrdtn/data/Bundle.h"
 #include "core/Event.h"
-#include "data/StatusReportBlock.h"
+#include "ibrdtn/data/StatusReportBlock.h"
 
 using namespace dtn::data;
 using namespace dtn::core;
-using namespace std;
 
 namespace dtn
 {
@@ -33,11 +33,11 @@ namespace dtn
 		class BundleEvent : public Event
 		{
 		public:
-			BundleEvent(const Bundle &bundle, EventBundleAction action, StatusReportReasonCode reason = NO_ADDITIONAL_INFORMATION);
+			BundleEvent(const Bundle &bundle, EventBundleAction action, StatusReportBlock::REASON_CODE reason = StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 
-			~BundleEvent();
+			virtual ~BundleEvent();
 
-			StatusReportReasonCode getReason() const;
+			StatusReportBlock::REASON_CODE getReason() const;
 			EventBundleAction getAction() const;
 			const Bundle& getBundle() const;
 			const string getName() const;
@@ -52,7 +52,7 @@ namespace dtn
 		private:
 			const Bundle m_bundle;
 			EventBundleAction m_action;
-			StatusReportReasonCode m_reason;
+			StatusReportBlock::REASON_CODE m_reason;
 		};
 	}
 }

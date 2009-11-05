@@ -48,7 +48,7 @@ namespace dtn
 
 		bool StaticRoute::match(const dtn::data::Bundle &b)
 		{
-			string dest = b.getDestination();
+			string dest = b._destination.getString();
 
 			switch (m_matchmode)
 			{

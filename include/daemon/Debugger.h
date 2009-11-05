@@ -1,6 +1,7 @@
 #ifndef DEBUGGER_H_
 #define DEBUGGER_H_
 
+#include "ibrdtn/default.h"
 #include "core/AbstractWorker.h"
 
 using namespace dtn::data;
@@ -22,9 +23,9 @@ namespace dtn
 		{
 			public:
 				Debugger() : AbstractWorker("/debugger") {};
-				~Debugger() {};
+				virtual ~Debugger() {};
 
-				TransmitReport callbackBundleReceived(const Bundle &b);
+				dtn::net::TransmitReport callbackBundleReceived(const Bundle &b);
 		};
 	}
 }

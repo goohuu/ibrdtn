@@ -8,12 +8,11 @@
 #ifndef NODEEVENT_H_
 #define NODEEVENT_H_
 
-#include <string>
+#include "ibrdtn/default.h"
 #include "core/Node.h"
 #include "core/Event.h"
 
 using namespace dtn::core;
-using namespace std;
 
 namespace dtn
 {
@@ -30,7 +29,7 @@ namespace dtn
 		{
 		public:
 			NodeEvent(const Node &n, const EventNodeAction action);
-			~NodeEvent();
+			virtual ~NodeEvent();
 
 			EventNodeAction getAction() const;
 			const Node& getNode() const;

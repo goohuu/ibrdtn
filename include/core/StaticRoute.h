@@ -1,7 +1,7 @@
 #ifndef STATICROUTE_H_
 #define STATICROUTE_H_
 
-#include "data/Bundle.h"
+#include "ibrdtn/data/Bundle.h"
 
 namespace dtn
 {
@@ -11,7 +11,7 @@ namespace dtn
 		{
 			public:
 			StaticRoute(string route, string dest);
-			~StaticRoute();
+			virtual ~StaticRoute();
 
 			bool match(const dtn::data::Bundle &b);
 			string getDestination();

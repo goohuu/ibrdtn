@@ -1,9 +1,9 @@
 #include "testsuite/StorageTestSuite.h"
 #include "core/SimpleBundleStorage.h"
-#include "data/BundleFactory.h"
+#include "ibrdtn/data/Exceptions.h"
 #include "testsuite/TestUtils.h"
 #include <iostream>
-#include "utils/Utils.h"
+#include "ibrdtn/utils/Utils.h"
 
 using namespace dtn::data;
 using namespace dtn::core;
@@ -25,78 +25,117 @@ namespace testsuite
 		bool ret = true;
 		cout << "StorageTestSuite... ";
 
-		if ( !testSimpleBundleStorage() )
+		// create a SimpleBundleStorage
+		SimpleBundleStorage storage;
+
+		if ( !testBundleStorage( storage ) )
 		{
-			cout << endl << "testSimpleBundleStorage failed" << endl;
+			cout << endl << "SimpleBundleStorage failed" << endl;
 			ret = false;
 		}
+
+//#ifdef HAVE_LIBSQLITE3
+//		SQLiteBundleStorage sqlite("database.db", true);
+//
+//		if ( !testBundleStorage( sqlite ) )
+//		{
+//			cout << endl << "SQLiteBundleStorage failed" << endl;
+//			ret = false;
+//		}
+//#endif
 
 		if (ret) cout << "\t\t\tpassed" << endl;
 
 		return ret;
 	}
 
-	bool StorageTestSuite::testSimpleBundleStorage()
+	bool StorageTestSuite::testBundleStorage(BundleStorage &storage)
 	{
 		bool ret = true;
 
-		// Erstelle eine SimpleBundleStorage
-		SimpleBundleStorage storage;
-
-		if (!fragmentationTest(storage))
+		if (!StoreAndRetrieveTest(storage))
 		{
-			cout << "Fragmentation Test for SimpleBundleStorage failed" << endl;
+			cout << "store'n'retrieve test failed" << endl;
+			ret = false;
+		}
+
+//		if (!fragmentationTest(storage))
+//		{
+//			cout << "fragmentation test failed" << endl;
+//			ret = false;
+//		}
+
+		return ret;
+	}
+
+	bool StorageTestSuite::StoreAndRetrieveTest(BundleStorage &storage)
+	{
+		bool ret = true;
+
+		Bundle b1;
+
+		for (int i = 0; i < 10; i++)
+		{
+			storage.store(b1);
+		}
+
+		try {
+			Bundle b2 = storage.get( BundleID(b1) );
+
+		} catch (dtn::exceptions::NoBundleFoundException ex) {
 			ret = false;
 		}
 
 		return ret;
 	}
 
-	bool StorageTestSuite::fragmentationTest(AbstractBundleStorage &storage)
-	{
-		bool ret = true;
-
-		// Erstelle ein Bündel
-		Bundle *origin = TestUtils::createTestBundle(18196);
-		Bundle *merged = NULL;
-
-		// Erzeuge dazu Fragmente
-		list<Bundle> fragments = BundleFactory::split(*origin, 1200);
-
-		unsigned int size = fragments.size();
-
-		for (unsigned int i = 0; i < size; i++)
-		{
-			if ( (i % 2) == 0 )
-			{
-				merged = storage.storeFragment( fragments.front() );
-				fragments.pop_front();
-			}
-			else
-			{
-				merged = storage.storeFragment( fragments.back() );
-				fragments.pop_back();
-			}
-		}
-
-		// Bei der Übergabe des letzten Fragments muss ein komplettes Bündel zurückgegeben werden
-		if (merged == NULL)
-		{
-			cout << "NULL returned" << endl;
-			ret = false;
-		}
-		else
-		{
-			if (!TestUtils::compareBundles(origin, merged))
-			{
-				ret = false;
-			}
-			delete merged;
-		}
-
-		delete origin;
-
-		return ret;
-	}
+//	bool StorageTestSuite::fragmentationTest(BundleStorage &storage)
+//	{
+//		// create a bundle
+//		Bundle origin = TestUtils::createTestBundle(1024);
+//		PayloadBlock *origin_payload = utils::Utils::getPayloadBlock(origin);
+//		size_t applength = origin_payload->getBLOBReference().getSize();
+//
+//		Bundle merged;
+//		list<Bundle> fragments;
+//		pair<PayloadBlock*, PayloadBlock*> blocks;
+//
+//		PayloadBlock *tail = origin_payload;
+//
+//		// create fragments of the bundle
+//		for (int i = 128; i <= 1024; i += 128)
+//		{
+//			pair<PayloadBlock*, PayloadBlock*> blocks = utils::Utils::split(tail, 128);
+//
+//			// do not delete the first tail object, it is origin_payload!
+//			if (i != 128) delete tail;
+//
+//			Bundle fbundle = origin;
+//
+//			fbundle._procflags += Bundle::FRAGMENT;
+//			fbundle._fragmentoffset = i - 128;
+//			fbundle._appdatalength = applength;
+//
+//			fbundle.clearBlocks();
+//			fbundle.addBlock(blocks.first);
+//
+//			// set the second part as tail
+//			tail = blocks.second;
+//
+//			try {
+//				Bundle m; storage.store( fbundle );
+//
+//				// delete the tail
+//				if (i != 128) delete tail;
+//
+//				// check m, it has to be equal to origin
+//				if (TestUtils::compareBundles(m, origin)) return true;
+//			} catch (exceptions::MissingObjectException ex) {
+//
+//			}
+//		}
+//
+//		return false;
+//	}
 }
 }

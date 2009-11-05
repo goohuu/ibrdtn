@@ -1,118 +1,83 @@
-#include "data/Block.h"
+/*
+ * Block.cpp
+ *
+ *  Created on: 04.06.2009
+ *      Author: morgenro
+ */
 
-#include "data/BundleFactory.h"
-#include "data/Exceptions.h"
-#include "data/SDNV.h"
-#include "data/Bundle.h"
+#include "ibrdtn/data/Block.h"
+#include "ibrdtn/streams/BundleStreamWriter.h"
+#include "ibrdtn/data/BLOBManager.h"
+#include <iostream>
+
+using namespace std;
 
 namespace dtn
 {
 	namespace data
 	{
-		Block::Block(Block *block) : m_processed(false), m_frame(block->m_frame)
-		{
-			block->dissociateNetworkFrame();
-			delete block;
-		}
-
-		Block::Block(NetworkFrame *frame) : m_processed(false), m_frame(frame)
+		Block::Block(char blocktype)
+		 : _procflags(0), _blocktype(blocktype), _blobref(blob::BLOBManager::_instance.create())
 		{
 		}
 
-		Block::Block(const Block &k)
-		: m_processed(k.m_processed), m_frame(new NetworkFrame(*k.m_frame))
-		{}
+		Block::Block(char blocktype, blob::BLOBManager::BLOB_TYPE type)
+		 : _procflags(0), _blocktype(blocktype), _blobref(blob::BLOBManager::_instance.create(type))
+		{
+		}
+
+		Block::Block(char blocktype, blob::BLOBReference ref)
+		: _procflags(0), _blocktype(blocktype), _blobref(ref)
+		{
+		}
 
 		Block::~Block()
 		{
-			if (m_frame != NULL) delete m_frame;
 		}
 
-		unsigned int Block::getBodyIndex() const
+		void Block::addEID(EID eid)
 		{
-			// BlockType + Processing Fields
-			unsigned int position = 3;
-
-			if ( getBlockFlags().getFlag(CONTAINS_EID_FIELD) )
-			{
-				// add count of EID references
-				position += m_frame->getSDNV( 2 ) * 2;
-
-				// and the field for the eid count
-				position++;
-			}
-
-			return position;
+			_eids.push_back(eid);
 		}
 
-		NetworkFrame& Block::getFrame() const
+		list<EID> Block::getEIDList() const
 		{
-			return *m_frame;
+			return _eids;
 		}
 
-		NetworkFrame* Block::dissociateNetworkFrame()
+		blob::BLOBReference Block::getBLOBReference()
 		{
-			NetworkFrame *frame = m_frame;
-			m_frame = NULL;
-			return frame;
+			return _blobref;
 		}
 
-		BlockFlags Block::getBlockFlags() const
+		size_t Block::writeHeader( dtn::streams::BundleWriter &writer ) const
 		{
-			// get the block processing flags
-			BlockFlags blockflags( m_frame->getSDNV(1) );
-			return blockflags;
+			size_t len = 0;
+			len += writer.write(_blocktype);
+			len += writer.write(_procflags);
+			len += writer.write( _blobref.getSize() );
+			return len;
 		}
 
-		void Block::setBlockFlags(BlockFlags flags)
+		size_t Block::getSize() const
 		{
-			m_frame->set(1, flags.getValue() );
+			dtn::streams::BundleStreamWriter writer(cout);
+			size_t len = 0;
+
+			len += writer.getSizeOf(_blocktype);
+			len += writer.getSizeOf(_procflags);
+			len += writer.getSizeOf( _blobref.getSize() );
+			len += _blobref.getSize();
+
+			return len;
 		}
 
-		unsigned char Block::getType() const
+		size_t Block::write( dtn::streams::BundleWriter &writer )
 		{
-			return m_frame->getChar( 0 );
-		}
-
-		bool Block::isProcessed() const
-		{
-			return m_processed;
-		}
-
-		unsigned int Block::getHeaderSize() const
-		{
-			unsigned int begin = 0;
-			unsigned int end = getBodyIndex();
-			unsigned int size = 0;
-
-			for (unsigned int i = begin; i < end; i++)
-			{
-				size += m_frame->getSize(i);
-			}
-
-			return size;
-		}
-
-		void Block::updateBlockSize()
-		{
-			NetworkFrame &frame = Block::getFrame();
-			size_t maxfield = frame.getFieldSizeMap().size() - 1;
-
-			unsigned int size = 0;
-			unsigned int position = Block::getBodyIndex();
-
-			for (unsigned int i = position; i <= maxfield; i++)
-			{
-				size += frame.getSize(i);
-			}
-
-			// set the new body length
-			frame.set(Block::getBodyIndex() - 1, size);
-		}
-
-		bool Block::isAdministrativeBlock() const
-		{
-			return false;
+			size_t len = 0;
+			len += writeHeader( writer );
+			len += writer.write( _blobref );
+			return len;
 		}
 	}
 }

@@ -1,18 +1,15 @@
 #include "testsuite/SelfTestSuite.h"
-#include "testsuite/DictionaryTestSuite.h"
 #include "testsuite/BundleTestSuite.h"
 #include "testsuite/StorageTestSuite.h"
-#include "testsuite/NetworkFrameTestSuite.h"
-#include "testsuite/CustodySignalBlockTestSuite.h"
 #include "testsuite/PerformanceTestSuite.h"
-#include "testsuite/ServiceTestSuite.h"
 #include "testsuite/MeasurementTestSuite.h"
-#include "testsuite/SQLiteTestSuite.h"
-#include "testsuite/DiscoveryBlockTestSuite.h"
-#include "testsuite/StatusReportTestSuite.h"
 #include "testsuite/BlockTestSuite.h"
-#include "utils/Utils.h"
-#include "data/BundleFactory.h"
+#include "testsuite/BLOBTestSuite.h"
+#include "testsuite/BundleStreamTestSuite.h"
+#include "testsuite/SerializeTestSuite.h"
+#include "testsuite/StreamingTestSuite.h"
+#include "ibrdtn/utils/Utils.h"
+
 
 #include <iostream>
 
@@ -34,14 +31,11 @@ namespace testsuite
 	{
 		bool ret = true;
 
-		NetworkFrameTestSuite frametest;
-		if ( !frametest.runAllTests() ) ret = false;
+		SerializeTestSuite serializetest;
+		if ( !serializetest.runAllTests() ) ret = false;
 
-		ServiceTestSuite servicetest;
-		if ( !servicetest.runAllTests() ) ret = false;
-
-		DictionaryTestSuite dicttest;
-		if ( !dicttest.runAllTests() ) ret = false;
+		BLOBTestSuite blobtest;
+		if ( !blobtest.runAllTests() ) ret = false;
 
 		BlockTestSuite blocktest;
 		if ( !blocktest.runAllTests() ) ret = false;
@@ -49,31 +43,22 @@ namespace testsuite
 		BundleTestSuite bundletest;
 		if ( !bundletest.runAllTests() ) ret = false;
 
+		BundleStreamTestSuite streamtest;
+		if ( !streamtest.runAllTests() ) ret = false;
+
 		StorageTestSuite storagetest;
 		if ( !storagetest.runAllTests() ) ret = false;
 
-		CustodySignalBlockTestSuite custodytest;
-		if ( !custodytest.runAllTests() ) ret = false;
-
-		StatusReportTestSuite statustest;
-		if ( !statustest.runAllTests() ) ret = false;
+		StreamingTestSuite streamingtest;
+		if ( !streamingtest.runAllTests() ) ret = false;
 
 #ifdef USE_EMMA_CODE
 		MeasurementTestSuite measurementtest;
 		if ( !measurementtest.runAllTests() ) ret = false;
-
-		DiscoveryBlockTestSuite discoverytest;
-		if ( !discoverytest.runAllTests() ) ret = false;
 #endif
 
-//		PerformanceTestSuite performtest;
-//		if ( !performtest.runAllTests() ) ret = false;
-
-#ifdef HAVE_LIBSQLITE3
-		SQLiteTestSuite sqlitetest;
-		if ( !sqlitetest.runAllTests() ) ret = false;
-#endif
-
+		PerformanceTestSuite performtest;
+		if ( !performtest.runAllTests() ) ret = false;
 
 		cout << "TestSuite completed!" << endl;
 

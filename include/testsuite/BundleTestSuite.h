@@ -1,7 +1,7 @@
 #ifndef BUNDLETESTSUITE_H_
 #define BUNDLETESTSUITE_H_
 
-#include "data/Bundle.h"
+#include "ibrdtn/data/Bundle.h"
 
 using namespace dtn::data;
 
@@ -14,7 +14,7 @@ namespace testsuite
 		public:
 			BundleTestSuite();
 
-			~BundleTestSuite();
+			virtual ~BundleTestSuite();
 
 			bool runAllTests();
 

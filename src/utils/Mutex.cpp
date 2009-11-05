@@ -1,57 +1,27 @@
-#include "utils/Mutex.h"
+#include "ibrdtn/utils/Mutex.h"
 
 namespace dtn
 {
 	namespace utils
 	{
-	#ifdef HAVE_LIBCOMMONCPP
-		Mutex::Mutex() : ost::Mutex() {}
-		Mutex::~Mutex() {}
-	#else
 		Mutex::Mutex()
 		{
-			m_mutex = new pthread_mutex_t();
-			pthread_mutex_init(m_mutex, NULL);
+			pthread_mutex_init(&m_mutex, NULL);
 		}
 
 		Mutex::~Mutex()
 		{
-			pthread_mutex_destroy( m_mutex );
-			delete m_mutex;
+			pthread_mutex_destroy( &m_mutex );
 		}
 
-		bool Mutex::tryLock()
+		void Mutex::enter()
 		{
-			if ( pthread_mutex_trylock( m_mutex ) < 0 )
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
+			pthread_mutex_lock( &m_mutex );
 		}
 
-		void Mutex::enterMutex()
+		void Mutex::leave()
 		{
-			pthread_mutex_lock( m_mutex );
-		}
-
-		void Mutex::leaveMutex()
-		{
-			pthread_mutex_unlock( m_mutex );
-		}
-
-	#endif
-
-		void Mutex::lock()
-		{
-			enterMutex();
-		}
-
-		void Mutex::unlock()
-		{
-			leaveMutex();
+			pthread_mutex_unlock( &m_mutex );
 		}
 	}
 }

@@ -1,7 +1,8 @@
 #ifndef CUSTODYTIMER_H_
 #define CUSTODYTIMER_H_
 
-#include "data/Bundle.h"
+#include "ibrdtn/default.h"
+#include "ibrdtn/data/Bundle.h"
 #include "core/Node.h"
 
 using namespace dtn::data;
@@ -26,7 +27,7 @@ namespace core
 			/**
 			 * destructor
 			 */
-			~CustodyTimer();
+			virtual ~CustodyTimer();
 
 			unsigned int getTime() const;
 

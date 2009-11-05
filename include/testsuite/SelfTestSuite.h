@@ -1,8 +1,7 @@
 #ifndef SELFTESTSUITE_H_
 #define SELFTESTSUITE_H_
 
-#include "data/PayloadBlockFactory.h"
-#include "config.h"
+#include "ibrdtn/default.h"
 
 namespace dtn
 {
@@ -13,7 +12,7 @@ namespace testsuite
 		public:
 			SelfTestSuite();
 
-			~SelfTestSuite();
+			virtual ~SelfTestSuite();
 
 			bool runAllTests();
 	};

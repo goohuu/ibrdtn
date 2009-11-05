@@ -1,96 +1,77 @@
 #ifndef BUNDLEROUTER_H_
 #define BUNDLEROUTER_H_
 
-#include "Node.h"
-#include <list>
-#include "data/Bundle.h"
-#include "utils/Service.h"
-#include "core/BundleSchedule.h"
-#include "utils/MutexLock.h"
-#include "utils/Mutex.h"
+#include "ibrdtn/default.h"
+
+#include "core/Node.h"
 #include "core/EventReceiver.h"
-#include "core/Event.h"
-#include "utils/Conditional.h"
+
+#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/EID.h"
+
+#include <list>
 
 using namespace std;
 using namespace dtn::data;
-using namespace dtn::utils;
 
 namespace dtn
 {
 	namespace core
 	{
 		/**
-		 * A bundle router search a route for given bundle and return a BundleSchedule.
-		 * Additional manage a list of currently reachable nodes.
-		 *
 		 * This is a base class which can be extended to implement several routing
 		 * protocols.
 		 */
-		class BundleRouter : public Service, public EventReceiver
+		class BundleRouter : public EventReceiver
 		{
 		public:
-			/* constructor
-			 * @param eid Own node eid.
+			/**
+			 * Constructor
 			 */
-			BundleRouter(string eid);
+			BundleRouter();
 
 			/**
-			 * destructor
+			 * Destructor
 			 */
 			virtual ~BundleRouter();
 
 			/**
-			 * Returns a list of currently reachable nodes.
-			 * @return The list of currently reachable nodes.
-			 */
-			virtual const list<Node>& getNeighbours();
-
-			/**
-			 * Determine of a specific node is currently reachable.
-			 * @param node The node to reach.
-			 * @return true, if the given node is reachable.
-			 */
-			virtual bool isNeighbour(Node &node);
-			bool isNeighbour(string eid);
-
-			Node getNeighbour(string eid);
-
-			/**
-			 * @sa Service::tick()
-			 */
-			virtual void tick();
-
-			/**
-			 * Search for a route and return a schedule for the given bundle
-			 * @param b A bundle to route.
-			 * @return A schedule for the given bundle.
-			 */
-			virtual BundleSchedule getSchedule(const Bundle &b);
-
-			bool isLocal(const Bundle &b) const;
-
-			/**
 			 * method to receive new events from the EventSwitch
 			 */
-			void raiseEvent(const Event *evt);
+			virtual void raiseEvent(const Event *evt);
 
 		protected:
-			void terminate();
+			/**
+			 * This method do the routing decisions. Every time a bundle is received or
+			 * going to transmitted this method gets called. All routing implementation
+			 * should overload this method.
+			 * @param b The bundle to route.
+			 */
+			virtual void route(const dtn::data::Bundle &b);
+
+			/**
+			 * Determinate if a node with a specific EID exists currently in
+			 * the neighborhood.
+			 * @param eid The eid of the searched node.
+			 * @return True, if the node exists, otherwise it returns false.
+			 */
+			bool isNeighbor(const EID &eid) const;
+
+			/**
+			 * Determine if a bundle is deliverable locally.
+			 */
+			bool isLocal(const Bundle &b) const;
+
+			virtual void signalAvailable(const Node &n) {};
+			virtual void signalUnavailable(const Node &n) {};
+			virtual void signalTimeTick(size_t timestamp) {};
 
 		private:
-			/**
-			 * Updates the list of reachable nodes. If the node is currently unknown
-			 * a NODE_AVAILABLE event will be raised.
-			 * @param node The node with new information.
-			 */
-			virtual void discovered(const Node &node);
+			list<Node> m_neighbors;
 
-			list<Node> m_neighbours;
-			string m_eid;
 			dtn::utils::Mutex m_lock;
-
-			Conditional m_nexttime;
+			dtn::utils::WaitForConditional m_nexttime;
+			bool _running;
 		};
 	}
 }
