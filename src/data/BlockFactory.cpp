@@ -8,6 +8,7 @@
 #include "data/BlockFactory.h"
 #include "data/SDNV.h"
 #include "data/Exceptions.h"
+#include <stdint.h>
 
 using namespace dtn::exceptions;
 
