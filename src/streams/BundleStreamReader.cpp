@@ -205,6 +205,8 @@ namespace dtn
 				}
 			} catch (exceptions::InvalidDataException ex) {
 				// end of bundle
+			} catch (exceptions::IOException ex) {
+				// read aborted, check if fragmentation is needed
 			}
 
 			_handler.endBundle();

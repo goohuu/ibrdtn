@@ -50,7 +50,13 @@ namespace dtn
 			};
 
 			virtual void beginBundle(char version) = 0;
+
+			/**
+			 * This method checks the received data. If the bundle is not received
+			 * completely then transform it into a fragment.
+			 */
 			virtual void endBundle() = 0;
+
 			virtual void beginAttribute(ATTRIBUTES attr) = 0;
 			virtual void endAttribute(char value) = 0;
 			virtual void endAttribute(char *data, size_t size) = 0;

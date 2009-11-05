@@ -20,6 +20,17 @@ namespace dtn
 	{
 		class BundleCopier : public BundleHandler
 		{
+			enum State
+			{
+				IDLE = 0,
+				PRIMARY_BLOCK = 1,
+				PAYLOAD_BLOCK_HEADER = 2,
+				PAYLOAD_BLOCK_DATA = 3,
+				EXTENSION_BLOCK = 4,
+				ADM_BLOCK = 5,
+				FINISHED = 6
+			};
+
 		public:
 			BundleCopier(dtn::blob::BLOBManager &blobmanager, dtn::data::Bundle &b);
 			virtual ~BundleCopier();
@@ -45,6 +56,9 @@ namespace dtn
 			dtn::data::Dictionary _dict;
 
 			int _blockref;
+
+			State _state;
+			size_t _last_blocksize;
 		};
 	}
 }

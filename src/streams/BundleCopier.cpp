@@ -14,10 +14,6 @@
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/SDNV.h"
 
-#ifdef USE_EMMA_CODE
-#include "emma/DiscoverBlock.h"
-#endif
-
 #include <stdlib.h>
 
 using namespace dtn::blob;
@@ -27,7 +23,7 @@ namespace dtn
 	namespace streams
 	{
 		BundleCopier::BundleCopier(dtn::blob::BLOBManager &blobmanager, dtn::data::Bundle &b)
-		 : _blobmanager(blobmanager), _bundle(b), _block(NULL), _blockref(-1)
+		 : _blobmanager(blobmanager), _bundle(b), _block(NULL), _blockref(-1), _state(IDLE)
 		{
 		}
 
@@ -40,10 +36,67 @@ namespace dtn
 		{
 			// clear all blocks
 			_bundle.clearBlocks();
+			_state = PRIMARY_BLOCK;
 		}
 
+		/**
+		 * This method checks the received data. If the bundle is not received
+		 * completely then transform it into a fragment.
+		 *
+		 * The State of this class tells what to do:
+		 *
+		 *   PRIMARY_BLOCK:
+		 *     The primary block of a bundle is necessary to build a fragment.
+		 *     This bundle can not be used for anything.
+		 *
+		 *   PAYLOAD_BLOCK_HEADER:
+		 *     The header of a payload block has been received, but no data.
+		 *     Mark the bundle as fragment and discard the payload block.
+		 *
+		 *   PAYLOAD_BLOCK_DATA:
+		 *     Some payload has been received. Create a fragment of this
+		 *     bundle.
+		 *
+		 *   EXTENSION_BLOCK:
+		 *     A header of a extension block has been received. It is not allowed
+		 *     to split this type of block.
+		 *
+		 *   ADM_BLOCK:
+		 *     A header of a adm block has been received. It is not allowed
+		 *     to split this type of block.
+		 *
+		 *   FINISHED:
+		 *     The whole bundle has been received successfully.
+		 */
 		void BundleCopier::endBundle()
 		{
+			switch (_state)
+			{
+			case PRIMARY_BLOCK:
+				throw dtn::exceptions::IOException("Not enough data has been received.");
+
+			case PAYLOAD_BLOCK_DATA:
+				// create a fragment
+				if (!(_bundle._procflags & Bundle::FRAGMENT))
+					_bundle._procflags += Bundle::FRAGMENT;
+
+				// set the application length
+				_bundle._appdatalength = _last_blocksize;
+
+				// close the blob and add the block to the bundle
+				endBlob(); endBlock();
+				break;
+
+			case PAYLOAD_BLOCK_HEADER:
+			case EXTENSION_BLOCK:
+			case ADM_BLOCK:
+				// discard the current block
+				delete _block;
+				_block = NULL;
+
+			case FINISHED:
+				// nothing to do
+			}
 		}
 
 		void BundleCopier::beginAttribute(ATTRIBUTES attr)
@@ -116,6 +169,10 @@ namespace dtn
 					_block->_procflags = value;
 					break;
 
+				case BLOCK_LENGTH:
+					_last_blocksize = value;
+					break;
+
 				case BLOCK_REFERENCES:
 					// add block references!
 					if (_blockref == -1)
@@ -162,22 +219,19 @@ namespace dtn
 				// is adm flag set?
 				if (_bundle._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
 				{
+					_state = ADM_BLOCK;
 					// we expecting a small block, so use memory based blocks
 					_block = new dtn::data::PayloadBlock( _blobmanager.create(dtn::blob::BLOBManager::BLOB_MEMORY) );
 				}
 				else
 				{
+					_state = PAYLOAD_BLOCK_HEADER;
 					_block = new dtn::data::PayloadBlock( _blobmanager.create() );
 				}
 				break;
 
-#ifdef USE_EMMA_CODE
-			case 200:
-				_block = new emma::DiscoverBlock( _blobmanager.create(BLOBManager::BLOB_MEMORY) );
-				break;
-#endif
-
 			default: // unknown block
+				_state = EXTENSION_BLOCK;
 				_block = new dtn::data::Block(type);
 				break;
 			}
@@ -216,10 +270,12 @@ namespace dtn
 			_block->read();
 			_bundle.addBlock(_block);
 			_block = NULL;
+			_state = IDLE;
 		}
 
 		void BundleCopier::beginBlob()
 		{
+			_state = PAYLOAD_BLOCK_DATA;
 		}
 
 		void BundleCopier::dataBlob(char *data, size_t length)
@@ -229,6 +285,7 @@ namespace dtn
 
 		void BundleCopier::endBlob(size_t size)
 		{
+			_state = IDLE;
 		}
 	}
 }

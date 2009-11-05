@@ -14,10 +14,6 @@
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/SDNV.h"
 
-#ifdef USE_EMMA_CODE
-#include "emma/DiscoverBlock.h"
-#endif
-
 #include <stdlib.h>
 
 using namespace dtn::blob;
@@ -169,12 +165,6 @@ namespace dtn
 					_block = new dtn::data::PayloadBlock( _blobmanager.create() );
 				}
 				break;
-
-#ifdef USE_EMMA_CODE
-			case 200:
-				_block = new emma::DiscoverBlock( _blobmanager.create(BLOBManager::BLOB_MEMORY) );
-				break;
-#endif
 
 			default: // unknown block
 				_block = new dtn::data::Block(type);
