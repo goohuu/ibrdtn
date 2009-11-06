@@ -13,6 +13,7 @@
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Exceptions.h"
 
 #include <stdlib.h>
 
@@ -77,14 +78,15 @@ namespace dtn
 
 			case PAYLOAD_BLOCK_DATA:
 				// create a fragment
-				if (!(_bundle._procflags & Bundle::FRAGMENT))
-					_bundle._procflags += Bundle::FRAGMENT;
+				if (!(_bundle._procflags & dtn::data::Bundle::FRAGMENT))
+					_bundle._procflags += dtn::data::Bundle::FRAGMENT;
 
 				// set the application length
 				_bundle._appdatalength = _last_blocksize;
 
 				// close the blob and add the block to the bundle
-				endBlob(); endBlock();
+				endBlob(0);
+				endBlock();
 				break;
 
 			case PAYLOAD_BLOCK_HEADER:
@@ -96,7 +98,8 @@ namespace dtn
 
 			case FINISHED:
 				// nothing to do
-			}
+				break;
+			};
 		}
 
 		void BundleCopier::beginAttribute(ATTRIBUTES attr)

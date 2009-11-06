@@ -157,6 +157,8 @@ namespace dtn
 		void ConnectionManager::send(const dtn::data::EID &eid, const dtn::data::Bundle &b)
 		{
 			BundleConnection *conn = getConnection(eid);
+
+			// TODO: catch an interrupted connection and create a fragment is possible
 			conn->write(b);
 		}
 
