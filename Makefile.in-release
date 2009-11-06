@@ -33,10 +33,6 @@ STREAMS_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src
 CORE_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/core/*.cpp))
 CORE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(CORE_OBJ) ) )
 
-# api sources
-API_OBJ := $(patsubst %.cpp,%.o, $(wildcard @srcdir@/src/api/*.cpp))
-API_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(API_OBJ) ) )
-
 # net sources
 NET_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/net/*.cpp))
 NET_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(NET_OBJ) ) )
@@ -46,7 +42,9 @@ DAEMON_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/daemon/*.cpp))
 DAEMON_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DAEMON_OBJ) ) )
 
 # Main target
-all: dtnd dtnping iptunnel
+all: dtnd dtnsend dtnping iptunnel
+
+osx: dtnd cdtnping_sync cdtnping_async
 
 # build directory
 BUILD_DIRS := 	@builddir@/bin \
@@ -59,7 +57,9 @@ BUILD_DIRS := 	@builddir@/bin \
 				@builddir@/obj/data \
 				@builddir@/obj/core \
 				@builddir@/obj/net \
-				@builddir@/obj/daemon
+				@builddir@/obj/daemon \
+				@builddir@/obj/apps/c_api_examples \
+				@builddir@/obj/apps/DTNTun
 
 # create a build directory
 builddirs:
@@ -70,14 +70,14 @@ libdata: builddirs $(UTILS_BUILD_OBJ) $(DATA_BUILD_OBJ) $(STREAMS_BUILD_OBJ)
 		-L@builddir@/lib/ \
 		-shared \
 		$(UTILS_BUILD_OBJ) $(DATA_BUILD_OBJ) $(STREAMS_BUILD_OBJ) \
-		-o"@builddir@/lib/libibrdtn-data.so"
+		-o "@builddir@/lib/libibrdtn-data.so"
 
 libclient: libdata $(API_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
 		-L@builddir@/lib/ \
 		-shared \
-		$(API_BUILD_OBJ) \
-		-o"@builddir@/lib/libibrdtn-client.so"
+		$(API_BUILD_OBJ) $(UTILS_BUILD_OBJ) $(DATA_BUILD_OBJ) $(STREAMS_BUILD_OBJ) \
+		-o "@builddir@/lib/libibrdtn-client.so"
 
 dtnping: libdata libclient @builddir@/obj/apps/dtnping.o
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
@@ -85,15 +85,65 @@ dtnping: libdata libclient @builddir@/obj/apps/dtnping.o
 		-librdtn-data -librdtn-client \
 		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnping.o \
 		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o"@builddir@/bin/dtnping"
-		
+		-o "@builddir@/bin/dtnping"
+
+dtnsend: libdata libclient @builddir@/obj/apps/dtnsend.o
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnsend.o \
+		-Wl,-rpath,@libdir@:@builddir@/lib \
+		-o "@builddir@/bin/dtnsend"
+
+cdtnping_sync: libdata libclient 
+	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
+		-o @builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
+		@srcdir@/src/apps/c_api_examples/dtnping_sync.c
+	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread   \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		@builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
+		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib \
+		-o "@builddir@/bin/cdtnping_sync"
+	
+
+cdtnping_async: libdata libclient 
+	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
+		-o @builddir@/obj/apps/c_api_examples/cdtnping_async.o \
+		@srcdir@/src/apps/c_api_examples/dtnping_async.c
+	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread   \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		@builddir@/obj/apps/c_api_examples/cdtnping_async.o \
+		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib \
+		-o "@builddir@/bin/cdtnping_async"
+
+dtntun: libdata libclient 
+	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
+		-o @builddir@/obj/apps/DTNTun/dtntun.o \
+		@srcdir@/src/apps/DTNTun/dtntun.c
+	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
+		-o @builddir@/obj/apps/DTNTun/receiver.o \
+		@srcdir@/src/apps/DTNTun/receiver.c
+	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
+		-o @builddir@/obj/apps/DTNTun/tun.o \
+		@srcdir@/src/apps/DTNTun/tun.c
+	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		@builddir@/obj/apps/DTNTun/dtntun.o \
+		@builddir@/obj/apps/DTNTun/receiver.o \
+		@builddir@/obj/apps/DTNTun/tun.o \
+		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib \
+		-o "@builddir@/bin/dtntun"
+
 iptunnel: libdata libclient @builddir@/obj/apps/iptunnel.o
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
 		-L@builddir@/lib/ \
 		-librdtn-data -librdtn-client \
 		$(API_BUILD_OBJ) @builddir@/obj/apps/iptunnel.o \
 		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o"@builddir@/bin/iptunnel"
+		-o "@builddir@/bin/iptunnel"
 
 dtnd: libdata $(NET_BUILD_OBJ) $(CORE_BUILD_OBJ) $(DAEMON_BUILD_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
@@ -101,7 +151,7 @@ dtnd: libdata $(NET_BUILD_OBJ) $(CORE_BUILD_OBJ) $(DAEMON_BUILD_OBJ)
 		-librdtn-data \
 		$(NET_BUILD_OBJ) $(CORE_BUILD_OBJ) $(DAEMON_BUILD_OBJ) \
 		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o"@builddir@/bin/dtnd"
+		-o "@builddir@/bin/dtnd"
 	
 @builddir@/obj/%.o: @srcdir@/src/%.cpp
 	$(CXX) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $< -o $@
@@ -121,6 +171,8 @@ selftest: testsuite
 install: install-lib
 	cp @builddir@/bin/dtnd @prefix@/bin
 	cp @builddir@/bin/dtnping @prefix@/bin
+	cp @builddir@/bin/dtnsend @prefix@/bin
+	cp @builddir@/bin/iptunnel @prefix@/bin/dtntunnel
 	
 uninstall:
 	rm -rf @prefix@/bin/dtnd

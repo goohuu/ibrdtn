@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 	dtn::utils::tcpclient conn("127.0.0.1", 4550);
 
 	// Initiate a derivated client
-	FileClient client(file_source, conn.stream());
+	FileClient client(file_source, conn);
 
 	// Connect to the server. Actually, this function initiate the
 	// stream protocol by starting the thread and sending the contact header.
