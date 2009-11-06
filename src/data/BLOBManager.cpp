@@ -85,7 +85,7 @@ namespace dtn
 			switch (_type)
 			{
 				case BLOB_FILENAME:
-					throw dtn::exceptions::IOException("This is a read only stream.");
+					return *_file;
 
 				case BLOB_MEMORY:
 					return *_sstream;
@@ -100,7 +100,7 @@ namespace dtn
 			switch (_type)
 			{
 				case BLOB_FILENAME:
-					return *_file;
+					throw dtn::exceptions::IOException("This is a read only stream.");
 
 				case BLOB_MEMORY:
 					return *_sstream;

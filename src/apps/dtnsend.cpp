@@ -13,36 +13,9 @@
 
 #include <iostream>
 
-class FileClient : public dtn::api::Client
-{
-	public:
-		FileClient(string app, std::iostream &stream)
-		 : dtn::api::Client(app, stream)
-		{
-		}
-
-		virtual ~FileClient()
-		{
-		}
-
-		void send(EID destination, string filename)
-		{
-			// create a bundle
-			dtn::api::FileBundle b(destination, filename);
-
-			// send the bundle
-			(*this) << b;
-		}
-
-	protected:
-		void received(dtn::api::Bundle &b)
-		{
-		};
-};
-
 void print_help()
 {
-	cout << "-- dtnping (IBR-DTN) --" << endl;
+	cout << "-- dtnsend (IBR-DTN) --" << endl;
 	cout << "Syntax: dtnsend [options] <dst> <filename>"  << endl;
 	cout << " <dst>         set the destination eid (e.g. dtn://node/filetransfer)" << endl;
 	cout << " <filename>    the file to transfer" << endl;
@@ -89,8 +62,8 @@ int main(int argc, char *argv[])
 	// Create a stream to the server using TCP.
 	dtn::utils::tcpclient conn("127.0.0.1", 4550);
 
-	// Initiate a derivated client
-	FileClient client(file_source, conn);
+	// Initiate a client for synchronous receiving
+	dtn::api::Client client(file_source, conn, false);
 
 	// Connect to the server. Actually, this function initiate the
 	// stream protocol by starting the thread and sending the contact header.
@@ -101,8 +74,14 @@ int main(int argc, char *argv[])
 
 	cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
 
-	// send the file
-	client.send(file_destination, filename);
+	// create a bundle from the file
+	dtn::api::FileBundle b(file_destination, filename);
+
+	// send the bundle
+	client << b;
+
+	// flush the buffers
+	client.flush();
 
 	// Shutdown the client connection.
 	client.shutdown();
