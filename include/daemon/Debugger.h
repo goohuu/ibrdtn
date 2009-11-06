@@ -22,7 +22,10 @@ namespace dtn
 		class Debugger : AbstractWorker
 		{
 			public:
-				Debugger() : AbstractWorker("/debugger") {};
+				Debugger()
+				{
+					AbstractWorker::initialize("/debugger", true);
+				};
 				virtual ~Debugger() {};
 
 				dtn::net::TransmitReport callbackBundleReceived(const Bundle &b);

@@ -27,7 +27,8 @@ namespace dtn
 			}
 		};
 
-		BundleRouter::BundleRouter()
+		BundleRouter::BundleRouter(BundleStorage &storage)
+		 : _storage(storage)
 		{
 
 			// register at event switch
@@ -61,7 +62,8 @@ namespace dtn
 
 			if 	( isLocal( b ) )
 			{
-				BundleCore::getInstance().deliver(b);
+				// if a bundle is local store it for later querys
+				_storage.store(b);
 				return;
 			}
 

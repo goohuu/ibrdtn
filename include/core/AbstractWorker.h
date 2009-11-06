@@ -15,10 +15,23 @@ namespace dtn
 	{
 		class AbstractWorker : public dtn::utils::Mutex
 		{
+			class AbstractWorkerAsync : public dtn::utils::JoinableThread
+			{
+			public:
+				AbstractWorkerAsync(AbstractWorker &worker);
+				~AbstractWorkerAsync();
+				void shutdown();
+
+			protected:
+				void run();
+
+			private:
+				AbstractWorker &_worker;
+				bool _running;
+			};
+
 			public:
 				AbstractWorker();
-
-				AbstractWorker(const string uri);
 
 				virtual ~AbstractWorker();
 
@@ -27,10 +40,16 @@ namespace dtn
 				virtual dtn::net::TransmitReport callbackBundleReceived(const Bundle &b) = 0;
 
 			protected:
+				void initialize(const string uri, bool async = false);
 				void transmit(const Bundle &bundle);
+				dtn::data::Bundle receive();
+
+				EID _eid;
+
+				void shutdown();
 
 			private:
-				EID m_uri;
+				AbstractWorkerAsync _thread;
 		};
 	}
 }

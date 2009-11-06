@@ -129,6 +129,7 @@ int main(int argc, char *argv[])
 
 	// create a storage for bundles
 	SimpleBundleStorage storage;
+	core.setStorage(&storage);
 
 	// create a static router
 	DynamicBundleRouter router( conf.getStaticRoutes(), storage );

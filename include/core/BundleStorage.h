@@ -97,9 +97,24 @@ namespace dtn
 			 * This method returns a specific bundle which is identified by
 			 * its id.
 			 * @param id The ID of the bundle to return.
-			 * @return A bundle object of the
+			 * @return A bundle object.
 			 */
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id) = 0;
+
+			/**
+			 * This method returns a bundle which is addressed to a EID.
+			 * If there is no bundle available the method will block until
+			 * a global shutdown or a bundle is available.
+			 * @param eid The receiver for the bundle.
+			 * @return A bundle object.
+			 */
+			virtual dtn::data::Bundle get(const dtn::data::EID &eid) = 0;
+
+			/**
+			 * Unblock the get()-call for a specific EID.
+			 * @param eid
+			 */
+			virtual void unblock(const dtn::data::EID &eid) = 0;
 
 			/**
 			 * This method deletes a specific bundle in the storage.

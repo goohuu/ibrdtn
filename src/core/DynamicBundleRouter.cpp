@@ -15,7 +15,7 @@ namespace dtn
 	namespace core
 	{
 		DynamicBundleRouter::DynamicBundleRouter(list<StaticRoute> routes, BundleStorage &storage)
-		 : StaticBundleRouter(routes), _storage(storage), _running(true)
+		 : StaticBundleRouter(routes, storage), _running(true)
 		{
 		}
 

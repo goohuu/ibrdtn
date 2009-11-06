@@ -12,7 +12,7 @@ namespace dtn
 		class StaticBundleRouter : public BundleRouter
 		{
 			public:
-				StaticBundleRouter(list<StaticRoute> routes);
+				StaticBundleRouter(list<StaticRoute> routes, BundleStorage &storage);
 				virtual ~StaticBundleRouter();
 
 				virtual void route(const dtn::data::Bundle &b);

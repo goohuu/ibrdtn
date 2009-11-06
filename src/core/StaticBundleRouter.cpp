@@ -10,8 +10,8 @@ namespace dtn
 {
 	namespace core
 	{
-		StaticBundleRouter::StaticBundleRouter(list<StaticRoute> routes)
-			: BundleRouter(), m_routes(routes)
+		StaticBundleRouter::StaticBundleRouter(list<StaticRoute> routes, BundleStorage &storage)
+			: BundleRouter(storage), m_routes(routes)
 		{
 		}
 

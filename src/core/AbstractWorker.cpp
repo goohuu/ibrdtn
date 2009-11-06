@@ -15,38 +15,85 @@ namespace dtn
 {
 	namespace core
 	{
-		AbstractWorker::AbstractWorker() : m_uri("dtn:none")
+		AbstractWorker::AbstractWorkerAsync::AbstractWorkerAsync(AbstractWorker &worker)
+		 : _worker(worker), _running(true)
+		{
+
+		}
+
+		AbstractWorker::AbstractWorkerAsync::~AbstractWorkerAsync()
+		{
+			shutdown();
+		}
+
+		void AbstractWorker::AbstractWorkerAsync::shutdown()
+		{
+			if (!_running)
+			{
+				join();
+				return;
+			}
+
+			_running = false;
+
+			BundleStorage &storage = BundleCore::getInstance().getStorage();
+			storage.unblock(_worker._eid);
+
+			join();
+		}
+
+		void AbstractWorker::AbstractWorkerAsync::run()
+		{
+			while (_running)
+			{
+				try {
+					dtn::data::Bundle b = _worker.receive();
+					_worker.callbackBundleReceived(b);
+				} catch (dtn::exceptions::NoBundleFoundException ex) {
+					return;
+				}
+			}
+		}
+
+		AbstractWorker::AbstractWorker() : _thread(*this)
 		{
 		};
 
-		AbstractWorker::AbstractWorker(const string uri)
+		void AbstractWorker::initialize(const string uri, bool async)
 		{
 			BundleCore &core = BundleCore::getInstance();
-			m_uri = BundleCore::local + uri;
+			_eid = BundleCore::local + uri;
 
-			// Registriere mich als Knoten der Bundle empfangen kann
-			core.registerSubNode( getWorkerURI(), this );
-		};
+			if (async) _thread.start();
+		}
 
 		AbstractWorker::~AbstractWorker()
 		{
-			dtn::utils::MutexLock l(*this);
-
-			if (m_uri != EID())
-			{
-				BundleCore &core = BundleCore::getInstance();
-				core.unregisterSubNode( getWorkerURI() );
-			}
+			shutdown();
 		};
+
+		void AbstractWorker::shutdown()
+		{
+			// wait for the async thread
+			_thread.shutdown();
+		}
 
 		const EID AbstractWorker::getWorkerURI() const
 		{
-			return m_uri;
+			return _eid;
 		}
 
 		void AbstractWorker::transmit(const Bundle &bundle)
 		{
 			EventSwitch::raiseEvent(new RouteEvent(bundle, ROUTE_PROCESS_BUNDLE));
+		}
+
+		dtn::data::Bundle AbstractWorker::receive()
+		{
+			BundleStorage &storage = BundleCore::getInstance().getStorage();
+			dtn::data::Bundle b = storage.get(_eid);
+			storage.remove(b);
+			return b;
 		}
 	}
 }

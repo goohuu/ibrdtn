@@ -10,7 +10,6 @@
 
 #include "ibrdtn/default.h"
 #include "core/StaticBundleRouter.h"
-#include "core/BundleStorage.h"
 #include "ibrdtn/utils/Thread.h"
 #include "ibrdtn/utils/Mutex.h"
 #include "ibrdtn/utils/Conditional.h"
@@ -37,7 +36,6 @@ namespace dtn
 			virtual void signalTimeTick(size_t timestamp);
 
 		private:
-			BundleStorage &_storage;
 			std::map<dtn::data::EID, std::queue<dtn::data::BundleID> > _stored_bundles;
 
 			bool _running;

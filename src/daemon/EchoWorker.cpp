@@ -9,8 +9,9 @@ namespace dtn
 {
 	namespace daemon
 	{
-		EchoWorker::EchoWorker() : AbstractWorker("/echo")
+		EchoWorker::EchoWorker()
 		{
+			AbstractWorker::initialize("/echo", true);
 		}
 
 		dtn::net::TransmitReport EchoWorker::callbackBundleReceived(const Bundle &b)

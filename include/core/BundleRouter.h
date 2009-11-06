@@ -5,7 +5,7 @@
 
 #include "core/Node.h"
 #include "core/EventReceiver.h"
-
+#include "core/BundleStorage.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/EID.h"
 
@@ -28,7 +28,7 @@ namespace dtn
 			/**
 			 * Constructor
 			 */
-			BundleRouter();
+			BundleRouter(BundleStorage &storage);
 
 			/**
 			 * Destructor
@@ -65,6 +65,11 @@ namespace dtn
 			virtual void signalAvailable(const Node &n) {};
 			virtual void signalUnavailable(const Node &n) {};
 			virtual void signalTimeTick(size_t timestamp) {};
+
+			/**
+			 * The assigned bundle storage.
+			 */
+			BundleStorage &_storage;
 
 		private:
 			list<Node> m_neighbors;

@@ -48,9 +48,6 @@ namespace dtn
 			dtn::streams::StreamConnection _connection;
 			StreamContactHeader _contact;
 
-			// local eid
-			EID _local;
-
 			bool _connected;
 
 			dtn::streams::tcpstream _tcpstream;

@@ -47,6 +47,9 @@ namespace dtn
 			 */
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
 
+			virtual dtn::data::Bundle get(const dtn::data::EID &eid);
+			virtual void unblock(const dtn::data::EID &eid);
+
 			/**
 			 * This method deletes a specific bundle in the storage.
 			 * No reports will be generated here.
@@ -90,6 +93,10 @@ namespace dtn
 
 			dtn::utils::WaitForConditional _timecond;
 			bool _running;
+
+			dtn::utils::Conditional _dbchanged;
+
+			EID _unblock_eid;
 		};
 	}
 }

@@ -22,13 +22,13 @@ namespace dtn
 	namespace daemon
 	{
 		ClientHandler::ClientHandler(iostream &stream)
-		 : AbstractWorker(), _connection(stream, 30), _connected(false)
+		 : _connection(stream, 30), _connected(false)
 		{
 			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
 		}
 
 		ClientHandler::ClientHandler(int socket)
-		 : _tcpstream(socket, tcpstream::STREAM_INCOMING), AbstractWorker(), _connection(_tcpstream, 0), _connected(false)
+		 : _tcpstream(socket, tcpstream::STREAM_INCOMING), _connection(_tcpstream, 0), _connected(false)
 		{
 			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
 		}
@@ -68,15 +68,13 @@ namespace dtn
 		void ClientHandler::shutdown()
 		{
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "Client disconnected: " << _local.getString() << endl;
+			cout << "Client disconnected: " << _eid.getString() << endl;
 			cout << "shutdown: ClientHandler" << endl;
 #endif
 
-			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
-			core.unregisterSubNode( _local );
-
 			_tcpstream.close();
 			_connection.shutdown();
+			AbstractWorker::shutdown();
 
 			bury();
 		}
@@ -103,7 +101,7 @@ namespace dtn
 					b.relabel();
 
 					// set the source
-					b._source = _local;
+					b._source = _eid;
 
 					// forward the bundle
 					dtn::core::AbstractWorker::transmit(b);
@@ -131,13 +129,10 @@ namespace dtn
 		{
 			_contact = h;
 
-			// register at bundle core
-			dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
-			_local = dtn::core::BundleCore::local + _contact._localeid.getApplication();
-			core.registerSubNode( _local, (AbstractWorker*)this );
+			AbstractWorker::initialize(_contact._localeid.getApplication(), true);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "New client connected: " << _local.getString() << endl;
+			cout << "New client connected: " << _eid.getString() << endl;
 #endif
 
 			// reply with own header

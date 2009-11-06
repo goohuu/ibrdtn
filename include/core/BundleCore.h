@@ -27,7 +27,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class AbstractWorker;
+//		class AbstractWorker;
 
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
@@ -40,22 +40,6 @@ namespace dtn
 			static BundleCore& getInstance();
 
 			/**
-			 * Get a specific subnode.
-			 * @return
-			 */
-			AbstractWorker* getSubNode(EID eid);
-
-			/**
-			 * Register a worker. This method is used by the API.
-			 */
-			void registerSubNode(EID eid, AbstractWorker *node);
-
-			/**
-			 * Unregister a worker. This method is used by the API.
-			 */
-			void unregisterSubNode(EID eid);
-
-			/**
 			 * method to receive new events from the EventSwitch
 			 */
 			void raiseEvent(const Event *evt);
@@ -65,12 +49,15 @@ namespace dtn
 			 */
 			void transmit(const dtn::data::EID &eid, const Bundle &b);
 
-			/**
-			 * deliver a bundle to a application
-			 */
-			void deliver(const Bundle &b);
+//			/**
+//			 * deliver a bundle to a application
+//			 */
+//			void deliver(const Bundle &b);
 
 			Clock& getClock();
+
+			void setStorage(dtn::core::BundleStorage *storage);
+			dtn::core::BundleStorage& getStorage();
 
 		protected:
 			/**
@@ -120,17 +107,9 @@ namespace dtn
 			Bundle createCustodySignal(const Bundle &b, bool accepted);
 
 			/**
-			 * This map contains all active worker. This could be worker built-in this daemon or
-			 * registrations made by the API.
-			 */
-			std::map<EID, AbstractWorker*> m_worker;
-
-			/**
 			 * A custody manager takes care about a transmission of custody to another node.
 			 */
 			CustodyManager m_cm;
-
-			dtn::utils::Conditional _register_action;
 
 			/**
 			 * This is a clock object. It can be used to synchronize methods to the local clock.
@@ -138,6 +117,8 @@ namespace dtn
 			Clock _clock;
 
 			bool _shutdown;
+
+			dtn::core::BundleStorage *_storage;
 		};
 	}
 }

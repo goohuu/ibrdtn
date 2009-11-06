@@ -1,6 +1,7 @@
 #include "core/SimpleBundleStorage.h"
 #include "core/EventSwitch.h"
 #include "core/TimeEvent.h"
+#include "core/GlobalEvent.h"
 
 #include "ibrdtn/utils/Utils.h"
 
@@ -14,20 +15,36 @@ namespace dtn
 		 : _running(true)
 		{
 			EventSwitch::registerEventReceiver(TimeEvent::className, this);
+			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
 		{
 			EventSwitch::unregisterEventReceiver(TimeEvent::className, this);
+			EventSwitch::unregisterEventReceiver(GlobalEvent::className, this);
 
 			_running = false;
 			_timecond.go();
+			dtn::utils::MutexLock l(_dbchanged);
+			_dbchanged.signal(true);
 			join();
 		}
 
 		void SimpleBundleStorage::raiseEvent(const Event *evt)
 		{
 			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
+			const GlobalEvent *global = dynamic_cast<const GlobalEvent*>(evt);
+
+			if (global != NULL)
+			{
+				if (global->getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
+				{
+					dtn::utils::MutexLock l(_dbchanged);
+					_running = false;
+					_timecond.go();
+					_dbchanged.signal(true);
+				}
+			}
 
 			if (time != NULL)
 			{
@@ -40,6 +57,7 @@ namespace dtn
 
 		void SimpleBundleStorage::clear()
 		{
+			dtn::utils::MutexLock l(_dbchanged);
 			// delete all bundles
 			_bundles.clear();
 			_fragments.clear();
@@ -57,11 +75,58 @@ namespace dtn
 
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
+			dtn::utils::MutexLock l(_dbchanged);
 			_bundles.push_back(bundle);
+			_dbchanged.signal(true);
+		}
+
+		void SimpleBundleStorage::unblock(const dtn::data::EID &eid)
+		{
+			dtn::utils::MutexLock l(_dbchanged);
+			_unblock_eid = eid;
+			_dbchanged.signal(true);
+		}
+
+		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)
+		{
+			dtn::utils::MutexLock l(_dbchanged);
+
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			cout << "Storage: get bundle for " << eid.getString() << endl;
+#endif
+
+			while (_running)
+			{
+				list<Bundle>::iterator iter = _bundles.begin();
+
+				while (iter != _bundles.end())
+				{
+					dtn::data::Bundle &bundle = (*iter);
+					if (bundle._destination == eid)
+					{
+						return bundle;
+					}
+
+					iter++;
+				}
+
+				_dbchanged.wait();
+
+				// leave this method if we need to unblock
+				if (_unblock_eid == eid)
+				{
+					_unblock_eid = EID();
+					break;
+				}
+			}
+
+			throw dtn::exceptions::NoBundleFoundException();
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)
 		{
+			dtn::utils::MutexLock l(_dbchanged);
+
 			list<Bundle>::iterator iter = _bundles.begin();
 
 			while (iter != _bundles.end())
@@ -80,6 +145,8 @@ namespace dtn
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
+			dtn::utils::MutexLock l(_dbchanged);
+
 			list<Bundle>::iterator iter = _bundles.begin();
 
 			while (iter != _bundles.end())
