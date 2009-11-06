@@ -125,6 +125,7 @@ namespace dtn
 			{
 				// failure
 				//throw ConnectionClosedException("Error while writing to the socket.");
+				close();
 				return std::char_traits<char>::eof();
 			}
 
@@ -153,6 +154,7 @@ namespace dtn
 			{
 				//  throw Exception?
 				//throw ConnectionClosedException("Connection has been closed.");
+				close();
 				return std::char_traits<char>::eof();
 			}
 

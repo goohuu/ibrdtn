@@ -166,11 +166,11 @@ namespace dtn
 		}
 
 		BLOBManager::BLOBManager()
-		 : _memoryonly(true)
+		 : _memoryonly(true), _lastid(0)
 		{ }
 
 		BLOBManager::BLOBManager(string directory)
-		 : _directory(directory), _memoryonly(false)
+		 : _directory(directory), _memoryonly(false), _lastid(0)
 		{ }
 
 		BLOBManager::~BLOBManager()
