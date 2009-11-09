@@ -78,6 +78,10 @@ namespace dtn
 			dtn::utils::MutexLock l(_dbchanged);
 			_bundles.push_back(bundle);
 			_dbchanged.signal(true);
+
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			cout << "Storage: stored bundle " << bundle.toString() << endl;
+#endif
 		}
 
 		void SimpleBundleStorage::unblock(const dtn::data::EID &eid)

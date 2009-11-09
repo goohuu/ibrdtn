@@ -86,6 +86,12 @@ namespace dtn
 				_connection >> _contact;
 				received(_contact);
 
+				// reply with own header
+				StreamContactHeader srv_header(dtn::core::BundleCore::local);
+				_connection << srv_header;
+
+				AbstractWorker::initialize(_contact._localeid.getApplication(), true);
+
 				// set to connected
 				_connected = true;
 
@@ -129,15 +135,10 @@ namespace dtn
 		{
 			_contact = h;
 
-			AbstractWorker::initialize(_contact._localeid.getApplication(), true);
-
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "New client connected: " << _eid.getString() << endl;
 #endif
 
-			// reply with own header
-			StreamContactHeader srv_header(dtn::core::BundleCore::local);
-			_connection << srv_header;
 		}
 	}
 }
