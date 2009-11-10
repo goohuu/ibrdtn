@@ -105,7 +105,12 @@ Example stream for client-server API.
         </report>
 -->
         <priority>0</priority>
-        <payload encoding="utf8">
+<!--
+        <payload type="reference" length="1024354">
+          http://127.0.0.1:4552/jjdfhsdhf3h4f9whpw839hjr2qvp83r2
+        </payload>
+-->
+        <payload type="embedded" encoding="utf8" length="64">
           jjdfhsdhf3h4f9whpw839hjr2qvp83r283rhvn7h4tqp374tqpvn37h2qp3rhuwepdvhnads
         </payload>
         <extension>
