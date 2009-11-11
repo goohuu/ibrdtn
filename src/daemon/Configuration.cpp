@@ -2,6 +2,20 @@
 #include "ibrdtn/utils/Utils.h"
 #include "core/Node.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <ifaddrs.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
+#include <arpa/inet.h>
+
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <net/if.h>
+#include <errno.h>
+
+#include <unistd.h>
+
 using namespace dtn::core;
 using namespace dtn::utils;
 
@@ -28,7 +42,24 @@ namespace dtn
 
 		string Configuration::getLocalUri()
 		{
-			return m_conf.read<string>("local_uri", "dtn:local");
+			try {
+				return m_conf.read<string>("local_uri");
+			} catch (ConfigFile::key_not_found ex) {
+				char *hostname_array = new char[64];
+				if ( gethostname(hostname_array, 64) != 0 )
+				{
+					// error
+				}
+
+				string hostname(hostname_array);
+				delete[] hostname_array;
+
+				stringstream ss;
+				ss << "dtn://" << hostname;
+				ss >> hostname;
+
+				return hostname;
+			}
 		}
 
 		vector<string> Configuration::getNetList()
@@ -63,7 +94,12 @@ namespace dtn
 			string key;
 			ss >> key;
 
-			return m_conf.read<string>(key, "0.0.0.0");
+			try {
+				string interface = m_conf.read<string>(key);
+				return getInterfaceAddress(interface);
+			} catch (ConfigFile::key_not_found ex) {
+				return "0.0.0.0";
+			}
 		}
 
 		string Configuration::getNetBroadcast(const string name)
@@ -73,7 +109,27 @@ namespace dtn
 			string key;
 			ss >> key;
 
-			return m_conf.read<string>(key, "255.255.255.255");
+			try {
+				string interface = m_conf.read<string>(key);
+				return getInterfaceBroadcastAddress(interface);
+			} catch (ConfigFile::key_not_found ex) {
+				return "255.255.255.255";
+			}
+		}
+
+		string Configuration::getDiscoveryAddress()
+		{
+			try {
+				string interface = m_conf.read<string>("discovery_interface");
+				return getInterfaceBroadcastAddress(interface);
+			} catch (ConfigFile::key_not_found ex) {
+				return "255.255.255.255";
+			}
+		}
+
+		unsigned int Configuration::getDiscoveryPort()
+		{
+			return m_conf.read<int>("discovery_port", 4551);
 		}
 
 		unsigned int Configuration::getNetMTU(const string name)
@@ -212,6 +268,84 @@ namespace dtn
 		bool Configuration::doSQLiteFlush()
 		{
 			return m_conf.read<int>( "sqlite_flush", 0 );
+		}
+
+		string Configuration::getInterfaceAddress(string interface)
+		{
+			// define the return value
+			string ret = "0.0.0.0";
+
+			struct ifaddrs *ifap = NULL;
+			int status = getifaddrs(&ifap);
+
+			if (status != 0)
+			{
+				// error, return with default address
+				return ret;
+			}
+
+			for (struct ifaddrs *iter = ifap; iter != NULL; iter = iter->ifa_next)
+			{
+				if (iter->ifa_addr == NULL) continue;
+				if ((iter->ifa_flags & IFF_UP) == 0) continue;
+
+				sockaddr *addr = iter->ifa_addr;
+
+				// currently only IPv4 is supported
+				if (addr->sa_family != AF_INET) continue;
+
+				// check the name of the interface
+				if (string(iter->ifa_name) != interface) continue;
+
+				sockaddr_in *ip = (sockaddr_in*)iter->ifa_addr;
+
+				ret = string(inet_ntoa(ip->sin_addr));
+				break;
+			}
+
+			freeifaddrs(ifap);
+
+			return ret;
+		}
+
+		string Configuration::getInterfaceBroadcastAddress(string interface)
+		{
+			// define the return value
+			string ret = "255.255.255.255";
+
+			struct ifaddrs *ifap = NULL;
+			int status = getifaddrs(&ifap);
+
+			if (status != 0)
+			{
+				// error, return with default address
+				return ret;
+			}
+
+			for (struct ifaddrs *iter = ifap; iter != NULL; iter = iter->ifa_next)
+			{
+				if (iter->ifa_addr == NULL) continue;
+				if ((iter->ifa_flags & IFF_UP) == 0) continue;
+
+				sockaddr *addr = iter->ifa_addr;
+
+				// currently only IPv4 is supported
+				if (addr->sa_family != AF_INET) continue;
+
+				// check the name of the interface
+				if (string(iter->ifa_name) != interface) continue;
+
+				if (iter->ifa_flags & IFF_BROADCAST)
+				{
+					sockaddr_in *broadcast = (sockaddr_in*)iter->ifa_ifu.ifu_broadaddr;
+					ret = string(inet_ntoa(broadcast->sin_addr));
+					break;
+				}
+			}
+
+			freeifaddrs(ifap);
+
+			return ret;
 		}
 	}
 }

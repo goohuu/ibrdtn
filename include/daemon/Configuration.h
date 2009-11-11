@@ -35,6 +35,9 @@ namespace dtn
 			string getNetBroadcast(const string name = "default");
 			unsigned int getNetMTU(const string name = "default");
 
+			string getDiscoveryAddress();
+			unsigned int getDiscoveryPort();
+
 			void setConfigFile(ConfigFile &conf);
 
 			vector<Node> getStaticNodes();
@@ -56,6 +59,9 @@ namespace dtn
 			bool doSQLiteFlush();
 
 		private:
+			string getInterfaceAddress(string interface);
+			string getInterfaceBroadcastAddress(string interface);
+
 			ConfigFile m_conf;
 			bool m_debug;
 

@@ -51,6 +51,8 @@ namespace dtn
 				cerr << "IPNDAgent: cannot bind socket" << endl;
 				::exit(1);
 			}
+
+			cout << "DiscoveryAgent listen to " << broadcast_ip << ":" << port << endl;
 		}
 
 		IPNDAgent::~IPNDAgent()

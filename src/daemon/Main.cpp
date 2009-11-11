@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 	BundleCore& core = BundleCore::getInstance();
 
 	// initialize the DiscoveryAgent
-	dtn::net::IPNDAgent ipnd(_conf.read<string>("discovery_multicastip", "255.255.255.255"), _conf.read<unsigned int>( "discovery_port", 4551 ));
+	dtn::net::IPNDAgent ipnd(conf.getDiscoveryAddress(), conf.getDiscoveryPort());
 
 	// create a storage for bundles
 	SimpleBundleStorage storage;
