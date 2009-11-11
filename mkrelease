@@ -56,7 +56,7 @@ rm -rf $RELEASE_DIR/src/testsuite
 
 # copy doxygen
 echo "doxygen"
-cp api.doxygen $RELEASE_DIR/
+cp api.doxyfile $RELEASE_DIR/
 
 # copy default config
 echo "default config"
@@ -81,8 +81,8 @@ rm -rf `find . -name .svn`
 
 # make doxygen for API
 #mkdir doc
-#doxygen api.doxygen
-#rm api.doxygen
+#doxygen api.doxyfile
+#rm api.doxyfile
 
 # make a archive
 echo "make a archive"
