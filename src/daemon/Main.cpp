@@ -84,10 +84,17 @@ int main(int argc, char *argv[])
 	}
 
 	cout << "IBR-DTN Daemon - "; version(); cout << endl;
-	cout << "Configuration: " << configurationfile << endl;
 
 	// load configuration
-	ConfigFile _conf(configurationfile);
+	ConfigFile _conf;
+
+	try {
+		_conf = ConfigFile(configurationfile);;
+		cout << "Configuration: " << configurationfile << endl;
+	} catch (ConfigFile::file_not_found ex) {
+		cout << "No configuration file found. Using defaults." << endl;
+	}
+
 	conf.setConfigFile(_conf);
 
 	// set user id
@@ -109,6 +116,7 @@ int main(int argc, char *argv[])
 
 	// set local eid
 	dtn::core::BundleCore::local = conf.getLocalUri();
+	cout << "Local node name: " << conf.getLocalUri() << endl;
 
 #ifdef DO_DEBUG_OUTPUT
 	// create event debugger
@@ -178,22 +186,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-//#ifdef HAVE_LIBSQLITE3
-//	BundleStorage *storage = NULL;
-//
-//	if ( conf.useSQLiteStorage() )
-//	{
-//		storage = new SQLiteBundleStorage(
-//					conf.getSQLiteDatabase(),
-//					conf.doSQLiteFlush()
-//					);
-//	} else {
-//		storage = new SimpleBundleStorage();
-//	}
-//#else
-//	BundleStorage *storage = new SimpleBundleStorage();
-//#endif
-
 #ifdef DO_DEBUG_OUTPUT
 	// Debugger
 	Debugger debugger;
@@ -205,9 +197,6 @@ int main(int argc, char *argv[])
 	// start the services
 	storage.start();
 	router.start();
-
-//	dtn::utils::JoinableThread *storage_service = dynamic_cast<dtn::utils::JoinableThread*>(storage);
-//	if (storage_service != NULL) storage_service->start();
 
 	// announce static nodes
 	{
@@ -232,24 +221,6 @@ int main(int argc, char *argv[])
 			apiserv->start();
 		} catch (dtn::utils::tcpserver::SocketException ex) {
 			cerr << "Unable to bind to 127.0.0.1:4550. API not initialized!" << endl;
-
-//			sleep(1);
-//
-//			while (apiserv == NULL)
-//			{
-//				try {
-//					// instance a API server, first create a socket
-//					apiserv = new ApiServer("127.0.0.1", 4550);
-//					apiserv->start();
-//				} catch (dtn::utils::tcpserver::SocketException ex) {
-//					apiserv = NULL;
-//					sleep(1);
-//					continue;
-//				}
-//			}
-//
-//			cout << "API ready!" << endl;
-
 			exit(-1);
 		}
 	}
@@ -264,8 +235,6 @@ int main(int argc, char *argv[])
 	{
 		usleep(10000);
 	}
-
-//	delete storage;
 
 	if (api_switch)
 	{

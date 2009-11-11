@@ -49,6 +49,8 @@ namespace dtn
 				if ( gethostname(hostname_array, 64) != 0 )
 				{
 					// error
+					delete[] hostname_array;
+					return "local";
 				}
 
 				string hostname(hostname_array);
