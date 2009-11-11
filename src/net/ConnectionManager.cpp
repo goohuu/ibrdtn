@@ -111,36 +111,42 @@ namespace dtn
 			if ((node.getProtocol() == UNDEFINED) || (node.getProtocol() == UNSUPPORTED))
 				throw ConnectionNotAvailableException();
 
-			list<ConvergenceLayer*>::const_iterator iter = _cl.begin();
 			ConvergenceLayer *cl = NULL;
 
-			while (iter != _cl.end())
+			for (list<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); iter++)
 			{
 				switch (node.getProtocol())
 				{
 					case TCP_CONNECTION:
 					{
 						cl = dynamic_cast<TCPConvergenceLayer*>(*iter);
+
+						if (cl != NULL)
+						{
+							try {
+								// search a matching Connection or create a new one
+								return cl->getConnection(node);
+							} catch (dtn::utils::tcpserver::SocketException ex) {
+
+							}
+						}
 						break;
 					}
 
 					case UDP_CONNECTION:
 					{
 						cl = dynamic_cast<UDPConvergenceLayer*>(*iter);
+						if (cl != NULL)
+						{
+							try {
+								// search a matching Connection or create a new one
+								return cl->getConnection(node);
+							} catch (dtn::utils::tcpserver::SocketException ex) {
+
+							}
+						}
 						break;
 					}
-				}
-
-				iter++;
-			}
-
-			if (cl != NULL)
-			{
-				try {
-					// search a matching Connection or create a new one
-					return cl->getConnection(node);
-				} catch (dtn::utils::tcpserver::SocketException ex) {
-
 				}
 			}
 
@@ -158,8 +164,12 @@ namespace dtn
 		{
 			BundleConnection *conn = getConnection(eid);
 
-			// TODO: catch an interrupted connection and create a fragment is possible
-			conn->write(b);
+			try {
+				// TODO: catch an interrupted connection and create a fragment is possible
+				conn->write(b);
+			} catch (dtn::exceptions::IOException ex) {
+
+			}
 		}
 
 		BundleConnection* ConnectionManager::getConnection(const dtn::data::EID &eid)
