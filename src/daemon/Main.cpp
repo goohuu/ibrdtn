@@ -59,7 +59,9 @@ int main(int argc, char *argv[])
 	Configuration &conf = Configuration::getInstance();
 
 	string configurationfile = "config.ini";
+	string default_interface = "lo";
 	bool api_switch = true;
+	bool discovery_switch = true;
 
 	for (int i = 0; i < argc; i++)
 	{
@@ -68,6 +70,11 @@ int main(int argc, char *argv[])
 		if (arg == "-c" && argc > i)
 		{
 			configurationfile = argv[i + 1];
+		}
+
+		if (arg == "-i" && argc > i)
+		{
+			default_interface = argv[i + 1];
 		}
 
 		if (arg == "--noapi")
@@ -80,6 +87,12 @@ int main(int argc, char *argv[])
 		{
 			cout << "IBR-DTN "; version(); cout << endl;
 			return 0;
+		}
+
+		if (arg == "--nodiscovery")
+		{
+			cout << "Discovery disabled" << endl;
+			discovery_switch = false;
 		}
 	}
 
@@ -133,7 +146,10 @@ int main(int argc, char *argv[])
 	BundleCore& core = BundleCore::getInstance();
 
 	// initialize the DiscoveryAgent
-	dtn::net::IPNDAgent ipnd(conf.getDiscoveryAddress(), conf.getDiscoveryPort());
+	dtn::net::IPNDAgent *ipnd = NULL;
+
+	if (discovery_switch)
+		ipnd = new dtn::net::IPNDAgent(conf.getDiscoveryAddress(default_interface), conf.getDiscoveryPort());
 
 	// create a storage for bundles
 	SimpleBundleStorage storage;
@@ -155,30 +171,30 @@ int main(int argc, char *argv[])
 			try {
 				if (type == "udp")
 				{
-					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( conf.getNetInterface(key), conf.getNetPort(key) );
+					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( conf.getNetInterface(key, default_interface), conf.getNetPort(key) );
 					udpcl->start();
 					core.addConvergenceLayer(udpcl);
 
-					stringstream service; service << "ip=" << conf.getNetInterface(key) << ";port=" << conf.getNetPort(key) << ";";
-					ipnd.addService("udpcl", service.str());
+					stringstream service; service << "ip=" << conf.getNetInterface(key, default_interface) << ";port=" << conf.getNetPort(key) << ";";
+					if (discovery_switch) ipnd->addService("udpcl", service.str());
 				}
 				else if (type == "tcp")
 				{
-					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( conf.getNetInterface(key), conf.getNetPort(key) );
+					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( conf.getNetInterface(key, default_interface), conf.getNetPort(key) );
 					tcpcl->start();
 					core.addConvergenceLayer(tcpcl);
 
-					stringstream service; service << "ip=" << conf.getNetInterface(key) << ";port=" << conf.getNetPort(key) << ";";
-					ipnd.addService("tcpcl", service.str());
+					stringstream service; service << "ip=" << conf.getNetInterface(key, default_interface) << ";port=" << conf.getNetPort(key) << ";";
+					if (discovery_switch) ipnd->addService("tcpcl", service.str());
 				}
 
-				cout << "ConvergenceLayer for " << type << " added on " << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << endl;
+				cout << "ConvergenceLayer for " << type << " added on " << conf.getNetInterface(key, default_interface) << ":" << conf.getNetPort(key) << endl;
 
 			} catch (dtn::utils::tcpserver::SocketException ex) {
-				cout << "Failed to add ConvergenceLayer for " << type << " on " << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << endl;
+				cout << "Failed to add ConvergenceLayer for " << type << " on " << conf.getNetInterface(key, default_interface) << ":" << conf.getNetPort(key) << endl;
 				cout << "      Error: " << ex.what() << endl;
 			} catch (dtn::net::UDPConvergenceLayer::SocketException ex) {
-				cout << "Failed to add ConvergenceLayer for " << type << " on " << conf.getNetInterface(key) << ":" << conf.getNetPort(key) << endl;
+				cout << "Failed to add ConvergenceLayer for " << type << " on " << conf.getNetInterface(key, default_interface) << ":" << conf.getNetPort(key) << endl;
 				cout << "      Error: " << ex.what() << endl;
 			}
 
@@ -226,7 +242,7 @@ int main(int argc, char *argv[])
 	}
 
 	// Fire up the Discovery Agent
-	ipnd.start();
+	if (discovery_switch) ipnd->start();
 
 	// init system
 	cout << "dtn node ready" << endl;
@@ -242,6 +258,8 @@ int main(int argc, char *argv[])
 	}
 
 	cout << "shutdown dtn node" << endl;
+
+	if (discovery_switch) delete ipnd;
 
 	// send shutdown signal to unbound threads
 	dtn::core::EventSwitch::raiseEvent(new dtn::core::GlobalEvent(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN));

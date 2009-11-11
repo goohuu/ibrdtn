@@ -31,11 +31,11 @@ namespace dtn
 
 			string getNetType(const string name = "default");
 			unsigned int getNetPort(const string name = "default");
-			string getNetInterface(const string name = "default");
-			string getNetBroadcast(const string name = "default");
+			string getNetInterface(const string name = "default", string default_interface = "lo");
+			string getNetBroadcast(const string name = "default", string default_interface = "lo");
 			unsigned int getNetMTU(const string name = "default");
 
-			string getDiscoveryAddress();
+			string getDiscoveryAddress(string default_interface = "lo");
 			unsigned int getDiscoveryPort();
 
 			void setConfigFile(ConfigFile &conf);

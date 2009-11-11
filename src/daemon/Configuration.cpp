@@ -89,7 +89,7 @@ namespace dtn
 			return m_conf.read<int>(key, 4556);
 		}
 
-		string Configuration::getNetInterface(const string name)
+		string Configuration::getNetInterface(const string name, string default_interface)
 		{
 			stringstream ss;
 			ss << "net_" << name << "_interface";
@@ -97,14 +97,14 @@ namespace dtn
 			ss >> key;
 
 			try {
-				string interface = m_conf.read<string>(key);
+				string interface = m_conf.read<string>(key, default_interface);
 				return getInterfaceAddress(interface);
 			} catch (ConfigFile::key_not_found ex) {
 				return "0.0.0.0";
 			}
 		}
 
-		string Configuration::getNetBroadcast(const string name)
+		string Configuration::getNetBroadcast(const string name, string default_interface)
 		{
 			stringstream ss;
 			ss << "net_" << name << "_broadcast";
@@ -112,17 +112,17 @@ namespace dtn
 			ss >> key;
 
 			try {
-				string interface = m_conf.read<string>(key);
+				string interface = m_conf.read<string>(key, default_interface);
 				return getInterfaceBroadcastAddress(interface);
 			} catch (ConfigFile::key_not_found ex) {
 				return "255.255.255.255";
 			}
 		}
 
-		string Configuration::getDiscoveryAddress()
+		string Configuration::getDiscoveryAddress(string default_interface)
 		{
 			try {
-				string interface = m_conf.read<string>("discovery_interface");
+				string interface = m_conf.read<string>("discovery_interface", default_interface);
 				return getInterfaceBroadcastAddress(interface);
 			} catch (ConfigFile::key_not_found ex) {
 				return "255.255.255.255";
