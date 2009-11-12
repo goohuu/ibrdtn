@@ -76,7 +76,7 @@ namespace dtn
 			string key;
 			ss >> key;
 
-			return m_conf.read<string>(key, "default");
+			return m_conf.read<string>(key, "tcp");
 		}
 
 		unsigned int Configuration::getNetPort(const string name)
