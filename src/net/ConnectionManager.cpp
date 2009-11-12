@@ -111,42 +111,17 @@ namespace dtn
 			if ((node.getProtocol() == UNDEFINED) || (node.getProtocol() == UNSUPPORTED))
 				throw ConnectionNotAvailableException();
 
-			ConvergenceLayer *cl = NULL;
-
 			for (list<ConvergenceLayer*>::const_iterator iter = _cl.begin(); iter != _cl.end(); iter++)
 			{
-				switch (node.getProtocol())
-				{
-					case TCP_CONNECTION:
+				try {
+					BundleConnection *conn = (*iter)->getConnection(node);
+
+					if (conn != NULL)
 					{
-						cl = dynamic_cast<TCPConvergenceLayer*>(*iter);
-
-						if (cl != NULL)
-						{
-							try {
-								// search a matching Connection or create a new one
-								return cl->getConnection(node);
-							} catch (dtn::utils::tcpserver::SocketException ex) {
-
-							}
-						}
-						break;
+						return conn;
 					}
+				} catch (dtn::utils::tcpserver::SocketException ex) {
 
-					case UDP_CONNECTION:
-					{
-						cl = dynamic_cast<UDPConvergenceLayer*>(*iter);
-						if (cl != NULL)
-						{
-							try {
-								// search a matching Connection or create a new one
-								return cl->getConnection(node);
-							} catch (dtn::utils::tcpserver::SocketException ex) {
-
-							}
-						}
-						break;
-					}
 				}
 			}
 

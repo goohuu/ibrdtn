@@ -136,7 +136,7 @@ namespace dtn
 			_contact = h;
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "New client connected: " << _eid.getString() << endl;
+			cout << "New client connected: " << _contact.getEID().getString() << endl;
 #endif
 
 		}

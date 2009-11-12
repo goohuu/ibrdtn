@@ -228,6 +228,8 @@ namespace dtn
 		// search a matching Connection or create a new one
 		BundleConnection* TCPConvergenceLayer::getConnection(const dtn::core::Node &n)
 		{
+			if (n.getProtocol() != TCP_CONNECTION) return NULL;
+
 			_connection_lock.enter();
 			std::list<TCPConnection*>::iterator iter = _connections.begin();
 

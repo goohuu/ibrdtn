@@ -263,6 +263,8 @@ namespace dtn
 
 		BundleConnection* UDPConvergenceLayer::getConnection(const dtn::core::Node &n)
 		{
+			if (n.getProtocol() != UDP_CONNECTION) return NULL;
+
 			return new dtn::net::UDPConnection(*this, n);
 		}
 
