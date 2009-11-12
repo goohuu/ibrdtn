@@ -33,8 +33,9 @@ namespace dtn
 
 		std::ostream &operator<<(std::ostream &stream, const BundleString &bstring)
 		{
-			dtn::data::SDNV sdnv(bstring.length());
-			stream << sdnv << (std::string&)bstring;
+			std::string data = (std::string)bstring;
+			dtn::data::SDNV sdnv(data.length());
+			stream << sdnv << data;
 			return stream;
 		}
 
