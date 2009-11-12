@@ -1,20 +1,7 @@
 #include "daemon/Configuration.h"
 #include "ibrdtn/utils/Utils.h"
 #include "core/Node.h"
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <ifaddrs.h>
-#include <netinet/ip.h>
-#include <netinet/ip6.h>
-#include <arpa/inet.h>
-
-#include <stdlib.h>
-#include <netinet/in.h>
-#include <net/if.h>
-#include <errno.h>
-
-#include <unistd.h>
+#include "daemon/NetInterface.h"
 
 using namespace dtn::core;
 using namespace dtn::utils;
@@ -23,7 +10,16 @@ namespace dtn
 {
 	namespace daemon
 	{
+                void Configuration::version()
+                {
+                        cout << "Version: " << PACKAGE_VERSION;
+                #ifdef SVN_REV
+                        cout << "-r" << SVN_REV;
+                #endif
+                }
+
 		Configuration::Configuration()
+                 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true)
 		{}
 
 		Configuration::~Configuration()
@@ -35,15 +31,61 @@ namespace dtn
 			return conf;
 		}
 
-		void Configuration::setConfigFile(ConfigFile &conf)
-		{
-			m_conf = conf;
-		}
+                void Configuration::load(int argc, char *argv[])
+                {
+                    for (int i = 0; i < argc; i++)
+                    {
+                            string arg = argv[i];
 
-		string Configuration::getLocalUri()
+                            if (arg == "-c" && argc > i)
+                            {
+                                    _filename = argv[i + 1];
+                            }
+
+                            if (arg == "-i" && argc > i)
+                            {
+                                    _default_net = argv[i + 1];
+                                    _use_default_net = true;
+                            }
+
+                            if (arg == "--noapi")
+                            {
+                                    cout << "API disabled" << endl;
+                                    _doapi = false;
+                            }
+
+                            if ((arg == "--version") || (arg == "-v"))
+                            {
+                                    cout << "IBR-DTN "; version(); cout << endl;
+                                    exit(0);
+                            }
+
+                            if (arg == "--nodiscovery")
+                            {
+                                    cout << "Discovery disabled" << endl;
+                                    _dodiscovery = false;
+                            }
+                    }
+
+                    // load the configuration
+                    load(_filename);
+                }
+
+                void Configuration::load(string filename)
+                {
+                    try {
+                            _conf = ConfigFile(filename);;
+                            cout << "Configuration: " << filename << endl;
+                    } catch (ConfigFile::file_not_found ex) {
+                            cout << "Configuration file not found. Using defaults." << endl;
+                            _conf = ConfigFile();
+                    }
+                }
+
+		string Configuration::getNodename()
 		{
 			try {
-				return m_conf.read<string>("local_uri");
+				return _conf.read<string>("local_uri");
 			} catch (ConfigFile::key_not_found ex) {
 				char *hostname_array = new char[64];
 				if ( gethostname(hostname_array, 64) != 0 )
@@ -64,84 +106,74 @@ namespace dtn
 			}
 		}
 
-		vector<string> Configuration::getNetList()
+                NetInterface Configuration::getNetInterface(string name)
+                {
+                    list<NetInterface> nets = getNetInterfaces();
+
+                    for (list<NetInterface>::iterator iter = nets.begin(); iter != nets.end(); iter++)
+                    {
+                        if ((*iter).getName() == name)
+                        {
+                            return (*iter);
+                        }
+                    }
+
+                    throw ParameterNotFoundException();
+                }
+
+                list<NetInterface> Configuration::getNetInterfaces()
+                {
+                    list<NetInterface> ret;
+
+                    if (_use_default_net)
+                    {
+                        ret.push_back( NetInterface(NetInterface::NETWORK_TCP, "default", _default_net, 4556) );
+                        return ret;
+                    }
+
+                    try {
+                        vector<string> nets = Utils::tokenize(" ", _conf.read<string>("net_interfaces") );
+                        for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+                        {
+                            string key_type = "net_"; key_type.append(*iter); key_type.append("_type");
+                            string key_port = "net_"; key_port.append(*iter); key_port.append("_port");
+                            string key_interface = "net_"; key_interface.append(*iter); key_interface.append("_interface");
+
+                            string type_name = _conf.read<string>(key_type, "tcp");
+                            NetInterface::NetworkType type = NetInterface::NETWORK_UNKNOWN;
+
+                            if (type_name == "tcp") type = NetInterface::NETWORK_TCP;
+                            if (type_name == "udp") type = NetInterface::NETWORK_UDP;
+
+                            string systemname = _conf.read<string>(key_interface, "lo");
+                            unsigned int port = _conf.read<unsigned int>(key_port, 4556);
+
+                            NetInterface net(type, (*iter), systemname, port);
+
+                            ret.push_back(net);
+                        }
+                    } catch (ConfigFile::key_not_found ex) {
+                        return ret;
+                    }
+
+                    return ret;
+                }
+
+		NetInterface Configuration::getDiscoveryInterface()
 		{
-			return Utils::tokenize(" ", m_conf.read<string>("net_interfaces", "default") );
-		}
+                    if (_use_default_net)
+                    {
+                        return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, 4556);
+                    }
 
-		string Configuration::getNetType(const string name)
-		{
-			stringstream ss;
-			ss << "net_" << name << "_type";
-			string key;
-			ss >> key;
+                    try {
+                            string interface = _conf.read<string>("discovery_interface");
+                            return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, _conf.read<int>("discovery_port", 4551));
+                    } catch (ConfigFile::key_not_found ex) {
+                    } catch (ParameterNotFoundException ex) {
+                    }
 
-			return m_conf.read<string>(key, "tcp");
-		}
-
-		unsigned int Configuration::getNetPort(const string name)
-		{
-			stringstream ss;
-			ss << "net_" << name << "_port";
-			string key;
-			ss >> key;
-
-			return m_conf.read<int>(key, 4556);
-		}
-
-		string Configuration::getNetInterface(const string name, string default_interface)
-		{
-			stringstream ss;
-			ss << "net_" << name << "_interface";
-			string key;
-			ss >> key;
-
-			try {
-				string interface = m_conf.read<string>(key, default_interface);
-				return getInterfaceAddress(interface);
-			} catch (ConfigFile::key_not_found ex) {
-				return "0.0.0.0";
-			}
-		}
-
-		string Configuration::getNetBroadcast(const string name, string default_interface)
-		{
-			stringstream ss;
-			ss << "net_" << name << "_broadcast";
-			string key;
-			ss >> key;
-
-			try {
-				string interface = m_conf.read<string>(key, default_interface);
-				return getInterfaceBroadcastAddress(interface);
-			} catch (ConfigFile::key_not_found ex) {
-				return "255.255.255.255";
-			}
-		}
-
-		string Configuration::getDiscoveryAddress(string default_interface)
-		{
-			try {
-				string interface = m_conf.read<string>("discovery_interface", default_interface);
-				return getInterfaceBroadcastAddress(interface);
-			} catch (ConfigFile::key_not_found ex) {
-				return "255.255.255.255";
-			}
-		}
-
-		unsigned int Configuration::getDiscoveryPort()
-		{
-			return m_conf.read<int>("discovery_port", 4551);
-		}
-
-		unsigned int Configuration::getNetMTU(const string name)
-		{
-			stringstream ss;
-			ss << "net_" << name << "_mtu";
-			string key;
-			ss >> key;
-
-			return m_conf.read<unsigned int>(key, 1280);
+                    return NetInterface(NetInterface::NETWORK_UDP, "disco", "255.255.255.255", "255.255.255.255", 4551);
 		}
 
 		list<StaticRoute> Configuration::getStaticRoutes()
@@ -150,9 +182,9 @@ namespace dtn
 			string key = "route1";
 			unsigned int keynumber = 1;
 
-			while (m_conf.keyExists( key ))
+			while (_conf.keyExists( key ))
 			{
-				vector<string> route = Utils::tokenize(" ", m_conf.read<string>(key, "dtn:none dtn:none"));
+				vector<string> route = Utils::tokenize(" ", _conf.read<string>(key, "dtn:none dtn:none"));
 				ret.push_back( StaticRoute( route.front(), route.back() ) );
 
 				keynumber++;
@@ -162,9 +194,9 @@ namespace dtn
 			return ret;
 		}
 
-		vector<Node> Configuration::getStaticNodes()
+		list<Node> Configuration::getStaticNodes()
 		{
-			vector<Node> nodes;
+			list<Node> nodes;
 
 			// read the node count
 			int count = 1;
@@ -172,15 +204,15 @@ namespace dtn
 			// initial prefix
 			string prefix = "static1_";
 
-			while ( m_conf.keyExists(prefix + "uri") )
+			while ( _conf.keyExists(prefix + "uri") )
 			{
 				Node n(PERMANENT);
 
-				n.setAddress( m_conf.read<string>(prefix + "address", "127.0.0.1") );
-				n.setPort( m_conf.read<unsigned int>(prefix + "port", 4556) );
-				n.setURI( m_conf.read<string>(prefix + "uri", "dtn:none") );
+				n.setAddress( _conf.read<string>(prefix + "address", "127.0.0.1") );
+				n.setPort( _conf.read<unsigned int>(prefix + "port", 4556) );
+				n.setURI( _conf.read<string>(prefix + "uri", "dtn:none") );
 
-				string protocol = m_conf.read<string>(prefix + "proto", "tcp");
+				string protocol = _conf.read<string>(prefix + "proto", "tcp");
 				if (protocol == "tcp") n.setProtocol(TCP_CONNECTION);
 				if (protocol == "udp") n.setProtocol(UDP_CONNECTION);
 
@@ -196,158 +228,51 @@ namespace dtn
 			return nodes;
 		}
 
-		unsigned int Configuration::getStorageMaxSize()
-		{
-			return m_conf.read<unsigned int>("storage_maxsize", 1024);
-		}
+                int Configuration::getTimezone()
+                {
+                    return _conf.read<int>( "timezone", 0 );
+                }
 
-		bool Configuration::doStorageMerge()
-		{
-			return m_conf.read<unsigned int>("storage_merge", 0) == 1;
-		}
+                string Configuration::getPath(string name)
+                {
+                    stringstream ss;
+                    ss << name << "_path";
+                    string key; ss >> key;
 
-		list<Node> Configuration::getFakeBroadcastNodes()
-		{
-			list<Node> nodes;
+                    try {
+                        return _conf.read<string>(key);
+                    } catch (ConfigFile::key_not_found ex) {
+                        throw ParameterNotSetException();
+                    }
+                }
 
-			string key = "emma_broadcast_recv1";
-			unsigned int keynumber = 1;
+                unsigned int Configuration::getUID()
+                {
+                    try {
+                        return _conf.read<unsigned int>("user");
+                    } catch (ConfigFile::key_not_found ex) {
+                        throw ParameterNotSetException();
+                    }
+                }
 
-			while (m_conf.keyExists( key ))
-			{
-				Node node(FLOATING);
-				vector<string> node_data = Utils::tokenize(" ", m_conf.read<string>(key, "127.0.0.1 4556"));
-				node.setAddress(node_data.front());
+                unsigned int Configuration::getGID()
+                {
+                    try {
+                        return _conf.read<unsigned int>("group");
+                    } catch (ConfigFile::key_not_found ex) {
+                        throw ParameterNotSetException();
+                    }
+                }
 
-				int port;
-				stringstream ss_port; ss_port << node_data.back(); ss_port >> port;
-				node.setPort(port);
 
-				nodes.push_back(node);
+                bool Configuration::doDiscovery()
+                {
+                    return _dodiscovery;
+                }
 
-				keynumber++;
-				stringstream ss; ss << "emma_broadcast_recv" << keynumber; ss >> key;
-			}
-
-			return nodes;
-		}
-
-		bool Configuration::doFakeBroadcast()
-		{
-			return m_conf.read<int>("emma_fake_broadcast", 0) == 1;
-		}
-
-		pair<double, double> Configuration::getStaticPosition()
-		{
-			return make_pair(m_conf.read<double>("gpsd_lat", 0), m_conf.read<double>("gpsd_lon", 0));
-		}
-
-		string Configuration::getGPSHost()
-		{
-			return m_conf.read<string>("gpsd_host", "localhost");
-		}
-
-		unsigned int Configuration::getGPSPort()
-		{
-			return m_conf.read<unsigned int>("gpsd_port", 2947);
-		}
-
-		bool Configuration::useGPSDaemon()
-		{
-			return m_conf.keyExists("gpsd_host");
-		}
-
-		bool Configuration::useSQLiteStorage()
-		{
-			return m_conf.keyExists( "sqlite_database" );
-		}
-
-		string Configuration::getSQLiteDatabase()
-		{
-			return m_conf.read<string>( "sqlite_database", "database.db" );
-		}
-
-		bool Configuration::doSQLiteFlush()
-		{
-			return m_conf.read<int>( "sqlite_flush", 0 );
-		}
-
-		string Configuration::getInterfaceAddress(string interface)
-		{
-			// define the return value
-			string ret = "0.0.0.0";
-
-			struct ifaddrs *ifap = NULL;
-			int status = getifaddrs(&ifap);
-
-			if ((status != 0) || (ifap == NULL))
-			{
-				// error, return with default address
-				return ret;
-			}
-
-			for (struct ifaddrs *iter = ifap; iter != NULL; iter = iter->ifa_next)
-			{
-				if (iter->ifa_addr == NULL) continue;
-				if ((iter->ifa_flags & IFF_UP) == 0) continue;
-
-				sockaddr *addr = iter->ifa_addr;
-
-				// currently only IPv4 is supported
-				if (addr->sa_family != AF_INET) continue;
-
-				// check the name of the interface
-				if (string(iter->ifa_name) != interface) continue;
-
-				sockaddr_in *ip = (sockaddr_in*)iter->ifa_addr;
-
-				ret = string(inet_ntoa(ip->sin_addr));
-				break;
-			}
-
-			freeifaddrs(ifap);
-
-			return ret;
-		}
-
-		string Configuration::getInterfaceBroadcastAddress(string interface)
-		{
-			// define the return value
-			string ret = "255.255.255.255";
-
-			struct ifaddrs *ifap = NULL;
-			int status = getifaddrs(&ifap);
-
-			if ((status != 0) || (ifap == NULL))
-			{
-				// error, return with default address
-				return ret;
-			}
-
-			for (struct ifaddrs *iter = ifap; iter != NULL; iter = iter->ifa_next)
-			{
-				if (iter->ifa_addr == NULL) continue;
-				if ((iter->ifa_flags & IFF_UP) == 0) continue;
-
-				sockaddr *addr = iter->ifa_addr;
-
-				// currently only IPv4 is supported
-				if (addr->sa_family != AF_INET) continue;
-
-				// check the name of the interface
-				if (string(iter->ifa_name) != interface) continue;
-
-				if (iter->ifa_flags & IFF_BROADCAST)
-				{
-					sockaddr_in *broadcast = (sockaddr_in*)iter->ifa_ifu.ifu_broadaddr;
-					ret = string(inet_ntoa(broadcast->sin_addr));
-					break;
-				}
-			}
-
-			freeifaddrs(ifap);
-
-			return ret;
-		}
+                bool Configuration::doAPI()
+                {
+                    return _doapi;
+                }
 	}
 }

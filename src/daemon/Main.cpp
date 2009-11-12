@@ -21,6 +21,7 @@
 #include "net/IPNDAgent.h"
 
 #include "ibrdtn/utils/Utils.h"
+#include "daemon/NetInterface.h"
 
 using namespace dtn::core;
 using namespace dtn::daemon;
@@ -31,6 +32,7 @@ using namespace dtn::net;
 #include "daemon/Debugger.h"
 #endif
 
+// global variable. true if running
 bool m_running = true;
 
 void term(int signal)
@@ -41,12 +43,46 @@ void term(int signal)
 	}
 }
 
-void version()
+void reload(int signal)
 {
-	cout << "Version: " << PACKAGE_VERSION;
-#ifdef SVN_REV
-	cout << "-r" << SVN_REV;
-#endif
+    // send shutdown signal to unbound threads
+    dtn::core::EventSwitch::raiseEvent(new dtn::core::GlobalEvent(dtn::core::GlobalEvent::GLOBAL_RELOAD));
+}
+
+void switchUser(Configuration &config)
+{
+    try {
+        setuid( config.getUID() );
+        cout << "Switching UID to " << config.getUID() << endl;
+    } catch (Configuration::ParameterNotSetException ex) {
+
+    }
+
+    try {
+        setuid( config.getGID() );
+        cout << "Switching GID to " << config.getGID() << endl;
+    } catch (Configuration::ParameterNotSetException ex) {
+
+    }
+}
+
+void setGlobalVars(Configuration &config)
+{
+    //ConfigFile &conf = config.getConfigFile();
+
+    // set the timezone
+    dtn::utils::Utils::timezone = config.getTimezone();
+
+    // set local eid
+    dtn::core::BundleCore::local = config.getNodename();
+    cout << "Local node name: " << config.getNodename() << endl;
+
+    try {
+        // assign a directory for blobs
+        dtn::blob::BLOBManager::init(config.getPath("blob"));
+    } catch (Configuration::ParameterNotSetException ex) {
+
+    }
 }
 
 int main(int argc, char *argv[])
@@ -54,102 +90,29 @@ int main(int argc, char *argv[])
 	// catch process signals
 	signal(SIGINT, term);
 	signal(SIGTERM, term);
+        signal(SIGHUP, reload);
 
-	// create a configuration
-	Configuration &conf = Configuration::getInstance();
+        // create a configuration
+        Configuration &conf = Configuration::getInstance();
 
-	string configurationfile = "config.ini";
-	string default_interface = "lo";
-	bool api_switch = true;
-	bool discovery_switch = true;
+        // load parameter into the configuration
+        conf.load(argc, argv);
 
-	for (int i = 0; i < argc; i++)
-	{
-		string arg = argv[i];
+	cout << "IBR-DTN Daemon - "; conf.version(); cout << endl;
 
-		if (arg == "-c" && argc > i)
-		{
-			configurationfile = argv[i + 1];
-		}
+        // switch the user is requested
+        switchUser(conf);
 
-		if (arg == "-i" && argc > i)
-		{
-			default_interface = argv[i + 1];
-		}
-
-		if (arg == "--noapi")
-		{
-			cout << "API disabled" << endl;
-			api_switch = false;
-		}
-
-		if ((arg == "--version") || (arg == "-v"))
-		{
-			cout << "IBR-DTN "; version(); cout << endl;
-			return 0;
-		}
-
-		if (arg == "--nodiscovery")
-		{
-			cout << "Discovery disabled" << endl;
-			discovery_switch = false;
-		}
-	}
-
-	cout << "IBR-DTN Daemon - "; version(); cout << endl;
-
-	// load configuration
-	ConfigFile _conf;
-
-	try {
-		_conf = ConfigFile(configurationfile);;
-		cout << "Configuration: " << configurationfile << endl;
-	} catch (ConfigFile::file_not_found ex) {
-		cout << "No configuration file found. Using defaults." << endl;
-	}
-
-	conf.setConfigFile(_conf);
-
-	// set user id
-	if ( _conf.keyExists("user") )
-	{
-		cout << "Switching UID to " << _conf.read<unsigned int>( "user", 0 ) << endl;
-		setuid( _conf.read<unsigned int>( "user", 0 ) );
-	}
-
-	// set group id
-	if ( _conf.keyExists("group") )
-	{
-		cout << "Switching GID to " << _conf.read<unsigned int>( "group", 0 ) << endl;
-		setgid( _conf.read<unsigned int>( "group", 0 ) );
-	}
-
-	// set the timezone
-	dtn::utils::Utils::timezone = _conf.read<int>( "timezone", 0 );
-
-	// set local eid
-	dtn::core::BundleCore::local = conf.getLocalUri();
-	cout << "Local node name: " << conf.getLocalUri() << endl;
+        // set global vars
+        setGlobalVars(conf);
 
 #ifdef DO_DEBUG_OUTPUT
 	// create event debugger
 	EventDebugger eventdebugger;
 #endif
 
-	if (_conf.keyExists("local_blobpath"))
-	{
-		// assign a directory for blobs
-		dtn::blob::BLOBManager::init(_conf.read<string>("local_blobpath"));
-	}
-
 	// create the bundle core object
 	BundleCore& core = BundleCore::getInstance();
-
-	// initialize the DiscoveryAgent
-	dtn::net::IPNDAgent *ipnd = NULL;
-
-	if (discovery_switch)
-		ipnd = new dtn::net::IPNDAgent(conf.getDiscoveryAddress(default_interface), conf.getDiscoveryPort());
 
 	// create a storage for bundles
 	SimpleBundleStorage storage;
@@ -158,48 +121,61 @@ int main(int argc, char *argv[])
 	// create a static router
 	DynamicBundleRouter router( conf.getStaticRoutes(), storage );
 
-	// get names of the convergence layers
-	vector<string> netlist = conf.getNetList();
+	// get the configuration of the convergence layers
+        list<NetInterface> nets = conf.getNetInterfaces();
+
+	// initialize the DiscoveryAgent
+	dtn::net::IPNDAgent *ipnd = NULL;
+
+	if (conf.doDiscovery())
+        {
+            NetInterface disco_interface = conf.getDiscoveryInterface();
+            ipnd = new dtn::net::IPNDAgent(disco_interface.getBroadcastAddress(), disco_interface.getPort());
+        }
+
+        // create the convergence layers
+ 	for (list<NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 	{
-		vector<string>::iterator iter = netlist.begin();
+            const NetInterface &net = (*iter);
 
-		while (iter != netlist.end())
-		{
-			string key = (*iter);
-			string type = conf.getNetType(key);
+            try {
+                switch (net.getType())
+                {
+                    case NetInterface::NETWORK_UDP:
+                    {
+                        UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net.getAddress(), net.getPort() );
+                        udpcl->start();
+                        core.addConvergenceLayer(udpcl);
 
-			try {
-				if (type == "udp")
-				{
-					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( conf.getNetInterface(key, default_interface), conf.getNetPort(key) );
-					udpcl->start();
-					core.addConvergenceLayer(udpcl);
+                        stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
+                        if (ipnd != NULL) ipnd->addService("udpcl", service.str());
 
-					stringstream service; service << "ip=" << conf.getNetInterface(key, default_interface) << ";port=" << conf.getNetPort(key) << ";";
-					if (discovery_switch) ipnd->addService("udpcl", service.str());
-				}
-				else if (type == "tcp")
-				{
-					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( conf.getNetInterface(key, default_interface), conf.getNetPort(key) );
-					tcpcl->start();
-					core.addConvergenceLayer(tcpcl);
+                        cout << "UDP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
 
-					stringstream service; service << "ip=" << conf.getNetInterface(key, default_interface) << ";port=" << conf.getNetPort(key) << ";";
-					if (discovery_switch) ipnd->addService("tcpcl", service.str());
-				}
+                        break;
+                    }
 
-				cout << "ConvergenceLayer for " << type << " added on " << conf.getNetInterface(key, default_interface) << ":" << conf.getNetPort(key) << endl;
+                    case NetInterface::NETWORK_TCP:
+                    {
+                        TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net.getAddress(), net.getPort() );
+                        tcpcl->start();
+                        core.addConvergenceLayer(tcpcl);
 
-			} catch (dtn::utils::tcpserver::SocketException ex) {
-				cout << "Failed to add ConvergenceLayer for " << type << " on " << conf.getNetInterface(key, default_interface) << ":" << conf.getNetPort(key) << endl;
-				cout << "      Error: " << ex.what() << endl;
-			} catch (dtn::net::UDPConvergenceLayer::SocketException ex) {
-				cout << "Failed to add ConvergenceLayer for " << type << " on " << conf.getNetInterface(key, default_interface) << ":" << conf.getNetPort(key) << endl;
-				cout << "      Error: " << ex.what() << endl;
-			}
+                        stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
+                        if (ipnd != NULL) ipnd->addService("tcpcl", service.str());
 
-			iter++;
-		}
+                        cout << "TCP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
+
+                        break;
+                    }
+                }
+            } catch (dtn::utils::tcpserver::SocketException ex) {
+                    cout << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
+                    cout << "      Error: " << ex.what() << endl;
+            } catch (dtn::net::UDPConvergenceLayer::SocketException ex) {
+                    cout << "Failed to add UDP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
+                    cout << "      Error: " << ex.what() << endl;
+            }
 	}
 
 #ifdef DO_DEBUG_OUTPUT
@@ -214,22 +190,17 @@ int main(int argc, char *argv[])
 	storage.start();
 	router.start();
 
-	// announce static nodes
-	{
-		// create a list of static nodes
-		vector<Node> static_nodes = conf.getStaticNodes();
-		vector<Node>::iterator iter = static_nodes.begin();
+	// announce static nodes, create a list of static nodes
+        list<Node> static_nodes = conf.getStaticNodes();
 
-		while (iter != static_nodes.end())
-		{
-			core.addConnection(*iter);
-			iter++;
-		}
-	}
+        for (list<Node>::iterator iter = static_nodes.begin(); iter != static_nodes.end(); iter++)
+        {
+            core.addConnection(*iter);
+        }
 
 	ApiServer *apiserv = NULL;
 
-	if (api_switch)
+	if (conf.doAPI())
 	{
 		try {
 			// instance a API server, first create a socket
@@ -242,7 +213,7 @@ int main(int argc, char *argv[])
 	}
 
 	// Fire up the Discovery Agent
-	if (discovery_switch) ipnd->start();
+	if (ipnd != NULL) ipnd->start();
 
 	// init system
 	cout << "dtn node ready" << endl;
@@ -252,14 +223,14 @@ int main(int argc, char *argv[])
 		usleep(10000);
 	}
 
-	if (api_switch)
+	if (conf.doAPI())
 	{
 		delete apiserv;
 	}
 
 	cout << "shutdown dtn node" << endl;
 
-	if (discovery_switch) delete ipnd;
+	if (ipnd != NULL) delete ipnd;
 
 	// send shutdown signal to unbound threads
 	dtn::core::EventSwitch::raiseEvent(new dtn::core::GlobalEvent(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN));

@@ -20,7 +20,8 @@ namespace dtn
 		public:
 			enum Action
 			{
-				GLOBAL_SHUTDOWN = 0
+				GLOBAL_SHUTDOWN = 0,
+                                GLOBAL_RELOAD = 1
 			};
 
 			GlobalEvent(Action a);

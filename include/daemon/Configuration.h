@@ -5,6 +5,8 @@
 #include "ConfigFile.h"
 #include "core/Node.h"
 #include "core/StaticRoute.h"
+#include "ibrdtn/data/Exceptions.h"
+#include "daemon/NetInterface.h"
 
 using namespace dtn::core;
 using namespace dtn::data;
@@ -23,48 +25,67 @@ namespace dtn
 			virtual ~Configuration();
 
 		public:
+                        class ParameterNotSetException : dtn::exceptions::Exception
+                        {
+                        };
+
+                        class ParameterNotFoundException : dtn::exceptions::Exception
+                        {
+                        };
+
 			static Configuration &getInstance();
 
-			string getLocalUri();
+                        /**
+                         * load the configuration from a file
+                         */
+                        void load(string filename);
 
-			vector<string> getNetList();
+                        void load(int argc, char *argv[]);
 
-			string getNetType(const string name = "default");
-			unsigned int getNetPort(const string name = "default");
-			string getNetInterface(const string name = "default", string default_interface = "lo");
-			string getNetBroadcast(const string name = "default", string default_interface = "lo");
-			unsigned int getNetMTU(const string name = "default");
+                        /**
+                         * Returns the name of the node
+                         */
+			string getNodename();
 
-			string getDiscoveryAddress(string default_interface = "lo");
-			unsigned int getDiscoveryPort();
+                        /**
+                         * Returns all configured network interfaces
+                         */
+                        list<NetInterface> getNetInterfaces();
 
-			void setConfigFile(ConfigFile &conf);
+                        NetInterface getNetInterface(string name);
 
-			vector<Node> getStaticNodes();
+			NetInterface getDiscoveryInterface();
+
+                        /**
+                         * Returns all static neighboring nodes
+                         */
+			list<Node> getStaticNodes();
+
+                        /**
+                         * Returns all static routes
+                         */
 			list<StaticRoute> getStaticRoutes();
 
-			unsigned int getStorageMaxSize();
-			bool doStorageMerge();
+                        int getTimezone();
 
-			list<Node> getFakeBroadcastNodes();
-			bool doFakeBroadcast();
+                        string getPath(string name);
 
-			pair<double, double> getStaticPosition();
-			string getGPSHost();
-			unsigned int getGPSPort();
-			bool useGPSDaemon();
+                        unsigned int getUID();
+                        unsigned int getGID();
+                        
+                        bool doDiscovery();
+                        bool doAPI();
 
-			bool useSQLiteStorage();
-			string getSQLiteDatabase();
-			bool doSQLiteFlush();
+                        void version();
 
 		private:
-			string getInterfaceAddress(string interface);
-			string getInterfaceBroadcastAddress(string interface);
+			ConfigFile _conf;
 
-			ConfigFile m_conf;
-			bool m_debug;
-
+                        string _filename;
+                        string _default_net;
+                        bool _use_default_net;
+                        bool _doapi;
+                        bool _dodiscovery;
 		};
 	}
 }
