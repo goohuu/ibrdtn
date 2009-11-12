@@ -280,7 +280,7 @@ namespace dtn
 			struct ifaddrs *ifap = NULL;
 			int status = getifaddrs(&ifap);
 
-			if (status != 0)
+			if ((status != 0) || (ifap == NULL))
 			{
 				// error, return with default address
 				return ret;
@@ -318,7 +318,7 @@ namespace dtn
 			struct ifaddrs *ifap = NULL;
 			int status = getifaddrs(&ifap);
 
-			if (status != 0)
+			if ((status != 0) || (ifap == NULL))
 			{
 				// error, return with default address
 				return ret;
