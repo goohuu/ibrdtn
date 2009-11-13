@@ -57,6 +57,9 @@ namespace dtn
 
 		void StreamConnection::shutdown()
 		{
+                    static dtn::utils::Mutex m;
+                    dtn::utils::MutexLock l(m);
+                    
 			if (!_shutdown)
 			{
 				_shutdown = true;
@@ -106,6 +109,7 @@ namespace dtn
 
 						case StreamDataSegment::MSG_SHUTDOWN:
 							// reply with a shutdown
+                                                        shutdown();
 							break;
 					}
 
