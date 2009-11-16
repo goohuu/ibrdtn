@@ -11,6 +11,7 @@
 #include "ibrdtn/config.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/utils/Thread.h"
+#include "ibrdtn/data/Exceptions.h"
 #include <iostream>
 
 namespace dtn
