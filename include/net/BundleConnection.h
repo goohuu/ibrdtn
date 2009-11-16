@@ -33,6 +33,21 @@ namespace dtn
 			};
 
 		public:
+                    class ConnectionInterruptedException : public dtn::exceptions::IOException
+                    {
+                    public:
+                        ConnectionInterruptedException(size_t last_ack = 0) : dtn::exceptions::IOException("The connection has been interrupted."), _last_ack(last_ack)
+                        {
+                        }
+                        
+                        size_t getLastAck()
+                        {
+                            return _last_ack;
+                        }
+                    private:
+                        size_t _last_ack;
+                    };
+
 			BundleConnection();
 			virtual ~BundleConnection();
 

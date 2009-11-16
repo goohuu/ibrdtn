@@ -46,9 +46,6 @@ namespace dtn
 			virtual void shutdown();
 			virtual bool good();
 
-//                        bool isCompleted();
-//                        void waitCompletion();
-
 			bool timeout(dtn::utils::Timer *timer);
 
 		protected:
@@ -58,17 +55,23 @@ namespace dtn
                         bool waitState(ConnectionState conn);
 			void run();
 
-		private:
-			bpstreambuf _buf;
                         size_t _recv_size;
                         size_t _ack_size;
+
+                        bool isCompleted();
+                        bool waitCompleted();
+
+		private:
+			bpstreambuf _buf;
 
 			dtn::utils::Timer *_in_timer;
 			dtn::utils::Timer *_out_timer;
 
-                        dtn::utils::Conditional _completion;
+                        dtn::utils::Conditional _completed_cond;
+
                         dtn::utils::Conditional _state_cond;
                         ConnectionState _state;
+
 		};
 	}
 }

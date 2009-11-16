@@ -140,10 +140,14 @@ namespace dtn
 			BundleConnection *conn = getConnection(eid);
 
 			try {
-				// TODO: catch an interrupted connection and create a fragment is possible
-				conn->write(b);
-			} catch (dtn::exceptions::IOException ex) {
+                            conn->write(b);
+                        } catch (BundleConnection::ConnectionInterruptedException ex) {
+                            // TODO: the connection has been interrupted => create a fragment
 
+			} catch (dtn::exceptions::IOException ex) {
+                            // the connection has been terminated and fragmentation is not possible => requeue the bundle
+                            EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
+                            EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
 			}
 		}
 

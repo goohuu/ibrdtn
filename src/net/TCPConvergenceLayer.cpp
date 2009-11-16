@@ -101,16 +101,30 @@ namespace dtn
 			(*this) << _out_header;
 			StreamConnection::flush();
 
-			// get the header
-			(*this) >> _in_header;
-			_node.setURI(_in_header.getEID().getString());
-			_connected = true;
+                        try {
+                            // get the header
+                            (*this) >> _in_header;
+                            _node.setURI(_in_header.getEID().getString());
+                            _connected = true;
 
-			BundleConnection::initialize();
-			StreamConnection::start();
+                            BundleConnection::initialize();
+                            StreamConnection::start();
 
-                        // set the timer for this connection
-                        StreamConnection::setTimer(header._keepalive, _in_header._keepalive - 5);
+                            // set the timer for this connection
+                            StreamConnection::setTimer(header._keepalive, _in_header._keepalive - 5);
+
+                        } catch (dtn::exceptions::InvalidDataException ex) {
+
+                            // return with shutdown, if the stream is wrong
+                            (*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH); flush();
+
+                            StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
+
+                            // close the stream
+                            _stream.close();
+
+                            bury();
+                        }
 		}
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
@@ -156,9 +170,24 @@ namespace dtn
 			static dtn::utils::Mutex mutex;
 			dtn::utils::MutexLock l(mutex);
 
-			(*this) << bundle;
-			if (!good()) throw dtn::exceptions::IOException("write to stream failed");
-			(*this).flush();
+			(*this) << bundle; flush();
+
+                        // wait until all ACKs are received or the connection is closed
+                        if (!waitCompleted())
+                        {
+                            // connection is closed before all ACKs are received
+                            // if reactive fragmentation is enabled
+                            if (_in_header._flags & 0x02)
+                            {
+                                // then throw a exception to activate the fragmentation process
+                                throw BundleConnection::ConnectionInterruptedException(StreamConnection::_ack_size);
+                            }
+                            else
+                            {
+                                // if no fragmentation is possible, requeue the bundle
+                                throw dtn::exceptions::IOException("write to stream failed");
+                            }
+                        }
 		}
 
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;

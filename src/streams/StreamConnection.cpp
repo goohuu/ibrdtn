@@ -15,7 +15,7 @@ namespace dtn
 	namespace streams
 	{
 		StreamConnection::StreamConnection(std::iostream &stream, size_t timeout)
-		 : _buf(stream), std::iostream(&_buf), _state(CONNECTION_IDLE), _in_timer(NULL), _out_timer(NULL)
+		 : _buf(stream), std::iostream(&_buf), _recv_size(0), _ack_size(0), _state(CONNECTION_IDLE), _in_timer(NULL), _out_timer(NULL)
 		{
 		}
 
@@ -55,9 +55,17 @@ namespace dtn
                     // block states smaller than SHUTDOWN, if a shutdown is in progress.
                     if ((_state >= CONNECTION_SHUTDOWN) && (conn < CONNECTION_SHUTDOWN)) return;
 
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
                     cout << "StreamConnection state changed from " << _state << " to " << conn << endl;
+#endif
                     _state = conn;
                     _state_cond.signal(true);
+
+                    if (_state >= CONNECTION_SHUTDOWN)
+                    {
+                        dtn::utils::MutexLock l(_completed_cond);
+                        _completed_cond.signal(true);
+                    }
                 }
 
                 StreamConnection::ConnectionState StreamConnection::getState()
@@ -91,29 +99,34 @@ namespace dtn
                     }
 		}
 
-//                bool StreamConnection::isCompleted()
-//                {
-//                    dtn::utils::MutexLock l(_completion);
-//                    if (_buf.getOutSize() == _ack_size)
-//                    {
-//                        return true;
-//                    }
-//
-//                    return false;
-//                }
-//
-//                void StreamConnection::waitCompletion()
-//                {
-//                    dtn::utils::MutexLock l(_completion);
-//
-//                     cout << "ACK " << _ack_size << " < " << _buf.getOutSize() << " ? " << endl;
-//
-//                    while ((_buf.getOutSize() > _ack_size) && !_shutdown)
-//                    {
-//                        cout << "ACK " << _ack_size << " < " << _buf.getOutSize() << " ? " << endl;
-//                        _completion.wait();
-//                    }
-//                }
+                bool StreamConnection::isCompleted()
+                {
+                    dtn::utils::MutexLock l(_completed_cond);
+                    
+                    if (_buf.getOutSize() == _ack_size)
+                    {
+                        return true;
+                    }
+
+                    return false;
+                }
+
+                bool StreamConnection::waitCompleted()
+                {
+                    dtn::utils::MutexLock l(_completed_cond);
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+                    cout << "wait for completion of transmission, current size: " << _ack_size << " of " << _buf.getOutSize() << endl;
+#endif
+                    while ((_buf.getOutSize() != _ack_size) && (getState() < CONNECTION_SHUTDOWN))
+                    {
+                        _completed_cond.wait();
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+                        cout << "current size: " << _ack_size << " of " << _buf.getOutSize() << endl;
+#endif
+                    }
+
+                    return false;
+                }
 
 		void StreamConnection::run()
 		{
@@ -157,10 +170,12 @@ namespace dtn
 
 						case StreamDataSegment::MSG_ACK_SEGMENT:
                                                 {
-                                                        dtn::utils::MutexLock l(_completion);
-							_ack_size = seg._value;                                                        
+                                                        dtn::utils::MutexLock l(_completed_cond);
+							_ack_size = seg._value;
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
                                                         cout << "ACK received: " << _ack_size << endl;
-                                                        _completion.signal(true);
+#endif
+                                                        _completed_cond.signal(true);
 							break;
                                                 }
 
