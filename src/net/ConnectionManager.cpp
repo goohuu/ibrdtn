@@ -146,6 +146,8 @@ namespace dtn
 
 			} catch (dtn::exceptions::IOException ex) {
                             // the connection has been terminated and fragmentation is not possible => requeue the bundle
+                            cout << "the connection has been terminated and fragmentation is not possible => requeue the bundle" << endl;
+                            cout << "Exception: " << ex.what() << endl;
                             EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
                             EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
 			}

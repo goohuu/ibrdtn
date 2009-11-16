@@ -188,6 +188,8 @@ namespace dtn
                                 throw dtn::exceptions::IOException("write to stream failed");
                             }
                         }
+
+                        StreamConnection::_ack_size = 0;
 		}
 
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;

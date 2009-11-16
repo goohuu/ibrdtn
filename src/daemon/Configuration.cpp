@@ -77,7 +77,7 @@ namespace dtn
                             _conf = ConfigFile(filename);;
                             cout << "Configuration: " << filename << endl;
                     } catch (ConfigFile::file_not_found ex) {
-                            cout << "Configuration file not found. Using defaults." << endl;
+                            cout << "Using defaults. To use custom config file use parameter -c configfile." << endl;
                             _conf = ConfigFile();
                     }
                 }

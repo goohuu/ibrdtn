@@ -125,6 +125,7 @@ namespace dtn
 #endif
                     }
 
+                    if (_buf.getOutSize() == _ack_size) return true;
                     return false;
                 }
 
