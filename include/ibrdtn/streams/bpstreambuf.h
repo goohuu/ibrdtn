@@ -49,6 +49,8 @@ namespace dtn
 
 			virtual void shutdown();
 
+                        size_t getOutSize();
+
 		protected:
 			virtual int sync();
 			virtual int overflow(int = std::char_traits<char>::eof());
@@ -87,6 +89,8 @@ namespace dtn
 			size_t in_data_remain_;
 			bool _start_of_bundle;
 			bpstreambuf::State _state;
+
+                        size_t out_size_;
 		};
 	}
 }

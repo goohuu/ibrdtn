@@ -86,6 +86,11 @@ namespace dtn
 			setState(SHUTDOWN);
 		}
 
+                size_t bpstreambuf::getOutSize()
+                {
+                    return out_size_;
+                }
+
 		void bpstreambuf::write(const StreamDataSegment &seg, const char *data)
 		{
 			if (ifState(SHUTDOWN)) return;
@@ -110,40 +115,23 @@ namespace dtn
 
 		void bpstreambuf::read(StreamDataSegment &seg)
 		{
-			if (ifState(SHUTDOWN)) return;
+                    if (ifState(SHUTDOWN)) return;
 
-			_stream >> seg;
-			switch (seg._type)
-			{
-			case StreamDataSegment::MSG_ACK_SEGMENT:
-				break;
-			case StreamDataSegment::MSG_DATA_SEGMENT:
-			{
-				if (seg._value != 0)
-				{
-					in_data_remain_ = seg._value;
+                    // read the next segment
+                    _stream >> seg;
 
-					// announce the new data block
-					setState(DATA_AVAILABLE);
+                    // if the segment header indicates new data
+                    if ((seg._type == StreamDataSegment::MSG_DATA_SEGMENT) && (seg._value != 0))
+                    {
+                        // set the new data length
+                        in_data_remain_ = seg._value;
 
-					// and wait until the data is received completely
-					waitState(IDLE);
-				}
-				break;
-			}
-			case StreamDataSegment::MSG_KEEPALIVE:
-				break;
-			case StreamDataSegment::MSG_REFUSE_BUNDLE:
-				break;
-			case StreamDataSegment::MSG_SHUTDOWN:
-			{
-				// set shutdown state
-				setState(SHUTDOWN);
-				break;
-			}
-			default:
-				break;
-			}
+                        // announce the new data block
+                        setState(DATA_AVAILABLE);
+
+                        // and wait until the data is received completely
+                        waitState(IDLE);
+                    }
 		}
 
 		void bpstreambuf::read(StreamContactHeader &h)
@@ -182,6 +170,7 @@ namespace dtn
 			{
 				if (!(seg._flags & 0x04)) seg._flags += 0x04;
 				_start_of_bundle = false;
+                                out_size_ = 0;
 			}
 
 			if (char_traits<char>::eq_int_type(c, char_traits<char>::eof()))
@@ -193,6 +182,9 @@ namespace dtn
 
 			// write the segment to the stream
 			write(seg, out_buf_);
+
+                        // add size to outgoing size
+                        out_size_ += seg._value;
 
 			return traits_type::not_eof(c);
 		}

@@ -32,23 +32,43 @@ namespace dtn
 		class StreamConnection : public std::iostream, public dtn::utils::JoinableThread, public dtn::utils::TimerCallback
 		{
 		public:
+                        enum ConnectionState
+                        {
+                            CONNECTION_IDLE = 0,
+                            CONNECTION_RECEIVING = 1,
+                            CONNECTION_SHUTDOWN = 2,
+                            CONNECTION_CLOSED = 3
+                        };
+
 			StreamConnection(iostream &stream, size_t timeout);
 			virtual ~StreamConnection();
 
 			virtual void shutdown();
 			virtual bool good();
 
+//                        bool isCompleted();
+//                        void waitCompletion();
+
 			bool timeout(dtn::utils::Timer *timer);
 
 		protected:
+                        void setTimer(size_t in_timeout, size_t out_timeout);
+                        void setState(ConnectionState conn);
+                        ConnectionState getState();
+                        bool waitState(ConnectionState conn);
 			void run();
 
 		private:
 			bpstreambuf _buf;
-			bool _shutdown;
+                        size_t _recv_size;
+                        size_t _ack_size;
 
-			dtn::utils::Timer _in_timer;
-			dtn::utils::Timer _out_timer;
+			dtn::utils::Timer *_in_timer;
+			dtn::utils::Timer *_out_timer;
+
+                        dtn::utils::Conditional _completion;
+                        dtn::utils::Conditional _state_cond;
+                        ConnectionState _state;
 		};
 	}
 }

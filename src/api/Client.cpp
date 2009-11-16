@@ -93,6 +93,9 @@ namespace dtn
 		{
 			_connected = false;
 			StreamConnection::shutdown();
+
+                        // wait for the closed connection
+                        StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 		}
 	}
 }

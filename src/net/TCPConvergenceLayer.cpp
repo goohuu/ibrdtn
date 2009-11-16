@@ -108,13 +108,23 @@ namespace dtn
 
 			BundleConnection::initialize();
 			StreamConnection::start();
+
+                        // set the timer for this connection
+                        StreamConnection::setTimer(header._keepalive, _in_header._keepalive - 5);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
 			BundleConnection::shutdown();
 			StreamConnection::shutdown();
+
+                        // wait for the closed connection
+                        StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+
+                        // close the stream
 			_stream.close();
+
+                        // send myself to the graveyard
 			bury();
 		}
 
