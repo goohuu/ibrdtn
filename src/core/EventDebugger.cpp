@@ -14,6 +14,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace dtn::utils;
 
 namespace dtn
 {
@@ -49,14 +50,14 @@ namespace dtn
 					case CUSTODY_ACCEPT:
 						if (custody->getBundle()._procflags & Bundle::CUSTODY_REQUESTED)
 						{
-							cout << evt->getName() << ": custody acceptance" << endl;
+							dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": custody acceptance" << endl;
 						}
 						break;
 
 					case CUSTODY_REJECT:
 						if (custody->getBundle()._procflags & Bundle::CUSTODY_REQUESTED)
 						{
-							cout << evt->getName() << ": custody reject" << endl;
+							dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": custody reject" << endl;
 						}
 						break;
 				};
@@ -66,22 +67,22 @@ namespace dtn
 				switch (bundle->getAction())
 				{
 				case BUNDLE_DELETED:
-					cout << evt->getName() << ": bundle " << bundle->getBundle().toString() << " deleted" << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": bundle " << bundle->getBundle().toString() << " deleted" << endl;
 					break;
 				case BUNDLE_CUSTODY_ACCEPTED:
-					cout << evt->getName() << ": custody accepted for " << bundle->getBundle().toString() << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": custody accepted for " << bundle->getBundle().toString() << endl;
 					break;
 				case BUNDLE_FORWARDED:
-					cout << evt->getName() << ": bundle " << bundle->getBundle().toString() << " forwarded" << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": bundle " << bundle->getBundle().toString() << " forwarded" << endl;
 					break;
 				case BUNDLE_DELIVERED:
-					cout << evt->getName() << ": bundle " << bundle->getBundle().toString() << " delivered" << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": bundle " << bundle->getBundle().toString() << " delivered" << endl;
 					break;
 				case BUNDLE_RECEIVED:
-					cout << evt->getName() << ": bundle " << bundle->getBundle().toString() << " received" << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": bundle " << bundle->getBundle().toString() << " received" << endl;
 					break;
 				default:
-					cout << evt->getName() << ": unknown" << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": unknown" << endl;
 					break;
 				}
 			}
@@ -90,10 +91,10 @@ namespace dtn
 				switch (route->getAction())
 				{
 				case ROUTE_PROCESS_BUNDLE:
-					cout << evt->getName() << ": process bundle " << route->getBundle().toString() << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": process bundle " << route->getBundle().toString() << endl;
 					break;
 				default:
-					cout << evt->getName() << ": unknown" << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": unknown" << endl;
 					break;
 				}
 			}
@@ -102,30 +103,30 @@ namespace dtn
 				switch (node->getAction())
 				{
 				case NODE_INFO_UPDATED:
-					//cout << evt->getName() << ": Info updated for " << node->getNode().getURI() << endl;
+					//dtn::utils::syslog << evt->getName() << ": Info updated for " << node->getNode().getURI() << endl;
 					break;
 				case NODE_AVAILABLE:
-					cout << evt->getName() << ": Node " << node->getNode().getURI() << " available over ";
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": Node " << node->getNode().getURI() << " available over ";
 
 					if (node->getNode().getProtocol() == dtn::core::UDP_CONNECTION)
 					{
-						cout << "UDP";
+						dtn::utils::syslog << "UDP";
 					}
 					else if (node->getNode().getProtocol() == dtn::core::TCP_CONNECTION)
 					{
-						cout << "TCP";
+						dtn::utils::syslog << "TCP";
 					}
 					else
 					{
-						cout << "a unsupported connection";
+						dtn::utils::syslog << "a unsupported connection";
 					}
-					cout << endl;
+					dtn::utils::syslog << endl;
 					break;
 				case NODE_UNAVAILABLE:
-					cout << evt->getName() << ": Node " << node->getNode().getURI() << " unavailable" << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": Node " << node->getNode().getURI() << " unavailable" << endl;
 					break;
 				default:
-					cout << evt->getName() << ": unknown" << endl;
+					dtn::utils::syslog << SYSLOG_INFO << evt->getName() << ": unknown" << endl;
 					break;
 				}
 			}

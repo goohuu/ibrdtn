@@ -76,7 +76,7 @@ namespace dtn
                         bool doDiscovery();
                         bool doAPI();
 
-                        void version();
+                        void version(std::ostream &stream);
 
 		private:
 			ConfigFile _conf;

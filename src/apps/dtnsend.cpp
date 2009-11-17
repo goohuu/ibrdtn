@@ -21,7 +21,7 @@ void print_help()
 	cout << " <filename>    the file to transfer" << endl;
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help       display this text" << endl;
-	cout << " --src <eid>     set the source application name (e.g. filetransfer)" << endl;
+	cout << " --src <name>    set the source application name (e.g. filetransfer)" << endl;
 
 }
 

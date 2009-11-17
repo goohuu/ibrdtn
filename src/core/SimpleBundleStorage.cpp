@@ -80,7 +80,7 @@ namespace dtn
 			_dbchanged.signal(true);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "Storage: stored bundle " << bundle.toString() << endl;
+			dtn::utils::syslog << dtn::utils::SYSLOG_INFO << "Storage: stored bundle " << bundle.toString() << endl;
 #endif
 		}
 
@@ -193,7 +193,7 @@ namespace dtn
 				while (e_iter != expired.end())
 				{
 					remove( *iter );
-					cout << "bundle " << (*iter).toString() << " has been expired and removed" << endl;
+					dtn::utils::syslog << dtn::utils::SYSLOG_INFO << "bundle " << (*iter).toString() << " has been expired and removed" << endl;
 					e_iter++;
 				}
 

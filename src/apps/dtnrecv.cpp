@@ -21,7 +21,7 @@ void print_help()
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help          display this text" << endl;
 	cout << " --file <filename>  write the incoming data to the a file instead of the standard output" << endl;
-	cout << " --name <eid>       set the application name (e.g. filetransfer)" << endl;
+	cout << " --name <name>      set the application name (e.g. filetransfer)" << endl;
 
 }
 

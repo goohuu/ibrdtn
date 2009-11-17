@@ -10,11 +10,11 @@ namespace dtn
 {
 	namespace daemon
 	{
-                void Configuration::version()
+                void Configuration::version(std::ostream &stream)
                 {
-                        cout << "Version: " << PACKAGE_VERSION;
+                        stream << PACKAGE_VERSION;
                 #ifdef SVN_REV
-                        cout << "-r" << SVN_REV;
+                        stream << "-r" << SVN_REV;
                 #endif
                 }
 
@@ -56,7 +56,7 @@ namespace dtn
 
                             if ((arg == "--version") || (arg == "-v"))
                             {
-                                    cout << "IBR-DTN "; version(); cout << endl;
+                                    cout << "IBR-DTN version: "; version(cout); cout << endl;
                                     exit(0);
                             }
 

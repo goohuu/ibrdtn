@@ -98,7 +98,11 @@ int main(int argc, char *argv[])
         // load parameter into the configuration
         conf.load(argc, argv);
 
-	cout << "IBR-DTN Daemon - "; conf.version(); cout << endl;
+        // greeting to the console
+	cout << "IBR-DTN daemon "; conf.version(cout); cout << endl;
+
+        // greeting to the syslog
+        dtn::utils::syslog << dtn::utils::SYSLOG_INFO << "IBR-DTN daemon "; conf.version(dtn::utils::syslog); dtn::utils::syslog << ", EID: " << conf.getNodename() << endl;
 
         // switch the user is requested
         switchUser(conf);
@@ -215,9 +219,6 @@ int main(int argc, char *argv[])
 	// Fire up the Discovery Agent
 	if (ipnd != NULL) ipnd->start();
 
-	// init system
-	cout << "dtn node ready" << endl;
-
 	while (m_running)
 	{
 		usleep(10000);
@@ -228,7 +229,7 @@ int main(int argc, char *argv[])
 		delete apiserv;
 	}
 
-	cout << "shutdown dtn node" << endl;
+	dtn::utils::syslog << dtn::utils::SYSLOG_INFO << "shutdown dtn node" << endl;
 
 	if (ipnd != NULL) delete ipnd;
 

@@ -11,6 +11,7 @@
 #include "ibrdtn/utils/MutexLock.h"
 #include "ibrdtn/utils/Conditional.h"
 #include "ibrdtn/utils/WaitForConditional.h"
+#include "ibrdtn/utils/SyslogStream.h"
 
 #include <iostream>
 #include <sstream>

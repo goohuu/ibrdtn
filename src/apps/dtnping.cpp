@@ -80,7 +80,7 @@ void print_help()
 	cout << " <dst>    set the destination eid (e.g. dtn://node/echo)" << endl;
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help       display this text" << endl;
-	cout << " --src <eid>     set the source application name (e.g. echo-client)" << endl;
+	cout << " --src <name>    set the source application name (e.g. echo-client)" << endl;
 	cout << " --nowait        do not wait for a reply" << endl;
 	cout << " --size          the size of the payload" << endl;
 	cout << " --count X       send X echo in a row" << endl;
