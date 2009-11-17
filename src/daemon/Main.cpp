@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
 
                         stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
                         if (ipnd != NULL) ipnd->addService("udpcl", service.str());
+                        //if (ipnd != NULL) ipnd->addService(udpcl);
 
                         cout << "UDP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
 
@@ -167,6 +168,7 @@ int main(int argc, char *argv[])
 
                         stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
                         if (ipnd != NULL) ipnd->addService("tcpcl", service.str());
+                        //if (ipnd != NULL) ipnd->addService(tcpcl);
 
                         cout << "TCP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
 

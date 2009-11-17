@@ -40,6 +40,12 @@ namespace dtn
 			_self_announce.addService(service);
 		}
 
+                void DiscoveryAgent::addService(DiscoveryServiceProvider *provider)
+                {
+                        DiscoveryService service(provider);
+                        _self_announce.addService(service);
+                }
+
 		void DiscoveryAgent::received(const DiscoveryAnnouncement &announcement)
 		{
 			// calculating RTT with the service timestamp

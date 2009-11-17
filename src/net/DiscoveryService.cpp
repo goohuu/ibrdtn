@@ -17,11 +17,17 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryService::DiscoveryService()
+                 : _provider(NULL)
+		{
+		}
+
+		DiscoveryService::DiscoveryService(DiscoveryServiceProvider *provider)
+		 : _provider(provider)
 		{
 		}
 
 		DiscoveryService::DiscoveryService(std::string name, std::string parameters)
-		 : _service_name(name), _service_parameters(parameters)
+		 : _service_name(name), _service_parameters(parameters), _provider(NULL)
 		{
 		}
 
@@ -43,6 +49,11 @@ namespace dtn
 		{
 			return _service_parameters;
 		}
+
+                void DiscoveryService::update()
+                {
+                    if (_provider != NULL) _provider->update(_service_name, _service_parameters);
+                }
 
 		std::ostream &operator<<(std::ostream &stream, const DiscoveryService &service)
 		{

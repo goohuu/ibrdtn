@@ -33,7 +33,7 @@ namespace dtn
 			virtual ~IPNDAgent();
 
 		protected:
-			void send(DiscoveryAnnouncement announcement);
+			void send(DiscoveryAnnouncement &announcement);
 			void run();
 
 		private:

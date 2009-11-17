@@ -21,6 +21,8 @@
 
 #include "net/ConvergenceLayer.h"
 #include "net/BundleConnection.h"
+#include "net/DiscoveryService.h"
+#include "net/DiscoveryServiceProvider.h"
 
 namespace dtn
 {
@@ -33,7 +35,7 @@ namespace dtn
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
 		class TCPConvergenceLayer
-		 : public dtn::utils::tcpserver, public dtn::utils::JoinableThread, public ConvergenceLayer
+		 : public dtn::utils::tcpserver, public dtn::utils::JoinableThread, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
 			class TCPConnection : public dtn::streams::StreamConnection, public BundleConnection, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver
@@ -80,6 +82,11 @@ namespace dtn
 			 * Destructor
 			 */
 			virtual ~TCPConvergenceLayer();
+
+                        /**
+                         * this method updates the given values
+                         */
+                        void update(std::string &name, std::string &data);
 
 		protected:
 			virtual void run();

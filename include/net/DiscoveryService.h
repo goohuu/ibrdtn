@@ -9,6 +9,7 @@
 #define DISCOVERYSERVICE_H_
 
 #include "ibrdtn/config.h"
+#include "net/DiscoveryServiceProvider.h"
 #include <stdlib.h>
 #include <iostream>
 
@@ -20,6 +21,7 @@ namespace dtn
 		{
 		public:
 			DiscoveryService();
+                        DiscoveryService(DiscoveryServiceProvider *provider);
 			DiscoveryService(std::string name, std::string parameters);
 			virtual ~DiscoveryService();
 
@@ -28,12 +30,19 @@ namespace dtn
 			std::string getName() const;
 			std::string getParameters() const;
 
+                        /**
+                         * updates the values of the service block
+                         */
+                        void update();
+
+                protected:
+			std::string _service_name;
+			std::string _service_parameters;
+                        DiscoveryServiceProvider *_provider;
+
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const DiscoveryService &service);
 			friend std::istream &operator>>(std::istream &stream, DiscoveryService &service);
-
-			std::string _service_name;
-			std::string _service_parameters;
 		};
 	}
 }

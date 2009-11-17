@@ -79,6 +79,11 @@ namespace dtn
 			join();
 		}
 
+                void UDPConvergenceLayer::update(std::string &name, std::string &data)
+                {
+                    // TODO: update the values
+                }
+
 		TransmitReport UDPConvergenceLayer::transmit(const Bundle &b)
 		{
 			unsigned int size = b.getSize();

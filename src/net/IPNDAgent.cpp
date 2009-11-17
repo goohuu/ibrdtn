@@ -61,8 +61,11 @@ namespace dtn
 			::close(_socket);
 		}
 
-		void IPNDAgent::send(DiscoveryAnnouncement announcement)
+		void IPNDAgent::send(DiscoveryAnnouncement &announcement)
 		{
+                        // update service blocks
+                        announcement.updateServices();
+
 			stringstream ss;
 			ss << announcement;
 

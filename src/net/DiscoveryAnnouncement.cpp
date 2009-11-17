@@ -59,6 +59,14 @@ namespace dtn
 			_services.push_back(service);
 		}
 
+                void DiscoveryAnnouncement::updateServices()
+                {
+                    for (list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
+                    {
+                        (*iter).update();
+                    }
+                }
+
 		std::ostream &operator<<(std::ostream &stream, const DiscoveryAnnouncement &announcement)
 		{
 			if (DiscoveryAnnouncement::SHORT_BEACON == announcement._flags)

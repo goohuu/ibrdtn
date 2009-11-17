@@ -4,6 +4,7 @@
 #include "net/ConvergenceLayer.h"
 #include "net/BundleConnection.h"
 #include "ibrdtn/data/Exceptions.h"
+#include "net/DiscoveryServiceProvider.h"
 
 using namespace dtn::data;
 
@@ -16,7 +17,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for UDP/IP.
 		 * Each bundle is sent in exact one UDP datagram.
 		 */
-		class UDPConvergenceLayer : public ConvergenceLayer, public dtn::utils::JoinableThread
+		class UDPConvergenceLayer : public ConvergenceLayer, public dtn::utils::JoinableThread, public DiscoveryServiceProvider
 		{
 		public:
 			class SocketException : public dtn::exceptions::Exception
@@ -53,6 +54,8 @@ namespace dtn
 			void receive(dtn::data::Bundle &bundle);
 
 			BundleConnection* getConnection(const dtn::core::Node &n);
+
+                        virtual void update(std::string &name, std::string &data);
 
 		protected:
 				void run();

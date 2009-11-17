@@ -37,10 +37,11 @@ namespace dtn
 			void raiseEvent(const dtn::core::Event *evt);
 
 			void addService(string name, string parameters);
+                        void addService(DiscoveryServiceProvider *provider);
 
 		protected:
 			virtual void run() = 0;
-			virtual void send(DiscoveryAnnouncement announcement) = 0;
+			virtual void send(DiscoveryAnnouncement &announcement) = 0;
 			bool _running;
 
 		private:

@@ -39,6 +39,11 @@ namespace dtn
 
 			string toString() const;
 
+                        /**
+                         * update all service blocks
+                         */
+                        virtual void updateServices();
+
 		private:
 			static const unsigned char VERSION = 0x01;
 

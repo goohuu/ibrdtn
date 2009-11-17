@@ -236,6 +236,11 @@ namespace dtn
 			join();
 		}
 
+                void TCPConvergenceLayer::update(std::string& name, std::string& data)
+                {
+                    // TODO: update address and port
+                }
+
 		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::openConnection(const dtn::core::Node &n)
 		{
 			struct sockaddr_in sock_address;
