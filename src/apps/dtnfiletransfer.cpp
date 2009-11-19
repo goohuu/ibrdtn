@@ -13,23 +13,39 @@
 #include "ibrdtn/utils/tcpclient.h"
 #include "ibrdtn/utils/Mutex.h"
 #include "ibrdtn/utils/MutexLock.h"
+#include "ibrdtn/data/PayloadBlock.h"
+#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/BLOBManager.h"
 
 #include <iostream>
 #include <map>
 #include <vector>
+#include <dirent.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 class appstream : public std::streambuf
 {
 public:
     enum { BUF_SIZE = 512 };
 
-    appstream(string command)
-     : m_buf( BUF_SIZE+1 )
+    enum Mode
+    {
+    	MODE_READ = 0,
+    	MODE_WRITE = 1
+    };
+
+    appstream(string command, appstream::Mode mode)
+     : m_buf( BUF_SIZE+1 ), m_inbuf( BUF_SIZE+1 )
     {
         setp( &m_buf[0], &m_buf[0] + (m_buf.size() - 1) );
 
         // execute the command
-        _handle = popen(command.c_str(), "w");
+        if (mode == MODE_READ)
+        	_handle = popen(command.c_str(), "r");
+        else
+        	_handle = popen(command.c_str(), "w");
     }
 
     virtual ~appstream()
@@ -40,6 +56,18 @@ public:
 
 
 protected:
+	virtual int underflow()
+	{
+		// read the stdout of the process
+		size_t ret = fread(&m_buf[0], m_buf.size(), 1, _handle);
+
+		// Since the input buffer content is now valid (or is new)
+		// the get pointer should be initialized (or reset).
+		setg(&m_buf[0], &m_buf[0], &m_buf[0] + ret);
+
+		return std::char_traits<char>::not_eof(m_buf[0]);
+	}
+
     virtual int sync()
     {
 		int ret = std::char_traits<char>::eq_int_type(this->overflow(std::char_traits<char>::eof()),
@@ -76,6 +104,7 @@ private:
 	}
 
     std::vector< char_type > m_buf;
+    std::vector< char_type > m_inbuf;
     FILE *_handle;
 };
 
@@ -110,10 +139,10 @@ class filereceiver : public dtn::api::Client
         {
             dtn::blob::BLOBReference ref = b.getData();
 
-            stringstream cmdstream; cmdstream << "tar -xv -C " << _inbox;
+            stringstream cmdstream; cmdstream << "tar -x -C " << _inbox;
 
             // create a tar handler
-            appstream extractor(cmdstream.str());
+            appstream extractor(cmdstream.str(), appstream::MODE_WRITE);
             ostream stream(&extractor);
 
             // write the payload to the extractor
@@ -171,6 +200,140 @@ map<string,string> readconfiguration(int argc, char** argv)
     return ret;
 }
 
+class File
+{
+public:
+	File(const string path)
+	 : _path(path), _type(DT_UNKNOWN)
+	{
+		struct stat s;
+		int type;
+
+		stat(path.c_str(), &s);
+
+		type = s.st_mode & S_IFMT;
+
+		switch (type)
+		{
+			case S_IFREG:
+				_type = DT_REG;
+				break;
+
+			case S_IFLNK:
+				_type = DT_LNK;
+				break;
+
+			case S_IFDIR:
+				_type = DT_DIR;
+				break;
+
+			default:
+				_type = DT_UNKNOWN;
+				break;
+		}
+	}
+
+	virtual ~File()
+	{}
+
+	unsigned char getType() const
+	{
+		return _type;
+	}
+
+	int getFiles(list<File> &files)
+	{
+		if (!isDirectory()) return -1;
+
+	    DIR *dp;
+	    struct dirent *dirp;
+	    if((dp = opendir(_path.c_str())) == NULL) {
+	        return errno;
+	    }
+
+	    while ((dirp = readdir(dp)) != NULL)
+	    {
+	    	string name = string(dirp->d_name);
+	    	stringstream ss; ss << getPath() << "/" << name;
+	    	File file(ss.str(), dirp->d_type);
+	    	files.push_back(file);
+	    }
+	    closedir(dp);
+	}
+
+	bool isHidden()
+	{
+		//if (_name.substr(0,1) == ".") return true;
+		return false;
+	}
+
+	bool isSystem()
+	{
+		if ((_path.substr(_path.length() - 2, 2) == "..") || (_path.substr(_path.length() - 1, 1) == ".")) return true;
+		return false;
+	}
+
+	bool isDirectory()
+	{
+		if (_type == DT_DIR) return true;
+		return false;
+	}
+
+	string getPath() const
+	{
+		return _path;
+	}
+
+	int remove(bool recursive = false)
+	{
+		int ret;
+
+		if (isSystem()) return -1;
+
+		if (isDirectory())
+		{
+			if (recursive)
+			{
+				// container for all files
+				list<File> files;
+
+				// get all files in this directory
+				if ((ret = getFiles(files)) < 0)
+					return ret;
+
+				for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
+				{
+					if (!(*iter).isSystem())
+					{
+						if ((ret = (*iter).remove(recursive)) < 0)
+							return ret;
+					}
+				}
+			}
+
+			//rmdir(getPath());
+			cout << "remove directory: " << getPath() << endl;
+		}
+		else
+		{
+			//remove(getPath());
+			cout << "remove file: " << getPath() << endl;
+		}
+
+		return 0;
+	}
+
+private:
+	File(const string path, const unsigned char t)
+	 : _path(path), _type(t)
+	{
+
+	}
+
+	const string _path;
+	unsigned char _type;
+};
+
 // set this variable to false to stop the app
 bool _running = true;
 
@@ -183,7 +346,7 @@ void term(int signal)
 }
 
 /*
- *
+ * main application method
  */
 int main(int argc, char** argv)
 {
@@ -200,6 +363,12 @@ int main(int argc, char** argv)
         dtn::blob::BLOBManager::init(conf["workdir"]);
     }
 
+    // backoff for reconnect
+    size_t backoff = 2;
+
+    // check outbox for files
+	File outbox(conf["outbox"]);
+
     // loop, if no stop if requested
     while (_running)
     {
@@ -211,27 +380,89 @@ int main(int argc, char** argv)
             // stream protocol by starting the thread and sending the contact header.
             client.connect();
 
-            // check outbox for files
-
-            // send file in outbox
+            // reset backoff if connected
+            if (client.isConnected()) backoff = 2;
 
             // check the connection
             while (client.isConnected() && _running)
             {
-                // wait some seconds
-                sleep(1);
+            	list<File> files;
+            	outbox.getFiles(files);
 
-                // and restart
+            	stringstream file_list;
+
+            	int prefix_length = outbox.getPath().length() + 1;
+
+            	for (list<File>::iterator iter = files.begin(); iter != files.end(); iter++)
+            	{
+            		File &f = (*iter);
+
+            		// skip system files ("." and "..")
+            		if (f.isSystem()) continue;
+
+					// remove the prefix of the outbox path
+            		string rpath = f.getPath();
+            		rpath = rpath.substr(prefix_length, rpath.length() - prefix_length);
+
+            		file_list << rpath << " ";
+            	}
+
+            	// output of all files to send
+            	cout << "files: " << file_list.str() << endl;
+
+            	// "--remove-files" deletes files after adding
+            	stringstream cmd; cmd << "tar -cO -C " << outbox.getPath() << " " << file_list.str();
+
+            	// make a tar archive
+            	appstream app(cmd.str(), appstream::MODE_READ);
+            	iostream stream(&app);
+
+    			// create a bundle
+    			dtn::data::Bundle b;
+
+            	// create a payloadblock
+    			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(dtn::blob::BLOBManager::BLOB_HARDDISK);
+
+    			// stream the content of "tar" to the payload block
+    			payload->getBLOBReference().write(0, stream);
+
+    			// add the payload block to the bundle
+    			b.addBlock(payload);
+
+    			// set the destination
+    			b._destination = EID(conf["destination"]);
+
+                // send the bundle
+    			client << b; client.flush();
+
+                // wait some seconds
+                sleep(10);
             }
 
-            sleep(1);
+            // close the client connection
+            client.shutdown();
+        } catch (dtn::utils::tcpclient::SocketException ex) {
+            cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
+            sleep(backoff);
 
-        } catch (...) {
-            cout << "error while connecting" << endl;
-            sleep(5);
+            // if backoff < 10 minutes
+            if (backoff < 600)
+            {
+            	// set a new backoff
+            	backoff = backoff * 2;
+            }
+        } catch (dtn::exceptions::IOException ex) {
+            cout << "Connection to bundle daemon failed. Retry in " << backoff << " seconds." << endl;
+            sleep(backoff);
+
+            // if backoff < 10 minutes
+            if (backoff < 600)
+            {
+            	// set a new backoff
+            	backoff = backoff * 2;
+            }
         }
     }
 
     return (EXIT_SUCCESS);
 }
-
