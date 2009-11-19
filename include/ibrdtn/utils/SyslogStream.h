@@ -16,6 +16,8 @@ namespace dtn
 {
     namespace utils
     {
+        //#define slog dtn::utils::SyslogStream::getStream()
+
         enum SyslogPriority
         {
             SYSLOG_EMERG =	LOG_EMERG,	/* system is unusable */
@@ -39,6 +41,8 @@ namespace dtn
             SyslogStream();
             virtual ~SyslogStream();
 
+            static std::iostream& getStream();
+
             void setPriority(const SyslogPriority &prio);
 
         protected:
@@ -50,7 +54,7 @@ namespace dtn
             SyslogPriority _prio;
         };
 
-        extern std::iostream syslog;
+        extern std::iostream &slog;
     }
 }
 

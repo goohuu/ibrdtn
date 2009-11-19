@@ -11,15 +11,24 @@ namespace dtn
 {
     namespace utils
     {
-        SyslogStream syslogbuf;
-        std::iostream syslog(&syslogbuf);
+        std::iostream &slog = SyslogStream::getStream();
 
         SyslogStream::SyslogStream() : m_buf( BUF_SIZE+1 ), _prio(SYSLOG_INFO)
         {
             setp( &m_buf[0], &m_buf[0] + (m_buf.size()-1) );
         }
 
-        SyslogStream::~SyslogStream() {
+        SyslogStream::~SyslogStream()
+        {
+
+        }
+
+        std::iostream& SyslogStream::getStream()
+        {
+            static SyslogStream syslogbuf;
+            static std::iostream stream(&syslogbuf);
+
+            return stream;
         }
 
         int SyslogStream::sync()

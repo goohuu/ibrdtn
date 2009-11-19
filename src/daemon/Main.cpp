@@ -101,8 +101,8 @@ int main(int argc, char *argv[])
         // greeting to the console
 	cout << "IBR-DTN daemon "; conf.version(cout); cout << endl;
 
-        // greeting to the syslog
-        dtn::utils::syslog << dtn::utils::SYSLOG_INFO << "IBR-DTN daemon "; conf.version(dtn::utils::syslog); dtn::utils::syslog << ", EID: " << conf.getNodename() << endl;
+        // greeting to the sydtn::utils::slog
+        dtn::utils::slog << dtn::utils::SYSLOG_INFO << "IBR-DTN daemon "; conf.version(dtn::utils::slog); dtn::utils::slog << ", EID: " << conf.getNodename() << endl;
 
         // switch the user is requested
         switchUser(conf);
@@ -231,7 +231,7 @@ int main(int argc, char *argv[])
 		delete apiserv;
 	}
 
-	dtn::utils::syslog << dtn::utils::SYSLOG_INFO << "shutdown dtn node" << endl;
+	dtn::utils::slog << dtn::utils::SYSLOG_INFO << "shutdown dtn node" << endl;
 
 	if (ipnd != NULL) delete ipnd;
 
