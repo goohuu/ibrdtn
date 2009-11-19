@@ -37,15 +37,19 @@ public:
     };
 
     appstream(string command, appstream::Mode mode)
-     : m_buf( BUF_SIZE+1 ), m_inbuf( BUF_SIZE+1 )
+     : m_buf( BUF_SIZE+1 )
     {
-        setp( &m_buf[0], &m_buf[0] + (m_buf.size() - 1) );
-
         // execute the command
         if (mode == MODE_READ)
+        {
+        	setg(0, 0, 0);
         	_handle = popen(command.c_str(), "r");
+        }
         else
+        {
+        	setp( &m_buf[0], &m_buf[0] + (m_buf.size() - 1) );
         	_handle = popen(command.c_str(), "w");
+        }
     }
 
     virtual ~appstream()
@@ -59,7 +63,12 @@ protected:
 	virtual int underflow()
 	{
 		// read the stdout of the process
-		size_t ret = fread(&m_buf[0], m_buf.size(), 1, _handle);
+		size_t ret = 0;
+
+		if (feof(_handle))
+			return std::char_traits<char>::eof();
+
+		ret = fread(&m_buf[0], sizeof(char), m_buf.size(), _handle);
 
 		// Since the input buffer content is now valid (or is new)
 		// the get pointer should be initialized (or reset).
@@ -92,7 +101,11 @@ protected:
 		}
 
         // write the data
-        fwrite(pbase(), (iend - ibegin), 1, _handle);
+		int ret = 0;
+        if ((ret = fwrite(pbase(), sizeof(char), (iend - ibegin), _handle)) != (iend - ibegin))
+        {
+        	return std::char_traits<char>::eof();
+        }
 
         return std::char_traits<char>::not_eof(m);
     }
@@ -104,7 +117,6 @@ private:
 	}
 
     std::vector< char_type > m_buf;
-    std::vector< char_type > m_inbuf;
     FILE *_handle;
 };
 
@@ -354,6 +366,22 @@ int main(int argc, char** argv)
     signal(SIGINT, term);
     signal(SIGTERM, term);
 
+//    appstream app("cat ~/packages.list", appstream::MODE_READ);
+//    istream stream(&app);
+//
+//    char *buffer = new char[512];
+//
+//    while (!stream.eof())
+//    {
+//    	char buf;
+//    	stream.get(buf);
+//    	cout.put(buf);
+//    	//stream.read(buffer, 512);
+//    	//cout.write(buffer, 512);
+//    }
+//
+//    exit(0);
+
     // read the configuration
     map<string,string> conf = readconfiguration(argc, argv);
 
@@ -389,6 +417,15 @@ int main(int argc, char** argv)
             	list<File> files;
             	outbox.getFiles(files);
 
+            	// <= 2 because of "." and ".."
+            	if (files.size() <= 2)
+            	{
+                    // wait some seconds
+                    sleep(10);
+
+                    continue;
+            	}
+
             	stringstream file_list;
 
             	int prefix_length = outbox.getPath().length() + 1;
@@ -411,11 +448,11 @@ int main(int argc, char** argv)
             	cout << "files: " << file_list.str() << endl;
 
             	// "--remove-files" deletes files after adding
-            	stringstream cmd; cmd << "tar -cO -C " << outbox.getPath() << " " << file_list.str();
+            	stringstream cmd; cmd << "tar --remove-files -cO -C " << outbox.getPath() << " " << file_list.str();
 
             	// make a tar archive
             	appstream app(cmd.str(), appstream::MODE_READ);
-            	iostream stream(&app);
+            	istream stream(&app);
 
     			// create a bundle
     			dtn::data::Bundle b;

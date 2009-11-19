@@ -350,17 +350,25 @@ namespace dtn
 		{
 			dtn::utils::MutexLock l(ref);
 
-			char buffer[512];
+			//char buffer[512];
 			char bytes = 1;
 			size_t ret = 0;
 			ostream &s = getBLOB(ref)->getOutputStream();
 
-			while (bytes > 0)
+			while (!stream.eof())
 			{
-				bytes = stream.readsome(buffer, 512);
-				s.write(buffer, bytes);
-				ret += bytes;
+				char buf;
+				stream.get(buf);
+				s.put(buf);
+				ret++;
 			}
+
+//			while (bytes > 0)
+//			{
+//				bytes = stream.readsome(buffer, 512);
+//				s.write(buffer, bytes);
+//				ret += bytes;
+//			}
 
 			return ret;
 		}
