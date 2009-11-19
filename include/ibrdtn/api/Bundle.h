@@ -86,6 +86,16 @@ namespace dtn
 			 */
 			BUNDLE_SECURITY getSecurity();
 
+                        /**
+                         * Set the lifetime of a bundle
+                         */
+                        void setLifetime(unsigned int lifetime);
+
+                        /**
+                         * Returns the lifetime of a bundle
+                         */
+                        unsigned int getLifetime();
+
 			/**
 			 * Set the priority for this bundle.
 			 */
@@ -132,6 +142,7 @@ namespace dtn
 			dtn::data::Bundle _b;
 			BUNDLE_SECURITY _security;
 			BUNDLE_PRIORITY _priority;
+                        unsigned int _lifetime;
 		};
 	}
 }

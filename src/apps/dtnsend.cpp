@@ -22,6 +22,7 @@ void print_help()
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help       display this text" << endl;
 	cout << " --src <name>    set the source application name (e.g. filetransfer)" << endl;
+        cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 3600" << endl;
 
 }
 
@@ -29,6 +30,7 @@ int main(int argc, char *argv[])
 {
 	string file_destination = "dtn://local/filetransfer";
 	string file_source = "filetransfer";
+        unsigned int lifetime = 3600;
 
 	if (argc == 1)
 	{
@@ -50,6 +52,12 @@ int main(int argc, char *argv[])
 		if (arg == "--src" && argc > i)
 		{
 			file_source = argv[i + 1];
+		}
+
+		if (arg == "--lifetime" && argc > i)
+		{
+			stringstream data; data << argv[i + 1];
+                        data >> lifetime;
 		}
 	}
 
@@ -76,6 +84,9 @@ int main(int argc, char *argv[])
 
 	// create a bundle from the file
 	dtn::api::FileBundle b(file_destination, filename);
+
+        // set the lifetime
+        b.setLifetime(lifetime);
 
 	// send the bundle
 	client << b;

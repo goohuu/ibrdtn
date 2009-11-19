@@ -52,6 +52,9 @@ namespace dtn
                 {
                     dtn::utils::MutexLock l(_state_cond);
 
+                    // the closed state is a final state
+                    if (_state == CONNECTION_CLOSED) return;
+
                     // block states smaller than SHUTDOWN, if a shutdown is in progress.
                     if ((_state >= CONNECTION_SHUTDOWN) && (conn < CONNECTION_SHUTDOWN)) return;
 

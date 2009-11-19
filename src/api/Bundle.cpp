@@ -46,6 +46,16 @@ namespace dtn
 		{
 		}
 
+                void Bundle::setLifetime(unsigned int lifetime)
+                {
+                    _lifetime = lifetime;
+                }
+
+                unsigned int Bundle::getLifetime()
+                {
+                    return _lifetime;
+                }
+
 		dtn::blob::BLOBReference Bundle::getData()
 		{
 			const list<dtn::data::Block* > blocks = _b.getBlocks(dtn::data::PayloadBlock::BLOCK_TYPE);
@@ -69,6 +79,9 @@ namespace dtn
 			{
 				_priority = PRIO_LOW;
 			}
+
+                        // read the lifetime
+                        _lifetime = _b._lifetime;
 		}
 
 		void Bundle::write(std::ostream &stream)
@@ -91,6 +104,9 @@ namespace dtn
 				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2) _b._procflags -= dtn::data::Bundle::PRIORITY_BIT2;
 				break;
 			}
+
+                        // set the lifetime
+                        _b._lifetime = _lifetime;
 
 			// send the bundle
 			stream << _b;

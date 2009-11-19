@@ -41,7 +41,7 @@ namespace dtn
             SyslogStream();
             virtual ~SyslogStream();
 
-            static std::iostream& getStream();
+            static std::ostream& getStream();
 
             void setPriority(const SyslogPriority &prio);
 
@@ -54,7 +54,7 @@ namespace dtn
             SyslogPriority _prio;
         };
 
-        extern std::iostream &slog;
+        extern std::ostream &slog;
     }
 }
 

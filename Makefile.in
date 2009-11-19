@@ -46,7 +46,7 @@ DAEMON_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/daemon/*.cpp))
 DAEMON_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DAEMON_OBJ) ) )
 
 # Main target
-all: testsuite dtnd dtnping dtnsend dtnrecv iptunnel selftest
+all: testsuite dtnd dtnping dtnsend dtnrecv dtnfiletransfer iptunnel selftest
 
 osx: testsuite dtnd cdtnping_sync cdtnping_async selftest
 
@@ -107,6 +107,14 @@ dtnrecv: libdata libclient @builddir@/obj/apps/dtnrecv.o
 		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnrecv.o \
 		-Wl,-rpath,@libdir@:@builddir@/lib \
 		-o "@builddir@/bin/dtnrecv"
+
+dtnfiletransfer: libdata libclient @builddir@/obj/apps/dtnfiletransfer.o
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnfiletransfer.o \
+		-Wl,-rpath,@libdir@:@builddir@/lib \
+		-o "@builddir@/bin/dtnfiletransfer"
 
 cdtnping_sync: libdata libclient 
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
