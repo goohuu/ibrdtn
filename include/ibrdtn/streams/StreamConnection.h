@@ -40,7 +40,7 @@ namespace dtn
                             CONNECTION_CLOSED = 3
                         };
 
-			StreamConnection(iostream &stream, size_t timeout);
+			StreamConnection(iostream &stream);
 			virtual ~StreamConnection();
 
 			virtual void shutdown();

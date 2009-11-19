@@ -108,8 +108,9 @@ namespace dtn
 		{
 			if (ifState(SHUTDOWN)) return;
 
-			dtn::utils::MutexLock l(_write_lock);
+			_write_lock.enter();
 			h.write(bundlewriter_);
+			_write_lock.leave();
 			_stream.flush();
 		}
 

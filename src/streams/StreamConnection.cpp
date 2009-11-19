@@ -14,7 +14,7 @@ namespace dtn
 {
 	namespace streams
 	{
-		StreamConnection::StreamConnection(std::iostream &stream, size_t timeout)
+		StreamConnection::StreamConnection(std::iostream &stream)
 		 : _buf(stream), std::iostream(&_buf), _recv_size(0), _ack_size(0), _state(CONNECTION_IDLE), _in_timer(NULL), _out_timer(NULL)
 		{
 		}
@@ -105,7 +105,7 @@ namespace dtn
                 bool StreamConnection::isCompleted()
                 {
                     dtn::utils::MutexLock l(_completed_cond);
-                    
+
                     if (_buf.getOutSize() == _ack_size)
                     {
                         return true;
@@ -199,7 +199,7 @@ namespace dtn
                                                         // reply with a shutdown
                                                         (*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
                                                     }
-                                                    
+
                                                     // and close the connection
                                                     _buf.shutdown();
 

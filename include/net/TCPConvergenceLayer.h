@@ -41,7 +41,7 @@ namespace dtn
 			class TCPConnection : public dtn::streams::StreamConnection, public BundleConnection, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver
 			{
 			public:
-				TCPConnection(TCPConvergenceLayer &cl, int socket, tcpstream::stream_direction d, size_t timeout = 30);
+				TCPConnection(TCPConvergenceLayer &cl, int socket, tcpstream::stream_direction d);
 				virtual ~TCPConnection();
 
 				const dtn::core::Node& getNode() const;

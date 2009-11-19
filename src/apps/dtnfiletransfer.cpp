@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   dtnfiletransfer.cpp
  * Author: morgenro
  *
@@ -26,7 +26,7 @@ public:
     appstream(string command)
      : m_buf( BUF_SIZE+1 )
     {
-        setp( &m_buf[0], &m_buf[0] + (m_buf.size()-1) );
+        setp( &m_buf[0], &m_buf[0] + (m_buf.size() - 1) );
 
         // execute the command
         _handle = popen(command.c_str(), "w");
@@ -38,24 +38,43 @@ public:
         pclose(_handle);
     }
 
+
 protected:
     virtual int sync()
     {
-        if( pptr() > pbase() )
-        {
-            // get the size of the data
-            size_t size = pptr() - pbase();
+		int ret = std::char_traits<char>::eq_int_type(this->overflow(std::char_traits<char>::eof()),
+				std::char_traits<char>::eof()) ? -1 : 0;
 
-            // write the data
-            fwrite(pbase(), size, 1, _handle);
+		return ret;
+    }
 
-            // mark the buffer as free
-            setp( &m_buf[0], &m_buf[0] + (m_buf.size()-1) );
-        }
-        return 0; // 0 := Ok
+    virtual int_type overflow( int_type m = traits_type::eof() )
+    {
+		char *ibegin = pbase();
+		char *iend = pptr();
+
+		// if there is nothing to send, just return
+        if ( iend <= ibegin ) return std::char_traits<char>::not_eof(m);
+
+        // mark the buffer as free
+        setp( &m_buf[0], &m_buf[0] + (m_buf.size() - 1) );
+
+		if(!std::char_traits<char>::eq_int_type(m, std::char_traits<char>::eof())) {
+			*iend++ = std::char_traits<char>::to_char_type(m);
+		}
+
+        // write the data
+        fwrite(pbase(), (iend - ibegin), 1, _handle);
+
+        return std::char_traits<char>::not_eof(m);
     }
 
 private:
+	void writeToProcess()
+	{
+
+	}
+
     std::vector< char_type > m_buf;
     FILE *_handle;
 };
@@ -64,7 +83,7 @@ class filereceiver : public dtn::api::Client
 {
     public:
         filereceiver(string app, string inbox, string address = "127.0.0.1", int port = 4550)
-        : _tcpclient(address, port), dtn::api::Client(app, *this), _inbox(inbox)
+        : _tcpclient(address, port), dtn::api::Client(app, _tcpclient), _inbox(inbox)
         { };
 
         /**
@@ -91,7 +110,7 @@ class filereceiver : public dtn::api::Client
         {
             dtn::blob::BLOBReference ref = b.getData();
 
-            stringstream cmdstream; cmdstream << "tar -C " << _inbox;
+            stringstream cmdstream; cmdstream << "tar -xv -C " << _inbox;
 
             // create a tar handler
             appstream extractor(cmdstream.str());
@@ -109,14 +128,14 @@ class filereceiver : public dtn::api::Client
 
 void print_help()
 {
-	cout << "-- dtnfiletransfer (IBR-DTN) --" << endl;
-	cout << "Syntax: dtnfiletransfer [options] <name> <inbox> <outbox> <destination>"  << endl;
+        cout << "-- dtnfiletransfer (IBR-DTN) --" << endl;
+        cout << "Syntax: dtnfiletransfer [options] <name> <inbox> <outbox> <destination>"  << endl;
         cout << " <name>           the application name" << endl;
-	cout << " <inbox>          directory where incoming files should be placed" << endl;
+        cout << " <inbox>          directory where incoming files should be placed" << endl;
         cout << " <outbox>         directory with outgoing files" << endl;
         cout << " <destination>    the destination EID for all outgoing files" << endl;
-	cout << "* optional parameters *" << endl;
-	cout << " -h|--help        display this text" << endl;
+        cout << "* optional parameters *" << endl;
+        cout << " -h|--help        display this text" << endl;
         cout << " -w|--workdir     temporary work directory" << endl;
 }
 
@@ -164,7 +183,7 @@ void term(int signal)
 }
 
 /*
- * 
+ *
  */
 int main(int argc, char** argv)
 {
@@ -174,24 +193,19 @@ int main(int argc, char** argv)
 
     // read the configuration
     map<string,string> conf = readconfiguration(argc, argv);
-    
+
     // init working directory
     if (conf.find("workdir") != conf.end())
     {
         dtn::blob::BLOBManager::init(conf["workdir"]);
     }
 
-//    // loop, if no stop if requested
-//    while (_running)
-//    {
-        
+    // loop, if no stop if requested
+    while (_running)
+    {
         try {
-            cout << "init" << endl;
-
             // Initiate a client for synchronous receiving
             filereceiver client(conf["name"], conf["inbox"]);
-
-            cout << "connect" << endl;
 
             // Connect to the server. Actually, this function initiate the
             // stream protocol by starting the thread and sending the contact header.
@@ -202,21 +216,21 @@ int main(int argc, char** argv)
             // send file in outbox
 
             // check the connection
-            if (!client.isConnected())
+            while (client.isConnected() && _running)
             {
-                cout << "not connected" << endl;
                 // wait some seconds
-                sleep(5);
+                sleep(1);
 
                 // and restart
             }
 
             sleep(1);
-            
+
         } catch (...) {
-            cout << "error" << endl;
+            cout << "error while connecting" << endl;
+            sleep(5);
         }
-//    }
+    }
 
     return (EXIT_SUCCESS);
 }

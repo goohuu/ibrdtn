@@ -22,13 +22,13 @@ namespace dtn
 	namespace daemon
 	{
 		ClientHandler::ClientHandler(iostream &stream)
-		 : _connection(stream, 30), _connected(false)
+		 : _connection(stream), _connected(false)
 		{
 			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
 		}
 
 		ClientHandler::ClientHandler(int socket)
-		 : _tcpstream(socket, tcpstream::STREAM_INCOMING), _connection(_tcpstream, 0), _connected(false)
+		 : _tcpstream(socket, tcpstream::STREAM_INCOMING), _connection(_tcpstream), _connected(false)
 		{
 			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
 		}

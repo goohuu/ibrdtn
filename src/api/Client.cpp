@@ -48,16 +48,16 @@ namespace dtn
 				}
 			} catch (dtn::api::ConnectionException ex) {
 				_client.shutdown();
+			} catch (dtn::exceptions::IOException ex) {
+				cout << ex.what() << endl;
+				_client.shutdown();
 			}
+
 		}
 
 		Client::Client(string app, iostream &stream, bool async)
-		  : StreamConnection(stream, 0), _app(app), _connected(false), _receiver(*this)
+		  : StreamConnection(stream), _app(app), _connected(false), _async(async), _receiver(*this)
 		{
-			if (async)
-			{
-				_receiver.start();
-			}
 		}
 
 		Client::~Client()
@@ -75,8 +75,17 @@ namespace dtn
 			// read the header
 			(*this) >> _header;
 
+			// call received method
+			received(_header);
+
+			// set connected to true
+			_connected = true;
+
 			// run myself
 			start();
+
+			// run the receiver
+			if (_async) _receiver.start();
 		}
 
 		bool Client::isConnected()

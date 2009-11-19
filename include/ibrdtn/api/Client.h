@@ -101,6 +101,7 @@ namespace dtn
 		private:
 			string _app;
 			bool _connected;
+			bool _async;
 			dtn::streams::StreamContactHeader _header;
 			Client::AsyncReceiver _receiver;
 		};

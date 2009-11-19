@@ -24,8 +24,8 @@ namespace dtn
 {
 	namespace net
 	{
-		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, int socket, tcpstream::stream_direction d, size_t timeout)
-		 : _stream(socket, d), StreamConnection(_stream, timeout), _cl(cl), _connected(false)
+		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, int socket, tcpstream::stream_direction d)
+		 : _stream(socket, d), StreamConnection(_stream), _cl(cl), _connected(false)
 		{
 			_node.setAddress(_stream.getAddress());
 			_node.setPort(_stream.getPort());
