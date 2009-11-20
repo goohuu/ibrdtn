@@ -27,7 +27,7 @@ using namespace dtn::utils;
 void print_help()
 {
         cout << "-- dtninbox (IBR-DTN) --" << endl;
-        cout << "Syntax: dtnfiletransfer [options] <name> <inbox>"  << endl;
+        cout << "Syntax: dtninbox [options] <name> <inbox>"  << endl;
         cout << " <name>           the application name" << endl;
         cout << " <inbox>          directory where incoming files should be placed" << endl;
         cout << "* optional parameters *" << endl;

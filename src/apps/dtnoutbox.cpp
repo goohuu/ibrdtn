@@ -26,8 +26,8 @@ using namespace dtn::utils;
 
 void print_help()
 {
-        cout << "-- dtnfiletransfer (IBR-DTN) --" << endl;
-        cout << "Syntax: dtnfiletransfer [options] <name> <outbox> <destination>"  << endl;
+        cout << "-- dtnoutbox (IBR-DTN) --" << endl;
+        cout << "Syntax: dtnoutbox [options] <name> <outbox> <destination>"  << endl;
         cout << " <name>           the application name" << endl;
         cout << " <outbox>         directory with outgoing files" << endl;
         cout << " <destination>    the destination EID for all outgoing files" << endl;
