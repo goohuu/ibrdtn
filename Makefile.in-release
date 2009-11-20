@@ -42,7 +42,9 @@ DAEMON_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/daemon/*.cpp))
 DAEMON_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DAEMON_OBJ) ) )
 
 # Main target
-all: dtnd dtnping dtnsend dtnrecv iptunnel
+all: dtnd tools iptunnel
+
+tools: dtnping dtnsend dtnrecv dtninbox dtnoutbox
 
 osx: dtnd cdtnping_sync cdtnping_async
 
@@ -102,6 +104,22 @@ dtnrecv: libdata libclient @builddir@/obj/apps/dtnrecv.o
 		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnrecv.o \
 		-Wl,-rpath,@libdir@:@builddir@/lib \
 		-o "@builddir@/bin/dtnrecv"
+
+dtninbox: libdata libclient @builddir@/obj/apps/dtninbox.o
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		$(API_BUILD_OBJ) @builddir@/obj/apps/dtninbox.o \
+		-Wl,-rpath,@libdir@:@builddir@/lib \
+		-o "@builddir@/bin/dtninbox"
+		
+dtnoutbox: libdata libclient @builddir@/obj/apps/dtnoutbox.o
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
+		-L@builddir@/lib/ \
+		-librdtn-data -librdtn-client \
+		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnoutbox.o \
+		-Wl,-rpath,@libdir@:@builddir@/lib \
+		-o "@builddir@/bin/dtnoutbox"
 
 cdtnping_sync: libdata libclient 
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
@@ -176,11 +194,16 @@ distclean: clean
 selftest: testsuite
 	LD_LIBRARY_PATH=@builddir@/lib @builddir@/bin/testsuite
 
-install: install-lib
+install: install-lib install-tools
 	cp @builddir@/bin/dtnd @prefix@/bin
+	cp @builddir@/bin/iptunnel @prefix@/bin/dtntunnel
+	
+install-tools:
 	cp @builddir@/bin/dtnping @prefix@/bin
 	cp @builddir@/bin/dtnsend @prefix@/bin
-	cp @builddir@/bin/iptunnel @prefix@/bin/dtntunnel
+	cp @builddir@/bin/dtnrecv @prefix@/bin
+	cp @builddir@/bin/dtninbox @prefix@/bin
+	cp @builddir@/bin/dtnoutbox @prefix@/bin
 	
 uninstall:
 	rm -rf @prefix@/bin/dtnd

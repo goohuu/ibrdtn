@@ -64,12 +64,12 @@ int main(int argc, char *argv[])
 	// stream protocol by starting the thread and sending the contact header.
 	client.connect();
 
-	// create a bundle from the file
+	// create a bundle
 	dtn::api::Bundle b;
 
 	if (!stdout) cout << "Wait for incoming bundle... ";
 
-	// send the bundle
+	// receive the bundle
 	client >> b;
 
 	// Shutdown the client connection.
