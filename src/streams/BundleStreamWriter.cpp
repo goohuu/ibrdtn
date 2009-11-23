@@ -29,6 +29,21 @@ namespace dtn
 			return dtn::data::SDNV::getLength(value);
 		}
 
+		size_t BundleStreamWriter::getSizeOf(const char value)
+		{
+			return 1;
+		}
+
+		size_t BundleStreamWriter::getSizeOf(u_int32_t value)
+		{
+			return dtn::data::SDNV::getLength(value);
+		}
+
+		size_t BundleStreamWriter::getSizeOf(u_int16_t value)
+		{
+			return dtn::data::SDNV::getLength(value);
+		}
+
 		size_t BundleStreamWriter::getSizeOf(string value)
 		{
 			return value.length();

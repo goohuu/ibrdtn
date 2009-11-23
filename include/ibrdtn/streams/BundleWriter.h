@@ -29,6 +29,10 @@ namespace dtn
 
 		public:
 			virtual size_t getSizeOf(u_int64_t value) = 0;
+			virtual size_t getSizeOf(u_int32_t value) = 0;
+			virtual size_t getSizeOf(u_int16_t value) = 0;
+			virtual size_t getSizeOf(char value) = 0;
+
 			virtual size_t getSizeOf(string value) = 0;
 			virtual size_t getSizeOf(pair<size_t, size_t> value) = 0;
 

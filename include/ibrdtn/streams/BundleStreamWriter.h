@@ -23,6 +23,10 @@ namespace dtn
 			virtual ~BundleStreamWriter();
 
 			size_t getSizeOf(u_int64_t value);
+			size_t getSizeOf(u_int32_t value);
+			size_t getSizeOf(u_int16_t value);
+			size_t getSizeOf(char value);
+
 			size_t getSizeOf(string value);
 			size_t getSizeOf(pair<size_t, size_t> value);
 

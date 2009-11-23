@@ -55,7 +55,7 @@ namespace dtn
 			size_t len = 0;
 			len += writer.write(_blocktype);
 			len += writer.write(_procflags);
-			len += writer.write( _blobref.getSize() );
+			len += writer.write( (u_int64_t)_blobref.getSize() );
 			return len;
 		}
 
