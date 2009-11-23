@@ -145,7 +145,7 @@ namespace dtn
 
 		size_t Bundle::getSize() const
 		{
-			BundleStreamWriter writer(cout);
+			dtn::streams::BundleStreamWriter writer(std::cout);
 			size_t len = 0;
 
 			len += writer.getSizeOf(BUNDLE_VERSION);		// bundle version

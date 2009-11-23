@@ -34,6 +34,11 @@ namespace dtn
 			return 1;
 		}
 
+		size_t BundleStreamWriter::getSizeOf(unsigned char value)
+		{
+			return 1;
+		}
+
 		size_t BundleStreamWriter::getSizeOf(u_int32_t value)
 		{
 			return dtn::data::SDNV::getLength(value);

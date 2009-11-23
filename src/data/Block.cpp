@@ -66,7 +66,7 @@ namespace dtn
 
 			len += writer.getSizeOf(_blocktype);
 			len += writer.getSizeOf(_procflags);
-			len += writer.getSizeOf( _blobref.getSize() );
+			len += writer.getSizeOf( (u_int64_t)_blobref.getSize() );
 			len += _blobref.getSize();
 
 			return len;
