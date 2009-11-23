@@ -86,12 +86,12 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b);
 
 		public:
-			u_int64_t _procflags;
-			u_int64_t _timestamp;
-			u_int64_t _sequencenumber;
-			u_int64_t _lifetime;
-			u_int64_t _fragmentoffset;
-			u_int64_t _appdatalength;
+			size_t _procflags;
+			size_t _timestamp;
+			size_t _sequencenumber;
+			size_t _lifetime;
+			size_t _fragmentoffset;
+			size_t _appdatalength;
 
 			EID _source;
 			EID _destination;

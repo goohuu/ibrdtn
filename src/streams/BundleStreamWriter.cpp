@@ -150,7 +150,7 @@ namespace dtn
 			}
 
 			// predict the block length
-			u_int64_t length =
+			size_t length =
 				getSizeOf( dict.getRef(b._destination) ) +
 				getSizeOf( dict.getRef(b._source) ) +
 				getSizeOf( dict.getRef(b._reportto) ) +

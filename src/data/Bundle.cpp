@@ -172,7 +172,7 @@ namespace dtn
 			}
 
 			// predict the block length
-			u_int64_t length =
+			size_t length =
 				writer.getSizeOf( dict.getRef(_destination) ) +
 				writer.getSizeOf( dict.getRef(_source) ) +
 				writer.getSizeOf( dict.getRef(_reportto) ) +

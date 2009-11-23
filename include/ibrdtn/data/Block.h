@@ -37,7 +37,7 @@ namespace dtn
 			size_t getSize() const;
 			blob::BLOBReference getBLOBReference();
 
-			u_int64_t _procflags;
+			size_t _procflags;
 
 			virtual void read() {}
 			virtual void commit() {};
