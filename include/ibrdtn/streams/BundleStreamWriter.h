@@ -11,7 +11,6 @@
 #define BUNDLESTREAMWRITER_H_
 
 #include "ibrdtn/streams/BundleWriter.h"
-#include "ibrdtn/data/SDNV.h"
 
 namespace dtn
 {
@@ -27,25 +26,25 @@ namespace dtn
 			size_t getSizeOf(string value);
 			size_t getSizeOf(pair<size_t, size_t> value);
 
-			size_t write(unsigned int value);
-			size_t write(u_int64_t value);
-			size_t write(int value);
+			size_t write(const dtn::data::SDNV &value);
+
+			size_t write(const u_int64_t &value);		// write a SDNV
+			size_t write(const u_int32_t &value);		// write a SDNV
+			size_t write(const u_int16_t &value);		// write a SDNV
+
 			size_t write(pair<size_t, size_t> value);
 			size_t write(double value);
 			size_t write(char data);
-			//size_t write(size_t value);
 			size_t write(unsigned char data);
 			size_t write(unsigned char *data, size_t length);
 			size_t write(char *data, size_t length);
 			size_t write(string value);
 			size_t write(istream &input);
-			size_t write(dtn::data::SDNV value);
 
 			size_t write(dtn::blob::BLOBReference &ref);
 			size_t write(const dtn::data::Bundle &b);
 
 		private:
-			size_t writeSDNV(u_int64_t value);
 			ostream &_output;
 
 		};

@@ -25,7 +25,10 @@
 #include <stdlib.h>
 #include <cstdlib>
 #include <stdio.h>
-#include <stdint.h>
+
+#if HAVE_STDINT_H
+# include <stdint.h>
+#endif
 
 #include <time.h>
 #include <math.h>

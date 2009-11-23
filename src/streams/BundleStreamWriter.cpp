@@ -42,17 +42,15 @@ namespace dtn
 			return size;
 		}
 
-		size_t BundleStreamWriter::writeSDNV(u_int64_t value)
+		size_t BundleStreamWriter::write(const dtn::data::SDNV &value)
 		{
-			dtn::data::SDNV sdnv(value);
-			_output << sdnv;
-			return sdnv.getLength();
+			_output << value;
+			return value.getLength();
 		}
 
-		size_t BundleStreamWriter::write(dtn::data::SDNV value) {	return writeSDNV(value.getValue()); 	}
-		size_t BundleStreamWriter::write(unsigned int value) {	return writeSDNV(value); 	}
-		size_t BundleStreamWriter::write(u_int64_t value) 	 {	return writeSDNV(value); 	}
-		size_t BundleStreamWriter::write(int value) 		 {	return writeSDNV(value); 	}
+		size_t BundleStreamWriter::write(const u_int64_t &value) {	return write(dtn::data::SDNV(value)); 	}
+		size_t BundleStreamWriter::write(const u_int32_t &value) {	return write(dtn::data::SDNV(value)); 	}
+		size_t BundleStreamWriter::write(const u_int16_t &value) {	return write(dtn::data::SDNV(value)); 	}
 
 		size_t BundleStreamWriter::write(pair<size_t, size_t> value)
 		{
@@ -66,11 +64,6 @@ namespace dtn
 		{
 			return write((char*)&value, sizeof(double));
 		}
-
-//		size_t BundleStreamWriter::write(size_t value)
-//		{
-//		  return write((char*)&value, sizeof(size_t));
-//		}
 
 		size_t BundleStreamWriter::write(char data)
 		{

@@ -44,6 +44,7 @@ namespace dtn
 			// bind to the socket
 			if ( bind(_socket, (struct sockaddr *) &sock_address, sizeof(sock_address)) < 0 )
 			{
+
 				throw SocketException("TCPConvergenceLayer: cannot bind socket");
 			}
 

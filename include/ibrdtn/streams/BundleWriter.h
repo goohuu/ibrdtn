@@ -10,6 +10,7 @@
 
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/BLOBReference.h"
+#include "ibrdtn/data/SDNV.h"
 
 namespace dtn
 {
@@ -31,13 +32,16 @@ namespace dtn
 			virtual size_t getSizeOf(string value) = 0;
 			virtual size_t getSizeOf(pair<size_t, size_t> value) = 0;
 
-			virtual size_t write(unsigned int value) = 0;	// write a SDNV
-			virtual size_t write(u_int64_t value) = 0;		// write a SDNV
-			virtual size_t write(int value) = 0;		// write a SDNV
+			virtual size_t write(const dtn::data::SDNV &value) = 0;
+
+			virtual size_t write(const u_int64_t &value) = 0;		// write a SDNV
+			virtual size_t write(const u_int32_t &value) = 0;		// write a SDNV
+			virtual size_t write(const u_int16_t &value) = 0;		// write a SDNV
+
 			virtual size_t write(pair<size_t, size_t> value) = 0; // write two SDNVs
 			virtual size_t write(double value) = 0;
 			virtual size_t write(char data) = 0;
-			//virtual size_t write(size_t value) = 0;
+
 			virtual size_t write(unsigned char data) = 0;
 			virtual size_t write(unsigned char *data, size_t length) = 0;
 			virtual size_t write(char *data, size_t length) = 0;
