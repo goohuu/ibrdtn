@@ -28,9 +28,10 @@ namespace dtn
 			friend class Block;
 
 		public:
-			virtual size_t getSizeOf(u_int64_t value) = 0;
-			virtual size_t getSizeOf(u_int32_t value) = 0;
-			virtual size_t getSizeOf(u_int16_t value) = 0;
+			virtual size_t getSizeOf(size_t value) = 0;
+//			virtual size_t getSizeOf(u_int64_t value) = 0;
+//			virtual size_t getSizeOf(u_int32_t value) = 0;
+//			virtual size_t getSizeOf(u_int16_t value) = 0;
 			virtual size_t getSizeOf(char value) = 0;
 			virtual size_t getSizeOf(unsigned char value) = 0;
 
@@ -39,9 +40,10 @@ namespace dtn
 
 			virtual size_t write(const dtn::data::SDNV &value) = 0;
 
-			virtual size_t write(const u_int64_t &value) = 0;		// write a SDNV
-			virtual size_t write(const u_int32_t &value) = 0;		// write a SDNV
-			virtual size_t write(const u_int16_t &value) = 0;		// write a SDNV
+			virtual size_t write(const size_t &value) = 0;		// write a SDNV
+//			virtual size_t write(const u_int64_t &value) = 0;		// write a SDNV
+//			virtual size_t write(const u_int32_t &value) = 0;		// write a SDNV
+//			virtual size_t write(const u_int16_t &value) = 0;		// write a SDNV
 
 			virtual size_t write(pair<size_t, size_t> value) = 0; // write two SDNVs
 			virtual size_t write(double value) = 0;

@@ -79,7 +79,7 @@ namespace dtn
 		void CustodySignalBlock::commit()
 		{
 			stringstream ss;
-			BundleStreamWriter w(ss);
+			dtn::streams::BundleStreamWriter w(ss);
 
 			w.write(_admfield);
 			w.write(_status);

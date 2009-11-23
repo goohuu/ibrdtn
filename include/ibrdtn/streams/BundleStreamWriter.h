@@ -22,9 +22,10 @@ namespace dtn
 			BundleStreamWriter(ostream &output);
 			virtual ~BundleStreamWriter();
 
-			size_t getSizeOf(u_int64_t value);
-			size_t getSizeOf(u_int32_t value);
-			size_t getSizeOf(u_int16_t value);
+			size_t getSizeOf(size_t value);
+//			size_t getSizeOf(u_int64_t value);
+//			size_t getSizeOf(u_int32_t value);
+//			size_t getSizeOf(u_int16_t value);
 			size_t getSizeOf(char value);
 			size_t getSizeOf(unsigned char value);
 
@@ -33,9 +34,10 @@ namespace dtn
 
 			size_t write(const dtn::data::SDNV &value);
 
-			size_t write(const u_int64_t &value);		// write a SDNV
-			size_t write(const u_int32_t &value);		// write a SDNV
-			size_t write(const u_int16_t &value);		// write a SDNV
+			size_t write(const size_t &value);		// write a SDNV
+//			size_t write(const u_int64_t &value);		// write a SDNV
+//			size_t write(const u_int32_t &value);		// write a SDNV
+//			size_t write(const u_int16_t &value);		// write a SDNV
 
 			size_t write(pair<size_t, size_t> value);
 			size_t write(double value);
