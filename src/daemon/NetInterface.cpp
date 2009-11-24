@@ -1,7 +1,7 @@
-/* 
+/*
  * File:   NetInterface.cpp
  * Author: morgenro
- * 
+ *
  * Created on 12. November 2009, 14:57
  */
 
@@ -9,7 +9,6 @@
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <ifaddrs.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <arpa/inet.h>
@@ -17,6 +16,7 @@
 #include <stdlib.h>
 #include <netinet/in.h>
 #include <net/if.h>
+#include <ifaddrs.h>
 #include <errno.h>
 
 #include <unistd.h>
@@ -150,7 +150,7 @@ namespace dtn
 
                         if (iter->ifa_flags & IFF_BROADCAST)
                         {
-                                sockaddr_in *broadcast = (sockaddr_in*)iter->ifa_ifu.ifu_broadaddr;
+                                sockaddr_in *broadcast = (sockaddr_in*)iter->ifa_broadaddr;
                                 ret = string(inet_ntoa(broadcast->sin_addr));
                                 break;
                         }
