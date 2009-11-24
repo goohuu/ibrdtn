@@ -28,6 +28,11 @@ namespace dtn
 		{
 
 		};
+
+		class NoReceiverFoundException : public Exception
+		{
+
+		};
 	}
 
 	namespace core
@@ -44,6 +49,9 @@ namespace dtn
 			dtn::utils::Mutex m_queuelock;
 
 			void direct(const Event *evt);
+
+			const list<EventReceiver*>& getReceivers(string eventName) const;
+			list<EventReceiver*>& getReceivers(string eventName);
 
 		public:
 			static void registerEventReceiver(string eventName, EventReceiver *receiver);

@@ -24,15 +24,39 @@ namespace dtn
 		{
 		}
 
+		const list<EventReceiver*>& EventSwitch::getReceivers(string eventName) const
+		{
+			map<string,list<EventReceiver*> >::const_iterator iter = m_list.find(eventName);
+
+			if (iter == m_list.end())
+			{
+				throw NoReceiverFoundException();
+			}
+
+			return iter->second;
+		}
+
+		list<EventReceiver*>& EventSwitch::getReceivers(string eventName)
+		{
+			map<string,list<EventReceiver*> >::iterator iter = m_list.find(eventName);
+
+			if (iter == m_list.end())
+			{
+				throw NoReceiverFoundException();
+			}
+
+			return iter->second;
+		}
+
 		void EventSwitch::registerEventReceiver(string eventName, EventReceiver *receiver)
 		{
 			// get the list for this event
 			EventSwitch &s = EventSwitch::getInstance();
 
 			try {
-				list<EventReceiver*> &receivers = s.m_list.at(eventName);
+				list<EventReceiver*> &receivers = s.getReceivers(eventName);
 				receivers.push_back(receiver);
-			} catch (std::out_of_range ex) {
+			} catch (NoReceiverFoundException ex) {
 				list<EventReceiver*> receivers;
 				receivers.push_back(receiver);
 				s.m_list[eventName] = receivers;
@@ -45,9 +69,9 @@ namespace dtn
 			EventSwitch &s = EventSwitch::getInstance();
 
 			try {
-				list<EventReceiver*> &receivers = s.m_list.at(eventName);
+				list<EventReceiver*> &receivers = s.getReceivers(eventName);
 				receivers.remove( receiver );
-			} catch (std::out_of_range ex) {
+			} catch (NoReceiverFoundException ex) {
 			}
 		}
 
@@ -63,7 +87,7 @@ namespace dtn
 		{
 			try {
 				// get the list for this event
-				const list<EventReceiver*> receivers = m_list.at(evt->getName());
+				const list<EventReceiver*> receivers = getReceivers(evt->getName());
 				list<EventReceiver*>::const_iterator iter = receivers.begin();
 
 				while (iter != receivers.end())
@@ -71,7 +95,7 @@ namespace dtn
 					(*iter)->raiseEvent(evt);
 					iter++;
 				}
-			} catch (std::out_of_range ex) {
+			} catch (NoReceiverFoundException ex) {
 				// No receiver available!
 			}
 		}
