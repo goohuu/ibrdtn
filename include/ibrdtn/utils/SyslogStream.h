@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   SyslogStream.h
  * Author: morgenro
  *
@@ -35,7 +35,7 @@ namespace dtn
         class SyslogStream : public std::streambuf
         {
         private:
-            enum { BUF_SIZE = 80 };
+            enum { BUF_SIZE = 256 };
 
         public:
             SyslogStream();

@@ -76,12 +76,12 @@ namespace dtn
 				{
 					std::vector<string> p = dtn::utils::Utils::tokenize("=", (*param_iter));
 
-					if (p[0] == "ip")
+					if (p[0].compare("ip") == 0)
 					{
 						n.setAddress(p[1]);
 					}
 
-					if (p[0] == "port")
+					if (p[0].compare("port") == 0)
 					{
 						int port_number = 0;
 						stringstream port_stream;

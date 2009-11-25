@@ -37,7 +37,10 @@ namespace dtn
 
 		size_t DiscoveryService::getLength() const
 		{
-			return 1;
+			BundleString name(_service_name);
+			BundleString parameters(_service_parameters);
+
+			return name.getLength() + parameters.getLength();
 		}
 
 		std::string DiscoveryService::getName() const
