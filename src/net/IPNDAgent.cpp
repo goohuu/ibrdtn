@@ -19,10 +19,6 @@ namespace dtn
 		IPNDAgent::IPNDAgent(NetInterface net)
 		 : _interface(net)
 		{
-			struct sockaddr_in address;
-			net.getInterfaceBroadcastAddress(&address.sin_addr);
-			address.sin_port = htons(net.getPort());
-
 			// Create socket for listening for client connection requests.
 			_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -32,6 +28,12 @@ namespace dtn
 				::exit(1);
 			}
 
+			struct sockaddr_in address;
+			bzero(address, sizeof(address));
+			address.sin_family = AF_INET;
+			net.getInterfaceAddress(&address.sin_addr);
+			address.sin_port = htons(net.getPort());
+
 			// enable broadcast
 			int b = 1;
 			if ( setsockopt(_socket, SOL_SOCKET, SO_BROADCAST, (char*)&b, sizeof(b)) == -1 )
@@ -40,18 +42,13 @@ namespace dtn
 				::exit(1);
 			}
 
-			// broadcast addresses should be usable more than once.
-			setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&b, sizeof(b));
-
-			address.sin_family = AF_INET;
-
 			if ( bind(_socket, (struct sockaddr *) &address, sizeof(address)) < 0 )
 			{
-				cerr << "IPNDAgent: cannot bind socket" << endl;
+				cerr << "IPNDAgent: cannot bind socket to " << net.getAddress() << ":" << net.getPort() << endl;
 				::exit(1);
 			}
 
-			cout << "DiscoveryAgent listen to " << net.getBroadcastAddress() << ":" << net.getPort() << endl;
+			cout << "DiscoveryAgent listen to " << net.getAddress() << ":" << net.getPort() << endl;
 		}
 
 		IPNDAgent::~IPNDAgent()

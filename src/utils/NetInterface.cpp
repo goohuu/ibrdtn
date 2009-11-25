@@ -95,7 +95,7 @@ namespace dtn
         void NetInterface::getInterfaceAddress(string interface, struct in_addr *ret)
         {
             // define the return value
-        	ret->s_addr = INADDR_ANY;
+        	ret->s_addr = htonl(INADDR_ANY);
 
             struct ifaddrs *ifap = NULL;
             int status = getifaddrs(&ifap);
@@ -131,7 +131,7 @@ namespace dtn
         void NetInterface::getInterfaceBroadcastAddress(string interface, struct in_addr *ret)
         {
             // define the return value
-            ret->s_addr = INADDR_BROADCAST;
+            ret->s_addr = htonl(INADDR_BROADCAST);
 
             struct ifaddrs *ifap = NULL;
             int status = getifaddrs(&ifap);
