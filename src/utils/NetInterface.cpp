@@ -84,12 +84,12 @@ namespace dtn
 
         void NetInterface::getInterfaceAddress(struct in_addr *ret) const
         {
-        	getInterfaceAddress(_name, ret);
+        	getInterfaceAddress(_systemname, ret);
         }
 
         void NetInterface::getInterfaceBroadcastAddress(struct in_addr *ret) const
         {
-        	getInterfaceBroadcastAddress(_name, ret);
+        	getInterfaceBroadcastAddress(_systemname, ret);
         }
 
         void NetInterface::getInterfaceAddress(string interface, struct in_addr *ret)
@@ -117,7 +117,7 @@ namespace dtn
                     if (addr->sa_family != AF_INET) continue;
 
                     // check the name of the interface
-                    if (string(iter->ifa_name) != interface) continue;
+                    if (string(iter->ifa_name).compare(interface) != 0) continue;
 
                     sockaddr_in *ip = (sockaddr_in*)iter->ifa_addr;
 
