@@ -11,6 +11,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <string.h>
 
 namespace dtn
 {
@@ -29,7 +30,7 @@ namespace dtn
 			}
 
 			struct sockaddr_in address;
-			bzero(address, sizeof(address));
+			bzero((char *) &address, sizeof(address));
 			address.sin_family = AF_INET;
 			net.getInterfaceAddress(&address.sin_addr);
 			address.sin_port = htons(net.getPort());
