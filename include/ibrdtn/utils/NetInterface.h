@@ -25,6 +25,7 @@ namespace dtn
                 NETWORK_UDP = 2
             };
 
+            NetInterface(NetworkType type, string name, unsigned int port = 4556, unsigned int mtu = 0);
             NetInterface(NetworkType type, string name, string systemname, unsigned int port = 4556, unsigned int mtu = 0);
             NetInterface(NetworkType type, string name, string address, string broadcastaddress = "255.255.255.255", unsigned int port = 4556, unsigned int mtu = 1280);
             NetInterface(const NetInterface& orig);

@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/poll.h>
+#include <string.h>
 
 namespace dtn
 {
@@ -21,6 +22,7 @@ namespace dtn
 		 : _socket(0), _closed(false)
 		{
 			struct sockaddr_in sock_address;
+			bzero((char *) &sock_address, sizeof(sock_address));
 
 			// define the protocol family
 			sock_address.sin_family = AF_INET;

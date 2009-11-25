@@ -24,6 +24,37 @@ namespace dtn
 {
     namespace net
     {
+		NetInterface::NetInterface(NetworkType type, string name, unsigned int port, unsigned int mtu)
+		: _type(type), _name(name), _port(port), _mtu(mtu)
+		{
+            struct ifaddrs *ifap = NULL;
+            int status = getifaddrs(&ifap);
+
+            if ((status != 0) || (ifap == NULL))
+            {
+                    // error, return with default address
+                    return;
+            }
+
+            for (struct ifaddrs *iter = ifap; iter != NULL; iter = iter->ifa_next)
+            {
+                    if (iter->ifa_addr == NULL) continue;
+                    if ((iter->ifa_flags & IFF_UP) == 0) continue;
+
+                    sockaddr *addr = iter->ifa_addr;
+                    sockaddr_in *ip = (sockaddr_in*)iter->ifa_addr;
+
+                      // currently only IPv4 is supported
+                    if (addr->sa_family != AF_INET) continue;
+
+                    // check the name of the interface
+                    _systemname = string(iter->ifa_name);
+                    break;
+            }
+
+            freeifaddrs(ifap);
+		}
+
         NetInterface::NetInterface(NetInterface::NetworkType type, string name, string systemname, unsigned int port, unsigned int mtu)
          : _type(type), _name(name), _systemname(systemname), _port(port), _mtu(mtu)
         {
@@ -153,7 +184,7 @@ namespace dtn
                     if (addr->sa_family != AF_INET) continue;
 
                     // check the name of the interface
-                    if (string(iter->ifa_name) != interface) continue;
+                    if (string(iter->ifa_name).compare(interface) != 0) continue;
 
                     if (iter->ifa_flags & IFF_BROADCAST)
                     {

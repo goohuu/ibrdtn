@@ -179,7 +179,7 @@ namespace dtn
 
 		NetInterface Configuration::getAPIInterface()
 		{
-			return NetInterface(NetInterface::NETWORK_UDP, "local", "lo", 4550);
+			return NetInterface(NetInterface::NETWORK_UDP, "local", 4550);
 		}
 
 		list<StaticRoute> Configuration::getStaticRoutes()
