@@ -32,14 +32,14 @@ namespace dtn
 			struct sockaddr_in address;
 			bzero((char *) &address, sizeof(address));
 			address.sin_family = AF_INET;
-			net.getInterfaceAddress(&address.sin_addr);
+			address.sin_addr.s_addr = htonl(INADDR_ANY);
 			address.sin_port = htons(net.getPort());
 
 			// enable broadcast
 			int b = 1;
 			if ( setsockopt(_socket, SOL_SOCKET, SO_BROADCAST, (char*)&b, sizeof(b)) == -1 )
 			{
-				cerr << "IPNDAgent: cannot send broadcasts" << endl;
+				cerr << "IPNDAgent: set socket to broadcast mode" << endl;
 				::exit(1);
 			}
 
@@ -49,7 +49,7 @@ namespace dtn
 				::exit(1);
 			}
 
-			cout << "DiscoveryAgent listen to " << net.getAddress() << ":" << net.getPort() << endl;
+			cout << "DiscoveryAgent listen to port " << ntohs(address.sin_port) << endl;
 		}
 
 		IPNDAgent::~IPNDAgent()
