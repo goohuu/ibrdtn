@@ -1,4 +1,4 @@
 #!/bin/sh
 #
-autoheader
+autoheader configure.in
 autoconf --include=include
