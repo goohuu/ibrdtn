@@ -6,8 +6,9 @@
 #include "core/Node.h"
 #include "core/StaticRoute.h"
 #include "ibrdtn/data/Exceptions.h"
-#include "daemon/NetInterface.h"
+#include "ibrdtn/utils/NetInterface.h"
 
+using namespace dtn::net;
 using namespace dtn::core;
 using namespace dtn::data;
 
@@ -55,6 +56,7 @@ namespace dtn
                         NetInterface getNetInterface(string name);
 
 			NetInterface getDiscoveryInterface();
+			NetInterface getAPIInterface();
 
                         /**
                          * Returns all static neighboring nodes
@@ -72,7 +74,7 @@ namespace dtn
 
                         unsigned int getUID();
                         unsigned int getGID();
-                        
+
                         bool doDiscovery();
                         bool doAPI();
 

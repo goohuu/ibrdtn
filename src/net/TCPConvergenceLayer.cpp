@@ -10,6 +10,7 @@
 #include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
+#include "ibrdtn/utils/NetInterface.h"
 
 #include <sys/socket.h>
 #include <streambuf>
@@ -218,8 +219,8 @@ namespace dtn
 			_connections.remove( conn );
 		}
 
-		TCPConvergenceLayer::TCPConvergenceLayer(string bind_addr, unsigned short port)
-		 : tcpserver(bind_addr, port), _running(true), _header(dtn::core::BundleCore::local)
+		TCPConvergenceLayer::TCPConvergenceLayer(NetInterface net)
+		 : _net(net), tcpserver(net), _running(true), _header(dtn::core::BundleCore::local)
 		{
 			_header._keepalive = 10;
 		}

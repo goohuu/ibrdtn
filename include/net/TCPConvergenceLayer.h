@@ -23,6 +23,7 @@
 #include "net/BundleConnection.h"
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryServiceProvider.h"
+#include "ibrdtn/utils/NetInterface.h"
 
 namespace dtn
 {
@@ -76,7 +77,7 @@ namespace dtn
 			 * @param[in] bind_addr The address to bind.
 			 * @param[in] port The port to use.
 			 */
-			TCPConvergenceLayer(string bind_addr = "0.0.0.0", unsigned short port = 4556);
+			TCPConvergenceLayer(NetInterface net);
 
 			/**
 			 * Destructor
@@ -94,6 +95,7 @@ namespace dtn
 			void remove(TCPConnection *conn);
 
 		private:
+			NetInterface _net;
 			static const int DEFAULT_PORT;
 			bool _running;
 

@@ -11,6 +11,8 @@
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/streams/tcpstream.h"
+#include <netinet/in.h>
+#include "ibrdtn/utils/NetInterface.h"
 
 namespace dtn
 {
@@ -30,7 +32,7 @@ namespace dtn
 			 * @param address the address to listen to
 			 * @param port the port to listen to
 			 */
-			tcpserver(string address, int port);
+			tcpserver(dtn::net::NetInterface net);
 
 			/**
 			 * Destructor

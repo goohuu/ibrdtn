@@ -21,7 +21,7 @@
 #include "net/IPNDAgent.h"
 
 #include "ibrdtn/utils/Utils.h"
-#include "daemon/NetInterface.h"
+#include "ibrdtn/utils/NetInterface.h"
 
 using namespace dtn::core;
 using namespace dtn::daemon;
@@ -133,8 +133,7 @@ int main(int argc, char *argv[])
 
 	if (conf.doDiscovery())
         {
-            NetInterface disco_interface = conf.getDiscoveryInterface();
-            ipnd = new dtn::net::IPNDAgent(disco_interface.getBroadcastAddress(), disco_interface.getPort());
+            ipnd = new dtn::net::IPNDAgent( conf.getDiscoveryInterface() );
         }
 
         // create the convergence layers
@@ -147,7 +146,7 @@ int main(int argc, char *argv[])
                 {
                     case NetInterface::NETWORK_UDP:
                     {
-                        UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net.getAddress(), net.getPort() );
+                        UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net );
                         udpcl->start();
                         core.addConvergenceLayer(udpcl);
 
@@ -162,7 +161,7 @@ int main(int argc, char *argv[])
 
                     case NetInterface::NETWORK_TCP:
                     {
-                        TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net.getAddress(), net.getPort() );
+                        TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net );
                         tcpcl->start();
                         core.addConvergenceLayer(tcpcl);
 
@@ -208,12 +207,14 @@ int main(int argc, char *argv[])
 
 	if (conf.doAPI())
 	{
+		NetInterface lo = conf.getAPIInterface();
+
 		try {
 			// instance a API server, first create a socket
-			apiserv = new ApiServer("127.0.0.1", 4550);
+			apiserv = new ApiServer(lo);
 			apiserv->start();
 		} catch (dtn::utils::tcpserver::SocketException ex) {
-			cerr << "Unable to bind to 127.0.0.1:4550. API not initialized!" << endl;
+			cerr << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << endl;
 			exit(-1);
 		}
 	}

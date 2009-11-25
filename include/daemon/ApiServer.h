@@ -11,6 +11,7 @@
 #include "ibrdtn/default.h"
 #include "daemon/ClientHandler.h"
 #include "ibrdtn/utils/tcpserver.h"
+#include "ibrdtn/utils/NetInterface.h"
 
 #include <list>
 
@@ -21,7 +22,7 @@ namespace dtn
 		class ApiServer : public dtn::utils::JoinableThread, public dtn::utils::tcpserver
 		{
 		public:
-			ApiServer(string address, int port);
+			ApiServer(dtn::net::NetInterface net);
 			virtual ~ApiServer();
 
 		protected:

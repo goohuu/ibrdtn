@@ -1,4 +1,4 @@
-/* 
+/*
  * File:   NetInterface.h
  * Author: morgenro
  *
@@ -9,10 +9,11 @@
 #define	_NETINTERFACE_H
 
 #include <ibrdtn/default.h>
+#include <netinet/in.h>
 
 namespace dtn
 {
-    namespace daemon
+    namespace net
     {
         class NetInterface
         {
@@ -38,9 +39,15 @@ namespace dtn
             unsigned int getPort() const;
             unsigned int getMTU() const;
 
+            void getInterfaceAddress(struct in_addr *ret) const;
+            void getInterfaceBroadcastAddress(struct in_addr *ret) const;
+
         private:
-            string getInterfaceAddress(string interface);
-            string getInterfaceBroadcastAddress(string interface);
+            static void getInterfaceAddress(string interface, struct in_addr *ret);
+            static void getInterfaceBroadcastAddress(string interface, struct in_addr *ret);
+
+            static string getInterfaceAddress(string interface);
+            static string getInterfaceBroadcastAddress(string interface);
 
             NetworkType _type;
             string _name;

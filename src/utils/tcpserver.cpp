@@ -8,7 +8,6 @@
 #include "ibrdtn/utils/tcpserver.h"
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <errno.h>
@@ -18,7 +17,7 @@ namespace dtn
 {
 	namespace utils
 	{
-		tcpserver::tcpserver(string address, int port)
+		tcpserver::tcpserver(dtn::net::NetInterface net)
 		 : _socket(0), _closed(false)
 		{
 			struct sockaddr_in sock_address;
@@ -27,13 +26,13 @@ namespace dtn
 			sock_address.sin_family = AF_INET;
 
 			// set the local interface address
-			sock_address.sin_addr.s_addr = inet_addr(address.c_str());
+			net.getInterfaceAddress(&sock_address.sin_addr);
 
 			// set the local port
-			sock_address.sin_port = htons(port);
+			sock_address.sin_port = htons(net.getPort());
 
 			// Create socket for listening for client connection requests.
-			_socket = socket(AF_INET, SOCK_STREAM, 0);
+			_socket = socket(sock_address.sin_family, SOCK_STREAM, 0);
 
 			// check for errors
 			if (_socket < 0)

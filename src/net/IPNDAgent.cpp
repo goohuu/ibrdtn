@@ -16,13 +16,12 @@ namespace dtn
 {
 	namespace net
 	{
-		IPNDAgent::IPNDAgent(string broadcast_ip, size_t port)
-		 : _port(port), _ip(broadcast_ip)
+		IPNDAgent::IPNDAgent(NetInterface net)
+		 : _interface(net)
 		{
 			struct sockaddr_in address;
-
-			address.sin_addr.s_addr = inet_addr(broadcast_ip.c_str());
-			address.sin_port = htons(port);
+			net.getInterfaceBroadcastAddress(&address.sin_addr);
+			address.sin_port = htons(net.getPort());
 
 			// Create socket for listening for client connection requests.
 			_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -52,7 +51,7 @@ namespace dtn
 				::exit(1);
 			}
 
-			cout << "DiscoveryAgent listen to " << broadcast_ip << ":" << port << endl;
+			cout << "DiscoveryAgent listen to " << net.getBroadcastAddress() << ":" << net.getPort() << endl;
 		}
 
 		IPNDAgent::~IPNDAgent()
@@ -77,8 +76,8 @@ namespace dtn
 			clientAddress.sin_family = AF_INET;
 
 			// broadcast
-			clientAddress.sin_addr.s_addr = inet_addr(_ip.c_str());
-			clientAddress.sin_port = htons(_port);
+			_interface.getInterfaceBroadcastAddress(&clientAddress.sin_addr);
+			clientAddress.sin_port = htons(_interface.getPort());
 
 			// send converted line back to client.
 			int ret = sendto(_socket, data.c_str(), data.length(), 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));

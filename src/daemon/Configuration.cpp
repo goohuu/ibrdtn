@@ -1,8 +1,9 @@
 #include "daemon/Configuration.h"
 #include "ibrdtn/utils/Utils.h"
 #include "core/Node.h"
-#include "daemon/NetInterface.h"
+#include "ibrdtn/utils/NetInterface.h"
 
+using namespace dtn::net;
 using namespace dtn::core;
 using namespace dtn::utils;
 
@@ -163,7 +164,7 @@ namespace dtn
 		{
                     if (_use_default_net)
                     {
-                        return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, 4556);
+                        return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, 4551);
                     }
 
                     try {
@@ -174,6 +175,11 @@ namespace dtn
                     }
 
                     return NetInterface(NetInterface::NETWORK_UDP, "disco", "255.255.255.255", "255.255.255.255", 4551);
+		}
+
+		NetInterface Configuration::getAPIInterface()
+		{
+			return NetInterface(NetInterface::NETWORK_UDP, "local", "lo", 4550);
 		}
 
 		list<StaticRoute> Configuration::getStaticRoutes()

@@ -34,13 +34,13 @@ namespace dtn
 	{
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		UDPConvergenceLayer::UDPConvergenceLayer(string bind_addr, unsigned short port, bool broadcast, unsigned int mtu)
-			: m_maxmsgsize(mtu), m_selfaddr(bind_addr), m_selfport(port), _running(true)
+		UDPConvergenceLayer::UDPConvergenceLayer(NetInterface net, bool broadcast, unsigned int mtu)
+			: _net(net), m_maxmsgsize(mtu), _running(true)
 		{
 			struct sockaddr_in address;
 
-			address.sin_addr.s_addr = inet_addr(bind_addr.c_str());
-		  	address.sin_port = htons(port);
+			net.getInterfaceAddress(&(address.sin_addr));
+		  	address.sin_port = htons(net.getPort());
 
 			// Create socket for listening for client connection requests.
 			m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -143,8 +143,8 @@ namespace dtn
 			clientAddress.sin_family = AF_INET;
 
 			// broadcast
-			clientAddress.sin_addr.s_addr = inet_addr(m_selfaddr.c_str());
-			clientAddress.sin_port = htons(m_selfport);
+			_net.getInterfaceAddress(&(clientAddress.sin_addr));
+			clientAddress.sin_port = htons(_net.getPort());
 
 			dtn::utils::MutexLock l(m_writelock);
 

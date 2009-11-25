@@ -17,8 +17,8 @@ namespace dtn
 {
 	namespace daemon
 	{
-		ApiServer::ApiServer(string address, int port)
-		 : tcpserver(address, port), _running(true)
+		ApiServer::ApiServer(dtn::net::NetInterface net)
+		 : tcpserver(net), _running(true)
 		{
 		}
 
