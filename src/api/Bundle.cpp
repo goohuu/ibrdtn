@@ -56,6 +56,16 @@ namespace dtn
                     return _lifetime;
                 }
 
+		dtn::data::EID Bundle::getDestination()
+		{
+			return _b._destination;
+		}
+
+		dtn::data::EID Bundle::getSource()
+		{
+			return _b._source;
+		}
+
 		dtn::blob::BLOBReference Bundle::getData()
 		{
 			const list<dtn::data::Block* > blocks = _b.getBlocks(dtn::data::PayloadBlock::BLOCK_TYPE);

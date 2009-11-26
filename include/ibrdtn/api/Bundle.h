@@ -132,6 +132,9 @@ namespace dtn
 			 */
 			dtn::blob::BLOBReference getData();
 
+			dtn::data::EID getDestination();
+			dtn::data::EID getSource();
+
 		protected:
 			/**
 			 * Constructor for a bundle object.
