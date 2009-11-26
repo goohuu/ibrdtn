@@ -90,7 +90,9 @@ namespace dtn
 				StreamContactHeader srv_header(dtn::core::BundleCore::local);
 				_connection << srv_header;
 
-				AbstractWorker::initialize(_contact._localeid.getApplication(), true);
+				// initialize the AbstractWorker
+				// deactivate the thread for receiving bundles is bit 0x80 is set
+				AbstractWorker::initialize(_contact._localeid.getApplication(), !(_contact._flags & 0x80));
 
 				// set to connected
 				_connected = true;

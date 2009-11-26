@@ -83,6 +83,7 @@ namespace dtn
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "shutdown: tcpstream" << endl;
 #endif
+			dtn::utils::MutexLock l1(_overflow_lock);
 			::shutdown(_socket, SHUT_RDWR);
 			::close(_socket);
 			_closed = true;
@@ -98,6 +99,8 @@ namespace dtn
 
 		int tcpstream::overflow(int c)
 		{
+			dtn::utils::MutexLock l(_overflow_lock);
+
 			if ( _closed )
 			{
 				//throw ConnectionClosedException("Connection has been closed.");
@@ -121,7 +124,7 @@ namespace dtn
 			}
 
 			// send the data
-			if ( ::send(_socket, out_buf_, (iend - ibegin), 0) == -1 )
+			if ( ::send(_socket, out_buf_, (iend - ibegin), 0) < 0 )
 			{
 				// failure
 				//throw ConnectionClosedException("Error while writing to the socket.");

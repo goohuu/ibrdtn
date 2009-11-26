@@ -66,8 +66,7 @@ namespace dtn
 
 			stream_direction _direction;
 
-//			dtn::utils::Mutex _overflow_lock;
-//			dtn::utils::Mutex _underflow_lock;
+			dtn::utils::Mutex _overflow_lock;
 		};
 	}
 }

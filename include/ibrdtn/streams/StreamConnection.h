@@ -52,6 +52,7 @@ namespace dtn
                         void setTimer(size_t in_timeout, size_t out_timeout);
                         void setState(ConnectionState conn);
                         ConnectionState getState();
+                        bool waitState(ConnectionState conn, size_t timeout);
                         bool waitState(ConnectionState conn);
 			void run();
 

@@ -197,8 +197,6 @@ namespace dtn
 			int ret = traits_type::eq_int_type(this->overflow(traits_type::eof()),
 											traits_type::eof()) ? -1 : 0;
 
-			waitState(IDLE);
-
 			// ... and flush.
 			_stream.flush();
 

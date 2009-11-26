@@ -25,6 +25,26 @@ void print_help()
 
 }
 
+void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
+{
+	// write the data to output
+	if (stdout)
+	{
+		b.getData().read(cout);
+	}
+	else
+	{
+		cout << " received." << endl;
+		cout << "Writing bundle payload to " << filename << endl;
+
+		fstream file(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
+		b.getData().read(file);
+		file.close();
+
+		cout << "finished" << endl;
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	string filename = "";
@@ -72,26 +92,25 @@ int main(int argc, char *argv[])
 	// receive the bundle
 	client >> b;
 
+	// write the bundle to stdout/file
+	writeBundle(stdout, filename, b);
+
 	// Shutdown the client connection.
 	client.shutdown();
 
 	conn.close();
 
-	// write the data to output
-	if (stdout)
-	{
-		b.getData().read(cout);
-	}
-	else
-	{
-		cout << " received." << endl;
-		cout << "Writing bundle payload to " << filename << endl;
+	try {
+		// write all following bundles
+		while (!client.eof())
+		{
+			client >> b;
 
-		fstream file(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
-		b.getData().read(file);
-		file.close();
+			// write the bundle to stdout/file
+			writeBundle(stdout, filename, b);
+		}
+	} catch (dtn::exceptions::IOException ex) {
 
-		cout << "finished" << endl;
 	}
 
 	return 0;

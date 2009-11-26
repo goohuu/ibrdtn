@@ -18,8 +18,8 @@
 class EchoClient : public dtn::api::Client
 {
 	public:
-		EchoClient(string app, std::iostream &stream)
-		 : dtn::api::Client(app, stream, false)
+		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app, std::iostream &stream)
+		 : dtn::api::Client(mode, app, stream, false)
 		{
 		}
 
@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
 	int ping_size = 64;
 	bool wait_for_reply = true;
 	size_t count = 1;
+	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
 
 	if (argc == 1)
 	{
@@ -114,6 +115,7 @@ int main(int argc, char *argv[])
 
 		if (arg == "--nowait")
 		{
+			mode = dtn::api::Client::MODE_SENDONLY;
 			wait_for_reply = false;
 		}
 
@@ -147,7 +149,7 @@ int main(int argc, char *argv[])
 		dtn::utils::tcpclient conn("127.0.0.1", 4550);
 
 		// Initiate a derivated client
-		EchoClient client(ping_source, conn);
+		EchoClient client(mode, ping_source, conn);
 
 		// Connect to the server. Actually, this function initiate the
 		// stream protocol by starting the thread and sending the contact header.

@@ -59,6 +59,12 @@ namespace dtn
 
 
 		public:
+			enum COMMUNICATION_MODE
+			{
+				MODE_BIDIRECTIONAL = 0, 	// bidirectional
+				MODE_SENDONLY = 1 			// unidirectional, no reception of bundles
+			};
+
 			/**
 			 * Constructor for the API Connection. At least a application suffix
 			 * and a existing stream are required. The suffix is appended to the node
@@ -67,6 +73,7 @@ namespace dtn
 			 * and will be used with the bundle protocol for TCP (draft-irtf-dtnrg-tcp-clayer-02)
 			 * provided by the StreamConnection class.
 			 */
+			Client(COMMUNICATION_MODE mode, string app, iostream &stream, bool async = true);
 			Client(string app, iostream &stream, bool async = true);
 
 			/**
@@ -99,6 +106,7 @@ namespace dtn
 			virtual void received(dtn::api::Bundle &b) {};
 
 		private:
+			COMMUNICATION_MODE _mode;
 			string _app;
 			bool _connected;
 			bool _async;

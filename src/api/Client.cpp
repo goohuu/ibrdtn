@@ -55,8 +55,13 @@ namespace dtn
 
 		}
 
+		Client::Client(COMMUNICATION_MODE mode, string app, iostream &stream, bool async)
+		  : StreamConnection(stream), _mode(mode), _app(app), _connected(false), _async(async), _receiver(*this)
+		{
+		}
+
 		Client::Client(string app, iostream &stream, bool async)
-		  : StreamConnection(stream), _app(app), _connected(false), _async(async), _receiver(*this)
+		  : StreamConnection(stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _async(async), _receiver(*this)
 		{
 		}
 
@@ -68,6 +73,10 @@ namespace dtn
 		{
 			// do a handshake
 			StreamContactHeader header(EID("dtn:local/" + _app));
+
+			// set comm. mode
+			if ((_mode == MODE_SENDONLY) && !(header._flags & 0x80))
+				header._flags += 0x80;
 
 			// transmit the header
 			(*this) << header;
@@ -103,8 +112,8 @@ namespace dtn
 			_connected = false;
 			StreamConnection::shutdown();
 
-                        // wait for the closed connection
-                        StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+			// wait for the closed connection
+			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 		}
 	}
 }

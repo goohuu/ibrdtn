@@ -77,6 +77,17 @@ namespace dtn
                     return _state;
                 }
 
+                bool StreamConnection::waitState(ConnectionState conn, size_t timeout)
+                {
+                    dtn::utils::MutexLock l(_state_cond);
+                    while ((conn != _state) && (_state != CONNECTION_CLOSED))
+                        if (!_state_cond.wait(timeout)) break;
+
+                    if (conn == _state) return true;
+
+                    return false;
+                }
+
                 bool StreamConnection::waitState(ConnectionState conn)
                 {
                     dtn::utils::MutexLock l(_state_cond);
