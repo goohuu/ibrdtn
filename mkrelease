@@ -47,13 +47,23 @@ rm $RELEASE_DIR/include/ibrdtn/config.h
 
 # copy source
 echo "copy source"
-cp -R src/ $RELEASE_DIR/
+cp -R src/ install-sh $RELEASE_DIR/
 rm -rf $RELEASE_DIR/src/testsuite
 
 # copy ibrcommon
 mkdir $RELEASE_DIR/ibrcommon
 echo "ibrcommon files"
-cp -R ibrcommon/*.cpp ibrcommon/ibrcommon ibrcommon/data ibrcommon/net ibrcommon/thread ibrcommon/xml ibrcommon/config.h.in ibrcommon/configure.ac ibrcommon/Makefile.in $RELEASE_DIR/ibrcommon
+cp -R ibrcommon/*.cpp \
+	ibrcommon/ibrcommon \
+	ibrcommon/data \
+	ibrcommon/net \
+	ibrcommon/thread \
+	ibrcommon/xml \
+	ibrcommon/config.h.in \
+	ibrcommon/configure.ac \
+	ibrcommon/Makefile.in \
+	ibrcommon/install-sh \
+	$RELEASE_DIR/ibrcommon
 
 # copy default database
 #echo "copy default database"

@@ -14,11 +14,9 @@ SVNDEF := -D'SVN_REV="$(shell cat REVISION)"'
 CFLAGS += -fPIC -ggdb $(SVNDEF) -librcommon -L@srcdir@/ibrcommon
 
 # modules
-MODULES:=api utils data streams core net testsuite daemon
+MODULES:=apps apps/c_api_examples apps/DTNTun api utils data streams core net testsuite daemon
 
 APPS:=ping send recv inbox outbox tunnel
-
-MODULES:=apps apps/c_api_examples apps/DTNTun api utils data streams core net testsuite daemon
 
 DATA_MODS:=utils data
 DATA_SRC = $(foreach mod,$(DATA_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp))
@@ -46,8 +44,6 @@ builddirs:
 libraries: libdata libclient
 
 apps: $(foreach app,$(APPS),dtn$(app))
-
-modules: $(foreach m,$(MODULES),mod_$(m))
 
 @builddir@/obj/%.o: @srcdir@/src/%.cpp
 	$(CXX) -c $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) $< -o $@
