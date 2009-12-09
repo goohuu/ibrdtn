@@ -11,7 +11,7 @@ exec_prefix=@exec_prefix@
 SVNDEF := -D'SVN_REV="$(shell cat REVISION)"'
 
 # 64bit fix
-CFLAGS += -fPIC -O3 $(SVNDEF) -librcommon -L@srcdir@/ibrcommon
+CFLAGS += -fPIC -O3 $(SVNDEF)
 
 # modules
 MODULES:=apps apps/c_api_examples apps/DTNTun api utils data streams core net daemon
@@ -45,28 +45,28 @@ apps: $(foreach app,$(APPS),dtn$(app))
 	$(CXX) -c $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) $< -o $@
 	
 libdata: builddirs $(DATA_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
-		-L@builddir@/lib/ -shared $(DATA_OBJ) -o "@builddir@/lib/libibrdtn-data.so"
+	$(CXX) $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) @LIBS@ -librcommon \
+		-L@srcdir@/ibrcommon -L@builddir@/lib/ -shared $(DATA_OBJ) -o "@builddir@/lib/libibrdtn-data.so"
 
 libclient: libdata $(API_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
-		-L@builddir@/lib/ -shared $(API_OBJ) -o "@builddir@/lib/libibrdtn-client.so"
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -librcommon \
+		-L@srcdir@/ibrcommon -L@builddir@/lib/ -shared $(API_OBJ) -o "@builddir@/lib/libibrdtn-client.so"
 
 dtn%: libdata libclient @builddir@/obj/apps/dtn%.o
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
-		-L@builddir@/lib/ -librdtn-data -librdtn-client @builddir@/obj/apps/$@.o -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon -o "@builddir@/bin/$@"
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -librcommon \
+		-L@srcdir@/ibrcommon -L@builddir@/lib/ -librdtn-data -librdtn-client @builddir@/obj/apps/$@.o -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon -o "@builddir@/bin/$@"
 		
 daemon: libdata libclient $(DAEMON_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
-		-L@builddir@/lib/ -librdtn-data -librdtn-client $(DAEMON_OBJ) -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon -o "@builddir@/bin/dtnd"
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ -librcommon \
+		-L@srcdir@/ibrcommon -L@builddir@/lib/ -librdtn-data -librdtn-client $(DAEMON_OBJ) -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon -o "@builddir@/bin/dtnd"
 		
 cdtnping_sync: libdata libclient 
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-o @builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
 		@srcdir@/src/apps/c_api_examples/dtnping_sync.c
 	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread   \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
+		-L@srcdir@/ibrcommon -L@builddir@/lib/ \
+		-librcommon -librdtn-data -librdtn-client \
 		@builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
 		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon \
 		-o "@builddir@/bin/cdtnping_sync"
@@ -77,8 +77,8 @@ cdtnping_async: libdata libclient
 		-o @builddir@/obj/apps/c_api_examples/cdtnping_async.o \
 		@srcdir@/src/apps/c_api_examples/dtnping_async.c
 	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread   \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
+		-L@srcdir@/ibrcommon -L@builddir@/lib/ \
+		-librcommon -librdtn-data -librdtn-client \
 		@builddir@/obj/apps/c_api_examples/cdtnping_async.o \
 		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon \
 		-o "@builddir@/bin/cdtnping_async"
@@ -93,9 +93,9 @@ dtntun: libdata libclient
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-o @builddir@/obj/apps/DTNTun/tun.o \
 		@srcdir@/src/apps/DTNTun/tun.c
-	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
+	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@  \
+		-L@srcdir@/ibrcommon -L@builddir@/lib/ \
+		-librcommon -librdtn-data -librdtn-client \
 		@builddir@/obj/apps/DTNTun/dtntun.o \
 		@builddir@/obj/apps/DTNTun/receiver.o \
 		@builddir@/obj/apps/DTNTun/tun.o \
