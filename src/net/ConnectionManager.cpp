@@ -12,7 +12,7 @@
 #include "core/NodeEvent.h"
 #include "core/RouteEvent.h"
 #include "core/BundleEvent.h"
-#include "ibrdtn/utils/tcpserver.h"
+#include "ibrcommon/net/tcpserver.h"
 #include "core/BundleCore.h"
 
 using namespace dtn::core;
@@ -120,7 +120,7 @@ namespace dtn
 					{
 						return conn;
 					}
-				} catch (dtn::utils::tcpserver::SocketException ex) {
+				} catch (ibrcommon::tcpserver::SocketException ex) {
 
 				}
 			}

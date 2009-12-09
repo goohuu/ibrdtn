@@ -12,7 +12,7 @@
 
 #include "ibrdtn/streams/BundleHandler.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 
 namespace dtn
 {
@@ -32,7 +32,7 @@ namespace dtn
 			};
 
 		public:
-			BundleCopier(dtn::blob::BLOBManager &blobmanager, dtn::data::Bundle &b);
+			BundleCopier(ibrcommon::BLOBManager &blobmanager, dtn::data::Bundle &b);
 			virtual ~BundleCopier();
 
 			void beginBundle(char version);
@@ -48,7 +48,7 @@ namespace dtn
 			void endBlob(size_t size);
 
 		private:
-			blob::BLOBManager &_blobmanager;
+			ibrcommon::BLOBManager &_blobmanager;
 			ATTRIBUTES _next;
 			dtn::data::Bundle &_bundle;
 			dtn::data::Block *_block;

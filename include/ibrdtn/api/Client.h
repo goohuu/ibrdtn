@@ -16,8 +16,8 @@
 #include "ibrdtn/streams/BundleStreamReader.h"
 #include "ibrdtn/streams/BundleFactory.h"
 #include "ibrdtn/streams/StreamConnection.h"
-#include "ibrdtn/utils/Mutex.h"
-#include "ibrdtn/utils/MutexLock.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 
 using namespace dtn::data;
 using namespace dtn::streams;
@@ -44,7 +44,7 @@ namespace dtn
 		class Client : public StreamConnection
 		{
 		private:
-			class AsyncReceiver : public dtn::utils::JoinableThread
+			class AsyncReceiver : public ibrcommon::JoinableThread
 			{
 			public:
 				AsyncReceiver(Client &client);

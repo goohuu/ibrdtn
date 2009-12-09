@@ -15,7 +15,7 @@ namespace dtn
 	namespace data
 	{
 		CustodySignalBlock::CustodySignalBlock()
-		 : PayloadBlock(blob::BLOBManager::BLOB_MEMORY), _admfield(32), _status(0), _fragment_offset(0),
+		 : PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY), _admfield(32), _status(0), _fragment_offset(0),
 		 _fragment_length(0), _timeofsignal(0), _bundle_timestamp(0), _unknown(0),
 		 _bundle_sequence(0)
 		{
@@ -29,7 +29,7 @@ namespace dtn
 			read();
 		}
 
-		CustodySignalBlock::CustodySignalBlock(BLOBReference ref)
+		CustodySignalBlock::CustodySignalBlock(ibrcommon::BLOBReference ref)
 		 : PayloadBlock(ref), _admfield(32), _status(0), _fragment_offset(0),
 		 _fragment_length(0), _timeofsignal(0), _bundle_timestamp(0), _unknown(0),
 		 _bundle_sequence(0)
@@ -43,7 +43,7 @@ namespace dtn
 		void CustodySignalBlock::read()
 		{
 			// read the attributes out of the BLOBReference
-			BLOBReference ref = Block::getBLOBReference();
+			ibrcommon::BLOBReference ref = Block::getBLOBReference();
 			size_t remain = ref.getSize();
 			char buffer[remain];
 
@@ -98,7 +98,7 @@ namespace dtn
 			w.write(_source.getString());
 
 			// clear the blob
-			BLOBReference ref = Block::getBLOBReference();
+			ibrcommon::BLOBReference ref = Block::getBLOBReference();
 			ref.clear();
 
 			// copy the content of ss to the blob

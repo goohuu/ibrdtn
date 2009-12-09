@@ -9,7 +9,7 @@
 #define DISCOVERYAGENT_H_
 
 #include "ibrdtn/config.h"
-#include "ibrdtn/utils/Thread.h"
+#include "ibrcommon/thread/Thread.h"
 
 #include "core/Node.h"
 #include "core/EventReceiver.h"
@@ -27,7 +27,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryAgent : public dtn::utils::JoinableThread, public dtn::core::EventReceiver
+		class DiscoveryAgent : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
 		{
 		public:
 			DiscoveryAgent();

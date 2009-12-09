@@ -66,7 +66,7 @@ namespace dtn
 			return _b._source;
 		}
 
-		dtn::blob::BLOBReference Bundle::getData()
+		ibrcommon::BLOBReference Bundle::getData()
 		{
 			const list<dtn::data::Block* > blocks = _b.getBlocks(dtn::data::PayloadBlock::BLOCK_TYPE);
 			if (blocks.size() < 1) throw dtn::exceptions::MissingObjectException("No payload block exists!");

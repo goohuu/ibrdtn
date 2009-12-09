@@ -5,7 +5,7 @@
 #include "net/BundleConnection.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "net/DiscoveryServiceProvider.h"
-#include "ibrdtn/utils/NetInterface.h"
+#include "ibrcommon/net/NetInterface.h"
 
 using namespace dtn::data;
 
@@ -18,7 +18,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for UDP/IP.
 		 * Each bundle is sent in exact one UDP datagram.
 		 */
-		class UDPConvergenceLayer : public ConvergenceLayer, public dtn::utils::JoinableThread, public DiscoveryServiceProvider
+		class UDPConvergenceLayer : public ConvergenceLayer, public ibrcommon::JoinableThread, public DiscoveryServiceProvider
 		{
 		public:
 			class SocketException : public dtn::exceptions::Exception
@@ -35,7 +35,7 @@ namespace dtn
 			 * @param[in] broadcast If true, the broadcast feature for this socket is enabled.
 			 * @param[in] mtu The maximum bundle size.
 			 */
-			UDPConvergenceLayer(NetInterface net, bool broadcast = false, unsigned int mtu = 1280);
+			UDPConvergenceLayer(ibrcommon::NetInterface net, bool broadcast = false, unsigned int mtu = 1280);
 
 			/**
 			 * Desktruktor
@@ -62,15 +62,15 @@ namespace dtn
 				void run();
 
 		private:
-			NetInterface _net;
+			ibrcommon::NetInterface _net;
 			int m_socket;
 
 			static const int DEFAULT_PORT;
 
 			unsigned int m_maxmsgsize;
 
-			dtn::utils::Mutex m_writelock;
-			dtn::utils::Mutex m_readlock;
+			ibrcommon::Mutex m_writelock;
+			ibrcommon::Mutex m_readlock;
 
 			bool _running;
 		};

@@ -1,6 +1,6 @@
 #include "ibrdtn/default.h"
 
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 #include "core/BundleCore.h"
 #include "core/BundleStorage.h"
 #include "core/SimpleBundleStorage.h"
@@ -21,7 +21,7 @@
 #include "net/IPNDAgent.h"
 
 #include "ibrdtn/utils/Utils.h"
-#include "ibrdtn/utils/NetInterface.h"
+#include "ibrcommon/net/NetInterface.h"
 
 using namespace dtn::core;
 using namespace dtn::daemon;
@@ -79,7 +79,7 @@ void setGlobalVars(Configuration &config)
 
     try {
         // assign a directory for blobs
-        dtn::blob::BLOBManager::init(config.getPath("blob"));
+    	ibrcommon::BLOBManager::init(config.getPath("blob"));
     } catch (Configuration::ParameterNotSetException ex) {
 
     }
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	cout << "IBR-DTN daemon "; conf.version(cout); cout << endl;
 
         // greeting to the sydtn::utils::slog
-        dtn::utils::slog << dtn::utils::SYSLOG_INFO << "IBR-DTN daemon "; conf.version(dtn::utils::slog); dtn::utils::slog << ", EID: " << conf.getNodename() << endl;
+        ibrcommon::slog << ibrcommon::SYSLOG_INFO << "IBR-DTN daemon "; conf.version(ibrcommon::slog); ibrcommon::slog << ", EID: " << conf.getNodename() << endl;
 
         // switch the user is requested
         switchUser(conf);
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 	DynamicBundleRouter router( conf.getStaticRoutes(), storage );
 
 	// get the configuration of the convergence layers
-        list<NetInterface> nets = conf.getNetInterfaces();
+        list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();
 
 	// initialize the DiscoveryAgent
 	dtn::net::IPNDAgent *ipnd = NULL;
@@ -137,14 +137,14 @@ int main(int argc, char *argv[])
         }
 
         // create the convergence layers
- 	for (list<NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+ 	for (list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 	{
-            const NetInterface &net = (*iter);
+            const ibrcommon::NetInterface &net = (*iter);
 
             try {
                 switch (net.getType())
                 {
-                    case NetInterface::NETWORK_UDP:
+                    case ibrcommon::NetInterface::NETWORK_UDP:
                     {
                         UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net );
                         udpcl->start();
@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
                         break;
                     }
 
-                    case NetInterface::NETWORK_TCP:
+                    case ibrcommon::NetInterface::NETWORK_TCP:
                     {
                         TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net );
                         tcpcl->start();
@@ -174,7 +174,7 @@ int main(int argc, char *argv[])
                         break;
                     }
                 }
-            } catch (dtn::utils::tcpserver::SocketException ex) {
+            } catch (ibrcommon::tcpserver::SocketException ex) {
                     cout << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
                     cout << "      Error: " << ex.what() << endl;
             } catch (dtn::net::UDPConvergenceLayer::SocketException ex) {
@@ -207,13 +207,13 @@ int main(int argc, char *argv[])
 
 	if (conf.doAPI())
 	{
-		NetInterface lo = conf.getAPIInterface();
+		ibrcommon::NetInterface lo = conf.getAPIInterface();
 
 		try {
 			// instance a API server, first create a socket
 			apiserv = new ApiServer(lo);
 			apiserv->start();
-		} catch (dtn::utils::tcpserver::SocketException ex) {
+		} catch (ibrcommon::tcpserver::SocketException ex) {
 			cerr << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << endl;
 			exit(-1);
 		}
@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 		delete apiserv;
 	}
 
-	dtn::utils::slog << dtn::utils::SYSLOG_INFO << "shutdown dtn node" << endl;
+	ibrcommon::slog << ibrcommon::SYSLOG_INFO << "shutdown dtn node" << endl;
 
 	if (ipnd != NULL) delete ipnd;
 

@@ -130,7 +130,7 @@ namespace dtn
 			/**
 			 * Returns a reference to the data block of this bundle.
 			 */
-			dtn::blob::BLOBReference getData();
+			ibrcommon::BLOBReference getData();
 
 			dtn::data::EID getDestination();
 			dtn::data::EID getSource();

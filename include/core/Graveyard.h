@@ -9,14 +9,14 @@
 #define GRAVEYARD_H_
 
 #include "ibrdtn/default.h"
-#include "ibrdtn/utils/Thread.h"
+#include "ibrcommon/thread/Thread.h"
 #include <queue>
 
 namespace dtn
 {
 	namespace core
 	{
-		class Graveyard : public dtn::utils::JoinableThread
+		class Graveyard : public ibrcommon::JoinableThread
 		{
 		public:
 			class Zombie
@@ -41,7 +41,7 @@ namespace dtn
 
 		private:
 			bool wait();
-			dtn::utils::Conditional _wait;
+			ibrcommon::Conditional _wait;
 
 			void newJob(Zombie *z);
 

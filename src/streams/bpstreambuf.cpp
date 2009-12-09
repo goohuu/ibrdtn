@@ -40,14 +40,14 @@ namespace dtn
 		void bpstreambuf::setState(bpstreambuf::State state)
 		{
 			if (_state == SHUTDOWN) return;
-			dtn::utils::MutexLock l(_state_changed);
+			ibrcommon::MutexLock l(_state_changed);
 			_state = state;
 			_state_changed.signal(true);
 		}
 
 		bool bpstreambuf::waitState(bpstreambuf::State state)
 		{
-			dtn::utils::MutexLock l(_state_changed);
+			ibrcommon::MutexLock l(_state_changed);
 			bool ret = true;
 
 			if (_state == SHUTDOWN)
@@ -67,13 +67,13 @@ namespace dtn
 
 		bpstreambuf::State bpstreambuf::getState()
 		{
-			dtn::utils::MutexLock l(_state_changed);
+			ibrcommon::MutexLock l(_state_changed);
 			return _state;
 		}
 
 		bool bpstreambuf::ifState(bpstreambuf::State state)
 		{
-			dtn::utils::MutexLock l(_state_changed);
+			ibrcommon::MutexLock l(_state_changed);
 			return (state == _state);
 		}
 
@@ -95,7 +95,7 @@ namespace dtn
 		{
 			if (ifState(SHUTDOWN)) return;
 
-			dtn::utils::MutexLock l(_write_lock);
+			ibrcommon::MutexLock l(_write_lock);
 			seg.write(bundlewriter_);
 
 			if (data != NULL)

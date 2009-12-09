@@ -19,7 +19,7 @@
 #include "ibrdtn/config.h"
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryAnnouncement.h"
-#include "ibrdtn/utils/NetInterface.h"
+#include "ibrcommon/net/NetInterface.h"
 
 using namespace dtn::data;
 
@@ -30,7 +30,7 @@ namespace dtn
 		class IPNDAgent : public DiscoveryAgent
 		{
 		public:
-			IPNDAgent(NetInterface net);
+			IPNDAgent(ibrcommon::NetInterface net);
 			virtual ~IPNDAgent();
 
 		protected:
@@ -38,7 +38,7 @@ namespace dtn
 			void run();
 
 		private:
-			NetInterface _interface;
+			ibrcommon::NetInterface _interface;
 			int _socket;
 		};
 	}

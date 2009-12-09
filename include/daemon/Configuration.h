@@ -2,11 +2,11 @@
 #define CONFIGURATION_H_
 
 #include "ibrdtn/default.h"
-#include "ConfigFile.h"
+#include "ibrcommon/data/ConfigFile.h"
 #include "core/Node.h"
 #include "core/StaticRoute.h"
 #include "ibrdtn/data/Exceptions.h"
-#include "ibrdtn/utils/NetInterface.h"
+#include "ibrcommon/net/NetInterface.h"
 
 using namespace dtn::net;
 using namespace dtn::core;
@@ -51,12 +51,12 @@ namespace dtn
                         /**
                          * Returns all configured network interfaces
                          */
-                        list<NetInterface> getNetInterfaces();
+                        list<ibrcommon::NetInterface> getNetInterfaces();
 
-                        NetInterface getNetInterface(string name);
+                        ibrcommon::NetInterface getNetInterface(string name);
 
-			NetInterface getDiscoveryInterface();
-			NetInterface getAPIInterface();
+                        ibrcommon::NetInterface getDiscoveryInterface();
+                        ibrcommon::NetInterface getAPIInterface();
 
                         /**
                          * Returns all static neighboring nodes
@@ -81,7 +81,7 @@ namespace dtn
                         void version(std::ostream &stream);
 
 		private:
-			ConfigFile _conf;
+			ibrcommon::ConfigFile _conf;
 
                         string _filename;
                         string _default_net;

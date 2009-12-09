@@ -6,8 +6,8 @@
  */
 
 #include "ibrdtn/streams/BundleFactory.h"
-#include "ibrdtn/data/BLOBManager.h"
-#include "ibrdtn/data/BLOBReference.h"
+#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBReference.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/StatusReportBlock.h"
@@ -16,13 +16,11 @@
 
 #include <stdlib.h>
 
-using namespace dtn::blob;
-
 namespace dtn
 {
 	namespace streams
 	{
-		BundleFactory::BundleFactory(BLOBManager &blobmanager)
+		BundleFactory::BundleFactory(ibrcommon::BLOBManager &blobmanager)
 		 : _blobmanager(blobmanager), _block(NULL), _blockref(-1)
 		{
 		}
@@ -158,7 +156,7 @@ namespace dtn
 				if (_bundle._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
 				{
 					// we expecting a small block, so use memory based blocks
-					_block = new dtn::data::PayloadBlock( _blobmanager.create(dtn::blob::BLOBManager::BLOB_MEMORY) );
+					_block = new dtn::data::PayloadBlock( _blobmanager.create(ibrcommon::BLOBManager::BLOB_MEMORY) );
 				}
 				else
 				{

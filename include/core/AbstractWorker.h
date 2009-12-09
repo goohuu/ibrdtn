@@ -4,7 +4,7 @@
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/EID.h"
-#include "ibrdtn/utils/Mutex.h"
+#include "ibrcommon/thread/Mutex.h"
 #include "net/ConvergenceLayer.h"
 
 using namespace dtn::data;
@@ -13,9 +13,9 @@ namespace dtn
 {
 	namespace core
 	{
-		class AbstractWorker : public dtn::utils::Mutex
+		class AbstractWorker : public ibrcommon::Mutex
 		{
-			class AbstractWorkerAsync : public dtn::utils::JoinableThread
+			class AbstractWorkerAsync : public ibrcommon::JoinableThread
 			{
 			public:
 				AbstractWorkerAsync(AbstractWorker &worker);

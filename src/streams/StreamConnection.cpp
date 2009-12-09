@@ -6,7 +6,7 @@
  */
 
 #include "ibrdtn/streams/StreamConnection.h"
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 
 using namespace dtn::data;
 
@@ -41,8 +41,8 @@ namespace dtn
 
                 void StreamConnection::setTimer(size_t in_timeout, size_t out_timeout)
                 {
-                    _in_timer = new dtn::utils::Timer(*this, in_timeout);
-                    _out_timer = new dtn::utils::Timer(*this, out_timeout);
+                    _in_timer = new ibrcommon::Timer(*this, in_timeout);
+                    _out_timer = new ibrcommon::Timer(*this, out_timeout);
 
                     _in_timer->start();
                     _out_timer->start();
@@ -50,7 +50,7 @@ namespace dtn
 
                 void StreamConnection::setState(ConnectionState conn)
                 {
-                    dtn::utils::MutexLock l(_state_cond);
+                    ibrcommon::MutexLock l(_state_cond);
 
                     // the closed state is a final state
                     if (_state == CONNECTION_CLOSED) return;
@@ -66,20 +66,20 @@ namespace dtn
 
                     if (_state >= CONNECTION_SHUTDOWN)
                     {
-                        dtn::utils::MutexLock l(_completed_cond);
+                        ibrcommon::MutexLock l(_completed_cond);
                         _completed_cond.signal(true);
                     }
                 }
 
                 StreamConnection::ConnectionState StreamConnection::getState()
                 {
-                    dtn::utils::MutexLock l(_state_cond);
+                    ibrcommon::MutexLock l(_state_cond);
                     return _state;
                 }
 
                 bool StreamConnection::waitState(ConnectionState conn, size_t timeout)
                 {
-                    dtn::utils::MutexLock l(_state_cond);
+                    ibrcommon::MutexLock l(_state_cond);
                     while ((conn != _state) && (_state != CONNECTION_CLOSED))
                         if (!_state_cond.wait(timeout)) break;
 
@@ -90,7 +90,7 @@ namespace dtn
 
                 bool StreamConnection::waitState(ConnectionState conn)
                 {
-                    dtn::utils::MutexLock l(_state_cond);
+                    ibrcommon::MutexLock l(_state_cond);
                     while ((conn != _state) && (_state != CONNECTION_CLOSED))
                         _state_cond.wait();
 
@@ -115,7 +115,7 @@ namespace dtn
 
                 bool StreamConnection::isCompleted()
                 {
-                    dtn::utils::MutexLock l(_completed_cond);
+                    ibrcommon::MutexLock l(_completed_cond);
 
                     if (_buf.getOutSize() == _ack_size)
                     {
@@ -127,7 +127,7 @@ namespace dtn
 
                 bool StreamConnection::waitCompleted()
                 {
-                    dtn::utils::MutexLock l(_completed_cond);
+                    ibrcommon::MutexLock l(_completed_cond);
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
                     cout << "wait for completion of transmission, current size: " << _ack_size << " of " << _buf.getOutSize() << endl;
 #endif
@@ -185,7 +185,7 @@ namespace dtn
 
 						case StreamDataSegment::MSG_ACK_SEGMENT:
                                                 {
-                                                        dtn::utils::MutexLock l(_completed_cond);
+                                                        ibrcommon::MutexLock l(_completed_cond);
 							_ack_size = seg._value;
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
                                                         cout << "ACK received: " << _ack_size << endl;
@@ -250,7 +250,7 @@ namespace dtn
                 /**
                  * This method is called if a timer is fired.
                  */
-		bool StreamConnection::timeout(dtn::utils::Timer *timer)
+		bool StreamConnection::timeout(ibrcommon::Timer *timer)
 		{
 			if (timer == _out_timer)
 			{

@@ -1,11 +1,12 @@
 #include "daemon/Configuration.h"
 #include "ibrdtn/utils/Utils.h"
 #include "core/Node.h"
-#include "ibrdtn/utils/NetInterface.h"
+#include "ibrcommon/net/NetInterface.h"
 
 using namespace dtn::net;
 using namespace dtn::core;
 using namespace dtn::utils;
+using namespace ibrcommon;
 
 namespace dtn
 {
@@ -75,9 +76,9 @@ namespace dtn
                 void Configuration::load(string filename)
                 {
                     try {
-                            _conf = ConfigFile(filename);;
+                            _conf = ibrcommon::ConfigFile(filename);;
                             cout << "Configuration: " << filename << endl;
-                    } catch (ConfigFile::file_not_found ex) {
+                    } catch (ibrcommon::ConfigFile::file_not_found ex) {
                             cout << "Using defaults. To use custom config file use parameter -c configfile." << endl;
                             _conf = ConfigFile();
                     }
@@ -87,7 +88,7 @@ namespace dtn
 		{
 			try {
 				return _conf.read<string>("local_uri");
-			} catch (ConfigFile::key_not_found ex) {
+			} catch (ibrcommon::ConfigFile::key_not_found ex) {
 				char *hostname_array = new char[64];
 				if ( gethostname(hostname_array, 64) != 0 )
 				{
@@ -133,7 +134,7 @@ namespace dtn
                     }
 
                     try {
-                        vector<string> nets = Utils::tokenize(" ", _conf.read<string>("net_interfaces") );
+                        vector<string> nets = dtn::utils::Utils::tokenize(" ", _conf.read<string>("net_interfaces") );
                         for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
                         {
                             string key_type = "net_"; key_type.append(*iter); key_type.append("_type");
@@ -190,7 +191,7 @@ namespace dtn
 
 			while (_conf.keyExists( key ))
 			{
-				vector<string> route = Utils::tokenize(" ", _conf.read<string>(key, "dtn:none dtn:none"));
+				vector<string> route = dtn::utils::Utils::tokenize(" ", _conf.read<string>(key, "dtn:none dtn:none"));
 				ret.push_back( StaticRoute( route.front(), route.back() ) );
 
 				keynumber++;

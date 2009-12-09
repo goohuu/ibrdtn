@@ -14,7 +14,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class CustodyManager : public dtn::utils::JoinableThread, public EventReceiver
+		class CustodyManager : public ibrcommon::JoinableThread, public EventReceiver
 		{
 			public:
 				CustodyManager();
@@ -36,10 +36,10 @@ namespace dtn
 				void retransmitBundle(const Bundle &bundle);
 				void checkCustodyTimer();
 
-				dtn::utils::Mutex m_custodylock;
+				ibrcommon::Mutex m_custodylock;
 				unsigned int m_nextcustodytimer;
 				list<CustodyTimer> m_custodytimer;
-				dtn::utils::WaitForConditional m_breakwait;
+				ibrcommon::WaitForConditional m_breakwait;
 
 				bool _running;
 		};

@@ -6,7 +6,7 @@
 #include "core/BundleCore.h"
 #include "core/BundleStorage.h"
 #include "core/Node.h"
-#include "ibrdtn/utils/WaitForConditional.h"
+#include "ibrcommon/thread/WaitForConditional.h"
 #include "core/EventReceiver.h"
 
 #include "ibrdtn/data/Bundle.h"
@@ -20,7 +20,7 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public dtn::utils::JoinableThread, public BundleStorage, public EventReceiver
+		class SimpleBundleStorage : public ibrcommon::JoinableThread, public BundleStorage, public EventReceiver
 		{
 		public:
 			/**
@@ -91,10 +91,10 @@ namespace dtn
 //			 */
 //			void deleteDeprecated();
 
-			dtn::utils::WaitForConditional _timecond;
+			ibrcommon::WaitForConditional _timecond;
 			bool _running;
 
-			dtn::utils::Conditional _dbchanged;
+			ibrcommon::Conditional _dbchanged;
 
 			EID _unblock_eid;
 		};

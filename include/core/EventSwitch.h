@@ -46,7 +46,7 @@ namespace dtn
 
 			map<string,list<EventReceiver*> > m_list;
 			queue<Event*> m_queue;
-			dtn::utils::Mutex m_queuelock;
+			ibrcommon::Mutex m_queuelock;
 
 			void direct(const Event *evt);
 

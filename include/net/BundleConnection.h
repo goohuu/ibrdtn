@@ -10,7 +10,7 @@
 
 #include "ibrdtn/config.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/utils/Thread.h"
+#include "ibrcommon/thread/Thread.h"
 #include "ibrdtn/data/Exceptions.h"
 #include <iostream>
 
@@ -18,9 +18,9 @@ namespace dtn
 {
 	namespace net
 	{
-		class BundleConnection : public dtn::utils::Mutex
+		class BundleConnection : public ibrcommon::Mutex
 		{
-			class BundleReceiver : public dtn::utils::JoinableThread
+			class BundleReceiver : public ibrcommon::JoinableThread
 			{
 			public:
 				BundleReceiver(BundleConnection &connection);

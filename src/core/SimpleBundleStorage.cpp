@@ -25,7 +25,7 @@ namespace dtn
 
 			_running = false;
 			_timecond.go();
-			dtn::utils::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock l(_dbchanged);
 			_dbchanged.signal(true);
 			join();
 		}
@@ -39,7 +39,7 @@ namespace dtn
 			{
 				if (global->getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
 				{
-					dtn::utils::MutexLock l(_dbchanged);
+					ibrcommon::MutexLock l(_dbchanged);
 					_running = false;
 					_timecond.go();
 					_dbchanged.signal(true);
@@ -57,7 +57,7 @@ namespace dtn
 
 		void SimpleBundleStorage::clear()
 		{
-			dtn::utils::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock l(_dbchanged);
 			// delete all bundles
 			_bundles.clear();
 			_fragments.clear();
@@ -75,25 +75,25 @@ namespace dtn
 
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
-			dtn::utils::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock l(_dbchanged);
 			_bundles.push_back(bundle);
 			_dbchanged.signal(true);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-			dtn::utils::slog << dtn::utils::SYSLOG_INFO << "Storage: stored bundle " << bundle.toString() << endl;
+			ibrcommon::slog << ibrcommon::SYSLOG_INFO << "Storage: stored bundle " << bundle.toString() << endl;
 #endif
 		}
 
 		void SimpleBundleStorage::unblock(const dtn::data::EID &eid)
 		{
-			dtn::utils::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock l(_dbchanged);
 			_unblock_eid = eid;
 			_dbchanged.signal(true);
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)
 		{
-			dtn::utils::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock l(_dbchanged);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "Storage: get bundle for " << eid.getString() << endl;
@@ -129,7 +129,7 @@ namespace dtn
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)
 		{
-			dtn::utils::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock l(_dbchanged);
 
 			list<Bundle>::iterator iter = _bundles.begin();
 
@@ -149,7 +149,7 @@ namespace dtn
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
-			dtn::utils::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock l(_dbchanged);
 
 			list<Bundle>::iterator iter = _bundles.begin();
 
@@ -193,7 +193,7 @@ namespace dtn
 				while (e_iter != expired.end())
 				{
 					remove( *iter );
-					dtn::utils::slog << dtn::utils::SYSLOG_INFO << "bundle " << (*iter).toString() << " has been expired and removed" << endl;
+					ibrcommon::slog << ibrcommon::SYSLOG_INFO << "bundle " << (*iter).toString() << " has been expired and removed" << endl;
 					e_iter++;
 				}
 

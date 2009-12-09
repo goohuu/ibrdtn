@@ -8,21 +8,21 @@
 #include "ibrdtn/default.h"
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/FileBundle.h"
-#include "ibrdtn/utils/tcpclient.h"
-#include "ibrdtn/utils/Mutex.h"
-#include "ibrdtn/utils/MutexLock.h"
+#include "ibrcommon/net/tcpclient.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/BLOBManager.h"
-#include "ibrdtn/utils/File.h"
-#include "ibrdtn/utils/appstreambuf.h"
+#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/File.h"
+#include "ibrcommon/appstreambuf.h"
 
 #include <stdlib.h>
 #include <iostream>
 #include <map>
 #include <vector>
 
-using namespace dtn::utils;
+using namespace ibrcommon;
 
 void print_help()
 {
@@ -69,7 +69,7 @@ map<string,string> readconfiguration(int argc, char** argv)
 bool _running = true;
 
 // global connection
-dtn::utils::tcpclient *_conn = NULL;
+ibrcommon::tcpclient *_conn = NULL;
 
 void term(int signal)
 {
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
     // init working directory
     if (conf.find("workdir") != conf.end())
     {
-        dtn::blob::BLOBManager::init(conf["workdir"]);
+    	ibrcommon::BLOBManager::init(conf["workdir"]);
     }
 
     // backoff for reconnect
@@ -109,7 +109,7 @@ int main(int argc, char** argv)
     {
         try {
         	// Create a stream to the server using TCP.
-        	dtn::utils::tcpclient conn("127.0.0.1", 4550);
+        	ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
         	// set the connection globally
         	_conn = &conn;
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
             	client >> b;
 
             	// get the reference to the blob
-                dtn::blob::BLOBReference ref = b.getData();
+            	ibrcommon::BLOBReference ref = b.getData();
 
                 // create the extract command
                 stringstream cmdstream; cmdstream << "tar -x -C " << conf["inbox"];
@@ -158,7 +158,7 @@ int main(int argc, char** argv)
 
             // set the global connection to NULL
             _conn = NULL;
-        } catch (dtn::utils::tcpclient::SocketException ex) {
+        } catch (ibrcommon::tcpclient::SocketException ex) {
         	// set the global connection to NULL
         	_conn = NULL;
 

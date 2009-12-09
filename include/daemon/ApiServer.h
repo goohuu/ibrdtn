@@ -10,8 +10,8 @@
 
 #include "ibrdtn/default.h"
 #include "daemon/ClientHandler.h"
-#include "ibrdtn/utils/tcpserver.h"
-#include "ibrdtn/utils/NetInterface.h"
+#include "ibrcommon/net/tcpserver.h"
+#include "ibrcommon/net/NetInterface.h"
 
 #include <list>
 
@@ -19,10 +19,10 @@ namespace dtn
 {
 	namespace daemon
 	{
-		class ApiServer : public dtn::utils::JoinableThread, public dtn::utils::tcpserver
+		class ApiServer : public ibrcommon::JoinableThread, public ibrcommon::tcpserver
 		{
 		public:
-			ApiServer(dtn::net::NetInterface net);
+			ApiServer(ibrcommon::NetInterface net);
 			virtual ~ApiServer();
 
 		protected:

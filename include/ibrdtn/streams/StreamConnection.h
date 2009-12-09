@@ -14,8 +14,8 @@
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/streams/bpstreambuf.h"
-#include "ibrdtn/utils/Timer.h"
-#include "ibrdtn/utils/TimerCallback.h"
+#include "ibrcommon/thread/Timer.h"
+#include "ibrcommon/thread/TimerCallback.h"
 
 namespace dtn
 {
@@ -29,7 +29,7 @@ namespace dtn
 				};
 		};
 
-		class StreamConnection : public std::iostream, public dtn::utils::JoinableThread, public dtn::utils::TimerCallback
+		class StreamConnection : public std::iostream, public ibrcommon::JoinableThread, public ibrcommon::TimerCallback
 		{
 		public:
                         enum ConnectionState
@@ -46,7 +46,7 @@ namespace dtn
 			virtual void shutdown();
 			virtual bool good();
 
-			bool timeout(dtn::utils::Timer *timer);
+			bool timeout(ibrcommon::Timer *timer);
 
 		protected:
                         void setTimer(size_t in_timeout, size_t out_timeout);
@@ -65,12 +65,12 @@ namespace dtn
 		private:
 			bpstreambuf _buf;
 
-			dtn::utils::Timer *_in_timer;
-			dtn::utils::Timer *_out_timer;
+			ibrcommon::Timer *_in_timer;
+			ibrcommon::Timer *_out_timer;
 
-                        dtn::utils::Conditional _completed_cond;
+                        ibrcommon::Conditional _completed_cond;
 
-                        dtn::utils::Conditional _state_cond;
+                        ibrcommon::Conditional _state_cond;
                         ConnectionState _state;
 
 		};

@@ -4,7 +4,6 @@
 #include "testsuite/PerformanceTestSuite.h"
 #include "testsuite/MeasurementTestSuite.h"
 #include "testsuite/BlockTestSuite.h"
-#include "testsuite/BLOBTestSuite.h"
 #include "testsuite/BundleStreamTestSuite.h"
 #include "testsuite/SerializeTestSuite.h"
 #include "testsuite/StreamingTestSuite.h"
@@ -33,9 +32,6 @@ namespace testsuite
 
 		SerializeTestSuite serializetest;
 		if ( !serializetest.runAllTests() ) ret = false;
-
-		BLOBTestSuite blobtest;
-		if ( !blobtest.runAllTests() ) ret = false;
 
 		BlockTestSuite blocktest;
 		if ( !blocktest.runAllTests() ) ret = false;

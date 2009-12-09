@@ -12,8 +12,8 @@
 
 #include "ibrdtn/streams/BundleWriter.h"
 #include "ibrdtn/data/Block.h"
-
-using namespace dtn::blob;
+#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBReference.h"
 
 namespace dtn
 {
@@ -25,8 +25,8 @@ namespace dtn
 			static const unsigned char BLOCK_TYPE = 1;
 
 			PayloadBlock();
-			PayloadBlock(blob::BLOBManager::BLOB_TYPE type);
-			PayloadBlock(BLOBReference ref);
+			PayloadBlock(ibrcommon::BLOBManager::BLOB_TYPE type);
+			PayloadBlock(ibrcommon::BLOBReference ref);
 			virtual ~PayloadBlock();
 
 			virtual void read() {};

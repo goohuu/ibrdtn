@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 #include "core/CustodyManager.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/utils/Utils.h"
@@ -17,7 +17,6 @@
 #include "core/CustodyEvent.h"
 #include "core/RouteEvent.h"
 
-using namespace dtn::blob;
 using namespace dtn::data;
 using namespace dtn::utils;
 
@@ -131,7 +130,7 @@ namespace dtn
 
 		void CustodyManager::setTimer(const Bundle &bundle, unsigned int time, unsigned int attempt)
 		{
-			dtn::utils::MutexLock l(m_custodylock);
+			ibrcommon::MutexLock l(m_custodylock);
 
 			// create a new timer
 			CustodyTimer timer(bundle, Utils::get_current_dtn_time() + time, attempt);
@@ -160,7 +159,7 @@ namespace dtn
 
 		const Bundle CustodyManager::removeTimer(const CustodySignalBlock &block)
 		{
-			dtn::utils::MutexLock l(m_custodylock);
+			ibrcommon::MutexLock l(m_custodylock);
 
 			// search for the timer match the signal
 			list<CustodyTimer>::iterator iter = m_custodytimer.begin();

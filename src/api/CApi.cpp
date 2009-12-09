@@ -1,7 +1,7 @@
 /** DTN C API */
 
 #include "ibrdtn/api/dtn_api.h"
-#include "ibrdtn/utils/tcpclient.h"
+#include "ibrcommon/net/tcpclient.h"
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/StringBundle.h"
 #include <string.h>
@@ -49,7 +49,7 @@ class CAPIGateway : public dtn::api::Client
 		void send(char *dst_uri, char *data, uint32_t length) {
 			dtn::data::Bundle b;
 			b._destination = dtn::data::EID(dst_uri);
-			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(dtn::blob::BLOBManager::BLOB_MEMORY);
+			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY);
 
 			// add the payload block to the bundle
 			b.addBlock(payload);
@@ -99,7 +99,7 @@ class CAPIGateway : public dtn::api::Client
 				return;
 			dtn::data::Bundle b;
 			b._destination = dtn::data::EID(this->dst_eid);
-			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(dtn::blob::BLOBManager::BLOB_MEMORY);
+			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY);
 
 			// add the payload block to the bundle
 			b.addBlock(payload);
@@ -143,7 +143,7 @@ class CAPIGateway : public dtn::api::Client
 		void (*process_bundle)(const void * data, uint32_t size);
 		void (*status_callback)(struct dtn_notification info);
 		void *recvd;
-		dtn::utils::Mutex recv_mutex;
+		ibrcommon::Mutex recv_mutex;
 		int sync_pipe[2];
 
 		char *tx_buffer;
@@ -162,7 +162,7 @@ class CAPIGateway : public dtn::api::Client
 			}
 		}
 
-		dtn::utils::tcpclient _tcpclient;
+		ibrcommon::tcpclient _tcpclient;
 
 
 

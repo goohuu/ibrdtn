@@ -14,7 +14,7 @@ namespace dtn
 	{
 		StringBundle::StringBundle(dtn::data::EID destination) : Bundle(destination)
 		{
-			_payload = new dtn::data::PayloadBlock(dtn::blob::BLOBManager::BLOB_HARDDISK);
+			_payload = new dtn::data::PayloadBlock(ibrcommon::BLOBManager::BLOB_HARDDISK);
 
 			// add the payload block to the bundle
 			_b.addBlock(_payload);

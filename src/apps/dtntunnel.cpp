@@ -19,11 +19,11 @@
 #include "ibrdtn/api/StringBundle.h"
 
 //  TCP client implemeted as a stream.
-#include "ibrdtn/utils/tcpclient.h"
+#include "ibrcommon/net/tcpclient.h"
 
 // Some classes to be thread-safe.
-#include "ibrdtn/utils/Mutex.h"
-#include "ibrdtn/utils/MutexLock.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 
 // Basic functionalities for streaming.
 #include <iostream>
@@ -38,7 +38,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <syslog.h>
 #include <errno.h>
 
 #include <sys/ioctl.h>
@@ -158,13 +157,13 @@ class TUN2BundleGateway : public dtn::api::Client
 		 */
 		void received(dtn::api::Bundle &b)
 		{
-			dtn::blob::BLOBReference ref = b.getData();
+			ibrcommon::BLOBReference ref = b.getData();
 			char data[65536];
 			size_t ret = ref.read(data, 0, sizeof(data));
 			::write(_fd, data, ret);
 		}
 
-		dtn::utils::tcpclient _tcpclient;
+		ibrcommon::tcpclient _tcpclient;
 };
 
 bool m_running = true;
@@ -226,7 +225,7 @@ int main(int argc, char *argv[])
 
 		dtn::data::Bundle b;
 		b._destination = dtn::data::EID(argv[4]);
-		dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(dtn::blob::BLOBManager::BLOB_MEMORY);
+		dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY);
 
 		// add the payload block to the bundle
 		b.addBlock(payload);

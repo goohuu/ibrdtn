@@ -74,8 +74,8 @@ namespace dtn
 		private:
 			list<Node> m_neighbors;
 
-			dtn::utils::Mutex m_lock;
-			dtn::utils::WaitForConditional m_nexttime;
+			ibrcommon::Mutex m_lock;
+			ibrcommon::WaitForConditional m_nexttime;
 			bool _running;
 		};
 	}

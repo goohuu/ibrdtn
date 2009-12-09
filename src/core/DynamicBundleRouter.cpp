@@ -8,7 +8,7 @@
 #include "core/DynamicBundleRouter.h"
 #include "net/ConnectionManager.h"
 #include "ibrdtn/data/Exceptions.h"
-#include "ibrdtn/utils/MutexLock.h"
+#include "ibrcommon/thread/MutexLock.h"
 
 namespace dtn
 {
@@ -35,7 +35,7 @@ namespace dtn
 
 		void DynamicBundleRouter::signalAvailable(const Node &n)
 		{
-			dtn::utils::MutexLock l(_wait);
+			ibrcommon::MutexLock l(_wait);
 			dtn::data::EID eid(n.getURI());
 			_available.push(eid);
 			_wait.signal(true);
@@ -78,7 +78,7 @@ namespace dtn
 
 		void DynamicBundleRouter::run()
 		{
-			dtn::utils::Mutex l(_wait);
+			ibrcommon::Mutex l(_wait);
 
 			while (_running)
 			{

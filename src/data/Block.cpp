@@ -7,7 +7,7 @@
 
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/streams/BundleStreamWriter.h"
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 #include <iostream>
 
 using namespace std;
@@ -17,16 +17,16 @@ namespace dtn
 	namespace data
 	{
 		Block::Block(char blocktype)
-		 : _procflags(0), _blocktype(blocktype), _blobref(blob::BLOBManager::_instance.create())
+		 : _procflags(0), _blocktype(blocktype), _blobref(ibrcommon::BLOBManager::_instance.create())
 		{
 		}
 
-		Block::Block(char blocktype, blob::BLOBManager::BLOB_TYPE type)
-		 : _procflags(0), _blocktype(blocktype), _blobref(blob::BLOBManager::_instance.create(type))
+		Block::Block(char blocktype, ibrcommon::BLOBManager::BLOB_TYPE type)
+		 : _procflags(0), _blocktype(blocktype), _blobref(ibrcommon::BLOBManager::_instance.create(type))
 		{
 		}
 
-		Block::Block(char blocktype, blob::BLOBReference ref)
+		Block::Block(char blocktype, ibrcommon::BLOBReference ref)
 		: _procflags(0), _blocktype(blocktype), _blobref(ref)
 		{
 		}
@@ -45,7 +45,7 @@ namespace dtn
 			return _eids;
 		}
 
-		blob::BLOBReference Block::getBLOBReference()
+		ibrcommon::BLOBReference Block::getBLOBReference()
 		{
 			return _blobref;
 		}

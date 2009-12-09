@@ -11,13 +11,12 @@
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/SDNV.h"
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 #include "ibrdtn/data/Exceptions.h"
 
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 
-using namespace dtn::blob;
 using namespace dtn::data;
 using namespace dtn::streams;
 

@@ -7,9 +7,9 @@
 
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/FileBundle.h"
-#include "ibrdtn/utils/tcpclient.h"
-#include "ibrdtn/utils/Mutex.h"
-#include "ibrdtn/utils/MutexLock.h"
+#include "ibrcommon/net/tcpclient.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 
 #include <iostream>
 
@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	string filename = argv[argc -1];
 
 	// Create a stream to the server using TCP.
-	dtn::utils::tcpclient conn("127.0.0.1", 4550);
+	ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
 	// Initiate a client for synchronous receiving
 	dtn::api::Client client(dtn::api::Client::MODE_SENDONLY, file_source, conn, false);

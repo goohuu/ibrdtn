@@ -13,6 +13,7 @@
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/SDNV.h"
+#include "ibrcommon/data/BLOBReference.h"
 
 namespace dtn {
 namespace data
@@ -22,7 +23,7 @@ namespace data
 	public:
 		CustodySignalBlock();
 		CustodySignalBlock(Block *block);
-		CustodySignalBlock(BLOBReference ref);
+		CustodySignalBlock(ibrcommon::BLOBReference ref);
 		virtual ~CustodySignalBlock();
 
 		void read();

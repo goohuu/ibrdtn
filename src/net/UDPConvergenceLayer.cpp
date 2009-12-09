@@ -6,7 +6,7 @@
 
 #include "ibrdtn/streams/BundleFactory.h"
 #include "ibrdtn/streams/BundleStreamReader.h"
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 
 #include "ibrdtn/utils/Utils.h"
 #include <sys/socket.h>
@@ -34,7 +34,7 @@ namespace dtn
 	{
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		UDPConvergenceLayer::UDPConvergenceLayer(NetInterface net, bool broadcast, unsigned int mtu)
+		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::NetInterface net, bool broadcast, unsigned int mtu)
 			: _net(net), m_maxmsgsize(mtu), _running(true)
 		{
 			struct sockaddr_in address;
@@ -146,7 +146,7 @@ namespace dtn
 			_net.getInterfaceAddress(&(clientAddress.sin_addr));
 			clientAddress.sin_port = htons(_net.getPort());
 
-			dtn::utils::MutexLock l(m_writelock);
+			ibrcommon::MutexLock l(m_writelock);
 
 		    // send converted line back to client.
 		    int ret = sendto(m_socket, data.c_str(), data.length(), 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));
@@ -220,7 +220,7 @@ namespace dtn
 			clientAddress.sin_addr.s_addr = inet_addr(node.getAddress().c_str());
 			clientAddress.sin_port = htons(node.getPort());
 
-			dtn::utils::MutexLock l(m_writelock);
+			ibrcommon::MutexLock l(m_writelock);
 
 		    // Send converted line back to client.
 		    int ret = sendto(m_socket, data.c_str(), data.length(), 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));
@@ -235,7 +235,7 @@ namespace dtn
 
 		void UDPConvergenceLayer::receive(dtn::data::Bundle &bundle)
 		{
-			dtn::utils::MutexLock l(m_readlock);
+			ibrcommon::MutexLock l(m_readlock);
 
 			struct sockaddr_in clientAddress;
 			socklen_t clientAddressLength = sizeof(clientAddress);

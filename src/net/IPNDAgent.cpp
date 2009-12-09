@@ -17,7 +17,7 @@ namespace dtn
 {
 	namespace net
 	{
-		IPNDAgent::IPNDAgent(NetInterface net)
+		IPNDAgent::IPNDAgent(ibrcommon::NetInterface net)
 		 : _interface(net)
 		{
 			// Create socket for listening for client connection requests.

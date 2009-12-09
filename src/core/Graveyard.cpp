@@ -45,9 +45,9 @@ namespace dtn
 		void Graveyard::bury(Zombie *z)
 		{
 			static Graveyard yard;
-			static dtn::utils::Mutex m;
+			static ibrcommon::Mutex m;
 
-			dtn::utils::MutexLock l(m);
+			ibrcommon::MutexLock l(m);
 
 			// if not running, call the gravedigger
 			if (!yard._running) yard.start();
@@ -60,7 +60,7 @@ namespace dtn
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "Graveyard: new Zombie" << endl;
 #endif
-			dtn::utils::MutexLock l(_wait);
+			ibrcommon::MutexLock l(_wait);
 			_zombies.push(z);
 			_wait.signal(true);
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
@@ -70,7 +70,7 @@ namespace dtn
 
 		bool Graveyard::wait()
 		{
-			dtn::utils::MutexLock l(_wait);
+			ibrcommon::MutexLock l(_wait);
 			if (!_zombies.empty()) return true;
 
 			// wait for a new zombie

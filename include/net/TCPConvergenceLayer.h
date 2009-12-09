@@ -10,8 +10,8 @@
 
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/utils/tcpserver.h"
-#include "ibrdtn/streams/tcpstream.h"
+#include "ibrcommon/net/tcpserver.h"
+#include "ibrcommon/net/tcpstream.h"
 #include "ibrdtn/streams/StreamConnection.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 
@@ -23,7 +23,7 @@
 #include "net/BundleConnection.h"
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryServiceProvider.h"
-#include "ibrdtn/utils/NetInterface.h"
+#include "ibrcommon/net/NetInterface.h"
 
 namespace dtn
 {
@@ -36,13 +36,13 @@ namespace dtn
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
 		class TCPConvergenceLayer
-		 : public dtn::utils::tcpserver, public dtn::utils::JoinableThread, public ConvergenceLayer, public DiscoveryServiceProvider
+		 : public ibrcommon::tcpserver, public ibrcommon::JoinableThread, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
 			class TCPConnection : public dtn::streams::StreamConnection, public BundleConnection, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver
 			{
 			public:
-				TCPConnection(TCPConvergenceLayer &cl, int socket, tcpstream::stream_direction d);
+				TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d);
 				virtual ~TCPConnection();
 
 				const dtn::core::Node& getNode() const;
@@ -64,7 +64,7 @@ namespace dtn
 
 			private:
 				TCPConvergenceLayer &_cl;
-				dtn::streams::tcpstream _stream;
+				ibrcommon::tcpstream _stream;
 				dtn::core::Node _node;
 
 				dtn::streams::StreamContactHeader _out_header;
@@ -77,7 +77,7 @@ namespace dtn
 			 * @param[in] bind_addr The address to bind.
 			 * @param[in] port The port to use.
 			 */
-			TCPConvergenceLayer(NetInterface net);
+			TCPConvergenceLayer(ibrcommon::NetInterface net);
 
 			/**
 			 * Destructor
@@ -95,7 +95,7 @@ namespace dtn
 			void remove(TCPConnection *conn);
 
 		private:
-			NetInterface _net;
+			ibrcommon::NetInterface _net;
 			static const int DEFAULT_PORT;
 			bool _running;
 
@@ -105,7 +105,7 @@ namespace dtn
 			std::list<TCPConnection*> _connections;
 
 			dtn::streams::StreamContactHeader _header;
-			dtn::utils::Mutex _connection_lock;
+			ibrcommon::Mutex _connection_lock;
 		};
 	}
 }

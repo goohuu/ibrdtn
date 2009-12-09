@@ -10,9 +10,9 @@
 
 #include "ibrdtn/default.h"
 #include "core/StaticBundleRouter.h"
-#include "ibrdtn/utils/Thread.h"
-#include "ibrdtn/utils/Mutex.h"
-#include "ibrdtn/utils/Conditional.h"
+#include "ibrcommon/thread/Thread.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/Conditional.h"
 #include <queue>
 #include <map>
 
@@ -20,7 +20,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class DynamicBundleRouter : public StaticBundleRouter, public dtn::utils::JoinableThread
+		class DynamicBundleRouter : public StaticBundleRouter, public ibrcommon::JoinableThread
 		{
 		public:
 			DynamicBundleRouter(list<StaticRoute> routes, BundleStorage &storage);
@@ -41,7 +41,7 @@ namespace dtn
 			bool _running;
 
 			std::queue<dtn::data::EID> _available;
-			dtn::utils::Conditional _wait;
+			ibrcommon::Conditional _wait;
 		};
 	}
 }

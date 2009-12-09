@@ -16,8 +16,8 @@
 #include <iostream>
 #include <streambuf>
 #include <queue>
-#include "ibrdtn/utils/Mutex.h"
-#include "ibrdtn/utils/MutexLock.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 
 using namespace std;
 using namespace dtn::data;
@@ -73,8 +73,8 @@ namespace dtn
 			bpstreambuf::State getState();
 			bool ifState(bpstreambuf::State state);
 
-			dtn::utils::Mutex _write_lock;
-			dtn::utils::Conditional _state_changed;
+			ibrcommon::Mutex _write_lock;
+			ibrcommon::Conditional _state_changed;
 
 			// Input buffer
 			char *in_buf_;

@@ -13,7 +13,7 @@
 #include "ibrdtn/streams/BundleStreamWriter.h"
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Block.h"
-#include "ibrdtn/utils/refcnt_ptr.h"
+#include "ibrcommon/refcnt_ptr.h"
 #include <ostream>
 
 using namespace dtn::streams;

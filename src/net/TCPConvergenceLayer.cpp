@@ -10,7 +10,7 @@
 #include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
-#include "ibrdtn/utils/NetInterface.h"
+#include "ibrcommon/net/NetInterface.h"
 
 #include <sys/socket.h>
 #include <streambuf>
@@ -21,11 +21,13 @@
 #include <list>
 #include <algorithm>
 
+using namespace ibrcommon;
+
 namespace dtn
 {
 	namespace net
 	{
-		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, int socket, tcpstream::stream_direction d)
+		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d)
 		 : _stream(socket, d), StreamConnection(_stream), _cl(cl), _connected(false)
 		{
 			_node.setAddress(_stream.getAddress());
@@ -62,8 +64,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::raiseEvent(const Event *evt)
 		{
-			static dtn::utils::Mutex mutex;
-			dtn::utils::MutexLock l(mutex);
+			static ibrcommon::Mutex mutex;
+			ibrcommon::MutexLock l(mutex);
 
 			const GlobalEvent *global = dynamic_cast<const GlobalEvent*>(evt);
 
@@ -155,8 +157,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::read(dtn::data::Bundle &bundle)
 		{
-			static dtn::utils::Mutex mutex;
-			dtn::utils::MutexLock l(mutex);
+			static ibrcommon::Mutex mutex;
+			ibrcommon::MutexLock l(mutex);
 
 			try {
 				(*this) >> bundle;
@@ -168,8 +170,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::write(const dtn::data::Bundle &bundle)
 		{
-			static dtn::utils::Mutex mutex;
-			dtn::utils::MutexLock l(mutex);
+			static ibrcommon::Mutex mutex;
+			ibrcommon::MutexLock l(mutex);
 
 			(*this) << bundle; flush();
 
@@ -197,7 +199,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::add(TCPConnection *conn)
 		{
-			dtn::utils::MutexLock l(_connection_lock);
+			ibrcommon::MutexLock l(_connection_lock);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "TCPConvergenceLayer: connection added" << endl;
@@ -209,7 +211,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::remove(TCPConnection *conn)
 		{
-			dtn::utils::MutexLock l(_connection_lock);
+			ibrcommon::MutexLock l(_connection_lock);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "TCPConvergenceLayer: connection removed" << endl;
@@ -219,7 +221,7 @@ namespace dtn
 			_connections.remove( conn );
 		}
 
-		TCPConvergenceLayer::TCPConvergenceLayer(NetInterface net)
+		TCPConvergenceLayer::TCPConvergenceLayer(ibrcommon::NetInterface net)
 		 : _net(net), tcpserver(net), _running(true), _header(dtn::core::BundleCore::local)
 		{
 			_header._keepalive = 10;
@@ -264,7 +266,7 @@ namespace dtn
 			}
 
 			// create a connection
-			TCPConnection *conn = new TCPConnection(*this, sock, tcpstream::STREAM_OUTGOING);
+			TCPConnection *conn = new TCPConnection(*this, sock, ibrcommon::tcpstream::STREAM_OUTGOING);
 
 			// start the ClientHandler (service)
 			conn->initialize(_header);
@@ -326,7 +328,7 @@ namespace dtn
 				if (waitPending())
 				{
 					// create a new Connection
-					TCPConnection *conn = new TCPConnection(*this, accept(), tcpstream::STREAM_INCOMING);
+					TCPConnection *conn = new TCPConnection(*this, accept(), ibrcommon::tcpstream::STREAM_INCOMING);
 
 					// start the ClientHandler (service)
 					conn->initialize(_header);

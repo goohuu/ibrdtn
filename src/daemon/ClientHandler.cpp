@@ -6,13 +6,12 @@
  */
 
 #include "daemon/ClientHandler.h"
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 #include "core/EventSwitch.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
 #include <iostream>
 
-using namespace dtn::blob;
 using namespace dtn::data;
 using namespace dtn::streams;
 using namespace dtn::core;
@@ -28,7 +27,7 @@ namespace dtn
 		}
 
 		ClientHandler::ClientHandler(int socket)
-		 : _tcpstream(socket, tcpstream::STREAM_INCOMING), _connection(_tcpstream), _connected(false)
+		 : _tcpstream(socket, ibrcommon::tcpstream::STREAM_INCOMING), _connection(_tcpstream), _connected(false)
 		{
 			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
 		}
@@ -46,8 +45,8 @@ namespace dtn
 
 		void ClientHandler::raiseEvent(const dtn::core::Event *evt)
 		{
-			static dtn::utils::Mutex mutex;
-			dtn::utils::MutexLock l(mutex);
+			static ibrcommon::Mutex mutex;
+			ibrcommon::MutexLock l(mutex);
 
 			const GlobalEvent *global = dynamic_cast<const GlobalEvent*>(evt);
 

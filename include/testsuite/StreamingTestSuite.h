@@ -10,7 +10,7 @@
 
 #include "ibrdtn/default.h"
 #include "ibrdtn/streams/bpstreambuf.h"
-#include "ibrdtn/utils/Thread.h"
+#include "ibrcommon/thread/Thread.h"
 
 namespace dtn
 {
@@ -18,7 +18,7 @@ namespace dtn
 	{
 		class StreamingTestSuite
 		{
-			class StreamingPeer : public std::iostream, public dtn::utils::JoinableThread
+			class StreamingPeer : public std::iostream, public ibrcommon::JoinableThread
 			{
 			public:
 				StreamingPeer(std::iostream &stream);

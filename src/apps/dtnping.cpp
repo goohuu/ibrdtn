@@ -7,9 +7,9 @@
 
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/StringBundle.h"
-#include "ibrdtn/utils/tcpclient.h"
-#include "ibrdtn/utils/Mutex.h"
-#include "ibrdtn/utils/MutexLock.h"
+#include "ibrcommon/net/tcpclient.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 
 #include <time.h>
 
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 
 	try {
 		// Create a stream to the server using TCP.
-		dtn::utils::tcpclient conn("127.0.0.1", 4550);
+		ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
 		// Initiate a derivated client
 		EchoClient client(mode, ping_source, conn);
@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 
 		conn.close();
 
-	} catch (dtn::utils::tcpclient::SocketException ex) {
+	} catch (ibrcommon::tcpclient::SocketException ex) {
 		cerr << "Can not connect to the daemon. Does it run?" << endl;
 		return -1;
 	}

@@ -105,8 +105,8 @@ namespace dtn
 
 		void DiscoveryAgent::raiseEvent(const dtn::core::Event *evt)
 		{
-			static dtn::utils::Mutex mutex;
-			dtn::utils::MutexLock l(mutex);
+			static ibrcommon::Mutex mutex;
+			ibrcommon::MutexLock l(mutex);
 
 			const dtn::core::TimeEvent *time = dynamic_cast<const dtn::core::TimeEvent*>(evt);
 			if (time == NULL) return;

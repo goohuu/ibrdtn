@@ -1,5 +1,5 @@
 #include "ibrdtn/utils/Utils.h"
-#include "ibrdtn/data/BLOBReference.h"
+#include "ibrcommon/data/BLOBReference.h"
 #include "ibrdtn/data/Exceptions.h"
 
 namespace dtn
@@ -113,8 +113,8 @@ namespace dtn
 
 		pair<dtn::data::PayloadBlock*, dtn::data::PayloadBlock*> Utils::split(dtn::data::PayloadBlock *block, size_t split_position)
 		{
-			const dtn::blob::BLOBReference b = block->getBLOBReference();
-			pair<dtn::blob::BLOBReference, dtn::blob::BLOBReference> refpair = b.split(split_position);
+			const ibrcommon::BLOBReference b = block->getBLOBReference();
+			pair<ibrcommon::BLOBReference, ibrcommon::BLOBReference> refpair = b.split(split_position);
 
 			dtn::data::PayloadBlock *p1 = new dtn::data::PayloadBlock(refpair.first);
 			dtn::data::PayloadBlock *p2 = new dtn::data::PayloadBlock(refpair.second);
@@ -176,7 +176,7 @@ namespace dtn
 			unsigned int p2offset = source._fragmentoffset - destination._fragmentoffset;
 
 			// append the payload of fragment2 at the end of fragment1
-			dtn::blob::BLOBReference ref = payload2->getBLOBReference();
+			ibrcommon::BLOBReference ref = payload2->getBLOBReference();
 			payload1->getBLOBReference().append( ref );
 
 			size_t payload_s = payload1->getBLOBReference().getSize();

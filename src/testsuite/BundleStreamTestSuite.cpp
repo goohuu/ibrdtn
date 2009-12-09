@@ -9,14 +9,13 @@
 
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/StatusReportBlock.h"
-#include "ibrdtn/data/BLOBManager.h"
-#include "ibrdtn/data/BLOBReference.h"
+#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBReference.h"
 #include <fstream>
 #include <stdlib.h>
 #include <list>
 
 using namespace dtn::data;
-using namespace dtn::blob;
 using namespace std;
 
 namespace dtn
@@ -24,7 +23,7 @@ namespace dtn
 	namespace testsuite
 	{
 		BundleStreamTestSuite::BundleStreamTestSuite()
-		 : _blobmanager(BLOBManager::_instance)
+		 : _blobmanager(ibrcommon::BLOBManager::_instance)
 		{
 		}
 
@@ -118,7 +117,7 @@ namespace dtn
 		PayloadBlock* BundleStreamTestSuite::createTestBlock()
 		{
 			// create a blob object
-			BLOBReference blobref = _blobmanager.create();
+			ibrcommon::BLOBReference blobref = _blobmanager.create();
 
 			// create a payload block, managed in memory
 			CustodySignalBlock *p = new CustodySignalBlock( blobref );

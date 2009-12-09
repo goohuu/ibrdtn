@@ -9,7 +9,7 @@
 #define BUNDLEWRITER_H_
 
 #include "ibrdtn/default.h"
-#include "ibrdtn/data/BLOBReference.h"
+#include "ibrcommon/data/BLOBReference.h"
 #include "ibrdtn/data/SDNV.h"
 
 namespace dtn
@@ -55,7 +55,7 @@ namespace dtn
 			virtual size_t write(string value) = 0;
 			virtual size_t write(istream &input) = 0;
 
-			virtual size_t write(dtn::blob::BLOBReference &ref) = 0;
+			virtual size_t write(ibrcommon::BLOBReference &ref) = 0;
 			virtual size_t write(const dtn::data::Bundle &b) = 0;
 		};
 	}

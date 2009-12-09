@@ -7,26 +7,27 @@
 
 #include "ibrdtn/data/PayloadBlock.h"
 
-namespace dtn {
-namespace data
+namespace dtn
 {
-	PayloadBlock::PayloadBlock()
-	 : Block(PayloadBlock::BLOCK_TYPE)
+	namespace data
 	{
-	}
+		PayloadBlock::PayloadBlock()
+		 : Block(PayloadBlock::BLOCK_TYPE)
+		{
+		}
 
-	PayloadBlock::PayloadBlock(blob::BLOBManager::BLOB_TYPE type)
-	 : Block(PayloadBlock::BLOCK_TYPE, type)
-	{
-	}
+		PayloadBlock::PayloadBlock(ibrcommon::BLOBManager::BLOB_TYPE type)
+		 : Block(PayloadBlock::BLOCK_TYPE, type)
+		{
+		}
 
-	PayloadBlock::PayloadBlock(BLOBReference ref)
-	 : Block(PayloadBlock::BLOCK_TYPE, ref)
-	{
-	}
+		PayloadBlock::PayloadBlock(ibrcommon::BLOBReference ref)
+		 : Block(PayloadBlock::BLOCK_TYPE, ref)
+		{
+		}
 
-	PayloadBlock::~PayloadBlock()
-	{
+		PayloadBlock::~PayloadBlock()
+		{
+		}
 	}
-}
 }

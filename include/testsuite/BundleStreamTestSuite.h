@@ -12,10 +12,9 @@
 
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrdtn/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBManager.h"
 
 using namespace dtn::data;
-using namespace dtn::blob;
 
 namespace dtn
 {
@@ -31,7 +30,7 @@ namespace dtn
 			bool commonTest();
 
 		private:
-			BLOBManager &_blobmanager;
+			ibrcommon::BLOBManager &_blobmanager;
 
 			PayloadBlock* createTestBlock();
 		};

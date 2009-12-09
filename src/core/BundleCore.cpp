@@ -1,5 +1,4 @@
 #include "core/BundleCore.h"
-//#include "core/AbstractWorker.h"
 #include "core/CustodyManager.h"
 #include "core/EventSwitch.h"
 #include "core/RouteEvent.h"
@@ -9,18 +8,17 @@
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
 
-#include "ibrdtn/data/BLOBManager.h"
-#include "ibrdtn/data/BLOBReference.h"
+#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBReference.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/EID.h"
 
 #include "ibrdtn/utils/Utils.h"
-#include "ibrdtn/utils/tcpserver.h"
+#include "ibrcommon/net/tcpserver.h"
 #include "limits.h"
 #include <iostream>
 
-using namespace dtn::blob;
 using namespace dtn::exceptions;
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -89,7 +87,7 @@ namespace dtn
 
 			if (globalevent != NULL)
 			{
-				//dtn::utils::MutexLock l(_register_action);
+				//ibrcommon::MutexLock l(_register_action);
 				_shutdown = true;
 				//_register_action.signal(true);
 			}
@@ -167,7 +165,7 @@ namespace dtn
 			try {
 				// send the bundle with the ConnectionManager
 				ConnectionManager::send(eid, b);
-			} catch (dtn::utils::tcpserver::SocketException ex) {
+			} catch (ibrcommon::tcpserver::SocketException ex) {
 				// connection not possible
 				// TODO: requeue!
 				throw dtn::exceptions::NotImplementedException("connection not possible, requeue!");
@@ -231,7 +229,7 @@ namespace dtn
 //
 //				if (worker != NULL)
 //				{
-//					dtn::utils::MutexLock l(*worker);
+//					ibrcommon::MutexLock l(*worker);
 //
 //					switch ( worker->callbackBundleReceived( b ) )
 //					{

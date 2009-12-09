@@ -15,7 +15,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class Clock : public dtn::utils::WaitForConditional, public dtn::utils::JoinableThread
+		class Clock : public ibrcommon::WaitForConditional, public ibrcommon::JoinableThread
 		{
 		public:
 			/**

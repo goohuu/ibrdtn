@@ -11,116 +11,59 @@ exec_prefix=@exec_prefix@
 SVNDEF := -D'SVN_REV="$(shell cat REVISION)"'
 
 # 64bit fix
-CFLAGS += -fPIC -O3 $(SVNDEF)
+CFLAGS += -fPIC -O3 $(SVNDEF) -librcommon -L@srcdir@/ibrcommon
 
-# api sources
-API_OBJ := $(patsubst %.cpp,%.o, $(wildcard @srcdir@/src/api/*.cpp))
-API_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(API_OBJ) ) )
+# modules
+MODULES:=api utils data streams core net testsuite daemon
 
-# utils sources
-UTILS_OBJ := $(patsubst %.cpp,%.o, $(wildcard @srcdir@/src/utils/*.cpp))
-UTILS_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(UTILS_OBJ) ) )
+APPS:=ping send recv inbox outbox tunnel
 
-# data sources
-DATA_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/data/*.cpp))
-DATA_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DATA_OBJ) ) )
+MODULES:=apps apps/c_api_examples apps/DTNTun api utils data streams core net testsuite daemon
 
-# streams sources
-STREAMS_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/streams/*.cpp))
-STREAMS_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(STREAMS_OBJ) ) )
+DATA_MODS:=utils data
+DATA_SRC = $(foreach mod,$(DATA_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp))
+DATA_OBJ = $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(patsubst %.cpp, %.o, $(DATA_SRC) ) ) )
 
-# core sources
-CORE_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/core/*.cpp))
-CORE_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(CORE_OBJ) ) )
+API_MODS:=streams api
+API_SRC = $(foreach mod,$(API_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp))
+API_OBJ = $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(patsubst %.cpp, %.o, $(API_SRC) ) ) )
 
-# net sources
-NET_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/net/*.cpp))
-NET_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(NET_OBJ) ) )
-
-# daemon sources
-DAEMON_OBJ := $(patsubst %.cpp,%.o,$(wildcard @srcdir@/src/daemon/*.cpp))
-DAEMON_BUILD_OBJ := $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(DAEMON_OBJ) ) )
+DAEMON_MODS:=net core daemon
+DAEMON_SRC = $(foreach mod,$(DAEMON_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp))
+DAEMON_OBJ = $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(patsubst %.cpp, %.o, $(DAEMON_SRC) ) ) )
 
 # Main target
-all: dtnd tools iptunnel
-
-tools: dtnping dtnsend dtnrecv dtninbox dtnoutbox
-
-osx: dtnd cdtnping_sync cdtnping_async
-
-# build directory
-BUILD_DIRS := 	@builddir@/bin \
-				@builddir@/lib \
-				@builddir@/obj \
-				@builddir@/obj/apps \
-				@builddir@/obj/api \
-				@builddir@/obj/streams \
-				@builddir@/obj/utils \
-				@builddir@/obj/data \
-				@builddir@/obj/core \
-				@builddir@/obj/net \
-				@builddir@/obj/daemon \
-				@builddir@/obj/apps/c_api_examples \
-				@builddir@/obj/apps/DTNTun
+all: ibrcommon daemon apps
 
 # create a build directory
 builddirs:
-	mkdir -p $(BUILD_DIRS)
+	mkdir -p bin lib $(foreach dir,$(MODULES),@builddir@/obj/$(dir))
 	
-libdata: builddirs $(UTILS_BUILD_OBJ) $(DATA_BUILD_OBJ) $(STREAMS_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-shared \
-		$(UTILS_BUILD_OBJ) $(DATA_BUILD_OBJ) $(STREAMS_BUILD_OBJ) \
-		-o "@builddir@/lib/libibrdtn-data.so"
+libraries: libdata libclient
 
-libclient: libdata $(API_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-shared \
-		$(API_BUILD_OBJ) $(UTILS_BUILD_OBJ) $(DATA_BUILD_OBJ) $(STREAMS_BUILD_OBJ) \
-		-o "@builddir@/lib/libibrdtn-client.so"
+apps: $(foreach app,$(APPS),dtn$(app))
 
-dtnping: libdata libclient @builddir@/obj/apps/dtnping.o
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
-		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnping.o \
-		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o "@builddir@/bin/dtnping"
+modules: $(foreach m,$(MODULES),mod_$(m))
 
-dtnsend: libdata libclient @builddir@/obj/apps/dtnsend.o
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
-		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnsend.o \
-		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o "@builddir@/bin/dtnsend"
+@builddir@/obj/%.o: @srcdir@/src/%.cpp
+	$(CXX) -c $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) $< -o $@
+	
+libdata: builddirs $(DATA_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
+		-L@builddir@/lib/ -shared $(DATA_OBJ) -o "@builddir@/lib/libibrdtn-data.so"
 
-dtnrecv: libdata libclient @builddir@/obj/apps/dtnrecv.o
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
-		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnrecv.o \
-		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o "@builddir@/bin/dtnrecv"
+libclient: libdata $(API_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
+		-L@builddir@/lib/ -shared $(API_OBJ) -o "@builddir@/lib/libibrdtn-client.so"
 
-dtninbox: libdata libclient @builddir@/obj/apps/dtninbox.o
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
-		$(API_BUILD_OBJ) @builddir@/obj/apps/dtninbox.o \
-		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o "@builddir@/bin/dtninbox"
+dtn%: libdata libclient @builddir@/obj/apps/dtn%.o
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
+		-L@builddir@/lib/ -librdtn-data -librdtn-client @builddir@/obj/apps/$@.o -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon -o "@builddir@/bin/$@"
 		
-dtnoutbox: libdata libclient @builddir@/obj/apps/dtnoutbox.o
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
-		$(API_BUILD_OBJ) @builddir@/obj/apps/dtnoutbox.o \
-		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o "@builddir@/bin/dtnoutbox"
-
+daemon: libdata libclient $(DAEMON_OBJ)
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread -lrt  \
+		-L@builddir@/lib/ -librdtn-data -librdtn-client $(DAEMON_OBJ) -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon -o "@builddir@/bin/dtnd"
+		
 cdtnping_sync: libdata libclient 
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-o @builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
@@ -129,7 +72,7 @@ cdtnping_sync: libdata libclient
 		-L@builddir@/lib/ \
 		-librdtn-data -librdtn-client \
 		@builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
-		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib \
+		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon \
 		-o "@builddir@/bin/cdtnping_sync"
 	
 
@@ -141,7 +84,7 @@ cdtnping_async: libdata libclient
 		-L@builddir@/lib/ \
 		-librdtn-data -librdtn-client \
 		@builddir@/obj/apps/c_api_examples/cdtnping_async.o \
-		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib \
+		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon \
 		-o "@builddir@/bin/cdtnping_async"
 
 dtntun: libdata libclient 
@@ -160,62 +103,50 @@ dtntun: libdata libclient
 		@builddir@/obj/apps/DTNTun/dtntun.o \
 		@builddir@/obj/apps/DTNTun/receiver.o \
 		@builddir@/obj/apps/DTNTun/tun.o \
-		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib \
+		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon \
 		-o "@builddir@/bin/dtntun"
 
-iptunnel: libdata libclient @builddir@/obj/apps/iptunnel.o
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-librdtn-data -librdtn-client \
-		$(API_BUILD_OBJ) @builddir@/obj/apps/iptunnel.o \
-		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o "@builddir@/bin/iptunnel"
-
-dtnd: libdata $(NET_BUILD_OBJ) $(CORE_BUILD_OBJ) $(DAEMON_BUILD_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@ \
-		-L@builddir@/lib/ \
-		-librdtn-data \
-		$(NET_BUILD_OBJ) $(CORE_BUILD_OBJ) $(DAEMON_BUILD_OBJ) \
-		-Wl,-rpath,@libdir@:@builddir@/lib \
-		-o "@builddir@/bin/dtnd"
-	
-@builddir@/obj/%.o: @srcdir@/src/%.cpp
-	$(CXX) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $< -o $@
-
+# delete all object, library and binary files
 clean:
 	rm -rf @builddir@/obj
 	rm -rf @builddir@/lib
 	rm -rf @builddir@/bin
 
+# makes a full cleanup of the source directory
 distclean: clean
 	rm -rf Makefile
 	rm -rf include/ibrdtn/config.h
 
-selftest: testsuite
-	LD_LIBRARY_PATH=@builddir@/lib @builddir@/bin/testsuite
-
-install: install-lib install-tools
+# main install target
+install: install-common install-lib install-apps
 	cp @builddir@/bin/dtnd @prefix@/bin
-	cp @builddir@/bin/iptunnel @prefix@/bin/dtntunnel
 	
-install-tools:
-	cp @builddir@/bin/dtnping @prefix@/bin
-	cp @builddir@/bin/dtnsend @prefix@/bin
-	cp @builddir@/bin/dtnrecv @prefix@/bin
-	cp @builddir@/bin/dtninbox @prefix@/bin
-	cp @builddir@/bin/dtnoutbox @prefix@/bin
-	
-uninstall:
+# main uninstall target
+uninstall: uninstall-common uninstall-lib uninstall-apps
 	rm -rf @prefix@/bin/dtnd
-	rm -rf @prefix@/bin/dtnping
-	rm -rf @libdir@/libibrdtn-*.so
 	rm -rf @includedir@/ibrdtn
+
+# install all apps listed in variable APPS
+install-apps: $(foreach app,$(APPS),install-dtn$(app))
+install-dtn%:
+	cp @builddir@/bin/$(@:install-dtn%=dtn%) @prefix@/bin
+
+# uninstall all apps listed in variable APPS
+uninstall-apps: $(foreach app,$(APPS),uninstall-dtn$(app))
+uninstall-dtn%:
+	rm -rf @prefix@/bin/$(@:uninstall-dtn%=dtn%)
 	
+# install all libraries of IBR-DTN
 install-lib:
 	cp @builddir@/lib/*.so @libdir@
 	chmod 755 @libdir@/libibrdtn-*.so
+	
+# uninstall all libraries of IBR-DTN
+uninstall-lib:
+	rm -rf ${exec_prefix}/lib/libibrdtn-*.so
 
-install-dev: install-lib
+# install all development files for the IBR-DTN
+install-dev: install-common-dev install-lib
 	mkdir -p @includedir@/ibrdtn
 	cp -R @srcdir@/include/ibrdtn/api @includedir@/ibrdtn/api
 	cp -R @srcdir@/include/ibrdtn/data @includedir@/ibrdtn/data
@@ -224,4 +155,20 @@ install-dev: install-lib
 	cp @srcdir@/include/ibrdtn/config.h @includedir@/ibrdtn
 	cp @srcdir@/include/ibrdtn/default.h @includedir@/ibrdtn
 
+# build the ibrcommon library
+.PHONY: ibrcommon
+ibrcommon:
+	make -C ibrcommon
+
+# install the IBR Common C++ Library
+install-common:
+	make -C ibrcommon install
+
+# install the development files of the IBR Common C++ Library	
+install-common-dev:
+	make -C ibrcommon install-dev
+	
+# uninstall the IBR Common C++ Library
+uninstall-common:
+	make -C ibrcommon uninstall
 	

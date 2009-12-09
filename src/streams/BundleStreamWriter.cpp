@@ -115,7 +115,7 @@ namespace dtn
 			return len;
 		}
 
-		size_t BundleStreamWriter::write(dtn::blob::BLOBReference &ref)
+		size_t BundleStreamWriter::write(ibrcommon::BLOBReference &ref)
 		{
 			size_t len = ref.read(_output);
 			return len;

@@ -6,8 +6,8 @@
  */
 
 #include "ibrdtn/streams/BundleCopier.h"
-#include "ibrdtn/data/BLOBManager.h"
-#include "ibrdtn/data/BLOBReference.h"
+#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOBReference.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/StatusReportBlock.h"
@@ -17,13 +17,11 @@
 
 #include <stdlib.h>
 
-using namespace dtn::blob;
-
 namespace dtn
 {
 	namespace streams
 	{
-		BundleCopier::BundleCopier(dtn::blob::BLOBManager &blobmanager, dtn::data::Bundle &b)
+		BundleCopier::BundleCopier(ibrcommon::BLOBManager &blobmanager, dtn::data::Bundle &b)
 		 : _blobmanager(blobmanager), _bundle(b), _block(NULL), _blockref(-1), _state(IDLE)
 		{
 		}
@@ -224,7 +222,7 @@ namespace dtn
 				{
 					_state = ADM_BLOCK;
 					// we expecting a small block, so use memory based blocks
-					_block = new dtn::data::PayloadBlock( _blobmanager.create(dtn::blob::BLOBManager::BLOB_MEMORY) );
+					_block = new dtn::data::PayloadBlock( _blobmanager.create(ibrcommon::BLOBManager::BLOB_MEMORY) );
 				}
 				else
 				{

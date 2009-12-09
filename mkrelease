@@ -50,6 +50,11 @@ echo "copy source"
 cp -R src/ $RELEASE_DIR/
 rm -rf $RELEASE_DIR/src/testsuite
 
+# copy ibrcommon
+mkdir $RELEASE_DIR/ibrcommon
+echo "ibrcommon files"
+cp -R ibrcommon/*.cpp ibrcommon/ibrcommon ibrcommon/data ibrcommon/net ibrcommon/thread ibrcommon/xml ibrcommon/config.h.in ibrcommon/configure.ac ibrcommon/Makefile.in $RELEASE_DIR/ibrcommon
+
 # copy default database
 #echo "copy default database"
 #cp database-clean.db $RELEASE_DIR/database.db
@@ -68,12 +73,20 @@ echo "copy license"
 cp LICENSE $RELEASE_DIR/
 
 # run autoconf
-echo "run autoconf"
-cd $RELEASE_DIR/
+echo "run autoconf ibrcommon"
+cd $RELEASE_DIR/ibrcommon
+autoheader 
+autoconf 
+rm configure.ac
+rm -rf autom4te.cache
+
+echo "run autoconf ibrdtn"
+cd ..
 autoheader
 autoconf --include=include
 rm configure.in
 rm -rf autom4te.cache
+
 
 # remove all .svn directories
 echo "remove all .svn directories"

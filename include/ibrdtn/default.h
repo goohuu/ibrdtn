@@ -6,12 +6,12 @@
  */
 
 #include "ibrdtn/config.h"
-#include "ibrdtn/utils/Thread.h"
-#include "ibrdtn/utils/Mutex.h"
-#include "ibrdtn/utils/MutexLock.h"
-#include "ibrdtn/utils/Conditional.h"
-#include "ibrdtn/utils/WaitForConditional.h"
-#include "ibrdtn/utils/SyslogStream.h"
+#include "ibrcommon/thread/Thread.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
+#include "ibrcommon/thread/Conditional.h"
+#include "ibrcommon/thread/WaitForConditional.h"
+#include "ibrcommon/SyslogStream.h"
 
 #include <iostream>
 #include <sstream>
