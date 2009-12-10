@@ -53,17 +53,8 @@ rm -rf $RELEASE_DIR/src/testsuite
 # copy ibrcommon
 mkdir $RELEASE_DIR/ibrcommon
 echo "ibrcommon files"
-cp -R ibrcommon/*.cpp \
-	ibrcommon/ibrcommon \
-	ibrcommon/data \
-	ibrcommon/net \
-	ibrcommon/thread \
-	ibrcommon/xml \
-	ibrcommon/config.h.in \
-	ibrcommon/configure.ac \
-	ibrcommon/Makefile.in \
-	ibrcommon/install-sh \
-	$RELEASE_DIR/ibrcommon
+cp -R ibrcommon \
+	$RELEASE_DIR
 
 # copy default database
 #echo "copy default database"
@@ -85,9 +76,7 @@ cp LICENSE $RELEASE_DIR/
 # run autoconf
 echo "run autoconf ibrcommon"
 cd $RELEASE_DIR/ibrcommon
-autoheader 
-autoconf 
-rm configure.ac
+autoreconf
 rm -rf autom4te.cache
 
 echo "run autoconf ibrdtn"
