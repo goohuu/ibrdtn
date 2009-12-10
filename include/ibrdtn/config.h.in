@@ -30,6 +30,9 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
 /* Define to 1 if you have the `rt' library (-lrt). */
 #undef HAVE_LIBRT
 
@@ -51,6 +54,24 @@
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #undef HAVE_NETINET_IN_H
+
+/* "pthread clocking" */
+#undef HAVE_PTHREAD_CONDATTR_SETCLOCK
+
+/* "pthread delay" */
+#undef HAVE_PTHREAD_DELAY
+
+/* "pthread delay np" */
+#undef HAVE_PTHREAD_DELAY_NP
+
+/* "pthread concurrency" */
+#undef HAVE_PTHREAD_SETCONCURRENCY
+
+/* "pthread scheduling" */
+#undef HAVE_PTHREAD_SETSCHEDPRIO
+
+/* "pthread yield" */
+#undef HAVE_PTHREAD_YIELD
 
 /* Define to 1 if you have the `socket' function. */
 #undef HAVE_SOCKET
