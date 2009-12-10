@@ -17,6 +17,9 @@ CFLAGS += -fPIC -ggdb $(SVNDEF) @CPPFLAGS@
 IBRCOMMON_LIB_PATH = @srcdir@/ibrcommon/ibrcommon/.libs
 LIBS = @LIBS@ -librcommon -L$(IBRCOMMON_LIB_PATH) -L@builddir@/lib
 
+# flags for library search path
+LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:$(IBRCOMMON_LIB_PATH)
+
 # modules
 MODULES:=apps apps/c_api_examples apps/DTNTun api utils data streams core net testsuite daemon
 
@@ -50,7 +53,7 @@ libraries: libdata libclient
 apps: $(foreach app,$(APPS),dtn$(app))
 
 @builddir@/obj/%.o: @srcdir@/src/%.cpp
-	$(CXX) -c $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) $< -o $@
+	$(CXX) -c $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $< -o $@
 	
 libdata: builddirs $(DATA_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) $(LIBS) \
@@ -62,15 +65,15 @@ libclient: libdata $(API_OBJ)
 
 dtn%: libdata libclient @builddir@/obj/apps/dtn%.o
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(LIBS) \
-		-librdtn-data -librdtn-client @builddir@/obj/apps/$@.o -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:$(IBRCOMMON_LIB_PATH) -o "@builddir@/bin/$@"
+		-librdtn-data -librdtn-client @builddir@/obj/apps/$@.o $(LDFLAGS) -o "@builddir@/bin/$@"
 		
 daemon: libdata libclient $(DAEMON_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(LIBS) \
-		-librdtn-data -librdtn-client $(DAEMON_OBJ) -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:$(IBRCOMMON_LIB_PATH) -o "@builddir@/bin/dtnd"
+		-librdtn-data -librdtn-client $(DAEMON_OBJ) $(LDFLAGS) -o "@builddir@/bin/dtnd"
 		
 testsuite: libdata libclient $(TESTSUITE_OBJ)
 	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(LIBS) \
-		-librdtn-data -librdtn-client $(TESTSUITE_OBJ) -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:$(IBRCOMMON_LIB_PATH) -o "@builddir@/bin/testsuite"
+		-librdtn-data -librdtn-client $(TESTSUITE_OBJ) $(LDFLAGS) -o "@builddir@/bin/testsuite"
 
 cdtnping_sync: libdata libclient 
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
@@ -80,7 +83,6 @@ cdtnping_sync: libdata libclient
 		-L@builddir@/lib/ \
 		-librdtn-data -librdtn-client \
 		@builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
-		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon \
 		-o "@builddir@/bin/cdtnping_sync"
 	
 
@@ -92,7 +94,6 @@ cdtnping_async: libdata libclient
 		-L@builddir@/lib/ \
 		-librdtn-data -librdtn-client \
 		@builddir@/obj/apps/c_api_examples/cdtnping_async.o \
-		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon \
 		-o "@builddir@/bin/cdtnping_async"
 
 dtntun: libdata libclient 
@@ -111,7 +112,6 @@ dtntun: libdata libclient
 		@builddir@/obj/apps/DTNTun/dtntun.o \
 		@builddir@/obj/apps/DTNTun/receiver.o \
 		@builddir@/obj/apps/DTNTun/tun.o \
-		-Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:@builddir@/ibrcommon \
 		-o "@builddir@/bin/dtntun"
 
 # delete all object, library and binary files
