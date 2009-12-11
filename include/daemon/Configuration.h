@@ -80,6 +80,8 @@ namespace dtn
 
                         void version(std::ostream &stream);
 
+                        string getNotifyCommand();
+
 		private:
 			ibrcommon::ConfigFile _conf;
 

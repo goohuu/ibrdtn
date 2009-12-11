@@ -281,5 +281,14 @@ namespace dtn
                 {
                     return _doapi;
                 }
+
+                string Configuration::getNotifyCommand()
+                {
+                    try {
+                        return _conf.read<string>("notify_cmd");
+                    } catch (ConfigFile::key_not_found ex) {
+                        throw ParameterNotSetException();
+                    }
+                }
 	}
 }

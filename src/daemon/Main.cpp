@@ -18,6 +18,7 @@
 #include "daemon/ApiServer.h"
 #include "daemon/Configuration.h"
 #include "daemon/EchoWorker.h"
+#include "daemon/Notifier.h"
 #include "net/IPNDAgent.h"
 
 #include "ibrdtn/utils/Utils.h"
@@ -109,6 +110,15 @@ int main(int argc, char *argv[])
 
         // set global vars
         setGlobalVars(conf);
+
+        dtn::daemon::Notifier *notifier = NULL;
+
+        try {
+        	notifier = new dtn::daemon::Notifier( conf.getNotifyCommand() );
+        	notifier->notify("IBR-DTN", "daemon is getting ready");
+        } catch (Configuration::ParameterNotSetException ex) {
+
+        }
 
 #ifdef DO_DEBUG_OUTPUT
 	// create event debugger
