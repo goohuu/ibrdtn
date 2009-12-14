@@ -16,12 +16,12 @@ namespace dtn
 	namespace streams
 	{
 		StreamContactHeader::StreamContactHeader()
-		 : _flags(0), _keepalive(0)
+		 : _flags(1), _keepalive(0)
 		{
 		}
 
 		StreamContactHeader::StreamContactHeader(EID localeid)
-		 : _localeid(localeid), _flags(0), _keepalive(0)
+		 : _localeid(localeid), _flags(1), _keepalive(0)
 		{
 		}
 
@@ -52,7 +52,7 @@ namespace dtn
 
 			// version
 			char version; reader.readChar(version);
-			if (version != dtn::data::BUNDLE_VERSION)
+			if (version != TCPCL_VERSION)
 			{
 				throw exceptions::InvalidDataException("invalid bundle protocol version");
 			}
@@ -87,7 +87,7 @@ namespace dtn
 		{
 			//BundleStreamWriter writer(stream);
 			writer.write("dtn!");
-			writer.write(BUNDLE_VERSION);
+			writer.write(TCPCL_VERSION);
 			writer.write(_flags);
 			writer.write((char*)&_keepalive, 2);
 

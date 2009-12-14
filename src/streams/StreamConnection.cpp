@@ -161,7 +161,11 @@ namespace dtn
 					{
 						case StreamDataSegment::MSG_DATA_SEGMENT:
 						{
-                                                        if (seg._flags & 0x04)
+#ifdef DTN2_COMPATIBILITY_MODE
+														if (seg._flags & 0x01)
+#else
+														if (seg._flags & 0x04)
+#endif
                                                         {
                                                             setState(CONNECTION_RECEIVING);
                                                             _recv_size = seg._value;
@@ -175,7 +179,11 @@ namespace dtn
 							(*this) << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size);
 
                                                         // flush if this ack is the last segment
+#ifdef DTN2_COMPATIBILITY_MODE
+														if (seg._flags & 0x02)
+#else
                                                         if (seg._flags & 0x08)
+#endif
                                                         {
                                                             flush();
                                                             setState(CONNECTION_IDLE);

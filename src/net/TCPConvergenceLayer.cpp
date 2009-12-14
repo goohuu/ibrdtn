@@ -165,6 +165,8 @@ namespace dtn
 				if (!good()) throw dtn::exceptions::IOException("read from stream failed");
 			} catch (dtn::exceptions::InvalidDataException ex) {
 				throw dtn::exceptions::IOException("read from stream failed");
+			} catch (dtn::exceptions::InvalidBundleData ex) {
+				throw dtn::exceptions::IOException("Bundle data invalid");
 			}
 		}
 

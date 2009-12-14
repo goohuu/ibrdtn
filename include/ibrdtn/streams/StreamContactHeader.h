@@ -21,6 +21,8 @@ namespace dtn
 {
 	namespace streams
 	{
+		static const unsigned char TCPCL_VERSION = 3;
+
 		class StreamContactHeader
 		{
 		public:
