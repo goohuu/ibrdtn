@@ -39,13 +39,8 @@ namespace dtn
 
 			char header; ret += reader.readChar(header);
 
-#ifdef DTN2_COMPATIBILITY_MODE
 			_type = SegmentType( (header & 0xF0) >> 4 );
 			_flags = (header & 0x0F);
-#else
-			_type = SegmentType(header & 0x0F);
-			_flags = ((header & 0xF0) >> 4);
-#endif
 
 			switch (_type)
 			{
@@ -105,13 +100,8 @@ namespace dtn
 		{
 			size_t ret = 0;
 
-#ifdef DTN2_COMPATIBILITY_MODE
 			char header = _flags;
 			header += ((_type & 0x0F) << 4);
-#else
-			char header = _type;
-			header += ((_flags & 0x0F) << 4);
-#endif
 
 			// write the header (1-byte)
 			ret += writer.write(header);

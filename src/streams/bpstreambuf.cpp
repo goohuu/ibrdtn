@@ -169,11 +169,7 @@ namespace dtn
 			// set the start flag
 			if (_start_of_bundle)
 			{
-#ifdef DTN2_COMPATIBILITY_MODE
 				if (!(seg._flags & 0x01)) seg._flags += 0x01;
-#else
-				if (!(seg._flags & 0x04)) seg._flags += 0x04;
-#endif
 				_start_of_bundle = false;
                                 out_size_ = 0;
 			}
@@ -181,11 +177,7 @@ namespace dtn
 			if (char_traits<char>::eq_int_type(c, char_traits<char>::eof()))
 			{
 				// set the end flag
-#ifdef DTN2_COMPATIBILITY_MODE
 				if (!(seg._flags & 0x02)) seg._flags += 0x02;
-#else
-				if (!(seg._flags & 0x08)) seg._flags += 0x08;
-#endif
 				_start_of_bundle = true;
 			}
 
