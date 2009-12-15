@@ -14,35 +14,36 @@
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrcommon/data/BLOBReference.h"
+#include "ibrdtn/data/DTNTime.h"
 
-namespace dtn {
-namespace data
+namespace dtn
 {
-	class CustodySignalBlock : public PayloadBlock
+	namespace data
 	{
-	public:
-		CustodySignalBlock();
-		CustodySignalBlock(Block *block);
-		CustodySignalBlock(ibrcommon::BLOBReference ref);
-		virtual ~CustodySignalBlock();
+		class CustodySignalBlock : public PayloadBlock
+		{
+		public:
+			CustodySignalBlock();
+			CustodySignalBlock(Block *block);
+			CustodySignalBlock(ibrcommon::BLOBReference ref);
+			virtual ~CustodySignalBlock();
 
-		void read();
-		void commit();
+			void read();
+			void commit();
 
-		void setMatch(const Bundle& other);
-		bool match(const Bundle& other) const;
+			void setMatch(const Bundle& other);
+			bool match(const Bundle& other) const;
 
-		char _admfield;
-		char _status;
-		SDNV _fragment_offset;
-		SDNV _fragment_length;
-		SDNV _timeofsignal;
-		SDNV _bundle_timestamp;
-		SDNV _unknown;
-		SDNV _bundle_sequence;
-		EID _source;
-	};
-}
+			char _admfield;
+			char _status;
+			SDNV _fragment_offset;
+			SDNV _fragment_length;
+			DTNTime _timeofsignal;
+			SDNV _bundle_timestamp;
+			SDNV _bundle_sequence;
+			EID _source;
+		};
+	}
 }
 
 #endif /* CUSTODYSIGNALBLOCK_H_ */

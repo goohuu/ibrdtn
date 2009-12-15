@@ -6,6 +6,9 @@
 /* Define to enable extended debugging output. */
 #undef DO_EXTENDED_DEBUG_OUTPUT
 
+/* Define to enable compatibility with DTN2 reference implementation. */
+#undef DTN2_COMPATIBILITY_MODE
+
 /* Define to 1 if you have the `alarm' function. */
 #undef HAVE_ALARM
 

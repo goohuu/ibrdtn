@@ -7,6 +7,7 @@
 
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
+#include "ibrdtn/data/BundleString.h"
 #include <stdlib.h>
 #include <sstream>
 
@@ -16,23 +17,20 @@ namespace dtn
 	{
 		CustodySignalBlock::CustodySignalBlock()
 		 : PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY), _admfield(32), _status(0), _fragment_offset(0),
-		 _fragment_length(0), _timeofsignal(0), _bundle_timestamp(0), _unknown(0),
-		 _bundle_sequence(0)
+		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 		}
 
 		CustodySignalBlock::CustodySignalBlock(Block *block)
 		 : PayloadBlock(block->getBLOBReference()), _admfield(32), _status(0), _fragment_offset(0),
-		 _fragment_length(0), _timeofsignal(0), _bundle_timestamp(0), _unknown(0),
-		 _bundle_sequence(0)
+		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 			read();
 		}
 
 		CustodySignalBlock::CustodySignalBlock(ibrcommon::BLOBReference ref)
 		 : PayloadBlock(ref), _admfield(32), _status(0), _fragment_offset(0),
-		 _fragment_length(0), _timeofsignal(0), _bundle_timestamp(0), _unknown(0),
-		 _bundle_sequence(0)
+		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 		}
 
@@ -66,9 +64,10 @@ namespace dtn
 			}
 
 			len = _timeofsignal.decode(data, remain); 		remain -= len; data += len;
+
 			len = _bundle_timestamp.decode(data, remain); 	remain -= len; data += len;
-			len = _unknown.decode(data, remain); 			remain -= len; data += len;
 			len = _bundle_sequence.decode(data, remain); 	remain -= len; data += len;
+
 			len = value.decode(data, remain); 				remain -= len; data += len;
 
 			string source;
@@ -79,23 +78,20 @@ namespace dtn
 		void CustodySignalBlock::commit()
 		{
 			stringstream ss;
-			dtn::streams::BundleStreamWriter w(ss);
 
-			w.write(_admfield);
-			w.write(_status);
+			ss << _admfield
+			   << _status;
 
 			if ( _admfield & 0x01 )
 			{
-				w.write(_fragment_offset);
-				w.write(_fragment_length);
+				ss << _fragment_offset
+				   << _fragment_length;
 			}
 
-			w.write(_timeofsignal);
-			w.write(_bundle_timestamp);
-			w.write(_unknown);
-			w.write(_bundle_sequence);
-			w.write(_source.getString().length());
-			w.write(_source.getString());
+			ss << _timeofsignal
+			   << _bundle_timestamp
+			   << _bundle_sequence
+			   << BundleString(_source.getString());
 
 			// clear the blob
 			ibrcommon::BLOBReference ref = Block::getBLOBReference();

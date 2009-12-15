@@ -299,23 +299,23 @@ namespace dtn
 			switch (type)
 			{
 				case StatusReportBlock::RECEIPT_OF_BUNDLE:
-					report->_timeof_receipt = Utils::get_current_dtn_time();
+					report->_timeof_receipt.set();
 				break;
 
 				case StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE:
-					report->_timeof_custodyaccept = Utils::get_current_dtn_time();
+					report->_timeof_custodyaccept.set();
 				break;
 
 				case StatusReportBlock::FORWARDING_OF_BUNDLE:
-					report->_timeof_forwarding = Utils::get_current_dtn_time();
+					report->_timeof_forwarding.set();
 				break;
 
 				case StatusReportBlock::DELIVERY_OF_BUNDLE:
-					report->_timeof_delivery = Utils::get_current_dtn_time();
+					report->_timeof_delivery.set();
 				break;
 
 				case StatusReportBlock::DELETION_OF_BUNDLE:
-					report->_timeof_deletion = Utils::get_current_dtn_time();
+					report->_timeof_deletion.set();
 				break;
 
 				default:

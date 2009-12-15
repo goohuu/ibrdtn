@@ -8,6 +8,7 @@
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/streams/BundleStreamWriter.h"
 #include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/BundleString.h"
 #include <stdlib.h>
 #include <sstream>
 
@@ -17,26 +18,26 @@ namespace dtn
 	{
 		StatusReportBlock::StatusReportBlock()
 		 : PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY), _admfield(16), _status(0), _reasoncode(0),
-		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(0),
-		 _timeof_custodyaccept(0), _timeof_forwarding(0), _timeof_delivery(0),
-		 _timeof_deletion(0), _bundle_timestamp(0), _bundle_sequence(0)
+		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(),
+		 _timeof_custodyaccept(), _timeof_forwarding(), _timeof_delivery(),
+		 _timeof_deletion(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 		}
 
 		StatusReportBlock::StatusReportBlock(Block *block)
 		 : PayloadBlock(block->getBLOBReference()), _admfield(16), _status(0), _reasoncode(0),
-		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(0),
-		 _timeof_custodyaccept(0), _timeof_forwarding(0), _timeof_delivery(0),
-		 _timeof_deletion(0), _bundle_timestamp(0), _bundle_sequence(0)
+		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(),
+		 _timeof_custodyaccept(), _timeof_forwarding(), _timeof_delivery(),
+		 _timeof_deletion(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 			read();
 		}
 
 		StatusReportBlock::StatusReportBlock(ibrcommon::BLOBReference ref)
 		 : PayloadBlock(ref), _admfield(16), _status(0), _reasoncode(0),
-		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(0),
-		 _timeof_custodyaccept(0), _timeof_forwarding(0), _timeof_delivery(0),
-		 _timeof_deletion(0), _bundle_timestamp(0), _bundle_sequence(0)
+		 _fragment_offset(0), _fragment_length(0), _timeof_receipt(),
+		 _timeof_custodyaccept(), _timeof_forwarding(), _timeof_delivery(),
+		 _timeof_deletion(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 		}
 
@@ -86,26 +87,24 @@ namespace dtn
 		void StatusReportBlock::commit()
 		{
 			stringstream ss;
-			dtn::streams::BundleStreamWriter w(ss);
 
-			w.write(_admfield);
-			w.write(_status);
+			ss << _admfield;
+			ss << _status;
 
 			if ( _admfield & 0x01 )
 			{
-				w.write(_fragment_offset);
-				w.write(_fragment_length);
+				ss << _fragment_offset;
+				ss << _fragment_length;
 			}
 
-			w.write(_timeof_receipt);
-			w.write(_timeof_custodyaccept);
-			w.write(_timeof_forwarding);
-			w.write(_timeof_delivery);
-			w.write(_timeof_deletion);
-			w.write(_bundle_timestamp);
-			w.write(_bundle_sequence);
-			w.write(_source.getString().length());
-			w.write(_source.getString());
+			ss << _timeof_receipt;
+			ss << _timeof_custodyaccept;
+			ss << _timeof_forwarding;
+			ss << _timeof_delivery;
+			ss << _timeof_deletion;
+			ss << _bundle_timestamp;
+			ss << _bundle_sequence;
+			ss << BundleString(_source.getString());
 
 			// clear the blob
 			ibrcommon::BLOBReference ref = Block::getBLOBReference();

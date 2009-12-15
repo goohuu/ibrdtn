@@ -13,6 +13,7 @@
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrcommon/data/BLOBReference.h"
+#include "ibrdtn/data/DTNTime.h"
 
 namespace dtn
 {
@@ -56,11 +57,11 @@ namespace dtn
 			char _reasoncode;
 			SDNV _fragment_offset;
 			SDNV _fragment_length;
-			SDNV _timeof_receipt;
-			SDNV _timeof_custodyaccept;
-			SDNV _timeof_forwarding;
-			SDNV _timeof_delivery;
-			SDNV _timeof_deletion;
+			DTNTime _timeof_receipt;
+			DTNTime _timeof_custodyaccept;
+			DTNTime _timeof_forwarding;
+			DTNTime _timeof_delivery;
+			DTNTime _timeof_deletion;
 			SDNV _bundle_timestamp;
 			SDNV _bundle_sequence;
 			EID _source;
