@@ -76,7 +76,7 @@ namespace dtn
 			{
 				Bundle pbundle;
 				PayloadBlock *pblock = new PayloadBlock();
-				pblock->getBLOBReference().append(data, size);
+				(*pblock->getBLOB()).write(data, size);
 				pbundle.addBlock(pblock);
 				bundles.push_back( pbundle );
 			}

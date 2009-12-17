@@ -70,7 +70,7 @@ namespace dtn
 
                         int getTimezone();
 
-                        string getPath(string name);
+                        ibrcommon::File getPath(string name);
 
                         unsigned int getUID();
                         unsigned int getGID();

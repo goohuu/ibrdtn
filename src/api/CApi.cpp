@@ -49,13 +49,13 @@ class CAPIGateway : public dtn::api::Client
 		void send(char *dst_uri, char *data, uint32_t length) {
 			dtn::data::Bundle b;
 			b._destination = dtn::data::EID(dst_uri);
-			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY);
+			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::StringBLOB::create());
 
 			// add the payload block to the bundle
 			b.addBlock(payload);
 
 			// add the data
-			payload->getBLOBReference().append(data, length);
+			(*payload->getBLOB()).write(data, length);
 
 			// transmit the packet
 			(*this) << b;
@@ -99,13 +99,13 @@ class CAPIGateway : public dtn::api::Client
 				return;
 			dtn::data::Bundle b;
 			b._destination = dtn::data::EID(this->dst_eid);
-			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY);
+			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::StringBLOB::create());
 
 			// add the payload block to the bundle
 			b.addBlock(payload);
 
 			// add the data
-			payload->getBLOBReference().append(tx_buffer, tx_buffer_position); //+1 is wrong =?!?
+			(*payload->getBLOB()).write(tx_buffer, tx_buffer_position); //+1 is wrong =?!?
 
 			// transmit the packet
 			(*this) << b;
@@ -190,7 +190,7 @@ class CAPIGateway : public dtn::api::Client
 				return;
 			}
 			recvd=malloc(len);
-			b.getData().read((char *)recvd, 0, len);
+			(*b.getData()).read((char *)recvd, len);
 			recv_mutex.enter();
 			process_bundle(recvd,len);
 			recv_mutex.leave();
@@ -210,13 +210,13 @@ class CAPIGateway : public dtn::api::Client
 			while(len != 0) {
 				if (len <= chunksize) {
 					//cout << "Write " << len << endl;
-					b.getData().read(buffer, offset, len);
+					(*b.getData()).read(buffer, len);
 					::write(sync_pipe[1],buffer,len);
 					break;
 				}
 				else {
 					//cout << "Write " << chunksize << endl;
-					b.getData().read(buffer, offset, chunksize);
+					(*b.getData()).read(buffer, chunksize);
 					offset+=chunksize; len-=chunksize;
 					::write(sync_pipe[1],buffer,chunksize);
 				}

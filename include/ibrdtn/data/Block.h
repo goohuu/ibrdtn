@@ -12,8 +12,7 @@
 #include "ibrdtn/streams/BundleWriter.h"
 #include "ibrdtn/streams/BundleStreamWriter.h"
 #include "ibrdtn/data/EID.h"
-#include "ibrcommon/data/BLOBManager.h"
-#include "ibrcommon/data/BLOBReference.h"
+#include "ibrcommon/data/BLOB.h"
 
 namespace dtn
 {
@@ -28,15 +27,15 @@ namespace dtn
 
 		public:
 			Block(char blocktype);
-			Block(char blocktype, ibrcommon::BLOBManager::BLOB_TYPE type);
-			Block(char blocktype, ibrcommon::BLOBReference ref);
+			Block(char blocktype, ibrcommon::BLOB::Reference ref);
 			virtual ~Block();
 
 			virtual void addEID(EID eid);
 			virtual list<EID> getEIDList() const;
 
 			size_t getSize() const;
-			ibrcommon::BLOBReference getBLOBReference();
+
+			ibrcommon::BLOB::Reference getBLOB();
 
 			size_t _procflags;
 
@@ -50,7 +49,7 @@ namespace dtn
 
 			char _blocktype;
 			list<EID> _eids;
-			ibrcommon::BLOBReference _blobref;
+			ibrcommon::BLOB::Reference _blobref;
 
 			virtual size_t write( dtn::streams::BundleWriter &writer );
 		};

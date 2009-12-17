@@ -66,13 +66,13 @@ namespace dtn
 			return _b._source;
 		}
 
-		ibrcommon::BLOBReference Bundle::getData()
+		ibrcommon::BLOB::Reference Bundle::getData()
 		{
 			const list<dtn::data::Block* > blocks = _b.getBlocks(dtn::data::PayloadBlock::BLOCK_TYPE);
 			if (blocks.size() < 1) throw dtn::exceptions::MissingObjectException("No payload block exists!");
 
 			dtn::data::Block *block = (*blocks.begin());
-			return block->getBLOBReference();
+			return block->getBLOB();
 		}
 
 		void Bundle::read(std::istream &stream)

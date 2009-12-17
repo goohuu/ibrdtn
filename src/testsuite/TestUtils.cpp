@@ -45,8 +45,8 @@ namespace testsuite
 		}
 
 		dtn::data::Bundle out;
-		Block *block = new PayloadBlock(ibrcommon::BLOBManager::BLOB_HARDDISK);
-		block->getBLOBReference().append(data, size);
+		Block *block = new PayloadBlock(ibrcommon::TmpFileBLOB::create());
+		(*block->getBLOB()).write(data, size);
 
 		out.addBlock( block );
 		free(data);

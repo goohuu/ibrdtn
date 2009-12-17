@@ -240,14 +240,14 @@ namespace dtn
                     return _conf.read<int>( "timezone", 0 );
                 }
 
-                string Configuration::getPath(string name)
+                ibrcommon::File Configuration::getPath(string name)
                 {
                     stringstream ss;
                     ss << name << "_path";
                     string key; ss >> key;
 
                     try {
-                        return _conf.read<string>(key);
+                        return ibrcommon::File(_conf.read<string>(key));
                     } catch (ConfigFile::key_not_found ex) {
                         throw ParameterNotSetException();
                     }

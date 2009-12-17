@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOB.h"
 #include "core/CustodyManager.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/utils/Utils.h"

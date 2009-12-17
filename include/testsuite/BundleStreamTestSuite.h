@@ -12,7 +12,6 @@
 
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrcommon/data/BLOBManager.h"
 
 using namespace dtn::data;
 
@@ -30,8 +29,6 @@ namespace dtn
 			bool commonTest();
 
 		private:
-			ibrcommon::BLOBManager &_blobmanager;
-
 			PayloadBlock* createTestBlock();
 		};
 	}

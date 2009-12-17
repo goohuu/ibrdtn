@@ -7,7 +7,6 @@
 
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/streams/BundleStreamWriter.h"
-#include "ibrcommon/data/BLOBManager.h"
 #include <iostream>
 
 using namespace std;
@@ -17,17 +16,12 @@ namespace dtn
 	namespace data
 	{
 		Block::Block(char blocktype)
-		 : _procflags(0), _blocktype(blocktype), _blobref(ibrcommon::BLOBManager::_instance.create())
+		 : _procflags(0), _blocktype(blocktype), _blobref(ibrcommon::StringBLOB::create())
 		{
 		}
 
-		Block::Block(char blocktype, ibrcommon::BLOBManager::BLOB_TYPE type)
-		 : _procflags(0), _blocktype(blocktype), _blobref(ibrcommon::BLOBManager::_instance.create(type))
-		{
-		}
-
-		Block::Block(char blocktype, ibrcommon::BLOBReference ref)
-		: _procflags(0), _blocktype(blocktype), _blobref(ref)
+		Block::Block(char blocktype, ibrcommon::BLOB::Reference blob)
+		 : _procflags(0), _blocktype(blocktype), _blobref(blob)
 		{
 		}
 
@@ -45,7 +39,7 @@ namespace dtn
 			return _eids;
 		}
 
-		ibrcommon::BLOBReference Block::getBLOBReference()
+		ibrcommon::BLOB::Reference Block::getBLOB()
 		{
 			return _blobref;
 		}
@@ -76,7 +70,11 @@ namespace dtn
 		{
 			size_t len = 0;
 			len += writeHeader( writer );
-			len += writer.write( _blobref );
+
+			ibrcommon::MutexLock l(_blobref);
+			(*_blobref).seekg(0);
+			len += writer.write( (*_blobref) );
+
 			return len;
 		}
 	}

@@ -25,7 +25,7 @@ namespace dtn
 				Bundle echo;
 
 				// make a copy of the payload block
-				PayloadBlock *payload_copy = new PayloadBlock(payload->getBLOBReference());
+				PayloadBlock *payload_copy = new PayloadBlock(payload->getBLOB());
 
 				// append to the bundle
 				echo.addBlock(payload_copy);

@@ -19,15 +19,15 @@ namespace testsuite
 			bool runAllTests();
 
 		private:
-			bool createTest();
-			bool copyTest();
-			bool instanceTest();
-			bool compareTest();
-			bool splitTest();
-			bool cutTest();
-			bool sliceTest();
-			bool mergeTest();
-			bool mergeBlockTest();
+//			bool createTest();
+//			bool copyTest();
+//			bool instanceTest();
+//			bool compareTest();
+//			bool splitTest();
+//			bool cutTest();
+//			bool sliceTest();
+//			bool mergeTest();
+//			bool mergeBlockTest();
 	};
 }
 }

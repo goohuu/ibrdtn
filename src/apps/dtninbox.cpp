@@ -13,7 +13,7 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOB.h"
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
@@ -95,7 +95,7 @@ int main(int argc, char** argv)
     // init working directory
     if (conf.find("workdir") != conf.end())
     {
-    	ibrcommon::BLOBManager::init(conf["workdir"]);
+    	ibrcommon::BLOB::tmppath = File(conf["workdir"]);
     }
 
     // backoff for reconnect
@@ -134,7 +134,7 @@ int main(int argc, char** argv)
             	client >> b;
 
             	// get the reference to the blob
-            	ibrcommon::BLOBReference ref = b.getData();
+            	ibrcommon::BLOB::Reference ref = b.getData();
 
                 // create the extract command
                 stringstream cmdstream; cmdstream << "tar -x -C " << conf["inbox"];
@@ -144,7 +144,7 @@ int main(int argc, char** argv)
                 ostream stream(&extractor);
 
                 // write the payload to the extractor
-                ref.read( stream );
+                ref.read( 0, stream );
 
                 // flush the stream
                 stream.flush();

@@ -11,7 +11,6 @@
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/SDNV.h"
-#include "ibrcommon/data/BLOBManager.h"
 #include "ibrdtn/data/Exceptions.h"
 
 #include "ibrdtn/streams/StreamDataSegment.h"

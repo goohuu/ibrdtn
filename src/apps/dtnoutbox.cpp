@@ -13,7 +13,7 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOB.h"
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
 
@@ -97,7 +97,7 @@ int main(int argc, char** argv)
     // init working directory
     if (conf.find("workdir") != conf.end())
     {
-    	ibrcommon::BLOBManager::init(conf["workdir"]);
+    	ibrcommon::BLOB::tmppath = File(conf["workdir"]);
     }
 
     // backoff for reconnect
@@ -173,10 +173,10 @@ int main(int argc, char** argv)
     			dtn::data::Bundle b;
 
             	// create a payloadblock
-    			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::BLOBManager::BLOB_HARDDISK);
+    			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::TmpFileBLOB::create());
 
     			// stream the content of "tar" to the payload block
-    			payload->getBLOBReference().write(0, stream);
+    			payload->getBLOB().write(0, stream);
 
     			// add the payload block to the bundle
     			b.addBlock(payload);

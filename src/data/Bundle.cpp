@@ -12,7 +12,6 @@
 #include "ibrdtn/streams/BundleStreamReader.h"
 #include "ibrdtn/streams/BundleStreamWriter.h"
 #include "ibrdtn/streams/BundleCopier.h"
-#include "ibrcommon/data/BLOBManager.h"
 
 namespace dtn
 {
@@ -213,7 +212,7 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b)
 		{
-			dtn::streams::BundleCopier copier(ibrcommon::BLOBManager::_instance, b);
+			dtn::streams::BundleCopier copier(b);
 			dtn::streams::BundleStreamReader reader(stream, copier);
 			reader.readBundle();
 

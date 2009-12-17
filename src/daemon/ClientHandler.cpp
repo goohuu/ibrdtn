@@ -6,7 +6,6 @@
  */
 
 #include "daemon/ClientHandler.h"
-#include "ibrcommon/data/BLOBManager.h"
 #include "core/EventSwitch.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"

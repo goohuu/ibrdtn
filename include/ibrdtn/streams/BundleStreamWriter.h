@@ -11,7 +11,7 @@
 #define BUNDLESTREAMWRITER_H_
 
 #include "ibrdtn/streams/BundleWriter.h"
-#include "ibrcommon/data/BLOBReference.h"
+#include "ibrcommon/data/BLOB.h"
 
 namespace dtn
 {
@@ -49,7 +49,6 @@ namespace dtn
 			size_t write(string value);
 			size_t write(istream &input);
 
-			size_t write(ibrcommon::BLOBReference &ref);
 			size_t write(const dtn::data::Bundle &b);
 
 		private:

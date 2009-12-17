@@ -8,8 +8,7 @@
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
 
-#include "ibrcommon/data/BLOBManager.h"
-#include "ibrcommon/data/BLOBReference.h"
+#include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/EID.h"

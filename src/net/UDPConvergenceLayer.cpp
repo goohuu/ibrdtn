@@ -6,7 +6,7 @@
 
 #include "ibrdtn/streams/BundleFactory.h"
 #include "ibrdtn/streams/BundleStreamReader.h"
-#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOB.h"
 
 #include "ibrdtn/utils/Utils.h"
 #include <sys/socket.h>
@@ -92,7 +92,7 @@ namespace dtn
 			{
 				// get the payload block
 				PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
-				size_t application_length = payload->getBLOBReference().getSize();
+				size_t application_length = payload->getBLOB().getSize();
 
 				// the new size for the payload
 				size_t payload_size = m_maxmsgsize;
@@ -104,7 +104,7 @@ namespace dtn
 				payload_size -= 20;
 
 				// split the payload block
-				pair<PayloadBlock*, PayloadBlock*> frags = utils::Utils::split(payload, payload_size);
+				pair<PayloadBlock*, PayloadBlock*> frags = payload->split(payload_size);
 
 				Bundle frag1 = b;
 				frag1.clearBlocks();
@@ -167,7 +167,7 @@ namespace dtn
 			{
 				// get the payload block
 				PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
-				size_t application_length = payload->getBLOBReference().getSize();
+				size_t application_length = payload->getBLOB().getSize();
 
 				// the new size for the payload
 				size_t payload_size = m_maxmsgsize;
@@ -179,7 +179,7 @@ namespace dtn
 				payload_size -= 20;
 
 				// split the payload block
-				pair<PayloadBlock*, PayloadBlock*> frags = utils::Utils::split(payload, payload_size);
+				pair<PayloadBlock*, PayloadBlock*> frags = payload->split(payload_size);
 
 				Bundle frag1 = b;
 				frag1.clearBlocks();

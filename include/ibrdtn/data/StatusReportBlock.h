@@ -12,7 +12,7 @@
 
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/EID.h"
-#include "ibrcommon/data/BLOBReference.h"
+#include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/DTNTime.h"
 
 namespace dtn
@@ -46,7 +46,7 @@ namespace dtn
 
 			StatusReportBlock();
 			StatusReportBlock(Block *block);
-			StatusReportBlock(ibrcommon::BLOBReference ref);
+			StatusReportBlock(ibrcommon::BLOB::Reference ref);
 			virtual ~StatusReportBlock();
 
 			void read();

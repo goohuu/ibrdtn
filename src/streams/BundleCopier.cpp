@@ -6,8 +6,7 @@
  */
 
 #include "ibrdtn/streams/BundleCopier.h"
-#include "ibrcommon/data/BLOBManager.h"
-#include "ibrcommon/data/BLOBReference.h"
+#include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/StatusReportBlock.h"
@@ -21,8 +20,8 @@ namespace dtn
 {
 	namespace streams
 	{
-		BundleCopier::BundleCopier(ibrcommon::BLOBManager &blobmanager, dtn::data::Bundle &b)
-		 : _blobmanager(blobmanager), _bundle(b), _block(NULL), _blockref(-1), _state(IDLE)
+		BundleCopier::BundleCopier(dtn::data::Bundle &b)
+		 : _bundle(b), _block(NULL), _blockref(-1), _state(IDLE)
 		{
 		}
 
@@ -222,12 +221,12 @@ namespace dtn
 				{
 					_state = ADM_BLOCK;
 					// we expecting a small block, so use memory based blocks
-					_block = new dtn::data::PayloadBlock( _blobmanager.create(ibrcommon::BLOBManager::BLOB_MEMORY) );
+					_block = new dtn::data::PayloadBlock( ibrcommon::StringBLOB::create() );
 				}
 				else
 				{
 					_state = PAYLOAD_BLOCK_HEADER;
-					_block = new dtn::data::PayloadBlock( _blobmanager.create() );
+					_block = new dtn::data::PayloadBlock( ibrcommon::TmpFileBLOB::create() );
 				}
 				break;
 
@@ -244,7 +243,7 @@ namespace dtn
 			if (_bundle._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
 			{
 				char type;
-				_block->getBLOBReference().read(&type, 0, 1);
+				(*_block->getBLOB()) >> type;
 
 				dtn::data::Block *block = NULL;
 
@@ -281,7 +280,10 @@ namespace dtn
 
 		void BundleCopier::dataBlob(char *data, size_t length)
 		{
-			_block->getBLOBReference().append(data, length);
+			ibrcommon::BLOB::Reference ref = _block->getBLOB();
+			ibrcommon::MutexLock l(ref);
+			(*ref).seekp(0, ios_base::end);
+			(*ref).write(data, length);
 		}
 
 		void BundleCopier::endBlob(size_t size)

@@ -1,6 +1,8 @@
 #include "ibrdtn/default.h"
 
-#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOB.h"
+#include "ibrcommon/data/File.h"
+
 #include "core/BundleCore.h"
 #include "core/BundleStorage.h"
 #include "core/SimpleBundleStorage.h"
@@ -79,8 +81,8 @@ void setGlobalVars(Configuration &config)
     cout << "Local node name: " << config.getNodename() << endl;
 
     try {
-        // assign a directory for blobs
-    	ibrcommon::BLOBManager::init(config.getPath("blob"));
+    	// new methods for blobs
+    	ibrcommon::BLOB::tmppath = config.getPath("blob");
     } catch (Configuration::ParameterNotSetException ex) {
 
     }
@@ -245,6 +247,7 @@ int main(int argc, char *argv[])
 	ibrcommon::slog << ibrcommon::SYSLOG_INFO << "shutdown dtn node" << endl;
 
 	if (ipnd != NULL) delete ipnd;
+	if (notifier != NULL) delete notifier;
 
 	// send shutdown signal to unbound threads
 	dtn::core::EventSwitch::raiseEvent(new dtn::core::GlobalEvent(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN));

@@ -12,8 +12,7 @@
 
 #include "ibrdtn/streams/BundleWriter.h"
 #include "ibrdtn/data/Block.h"
-#include "ibrcommon/data/BLOBManager.h"
-#include "ibrcommon/data/BLOBReference.h"
+#include "ibrcommon/data/BLOB.h"
 
 namespace dtn
 {
@@ -25,9 +24,10 @@ namespace dtn
 			static const unsigned char BLOCK_TYPE = 1;
 
 			PayloadBlock();
-			PayloadBlock(ibrcommon::BLOBManager::BLOB_TYPE type);
-			PayloadBlock(ibrcommon::BLOBReference ref);
+			PayloadBlock(ibrcommon::BLOB::Reference ref);
 			virtual ~PayloadBlock();
+
+			std::pair<PayloadBlock*, PayloadBlock*> split(size_t position);
 
 			virtual void read() {};
 			virtual void commit() {};

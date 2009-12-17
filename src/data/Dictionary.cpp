@@ -28,7 +28,7 @@ namespace data
 
 	void Dictionary::read(const char *data, size_t size)
 	{
-		_bytestream.clear();
+		_bytestream.str("");
 		_bytestream.write(data, size);
 	}
 

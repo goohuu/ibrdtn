@@ -7,7 +7,7 @@
 
 #include "ibrdtn/api/FileBundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrcommon/data/BLOBManager.h"
+#include "ibrcommon/data/BLOB.h"
 
 namespace dtn
 {
@@ -30,7 +30,7 @@ namespace dtn
 		void FileBundle::write(std::ostream &stream)
 		{
 			// create a reference out of the given file
-			ibrcommon::BLOBReference ref = ibrcommon::BLOBManager::_instance.create(_filename);
+			ibrcommon::BLOB::Reference ref = ibrcommon::FileBLOB::create(_filename);
 
 			// create a memory based payload block.
 			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ref);

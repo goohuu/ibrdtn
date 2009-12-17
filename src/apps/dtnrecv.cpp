@@ -30,7 +30,7 @@ void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
 	// write the data to output
 	if (stdout)
 	{
-		b.getData().read(cout);
+		b.getData().read(0, cout);
 	}
 	else
 	{
@@ -38,7 +38,7 @@ void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
 		cout << "Writing bundle payload to " << filename << endl;
 
 		fstream file(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
-		b.getData().read(file);
+		b.getData().read(0, file);
 		file.close();
 
 		cout << "finished" << endl;

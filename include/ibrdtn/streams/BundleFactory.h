@@ -12,7 +12,6 @@
 
 #include "ibrdtn/streams/BundleHandler.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrcommon/data/BLOBManager.h"
 
 namespace dtn
 {
@@ -21,7 +20,7 @@ namespace dtn
 		class BundleFactory : public BundleHandler
 		{
 		public:
-			BundleFactory(ibrcommon::BLOBManager &blobmanager);
+			BundleFactory();
 			virtual ~BundleFactory();
 
 			void beginBundle(char version);
@@ -39,7 +38,6 @@ namespace dtn
 			dtn::data::Bundle getBundle();
 
 		private:
-			ibrcommon::BLOBManager &_blobmanager;
 			ATTRIBUTES _next;
 			dtn::data::Bundle _bundle;
 			dtn::data::Block *_block;

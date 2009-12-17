@@ -11,6 +11,7 @@
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Bundle.h"
+#include "ibrcommon/data/BLOB.h"
 
 #include <iostream>
 #include <fstream>
@@ -130,7 +131,7 @@ namespace dtn
 			/**
 			 * Returns a reference to the data block of this bundle.
 			 */
-			ibrcommon::BLOBReference getData();
+			ibrcommon::BLOB::Reference getData();
 
 			dtn::data::EID getDestination();
 			dtn::data::EID getSource();

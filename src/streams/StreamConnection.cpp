@@ -6,7 +6,6 @@
  */
 
 #include "ibrdtn/streams/StreamConnection.h"
-#include "ibrcommon/data/BLOBManager.h"
 
 using namespace dtn::data;
 

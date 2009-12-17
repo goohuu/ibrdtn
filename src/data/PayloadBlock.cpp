@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/PayloadBlock.h"
+#include "ibrdtn/data/Exceptions.h"
 
 namespace dtn
 {
@@ -16,18 +17,18 @@ namespace dtn
 		{
 		}
 
-		PayloadBlock::PayloadBlock(ibrcommon::BLOBManager::BLOB_TYPE type)
-		 : Block(PayloadBlock::BLOCK_TYPE, type)
-		{
-		}
-
-		PayloadBlock::PayloadBlock(ibrcommon::BLOBReference ref)
+		PayloadBlock::PayloadBlock(ibrcommon::BLOB::Reference ref)
 		 : Block(PayloadBlock::BLOCK_TYPE, ref)
 		{
 		}
 
 		PayloadBlock::~PayloadBlock()
 		{
+		}
+
+		std::pair<PayloadBlock*, PayloadBlock*> PayloadBlock::split(size_t position)
+		{
+			throw dtn::exceptions::NotImplementedException("Fragmentation is not supported.");
 		}
 	}
 }

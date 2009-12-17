@@ -157,9 +157,9 @@ class TUN2BundleGateway : public dtn::api::Client
 		 */
 		void received(dtn::api::Bundle &b)
 		{
-			ibrcommon::BLOBReference ref = b.getData();
+			ibrcommon::BLOB::Reference ref = b.getData();
 			char data[65536];
-			size_t ret = ref.read(data, 0, sizeof(data));
+			size_t ret = (*ref).readsome(data, sizeof(data));
 			::write(_fd, data, ret);
 		}
 
@@ -225,13 +225,15 @@ int main(int argc, char *argv[])
 
 		dtn::data::Bundle b;
 		b._destination = dtn::data::EID(argv[4]);
-		dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::BLOBManager::BLOB_MEMORY);
+
+		dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::StringBLOB::create());
 
 		// add the payload block to the bundle
 		b.addBlock(payload);
 
 		// add the data
-		payload->getBLOBReference().append(data, ret);
+		ibrcommon::BLOB::Reference ref = payload->getBLOB();
+		(*ref).write(data, ret);
 
 		// transmit the packet
 		gateway << b;
