@@ -21,6 +21,7 @@ namespace dtn
 				virtual void signalAvailable(const Node &n) {};
 				virtual void signalUnavailable(const Node &n) {};
 				virtual void signalTimeTick(size_t timestamp) {};
+				virtual void signalBundleStored(const Bundle &b) {};
 
 			private:
 				list<StaticRoute> m_routes;

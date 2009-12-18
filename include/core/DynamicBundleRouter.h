@@ -34,6 +34,7 @@ namespace dtn
 			virtual void signalAvailable(const Node &n);
 			virtual void signalUnavailable(const Node &n);
 			virtual void signalTimeTick(size_t timestamp);
+			virtual void signalBundleStored(const Bundle &b);
 
 		private:
 			std::map<dtn::data::EID, std::queue<dtn::data::BundleID> > _stored_bundles;

@@ -43,6 +43,19 @@ namespace dtn
 
 		void DynamicBundleRouter::signalUnavailable(const Node &n)
 		{
+			// TODO: remove the node from the available queue
+		}
+
+		void DynamicBundleRouter::signalBundleStored(const Bundle &b)
+		{
+			// get the destination node
+			dtn::data::EID dest = b._destination.getNodeEID();
+
+			// get the queue for this destination
+			std::queue<dtn::data::BundleID> &q = _stored_bundles[dest];
+
+			// remember the bundle id for later delivery
+			q.push( BundleID(b) );
 		}
 
 		void DynamicBundleRouter::route(const dtn::data::Bundle &b)
@@ -53,26 +66,14 @@ namespace dtn
 				// No route available, put the bundle into the storage for later delivery
 				_storage.store(b);
 
-				// get the destination node
-				dtn::data::EID dest = b._destination.getNodeEID();
-
-				// get the queue for this destination
-				std::queue<dtn::data::BundleID> &q = _stored_bundles[dest];
-
-				// remember the bundle id for later delivery
-				q.push( BundleID(b) );
+				// signal the stored bundle
+				signalBundleStored(b);
 			} catch (dtn::net::ConnectionNotAvailableException ex) {
 				// Connection not available, put it into the storage for later delivery
 				_storage.store(b);
 
-				// get the destination node
-				dtn::data::EID dest = b._destination.getNodeEID();
-
-				// get the queue for this destination
-				std::queue<dtn::data::BundleID> &q = _stored_bundles[dest];
-
-				// remember the bundle id for later delivery
-				q.push( BundleID(b) );
+				// signal the stored bundle
+				signalBundleStored(b);
 			}
 		}
 

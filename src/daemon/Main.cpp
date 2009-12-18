@@ -117,7 +117,6 @@ int main(int argc, char *argv[])
 
         try {
         	notifier = new dtn::daemon::Notifier( conf.getNotifyCommand() );
-        	notifier->notify("IBR-DTN", "daemon is getting ready");
         } catch (Configuration::ParameterNotSetException ex) {
 
         }

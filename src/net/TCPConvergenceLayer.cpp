@@ -281,42 +281,38 @@ namespace dtn
 		{
 			if (n.getProtocol() != TCP_CONNECTION) return NULL;
 
-			_connection_lock.enter();
-			std::list<TCPConnection*>::iterator iter = _connections.begin();
+			// Lock the connection in this section
+			{
+				ibrcommon::MutexLock l(_connection_lock);
 
-			EID node_eid(n.getURI());
+				std::list<TCPConnection*>::iterator iter = _connections.begin();
+
+				EID node_eid(n.getURI());
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "search for '" << node_eid.getString() << "' in active connections" << endl;
+				cout << "search for '" << node_eid.getString() << "' in active connections" << endl;
 #endif
 
-			while (iter != _connections.end())
-			{
-				if ( (*iter)->isConnected() )
+				while (iter != _connections.end())
 				{
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-					cout << "check node '" << (*iter)->getNode().getURI() << "'" << endl;
-#endif
-					EID eid((*iter)->getNode().getURI());
-
-					if (eid == node_eid)
+					if ( (*iter)->isConnected() )
 					{
-						break;
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+						cout << "check node '" << (*iter)->getNode().getURI() << "'" << endl;
+#endif
+						EID eid((*iter)->getNode().getURI());
+
+						if (eid == node_eid)
+						{
+							if ( (*iter)->good() )
+							{
+								return (*iter);
+							}
+						}
 					}
+
+					iter++;
 				}
-
-				iter++;
-			}
-			_connection_lock.leave();
-
-			if (iter == _connections.end())
-			{
-				return openConnection(n);
-			}
-
-			if ( (*iter)->good() )
-			{
-				return (*iter);
 			}
 
 			return openConnection(n);
