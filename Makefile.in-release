@@ -11,7 +11,7 @@ exec_prefix=@exec_prefix@
 SVNDEF := -D'SVN_REV="$(shell cat REVISION)"'
 
 # 64bit fix
-CFLAGS += -fPIC -O3 $(SVNDEF) @CXXFLAGS@
+CFLAGS += -fPIC $(SVNDEF) @CXXFLAGS@
 
 # all libraries needed
 IBRCOMMON_LIB_PATH = @srcdir@/ibrcommon/ibrcommon/.libs
