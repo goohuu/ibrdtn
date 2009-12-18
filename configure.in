@@ -91,12 +91,11 @@ dnl debugging switches
 dnl -----------------------------------------------
 
 AC_ARG_ENABLE([debug],
+	[AC_HELP_STRING([--enable-debug], [enable extra debugging output [default=no]])],
 	[
-		AC_HELP_STRING([--enable-debug], [enable extra debugging output [default=no]])
+		AC_DEFINE([DO_DEBUG_OUTPUT], [], [Define to enable extra debugging output.])
 		CXXFLAGS="$CXXFLAGS -ggdb"
-	],
-	[AC_DEFINE([DO_DEBUG_OUTPUT], [], [Define to enable extra debugging output.])],
-	[
+	], [
 		CXXFLAGS="$CXXFLAGS -O3"
 	])
 	
