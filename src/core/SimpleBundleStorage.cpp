@@ -173,10 +173,9 @@ namespace dtn
 			while (_running)
 			{
 				list<dtn::data::BundleID> expired;
-				list<dtn::data::Bundle>::const_iterator iter = _bundles.begin();
 
 				// seek for expired bundles
-				while (iter != _bundles.end())
+				for (list<dtn::data::Bundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 				{
 					const dtn::data::Bundle &bundle = (*iter);
 
@@ -184,17 +183,13 @@ namespace dtn
 					{
 						expired.push_back( BundleID(bundle) );
 					}
-
-					iter++;
 				}
 
 				// remove the expired bundles
-				list<dtn::data::BundleID>::const_iterator e_iter = expired.begin();
-				while (e_iter != expired.end())
+				for (list<dtn::data::BundleID>::const_iterator iter = expired.begin(); iter != expired.end(); iter++)
 				{
 					remove( *iter );
 					ibrcommon::slog << ibrcommon::SYSLOG_INFO << "bundle " << (*iter).toString() << " has been expired and removed" << endl;
-					e_iter++;
 				}
 
 				yield();
