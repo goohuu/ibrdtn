@@ -1,5 +1,12 @@
 #!/bin/bash
 #
+# This script makes cross-compiling very easy. Follow these three steps:
+#
+# 1: ./cross <DEST-ARCH> <LOCAL-ARCH>
+#    e.g. ./cross arm-linux-gnu i686-linux-gnu
+# 2: ./cross configure
+# 3: ./cross compile
+#
 
 # get architecture
 if [ -e ".cross-arch" ]; then
