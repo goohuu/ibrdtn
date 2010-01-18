@@ -146,7 +146,7 @@ uninstall-lib:
 	rm -rf ${exec_prefix}/lib/libibrdtn-*.so
 
 # install all development files for the IBR-DTN
-install-dev: install-common-dev install-lib
+install-dev: install-lib
 	mkdir -p @includedir@/ibrdtn
 	cp -R @srcdir@/include/ibrdtn/api @includedir@/ibrdtn/api
 	cp -R @srcdir@/include/ibrdtn/data @includedir@/ibrdtn/data
@@ -164,10 +164,6 @@ ibrcommon:
 install-common:
 	make -C ibrcommon install
 
-# install the development files of the IBR Common C++ Library	
-install-common-dev:
-	make -C ibrcommon install-dev
-	
 # uninstall the IBR Common C++ Library
 uninstall-common:
 	make -C ibrcommon uninstall
