@@ -10,8 +10,7 @@
 #include "ibrcommon/net/tcpclient.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
-
-#include <time.h>
+#include "ibrcommon/TimeMeasurement.h"
 
 #include <iostream>
 
@@ -59,19 +58,6 @@ class EchoClient : public dtn::api::Client
 			flush();
 		}
 };
-
-
-int64_t timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
-{
-  return ((timeA_p->tv_sec * 1000000000) + timeA_p->tv_nsec) -
-           ((timeB_p->tv_sec * 1000000000) + timeB_p->tv_nsec);
-}
-
-double Round(double Zahl, int Stellen)
-{
-    double v[] = { 1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8 };
-    return floor(Zahl * v[Stellen] + 0.5) / v[Stellen];
-}
 
 void print_help()
 {
@@ -142,7 +128,7 @@ int main(int argc, char *argv[])
 	// the last parameter is always the destination
 	ping_destination = argv[argc - 1];
 
-	struct timespec start, end;
+	ibrcommon::TimeMeasurement tm;
 
 	try {
 		// Create a stream to the server using TCP.
@@ -164,7 +150,7 @@ int main(int argc, char *argv[])
 				cout << "ECHO: " << addr.getNodeEID() << " ..."; cout.flush();
 
 				// set sending time
-				clock_gettime(CLOCK_MONOTONIC, &start);
+				tm.start();
 
 				// Call out a ECHO
 				client.echo( addr, ping_size );
@@ -174,36 +160,11 @@ int main(int argc, char *argv[])
 					// Get the echo reply. This method blocks
 					dtn::api::Bundle relpy = client.reply();
 
-					//We are DOOOOMED
-					//http://www.wand.net.nz/~smr26/wordpress/2009/01/19/monotonic-time-in-mac-os-x/
 					// set receiving time
-					clock_gettime(CLOCK_MONOTONIC, &end);
+					tm.stop();
 
-					// calc difference
-					uint64_t timeElapsed = timespecDiff(&end, &start);
-
-					// make it readable
-					double delay_ms = (double)timeElapsed / 1000000;
-					double delay_sec = delay_ms / 1000;
-					double delay_min = delay_sec / 60;
-					double delay_h = delay_min / 60;
-
-					if (delay_h > 1)
-					{
-						cout << " " << Round(delay_h, 2) << " h" << endl;
-					}
-					else if (delay_min > 1)
-					{
-						cout << " " << Round(delay_min, 2) << " m" << endl;
-					}
-					else if (delay_sec > 1)
-					{
-						cout << " " << Round(delay_sec, 2) << " s." << endl;
-					}
-					else
-					{
-						cout << " " << Round(delay_ms, 2) << " ms" << endl;
-					}
+					// print out measurement result
+					cout << tm << endl;
 				}
 				else
 					cout << endl;
