@@ -152,7 +152,7 @@ namespace dtn
 				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
 
 				// print out throughput
-				cout << "transfer completed after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s";
+				cout << "transfer completed after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
 #endif
 			} catch (BundleConnection::ConnectionInterruptedException ex) {
 				m.stop();
@@ -161,7 +161,7 @@ namespace dtn
 				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
 
 				// print out throughput
-				cout << "transfer interrupted after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s";
+				cout << "transfer interrupted after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
 #endif
 				// TODO: the connection has been interrupted => create a fragment
 
@@ -172,7 +172,7 @@ namespace dtn
 				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
 
 				// print out throughput
-				cout << "connection terminated after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s";
+				cout << "connection terminated after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
 #endif
 				// the connection has been terminated and fragmentation is not possible => requeue the bundle
 

@@ -36,10 +36,13 @@ class EchoClient : public dtn::api::Client
 			return b;
 		}
 
-		void echo(EID destination, int size)
+		void echo(EID destination, int size, int lifetime)
 		{
 			// create a bundle
 			dtn::api::StringBundle b(destination);
+
+			// set lifetime
+			b.setLifetime(lifetime);
 
 			char data[size];
 			for (int i = 0; i < size; i++)
@@ -70,6 +73,7 @@ void print_help()
 	cout << " --nowait        do not wait for a reply" << endl;
 	cout << " --size          the size of the payload" << endl;
 	cout << " --count X       send X echo in a row" << endl;
+	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 30" << endl;
 
 }
 
@@ -78,6 +82,7 @@ int main(int argc, char *argv[])
 	string ping_destination = "dtn://local/echo";
 	string ping_source = "echo-client";
 	int ping_size = 64;
+	unsigned int lifetime = 30;
 	bool wait_for_reply = true;
 	size_t count = 1;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
@@ -123,6 +128,12 @@ int main(int argc, char *argv[])
 			str_count.str( argv[i + 1] );
 			str_count >> count;
 		}
+
+		if (arg == "--lifetime" && argc > i)
+		{
+			stringstream data; data << argv[i + 1];
+			data >> lifetime;
+		}
 	}
 
 	// the last parameter is always the destination
@@ -153,7 +164,7 @@ int main(int argc, char *argv[])
 				tm.start();
 
 				// Call out a ECHO
-				client.echo( addr, ping_size );
+				client.echo( addr, ping_size, lifetime );
 
 				if (wait_for_reply)
 				{
