@@ -118,6 +118,8 @@ namespace dtn
 
 			} catch (dtn::exceptions::InvalidBundleData ex) {
 
+			} catch (dtn::exceptions::InvalidDataException ex) {
+
 			}
 
 			shutdown();
