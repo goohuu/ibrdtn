@@ -148,10 +148,10 @@ uninstall-lib:
 # install all development files for the IBR-DTN
 install-dev: install-lib
 	mkdir -p @includedir@/ibrdtn
-	cp -R @srcdir@/include/ibrdtn/api @includedir@/ibrdtn/api
-	cp -R @srcdir@/include/ibrdtn/data @includedir@/ibrdtn/data
-	cp -R @srcdir@/include/ibrdtn/streams @includedir@/ibrdtn/streams
-	cp -R @srcdir@/include/ibrdtn/utils @includedir@/ibrdtn/utils
+	cp -R @srcdir@/include/ibrdtn/api @includedir@/ibrdtn
+	cp -R @srcdir@/include/ibrdtn/data @includedir@/ibrdtn
+	cp -R @srcdir@/include/ibrdtn/streams @includedir@/ibrdtn
+	cp -R @srcdir@/include/ibrdtn/utils @includedir@/ibrdtn
 	cp @srcdir@/include/ibrdtn/config.h @includedir@/ibrdtn
 	cp @srcdir@/include/ibrdtn/default.h @includedir@/ibrdtn
 
