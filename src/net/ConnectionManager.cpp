@@ -13,6 +13,8 @@
 #include "core/RouteEvent.h"
 #include "core/BundleEvent.h"
 #include "ibrcommon/net/tcpserver.h"
+#include "ibrcommon/TimeMeasurement.h"
+#include "ibrcommon/Math.h"
 #include "core/BundleCore.h"
 
 using namespace dtn::core;
@@ -139,19 +141,47 @@ namespace dtn
 		{
 			BundleConnection *conn = getConnection(eid);
 
+			ibrcommon::TimeMeasurement m;
+			m.start();
+
 			try {
-                            conn->write(b);
-                        } catch (BundleConnection::ConnectionInterruptedException ex) {
-                            // TODO: the connection has been interrupted => create a fragment
+				conn->write(b);
+				m.stop();
+#ifdef DO_DEBUG_OUTPUT
+				// get throughput
+				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
+
+				// print out throughput
+				cout << "transfer completed after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s";
+#endif
+			} catch (BundleConnection::ConnectionInterruptedException ex) {
+				m.stop();
+#ifdef DO_DEBUG_OUTPUT
+				// get throughput
+				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
+
+				// print out throughput
+				cout << "transfer interrupted after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s";
+#endif
+				// TODO: the connection has been interrupted => create a fragment
 
 			} catch (dtn::exceptions::IOException ex) {
-                            // the connection has been terminated and fragmentation is not possible => requeue the bundle
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-                            cout << "the connection has been terminated and fragmentation is not possible => requeue the bundle" << endl;
-                            cout << "Exception: " << ex.what() << endl;
+				m.stop();
+#ifdef DO_DEBUG_OUTPUT
+				// get throughput
+				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
+
+				// print out throughput
+				cout << "connection terminated after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s";
 #endif
-                            EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
-                            EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
+				// the connection has been terminated and fragmentation is not possible => requeue the bundle
+
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+				cout << "fragmentation is not possible => requeue the bundle" << endl;
+				cout << "Exception: " << ex.what() << endl;
+#endif
+				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
+				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
 			}
 		}
 
