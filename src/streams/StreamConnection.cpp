@@ -261,31 +261,31 @@ namespace dtn
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 				cout << "Connection timed out" << endl;
 #endif
-                                if (getState() < CONNECTION_SHUTDOWN)
-                                {
-                                    // we received a shutdown request
-                                    setState(CONNECTION_SHUTDOWN);
+				if (getState() < CONNECTION_SHUTDOWN)
+				{
+					// we received a shutdown request
+					setState(CONNECTION_SHUTDOWN);
 
-                                    // reply with a shutdown
-                                    (*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT); flush();
+					// reply with a shutdown
+					(*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT); flush();
 
-                                    // return true, to reset the timer
-                                    return true;
-                                }
-                                else
-                                {
-                                    // and close the connection
-                                    _buf.shutdown();
+					// return true, to reset the timer
+					return true;
+				}
+				else
+				{
+					// and close the connection
+					_buf.shutdown();
 
-                                    // connection closed
-                                    setState(CONNECTION_CLOSED);
+					// connection closed
+					setState(CONNECTION_CLOSED);
 
-                                    // call the shutdown method of the derived class
-                                    shutdown();
+					// call the shutdown method of the derived class
+					shutdown();
 
-                                    // return false to stop the timer
-                                    return false;
-                                }
+					// return false to stop the timer
+					return false;
+				}
 			}
 		}
 	}
