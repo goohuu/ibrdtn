@@ -47,7 +47,9 @@ namespace dtn
 			} catch (dtn::api::ConnectionException ex) {
 				_client.shutdown();
 			} catch (dtn::exceptions::IOException ex) {
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
 				cout << ex.what() << endl;
+#endif
 				_client.shutdown();
 			}
 

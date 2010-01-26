@@ -147,38 +147,28 @@ namespace dtn
 			try {
 				conn->write(b);
 				m.stop();
-#ifdef DO_DEBUG_OUTPUT
 				// get throughput
 				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
 
 				// print out throughput
-				cout << "transfer completed after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
-#endif
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer completed after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
 			} catch (BundleConnection::ConnectionInterruptedException ex) {
 				m.stop();
-#ifdef DO_DEBUG_OUTPUT
 				// get throughput
-				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
+				double kbytes_per_second = (ex.getLastAck() / m.getSeconds()) / 1024;
 
 				// print out throughput
-				cout << "transfer interrupted after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
-#endif
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer interrupted after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
+
 				// TODO: the connection has been interrupted => create a fragment
 
 			} catch (dtn::exceptions::IOException ex) {
 				m.stop();
-#ifdef DO_DEBUG_OUTPUT
-				// get throughput
-				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
-
-				// print out throughput
-				cout << "connection terminated after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
-#endif
 				// the connection has been terminated and fragmentation is not possible => requeue the bundle
 
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-				cout << "fragmentation is not possible => requeue the bundle" << endl;
-				cout << "Exception: " << ex.what() << endl;
+#ifdef DO_DEBUG_OUTPUT
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "fragmentation is not possible => requeue the bundle" << endl;
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "Exception: " << ex.what() << endl;
 #endif
 				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
 				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
