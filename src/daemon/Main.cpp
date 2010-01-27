@@ -21,6 +21,7 @@
 #include "daemon/Configuration.h"
 #include "daemon/EchoWorker.h"
 #include "daemon/Notifier.h"
+#include "daemon/DevNull.h"
 #include "net/IPNDAgent.h"
 
 #include "ibrdtn/utils/Utils.h"
@@ -201,6 +202,9 @@ int main(int argc, char *argv[])
 
 	// add echo module
 	EchoWorker echo;
+
+	// add DevNull module
+	DevNull devnull;
 
 	// start the services
 	storage.start();
