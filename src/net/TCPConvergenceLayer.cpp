@@ -155,6 +155,11 @@ namespace dtn
 			return _connected;
 		}
 
+		bool TCPConvergenceLayer::TCPConnection::isBusy() const
+		{
+			return _busy;
+		}
+
 		void TCPConvergenceLayer::TCPConnection::read(dtn::data::Bundle &bundle)
 		{
 			static ibrcommon::Mutex mutex;
@@ -173,7 +178,7 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::write(const dtn::data::Bundle &bundle)
 		{
 			static ibrcommon::Mutex mutex;
-			ibrcommon::MutexLock l(mutex);
+			ibrcommon::IndicatingLock l(mutex, _busy);
 
 			(*this) << bundle; flush();
 

@@ -61,6 +61,7 @@ namespace dtn
 				void embalm();
 
 				bool isConnected();
+				bool isBusy() const;
 
 			private:
 				TCPConvergenceLayer &_cl;
@@ -70,6 +71,7 @@ namespace dtn
 				dtn::streams::StreamContactHeader _out_header;
 				dtn::streams::StreamContactHeader _in_header;
 				bool _connected;
+				bool _busy;
 			};
 
 			/**

@@ -40,7 +40,7 @@ namespace dtn
                         ConnectionInterruptedException(size_t last_ack = 0) : dtn::exceptions::IOException("The connection has been interrupted."), _last_ack(last_ack)
                         {
                         }
-                        
+
                         size_t getLastAck()
                         {
                             return _last_ack;
@@ -59,6 +59,7 @@ namespace dtn
 			virtual void shutdown();
 
 			void waitFor();
+			virtual bool isBusy() const { return false; }
 
 		private:
 			BundleReceiver _receiver;

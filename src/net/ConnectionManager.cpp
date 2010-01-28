@@ -141,6 +141,16 @@ namespace dtn
 		{
 			BundleConnection *conn = getConnection(eid);
 
+//			if (conn->isBusy())
+//			{
+//#ifdef DO_DEBUG_OUTPUT
+//				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "requeue bundle cause of busy connection" << endl;
+//#endif
+//				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
+//				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
+//				return;
+//			}
+
 			ibrcommon::TimeMeasurement m;
 			m.start();
 
