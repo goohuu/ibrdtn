@@ -12,6 +12,7 @@
 #include "ibrdtn/data/Exceptions.h"
 #include "core/Event.h"
 #include "core/EventReceiver.h"
+#include "ibrcommon/thread/Thread.h"
 
 using namespace dtn::exceptions;
 
@@ -37,26 +38,28 @@ namespace dtn
 
 	namespace core
 	{
-		class EventSwitch
+		class EventSwitch : public ibrcommon::JoinableThread
 		{
 		private:
 			EventSwitch();
 			virtual ~EventSwitch();
 			static EventSwitch& getInstance();
 
-			map<string,list<EventReceiver*> > m_list;
-			queue<Event*> m_queue;
-			ibrcommon::Mutex m_queuelock;
-
-			void direct(const Event *evt);
+			ibrcommon::Mutex _receiverlock;
+			map<string,list<EventReceiver*> > _list;
+			queue<Event*> _queue;
+			ibrcommon::Conditional _cond_queue;
+			bool _running;
 
 			const list<EventReceiver*>& getReceivers(string eventName) const;
-			list<EventReceiver*>& getReceivers(string eventName);
+		protected:
+			void run();
 
 		public:
 			static void registerEventReceiver(string eventName, EventReceiver *receiver);
 			static void unregisterEventReceiver(string eventName, EventReceiver *receiver);
 			static void raiseEvent(Event *evt);
+			static void stop();
 		};
 	}
 }

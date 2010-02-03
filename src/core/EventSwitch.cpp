@@ -16,31 +16,70 @@ namespace dtn
 	namespace core
 	{
 		EventSwitch::EventSwitch()
+		 : _running(false)
 		{
 
 		}
 
 		EventSwitch::~EventSwitch()
 		{
+			{
+				ibrcommon::MutexLock l(_cond_queue);
+				_running = false;
+				_cond_queue.signal(true);
+			}
+			join();
+
+			// cleanup queue
+			while (!_queue.empty())
+			{
+				Event *evt = _queue.front();
+				_queue.pop();
+				delete evt;
+			}
+		}
+
+		void EventSwitch::run()
+		{
+			while (_running)
+			{
+				Event *evt = NULL;
+
+				{
+					ibrcommon::MutexLock l(_cond_queue);
+					if (_queue.empty()) _cond_queue.wait();
+					if (!_running) return;
+
+					// get item out of the queue
+					evt = _queue.front();
+					_queue.pop();
+				}
+
+				try {
+					// get the list for this event
+					const list<EventReceiver*> receivers = getReceivers(evt->getName());
+
+					for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
+					{
+						(*iter)->raiseEvent(evt);
+					}
+				} catch (NoReceiverFoundException ex) {
+					// No receiver available!
+				}
+
+				// delete the event
+				delete evt;
+
+				// spend some extra time
+				yield();
+			}
 		}
 
 		const list<EventReceiver*>& EventSwitch::getReceivers(string eventName) const
 		{
-			map<string,list<EventReceiver*> >::const_iterator iter = m_list.find(eventName);
+			map<string,list<EventReceiver*> >::const_iterator iter = _list.find(eventName);
 
-			if (iter == m_list.end())
-			{
-				throw NoReceiverFoundException();
-			}
-
-			return iter->second;
-		}
-
-		list<EventReceiver*>& EventSwitch::getReceivers(string eventName)
-		{
-			map<string,list<EventReceiver*> >::iterator iter = m_list.find(eventName);
-
-			if (iter == m_list.end())
+			if (iter == _list.end())
 			{
 				throw NoReceiverFoundException();
 			}
@@ -52,59 +91,44 @@ namespace dtn
 		{
 			// get the list for this event
 			EventSwitch &s = EventSwitch::getInstance();
-
-			try {
-				list<EventReceiver*> &receivers = s.getReceivers(eventName);
-				receivers.push_back(receiver);
-			} catch (NoReceiverFoundException ex) {
-				list<EventReceiver*> receivers;
-				receivers.push_back(receiver);
-				s.m_list[eventName] = receivers;
-			}
+			ibrcommon::MutexLock l(s._receiverlock);
+			s._list[eventName].push_back(receiver);
 		}
 
 		void EventSwitch::unregisterEventReceiver(string eventName, EventReceiver *receiver)
 		{
 			// get the list for this event
 			EventSwitch &s = EventSwitch::getInstance();
-
-			try {
-				list<EventReceiver*> &receivers = s.getReceivers(eventName);
-				receivers.remove( receiver );
-			} catch (NoReceiverFoundException ex) {
-			}
+			ibrcommon::MutexLock l(s._receiverlock);
+			s._list[eventName].remove( receiver );
 		}
 
 		void EventSwitch::raiseEvent(Event *evt)
 		{
 			EventSwitch &s = EventSwitch::getInstance();
 
-			s.direct(evt);
-			delete evt;
-		}
+			ibrcommon::MutexLock l(s._cond_queue);
 
-		void EventSwitch::direct(const Event *evt)
-		{
-			try {
-				// get the list for this event
-				const list<EventReceiver*> receivers = getReceivers(evt->getName());
-				list<EventReceiver*>::const_iterator iter = receivers.begin();
-
-				while (iter != receivers.end())
-				{
-					(*iter)->raiseEvent(evt);
-					iter++;
-				}
-			} catch (NoReceiverFoundException ex) {
-				// No receiver available!
-			}
+			s._queue.push(evt);
+			s._cond_queue.signal(true);
 		}
 
 		EventSwitch& EventSwitch::getInstance()
 		{
 			static EventSwitch instance;
-			//if (!instance.isRunning()) instance.start();
+			if (!instance._running)
+			{
+				instance._running = true;
+				instance.start();
+			}
 			return instance;
+		}
+
+		void EventSwitch::stop()
+		{
+			EventSwitch &s = EventSwitch::getInstance();
+			s._running = false;
+			s.join();
 		}
 	}
 }

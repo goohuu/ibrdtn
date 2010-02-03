@@ -62,7 +62,7 @@ namespace dtn
 
 			if 	( isLocal( b ) )
 			{
-				// if a bundle is local, store it for later querys
+				// if a bundle is local, store it for later queries
 				_storage.store(b);
 				return;
 			}

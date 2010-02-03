@@ -255,5 +255,8 @@ int main(int argc, char *argv[])
 	// send shutdown signal to unbound threads
 	dtn::core::EventSwitch::raiseEvent(new dtn::core::GlobalEvent(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN));
 
+	// stop the event switch
+	dtn::core::EventSwitch::stop();
+
 	return 0;
 };

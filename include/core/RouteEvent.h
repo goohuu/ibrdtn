@@ -43,7 +43,7 @@ namespace dtn
 			static const string className;
 
 		private:
-			const Bundle &m_bundle;
+			const Bundle m_bundle;
 			const EventRouteAction m_action;
 		};
 	}
