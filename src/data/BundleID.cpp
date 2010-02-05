@@ -12,13 +12,14 @@ namespace dtn
 {
 	namespace data
 	{
-		BundleID::BundleID(EID source, size_t timestamp, size_t sequencenumber)
-		: _source(source), _timestamp(timestamp), _sequencenumber(sequencenumber)
+		BundleID::BundleID(EID source, size_t timestamp, size_t sequencenumber, bool fragment, size_t offset)
+		: _source(source), _timestamp(timestamp), _sequencenumber(sequencenumber), _fragment(fragment), _offset(offset)
 		{
 		}
 
 		BundleID::BundleID(const dtn::data::Bundle &b)
-		: _source(b._source), _timestamp(b._timestamp), _sequencenumber(b._sequencenumber)
+		: _source(b._source), _timestamp(b._timestamp), _sequencenumber(b._sequencenumber),
+		_fragment(b._procflags & dtn::data::Bundle::FRAGMENT), _offset(b._fragmentoffset)
 		{
 		}
 
@@ -31,6 +32,12 @@ namespace dtn
 			if (other._source < _source) return true;
 			if (other._timestamp < _timestamp) return true;
 			if (other._sequencenumber < _sequencenumber) return true;
+
+			if (_fragment)
+			{
+				if (other._offset < _offset) return true;
+			}
+
 			return false;
 		}
 
@@ -39,6 +46,12 @@ namespace dtn
 			if (other._source > _source) return true;
 			if (other._timestamp > _timestamp) return true;
 			if (other._sequencenumber > _sequencenumber) return true;
+
+			if (_fragment)
+			{
+				if (other._offset > _offset) return true;
+			}
+
 			return false;
 		}
 
@@ -47,13 +60,27 @@ namespace dtn
 			if (other._timestamp != _timestamp) return false;
 			if (other._sequencenumber != _sequencenumber) return false;
 			if (other._source != _source) return false;
+
+			if (_fragment)
+			{
+				if (other._offset != _offset) return false;
+			}
+
 			return true;
 		}
 
 		string BundleID::toString() const
 		{
 			stringstream ss;
-			ss << "[" << _timestamp << "." << _sequencenumber << "] " << _source.getString();
+			ss << "[" << _timestamp << "." << _sequencenumber;
+
+			if (_fragment)
+			{
+				ss << "." << _offset;
+			}
+
+			ss << "] " << _source.getString();
+
 			return ss.str();
 		}
 	}

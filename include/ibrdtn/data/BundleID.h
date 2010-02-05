@@ -20,7 +20,7 @@ namespace dtn
 		{
 		public:
 			BundleID(const dtn::data::Bundle &b);
-			BundleID(EID source, size_t timestamp, size_t sequencenumber);
+			BundleID(EID source, size_t timestamp, size_t sequencenumber, bool fragment = false, size_t offset = 0);
 			virtual ~BundleID();
 
 			bool operator==(const BundleID& other) const;
@@ -33,6 +33,9 @@ namespace dtn
 			dtn::data::EID _source;
 			size_t _timestamp;
 			size_t _sequencenumber;
+
+			bool _fragment;
+			size_t _offset;
 		};
 	}
 }
