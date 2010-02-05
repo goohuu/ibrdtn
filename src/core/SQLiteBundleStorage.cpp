@@ -22,14 +22,17 @@
 namespace dtn {
 namespace core {
 
-	SQLiteBundleStorage::SQLiteBundleStorage(string dbPath ,string dbFile , int size):
+	SQLiteBundleStorage::SQLiteBundleStorage(ibrcommon::File dbPath ,string dbFile , int size):
 			dbPath(dbPath), dbFile(dbFile), dbSize(size), _BundleTable("Bundles"), global_shutdown(false), _FragmentTable("Fragments"){
 		int err,filename , err2;
 		list<int> inconsistentList;
 		list<int>::iterator it;
 
+		// create database file
+		ibrcommon::File db = dbPath.get(dbFile);
+
 		//open the database
-		err = sqlite3_open_v2((dbPath+"/"+dbFile).c_str(),&database,SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
+		err = sqlite3_open_v2(db.getPath().c_str(),&database,SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL);
 		if (err){
 			std::cerr << "Can't open database: " << sqlite3_errmsg(database);
 			sqlite3_close(database);
@@ -57,9 +60,10 @@ namespace core {
 		stringstream name;
 		for(int i = sqlite3_step(conistencycheck); i == SQLITE_ROW; i=sqlite3_step(conistencycheck)){
 			filename = sqlite3_column_int(conistencycheck,0);
-			stringstream name;
-			name << dbPath << "/"<<filename;
-			FILE *fpointer = fopen(name.str().c_str(),"r");
+
+			stringstream ss; ss << filename;
+			ibrcommon::File datafile = dbPath.get(ss.str());
+			FILE *fpointer = fopen(datafile.getPath().c_str(),"r");
 			if (fpointer == NULL){
 				//ToDo: Daten Protokollieren, damit sie nach der Suche gelöscht werden können.
 				inconsistentList.push_front(filename);
@@ -169,7 +173,7 @@ namespace core {
 				throw "SQLiteBundleStorage: Database contains two or more Bundle with the same BundleID, the requested Bundle is maybe a Fragment";
 			}
 
-			completefilename << dbPath << "/" << filename;
+			completefilename << dbPath.getPath() << "/" << filename;
 			datei.open((completefilename.str()).c_str(), ios::in|ios::binary);
 			datei >> bundle;
 			datei.close();
@@ -233,7 +237,7 @@ namespace core {
 		filename = sqlite3_column_int(getBundleByDestination, 0);
 
 		fstream datei;
-		completefilename << dbPath << "/" << filename;
+		completefilename << dbPath.getPath() << "/" << filename;
 		datei.open((completefilename.str()).c_str(), ios::in|ios::binary);
 		datei >> bundle;
 		datei.close();
@@ -276,7 +280,7 @@ namespace core {
 			//stores the bundle to a file
 			int filename = sqlite3_last_insert_rowid(database);
 			fstream datei;
-			completefilename << dbPath << "/" << filename;
+			completefilename << dbPath.getPath() << "/" << filename;
 			datei.open((completefilename.str()).c_str(), ios::out|ios::binary);
 			datei << bundle;
 			datei.close();
@@ -297,7 +301,7 @@ namespace core {
 				std::cerr << "SQLiteBundleStorage: failure while getting filename: " << id.toString() << " errmsg: " << err <<endl;
 			}
 			filename = sqlite3_column_int(getBundleByID,0);
-			file << dbPath << "/" << filename;
+			file << dbPath.getPath() << "/" << filename;
 			sqlite3_reset(removeBundle);
 			err = ::remove(file.str().c_str());
 			if(err != SQLITE_OK){
@@ -435,7 +439,7 @@ namespace core {
 
 			if(bundle._fragmentoffset == 0){
 				fstream datei;
-				completefilename << dbPath << "/Fragment/" << filename;
+				completefilename << dbPath.getPath() << "/Fragment/" << filename;
 				datei.open((completefilename.str()).c_str(), ios::binary);
 				datei << bundle;
 				datei.close();
@@ -482,7 +486,7 @@ namespace core {
 			if(bundle._fragmentoffset == 0){
 			//3) Bundle in datei speichern
 					fstream datei;
-					completefilename << dbPath << "/Fragment/" << filename;
+					completefilename << dbPath.getPath() << "/Fragment/" << filename;
 					datei.open((completefilename.str()).c_str(), ios::binary);
 					datei << bundle;
 					datei.close();
@@ -491,7 +495,7 @@ namespace core {
 			else{
 			//3) Bundle in Datei speichern
 				fstream datei, tmpdatei;
-				completefilename << dbPath << "/Fragment/" << filename;
+				completefilename << dbPath.getPath() << "/Fragment/" << filename;
 				tmpdatei.open((completefilename.str()).c_str(), ios::binary);
 				tmpdatei << bundle;
 				//copy the tmpfile without the headers to the file which should contain the complete bundle

@@ -17,6 +17,7 @@
 #include <string>
 #include "EventReceiver.h"
 #include "ibrcommon/thread/Thread.h"
+#include "ibrcommon/data/File.h"
 #include <set>
 #include <vector>
 
@@ -33,7 +34,7 @@ public:
 	 * @param Dateiname der Datenbank
 	 * @param maximale Größe der Datenbank
 	 */
-	SQLiteBundleStorage(string dbPath ,string dbFile , int size);
+	SQLiteBundleStorage(ibrcommon::File dbPath ,string dbFile , int size);
 
 	/**
 	 * destructor
@@ -142,7 +143,8 @@ private:
 	const std::string _FragmentTable;
 
 	bool global_shutdown;
-	string dbPath, dbFile;
+	ibrcommon::File dbPath;
+	string dbFile;
 	int dbSize;
 	sqlite3 *database;
 	ibrcommon::Conditional dbMutex, timeeventConditional;
