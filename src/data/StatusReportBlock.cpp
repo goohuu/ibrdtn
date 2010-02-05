@@ -50,7 +50,6 @@ namespace dtn
 			// read the attributes out of the BLOB
 			ibrcommon::BLOB::Reference ref = Block::getBLOB();
 			ibrcommon::MutexLock l(ref);
-			(*ref).seekp(0);
 
 			(*ref) >> _admfield;
 			(*ref) >> _status;
@@ -80,8 +79,6 @@ namespace dtn
 			ibrcommon::BLOB::Reference ref = Block::getBLOB();
 			ibrcommon::MutexLock l(ref);
 			ref.clear();
-
-			(*ref).seekg(0);
 
 			(*ref) << _admfield;
 			(*ref) << _status;

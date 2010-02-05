@@ -72,7 +72,6 @@ namespace dtn
 			len += writeHeader( writer );
 
 			ibrcommon::MutexLock l(_blobref);
-			(*_blobref).seekg(0);
 			len += writer.write( (*_blobref) );
 
 			return len;
