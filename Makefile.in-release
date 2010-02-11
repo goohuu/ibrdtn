@@ -18,7 +18,9 @@ IBRCOMMON_LIB_PATH = @srcdir@/ibrcommon/ibrcommon/.libs
 LIBS = @LIBS@ -librcommon -L$(IBRCOMMON_LIB_PATH) -L@builddir@/lib
 
 # flags for library search path
-LDFLAGS += -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:$(IBRCOMMON_LIB_PATH)
+CXXFLAGS = @CXXFLAGS@
+LDFLAGS += @LDFLAGS@ $(LIBS)
+RPATH = -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:$(IBRCOMMON_LIB_PATH):./
 
 # modules
 MODULES:=apps apps/c_api_examples apps/DTNTun api utils data streams core net daemon
@@ -52,26 +54,26 @@ apps: $(foreach app,$(APPS),dtn$(app))
 	$(CXX) -c $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $< -o $@
 	
 libdata: builddirs $(DATA_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) $(LIBS) \
+	$(CXX) $(CFLAGS) -I@srcdir@/ibrcommon -I@srcdir@/include $(LDFLAGS) \
 		-shared $(DATA_OBJ) -o "@builddir@/lib/libibrdtn-data.so"
 
 libclient: libdata $(API_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(LIBS) \
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-shared $(API_OBJ) -o "@builddir@/lib/libibrdtn-client.so"
 
 dtn%: libdata libclient @builddir@/obj/apps/dtn%.o
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(LIBS) \
-		-librdtn-data -librdtn-client @builddir@/obj/apps/$@.o $(LDFLAGS) -o "@builddir@/bin/$@"
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(RPATH) \
+		-librdtn-data -librdtn-client @builddir@/obj/apps/$@.o -o "@builddir@/bin/$@"
 		
 daemon: libdata libclient $(DAEMON_OBJ)
-	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(LIBS) \
-		-librdtn-data -librdtn-client $(DAEMON_OBJ) $(LDFLAGS) -o "@builddir@/bin/dtnd"
+	$(CXX) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(RPATH) \
+		-librdtn-data -librdtn-client $(DAEMON_OBJ) -o "@builddir@/bin/dtnd"
 		
 cdtnping_sync: libdata libclient 
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-o @builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
 		@srcdir@/src/apps/c_api_examples/dtnping_sync.c
-	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread   \
+	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-L@builddir@/lib/ \
 		-librdtn-data -librdtn-client \
 		@builddir@/obj/apps/c_api_examples/cdtnping_sync.o \
@@ -82,7 +84,7 @@ cdtnping_async: libdata libclient
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-o @builddir@/obj/apps/c_api_examples/cdtnping_async.o \
 		@srcdir@/src/apps/c_api_examples/dtnping_async.c
-	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) -lpthread   \
+	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-L@builddir@/lib/ \
 		-librdtn-data -librdtn-client \
 		@builddir@/obj/apps/c_api_examples/cdtnping_async.o \
@@ -98,7 +100,7 @@ dtntun: libdata libclient
 	$(CC) -c $(CFLAGS) -I@srcdir@/include $(LDFLAGS) \
 		-o @builddir@/obj/apps/DTNTun/tun.o \
 		@srcdir@/src/apps/DTNTun/tun.c
-	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) @LIBS@  \
+	$(CC) $(CFLAGS) -I@srcdir@/include $(LDFLAGS) $(RPATH) \
 		-L@builddir@/lib/ \
 		-librdtn-data -librdtn-client \
 		@builddir@/obj/apps/DTNTun/dtntun.o \
