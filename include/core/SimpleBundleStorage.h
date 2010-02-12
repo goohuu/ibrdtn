@@ -6,7 +6,8 @@
 #include "core/BundleCore.h"
 #include "core/BundleStorage.h"
 #include "core/Node.h"
-#include "ibrcommon/thread/WaitForConditional.h"
+#include "ibrcommon/thread/Conditional.h"
+#include "ibrcommon/thread/AtomicCounter.h"
 #include "core/EventReceiver.h"
 
 #include "ibrdtn/data/Bundle.h"
@@ -82,6 +83,8 @@ namespace dtn
 			virtual void run();
 
 		private:
+			virtual void shutdown();
+
 			list<Bundle> _bundles;
 			list<list<Bundle> > _fragments;
 
@@ -91,10 +94,11 @@ namespace dtn
 //			 */
 //			void deleteDeprecated();
 
-			ibrcommon::WaitForConditional _timecond;
+			ibrcommon::Conditional _clock;
 			bool _running;
 
 			ibrcommon::Conditional _dbchanged;
+			ibrcommon::AtomicCounter _blocker;
 
 			EID _unblock_eid;
 		};

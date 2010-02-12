@@ -23,10 +23,7 @@ namespace dtn
 			EventSwitch::unregisterEventReceiver(TimeEvent::className, this);
 			EventSwitch::unregisterEventReceiver(GlobalEvent::className, this);
 
-			_running = false;
-			_timecond.go();
-			ibrcommon::MutexLock l(_dbchanged);
-			_dbchanged.signal(true);
+			shutdown();
 			join();
 		}
 
@@ -39,10 +36,7 @@ namespace dtn
 			{
 				if (global->getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
 				{
-					ibrcommon::MutexLock l(_dbchanged);
-					_running = false;
-					_timecond.go();
-					_dbchanged.signal(true);
+					shutdown();
 				}
 			}
 
@@ -50,7 +44,7 @@ namespace dtn
 			{
 				if (time->getAction() == dtn::core::TIME_SECOND_TICK)
 				{
-					_timecond.go();
+					_clock.signal(true);
 				}
 			}
 		}
@@ -91,9 +85,20 @@ namespace dtn
 			_dbchanged.signal(true);
 		}
 
+		void SimpleBundleStorage::shutdown()
+		{
+			ibrcommon::MutexLock l1(_clock);
+			ibrcommon::MutexLock l2(_dbchanged);
+			_running = false;
+			_clock.signal(true);
+			_dbchanged.signal(true);
+		}
+
+
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)
 		{
 			ibrcommon::MutexLock l(_dbchanged);
+			ibrcommon::AtomicCounter::Lock alock(_blocker);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "Storage: get bundle for " << eid.getString() << endl;
@@ -115,6 +120,9 @@ namespace dtn
 				}
 
 				_dbchanged.wait();
+
+				// step out on shutdown
+				if (!_running) break;
 
 				// leave this method if we need to unblock
 				if (_unblock_eid == eid)
@@ -193,8 +201,16 @@ namespace dtn
 				}
 
 				yield();
-				_timecond.wait();
+
+				// wait until the next clock tick
+				{
+					ibrcommon::MutexLock l(_clock);
+					if (_running) _clock.wait();
+				}
 			}
+
+			// wait until all blocking get()-calls are finished.
+			_blocker.wait();
 		}
 
 //		Bundle SimpleBundleStorage::storeFragment(const Bundle &bundle)

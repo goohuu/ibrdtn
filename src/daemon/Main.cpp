@@ -2,6 +2,7 @@
 
 #include "ibrcommon/data/BLOB.h"
 #include "ibrcommon/data/File.h"
+#include "ibrcommon/AutoDelete.h"
 
 #include "core/BundleCore.h"
 #include "core/BundleStorage.h"
@@ -143,6 +144,8 @@ int main(int argc, char *argv[])
 		storage = new dtn::core::SimpleBundleStorage();
 	}
 
+	ibrcommon::AutoDelete<dtn::core::BundleStorage> storage_cleaner(storage);
+
 	// set the storage in the core
 	core.setStorage(storage);
 
@@ -274,9 +277,6 @@ int main(int argc, char *argv[])
 
 	// stop the event switch
 	dtn::core::EventSwitch::stop();
-
-	// delete the storage
-	delete storage;
 
 	return 0;
 };

@@ -262,7 +262,7 @@ namespace dtn
 		}
 
 		ConnectionManager::Transmitter::Transmitter(ConnectionManager &manager)
-		 : _manager(manager)
+		 : _running(true), _manager(manager)
 		{
 		}
 
