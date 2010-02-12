@@ -23,12 +23,33 @@ namespace dtn
 {
 	namespace net
 	{
-		ConnectionManager::ConnectionManager()
+		ConnectionManager::ConnectionManager(int concurrent_transmitter)
+		 : _shutdown(false)
 		{
+			// create transmitter
+			for (int i = 0; i < concurrent_transmitter; i++)
+			{
+				ConnectionManager::Transmitter *t = new ConnectionManager::Transmitter(*this);
+				t->start();
+				_transmitter_list.push_back(t);
+			}
 		}
 
 		ConnectionManager::~ConnectionManager()
 		{
+			{
+				ibrcommon::MutexLock l(_job_cond);
+				_shutdown = true;
+				_job_cond.signal(true);
+			}
+
+			// delete all transmitter
+			for (std::list<ConnectionManager::Transmitter*>::iterator iter = _transmitter_list.begin(); iter != _transmitter_list.end(); iter++)
+			{
+				(*iter)->waitFor();
+				delete (*iter);
+			}
+
 			list<ConvergenceLayer*>::iterator iter = _cl.begin();
 
 			while (iter != _cl.end())
@@ -139,7 +160,14 @@ namespace dtn
 
 		void ConnectionManager::send(const dtn::data::EID &eid, const dtn::data::Bundle &b)
 		{
-			BundleConnection *conn = getConnection(eid);
+			ibrcommon::MutexLock l(_job_cond);
+			_job_queue.push( Job(eid, b) );
+			_job_cond.signal(false);
+		}
+
+		void ConnectionManager::send(const ConnectionManager::Job &job)
+		{
+			BundleConnection *conn = getConnection(job._destination);
 
 //			if (conn->isBusy())
 //			{
@@ -155,10 +183,10 @@ namespace dtn
 			m.start();
 
 			try {
-				conn->write(b);
+				conn->write(job._bundle);
 				m.stop();
 				// get throughput
-				double kbytes_per_second = (b.getSize() / m.getSeconds()) / 1024;
+				double kbytes_per_second = (job._bundle.getSize() / m.getSeconds()) / 1024;
 
 				// print out throughput
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer completed after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
@@ -180,8 +208,8 @@ namespace dtn
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "fragmentation is not possible => requeue the bundle" << endl;
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "Exception: " << ex.what() << endl;
 #endif
-				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
-				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
+				EventSwitch::raiseEvent( new BundleEvent(job._bundle, BUNDLE_RECEIVED) );
+				EventSwitch::raiseEvent( new RouteEvent(job._bundle, ROUTE_PROCESS_BUNDLE) );
 			}
 		}
 
@@ -216,6 +244,56 @@ namespace dtn
 			}
 
 			throw NeighborNotAvailableException("No active connection to this neighbor available!");
+		}
+
+		ConnectionManager::Job ConnectionManager::getJob()
+		{
+			ibrcommon::MutexLock l(_job_cond);
+
+			while (_job_queue.empty())
+			{
+				_job_cond.wait();
+				if (_shutdown) throw ShutdownException();
+			}
+
+			ConnectionManager::Job ret = _job_queue.front();
+			_job_queue.pop();
+			return ret;
+		}
+
+		ConnectionManager::Transmitter::Transmitter(ConnectionManager &manager)
+		 : _manager(manager)
+		{
+		}
+
+		ConnectionManager::Transmitter::~Transmitter()
+		{
+			// TODO: abort current jobs
+			_running = false;
+			join();
+		}
+
+		void ConnectionManager::Transmitter::run()
+		{
+			try {
+				while (_running)
+				{
+					ConnectionManager::Job j = _manager.getJob();
+					_manager.send(j);
+					yield();
+				}
+			} catch (ConnectionManager::ShutdownException ex) {
+
+			}
+		}
+
+		ConnectionManager::Job::Job(const dtn::data::EID &eid, const dtn::data::Bundle &b)
+		 : _bundle(b), _destination(eid)
+		{
+		}
+
+		ConnectionManager::Job::~Job()
+		{
 		}
 	}
 }
