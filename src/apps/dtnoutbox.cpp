@@ -176,7 +176,11 @@ int main(int argc, char** argv)
     			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::TmpFileBLOB::create());
 
     			// stream the content of "tar" to the payload block
-    			payload->getBLOB().write(0, stream);
+    			{
+    				ibrcommon::BLOB::Reference data = payload->getBLOB();
+    				ibrcommon::MutexLock l(data);
+    				data.write(stream);
+    			}
 
     			// add the payload block to the bundle
     			b.addBlock(payload);

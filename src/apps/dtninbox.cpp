@@ -144,7 +144,10 @@ int main(int argc, char** argv)
                 ostream stream(&extractor);
 
                 // write the payload to the extractor
-                ref.read( 0, stream );
+                {
+                	ibrcommon::MutexLock l(ref);
+                	ref.read( stream );
+                }
 
                 // flush the stream
                 stream.flush();

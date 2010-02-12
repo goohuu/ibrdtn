@@ -27,10 +27,13 @@ void print_help()
 
 void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
 {
+	ibrcommon::BLOB::Reference data = b.getData();
+
 	// write the data to output
 	if (stdout)
 	{
-		b.getData().read(0, cout);
+		ibrcommon::MutexLock l(data);
+		data.read(cout);
 	}
 	else
 	{
@@ -38,7 +41,10 @@ void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
 		cout << "Writing bundle payload to " << filename << endl;
 
 		fstream file(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
-		b.getData().read(0, file);
+
+		ibrcommon::MutexLock l(data);
+		data.read(file);
+
 		file.close();
 
 		cout << "finished" << endl;
