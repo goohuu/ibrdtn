@@ -151,23 +151,22 @@ namespace dtn
 			return _in_header;
 		}
 
-		dtn::streams::StreamContactHeader TCPConvergenceLayer::TCPConnection::TCPBundleStream::handshake(dtn::streams::StreamContactHeader header)
+		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out)
 		{
 			dtn::streams::StreamContactHeader in_header;
-
-			// send the header
-			(*this) << header; (*this).flush();
+		// send the header
+			(*this) << out; (*this).flush();
 
 			try {
 				// get the header
-				(*this) >> in_header;
+				(*this) >> in;
 				_node.setURI(in_header.getEID().getString());
 
 				// startup the connection threads
 				StreamConnection::start();
 
 				// set the timer for this connection
-				StreamConnection::setTimer(header._keepalive, in_header._keepalive - 5);
+				StreamConnection::setTimer(out._keepalive, in._keepalive - 5);
 
 				// check fragmentation flag
 				_reactive_fragmentation = (in_header._flags & 0x02);
@@ -194,7 +193,7 @@ namespace dtn
 				_out_header = header;
 
 				// do the handshake
-				_in_header = _stream.handshake(_out_header);
+				_stream.handshake(_in_header, _out_header);
 
 				// set state to connected
 				_connected = true;

@@ -26,6 +26,7 @@ namespace dtn
 		 * base implementation of the ThreadedExtension class
 		 */
 		BaseRouter::ThreadedExtension::ThreadedExtension()
+		 : _running(true)
 		{ }
 
 		BaseRouter::ThreadedExtension::~ThreadedExtension()

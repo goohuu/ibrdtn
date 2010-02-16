@@ -85,7 +85,7 @@ namespace dtn
 
 					const dtn::core::Node& getNode() const;
 
-					dtn::streams::StreamContactHeader handshake(dtn::streams::StreamContactHeader header);
+					void handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out);
 
 					virtual void shutdown();
 					virtual bool waitCompleted();
