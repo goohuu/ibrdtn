@@ -6,7 +6,6 @@
  */
 
 #include "daemon/ClientHandler.h"
-#include "core/EventSwitch.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
 #include <iostream>
@@ -22,19 +21,19 @@ namespace dtn
 		ClientHandler::ClientHandler(iostream &stream)
 		 : _connection(stream), _connected(false)
 		{
-			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
+			bindEvent(GlobalEvent::className);
 		}
 
 		ClientHandler::ClientHandler(int socket)
 		 : _tcpstream(socket, ibrcommon::tcpstream::STREAM_INCOMING), _connection(_tcpstream), _connected(false)
 		{
-			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
+			bindEvent(GlobalEvent::className);
 		}
 
 		ClientHandler::~ClientHandler()
 		{
 			_connection.waitFor();
-			EventSwitch::unregisterEventReceiver(GlobalEvent::className, this);
+			unbindEvent(GlobalEvent::className);
 			join();
 		}
 
@@ -114,7 +113,7 @@ namespace dtn
 
 					yield();
 				}
-			} catch (IOException ex) {
+			} catch (dtn::exceptions::IOException ex) {
 
 			} catch (dtn::exceptions::InvalidBundleData ex) {
 
@@ -125,12 +124,10 @@ namespace dtn
 			shutdown();
 		}
 
-		dtn::net::TransmitReport ClientHandler::callbackBundleReceived(const Bundle &b)
+		void ClientHandler::callbackBundleReceived(const Bundle &b)
 		{
 			_connection << b;
 			_connection.flush();
-
-			return dtn::net::BUNDLE_ACCEPTED;
 		}
 
 		void ClientHandler::received(StreamContactHeader &h)

@@ -29,6 +29,25 @@ namespace dtn
 			};
 
 			/**
+			 * UDP connection class
+			 */
+			class UDPConnection : public BundleConnection
+			{
+			public:
+				UDPConnection(UDPConvergenceLayer &cl, const dtn::core::Node &node);
+				virtual ~UDPConnection();
+
+				void write(const dtn::data::Bundle &bundle);
+				void read(dtn::data::Bundle &bundle);
+
+				void shutdown();
+
+			private:
+				UDPConvergenceLayer &_cl;
+				dtn::core::Node _node;
+			};
+
+			/**
 			 * Constructor
 			 * @param[in] bind_addr The address to bind.
 			 * @param[in] port The udp port to use.
@@ -43,20 +62,15 @@ namespace dtn
 			virtual ~UDPConvergenceLayer();
 
 			/**
-			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b)
-			 */
-			virtual TransmitReport transmit(const dtn::data::Bundle &b);
-
-			/**
 			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b, Node &node)
 			 */
-			virtual TransmitReport transmit(const dtn::data::Bundle &b, const dtn::core::Node &node);
+			virtual void transmit(const dtn::data::Bundle &b, const dtn::core::Node &node);
 
 			void receive(dtn::data::Bundle &bundle);
 
 			BundleConnection* getConnection(const dtn::core::Node &n);
 
-                        virtual void update(std::string &name, std::string &data);
+			virtual void update(std::string &name, std::string &data);
 
 		protected:
 				void run();

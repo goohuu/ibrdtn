@@ -6,11 +6,10 @@
  */
 
 #include "core/EventDebugger.h"
-#include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
-#include "core/RouteEvent.h"
 #include "core/CustodyEvent.h"
 #include "core/BundleEvent.h"
+#include "core/TimeEvent.h"
 #include <iostream>
 
 using namespace std;
@@ -22,26 +21,18 @@ namespace dtn
 	{
 		EventDebugger::EventDebugger()
 		{
-			EventSwitch::registerEventReceiver( NodeEvent::className, this );
-			EventSwitch::registerEventReceiver( RouteEvent::className, this );
-			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
-			EventSwitch::registerEventReceiver( BundleEvent::className, this );
 		}
 
 		EventDebugger::~EventDebugger()
 		{
-			EventSwitch::unregisterEventReceiver( NodeEvent::className, this );
-			EventSwitch::unregisterEventReceiver( RouteEvent::className, this );
-			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
-			EventSwitch::unregisterEventReceiver( BundleEvent::className, this );
 		}
 
 		void EventDebugger::raiseEvent(const Event *evt)
 		{
 			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
-			const RouteEvent *route = dynamic_cast<const RouteEvent*>(evt);
 			const BundleEvent *bundle = dynamic_cast<const BundleEvent*>(evt);
 			const CustodyEvent *custody = dynamic_cast<const CustodyEvent*>(evt);
+			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
 
 			if (custody != NULL)
 			{
@@ -62,7 +53,7 @@ namespace dtn
 						break;
 				};
 			}
-			if (bundle != NULL)
+			else if (bundle != NULL)
 			{
 				switch (bundle->getAction())
 				{
@@ -86,19 +77,7 @@ namespace dtn
 					break;
 				}
 			}
-			if (route != NULL)
-			{
-				switch (route->getAction())
-				{
-				case ROUTE_PROCESS_BUNDLE:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": process bundle " << route->getBundle().toString() << endl;
-					break;
-				default:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": unknown" << endl;
-					break;
-				}
-			}
-			if (node != NULL)
+			else if (node != NULL)
 			{
 				switch (node->getAction())
 				{
@@ -129,6 +108,15 @@ namespace dtn
 					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": unknown" << endl;
 					break;
 				}
+			}
+			else if (time != NULL)
+			{
+				// do not debug print time events
+			}
+			else
+			{
+				// unknown event
+				ibrcommon::slog << SYSLOG_INFO << evt->toString() << endl;
 			}
 		}
 	}

@@ -11,11 +11,10 @@
 #include "ibrdtn/utils/Utils.h"
 #include "core/CustodyTimer.h"
 #include "core/BundleCore.h"
+#include "routing/QueueBundleEvent.h"
 
 #include "core/TimeEvent.h"
-#include "core/EventSwitch.h"
 #include "core/CustodyEvent.h"
-#include "core/RouteEvent.h"
 
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -26,8 +25,8 @@ namespace dtn
 	{
 		CustodyManager::CustodyManager() : m_nextcustodytimer(0), _running(true)
 		{
-			EventSwitch::registerEventReceiver( CustodyEvent::className, this );
-			EventSwitch::registerEventReceiver( TimeEvent::className, this );
+			bindEvent(CustodyEvent::className);
+			bindEvent(TimeEvent::className);
 		}
 
 		CustodyManager::~CustodyManager()
@@ -36,8 +35,8 @@ namespace dtn
 			m_breakwait.go();
 			join();
 
-			EventSwitch::unregisterEventReceiver( CustodyEvent::className, this );
-			EventSwitch::unregisterEventReceiver( TimeEvent::className, this );
+			unbindEvent(CustodyEvent::className);
+			unbindEvent(TimeEvent::className);
 		}
 
 		void CustodyManager::raiseEvent(const Event *evt)
@@ -55,7 +54,7 @@ namespace dtn
 			}
 			else if (custody != NULL)
 			{
-				switch (evt->getType())
+				switch (custody->getAction())
 				{
 				case CUSTODY_ACCEPT:
 					acceptCustody(custody->getBundle());
@@ -90,7 +89,7 @@ namespace dtn
 				b._source = BundleCore::local;
 
 				// raise the custody accepted event
-				EventSwitch::raiseEvent(new RouteEvent(b, ROUTE_PROCESS_BUNDLE));
+				dtn::routing::QueueBundleEvent::raise(b);
 			}
 		}
 
@@ -113,8 +112,8 @@ namespace dtn
 				b._destination = bundle._custodian;
 				b._source = BundleCore::local;
 
-				// raise the custody accepted event
-				EventSwitch::raiseEvent(new RouteEvent(b, ROUTE_PROCESS_BUNDLE));
+				// raise the custody rejected event
+				dtn::routing::QueueBundleEvent::raise(b);
 			}
 		}
 
@@ -179,7 +178,7 @@ namespace dtn
 				iter++;
 			}
 
-			throw NoTimerFoundException();
+			throw dtn::exceptions::NoTimerFoundException();
 		}
 
 		void CustodyManager::checkCustodyTimer()
@@ -227,7 +226,7 @@ namespace dtn
 		void CustodyManager::retransmitBundle(const Bundle &bundle)
 		{
 			// retransmit the bundle
-			EventSwitch::raiseEvent(new RouteEvent(bundle, ROUTE_PROCESS_BUNDLE));
+			dtn::routing::QueueBundleEvent::raise(bundle);
 		}
 	}
 }

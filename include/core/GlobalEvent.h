@@ -21,24 +21,25 @@ namespace dtn
 			enum Action
 			{
 				GLOBAL_SHUTDOWN = 0,
-                                GLOBAL_RELOAD = 1
+				GLOBAL_RELOAD = 1
 			};
 
-			GlobalEvent(Action a);
 			virtual ~GlobalEvent();
 
 			const string getName() const;
-			const EventType getType() const;
 
 			const Action getAction() const;
 
+			static void raise(const Action a);
+
 #ifdef DO_DEBUG_OUTPUT
-			string toString();
+			string toString() const;
 #endif
 
 			static const string className;
 
 		private:
+			GlobalEvent(const Action a);
 			Action _action;
 		};
 	}

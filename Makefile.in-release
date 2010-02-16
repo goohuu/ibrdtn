@@ -23,7 +23,7 @@ LDFLAGS += @LDFLAGS@ $(LIBS)
 RPATH = -Wl,-rpath-link=$(STAGING_DIR)/usr/lib -Wl,-rpath,${exec_prefix}/lib:@builddir@/lib:$(IBRCOMMON_LIB_PATH):./
 
 # modules
-MODULES:=apps apps/c_api_examples apps/DTNTun api utils data streams core net daemon
+MODULES:=apps apps/c_api_examples apps/DTNTun api utils data streams core net routing daemon
 
 APPS:=ping send recv inbox outbox tunnel
 
@@ -35,7 +35,7 @@ API_MODS:=streams api
 API_SRC = $(foreach mod,$(API_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp))
 API_OBJ = $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(patsubst %.cpp, %.o, $(API_SRC) ) ) )
 
-DAEMON_MODS:=net core daemon
+DAEMON_MODS:=net core routing daemon
 DAEMON_SRC = $(foreach mod,$(DAEMON_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp))
 DAEMON_OBJ = $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(patsubst %.cpp, %.o, $(DAEMON_SRC) ) ) )
 

@@ -183,16 +183,16 @@ namespace dtn
 			return NetInterface(NetInterface::NETWORK_UDP, "local", 4550);
 		}
 
-		list<StaticRoute> Configuration::getStaticRoutes()
+		list<dtn::routing::StaticRoutingExtension::StaticRoute> Configuration::getStaticRoutes()
 		{
-			list<StaticRoute> ret;
+			list<dtn::routing::StaticRoutingExtension::StaticRoute> ret;
 			string key = "route1";
 			unsigned int keynumber = 1;
 
 			while (_conf.keyExists( key ))
 			{
 				vector<string> route = dtn::utils::Utils::tokenize(" ", _conf.read<string>(key, "dtn:none dtn:none"));
-				ret.push_back( StaticRoute( route.front(), route.back() ) );
+				ret.push_back( dtn::routing::StaticRoutingExtension::StaticRoute( route.front(), route.back() ) );
 
 				keynumber++;
 				stringstream ss; ss << "route" << keynumber; ss >> key;

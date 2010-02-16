@@ -25,11 +25,6 @@ namespace dtn
 			return m_bundle;
 		}
 
-		const EventType BundleEvent::getType() const
-		{
-			return EVENT_ASYNC;
-		}
-
 		EventBundleAction BundleEvent::getAction() const
 		{
 			return m_action;
@@ -46,7 +41,7 @@ namespace dtn
 		}
 
 #ifdef DO_DEBUG_OUTPUT
-		string BundleEvent::toString()
+		string BundleEvent::toString() const
 		{
 			return className;
 		}

@@ -15,20 +15,6 @@ namespace dtn
 		class BundleReceiver;
 
 		/**
-		 * Übermittlungsbericht
-		 * Rückgabewert von transmit() der angibt ob ein Bundle zugestellt werden konnte oder ggf. warum nicht.
-		 * @sa transmit()
-		 */
-		enum TransmitReport
-		{
-			UNKNOWN = -1,
-			TRANSMIT_SUCCESSFUL = 0,
-			NO_ROUTE_FOUND = 1,
-			CONVERGENCE_LAYER_BUSY = 2,
-			BUNDLE_ACCEPTED = 3
-		};
-
-		/**
 		 * Ist für die Zustellung von Bundles verantwortlich.
 		 */
 		class ConvergenceLayer

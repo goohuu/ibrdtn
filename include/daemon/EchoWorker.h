@@ -24,7 +24,7 @@ namespace dtn
 			EchoWorker();
 			virtual ~EchoWorker() {};
 
-			dtn::net::TransmitReport callbackBundleReceived(const Bundle &b);
+			void callbackBundleReceived(const Bundle &b);
 		};
 	}
 }

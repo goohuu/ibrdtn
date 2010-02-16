@@ -7,8 +7,7 @@
 
 #include "core/AbstractWorker.h"
 #include "core/BundleCore.h"
-#include "core/RouteEvent.h"
-#include "core/EventSwitch.h"
+#include "net/BundleReceivedEvent.h"
 
 
 namespace dtn
@@ -85,7 +84,7 @@ namespace dtn
 
 		void AbstractWorker::transmit(const Bundle &bundle)
 		{
-			EventSwitch::raiseEvent(new RouteEvent(bundle, ROUTE_PROCESS_BUNDLE));
+			dtn::net::BundleReceivedEvent::raise(_eid, bundle);
 		}
 
 		dtn::data::Bundle AbstractWorker::receive()

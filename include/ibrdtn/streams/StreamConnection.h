@@ -32,13 +32,13 @@ namespace dtn
 		class StreamConnection : public std::iostream, public ibrcommon::JoinableThread, public ibrcommon::TimerCallback
 		{
 		public:
-                        enum ConnectionState
-                        {
-                            CONNECTION_IDLE = 0,
-                            CONNECTION_RECEIVING = 1,
-                            CONNECTION_SHUTDOWN = 2,
-                            CONNECTION_CLOSED = 3
-                        };
+			enum ConnectionState
+			{
+				CONNECTION_IDLE = 0,
+				CONNECTION_RECEIVING = 1,
+				CONNECTION_SHUTDOWN = 2,
+				CONNECTION_CLOSED = 3
+			};
 
 			StreamConnection(iostream &stream);
 			virtual ~StreamConnection();
@@ -49,18 +49,18 @@ namespace dtn
 			bool timeout(ibrcommon::Timer *timer);
 
 		protected:
-                        void setTimer(size_t in_timeout, size_t out_timeout);
-                        void setState(ConnectionState conn);
-                        ConnectionState getState();
-                        bool waitState(ConnectionState conn, size_t timeout);
-                        bool waitState(ConnectionState conn);
+			void setTimer(size_t in_timeout, size_t out_timeout);
+			void setState(ConnectionState conn);
+			ConnectionState getState();
+			bool waitState(ConnectionState conn, size_t timeout);
+			bool waitState(ConnectionState conn);
 			void run();
 
-                        size_t _recv_size;
-                        size_t _ack_size;
+			size_t _recv_size;
+			size_t _ack_size;
 
-                        bool isCompleted();
-                        bool waitCompleted();
+			bool isCompleted();
+			bool waitCompleted();
 
 		private:
 			bpstreambuf _buf;
@@ -68,11 +68,10 @@ namespace dtn
 			ibrcommon::Timer *_in_timer;
 			ibrcommon::Timer *_out_timer;
 
-                        ibrcommon::Conditional _completed_cond;
+			ibrcommon::Conditional _completed_cond;
 
-                        ibrcommon::Conditional _state_cond;
-                        ConnectionState _state;
-
+			ibrcommon::Conditional _state_cond;
+			ConnectionState _state;
 		};
 	}
 }

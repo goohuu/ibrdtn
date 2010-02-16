@@ -10,11 +10,9 @@ namespace dtn
 {
 	namespace daemon
 	{
-		dtn::net::TransmitReport Debugger::callbackBundleReceived(const Bundle &b)
+		void Debugger::callbackBundleReceived(const Bundle &b)
 		{
 			cout << "Bundle received " << b.toString() << endl;
-
-			return dtn::net::BUNDLE_ACCEPTED;
 		}
 	}
 }

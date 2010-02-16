@@ -14,6 +14,10 @@
 #include "core/EventReceiver.h"
 #include "ibrcommon/thread/Thread.h"
 
+#ifdef DO_DEBUG_OUTPUT
+#include "core/EventDebugger.h"
+#endif
+
 using namespace dtn::exceptions;
 
 namespace dtn
@@ -51,14 +55,23 @@ namespace dtn
 			ibrcommon::Conditional _cond_queue;
 			bool _running;
 
+#ifdef DO_DEBUG_OUTPUT
+			// create event debugger
+			EventDebugger _debugger;
+#endif
+
 			const list<EventReceiver*>& getReceivers(string eventName) const;
 		protected:
 			void run();
 
-		public:
+			friend class Event;
+			friend class EventReceiver;
+
 			static void registerEventReceiver(string eventName, EventReceiver *receiver);
 			static void unregisterEventReceiver(string eventName, EventReceiver *receiver);
 			static void raiseEvent(Event *evt);
+
+		public:
 			static void stop();
 		};
 	}

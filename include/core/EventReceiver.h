@@ -8,6 +8,8 @@
 #ifndef EVENTRECEIVER_H_
 #define EVENTRECEIVER_H_
 
+#include <string>
+
 namespace dtn
 {
 	namespace core
@@ -17,7 +19,12 @@ namespace dtn
 		class EventReceiver
 		{
 		public:
+			virtual ~EventReceiver() = 0;
 			virtual void raiseEvent(const Event *evt) = 0;
+
+		protected:
+			void bindEvent(std::string eventName);
+			void unbindEvent(std::string eventName);
 		};
 	}
 }

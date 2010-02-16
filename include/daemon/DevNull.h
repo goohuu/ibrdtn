@@ -27,7 +27,7 @@ namespace dtn
 			};
 			virtual ~DevNull() {};
 
-			dtn::net::TransmitReport callbackBundleReceived(const Bundle &b);
+			void callbackBundleReceived(const Bundle &b);
 		};
 	}
 }

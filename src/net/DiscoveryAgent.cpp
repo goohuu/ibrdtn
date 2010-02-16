@@ -9,7 +9,6 @@
 #include "net/DiscoveryService.h"
 #include "core/TimeEvent.h"
 #include "core/BundleCore.h"
-#include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
 #include "core/Node.h"
 #include "ibrdtn/utils/Utils.h"
@@ -23,12 +22,12 @@ namespace dtn
 		DiscoveryAgent::DiscoveryAgent()
 		 : _running(true), _self_announce(false, dtn::core::BundleCore::local)
 		{
-			EventSwitch::registerEventReceiver( TimeEvent::className, this );
+			bindEvent(TimeEvent::className);
 		}
 
 		DiscoveryAgent::~DiscoveryAgent()
 		{
-			EventSwitch::unregisterEventReceiver( TimeEvent::className, this );
+			unbindEvent(TimeEvent::className);
 
 			_running = false;
 			join();
@@ -93,11 +92,8 @@ namespace dtn
 					param_iter++;
 				}
 
-				// create a new event
-				dtn::core::NodeEvent *evt = new dtn::core::NodeEvent(n, NODE_INFO_UPDATED);
-
-				// raise the event
-				EventSwitch::raiseEvent(evt);
+				// create and raise a new event
+				dtn::core::NodeEvent::raise(n, NODE_INFO_UPDATED);
 
 				iter++;
 			}

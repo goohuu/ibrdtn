@@ -4,7 +4,7 @@
 #include "ibrdtn/default.h"
 #include "ibrcommon/data/ConfigFile.h"
 #include "core/Node.h"
-#include "core/StaticRoute.h"
+#include "routing/StaticRoutingExtension.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrcommon/net/NetInterface.h"
 
@@ -26,70 +26,70 @@ namespace dtn
 			virtual ~Configuration();
 
 		public:
-                        class ParameterNotSetException : dtn::exceptions::Exception
-                        {
-                        };
+			class ParameterNotSetException : dtn::exceptions::Exception
+			{
+			};
 
-                        class ParameterNotFoundException : dtn::exceptions::Exception
-                        {
-                        };
+			class ParameterNotFoundException : dtn::exceptions::Exception
+			{
+			};
 
 			static Configuration &getInstance();
 
-                        /**
-                         * load the configuration from a file
-                         */
-                        void load(string filename);
+			/**
+			 * load the configuration from a file
+			 */
+			void load(string filename);
 
-                        void load(int argc, char *argv[]);
+			void load(int argc, char *argv[]);
 
-                        /**
-                         * Returns the name of the node
-                         */
+			/**
+			 * Returns the name of the node
+			 */
 			string getNodename();
 
-                        /**
-                         * Returns all configured network interfaces
-                         */
-                        list<ibrcommon::NetInterface> getNetInterfaces();
+			/**
+			 * Returns all configured network interfaces
+			 */
+			list<ibrcommon::NetInterface> getNetInterfaces();
 
-                        ibrcommon::NetInterface getNetInterface(string name);
+			ibrcommon::NetInterface getNetInterface(string name);
 
-                        ibrcommon::NetInterface getDiscoveryInterface();
-                        ibrcommon::NetInterface getAPIInterface();
+			ibrcommon::NetInterface getDiscoveryInterface();
+			ibrcommon::NetInterface getAPIInterface();
 
-                        /**
-                         * Returns all static neighboring nodes
-                         */
+			/**
+			 * Returns all static neighboring nodes
+			 */
 			list<Node> getStaticNodes();
 
-                        /**
-                         * Returns all static routes
-                         */
-			list<StaticRoute> getStaticRoutes();
+			/**
+			 * Returns all static routes
+			 */
+			list<dtn::routing::StaticRoutingExtension::StaticRoute> getStaticRoutes();
 
-                        int getTimezone();
+			int getTimezone();
 
-                        ibrcommon::File getPath(string name);
+			ibrcommon::File getPath(string name);
 
-                        unsigned int getUID();
-                        unsigned int getGID();
+			unsigned int getUID();
+			unsigned int getGID();
 
-                        bool doDiscovery();
-                        bool doAPI();
+			bool doDiscovery();
+			bool doAPI();
 
-                        void version(std::ostream &stream);
+			void version(std::ostream &stream);
 
-                        string getNotifyCommand();
+			string getNotifyCommand();
 
 		private:
 			ibrcommon::ConfigFile _conf;
 
-                        string _filename;
-                        string _default_net;
-                        bool _use_default_net;
-                        bool _doapi;
-                        bool _dodiscovery;
+			string _filename;
+			string _default_net;
+			bool _use_default_net;
+			bool _doapi;
+			bool _dodiscovery;
 		};
 	}
 }

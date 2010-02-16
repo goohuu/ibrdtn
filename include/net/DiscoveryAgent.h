@@ -14,8 +14,6 @@
 #include "core/Node.h"
 #include "core/EventReceiver.h"
 
-#include "core/Event.h"
-
 #include "net/Neighbor.h"
 #include "net/DiscoveryAnnouncement.h"
 

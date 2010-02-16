@@ -14,7 +14,7 @@ namespace dtn
 			AbstractWorker::initialize("/echo", true);
 		}
 
-		dtn::net::TransmitReport EchoWorker::callbackBundleReceived(const Bundle &b)
+		void EchoWorker::callbackBundleReceived(const Bundle &b)
 		{
 			PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
 
@@ -41,8 +41,6 @@ namespace dtn
 				// send it
 				transmit( echo );
 			}
-
-			return dtn::net::BUNDLE_ACCEPTED;
 		}
 	}
 }

@@ -1,12 +1,11 @@
 #include "core/BundleCore.h"
 #include "core/CustodyManager.h"
-#include "core/EventSwitch.h"
-#include "core/RouteEvent.h"
 #include "core/CustodyEvent.h"
 #include "core/NodeEvent.h"
 #include "core/BundleEvent.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
+#include "routing/QueueBundleEvent.h"
 
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/Bundle.h"
@@ -39,9 +38,9 @@ namespace dtn
 		 : _clock(1), _shutdown(false), _storage(NULL)
 		{
 			// register me for events
-			EventSwitch::registerEventReceiver( NodeEvent::className, this );
-			EventSwitch::registerEventReceiver( BundleEvent::className, this );
-			EventSwitch::registerEventReceiver( TimeEvent::className, this );
+			bindEvent(NodeEvent::className);
+			bindEvent(BundleEvent::className);
+			bindEvent(TimeEvent::className);
 
 			// start the custody manager
 			m_cm.start();
@@ -52,9 +51,9 @@ namespace dtn
 
 		BundleCore::~BundleCore()
 		{
-			EventSwitch::unregisterEventReceiver( NodeEvent::className, this );
-			EventSwitch::unregisterEventReceiver( BundleEvent::className, this );
-			EventSwitch::unregisterEventReceiver( TimeEvent::className, this );
+			unbindEvent(NodeEvent::className);
+			unbindEvent(BundleEvent::className);
+			unbindEvent(TimeEvent::className);
 		}
 
 		void BundleCore::setStorage(dtn::core::BundleStorage *storage)
@@ -116,14 +115,14 @@ namespace dtn
 					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent->getReason());
-						transmit( bundle );
+						dtn::routing::QueueBundleEvent::raise(bundle);
 					}
 					break;
 				case BUNDLE_DELETED:
 					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent->getReason());
-						transmit( bundle );
+						dtn::routing::QueueBundleEvent::raise(bundle);
 					}
 					break;
 
@@ -131,7 +130,7 @@ namespace dtn
 					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent->getReason());
-						transmit( bundle );
+						dtn::routing::QueueBundleEvent::raise(bundle);
 					}
 					break;
 
@@ -139,7 +138,7 @@ namespace dtn
 					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent->getReason());
-						transmit( bundle );
+						dtn::routing::QueueBundleEvent::raise(bundle);
 					}
 					break;
 
@@ -147,27 +146,10 @@ namespace dtn
 					if ( b._procflags & Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
-						transmit( bundle );
+						dtn::routing::QueueBundleEvent::raise(bundle);
 					}
 					break;
 				}
-			}
-		}
-
-		void BundleCore::transmit(const Bundle &b)
-		{
-			EventSwitch::raiseEvent( new RouteEvent( b, ROUTE_PROCESS_BUNDLE ) );
-		}
-
-		void BundleCore::transmit(const dtn::data::EID &eid, const Bundle &b)
-		{
-			try {
-				// send the bundle with the ConnectionManager
-				ConnectionManager::send(eid, b);
-			} catch (ibrcommon::tcpserver::SocketException ex) {
-				// connection not possible
-				// TODO: requeue!
-				throw dtn::exceptions::NotImplementedException("connection not possible, requeue!");
 			}
 		}
 

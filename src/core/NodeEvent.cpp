@@ -18,13 +18,13 @@ namespace dtn
 		: m_node(n), m_action(action)
 		{}
 
+		void NodeEvent::raise(const Node &n, const EventNodeAction action)
+		{
+			raiseEvent( new NodeEvent(n, action) );
+		}
+
 		NodeEvent::~NodeEvent()
 		{}
-
-		const EventType NodeEvent::getType() const
-		{
-			return EVENT_ASYNC;
-		}
 
 		const Node& NodeEvent::getNode() const
 		{
@@ -42,7 +42,7 @@ namespace dtn
 		}
 
 #ifdef DO_DEBUG_OUTPUT
-		string NodeEvent::toString()
+		string NodeEvent::toString() const
 		{
 			return className;
 		}

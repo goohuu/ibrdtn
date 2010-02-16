@@ -6,7 +6,6 @@
  */
 
 #include "daemon/Notifier.h"
-#include "core/EventSwitch.h"
 #include "core/NodeEvent.h"
 #include <stdlib.h>
 
@@ -18,12 +17,12 @@ namespace dtn
 
 		Notifier::Notifier(std::string cmd) : _cmd(cmd)
 		{
-			EventSwitch::registerEventReceiver( NodeEvent::className, this );
+			bindEvent(NodeEvent::className);
 		}
 
 		Notifier::~Notifier()
 		{
-			EventSwitch::unregisterEventReceiver( NodeEvent::className, this );
+			unbindEvent(NodeEvent::className);
 		}
 
 		void Notifier::raiseEvent(const dtn::core::Event *evt)

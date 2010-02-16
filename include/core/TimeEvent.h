@@ -23,21 +23,23 @@ namespace dtn
 		class TimeEvent : public Event
 		{
 		public:
-			TimeEvent(const size_t timestamp, const TimeEventAction action);
 			virtual ~TimeEvent();
 
 			TimeEventAction getAction() const;
 			size_t getTimestamp() const;
 			const string getName() const;
-			const EventType getType() const;
+
+			static void raise(const size_t timestamp, const TimeEventAction action);
 
 #ifdef DO_DEBUG_OUTPUT
-			string toString();
+			string toString() const;
 #endif
 
 			static const string className;
 
 		private:
+			TimeEvent(const size_t timestamp, const TimeEventAction action);
+
 			const size_t m_timestamp;
 			const TimeEventAction m_action;
 		};

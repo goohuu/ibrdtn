@@ -8,13 +8,15 @@
 #include "core/BundleStorage.h"
 #include "core/SimpleBundleStorage.h"
 #include "core/SQLiteBundleStorage.h"
-#include "core/DynamicBundleRouter.h"
 #include "core/Node.h"
 #include "core/EventSwitch.h"
 #include "core/GlobalEvent.h"
 #include "core/NodeEvent.h"
-#include "core/EventDebugger.h"
 #include "core/CustodyManager.h"
+
+#include "routing/BaseRouter.h"
+#include "routing/StaticRoutingExtension.h"
+#include "routing/NeighborRoutingExtension.h"
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
@@ -53,8 +55,8 @@ void term(int signal)
 
 void reload(int signal)
 {
-    // send shutdown signal to unbound threads
-    dtn::core::EventSwitch::raiseEvent(new dtn::core::GlobalEvent(dtn::core::GlobalEvent::GLOBAL_RELOAD));
+	// send shutdown signal to unbound threads
+	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
 }
 
 void switchUser(Configuration &config)
@@ -126,11 +128,6 @@ int main(int argc, char *argv[])
 
 	}
 
-#ifdef DO_DEBUG_OUTPUT
-	// create event debugger
-	EventDebugger eventdebugger;
-#endif
-
 	// create the bundle core object
 	BundleCore& core = BundleCore::getInstance();
 
@@ -149,11 +146,15 @@ int main(int argc, char *argv[])
 	// set the storage in the core
 	core.setStorage(storage);
 
-	// create a static router
-	DynamicBundleRouter router( conf.getStaticRoutes(), *storage );
+	// create the base router
+	dtn::routing::BaseRouter router(*storage);
+
+	// add routing extensions
+	router.addExtension( new dtn::routing::StaticRoutingExtension( conf.getStaticRoutes() ) );
+	router.addExtension( new dtn::routing::NeighborRoutingExtension() );
 
 	// get the configuration of the convergence layers
-        list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();
+	list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();
 
 	// initialize the DiscoveryAgent
 	dtn::net::IPNDAgent *ipnd = NULL;
@@ -228,8 +229,6 @@ int main(int argc, char *argv[])
 		service->start();
 	}
 
-	router.start();
-
 	// announce static nodes, create a list of static nodes
 	list<Node> static_nodes = conf.getStaticNodes();
 
@@ -273,7 +272,7 @@ int main(int argc, char *argv[])
 	if (notifier != NULL) delete notifier;
 
 	// send shutdown signal to unbound threads
-	dtn::core::EventSwitch::raiseEvent(new dtn::core::GlobalEvent(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN));
+	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
 
 	// stop the event switch
 	dtn::core::EventSwitch::stop();

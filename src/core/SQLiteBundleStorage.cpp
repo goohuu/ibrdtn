@@ -6,7 +6,6 @@
  */
 
 #include "core/SQLiteBundleStorage.h"
-#include "core/EventSwitch.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
 #include "ibrcommon/thread/MutexLock.h"
@@ -107,31 +106,41 @@ namespace core {
 		removeFragments			= prepareStatement("DELETE FROM "+_FragmentTable+" WHERE Source = ? AND Timestamp = ?;");
 
 		//register Events
-		EventSwitch::registerEventReceiver(TimeEvent::className, this);
-		EventSwitch::registerEventReceiver(GlobalEvent::className, this);
+		bindEvent(TimeEvent::className);
+		bindEvent(GlobalEvent::className);
 	}
 
-	SQLiteBundleStorage::~SQLiteBundleStorage(){
+	SQLiteBundleStorage::~SQLiteBundleStorage()
+	{
+		{
+			ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
 
-		ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
+			//finalize Statements
+			sqlite3_finalize(getTTL);
+			sqlite3_finalize(getBundleByDestination);
+			sqlite3_finalize(getBundleByID);
+			sqlite3_finalize(store_Bundle);
+			sqlite3_finalize(clearStorage);
+			sqlite3_finalize(countEntries);
+			sqlite3_finalize(vacuum);
+			sqlite3_finalize(getROWID);
+			sqlite3_finalize(removeBundle);
 
-		//finalize Statements
-		sqlite3_finalize(getTTL);
-		sqlite3_finalize(getBundleByDestination);
-		sqlite3_finalize(getBundleByID);
-		sqlite3_finalize(store_Bundle);
-		sqlite3_finalize(clearStorage);
-		sqlite3_finalize(countEntries);
-		sqlite3_finalize(vacuum);
-		sqlite3_finalize(getROWID);
-		sqlite3_finalize(removeBundle);
+			//close Databaseconnection
+			sqlite3_close(database);
+		}
 
-		//close Databaseconnection
-		sqlite3_close(database);
+		{
+			ibrcommon::MutexLock l(timeeventConditional);
+			global_shutdown = true;
+			timeeventConditional.signal(true);
+		}
 
 		//unregister Events
-		EventSwitch::unregisterEventReceiver(TimeEvent::className, this);
-		EventSwitch::unregisterEventReceiver(GlobalEvent::className, this);
+		unbindEvent(TimeEvent::className);
+		unbindEvent(GlobalEvent::className);
+
+		join();
 	}
 
 	sqlite3_stmt* SQLiteBundleStorage::prepareStatement(string sqlquery){
@@ -571,6 +580,7 @@ namespace core {
 	}
 
 	void SQLiteBundleStorage::run(void){
+		ibrcommon::MutexLock l(timeeventConditional);
 		while(!global_shutdown){
 			deleteexpired();
 			timeeventConditional.wait();

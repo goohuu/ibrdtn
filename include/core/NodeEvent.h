@@ -28,21 +28,23 @@ namespace dtn
 		class NodeEvent : public Event
 		{
 		public:
-			NodeEvent(const Node &n, const EventNodeAction action);
 			virtual ~NodeEvent();
 
 			EventNodeAction getAction() const;
 			const Node& getNode() const;
 			const string getName() const;
-			const EventType getType() const;
 
 #ifdef DO_DEBUG_OUTPUT
-			string toString();
+			string toString() const;
 #endif
+
+			static void raise(const Node &n, const EventNodeAction action);
 
 			static const string className;
 
 		private:
+			NodeEvent(const Node &n, const EventNodeAction action);
+
 			const Node m_node;
 			const EventNodeAction m_action;
 		};

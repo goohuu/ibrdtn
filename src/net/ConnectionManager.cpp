@@ -8,14 +8,16 @@
 #include "net/ConnectionManager.h"
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
-#include "core/EventSwitch.h"
+#include "net/BundleReceivedEvent.h"
 #include "core/NodeEvent.h"
-#include "core/RouteEvent.h"
 #include "core/BundleEvent.h"
 #include "ibrcommon/net/tcpserver.h"
 #include "ibrcommon/TimeMeasurement.h"
 #include "ibrcommon/Math.h"
 #include "core/BundleCore.h"
+#include "routing/RequeueBundleEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
 
 using namespace dtn::core;
 
@@ -61,7 +63,7 @@ namespace dtn
 
 		void ConnectionManager::addConnection(const dtn::core::Node &n)
 		{
-			dtn::core::EventSwitch::raiseEvent(new dtn::core::NodeEvent( n, dtn::core::NODE_AVAILABLE) );
+			dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
 			_static_connections.push_back(n);
 		}
 
@@ -97,7 +99,7 @@ namespace dtn
 			_discovered_nodes.push_back( node );
 
 			// announce the new node
-			EventSwitch::raiseEvent(new NodeEvent(node, dtn::core::NODE_AVAILABLE));
+			dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
 		}
 
 		void ConnectionManager::check_discovered()
@@ -118,7 +120,7 @@ namespace dtn
 					_discovered_nodes.erase( eraseme );
 
 					// announce the node unavailable event
-					EventSwitch::raiseEvent(new NodeEvent(n, dtn::core::NODE_UNAVAILABLE));
+					dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
 
 					continue;
 				}
@@ -154,8 +156,7 @@ namespace dtn
 		void ConnectionManager::received(const dtn::data::EID &eid, const Bundle &b)
 		{
 			// raise default bundle received event
-			EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
-			EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
+			dtn::net::BundleReceivedEvent::raise(eid, b);
 		}
 
 		void ConnectionManager::send(const dtn::data::EID &eid, const dtn::data::Bundle &b)
@@ -167,29 +168,27 @@ namespace dtn
 
 		void ConnectionManager::send(const ConnectionManager::Job &job)
 		{
-			BundleConnection *conn = getConnection(job._destination);
-
-//			if (conn->isBusy())
-//			{
-//#ifdef DO_DEBUG_OUTPUT
-//				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "requeue bundle cause of busy connection" << endl;
-//#endif
-//				EventSwitch::raiseEvent( new BundleEvent(b, BUNDLE_RECEIVED) );
-//				EventSwitch::raiseEvent( new RouteEvent(b, ROUTE_PROCESS_BUNDLE) );
-//				return;
-//			}
-
+			// prepare a measurement
 			ibrcommon::TimeMeasurement m;
-			m.start();
 
 			try {
-				conn->write(job._bundle);
+				BundleConnection *conn = getConnection(job._destination);
+
+				// start the measurement
+				m.start();
+
+				(*conn) << job._bundle;
+
 				m.stop();
 				// get throughput
 				double kbytes_per_second = (job._bundle.getSize() / m.getSeconds()) / 1024;
 
 				// print out throughput
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer completed after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
+
+				// signal completion of the transfer
+				TransferCompletedEvent::raise(job._destination, job._bundle);
+
 			} catch (BundleConnection::ConnectionInterruptedException ex) {
 				m.stop();
 				// get throughput
@@ -200,6 +199,9 @@ namespace dtn
 
 				// TODO: the connection has been interrupted => create a fragment
 
+				// signal interruption of the transfer
+				TransferAbortedEvent::raise(job._destination, job._bundle);
+
 			} catch (dtn::exceptions::IOException ex) {
 				m.stop();
 				// the connection has been terminated and fragmentation is not possible => requeue the bundle
@@ -208,8 +210,19 @@ namespace dtn
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "fragmentation is not possible => requeue the bundle" << endl;
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "Exception: " << ex.what() << endl;
 #endif
-				EventSwitch::raiseEvent( new BundleEvent(job._bundle, BUNDLE_RECEIVED) );
-				EventSwitch::raiseEvent( new RouteEvent(job._bundle, ROUTE_PROCESS_BUNDLE) );
+				// signal interruption of the transfer
+				TransferAbortedEvent::raise(job._destination, job._bundle);
+
+			} catch (dtn::net::ConnectionNotAvailableException ex) {
+				// the connection not available
+
+#ifdef DO_DEBUG_OUTPUT
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "connection error => requeue the bundle" << endl;
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "Exception: " << ex.what() << endl;
+#endif
+				// signal interruption of the transfer
+				TransferAbortedEvent::raise(job._destination, job._bundle);
+
 			}
 		}
 

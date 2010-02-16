@@ -55,6 +55,11 @@ namespace dtn
 					_queue.pop();
 				}
 
+#ifdef DO_DEBUG_OUTPUT
+				// forward to debugger
+				_debugger.raiseEvent(evt);
+#endif
+
 				try {
 					// get the list for this event
 					const list<EventReceiver*> receivers = getReceivers(evt->getName());

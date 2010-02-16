@@ -37,7 +37,7 @@ namespace dtn
 
 				virtual const EID getWorkerURI() const;
 
-				virtual dtn::net::TransmitReport callbackBundleReceived(const Bundle &b) = 0;
+				virtual void callbackBundleReceived(const Bundle &b) = 0;
 
 			protected:
 				void initialize(const string uri, bool async = false);

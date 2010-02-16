@@ -37,13 +37,14 @@ namespace dtn
 			return TimeEvent::className;
 		}
 
-		const EventType TimeEvent::getType() const
+		void TimeEvent::raise(const size_t timestamp, const TimeEventAction action)
 		{
-			EVENT_ASYNC;
+			// raise the new event
+			raiseEvent( new TimeEvent(timestamp, action) );
 		}
 
 #ifdef DO_DEBUG_OUTPUT
-		string TimeEvent::toString()
+		string TimeEvent::toString() const
 		{
 
 		}

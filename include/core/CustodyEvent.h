@@ -37,10 +37,9 @@ namespace dtn
 			EventCustodyAction getAction() const;
 			const Bundle& getBundle() const;
 			const string getName() const;
-			const EventType getType() const;
 
 #ifdef DO_DEBUG_OUTPUT
-			string toString();
+			string toString() const;
 #endif
 
 			static const string className;

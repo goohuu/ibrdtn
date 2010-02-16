@@ -18,51 +18,34 @@ namespace dtn
 {
 	namespace net
 	{
-		class BundleConnection : public ibrcommon::Mutex
+		class BundleConnection
 		{
-			class BundleReceiver : public ibrcommon::JoinableThread
+		public:
+			class ConnectionInterruptedException : public dtn::exceptions::IOException
 			{
 			public:
-				BundleReceiver(BundleConnection &connection);
-				virtual ~BundleReceiver();
-				void run();
-				virtual void shutdown();
+				ConnectionInterruptedException(size_t last_ack = 0) : dtn::exceptions::IOException("The connection has been interrupted."), _last_ack(last_ack)
+				{
+				}
 
+				size_t getLastAck()
+				{
+					return _last_ack;
+				}
 			private:
-				bool _running;
-				BundleConnection &_connection;
+				size_t _last_ack;
 			};
 
-		public:
-                    class ConnectionInterruptedException : public dtn::exceptions::IOException
-                    {
-                    public:
-                        ConnectionInterruptedException(size_t last_ack = 0) : dtn::exceptions::IOException("The connection has been interrupted."), _last_ack(last_ack)
-                        {
-                        }
+			virtual ~BundleConnection() = 0;
 
-                        size_t getLastAck()
-                        {
-                            return _last_ack;
-                        }
-                    private:
-                        size_t _last_ack;
-                    };
+			friend BundleConnection &operator<<(BundleConnection &c, const dtn::data::Bundle &obj);
 
-			BundleConnection();
-			virtual ~BundleConnection();
+			virtual void shutdown() = 0;
 
-			virtual void read(dtn::data::Bundle &bundle) = 0;
-			virtual void write(const dtn::data::Bundle &bundle) = 0;
-
-			virtual void initialize();
-			virtual void shutdown();
-
-			void waitFor();
-			virtual bool isBusy() const { return false; }
+			virtual bool isBusy() const;
 
 		private:
-			BundleReceiver _receiver;
+			virtual void write(const dtn::data::Bundle &bundle) = 0;
 		};
 	}
 }

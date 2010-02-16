@@ -53,6 +53,11 @@ namespace dtn
 			return ret;
 		}
 
+		void DTNTime::operator+=(const size_t value)
+		{
+			_seconds += value;
+		}
+
 		std::ostream& operator<<(std::ostream &stream, const dtn::data::DTNTime &obj)
 		{
 			stream << obj._seconds << obj._nanoseconds;

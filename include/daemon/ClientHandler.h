@@ -33,7 +33,7 @@ namespace dtn
 			virtual ~ClientHandler();
 
 			bool isConnected();
-			dtn::net::TransmitReport callbackBundleReceived(const Bundle &b);
+			void callbackBundleReceived(const Bundle &b);
 
 			virtual void shutdown();
 			void embalm();

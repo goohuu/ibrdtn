@@ -9,26 +9,24 @@
 #define EVENT_H_
 
 #include "ibrdtn/default.h"
+#include "core/EventReceiver.h"
 
 namespace dtn
 {
 	namespace core
 	{
-		enum EventType {
-			EVENT_ASYNC = 0,
-			EVENT_SYNC = 1
-		};
-
 		class Event
 		{
 		public:
-			virtual ~Event() {};
+			virtual ~Event() = 0;
 			virtual const string getName() const = 0;
-			virtual const EventType getType() const = 0;
 
 #ifdef DO_DEBUG_OUTPUT
-			virtual string toString() = 0;
+			virtual string toString() const = 0;
 #endif
+
+		protected:
+			static void raiseEvent(Event *evt);
 		};
 	}
 }

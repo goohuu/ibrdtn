@@ -12,7 +12,7 @@ namespace dtn
 {
 	namespace core
 	{
-		GlobalEvent::GlobalEvent(Action a)
+		GlobalEvent::GlobalEvent(const Action a)
 		 : _action(a)
 		{
 		}
@@ -26,18 +26,19 @@ namespace dtn
 			return _action;
 		}
 
-		const EventType GlobalEvent::getType() const
-		{
-			return EVENT_SYNC;
-		}
-
 		const string GlobalEvent::getName() const
 		{
 			return GlobalEvent::className;
 		}
 
+		void GlobalEvent::raise(const Action a)
+		{
+			// raise the new event
+			raiseEvent( new GlobalEvent(a) );
+		}
+
 #ifdef DO_DEBUG_OUTPUT
-		string GlobalEvent::toString()
+		string GlobalEvent::toString() const
 		{
 			return className;
 		}

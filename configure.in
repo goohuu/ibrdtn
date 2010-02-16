@@ -57,7 +57,7 @@ dnl check for pthread library
 dnl -----------------------------------------------
 
 PTHREAD_CFLAGS=""
-PTHREAD_LIBS="-mt -pthread"
+PTHREAD_LIBS="-mt -pthread -pthreads"
 
 AC_CHECK_LIB(pthread,pthread_create)
 

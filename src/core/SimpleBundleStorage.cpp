@@ -1,7 +1,7 @@
 #include "core/SimpleBundleStorage.h"
-#include "core/EventSwitch.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
+#include "core/BundleExpiredEvent.h"
 
 #include "ibrdtn/utils/Utils.h"
 
@@ -14,14 +14,14 @@ namespace dtn
 		SimpleBundleStorage::SimpleBundleStorage()
 		 : _running(true)
 		{
-			EventSwitch::registerEventReceiver(TimeEvent::className, this);
-			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
+			bindEvent(TimeEvent::className);
+			bindEvent(GlobalEvent::className);
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
 		{
-			EventSwitch::unregisterEventReceiver(TimeEvent::className, this);
-			EventSwitch::unregisterEventReceiver(GlobalEvent::className, this);
+			unbindEvent(TimeEvent::className);
+			unbindEvent(GlobalEvent::className);
 
 			shutdown();
 			join();
@@ -190,6 +190,9 @@ namespace dtn
 					if ( bundle.isExpired() )
 					{
 						expired.push_back( BundleID(bundle) );
+
+						// raise an event
+						dtn::core::BundleExpiredEvent::raise( *iter );
 					}
 				}
 
@@ -197,7 +200,6 @@ namespace dtn
 				for (list<dtn::data::BundleID>::const_iterator iter = expired.begin(); iter != expired.end(); iter++)
 				{
 					remove( *iter );
-					ibrcommon::slog << ibrcommon::SYSLOG_INFO << "bundle " << (*iter).toString() << " has been expired and removed" << endl;
 				}
 
 				yield();

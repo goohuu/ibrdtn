@@ -15,9 +15,8 @@ namespace dtn
 {
 	namespace daemon
 	{
-		dtn::net::TransmitReport DevNull::callbackBundleReceived(const Bundle &b)
+		void DevNull::callbackBundleReceived(const Bundle &b)
 		{
-			return dtn::net::BUNDLE_ACCEPTED;
 		}
 	}
 }

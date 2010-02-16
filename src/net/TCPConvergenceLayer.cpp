@@ -7,7 +7,7 @@
 
 #include "net/TCPConvergenceLayer.h"
 #include "core/BundleCore.h"
-#include "core/EventSwitch.h"
+#include "net/BundleReceivedEvent.h"
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "ibrcommon/net/NetInterface.h"
@@ -27,35 +27,90 @@ namespace dtn
 {
 	namespace net
 	{
-		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d)
-		 : _stream(socket, d), StreamConnection(_stream), _cl(cl), _connected(false)
+		/*
+		 * class TCPBundleStream
+		 */
+		TCPConvergenceLayer::TCPConnection::TCPBundleStream::TCPBundleStream(int socket, ibrcommon::tcpstream::stream_direction d)
+		 : _stream(socket, d), StreamConnection(_stream), _reactive_fragmentation(false)
 		{
 			_node.setAddress(_stream.getAddress());
 			_node.setPort(_stream.getPort());
 			_node.setProtocol(TCP_CONNECTION);
-			_cl.add(this);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "new tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
 #endif
+		}
 
-			EventSwitch::registerEventReceiver(GlobalEvent::className, this);
-			EventSwitch::registerEventReceiver(NodeEvent::className, this);
+		TCPConvergenceLayer::TCPConnection::TCPBundleStream::~TCPBundleStream()
+		{
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			cout << "removed tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
+#endif
+		}
+
+		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::TCPBundleStream::getNode() const
+		{
+			return _node;
+		}
+
+		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::shutdown()
+		{
+			_stream.close();
+
+			// wait for the closed connection
+			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+
+			// close the stream
+			_stream.close();
+		}
+
+		bool TCPConvergenceLayer::TCPConnection::TCPBundleStream::waitCompleted()
+		{
+			// wait until all ACKs are received or the connection is closed
+			if (!StreamConnection::waitCompleted())
+			{
+				// connection is closed before all ACKs are received
+				// if reactive fragmentation is enabled
+				if (_reactive_fragmentation)
+				{
+					// then throw a exception to activate the fragmentation process
+					throw BundleConnection::ConnectionInterruptedException(StreamConnection::_ack_size);
+				}
+				else
+				{
+					// if no fragmentation is possible, requeue the bundle
+					throw dtn::exceptions::IOException("write to stream failed");
+				}
+			}
+
+			StreamConnection::_ack_size = 0;
+
+			return true;
+		}
+
+
+		/*
+		 * class TCPConnection
+		 */
+		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d)
+		 : _stream(socket, d), _cl(cl), _receiver(*this), _connected(false)
+		{
+			_cl.add(this);
+
+			bindEvent(GlobalEvent::className);
+			bindEvent(NodeEvent::className);
 		}
 
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()
 		{
-			BundleConnection::waitFor();
-			StreamConnection::waitFor();
+			_receiver.waitFor();
+			_stream.waitFor();
 
 			_cl.remove(this);
 
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "removed tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
-#endif
-
-			EventSwitch::unregisterEventReceiver(GlobalEvent::className, this);
-			EventSwitch::unregisterEventReceiver(NodeEvent::className, this);
+			unbindEvent(GlobalEvent::className);
+			unbindEvent(NodeEvent::className);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::embalm()
@@ -83,7 +138,7 @@ namespace dtn
 			{
 				if (node->getAction() == NODE_UNAVAILABLE)
 				{
-					if (node->getNode().equals(_node))
+					if (node->getNode().equals(getNode()))
 					{
 						shutdown();
 					}
@@ -96,58 +151,78 @@ namespace dtn
 			return _in_header;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::initialize(dtn::streams::StreamContactHeader header)
+		dtn::streams::StreamContactHeader TCPConvergenceLayer::TCPConnection::TCPBundleStream::handshake(dtn::streams::StreamContactHeader header)
 		{
-			_out_header = header;
+			dtn::streams::StreamContactHeader in_header;
 
 			// send the header
-			(*this) << _out_header;
-			StreamConnection::flush();
+			(*this) << header; (*this).flush();
 
-                        try {
-                            // get the header
-                            (*this) >> _in_header;
-                            _node.setURI(_in_header.getEID().getString());
-                            _connected = true;
+			try {
+				// get the header
+				(*this) >> in_header;
+				_node.setURI(in_header.getEID().getString());
 
-                            BundleConnection::initialize();
-                            StreamConnection::start();
+				// startup the connection threads
+				StreamConnection::start();
 
-                            // set the timer for this connection
-                            StreamConnection::setTimer(header._keepalive, _in_header._keepalive - 5);
+				// set the timer for this connection
+				StreamConnection::setTimer(header._keepalive, in_header._keepalive - 5);
 
-                        } catch (dtn::exceptions::InvalidDataException ex) {
+				// check fragmentation flag
+				_reactive_fragmentation = (in_header._flags & 0x02);
 
-                            // return with shutdown, if the stream is wrong
-                            (*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH); flush();
+			} catch (dtn::exceptions::InvalidDataException ex) {
 
-                            StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
+				// return with shutdown, if the stream is wrong
+				_stream << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH); flush();
 
-                            // close the stream
-                            _stream.close();
+				StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
 
-                            bury();
-                        }
+				// close the stream
+				_stream.close();
+
+				// forward the catched exception
+				throw ex;
+			}
+		}
+
+		void TCPConvergenceLayer::TCPConnection::initialize(dtn::streams::StreamContactHeader header)
+		{
+			try {
+				// define the outgoing header
+				_out_header = header;
+
+				// do the handshake
+				_in_header = _stream.handshake(_out_header);
+
+				// set state to connected
+				_connected = true;
+
+				// start the receiver for incoming bundles
+				_receiver.start();
+
+			} catch (dtn::exceptions::InvalidDataException ex) {
+				// mark up for deletion
+				bury();
+			}
+
 		}
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			BundleConnection::shutdown();
-			StreamConnection::shutdown();
+			// stop the receiver
+			_receiver.shutdown();
 
-                        // wait for the closed connection
-                        StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 
-                        // close the stream
-			_stream.close();
 
-                        // send myself to the graveyard
+			// send myself to the graveyard
 			bury();
 		}
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
 		{
-			return _node;
+			return _stream.getNode();
 		}
 
 		bool TCPConvergenceLayer::TCPConnection::isConnected()
@@ -162,12 +237,11 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::read(dtn::data::Bundle &bundle)
 		{
-			static ibrcommon::Mutex mutex;
-			ibrcommon::MutexLock l(mutex);
+			ibrcommon::MutexLock l(_readlock);
 
 			try {
-				(*this) >> bundle;
-				if (!good()) throw dtn::exceptions::IOException("read from stream failed");
+				_stream >> bundle;
+				if (!_stream.good()) throw dtn::exceptions::IOException("read from stream failed");
 			} catch (dtn::exceptions::InvalidDataException ex) {
 				throw dtn::exceptions::IOException("read from stream failed");
 			} catch (dtn::exceptions::InvalidBundleData ex) {
@@ -180,28 +254,49 @@ namespace dtn
 			static ibrcommon::Mutex mutex;
 			ibrcommon::IndicatingLock l(mutex, _busy);
 
-			(*this) << bundle; flush();
+			// transmit the bundle and flush
+			_stream << bundle; _stream.flush();
 
-                        // wait until all ACKs are received or the connection is closed
-                        if (!waitCompleted())
-                        {
-                            // connection is closed before all ACKs are received
-                            // if reactive fragmentation is enabled
-                            if (_in_header._flags & 0x02)
-                            {
-                                // then throw a exception to activate the fragmentation process
-                                throw BundleConnection::ConnectionInterruptedException(StreamConnection::_ack_size);
-                            }
-                            else
-                            {
-                                // if no fragmentation is possible, requeue the bundle
-                                throw dtn::exceptions::IOException("write to stream failed");
-                            }
-                        }
-
-                        StreamConnection::_ack_size = 0;
+			// wait until all segments are acknowledged.
+			_stream.waitCompleted();
 		}
 
+		TCPConvergenceLayer::TCPConnection::Receiver::Receiver(TCPConnection &connection)
+		 :  _running(true), _connection(connection)
+		{
+		}
+
+		TCPConvergenceLayer::TCPConnection::Receiver::~Receiver()
+		{
+			join();
+		}
+
+		void TCPConvergenceLayer::TCPConnection::Receiver::run()
+		{
+			try {
+				while (_running)
+				{
+					dtn::data::Bundle bundle;
+					_connection.read(bundle);
+
+					// raise default bundle received event
+					dtn::net::BundleReceivedEvent::raise(EID(), bundle);
+
+					yield();
+				}
+			} catch (dtn::exceptions::IOException ex) {
+				_running = false;
+			}
+		}
+
+		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
+		{
+			_running = false;
+		}
+
+		/*
+		 * class TCPConvergenceLayer
+		 */
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		void TCPConvergenceLayer::add(TCPConnection *conn)
@@ -246,10 +341,10 @@ namespace dtn
 			join();
 		}
 
-                void TCPConvergenceLayer::update(std::string& name, std::string& data)
-                {
-                    // TODO: update address and port
-                }
+		void TCPConvergenceLayer::update(std::string& name, std::string& data)
+		{
+			// TODO: update address and port
+		}
 
 		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::openConnection(const dtn::core::Node &n)
 		{
@@ -309,7 +404,7 @@ namespace dtn
 
 						if (eid == node_eid)
 						{
-							if ( (*iter)->good() )
+							if ( (*iter)->isConnected() )
 							{
 								return (*iter);
 							}

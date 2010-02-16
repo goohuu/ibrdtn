@@ -4,11 +4,9 @@
 #include "ibrdtn/default.h"
 
 #include "core/BundleStorage.h"
-#include "core/BundleRouter.h"
 #include "core/CustodyTimer.h"
 #include "core/EventReceiver.h"
 #include "core/CustodyManager.h"
-#include "core/Event.h"
 #include "core/Clock.h"
 
 #include "net/ConnectionManager.h"
@@ -44,16 +42,6 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt);
 
-			/**
-			 * transmit a bundle directly to a reachable node
-			 */
-			void transmit(const dtn::data::EID &eid, const Bundle &b);
-
-//			/**
-//			 * deliver a bundle to a application
-//			 */
-//			void deliver(const Bundle &b);
-
 			Clock& getClock();
 
 			void setStorage(dtn::core::BundleStorage *storage);
@@ -75,12 +63,6 @@ namespace dtn
 			 * destructor
 			 */
 			virtual ~BundleCore();
-
-			/**
-			 * Shortcut to give a bundle to the router module.
-			 * @param b The bundle to transfer.
-			 */
-			void transmit(const Bundle &b);
 
 			/**
 			 * Forbidden copy constructor

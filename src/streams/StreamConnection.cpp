@@ -20,127 +20,127 @@ namespace dtn
 
 		StreamConnection::~StreamConnection()
 		{
-                    if (_in_timer != NULL)
-                    {
-                        _in_timer->stop();
-                        delete _in_timer;
-                    }
+			if (_in_timer != NULL)
+			{
+				_in_timer->stop();
+				delete _in_timer;
+			}
 
-                    if (_out_timer != NULL)
-                    {
-			_out_timer->stop();
-                        delete _out_timer;
-                    }
+			if (_out_timer != NULL)
+			{
+				_out_timer->stop();
+				delete _out_timer;
+			}
 
-                    join();
+			join();
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-                    cout << "remove StreamConnection" << endl;
+			cout << "remove StreamConnection" << endl;
 #endif
 		}
 
-                void StreamConnection::setTimer(size_t in_timeout, size_t out_timeout)
-                {
-                    _in_timer = new ibrcommon::Timer(*this, in_timeout);
-                    _out_timer = new ibrcommon::Timer(*this, out_timeout);
+		void StreamConnection::setTimer(size_t in_timeout, size_t out_timeout)
+		{
+			_in_timer = new ibrcommon::Timer(*this, in_timeout);
+			_out_timer = new ibrcommon::Timer(*this, out_timeout);
 
-                    _in_timer->start();
-                    _out_timer->start();
-                }
+			_in_timer->start();
+			_out_timer->start();
+		}
 
-                void StreamConnection::setState(ConnectionState conn)
-                {
-                    ibrcommon::MutexLock l(_state_cond);
+		void StreamConnection::setState(ConnectionState conn)
+		{
+			ibrcommon::MutexLock l(_state_cond);
 
-                    // the closed state is a final state
-                    if (_state == CONNECTION_CLOSED) return;
+			// the closed state is a final state
+			if (_state == CONNECTION_CLOSED) return;
 
-                    // block states smaller than SHUTDOWN, if a shutdown is in progress.
-                    if ((_state >= CONNECTION_SHUTDOWN) && (conn < CONNECTION_SHUTDOWN)) return;
+			// block states smaller than SHUTDOWN, if a shutdown is in progress.
+			if ((_state >= CONNECTION_SHUTDOWN) && (conn < CONNECTION_SHUTDOWN)) return;
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-                    cout << "StreamConnection state changed from " << _state << " to " << conn << endl;
+			cout << "StreamConnection state changed from " << _state << " to " << conn << endl;
 #endif
-                    _state = conn;
-                    _state_cond.signal(true);
+			_state = conn;
+			_state_cond.signal(true);
 
-                    if (_state >= CONNECTION_SHUTDOWN)
-                    {
-                        ibrcommon::MutexLock l(_completed_cond);
-                        _completed_cond.signal(true);
-                    }
-                }
+			if (_state >= CONNECTION_SHUTDOWN)
+			{
+				ibrcommon::MutexLock l(_completed_cond);
+				_completed_cond.signal(true);
+			}
+		}
 
-                StreamConnection::ConnectionState StreamConnection::getState()
-                {
-                    ibrcommon::MutexLock l(_state_cond);
-                    return _state;
-                }
+		StreamConnection::ConnectionState StreamConnection::getState()
+		{
+			ibrcommon::MutexLock l(_state_cond);
+			return _state;
+		}
 
-                bool StreamConnection::waitState(ConnectionState conn, size_t timeout)
-                {
-                    ibrcommon::MutexLock l(_state_cond);
-                    while ((conn != _state) && (_state != CONNECTION_CLOSED))
-                        if (!_state_cond.wait(timeout)) break;
+		bool StreamConnection::waitState(ConnectionState conn, size_t timeout)
+		{
+			ibrcommon::MutexLock l(_state_cond);
+			while ((conn != _state) && (_state != CONNECTION_CLOSED))
+				if (!_state_cond.wait(timeout)) break;
 
-                    if (conn == _state) return true;
+			if (conn == _state) return true;
 
-                    return false;
-                }
+			return false;
+		}
 
-                bool StreamConnection::waitState(ConnectionState conn)
-                {
-                    ibrcommon::MutexLock l(_state_cond);
-                    while ((conn != _state) && (_state != CONNECTION_CLOSED))
-                        _state_cond.wait();
+		bool StreamConnection::waitState(ConnectionState conn)
+		{
+			ibrcommon::MutexLock l(_state_cond);
+			while ((conn != _state) && (_state != CONNECTION_CLOSED))
+				_state_cond.wait();
 
-                    if (conn == _state) return true;
+			if (conn == _state) return true;
 
-                    return false;
-                }
+			return false;
+		}
 
 		bool StreamConnection::good()
 		{
-                    // only return good if shutdown is not set.
-                    return (iostream::good() && (getState() < CONNECTION_SHUTDOWN));
+			// only return good if shutdown is not set.
+			return (iostream::good() && (getState() < CONNECTION_SHUTDOWN));
 		}
 
 		void StreamConnection::shutdown()
 		{
-                    if (getState() < CONNECTION_SHUTDOWN)
-                    {
-                        (*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
-                    }
+			if (getState() < CONNECTION_SHUTDOWN)
+			{
+				(*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
+			}
 		}
 
-                bool StreamConnection::isCompleted()
-                {
-                    ibrcommon::MutexLock l(_completed_cond);
+		bool StreamConnection::isCompleted()
+		{
+			ibrcommon::MutexLock l(_completed_cond);
 
-                    if (_buf.getOutSize() == _ack_size)
-                    {
-                        return true;
-                    }
+			if (_buf.getOutSize() == _ack_size)
+			{
+				return true;
+			}
 
-                    return false;
-                }
+			return false;
+		}
 
-                bool StreamConnection::waitCompleted()
-                {
-                    ibrcommon::MutexLock l(_completed_cond);
+		bool StreamConnection::waitCompleted()
+		{
+			ibrcommon::MutexLock l(_completed_cond);
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-                    cout << "wait for completion of transmission, current size: " << _ack_size << " of " << _buf.getOutSize() << endl;
+			cout << "wait for completion of transmission, current size: " << _ack_size << " of " << _buf.getOutSize() << endl;
 #endif
-                    while ((_buf.getOutSize() != _ack_size) && (getState() < CONNECTION_SHUTDOWN))
-                    {
-                        _completed_cond.wait();
+			while ((_buf.getOutSize() != _ack_size) && (getState() < CONNECTION_SHUTDOWN))
+			{
+				_completed_cond.wait();
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-                        cout << "current size: " << _ack_size << " of " << _buf.getOutSize() << endl;
+				cout << "current size: " << _ack_size << " of " << _buf.getOutSize() << endl;
 #endif
-                    }
+			}
 
-                    if (_buf.getOutSize() == _ack_size) return true;
-                    return false;
-                }
+			if (_buf.getOutSize() == _ack_size) return true;
+			return false;
+		}
 
 		void StreamConnection::run()
 		{
@@ -160,38 +160,38 @@ namespace dtn
 					{
 						case StreamDataSegment::MSG_DATA_SEGMENT:
 						{
-														if (seg._flags & 0x01)
-                                                        {
-                                                            setState(CONNECTION_RECEIVING);
-                                                            _recv_size = seg._value;
-                                                        }
-                                                        else
-                                                        {
-                                                            _recv_size += seg._value;
-                                                        }
+							if (seg._flags & 0x01)
+							{
+								setState(CONNECTION_RECEIVING);
+								_recv_size = seg._value;
+							}
+							else
+							{
+								_recv_size += seg._value;
+							}
 
 							// New data segment received. Send a ACK.
 							(*this) << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size);
 
-                                                        // flush if this ack is the last segment
-														if (seg._flags & 0x02)
-                                                        {
-                                                            flush();
-                                                            setState(CONNECTION_IDLE);
-                                                        }
+							// flush if this ack is the last segment
+							if (seg._flags & 0x02)
+							{
+								flush();
+								setState(CONNECTION_IDLE);
+							}
 							break;
 						}
 
 						case StreamDataSegment::MSG_ACK_SEGMENT:
-                                                {
-                                                        ibrcommon::MutexLock l(_completed_cond);
+						{
+							ibrcommon::MutexLock l(_completed_cond);
 							_ack_size = seg._value;
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-                                                        cout << "ACK received: " << _ack_size << endl;
+							cout << "ACK received: " << _ack_size << endl;
 #endif
-                                                        _completed_cond.signal(true);
+							_completed_cond.signal(true);
 							break;
-                                                }
+						}
 
 						case StreamDataSegment::MSG_KEEPALIVE:
 							break;
@@ -200,44 +200,44 @@ namespace dtn
 							break;
 
 						case StreamDataSegment::MSG_SHUTDOWN:
-                                                {
-                                                    if (getState() < CONNECTION_SHUTDOWN)
-                                                    {
-                                                        // we received a shutdown request
-                                                        setState(CONNECTION_SHUTDOWN);
+						{
+							if (getState() < CONNECTION_SHUTDOWN)
+							{
+								// we received a shutdown request
+								setState(CONNECTION_SHUTDOWN);
 
-                                                        // reply with a shutdown
-                                                        (*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
-                                                    }
+								// reply with a shutdown
+								(*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
+							}
 
-                                                    // and close the connection
-                                                    _buf.shutdown();
+							// and close the connection
+							_buf.shutdown();
 
-                                                    // connection closed
-                                                    setState(CONNECTION_CLOSED);
+							// connection closed
+							setState(CONNECTION_CLOSED);
 
-                                                    // call the shutdown method of the derived class
-                                                    shutdown();
+							// call the shutdown method of the derived class
+							shutdown();
 
-                                                    break;
-                                                }
+							break;
+						}
 					}
 
 				}
-                                catch (dtn::exceptions::IOException ex)
-                                {
+				catch (dtn::exceptions::IOException ex)
+				{
 					// Connection terminated
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 					cout << "IOException: " << ex.what() << endl;
 #endif
 					// close the connection
-                                        _buf.shutdown();
+					_buf.shutdown();
 
-                                        // connection closed
-                                        setState(CONNECTION_CLOSED);
+					// connection closed
+					setState(CONNECTION_CLOSED);
 
-                                        // call the shutdown method of the derived class
-                                        shutdown();
+					// call the shutdown method of the derived class
+					shutdown();
 					break;
 				}
 
@@ -246,9 +246,9 @@ namespace dtn
 			}
 		}
 
-                /**
-                 * This method is called if a timer is fired.
-                 */
+		/**
+		 * This method is called if a timer is fired.
+		 */
 		bool StreamConnection::timeout(ibrcommon::Timer *timer)
 		{
 			if (timer == _out_timer)

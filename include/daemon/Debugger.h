@@ -28,7 +28,7 @@ namespace dtn
 				};
 				virtual ~Debugger() {};
 
-				dtn::net::TransmitReport callbackBundleReceived(const Bundle &b);
+				void callbackBundleReceived(const Bundle &b);
 		};
 	}
 }

@@ -26,11 +26,6 @@ namespace dtn
 		{
 		}
 
-		const EventType CustodyEvent::getType() const
-		{
-			return EVENT_SYNC;
-		}
-
 		const Bundle& CustodyEvent::getBundle() const
 		{
 			return m_bundle;
@@ -47,7 +42,7 @@ namespace dtn
 		}
 
 #ifdef DO_DEBUG_OUTPUT
-		string CustodyEvent::toString()
+		string CustodyEvent::toString() const
 		{
 			return className;
 		}

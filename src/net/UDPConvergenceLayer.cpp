@@ -1,8 +1,5 @@
 #include "net/UDPConvergenceLayer.h"
-#include "net/UDPConnection.h"
-#include "core/EventSwitch.h"
-#include "core/RouteEvent.h"
-#include "core/BundleEvent.h"
+#include "net/BundleReceivedEvent.h"
 
 #include "ibrdtn/streams/BundleFactory.h"
 #include "ibrdtn/streams/BundleStreamReader.h"
@@ -79,132 +76,55 @@ namespace dtn
 			join();
 		}
 
-                void UDPConvergenceLayer::update(std::string &name, std::string &data)
-                {
-                    // TODO: update the values
-                }
-
-		TransmitReport UDPConvergenceLayer::transmit(const Bundle &b)
+		void UDPConvergenceLayer::update(std::string &name, std::string &data)
 		{
-			unsigned int size = b.getSize();
-
-			if (size > m_maxmsgsize)
-			{
-				// get the payload block
-				PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
-				size_t application_length = payload->getBLOB().getSize();
-
-				// the new size for the payload
-				size_t payload_size = m_maxmsgsize;
-
-				// reduce by the overhead
-				payload_size -= (size - application_length);
-
-				// possible size of fragment offset and application data length
-				payload_size -= 20;
-
-				// split the payload block
-				pair<PayloadBlock*, PayloadBlock*> frags = payload->split(payload_size);
-
-				Bundle frag1 = b;
-				frag1.clearBlocks();
-				frag1.addBlock(frags.first);
-
-				Bundle frag2 = b;
-				frag2.clearBlocks();
-				frag2.addBlock(frags.second);
-				frag2._fragmentoffset += payload_size;
-
-				if (!(b._procflags & Bundle::FRAGMENT))
-				{
-					frag1._procflags += Bundle::FRAGMENT;
-					frag1._appdatalength += application_length;
-					frag2._procflags += Bundle::FRAGMENT;
-					frag2._appdatalength += application_length;
-				}
-
-				// transfer the fragment
-				transmit(frag1);
-
-				// return the fragment to the router
-				EventSwitch::raiseEvent( new RouteEvent(frag2, ROUTE_PROCESS_BUNDLE) );
-
-				return TRANSMIT_SUCCESSFUL;
-			}
-
-			stringstream ss;
-			ss << b;
-
-			string data = ss.str();
-
-			struct sockaddr_in clientAddress;
-
-			// destination parameter
-			clientAddress.sin_family = AF_INET;
-
-			// broadcast
-			_net.getInterfaceAddress(&(clientAddress.sin_addr));
-			clientAddress.sin_port = htons(_net.getPort());
-
-			ibrcommon::MutexLock l(m_writelock);
-
-		    // send converted line back to client.
-		    int ret = sendto(m_socket, data.c_str(), data.length(), 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));
-
-		    if (ret < 0)
-		    {
-		    	return CONVERGENCE_LAYER_BUSY;
-		    }
-
-		    return TRANSMIT_SUCCESSFUL;
+			// TODO: update the values
 		}
 
-		TransmitReport UDPConvergenceLayer::transmit(const Bundle &b, const Node &node)
+		void UDPConvergenceLayer::transmit(const dtn::data::Bundle &b, const dtn::core::Node &node)
 		{
 			unsigned int size = b.getSize();
 
 			if (size > m_maxmsgsize)
 			{
-				// get the payload block
-				PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
-				size_t application_length = payload->getBLOB().getSize();
+				// TODO: create a fragment of length "size"
 
-				// the new size for the payload
-				size_t payload_size = m_maxmsgsize;
+//				// get the payload block
+//				PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
+//				size_t application_length = payload->getBLOB().getSize();
+//
+//				// the new size for the payload
+//				size_t payload_size = m_maxmsgsize;
+//
+//				// reduce by the overhead
+//				payload_size -= (size - application_length);
+//
+//				// possible size of fragment offset and application data length
+//				payload_size -= 20;
+//
+//				// split the payload block
+//				pair<PayloadBlock*, PayloadBlock*> frags = payload->split(payload_size);
+//
+//				Bundle frag1 = b;
+//				frag1.clearBlocks();
+//				frag1.addBlock(frags.first);
+//
+//				Bundle frag2 = b;
+//				frag2.clearBlocks();
+//				frag2.addBlock(frags.second);
+//				frag2._fragmentoffset += payload_size;
+//
+//				if (!(b._procflags & Bundle::FRAGMENT))
+//				{
+//					frag1._procflags += Bundle::FRAGMENT;
+//					frag1._appdatalength += application_length;
+//					frag2._procflags += Bundle::FRAGMENT;
+//					frag2._appdatalength += application_length;
+//				}
 
-				// reduce by the overhead
-				payload_size -= (size - application_length);
+				// TODO: transfer the fragment
 
-				// possible size of fragment offset and application data length
-				payload_size -= 20;
-
-				// split the payload block
-				pair<PayloadBlock*, PayloadBlock*> frags = payload->split(payload_size);
-
-				Bundle frag1 = b;
-				frag1.clearBlocks();
-				frag1.addBlock(frags.first);
-
-				Bundle frag2 = b;
-				frag2.clearBlocks();
-				frag2.addBlock(frags.second);
-				frag2._fragmentoffset += payload_size;
-
-				if (!(b._procflags & Bundle::FRAGMENT))
-				{
-					frag1._procflags += Bundle::FRAGMENT;
-					frag1._appdatalength += application_length;
-					frag2._procflags += Bundle::FRAGMENT;
-					frag2._appdatalength += application_length;
-				}
-
-				// transfer the fragment
-				transmit(frag1, node);
-
-				// return the fragment to the router
-				EventSwitch::raiseEvent( new RouteEvent(frag2, ROUTE_PROCESS_BUNDLE) );
-
-				return TRANSMIT_SUCCESSFUL;
+				throw BundleConnection::ConnectionInterruptedException(0);
 			}
 
 			stringstream ss;
@@ -222,15 +142,13 @@ namespace dtn
 
 			ibrcommon::MutexLock l(m_writelock);
 
-		    // Send converted line back to client.
-		    int ret = sendto(m_socket, data.c_str(), data.length(), 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));
+			// Send converted line back to client.
+			int ret = sendto(m_socket, data.c_str(), data.length(), 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));
 
-		    if (ret < 0)
-		    {
-		    	return CONVERGENCE_LAYER_BUSY;
-		    }
-
-		    return TRANSMIT_SUCCESSFUL;
+			if (ret < 0)
+			{
+				// TODO: CL is busy, throw exception
+			}
 		}
 
 		void UDPConvergenceLayer::receive(dtn::data::Bundle &bundle)
@@ -268,9 +186,9 @@ namespace dtn
 
 		BundleConnection* UDPConvergenceLayer::getConnection(const dtn::core::Node &n)
 		{
-			if (n.getProtocol() != UDP_CONNECTION) return NULL;
+			if (n.getProtocol() != dtn::core::UDP_CONNECTION) return NULL;
 
-			return new dtn::net::UDPConnection(*this, n);
+			return new dtn::net::UDPConvergenceLayer::UDPConnection(*this, n);
 		}
 
 		void UDPConvergenceLayer::run()
@@ -281,9 +199,12 @@ namespace dtn
 					dtn::data::Bundle bundle;
 					receive(bundle);
 
+					// determine sender
+					EID sender;
+
 					// raise default bundle received event
-					dtn::core::EventSwitch::raiseEvent( new dtn::core::BundleEvent(bundle, dtn::core::BUNDLE_RECEIVED) );
-					dtn::core::EventSwitch::raiseEvent( new dtn::core::RouteEvent(bundle, dtn::core::ROUTE_PROCESS_BUNDLE) );
+					dtn::net::BundleReceivedEvent::raise(sender, bundle);
+
 				} catch (dtn::exceptions::InvalidBundleData ex) {
 					cerr << "Received a invalid bundle: " << ex.what() << endl;
 				} catch (dtn::exceptions::IOException ex) {
@@ -291,6 +212,30 @@ namespace dtn
 				}
 				yield();
 			}
+		}
+
+		UDPConvergenceLayer::UDPConnection::UDPConnection(UDPConvergenceLayer &cl, const dtn::core::Node &node)
+		 : _cl(cl), _node(node)
+		{
+		}
+
+		UDPConvergenceLayer::UDPConnection::~UDPConnection()
+		{
+		}
+
+		void UDPConvergenceLayer::UDPConnection::shutdown()
+		{
+
+		}
+
+		void UDPConvergenceLayer::UDPConnection::write(const dtn::data::Bundle &bundle)
+		{
+			_cl.transmit(bundle, _node);
+		}
+
+		void UDPConvergenceLayer::UDPConnection::read(dtn::data::Bundle &bundle)
+		{
+			_cl.receive(bundle);
 		}
 	}
 }

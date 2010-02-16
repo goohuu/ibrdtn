@@ -39,7 +39,7 @@ namespace dtn
 		 : public ibrcommon::tcpserver, public ibrcommon::JoinableThread, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
-			class TCPConnection : public dtn::streams::StreamConnection, public BundleConnection, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver
+			class TCPConnection : public BundleConnection, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver
 			{
 			public:
 				TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d);
@@ -64,14 +64,55 @@ namespace dtn
 				bool isBusy() const;
 
 			private:
+				class Receiver : public ibrcommon::JoinableThread
+				{
+				public:
+					Receiver(TCPConnection &connection);
+					~Receiver();
+					void run();
+					void shutdown();
+
+				private:
+					bool _running;
+					TCPConnection &_connection;
+				};
+
+				class TCPBundleStream : public dtn::streams::StreamConnection
+				{
+				public:
+					TCPBundleStream(int socket = 0, ibrcommon::tcpstream::stream_direction d = ibrcommon::tcpstream::STREAM_OUTGOING);
+					~TCPBundleStream();
+
+					const dtn::core::Node& getNode() const;
+
+					dtn::streams::StreamContactHeader handshake(dtn::streams::StreamContactHeader header);
+
+					virtual void shutdown();
+					virtual bool waitCompleted();
+
+
+				private:
+					ibrcommon::tcpstream _stream;
+					dtn::core::Node _node;
+
+					bool _reactive_fragmentation;
+				};
+
+				TCPBundleStream _stream;
+
 				TCPConvergenceLayer &_cl;
-				ibrcommon::tcpstream _stream;
-				dtn::core::Node _node;
+
+				// This thread receives incoming bundles and forward them
+				// to the storage.
+				Receiver _receiver;
 
 				dtn::streams::StreamContactHeader _out_header;
 				dtn::streams::StreamContactHeader _in_header;
+
 				bool _connected;
 				bool _busy;
+
+				ibrcommon::Mutex _readlock;
 			};
 
 			/**

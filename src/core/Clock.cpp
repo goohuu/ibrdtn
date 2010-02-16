@@ -6,8 +6,6 @@
  */
 
 #include "core/Clock.h"
-
-#include "core/EventSwitch.h"
 #include "core/TimeEvent.h"
 
 #include <math.h>
@@ -50,7 +48,7 @@ namespace dtn
 				size_t dtntime = getTime();
 				if (_next <= dtntime)
 				{
-					EventSwitch::raiseEvent( new TimeEvent(dtntime, TIME_SECOND_TICK) );
+					TimeEvent::raise(dtntime, TIME_SECOND_TICK);
 					go();
 					_next = dtntime + _frequency;
 				}
