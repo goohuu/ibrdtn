@@ -9,6 +9,7 @@
 #define NEIGHBORROUTINGEXTENSION_H_
 
 #include "routing/BaseRouter.h"
+#include "routing/MetaBundle.h"
 #include "ibrdtn/data/EID.h"
 #include "core/Node.h"
 #include <list>
@@ -39,7 +40,7 @@ namespace dtn
 			 */
 			bool isNeighbor(const dtn::data::EID &eid) const;
 
-			void route(const dtn::data::BundleID &id);
+			void route(const dtn::routing::MetaBundle &meta);
 
 			std::list<dtn::core::Node> _neighbors;
 			std::map<dtn::data::EID, std::queue<dtn::data::BundleID> > _stored_bundles;

@@ -9,6 +9,7 @@
 #define STATICROUTINGEXTENSION_H_
 
 #include "routing/BaseRouter.h"
+#include "routing/MetaBundle.h"
 
 namespace dtn
 {
@@ -23,7 +24,7 @@ namespace dtn
 				StaticRoute(string route, string dest);
 				virtual ~StaticRoute();
 
-				bool match(const dtn::data::Bundle &b);
+				bool match(const dtn::data::EID &eid);
 				string getDestination();
 
 				private:
@@ -41,7 +42,7 @@ namespace dtn
 			void notify(const dtn::core::Event *evt);
 
 		private:
-			void route(const dtn::data::BundleID &id);
+			void route(const dtn::routing::MetaBundle &meta);
 
 			list<StaticRoutingExtension::StaticRoute> _routes;
 		};

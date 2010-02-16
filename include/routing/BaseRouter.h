@@ -14,6 +14,7 @@
 #include "core/BundleStorage.h"
 #include "ibrcommon/thread/Thread.h"
 #include "ibrcommon/thread/Conditional.h"
+#include "routing/MetaBundle.h"
 #include <list>
 #include <queue>
 
@@ -62,24 +63,24 @@ namespace dtn
 			};
 
 		private:
-			class MetaBundle : public dtn::data::BundleID
-			{
-			public:
-				MetaBundle(const dtn::data::Bundle &b);
-				~MetaBundle();
-
-				dtn::data::DTNTime _received;
-				dtn::data::DTNTime _schedule;
-				size_t _lifetime;
-
-				enum State {
-					TRANSIT = 0,
-					WAIT_ENDPOINT = 1,
-					DELAYED = 2
-				};
-
-				State _state;
-			};
+//			class MetaBundle : public dtn::data::BundleID
+//			{
+//			public:
+//				MetaBundle(const dtn::data::Bundle &b);
+//				~MetaBundle();
+//
+//				dtn::data::DTNTime _received;
+//				dtn::data::DTNTime _schedule;
+//				size_t _lifetime;
+//
+//				enum State {
+//					TRANSIT = 0,
+//					WAIT_ENDPOINT = 1,
+//					DELAYED = 2
+//				};
+//
+//				State _state;
+//			};
 
 			class SeenBundle : public dtn::data::BundleID
 			{
@@ -121,9 +122,8 @@ namespace dtn
 			 * @param destination The EID of the other node.
 			 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
 			 */
-			void transferTo(dtn::data::EID &destination, dtn::data::BundleID &id);
-
-			void transferTo(dtn::data::EID &destination, dtn::data::Bundle &bundle);
+			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id);
+			void transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle);
 
 			/**
 			 * method to receive new events from the EventSwitch
@@ -146,12 +146,16 @@ namespace dtn
 
 			dtn::core::BundleStorage &getStorage();
 
+			bool isLocal(const dtn::data::Bundle &b) const;
+
+			bool isLocal(const dtn::routing::MetaBundle &b) const;
+
 		private:
 			dtn::core::BundleStorage &_storage;
 			std::list<BaseRouter::Extension*> _extensions;
 
 			std::list<SeenBundle> _seenlist;
-			std::queue<MetaBundle> _delayed;
+			//std::queue<MetaBundle> _delayed;
 		};
 	}
 }

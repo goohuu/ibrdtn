@@ -29,16 +29,21 @@ namespace dtn
 		{
 		}
 
+		StreamContactHeader& StreamContactHeader::operator=(const StreamContactHeader &other)
+		{
+			_localeid = other._localeid;
+			_flags = other._flags;
+			_keepalive = other._keepalive;
+			return *this;
+		}
+
 		const EID StreamContactHeader::getEID() const
 		{
 			return _localeid;
 		}
 
 		void StreamContactHeader::read(dtn::streams::BundleStreamReader &reader)
-		//std::istream &operator>>(std::istream &stream, dtn::streams::StreamContactHeader &obj)
 		{
-			//BundleStreamReader reader(stream);
-
 			size_t ret = 0;
 			char buffer[512];
 
@@ -78,12 +83,9 @@ namespace dtn
 			reader.read(buffer, length); ret += length;
 			string eid; eid.assign(buffer, length);
 			_localeid = EID(eid);
-
-			//return stream;
 		}
 
 		void StreamContactHeader::write(dtn::streams::BundleWriter &writer) const
-		//std::ostream &operator<<(std::ostream &stream, const dtn::streams::StreamContactHeader &obj)
 		{
 			//BundleStreamWriter writer(stream);
 			writer.write("dtn!");
@@ -94,8 +96,6 @@ namespace dtn
 			string eid = _localeid.getString();
 			writer.write(eid.length());
 			writer.write(eid);
-
-			//return stream;
 		}
 	}
 }

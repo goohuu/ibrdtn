@@ -16,6 +16,7 @@ namespace dtn
 		DTNTime::DTNTime()
 		 : _seconds(0), _nanoseconds(0)
 		{
+			set();
 		}
 
 		DTNTime::DTNTime(SDNV seconds, SDNV nanoseconds)

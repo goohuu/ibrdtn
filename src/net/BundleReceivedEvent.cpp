@@ -42,7 +42,7 @@ namespace dtn
 			return _peer;
 		}
 
-		dtn::data::BundleID BundleReceivedEvent::getBundleID() const
+		dtn::routing::MetaBundle BundleReceivedEvent::getBundle() const
 		{
 			return _bundle;
 		}

@@ -30,6 +30,8 @@ namespace dtn
 			StreamContactHeader(EID localeid);
 			virtual ~StreamContactHeader();
 
+			StreamContactHeader& operator=(const StreamContactHeader &other);
+
 			const EID getEID() const;
 
 			EID _localeid;

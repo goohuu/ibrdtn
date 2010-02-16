@@ -35,7 +35,7 @@ namespace dtn
 			if (received != NULL)
 			{
 				// try to route this bundle
-				route(received->getBundleID());
+				route(received->getBundle());
 			}
 			else if (completed != NULL)
 			{
@@ -51,21 +51,18 @@ namespace dtn
 			}
 		}
 
-		void StaticRoutingExtension::route(const dtn::data::BundleID &id)
+		void StaticRoutingExtension::route(const dtn::routing::MetaBundle &meta)
 		{
-			// get real bundle
-			dtn::data::Bundle b = getRouter()->getBundle(id);
-
 			// check all routes
 			for (std::list<StaticRoute>::const_iterator iter = _routes.begin(); iter != _routes.end(); iter++)
 			{
 				StaticRoute route = (*iter);
-				if ( route.match(b) )
+				if ( route.match(meta.destination) )
 				{
 					dtn::data::EID target = dtn::data::EID(route.getDestination());
 
 					// Yes, make transmit it now!
-					getRouter()->transferTo( target, b );
+					getRouter()->transferTo( target, meta);
 					return;
 				}
 			}
@@ -112,9 +109,9 @@ namespace dtn
 		{
 		}
 
-		bool StaticRoutingExtension::StaticRoute::match(const dtn::data::Bundle &b)
+		bool StaticRoutingExtension::StaticRoute::match(const dtn::data::EID &eid)
 		{
-			string dest = b._destination.getString();
+			string dest = eid.getNodeEID();
 
 			switch (m_matchmode)
 			{

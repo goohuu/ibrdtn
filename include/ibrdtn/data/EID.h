@@ -25,20 +25,15 @@ namespace data
 		EID(string value);
 		virtual ~EID();
 
-		bool operator==(EID const& other) const
-		{
-			return equal(other);
-		}
+		EID(const EID &other);
 
-		bool operator==(string const& other) const
-		{
-			return equal(other);
-		}
+		EID& operator=(const EID &other);
 
-		bool operator!=(EID const& other) const
-		{
-			return !equal(other);
-		}
+		bool operator==(EID const& other) const;
+
+		bool operator==(string const& other) const;
+
+		bool operator!=(EID const& other) const;
 
 		EID operator+(string suffix);
 

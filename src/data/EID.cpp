@@ -15,6 +15,11 @@ namespace data
 	{
 	}
 
+	EID::EID(const EID &other)
+	 : m_value(other.m_value), m_scheme(other.m_scheme), m_node(other.m_node), m_application(other.m_application)
+	{
+	}
+
 	EID::EID(string scheme, string ssp)
 	 : m_value(scheme + ":" + ssp), m_scheme(scheme), m_node(""), m_application("")
 	{
@@ -69,6 +74,31 @@ namespace data
 
 	EID::~EID()
 	{
+	}
+
+	EID& EID::operator=(const EID &other)
+	{
+		m_value = other.m_value;
+		m_scheme = other.m_scheme;
+		m_node = other.m_node;
+		m_application = other.m_application;
+
+		return *this;
+	}
+
+	bool EID::operator==(EID const& other) const
+	{
+		return equal(other);
+	}
+
+	bool EID::operator==(string const& other) const
+	{
+		return equal(other);
+	}
+
+	bool EID::operator!=(EID const& other) const
+	{
+		return !equal(other);
 	}
 
 	EID EID::operator+(string suffix)

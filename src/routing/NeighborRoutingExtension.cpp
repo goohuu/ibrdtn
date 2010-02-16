@@ -84,7 +84,7 @@ namespace dtn
 			if (received != NULL)
 			{
 				// try to route this bundle
-				route(received->getBundleID());
+				route(received->getBundle());
 			}
 			else if (nodeevent != NULL)
 			{
@@ -130,26 +130,23 @@ namespace dtn
 			}
 		}
 
-		void NeighborRoutingExtension::route(const dtn::data::BundleID &id)
+		void NeighborRoutingExtension::route(const dtn::routing::MetaBundle &meta)
 		{
-			// get real bundle
-			dtn::data::Bundle b = getRouter()->getBundle(id);
-
 			try {
-				if 	( isNeighbor( b._destination ) )
+				if 	( isNeighbor( meta.destination ) )
 				{
-					getRouter()->transferTo( b._destination, b );
+					getRouter()->transferTo( meta.destination, meta );
 					return;
 				}
 
 				// get the destination node
-				dtn::data::EID dest = b._destination.getNodeEID();
+				dtn::data::EID dest = meta.destination.getNodeEID();
 
 				// get the queue for this destination
 				std::queue<dtn::data::BundleID> &q = _stored_bundles[dest];
 
 				// remember the bundle id for later delivery
-				q.push( BundleID(b) );
+				q.push( meta );
 
 			} catch (dtn::net::ConnectionNotAvailableException ex) {
 				// the connection to the node is not possible

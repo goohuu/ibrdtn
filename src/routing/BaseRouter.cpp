@@ -62,15 +62,15 @@ namespace dtn
 		BaseRouter::Endpoint::~Endpoint()
 		{ }
 
-		/**
-		 * implementation of the MetaBundle class
-		 */
-		BaseRouter::MetaBundle::MetaBundle(const dtn::data::Bundle &b)
-		 : BundleID(b), _state(TRANSIT)
-		{ }
-
-		BaseRouter::MetaBundle::~MetaBundle()
-		{ }
+//		/**
+//		 * implementation of the MetaBundle class
+//		 */
+//		BaseRouter::MetaBundle::MetaBundle(const dtn::data::Bundle &b)
+//		 : BundleID(b), _state(TRANSIT)
+//		{ }
+//
+//		BaseRouter::MetaBundle::~MetaBundle()
+//		{ }
 
 		/**
 		 * implementation of the SeenBundle class
@@ -148,7 +148,7 @@ namespace dtn
 		 * @param destination The EID of the other node.
 		 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
 		 */
-		void BaseRouter::transferTo(dtn::data::EID &destination, dtn::data::BundleID &id)
+		void BaseRouter::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id)
 		{
 			// get the bundle from the storage
 			dtn::data::Bundle b = _storage.get(id);
@@ -157,7 +157,7 @@ namespace dtn
 			transferTo(destination, b);
 		}
 
-		void BaseRouter::transferTo(dtn::data::EID &destination, dtn::data::Bundle &bundle)
+		void BaseRouter::transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle)
 		{
 			// send the bundle
 			dtn::core::BundleCore::getInstance().send(destination, bundle);
@@ -168,6 +168,17 @@ namespace dtn
 		 */
 		void BaseRouter::raiseEvent(const dtn::core::Event *evt)
 		{
+			const dtn::net::BundleReceivedEvent *received = dynamic_cast<const dtn::net::BundleReceivedEvent*>(evt);
+
+			if (received != NULL)
+			{
+				if ( isLocal(received->getBundle()) )
+				{
+					// if the bundle is local, do not forward it to routing modules
+					return;
+				}
+			}
+
 			// notify all underlying extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
@@ -198,6 +209,18 @@ namespace dtn
 		dtn::core::BundleStorage& BaseRouter::getStorage()
 		{
 			return _storage;
+		}
+
+		bool BaseRouter::isLocal(const dtn::data::Bundle &b) const
+		{
+			if (b._destination.getNodeEID() == BundleCore::local.getNodeEID()) return true;
+			return false;
+		}
+
+		bool BaseRouter::isLocal(const dtn::routing::MetaBundle &b) const
+		{
+			if (b.destination.getNodeEID() == BundleCore::local.getNodeEID()) return true;
+			return false;
 		}
 	}
 }
