@@ -11,6 +11,7 @@
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "ibrcommon/net/NetInterface.h"
+#include "net/ConnectionEvent.h"
 
 #include <sys/socket.h>
 #include <streambuf>
@@ -30,8 +31,8 @@ namespace dtn
 		/*
 		 * class TCPBundleStream
 		 */
-		TCPConvergenceLayer::TCPConnection::TCPBundleStream::TCPBundleStream(int socket, ibrcommon::tcpstream::stream_direction d)
-		 : _stream(socket, d), StreamConnection(_stream), _reactive_fragmentation(false)
+		TCPConvergenceLayer::TCPConnection::TCPBundleStream::TCPBundleStream(TCPConnection &conn, int socket, ibrcommon::tcpstream::stream_direction d)
+		 : _conn(conn), _stream(socket, d), StreamConnection(_stream), _reactive_fragmentation(false)
 		{
 			_node.setAddress(_stream.getAddress());
 			_node.setPort(_stream.getPort());
@@ -56,13 +57,16 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::shutdown()
 		{
+			// call underlaying shutdown
+			StreamConnection::shutdown();
+
+			// close the stream
 			_stream.close();
 
 			// wait for the closed connection
 			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 
-			// close the stream
-			_stream.close();
+			_conn.shutdown();
 		}
 
 		bool TCPConvergenceLayer::TCPConnection::TCPBundleStream::waitCompleted()
@@ -89,12 +93,72 @@ namespace dtn
 			return true;
 		}
 
+		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out)
+		{
+			// send the header
+			(*this) << out; (*this).flush();
+
+			try {
+				// get the header
+				(*this) >> in;
+				_node.setURI(in.getEID().getString());
+
+				// raise Event
+				ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, in._localeid);
+
+				// startup the connection threads
+				StreamConnection::start();
+
+				// set the timer for this connection
+				StreamConnection::setTimer(out._keepalive, in._keepalive - 5);
+
+				// check fragmentation flag
+				_reactive_fragmentation = (in._flags & 0x02);
+
+			} catch (dtn::exceptions::InvalidDataException ex) {
+
+				// return with shutdown, if the stream is wrong
+				_stream << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH); flush();
+
+				StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
+
+				// close the stream
+				_stream.close();
+
+				// forward the catched exception
+				throw ex;
+			}
+		}
+
+		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::eventTimeout()
+		{
+			// close the stream
+			_stream.close();
+
+			// wait for the closed connection
+			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+
+			// signal timeout
+			_conn.eventTimeout();
+		}
+
+		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::eventShutdown()
+		{
+			// close the stream
+			_stream.close();
+
+			// wait for the closed connection
+			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+
+			// signal timeout
+			_conn.eventShutdown();
+		}
 
 		/*
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d)
-		 : _stream(socket, d), _cl(cl), _receiver(*this), _connected(false)
+		 : _stream(*this, socket, d), _cl(cl), _receiver(*this), _connected(false)
 		{
 			_cl.add(this);
 
@@ -151,41 +215,6 @@ namespace dtn
 			return _in_header;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out)
-		{
-			dtn::streams::StreamContactHeader in_header;
-		// send the header
-			(*this) << out; (*this).flush();
-
-			try {
-				// get the header
-				(*this) >> in;
-				_node.setURI(in_header.getEID().getString());
-
-				// startup the connection threads
-				StreamConnection::start();
-
-				// set the timer for this connection
-				StreamConnection::setTimer(out._keepalive, in._keepalive - 5);
-
-				// check fragmentation flag
-				_reactive_fragmentation = (in_header._flags & 0x02);
-
-			} catch (dtn::exceptions::InvalidDataException ex) {
-
-				// return with shutdown, if the stream is wrong
-				_stream << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH); flush();
-
-				StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
-
-				// close the stream
-				_stream.close();
-
-				// forward the catched exception
-				throw ex;
-			}
-		}
-
 		void TCPConvergenceLayer::TCPConnection::initialize(dtn::streams::StreamContactHeader header)
 		{
 			try {
@@ -208,12 +237,37 @@ namespace dtn
 
 		}
 
+		void TCPConvergenceLayer::TCPConnection::eventShutdown()
+		{
+			// stop the receiver
+			_receiver.shutdown();
+
+			// event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _in_header._localeid);
+
+			// send myself to the graveyard
+			bury();
+		}
+
+		void TCPConvergenceLayer::TCPConnection::eventTimeout()
+		{
+			// stop the receiver
+			_receiver.shutdown();
+
+			// event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _in_header._localeid);
+
+			// send myself to the graveyard
+			bury();
+		}
+
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
 			// stop the receiver
 			_receiver.shutdown();
 
-
+			// disconnect
+			_stream.shutdown();
 
 			// send myself to the graveyard
 			bury();

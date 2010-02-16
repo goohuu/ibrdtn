@@ -105,6 +105,9 @@ namespace dtn
 			virtual void received(dtn::streams::StreamContactHeader &h);
 			virtual void received(dtn::api::Bundle &b) {};
 
+			virtual void eventTimeout();
+			virtual void eventShutdown();
+
 		private:
 			COMMUNICATION_MODE _mode;
 			string _app;

@@ -217,7 +217,7 @@ namespace dtn
 							setState(CONNECTION_CLOSED);
 
 							// call the shutdown method of the derived class
-							shutdown();
+							eventShutdown();
 
 							break;
 						}
@@ -261,6 +261,7 @@ namespace dtn
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 				cout << "Connection timed out" << endl;
 #endif
+
 				if (getState() < CONNECTION_SHUTDOWN)
 				{
 					// we received a shutdown request
@@ -280,8 +281,8 @@ namespace dtn
 					// connection closed
 					setState(CONNECTION_CLOSED);
 
-					// call the shutdown method of the derived class
-					shutdown();
+					// call superclass
+					eventTimeout();
 
 					// return false to stop the timer
 					return false;

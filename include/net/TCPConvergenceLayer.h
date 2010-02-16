@@ -51,7 +51,10 @@ namespace dtn
 				void write(const dtn::data::Bundle &bundle);
 
 				void initialize(dtn::streams::StreamContactHeader header);
+
 				virtual void shutdown();
+				virtual void eventTimeout();
+				virtual void eventShutdown();
 
 				void raiseEvent(const dtn::core::Event *evt);
 
@@ -68,7 +71,7 @@ namespace dtn
 				{
 				public:
 					Receiver(TCPConnection &connection);
-					~Receiver();
+					virtual ~Receiver();
 					void run();
 					void shutdown();
 
@@ -80,8 +83,8 @@ namespace dtn
 				class TCPBundleStream : public dtn::streams::StreamConnection
 				{
 				public:
-					TCPBundleStream(int socket = 0, ibrcommon::tcpstream::stream_direction d = ibrcommon::tcpstream::STREAM_OUTGOING);
-					~TCPBundleStream();
+					TCPBundleStream(TCPConnection &conn, int socket = 0, ibrcommon::tcpstream::stream_direction d = ibrcommon::tcpstream::STREAM_OUTGOING);
+					virtual ~TCPBundleStream();
 
 					const dtn::core::Node& getNode() const;
 
@@ -90,12 +93,17 @@ namespace dtn
 					virtual void shutdown();
 					virtual bool waitCompleted();
 
+				protected:
+					virtual void eventTimeout();
+					virtual void eventShutdown();
 
 				private:
 					ibrcommon::tcpstream _stream;
 					dtn::core::Node _node;
 
 					bool _reactive_fragmentation;
+
+					TCPConnection &_conn;
 				};
 
 				TCPBundleStream _stream;
@@ -127,10 +135,10 @@ namespace dtn
 			 */
 			virtual ~TCPConvergenceLayer();
 
-                        /**
-                         * this method updates the given values
-                         */
-                        void update(std::string &name, std::string &data);
+			/**
+			 * this method updates the given values
+			 */
+			void update(std::string &name, std::string &data);
 
 		protected:
 			virtual void run();

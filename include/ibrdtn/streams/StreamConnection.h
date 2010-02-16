@@ -56,6 +56,9 @@ namespace dtn
 			bool waitState(ConnectionState conn);
 			void run();
 
+			virtual void eventTimeout() {};
+			virtual void eventShutdown() {};
+
 			size_t _recv_size;
 			size_t _ack_size;
 

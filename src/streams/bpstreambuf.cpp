@@ -86,10 +86,10 @@ namespace dtn
 			setState(SHUTDOWN);
 		}
 
-                size_t bpstreambuf::getOutSize()
-                {
-                    return out_size_;
-                }
+		size_t bpstreambuf::getOutSize()
+		{
+			return out_size_;
+		}
 
 		void bpstreambuf::write(const StreamDataSegment &seg, const char *data)
 		{
@@ -116,23 +116,23 @@ namespace dtn
 
 		void bpstreambuf::read(StreamDataSegment &seg)
 		{
-                    if (ifState(SHUTDOWN)) return;
+			if (ifState(SHUTDOWN)) return;
 
-                    // read the next segment
-                    _stream >> seg;
+			// read the next segment
+			_stream >> seg;
 
-                    // if the segment header indicates new data
-                    if ((seg._type == StreamDataSegment::MSG_DATA_SEGMENT) && (seg._value != 0))
-                    {
-                        // set the new data length
-                        in_data_remain_ = seg._value;
+			// if the segment header indicates new data
+			if ((seg._type == StreamDataSegment::MSG_DATA_SEGMENT) && (seg._value != 0))
+			{
+				// set the new data length
+				in_data_remain_ = seg._value;
 
-                        // announce the new data block
-                        setState(DATA_AVAILABLE);
+				// announce the new data block
+				setState(DATA_AVAILABLE);
 
-                        // and wait until the data is received completely
-                        waitState(IDLE);
-                    }
+				// and wait until the data is received completely
+				waitState(IDLE);
+			}
 		}
 
 		void bpstreambuf::read(StreamContactHeader &h)
@@ -184,8 +184,8 @@ namespace dtn
 			// write the segment to the stream
 			write(seg, out_buf_);
 
-                        // add size to outgoing size
-                        out_size_ += seg._value;
+			// add size to outgoing size
+			out_size_ += seg._value;
 
 			return traits_type::not_eof(c);
 		}
