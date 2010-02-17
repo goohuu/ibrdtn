@@ -11,8 +11,8 @@ namespace dtn
 {
 	namespace net
 	{
-		ConnectionEvent::ConnectionEvent(State s, dtn::data::EID &p)
-		 : state(s), peer(p)
+		ConnectionEvent::ConnectionEvent(State s, dtn::data::EID &p, dtn::net::BundleConnection *conn)
+		 : state(s), peer(p), _connection(conn)
 		{
 
 		}
@@ -22,15 +22,20 @@ namespace dtn
 
 		}
 
-		void ConnectionEvent::raise(State s, dtn::data::EID &p)
+		void ConnectionEvent::raise(State s, dtn::data::EID &p, dtn::net::BundleConnection *conn)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new ConnectionEvent(s, p) );
+			dtn::core::Event::raiseEvent( new ConnectionEvent(s, p, conn) );
 		}
 
 		const string ConnectionEvent::getName() const
 		{
 			return ConnectionEvent::className;
+		}
+
+		BundleConnection* ConnectionEvent::getConnection() const
+		{
+			return _connection;
 		}
 
 
@@ -42,9 +47,11 @@ namespace dtn
 			case CONNECTION_UP:
 				return className + ": connection up " + peer.getString();
 			case CONNECTION_DOWN:
-				return className + ": connection down  " + peer.getString();
+				return className + ": connection down " + peer.getString();
 			case CONNECTION_TIMEOUT:
-				return className + ": connection timeout  " + peer.getString();
+				return className + ": connection timeout " + peer.getString();
+			case CONNECTION_SETUP:
+				return className + ": connection setup " + peer.getString();
 			}
 
 		}

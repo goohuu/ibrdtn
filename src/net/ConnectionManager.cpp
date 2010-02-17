@@ -19,6 +19,10 @@
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 
+#include "core/NodeEvent.h"
+#include "core/TimeEvent.h"
+#include "net/ConnectionEvent.h"
+
 using namespace dtn::core;
 
 namespace dtn
@@ -28,6 +32,10 @@ namespace dtn
 		ConnectionManager::ConnectionManager(int concurrent_transmitter)
 		 : _shutdown(false)
 		{
+			bindEvent(TimeEvent::className);
+			bindEvent(NodeEvent::className);
+			bindEvent(ConnectionEvent::className);
+
 			// create transmitter
 			for (int i = 0; i < concurrent_transmitter; i++)
 			{
@@ -39,6 +47,10 @@ namespace dtn
 
 		ConnectionManager::~ConnectionManager()
 		{
+			unbindEvent(NodeEvent::className);
+			unbindEvent(TimeEvent::className);
+			unbindEvent(ConnectionEvent::className);
+
 			{
 				ibrcommon::MutexLock l(_job_cond);
 				_shutdown = true;
@@ -58,6 +70,49 @@ namespace dtn
 			{
 				delete (*iter);
 				iter++;
+			}
+		}
+
+		void ConnectionManager::raiseEvent(const dtn::core::Event *evt)
+		{
+			const NodeEvent *nodeevent = dynamic_cast<const NodeEvent*>(evt);
+			const TimeEvent *timeevent = dynamic_cast<const TimeEvent*>(evt);
+			const ConnectionEvent *connevent = dynamic_cast<const ConnectionEvent*>(evt);
+
+			if (timeevent != NULL)
+			{
+				if (timeevent->getAction() == TIME_SECOND_TICK)
+				{
+					check_discovered();
+				}
+			}
+			else if (nodeevent != NULL)
+			{
+				Node n = nodeevent->getNode();
+
+				if (nodeevent->getAction() == NODE_INFO_UPDATED)
+				{
+					discovered(n);
+				}
+			}
+			else if (connevent != NULL)
+			{
+				ibrcommon::MutexLock l(_active_connections_lock);
+
+				switch (connevent->state)
+				{
+					case ConnectionEvent::CONNECTION_SETUP:
+						_active_connections[connevent->peer] = connevent->getConnection();
+						break;
+
+					case ConnectionEvent::CONNECTION_UP:
+						_active_connections[connevent->peer] = connevent->getConnection();
+						break;
+
+					case ConnectionEvent::CONNECTION_DOWN:
+						_active_connections.erase(connevent->peer);
+						break;
+				}
 			}
 		}
 
@@ -228,6 +283,17 @@ namespace dtn
 
 		BundleConnection* ConnectionManager::getConnection(const dtn::data::EID &eid)
 		{
+			// search for connection in active connections
+			{
+				ibrcommon::MutexLock l(_active_connections_lock);
+				EID node_eid(eid.getNodeEID());
+
+				if (_active_connections.find(node_eid) != _active_connections.end())
+				{
+					return _active_connections[node_eid];
+				}
+			}
+
 			// seek for a connection in the static list
 			list<dtn::core::Node>::const_iterator iter = _static_connections.begin();
 			while (iter != _static_connections.end())

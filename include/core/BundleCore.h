@@ -5,15 +5,16 @@
 
 #include "core/BundleStorage.h"
 #include "core/CustodyTimer.h"
-#include "core/EventReceiver.h"
 #include "core/CustodyManager.h"
 #include "core/Clock.h"
 
 #include "net/ConnectionManager.h"
+#include "net/ConvergenceLayer.h"
 
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
-#include "ibrdtn/data/StatusReportBlock.h"
+
+#include "core/StatusReportGenerator.h"
 
 #include <vector>
 #include <list>
@@ -30,28 +31,28 @@ namespace dtn
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
-		class BundleCore : public EventReceiver, public dtn::net::ConnectionManager
+		class BundleCore
 		{
 		public:
 			static dtn::data::EID local;
 
 			static BundleCore& getInstance();
 
-			/**
-			 * method to receive new events from the EventSwitch
-			 */
-			void raiseEvent(const Event *evt);
-
 			Clock& getClock();
 
 			void setStorage(dtn::core::BundleStorage *storage);
 			dtn::core::BundleStorage& getStorage();
 
-		protected:
 			/**
 			 * get the current custody manager
 			 */
 			CustodyManager& getCustodyManager();
+
+			void transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle);
+
+			void addConvergenceLayer(dtn::net::ConvergenceLayer *cl);
+
+			void addConnection(const dtn::core::Node &n);
 
 		private:
 			/**
@@ -72,15 +73,6 @@ namespace dtn
 			void transmitCustody(bool accept, const Bundle &b);
 
 			/**
-			 * This method generates a status report.
-			 * @param b The attributes of the given bundle where used to generate the status report.
-			 * @param type Defines the type of the report.
-			 * @param reason Give a additional reason.
-			 * @return A bundle with a status report block.
-			 */
-			Bundle createStatusReport(const Bundle &b, StatusReportBlock::TYPE type, StatusReportBlock::REASON_CODE reason = StatusReportBlock::NO_ADDITIONAL_INFORMATION);
-
-			/**
 			 * This method generates a custody signal.
 			 * @param b The attributes of the given bundle where used to generate the custody signal.
 			 * @param accepted Define if a accept or reject signal is generated. True is for accept.
@@ -98,9 +90,13 @@ namespace dtn
 			 */
 			Clock _clock;
 
-			bool _shutdown;
-
 			dtn::core::BundleStorage *_storage;
+
+			// generator for statusreports
+			StatusReportGenerator _statusreportgen;
+
+			// manager class for connections
+			dtn::net::ConnectionManager _connectionmanager;
 		};
 	}
 }

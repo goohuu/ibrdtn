@@ -1,14 +1,9 @@
 #include "core/BundleCore.h"
 #include "core/CustodyManager.h"
 #include "core/CustodyEvent.h"
-#include "core/NodeEvent.h"
-#include "core/BundleEvent.h"
-#include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
-#include "routing/QueueBundleEvent.h"
 
 #include "ibrcommon/data/BLOB.h"
-#include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/EID.h"
 
@@ -35,13 +30,8 @@ namespace dtn
 		}
 
 		BundleCore::BundleCore()
-		 : _clock(1), _shutdown(false), _storage(NULL)
+		 : _clock(1), _storage(NULL)
 		{
-			// register me for events
-			bindEvent(NodeEvent::className);
-			bindEvent(BundleEvent::className);
-			bindEvent(TimeEvent::className);
-
 			// start the custody manager
 			m_cm.start();
 
@@ -51,9 +41,6 @@ namespace dtn
 
 		BundleCore::~BundleCore()
 		{
-			unbindEvent(NodeEvent::className);
-			unbindEvent(BundleEvent::className);
-			unbindEvent(TimeEvent::className);
 		}
 
 		void BundleCore::setStorage(dtn::core::BundleStorage *storage)
@@ -76,81 +63,19 @@ namespace dtn
 			return m_cm;
 		}
 
-		void BundleCore::raiseEvent(const Event *evt)
+		void BundleCore::transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle)
 		{
-			const BundleEvent *bundleevent = dynamic_cast<const BundleEvent*>(evt);
-			const NodeEvent *nodeevent = dynamic_cast<const NodeEvent*>(evt);
-			const TimeEvent *timeevent = dynamic_cast<const TimeEvent*>(evt);
-			const GlobalEvent *globalevent = dynamic_cast<const GlobalEvent*>(evt);
+			_connectionmanager.send(destination, bundle);
+		}
 
-			if (globalevent != NULL)
-			{
-				//ibrcommon::MutexLock l(_register_action);
-				_shutdown = true;
-				//_register_action.signal(true);
-			}
-			else if (timeevent != NULL)
-			{
-				if (timeevent->getAction() == TIME_SECOND_TICK)
-				{
-					check_discovered();
-				}
-			}
-			else if (nodeevent != NULL)
-			{
-				Node n = nodeevent->getNode();
+		void BundleCore::addConvergenceLayer(dtn::net::ConvergenceLayer *cl)
+		{
+			_connectionmanager.addConvergenceLayer(cl);
+		}
 
-				if (nodeevent->getAction() == NODE_INFO_UPDATED)
-				{
-					discovered(n);
-				}
-			}
-			else if (bundleevent != NULL)
-			{
-				const Bundle &b = bundleevent->getBundle();
-
-				switch (bundleevent->getAction())
-				{
-				case BUNDLE_RECEIVED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION )
-					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
-					}
-					break;
-				case BUNDLE_DELETED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION )
-					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
-					}
-					break;
-
-				case BUNDLE_FORWARDED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING )
-					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
-					}
-					break;
-
-				case BUNDLE_DELIVERED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY )
-					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
-					}
-					break;
-
-				case BUNDLE_CUSTODY_ACCEPTED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE )
-					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
-					}
-					break;
-				}
-			}
+		void BundleCore::addConnection(const dtn::core::Node &n)
+		{
+			_connectionmanager.addConnection(n);
 		}
 
 //		void BundleCore::transmit(const Node &n, const Bundle &b)
@@ -262,73 +187,6 @@ namespace dtn
 //				}
 //			}
 //		}
-
-		Bundle BundleCore::createStatusReport(const Bundle &b, StatusReportBlock::TYPE type, StatusReportBlock::REASON_CODE reason)
-		{
-			// create a new bundle
-			Bundle bundle;
-
-			// create a new statusreport block
-			StatusReportBlock *report = new StatusReportBlock();
-
-			// get the flags and set the status flag
-			if (!(report->_status & type)) report->_status += type;
-
-			// set the reason code
-			if (!(report->_reasoncode & reason)) report->_reasoncode += reason;
-
-			switch (type)
-			{
-				case StatusReportBlock::RECEIPT_OF_BUNDLE:
-					report->_timeof_receipt.set();
-				break;
-
-				case StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE:
-					report->_timeof_custodyaccept.set();
-				break;
-
-				case StatusReportBlock::FORWARDING_OF_BUNDLE:
-					report->_timeof_forwarding.set();
-				break;
-
-				case StatusReportBlock::DELIVERY_OF_BUNDLE:
-					report->_timeof_delivery.set();
-				break;
-
-				case StatusReportBlock::DELETION_OF_BUNDLE:
-					report->_timeof_deletion.set();
-				break;
-
-				default:
-
-				break;
-			}
-
-			// set source and destination
-			bundle._source = BundleCore::local;
-			bundle._destination = b._reportto;
-
-			// set bundle parameter
-			if (b._procflags & Bundle::FRAGMENT)
-			{
-				report->_fragment_offset = b._fragmentoffset;
-				report->_fragment_length = b._appdatalength;
-
-				if (!(report->_admfield & 1)) report->_admfield += 1;
-			}
-
-			report->_bundle_timestamp = b._timestamp;
-			report->_bundle_sequence = b._sequencenumber;
-			report->_source = b._source;
-
-			// commit the data
-			report->commit();
-
-			// add the report to the bundle
-			bundle.addBlock(report);
-
-			return bundle;
-		}
 
 		Bundle BundleCore::createCustodySignal(const Bundle &b, bool accepted)
 		{

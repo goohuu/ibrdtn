@@ -160,7 +160,7 @@ namespace dtn
 		void BaseRouter::transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle)
 		{
 			// send the bundle
-			dtn::core::BundleCore::getInstance().send(destination, bundle);
+			dtn::core::BundleCore::getInstance().transferTo(destination, bundle);
 		}
 
 		/**

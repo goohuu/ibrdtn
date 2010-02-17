@@ -10,6 +10,7 @@
 
 #include "core/Event.h"
 #include "ibrdtn/data/EID.h"
+#include "net/BundleConnection.h"
 
 namespace dtn
 {
@@ -20,9 +21,10 @@ namespace dtn
 		public:
 			enum State
 			{
-				CONNECTION_UP = 0,
-				CONNECTION_DOWN = 1,
-				CONNECTION_TIMEOUT = 2
+				CONNECTION_SETUP = 0,
+				CONNECTION_UP = 1,
+				CONNECTION_DOWN = 2,
+				CONNECTION_TIMEOUT = 3
 			};
 
 			~ConnectionEvent();
@@ -35,13 +37,16 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(State state, dtn::data::EID &peer);
+			static void raise(State state, dtn::data::EID &peer, dtn::net::BundleConnection *conn);
 
 			const State state;
 			const dtn::data::EID peer;
 
+			BundleConnection *getConnection() const;
+
 		private:
-			ConnectionEvent(State state, dtn::data::EID &peer);
+			dtn::net::BundleConnection *_connection;
+			ConnectionEvent(State state, dtn::data::EID &peer, dtn::net::BundleConnection *conn);
 		};
 	}
 }

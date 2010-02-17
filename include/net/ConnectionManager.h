@@ -13,6 +13,7 @@
 #include "net/BundleConnection.h"
 #include "net/ConvergenceLayer.h"
 #include "net/BundleReceiver.h"
+#include "core/EventReceiver.h"
 #include "ibrdtn/data/EID.h"
 #include "core/Node.h"
 
@@ -36,7 +37,7 @@ namespace dtn
 			};
 		};
 
-		class ConnectionManager : public dtn::net::BundleReceiver
+		class ConnectionManager : public dtn::net::BundleReceiver, public dtn::core::EventReceiver
 		{
 		public:
 			ConnectionManager(int concurrent_transmitter = 1);
@@ -47,6 +48,11 @@ namespace dtn
 
 			void received(const dtn::data::EID &eid, const dtn::data::Bundle &b);
 			void send(const dtn::data::EID &eid, const dtn::data::Bundle &b);
+
+			/**
+			 * method to receive new events from the EventSwitch
+			 */
+			void raiseEvent(const dtn::core::Event *evt);
 
 			class ShutdownException : public dtn::exceptions::Exception
 			{
@@ -100,6 +106,9 @@ namespace dtn
 			list<ConvergenceLayer*> _cl;
 			list<dtn::core::Node> _static_connections;
 			list<dtn::core::Node> _discovered_nodes;
+
+			map<dtn::data::EID, BundleConnection*> _active_connections;
+			ibrcommon::Mutex _active_connections_lock;
 		};
 	}
 }

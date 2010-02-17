@@ -150,7 +150,7 @@ namespace dtn
 			static const int DEFAULT_PORT;
 			bool _running;
 
-			TCPConnection* openConnection(const dtn::core::Node &n);
+			//TCPConnection* openConnection(const dtn::core::Node &n);
 			BundleConnection* getConnection(const dtn::core::Node &n);
 
 			std::list<TCPConnection*> _connections;

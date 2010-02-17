@@ -104,7 +104,7 @@ namespace dtn
 				_node.setURI(in.getEID().getString());
 
 				// raise Event
-				ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, in._localeid);
+				ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, in._localeid, &_conn);
 
 				// startup the connection threads
 				StreamConnection::start();
@@ -243,7 +243,7 @@ namespace dtn
 			_receiver.shutdown();
 
 			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _in_header._localeid);
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _in_header._localeid, this);
 
 			// send myself to the graveyard
 			bury();
@@ -255,7 +255,7 @@ namespace dtn
 			_receiver.shutdown();
 
 			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _in_header._localeid);
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _in_header._localeid, this);
 
 			// send myself to the graveyard
 			bury();
@@ -399,7 +399,7 @@ namespace dtn
 			// TODO: update address and port
 		}
 
-		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::openConnection(const dtn::core::Node &n)
+		BundleConnection* TCPConvergenceLayer::getConnection(const dtn::core::Node &n)
 		{
 			struct sockaddr_in sock_address;
 			int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -423,53 +423,57 @@ namespace dtn
 			// create a connection
 			TCPConnection *conn = new TCPConnection(*this, sock, ibrcommon::tcpstream::STREAM_OUTGOING);
 
+			// raise setup event
+			EID eid(n.getURI());
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, eid, conn);
+
 			// start the ClientHandler (service)
 			conn->initialize(_header);
 
 			return conn;
 		}
 
-		// search a matching Connection or create a new one
-		BundleConnection* TCPConvergenceLayer::getConnection(const dtn::core::Node &n)
-		{
-			if (n.getProtocol() != TCP_CONNECTION) return NULL;
-
-			// Lock the connection in this section
-			{
-				ibrcommon::MutexLock l(_connection_lock);
-
-				std::list<TCPConnection*>::iterator iter = _connections.begin();
-
-				EID node_eid(n.getURI());
-
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-				cout << "search for '" << node_eid.getString() << "' in active connections" << endl;
-#endif
-
-				while (iter != _connections.end())
-				{
-					if ( (*iter)->isConnected() )
-					{
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-						cout << "check node '" << (*iter)->getNode().getURI() << "'" << endl;
-#endif
-						EID eid((*iter)->getNode().getURI());
-
-						if (eid == node_eid)
-						{
-							if ( (*iter)->isConnected() )
-							{
-								return (*iter);
-							}
-						}
-					}
-
-					iter++;
-				}
-			}
-
-			return openConnection(n);
-		}
+//		// search a matching Connection or create a new one
+//		BundleConnection* TCPConvergenceLayer::getConnection(const dtn::core::Node &n)
+//		{
+//			if (n.getProtocol() != TCP_CONNECTION) return NULL;
+//
+//			// Lock the connection in this section
+//			{
+//				ibrcommon::MutexLock l(_connection_lock);
+//
+//				std::list<TCPConnection*>::iterator iter = _connections.begin();
+//
+//				EID node_eid(n.getURI());
+//
+//#ifdef DO_EXTENDED_DEBUG_OUTPUT
+//				cout << "search for '" << node_eid.getString() << "' in active connections" << endl;
+//#endif
+//
+//				while (iter != _connections.end())
+//				{
+//					if ( (*iter)->isConnected() )
+//					{
+//#ifdef DO_EXTENDED_DEBUG_OUTPUT
+//						cout << "check node '" << (*iter)->getNode().getURI() << "'" << endl;
+//#endif
+//						EID eid((*iter)->getNode().getURI());
+//
+//						if (eid == node_eid)
+//						{
+//							if ( (*iter)->isConnected() )
+//							{
+//								return (*iter);
+//							}
+//						}
+//					}
+//
+//					iter++;
+//				}
+//			}
+//
+//			return openConnection(n);
+//		}
 
 		void TCPConvergenceLayer::run()
 		{
