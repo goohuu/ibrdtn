@@ -67,6 +67,8 @@ namespace dtn
 
 		Client::~Client()
 		{
+			// wait for the closed connection
+			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 		}
 
 		void Client::connect()
@@ -111,23 +113,16 @@ namespace dtn
 		{
 			_connected = false;
 			StreamConnection::shutdown();
-
-			// wait for the closed connection
-			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 		}
 
 		void Client::eventTimeout()
 		{
 			_connected = false;
-			// wait for the closed connection
-			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 		}
 
 		void Client::eventShutdown()
 		{
 			_connected = false;
-			// wait for the closed connection
-			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 		}
 	}
 }

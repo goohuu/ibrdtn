@@ -45,28 +45,74 @@ namespace dtn
 				TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d);
 				virtual ~TCPConnection();
 
-				const dtn::core::Node& getNode() const;
-
-				void read(dtn::data::Bundle &bundle);
-				void write(const dtn::data::Bundle &bundle);
-
+				/**
+				 * initialize this connection by send and receive
+				 * the connection header.
+				 * @param header
+				 */
 				void initialize(dtn::streams::StreamContactHeader header);
 
-				virtual void shutdown();
-				virtual void eventTimeout();
-				virtual void eventShutdown();
+				/**
+				 * shutdown the whole tcp connection
+				 */
+				void shutdown();
 
+				/**
+				 * handler for events
+				 */
 				void raiseEvent(const dtn::core::Event *evt);
 
+				/**
+				 * Get the header of this connection
+				 * @return
+				 */
 				const StreamContactHeader getHeader() const;
 
-				// method to prepare the class for deletion
+				/**
+				 * Get the associated Node object
+				 * @return
+				 */
+				const dtn::core::Node& getNode() const;
+
+				/**
+				 * Read a bundle from this connection
+				 * @param bundle
+				 */
+				void read(dtn::data::Bundle &bundle);
+
+				/**
+				 * Write a bundle to this connection
+				 * @param bundle
+				 */
+				void write(const dtn::data::Bundle &bundle);
+
+				/**
+				 * method to prepare the class for deletion
+				 */
 				void embalm();
 
 				bool isConnected();
 				bool isBusy() const;
 
 			private:
+				/**
+				 * this method gets called by sub-classes
+				 * on a timeout
+				 */
+				void eventTimeout();
+
+				/**
+				 * this method gets called by sub-classes
+				 * on a shutdown (disconnect)
+				 */
+				void eventShutdown();
+
+				/**
+				 * Receiver sub-process
+				 * This sub-process is implemented as a thread
+				 * and do a constant read to this connection until
+				 * the receiver is stopped or a exception is thrown.
+				 */
 				class Receiver : public ibrcommon::JoinableThread
 				{
 				public:
@@ -90,7 +136,16 @@ namespace dtn
 
 					void handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out);
 
+					/**
+					 * shutdown the BundleStream
+					 */
 					virtual void shutdown();
+
+					/**
+					 * This method block until a bundle is fully transfered
+					 * or the connection is terminated.
+					 * @return True, if the bundle is transferred. False, if the connection is terminated.
+					 */
 					virtual bool waitCompleted();
 
 				protected:
@@ -150,7 +205,6 @@ namespace dtn
 			static const int DEFAULT_PORT;
 			bool _running;
 
-			//TCPConnection* openConnection(const dtn::core::Node &n);
 			BundleConnection* getConnection(const dtn::core::Node &n);
 
 			std::list<TCPConnection*> _connections;

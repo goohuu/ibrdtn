@@ -50,6 +50,8 @@ namespace dtn
 
 		protected:
 			void setTimer(size_t in_timeout, size_t out_timeout);
+			void shutdownTimer();
+
 			void setState(ConnectionState conn);
 			ConnectionState getState();
 			bool waitState(ConnectionState conn, size_t timeout);

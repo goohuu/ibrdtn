@@ -63,6 +63,8 @@ namespace dtn
 									getRouter()->transferTo(eid, id);
 								} catch (dtn::exceptions::NoRouteFoundException ex) {
 									bundlequeue.push(id);
+								} catch (dtn::exceptions::NoBundleFoundException ex) {
+									// bundle may expired, ignore it.
 								}
 							}
 							else break;

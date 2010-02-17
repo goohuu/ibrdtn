@@ -20,22 +20,28 @@ namespace dtn
 
 		StreamConnection::~StreamConnection()
 		{
+			shutdownTimer();
+			join();
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			cout << "remove StreamConnection" << endl;
+#endif
+		}
+
+		void StreamConnection::shutdownTimer()
+		{
 			if (_in_timer != NULL)
 			{
 				_in_timer->stop();
 				delete _in_timer;
+				_in_timer = NULL;
 			}
 
 			if (_out_timer != NULL)
 			{
 				_out_timer->stop();
 				delete _out_timer;
+				_out_timer = NULL;
 			}
-
-			join();
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "remove StreamConnection" << endl;
-#endif
 		}
 
 		void StreamConnection::setTimer(size_t in_timeout, size_t out_timeout)
@@ -49,21 +55,25 @@ namespace dtn
 
 		void StreamConnection::setState(ConnectionState conn)
 		{
-			ibrcommon::MutexLock l(_state_cond);
+			// change the state and signal it.
+			{
+				ibrcommon::MutexLock l(_state_cond);
 
-			// the closed state is a final state
-			if (_state == CONNECTION_CLOSED) return;
+				// the closed state is a final state
+				if (_state == CONNECTION_CLOSED) return;
 
-			// block states smaller than SHUTDOWN, if a shutdown is in progress.
-			if ((_state >= CONNECTION_SHUTDOWN) && (conn < CONNECTION_SHUTDOWN)) return;
+				// block states smaller than SHUTDOWN, if a shutdown is in progress.
+				if ((_state >= CONNECTION_SHUTDOWN) && (conn < CONNECTION_SHUTDOWN)) return;
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "StreamConnection state changed from " << _state << " to " << conn << endl;
+				cout << "StreamConnection state changed from " << _state << " to " << conn << endl;
 #endif
-			_state = conn;
-			_state_cond.signal(true);
+				_state = conn;
+				_state_cond.signal(true);
+			}
 
-			if (_state >= CONNECTION_SHUTDOWN)
+			// If the connection is going to be closed, unblock the wait for completion.
+			if (_state == CONNECTION_CLOSED)
 			{
 				ibrcommon::MutexLock l(_completed_cond);
 				_completed_cond.signal(true);
@@ -108,6 +118,7 @@ namespace dtn
 		{
 			if (getState() < CONNECTION_SHUTDOWN)
 			{
+				setState(CONNECTION_SHUTDOWN);
 				(*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
 			}
 		}
@@ -206,8 +217,9 @@ namespace dtn
 								// we received a shutdown request
 								setState(CONNECTION_SHUTDOWN);
 
-								// reply with a shutdown
-								(*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
+								if (this->good())
+									// reply with a shutdown
+									(*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
 							}
 
 							// and close the connection
@@ -237,7 +249,7 @@ namespace dtn
 					setState(CONNECTION_CLOSED);
 
 					// call the shutdown method of the derived class
-					shutdown();
+					eventShutdown();
 					break;
 				}
 

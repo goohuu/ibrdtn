@@ -65,8 +65,6 @@ namespace dtn
 
 			// wait for the closed connection
 			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
-
-			_conn.shutdown();
 		}
 
 		bool TCPConvergenceLayer::TCPConnection::TCPBundleStream::waitCompleted()
@@ -168,13 +166,19 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()
 		{
+			unbindEvent(GlobalEvent::className);
+			unbindEvent(NodeEvent::className);
+
+			// stop the receiver
+			_receiver.shutdown();
+
+			// disconnect
+			_stream.shutdown();
+
 			_receiver.waitFor();
 			_stream.waitFor();
 
 			_cl.remove(this);
-
-			unbindEvent(GlobalEvent::className);
-			unbindEvent(NodeEvent::className);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::embalm()
@@ -263,11 +267,11 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			// stop the receiver
-			_receiver.shutdown();
-
 			// disconnect
 			_stream.shutdown();
+
+			// stop the receiver
+			_receiver.shutdown();
 
 			// send myself to the graveyard
 			bury();
