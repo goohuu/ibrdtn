@@ -99,7 +99,7 @@ namespace dtn
 			_discovered_nodes.push_back( node );
 
 			// announce the new node
-			dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
+			dtn::core::NodeEvent::raise(node, dtn::core::NODE_AVAILABLE);
 		}
 
 		void ConnectionManager::check_discovered()
