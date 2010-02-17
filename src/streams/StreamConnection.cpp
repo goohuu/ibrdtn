@@ -181,7 +181,7 @@ namespace dtn
 								_recv_size += seg._value;
 							}
 
-							// New data segment received. Send a ACK.
+							// New data segment received. Send an ACK.
 							(*this) << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size);
 
 							// flush if this ack is the last segment
@@ -217,9 +217,12 @@ namespace dtn
 								// we received a shutdown request
 								setState(CONNECTION_SHUTDOWN);
 
-								if (this->good())
-									// reply with a shutdown
-									(*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE); flush();
+								// reply with a shutdown
+								if (good())
+								{
+									(*this) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_NONE);
+									flush();
+								}
 							}
 
 							// and close the connection

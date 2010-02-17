@@ -68,7 +68,7 @@ namespace dtn
 		Client::~Client()
 		{
 			// wait for the closed connection
-			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+			//StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
 		}
 
 		void Client::connect()
