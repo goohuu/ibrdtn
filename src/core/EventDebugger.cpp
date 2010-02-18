@@ -5,6 +5,10 @@
  *      Author: morgenro
  */
 
+#include "ibrdtn/default.h"
+
+#ifdef DO_DEBUG_OUTPUT
+
 #include "core/EventDebugger.h"
 #include "core/NodeEvent.h"
 #include "core/CustodyEvent.h"
@@ -121,3 +125,6 @@ namespace dtn
 		}
 	}
 }
+
+#endif
+
