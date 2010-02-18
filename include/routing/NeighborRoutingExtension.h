@@ -40,6 +40,14 @@ namespace dtn
 			 */
 			bool isNeighbor(const dtn::data::EID &eid) const;
 
+			/**
+			 * Remove a bundle from local lists.
+			 * this is necessary if a bundle is expired or another routing
+			 * module has delivered the bundle.
+			 * @param id
+			 */
+			void remove(const dtn::data::BundleID &id);
+
 			void route(const dtn::routing::MetaBundle &meta);
 
 			std::list<dtn::core::Node> _neighbors;

@@ -31,7 +31,7 @@ namespace dtn
 			static const string className;
 
 			static void raise(const dtn::data::Bundle &bundle);
-			dtn::data::BundleID _bundle;
+			const dtn::data::BundleID _bundle;
 
 		private:
 			BundleExpiredEvent(const dtn::data::Bundle &bundle);

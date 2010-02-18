@@ -55,6 +55,11 @@ namespace dtn
 			return false;
 		}
 
+		bool BundleID::operator!=(const BundleID& other) const
+		{
+			return !((*this) == other);
+		}
+
 		bool BundleID::operator==(const BundleID& other) const
 		{
 			if (other._timestamp != _timestamp) return false;

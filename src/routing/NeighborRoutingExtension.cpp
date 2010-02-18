@@ -8,6 +8,7 @@
 #include "routing/NeighborRoutingExtension.h"
 #include "net/BundleReceivedEvent.h"
 #include "net/TransferCompletedEvent.h"
+#include "core/BundleExpiredEvent.h"
 #include "core/NodeEvent.h"
 #include "core/Node.h"
 #include "net/ConnectionManager.h"
@@ -82,6 +83,7 @@ namespace dtn
 			const dtn::net::BundleReceivedEvent *received = dynamic_cast<const dtn::net::BundleReceivedEvent*>(evt);
 			const dtn::core::NodeEvent *nodeevent = dynamic_cast<const dtn::core::NodeEvent*>(evt);
 			const dtn::net::TransferCompletedEvent *completed = dynamic_cast<const dtn::net::TransferCompletedEvent*>(evt);
+			const dtn::core::BundleExpiredEvent *expired = dynamic_cast<const dtn::core::BundleExpiredEvent*>(evt);
 
 			if (received != NULL)
 			{
@@ -120,14 +122,18 @@ namespace dtn
 					break;
 				}
 			}
+			else if (expired != NULL)
+			{
+				remove(expired->_bundle);
+			}
 			else if (completed != NULL)
 			{
 				dtn::data::EID eid = completed->getPeer();
 
 				if ( _stored_bundles.find(eid) != _stored_bundles.end() )
 				{
-					// TODO: if a bundle is delivered remove it from _stored_bundles
-					// std::queue<dtn::data::BundleID> &q = _stored_bundles[completed->getPeer()];
+					// if a bundle is delivered remove it from _stored_bundles
+					remove(completed->getBundleID());
 				}
 			}
 		}
@@ -171,6 +177,29 @@ namespace dtn
 			}
 
 			return false;
+		}
+
+		void NeighborRoutingExtension::remove(const dtn::data::BundleID &id)
+		{
+			for (std::map<dtn::data::EID, std::queue<dtn::data::BundleID> >::iterator iter = _stored_bundles.begin(); iter != _stored_bundles.end(); iter++ )
+			{
+				std::queue<dtn::data::BundleID> &q = (*iter).second;
+				std::queue<dtn::data::BundleID> new_queue;
+
+				while (!q.empty())
+				{
+					dtn::data::BundleID bid = q.front();
+
+					if (bid != id)
+					{
+						new_queue.push(bid);
+					}
+
+					q.pop();
+				}
+
+				_stored_bundles[(*iter).first] = new_queue;
+			}
 		}
 	}
 }

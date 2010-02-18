@@ -23,6 +23,7 @@ namespace dtn
 			BundleID(EID source, size_t timestamp, size_t sequencenumber, bool fragment = false, size_t offset = 0);
 			virtual ~BundleID();
 
+			bool operator!=(const BundleID& other) const;
 			bool operator==(const BundleID& other) const;
 			bool operator<(const BundleID& other) const;
 			bool operator>(const BundleID& other) const;

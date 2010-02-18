@@ -13,7 +13,9 @@
 #include "net/BundleReceivedEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "routing/RequeueBundleEvent.h"
+#include "core/BundleExpiredEvent.h"
 #include "core/NodeEvent.h"
+
 #include "ibrcommon/thread/MutexLock.h"
 
 namespace dtn
@@ -107,6 +109,7 @@ namespace dtn
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::routing::RequeueBundleEvent::className);
 			bindEvent(dtn::core::NodeEvent::className);
+			bindEvent(dtn::core::BundleExpiredEvent::className);
 		}
 
 		BaseRouter::~BaseRouter()
@@ -117,6 +120,7 @@ namespace dtn
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			unbindEvent(dtn::routing::RequeueBundleEvent::className);
 			unbindEvent(dtn::core::NodeEvent::className);
+			unbindEvent(dtn::core::BundleExpiredEvent::className);
 
 			// delete all extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
