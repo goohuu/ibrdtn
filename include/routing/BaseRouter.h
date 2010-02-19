@@ -15,8 +15,6 @@
 #include "ibrcommon/thread/Thread.h"
 #include "ibrcommon/thread/Conditional.h"
 #include "routing/MetaBundle.h"
-#include <list>
-#include <queue>
 
 namespace dtn
 {
@@ -63,35 +61,6 @@ namespace dtn
 			};
 
 		private:
-//			class MetaBundle : public dtn::data::BundleID
-//			{
-//			public:
-//				MetaBundle(const dtn::data::Bundle &b);
-//				~MetaBundle();
-//
-//				dtn::data::DTNTime _received;
-//				dtn::data::DTNTime _schedule;
-//				size_t _lifetime;
-//
-//				enum State {
-//					TRANSIT = 0,
-//					WAIT_ENDPOINT = 1,
-//					DELAYED = 2
-//				};
-//
-//				State _state;
-//			};
-
-			class SeenBundle : public dtn::data::BundleID
-			{
-			public:
-				SeenBundle(const dtn::data::Bundle &b);
-				virtual ~SeenBundle();
-
-				dtn::data::DTNTime _lastseen;
-				dtn::data::DTNTime _expire;
-			};
-
 			class VirtualEndpoint
 			{
 			public:
@@ -131,13 +100,6 @@ namespace dtn
 			void raiseEvent(const dtn::core::Event *evt);
 
 			/**
-			 * Check if one bundle was seen before.
-			 * @param id The ID of the Bundle.
-			 * @return True, if the bundle was seen before. False if not.
-			 */
-			bool wasSeenBefore(const dtn::data::BundleID &id) const;
-
-			/**
 			 * Get a bundle out of the storage.
 			 * @param id The ID of the bundle.
 			 * @return The requested bundle.
@@ -153,9 +115,6 @@ namespace dtn
 		private:
 			dtn::core::BundleStorage &_storage;
 			std::list<BaseRouter::Extension*> _extensions;
-
-			std::list<SeenBundle> _seenlist;
-			//std::queue<MetaBundle> _delayed;
 		};
 	}
 }

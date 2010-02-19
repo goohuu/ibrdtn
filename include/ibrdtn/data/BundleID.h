@@ -29,6 +29,7 @@ namespace dtn
 			bool operator>(const BundleID& other) const;
 
 			string toString() const;
+			size_t getTimestamp() const;
 
 		private:
 			dtn::data::EID _source;

@@ -18,6 +18,7 @@ namespace dtn
 		{
 		public:
 			DTNTime();
+			DTNTime(size_t seconds, size_t nanoseconds = 0);
 			DTNTime(SDNV seconds, SDNV nanoseconds);
 			~DTNTime();
 

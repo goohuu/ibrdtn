@@ -15,6 +15,7 @@
 #include "routing/RequeueBundleEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "core/NodeEvent.h"
+#include "core/TimeEvent.h"
 
 #include "ibrcommon/thread/MutexLock.h"
 
@@ -64,26 +65,6 @@ namespace dtn
 		BaseRouter::Endpoint::~Endpoint()
 		{ }
 
-//		/**
-//		 * implementation of the MetaBundle class
-//		 */
-//		BaseRouter::MetaBundle::MetaBundle(const dtn::data::Bundle &b)
-//		 : BundleID(b), _state(TRANSIT)
-//		{ }
-//
-//		BaseRouter::MetaBundle::~MetaBundle()
-//		{ }
-
-		/**
-		 * implementation of the SeenBundle class
-		 */
-		BaseRouter::SeenBundle::SeenBundle(const dtn::data::Bundle &b)
-		 : BundleID(b)
-		{ }
-
-		BaseRouter::SeenBundle::~SeenBundle()
-		{ }
-
 		/**
 		 * implementation of the VirtualEndpoint class
 		 */
@@ -110,6 +91,7 @@ namespace dtn
 			bindEvent(dtn::routing::RequeueBundleEvent::className);
 			bindEvent(dtn::core::NodeEvent::className);
 			bindEvent(dtn::core::BundleExpiredEvent::className);
+			bindEvent(dtn::core::TimeEvent::className);
 		}
 
 		BaseRouter::~BaseRouter()
@@ -121,6 +103,7 @@ namespace dtn
 			unbindEvent(dtn::routing::RequeueBundleEvent::className);
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::BundleExpiredEvent::className);
+			unbindEvent(dtn::core::TimeEvent::className);
 
 			// delete all extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
@@ -188,16 +171,6 @@ namespace dtn
 			{
 				(*iter)->notify(evt);
 			}
-		}
-
-		/**
-		 * Check if one bundle was seen before.
-		 * @param id The ID of the Bundle.
-		 * @return True, if the bundle was seen before. False if not.
-		 */
-		bool BaseRouter::wasSeenBefore(const dtn::data::BundleID &id) const
-		{
-			return false;
 		}
 
 		/**

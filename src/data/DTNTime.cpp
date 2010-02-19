@@ -19,6 +19,11 @@ namespace dtn
 			set();
 		}
 
+		DTNTime::DTNTime(size_t seconds, size_t nanoseconds)
+		 : _seconds(seconds), _nanoseconds(nanoseconds)
+		{
+		}
+
 		DTNTime::DTNTime(SDNV seconds, SDNV nanoseconds)
 		 : _seconds(seconds), _nanoseconds(nanoseconds)
 		{

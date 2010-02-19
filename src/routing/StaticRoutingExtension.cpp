@@ -42,7 +42,7 @@ namespace dtn
 				// delete bundle in storage
 				dtn::core::BundleStorage &storage = getRouter()->getStorage();
 
-				storage.remove(completed->getBundleID());
+				storage.remove(completed->getBundle());
 			}
 			else if (aborted != NULL)
 			{

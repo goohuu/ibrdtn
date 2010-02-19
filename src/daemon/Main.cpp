@@ -17,6 +17,7 @@
 #include "routing/BaseRouter.h"
 #include "routing/StaticRoutingExtension.h"
 #include "routing/NeighborRoutingExtension.h"
+#include "routing/EpidemicRoutingExtension.h"
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
@@ -152,6 +153,7 @@ int main(int argc, char *argv[])
 	// add routing extensions
 	router.addExtension( new dtn::routing::StaticRoutingExtension( conf.getStaticRoutes() ) );
 	router.addExtension( new dtn::routing::NeighborRoutingExtension() );
+	//router.addExtension( new dtn::routing::EpidemicRoutingExtension() );
 
 	// get the configuration of the convergence layers
 	list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();

@@ -133,7 +133,7 @@ namespace dtn
 				if ( _stored_bundles.find(eid) != _stored_bundles.end() )
 				{
 					// if a bundle is delivered remove it from _stored_bundles
-					remove(completed->getBundleID());
+					remove(completed->getBundle());
 				}
 			}
 		}
