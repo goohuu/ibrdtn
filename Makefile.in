@@ -40,7 +40,7 @@ DAEMON_SRC = $(foreach mod,$(DAEMON_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp)
 DAEMON_OBJ = $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(patsubst %.cpp, %.o, $(DAEMON_SRC) ) ) )
 
 TESTSUITE_MODS:=net core routing testsuite
-TESTSUITE_SRC = $(foreach mod,$(TESTSUITE_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp))
+TESTSUITE_SRC = ./src/daemon/Configuration.cpp $(foreach mod,$(TESTSUITE_MODS), $(wildcard @srcdir@/src/$(mod)/*.cpp))
 TESTSUITE_OBJ = $(patsubst @srcdir@/src/%, @builddir@/obj/%, $(patsubst src/%, obj/%, $(patsubst %.cpp, %.o, $(TESTSUITE_SRC) ) ) )
 
 # Main target
