@@ -112,6 +112,8 @@ namespace dtn
 			BundleEIDList _forwarded;
 
 			std::queue<dtn::routing::MetaBundle> _out_queue;
+
+			size_t _timestamp;
 		};
 	}
 }

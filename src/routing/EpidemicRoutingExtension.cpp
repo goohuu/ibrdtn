@@ -33,6 +33,7 @@ namespace dtn
 		};
 
 		EpidemicRoutingExtension::EpidemicRoutingExtension()
+		 : _timestamp(0)
 		{
 			// get configuration
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
@@ -52,7 +53,11 @@ namespace dtn
 			for (std::list<dtn::core::Node>::const_iterator iter = _neighbors.begin(); iter != _neighbors.end(); iter++)
 			{
 				const dtn::core::Node &node = (*iter);
-				getRouter()->transferTo(EID(node.getURI()), id);
+				try {
+					getRouter()->transferTo(EID(node.getURI()), id);
+				} catch (dtn::exceptions::NoBundleFoundException ex) {
+
+				}
 			}
 		}
 
@@ -62,6 +67,16 @@ namespace dtn
 
 			while (_running)
 			{
+				// check for expired bundles
+				if (_timestamp > 0)
+				{
+					ibrcommon::MutexLock l(_list_mutex);
+					_seenlist.expire(_timestamp);
+					_bundles.expire(_timestamp);
+					_forwarded.expire(_timestamp);
+					_timestamp = 0;
+				}
+
 				// transfer queued bundles to all neighbors
 				while (!_out_queue.empty())
 				{
@@ -97,9 +112,15 @@ namespace dtn
 						{
 							const MetaBundle &meta = (*iter);
 
-							if (!_forwarded.contains(meta, eid))
-							{
-								getRouter()->transferTo(eid, meta);
+							try {
+								if (!_forwarded.contains(meta, eid))
+								{
+									getRouter()->transferTo(eid, meta);
+								}
+							} catch (dtn::exceptions::NoBundleFoundException ex) {
+								// remove this bundle from all lists
+								_bundles.remove(meta);
+								_forwarded.remove(meta);
 							}
 						}
 					}
@@ -125,10 +146,9 @@ namespace dtn
 				if (time->getAction() == dtn::core::TIME_SECOND_TICK)
 				{
 					// check all lists for expired entries
-					ibrcommon::MutexLock l(_list_mutex);
-					_seenlist.expire(time->getTimestamp());
-					_bundles.expire(time->getTimestamp());
-					_forwarded.expire(time->getTimestamp());
+					ibrcommon::MutexLock l(_wait);
+					_timestamp = time->getTimestamp();
+					_wait.signal(true);
 				}
 			}
 			else if (received != NULL)
