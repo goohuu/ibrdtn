@@ -61,6 +61,39 @@ namespace dtn
 			}
 		}
 
+		void EpidemicRoutingExtension::readExtensionBlock(const dtn::data::BundleID &id)
+		{
+			// get the bundle out of the storage
+			dtn::data::Bundle bundle = getRouter()->getStorage().get(id);
+
+			// get all epidemic extension blocks of this bundle
+			const std::list<EpidemicExtensionBlock> blocks = bundle.getBlocks<EpidemicExtensionBlock>();
+
+			if (!blocks.empty())
+			{
+				const EpidemicExtensionBlock &ext = blocks.front();
+				cout << "Epidemic block found, value: " << ext.get() << endl;
+			}
+			else
+			{
+				// create a new epidemic block
+				EpidemicExtensionBlock *eblock = new EpidemicExtensionBlock();
+
+				// set a value
+				eblock->set(dtn::data::SDNV(1234));
+
+				// no extension block found, add one
+				bundle.addBlock(eblock);
+
+				// store the bundle in the storage
+				dtn::core::BundleStorage &storage = getRouter()->getStorage();
+
+				// store the bundle with the new extension block in the storage.
+				storage.remove(bundle);
+				storage.store(bundle);
+			}
+		}
+
 		void EpidemicRoutingExtension::run()
 		{
 			ibrcommon::Mutex l(_wait);
@@ -85,6 +118,9 @@ namespace dtn
 					// ignore the bundle if it was seen before
 					if ( !wasSeenBefore(bundle) )
 					{
+						// read epidemic extension block
+						readExtensionBlock(bundle);
+
 						ibrcommon::MutexLock l(_list_mutex);
 
 						// mark the bundle as seen
@@ -97,7 +133,7 @@ namespace dtn
 						_bundles.add(bundle);
 					}
 
-					// remove the bundle from the queue
+					// remove the bundle off the queue
 					_out_queue.pop();
 				}
 
@@ -315,8 +351,14 @@ namespace dtn
 		}
 
 		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock()
-		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE)
+		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE), _data("forwarded through epidemic routing")
 		{
+		}
+
+		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock(dtn::data::Block *block)
+		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE, block->getBLOB())
+		{
+			read();
 		}
 
 		EpidemicRoutingExtension::EpidemicExtensionBlock::~EpidemicExtensionBlock()
@@ -329,7 +371,7 @@ namespace dtn
 			commit();
 		}
 
-		dtn::data::SDNV EpidemicRoutingExtension::EpidemicExtensionBlock::get()
+		dtn::data::SDNV EpidemicRoutingExtension::EpidemicExtensionBlock::get() const
 		{
 			return _counter;
 		}
@@ -341,6 +383,7 @@ namespace dtn
 			ibrcommon::MutexLock l(ref);
 
 			(*ref) >> _counter;
+			(*ref) >> _data;
 		}
 
 		void EpidemicRoutingExtension::EpidemicExtensionBlock::commit()
@@ -351,6 +394,7 @@ namespace dtn
 			ref.clear();
 
 			(*ref) << _counter;
+			(*ref) << _data;
 		}
 	}
 }

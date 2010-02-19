@@ -203,7 +203,7 @@ namespace dtn
 			return ret;
 		}
 
-		// Fill the input buffer.  This reads from the streambuf.
+		// Fill the input buffer.  This reads out of the streambuf.
 		int bpstreambuf::underflow()
 		{
 			if ( !waitState(DATA_AVAILABLE) )

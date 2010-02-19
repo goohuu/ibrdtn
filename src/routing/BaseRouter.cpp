@@ -137,7 +137,7 @@ namespace dtn
 		 */
 		void BaseRouter::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id)
 		{
-			// get the bundle from the storage
+			// get the bundle out of the storage
 			dtn::data::Bundle b = _storage.get(id);
 
 			// send the bundle

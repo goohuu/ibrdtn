@@ -13,6 +13,7 @@
 #include "core/Node.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/BundleString.h"
 #include <list>
 
 namespace dtn
@@ -37,16 +38,18 @@ namespace dtn
 				static const unsigned char BLOCK_TYPE = 201;
 
 				EpidemicExtensionBlock();
+				EpidemicExtensionBlock(Block *block);
 				~EpidemicExtensionBlock();
 
 				void read();
 				void commit();
 
 				void set(dtn::data::SDNV value);
-				dtn::data::SDNV get();
+				dtn::data::SDNV get() const;
 
 			private:
 				dtn::data::SDNV _counter;
+				dtn::data::BundleString _data;
 			};
 
 			class BundleEIDList
@@ -102,6 +105,8 @@ namespace dtn
 			bool wasSeenBefore(const dtn::data::BundleID &id) const;
 
 			void broadcast(const dtn::data::BundleID &id);
+
+			void readExtensionBlock(const dtn::data::BundleID &id);
 
 			std::list<dtn::core::Node> _neighbors;
 			std::queue<dtn::data::EID> _available;

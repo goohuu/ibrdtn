@@ -139,7 +139,7 @@ namespace dtn
 		protected:
 			/**
 			 * Constructor for a bundle object.
-			 * @param b include a bundle from the data library in this bundle.
+			 * @param b include a bundle of the data library in this bundle.
 			 */
 			Bundle(dtn::data::Bundle &b);
 
