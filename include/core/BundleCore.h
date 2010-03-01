@@ -70,20 +70,10 @@ namespace dtn
 			 */
 			BundleCore operator=(const BundleCore &k) {};
 
-			void transmitCustody(bool accept, const Bundle &b);
-
-			/**
-			 * This method generates a custody signal.
-			 * @param b The attributes of the given bundle where used to generate the custody signal.
-			 * @param accepted Define if a accept or reject signal is generated. True is for accept.
-			 * @return A bundle with a custody signal block.
-			 */
-			Bundle createCustodySignal(const Bundle &b, bool accepted);
-
 			/**
 			 * A custody manager takes care about a transmission of custody to another node.
 			 */
-			CustodyManager m_cm;
+			CustodyManager _cm;
 
 			/**
 			 * This is a clock object. It can be used to synchronize methods to the local clock.

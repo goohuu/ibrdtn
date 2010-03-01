@@ -81,6 +81,9 @@ namespace dtn
 				// set accepted
 				if (!(signal->_status & 1)) signal->_status += 1;
 
+				// commit the signal data
+				signal->commit();
+
 				// create a new bundle
 				Bundle b;
 				b.addBlock(signal);
@@ -104,6 +107,9 @@ namespace dtn
 
 				// set the bundle to match
 				signal->setMatch(bundle);
+
+				// commit the signal data
+				signal->commit();
 
 				// create a new bundle
 				Bundle b;

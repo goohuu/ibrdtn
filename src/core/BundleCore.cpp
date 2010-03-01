@@ -33,7 +33,7 @@ namespace dtn
 		 : _clock(1), _storage(NULL)
 		{
 			// start the custody manager
-			m_cm.start();
+			_cm.start();
 
 			// start a clock
 			_clock.start();
@@ -60,7 +60,7 @@ namespace dtn
 
 		CustodyManager& BundleCore::getCustodyManager()
 		{
-			return m_cm;
+			return _cm;
 		}
 
 		void BundleCore::transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle)
@@ -187,31 +187,5 @@ namespace dtn
 //				}
 //			}
 //		}
-
-		Bundle BundleCore::createCustodySignal(const Bundle &b, bool accepted)
-		{
-			// create a new bundle
-			Bundle bundle;
-
-			// create a new statusreport block
-			CustodySignalBlock *custody = new CustodySignalBlock();
-
-			// set accepted
-			if (accepted)
-			{
-				if (!(custody->_status & 1)) custody->_status += 1;
-			}
-
-			// set source and destination
-			custody->match(b);
-
-			// commit the data
-			custody->commit();
-
-			// add the report to the bundle
-			bundle.addBlock(custody);
-
-			return bundle;
-		}
 	}
 }
