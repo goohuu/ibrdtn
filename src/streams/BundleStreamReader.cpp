@@ -8,6 +8,8 @@
 #include "ibrdtn/streams/BundleStreamReader.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/Exceptions.h"
+#include "ibrdtn/data/Block.h"
+#include "ibrdtn/data/Bundle.h"
 #include <stdlib.h>
 
 using namespace std;
@@ -113,7 +115,7 @@ namespace dtn
 			free(data);
 
 			// is this bundle a fragment?
-			if (proc_flags & 0x01)
+			if (proc_flags & dtn::data::Bundle::FRAGMENT)
 			{
 				// FRAGMENTATION_OFFSET
 				_handler.beginAttribute(BundleHandler::FRAGMENTATION_OFFSET);
@@ -146,10 +148,10 @@ namespace dtn
 					_handler.endAttribute(block_flags);
 
 					// decode last block flag
-					if (block_flags & 0x08) lastblock = true;
+					if (block_flags & dtn::data::Block::LAST_BLOCK) lastblock = true;
 
 					// contains a reference block?
-					if (block_flags & 0x40)
+					if (block_flags & dtn::data::Block::BLOCK_CONTAINS_EIDS)
 					{
 						// BLOCK_REFERENCE_COUNT
 						size_t ref_count = 0;

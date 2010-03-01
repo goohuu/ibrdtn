@@ -1,7 +1,7 @@
 #ifndef EXCEPTIONS_H_
 #define EXCEPTIONS_H_
 
-#include "ibrdtn/data/Bundle.h"
+#include "ibrcommon/Exceptions.h"
 
 #include <stdexcept>
 #include <string>
@@ -14,49 +14,9 @@ namespace dtn
 	namespace exceptions
 	{
 		/**
-		 * Base class for all exceptions in the bundle protocol
-		 */
-		class Exception : public exception
-		{
-			public:
-				/**
-				 * default constructor
-				 */
-				Exception() throw()
-				{};
-
-				Exception(const exception&) throw()
-				{};
-
-				virtual ~Exception() throw()
-				{};
-
-				/**
-				 * Get the explaining reason as string value.
-				 * @return The reason as string value.
-				 */
-				virtual const char* what() const throw()
-				{
-					return m_what.c_str();
-				}
-
-				/**
-				 * constructor with attached string value as reason.
-				 * @param what The detailed reason for this exception.
-				 */
-				Exception(string what) throw()
-				{
-					m_what = what;
-				};
-
-			private:
-				string m_what;
-		};
-
-		/**
 		 * This is thrown if a method isn't implemented.
 		 */
-		class NotImplementedException : public Exception
+		class NotImplementedException : public ibrcommon::Exception
 		{
 		public:
 			NotImplementedException(string what = "This method isn't implemented.") throw() : Exception(what)
@@ -67,7 +27,7 @@ namespace dtn
 		/**
 		 * This is thrown if Input/Output error happens.
 		 */
-		class IOException : public Exception
+		class IOException : public ibrcommon::Exception
 		{
 		public:
 			IOException(string what = "Input/Output error.") throw() : Exception(what)
@@ -78,7 +38,7 @@ namespace dtn
 		/**
 		 * If the use of a given field is invalid for this method, this exception is thrown.
 		 */
-		class InvalidFieldException : public Exception
+		class InvalidFieldException : public ibrcommon::Exception
 		{
 			public:
 				InvalidFieldException(string what = "The given field is invalid.") throw() : Exception(what)
@@ -89,7 +49,7 @@ namespace dtn
 		/**
 		 * If a given field don't exists, this exception is thrown.
 		 */
-		class FieldDoesNotExist : public Exception
+		class FieldDoesNotExist : public ibrcommon::Exception
 		{
 			public:
 				FieldDoesNotExist(string what = "This field don't exists.") throw() : Exception(what)
@@ -100,7 +60,7 @@ namespace dtn
 		/**
 		 * If the parsed data of a bundle is invalid, this exception is thrown.
 		 */
-		class InvalidBundleData : public Exception
+		class InvalidBundleData : public ibrcommon::Exception
 		{
 			public:
 				InvalidBundleData(string what = "The bundle contains invalid data.") throw() : Exception(what)
@@ -111,7 +71,7 @@ namespace dtn
 		/**
 		 * If the decoding of a SDNV failed, this exception is thrown.
 		 */
-		class SDNVDecodeFailed : public Exception
+		class SDNVDecodeFailed : public ibrcommon::Exception
 		{
 			public:
 				SDNVDecodeFailed(string what = "Decoding of a SDNV failed.") throw() : Exception(what)
@@ -122,7 +82,7 @@ namespace dtn
 		/**
 		 * If a choosed option is invalid, this exception is thrown.
 		 */
-		class InvalidOptionException : public Exception
+		class InvalidOptionException : public ibrcommon::Exception
 		{
 			public:
 				InvalidOptionException(string what = "Invalid option.") throw() : Exception(what)
@@ -133,7 +93,7 @@ namespace dtn
 		/**
 		 * If some data is invalid, this exception is thrown.
 		 */
-		class InvalidDataException : public Exception
+		class InvalidDataException : public ibrcommon::Exception
 		{
 			public:
 				InvalidDataException(string what = "Invalid input data.") throw() : Exception(what)
@@ -144,7 +104,7 @@ namespace dtn
 		/**
 		 * If no route can be found, this exception is thrown.
 		 */
-		class NoRouteFoundException : public Exception
+		class NoRouteFoundException : public ibrcommon::Exception
 		{
 			public:
 				NoRouteFoundException(string what = "No route found.") throw() : Exception(what)
@@ -155,7 +115,7 @@ namespace dtn
 		/**
 		 * If no bundle can be found, this exception is thrown.
 		 */
-		class NoBundleFoundException : public Exception
+		class NoBundleFoundException : public ibrcommon::Exception
 		{
 			public:
 				NoBundleFoundException(string what = "No bundle available.") throw() : Exception(what)
@@ -166,7 +126,7 @@ namespace dtn
 		/**
 		 * If a given size is to small for a method, this exception is thrown.
 		 */
-		class MaxSizeTooSmallException : public Exception
+		class MaxSizeTooSmallException : public ibrcommon::Exception
 		{
 			public:
 				MaxSizeTooSmallException(string what = "Maximum size is too small.") throw() : Exception(what)
@@ -177,7 +137,7 @@ namespace dtn
 		/**
 		 * If a error occurs during a fragmentation process, this exception is thrown.
 		 */
-		class FragmentationException : public Exception
+		class FragmentationException : public ibrcommon::Exception
 		{
 			public:
 				FragmentationException(string what = "De-/fragmentation not possible.") throw() : Exception(what)
@@ -220,7 +180,7 @@ namespace dtn
 		/**
 		 * If a bundle expires, this exception is thrown.
 		 */
-		class BundleExpiredException : public Exception
+		class BundleExpiredException : public ibrcommon::Exception
 		{
 			public:
 				BundleExpiredException(string what = "This bundle has expired.") throw() : Exception(what)
@@ -231,7 +191,7 @@ namespace dtn
 		/**
 		 * If no more space is available, e.g. for storing a bundle, this exception is thrown.
 		 */
-		class NoSpaceLeftException : public Exception
+		class NoSpaceLeftException : public ibrcommon::Exception
 		{
 			public:
 				NoSpaceLeftException(string what = "No space left.") throw() : Exception(what)
@@ -242,7 +202,7 @@ namespace dtn
 		/**
 		 * If no neighbour was found, this exception is thrown.
 		 */
-		class NoNeighbourFoundException : public Exception
+		class NoNeighbourFoundException : public ibrcommon::Exception
 		{
 			public:
 				NoNeighbourFoundException(string what = "No neighbour was found.") throw() : Exception(what)
@@ -250,7 +210,7 @@ namespace dtn
 				};
 		};
 
-		class NoTimerFoundException : public Exception
+		class NoTimerFoundException : public ibrcommon::Exception
 		{
 		public:
 			NoTimerFoundException(string what = "No matching timer was found.") throw() : Exception(what)
@@ -258,7 +218,7 @@ namespace dtn
 			};
 		};
 
-		class MissingObjectException : public Exception
+		class MissingObjectException : public ibrcommon::Exception
 		{
 		public:
 			MissingObjectException(string what = "Object not available.") throw() : Exception(what)
@@ -266,7 +226,7 @@ namespace dtn
 			};
 		};
 
-		class PermissionDeniedException : public Exception
+		class PermissionDeniedException : public ibrcommon::Exception
 		{
 		public:
 			PermissionDeniedException(string what = "Permission denied.") throw() : Exception(what)
@@ -274,7 +234,7 @@ namespace dtn
 			};
 		};
 
-		class DuplicateBundleException : public Exception
+		class DuplicateBundleException : public ibrcommon::Exception
 		{
 		public:
 			DuplicateBundleException(string what = "Duplicate found.") throw() : Exception(what)

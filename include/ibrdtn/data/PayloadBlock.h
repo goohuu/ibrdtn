@@ -27,10 +27,17 @@ namespace dtn
 			PayloadBlock(ibrcommon::BLOB::Reference ref);
 			virtual ~PayloadBlock();
 
-			std::pair<PayloadBlock*, PayloadBlock*> split(size_t position);
+			//std::pair<PayloadBlock*, PayloadBlock*> split(size_t position);
 
 			virtual void read() {};
 			virtual void commit() {};
+
+			/**
+			 * This method accepts a offset of bytes which are already successful transferred to
+			 * another Node.
+			 * @param offset
+			 */
+			void setFragment(size_t offset) throw (dtn::exceptions::FragmentationException);
 		};
 	}
 }

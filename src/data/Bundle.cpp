@@ -71,13 +71,13 @@ namespace dtn
 			}
 
 			// set the last block flag
-			if (!(b->_procflags & 0x08)) b->_procflags += 0x08;
+			if (!(b->_procflags & Block::LAST_BLOCK)) b->_procflags += Block::LAST_BLOCK;
 
 			if (_blocks.size() > 0)
 			{
 				// remove the last block flag of the previous block
 				refcnt_ptr<Block> lastblock = _blocks.back();
-				if (!(lastblock->_procflags & 0x08)) lastblock->_procflags -= 0x08;
+				if (!(lastblock->_procflags & Block::LAST_BLOCK)) lastblock->_procflags -= Block::LAST_BLOCK;
 			}
 
 			refcnt_ptr<Block> ref(b);

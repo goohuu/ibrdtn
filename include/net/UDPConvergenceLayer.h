@@ -3,7 +3,7 @@
 
 #include "net/ConvergenceLayer.h"
 #include "net/BundleConnection.h"
-#include "ibrdtn/data/Exceptions.h"
+#include "ibrcommon/Exceptions.h"
 #include "net/DiscoveryServiceProvider.h"
 #include "ibrcommon/net/NetInterface.h"
 
@@ -21,10 +21,10 @@ namespace dtn
 		class UDPConvergenceLayer : public ConvergenceLayer, public ibrcommon::JoinableThread, public DiscoveryServiceProvider
 		{
 		public:
-			class SocketException : public dtn::exceptions::Exception
+			class SocketException : public ibrcommon::Exception
 			{
 			public:
-				SocketException(string error) : Exception(error)
+				SocketException(string error) : ibrcommon::Exception(error)
 				{};
 			};
 

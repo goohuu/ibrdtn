@@ -26,9 +26,23 @@ namespace dtn
 		{
 		}
 
-		std::pair<PayloadBlock*, PayloadBlock*> PayloadBlock::split(size_t position)
+//		std::pair<PayloadBlock*, PayloadBlock*> PayloadBlock::split(size_t position)
+//		{
+//			throw dtn::exceptions::NotImplementedException("Fragmentation is not supported.");
+//		}
+
+		void PayloadBlock::setFragment(size_t offset) throw (dtn::exceptions::FragmentationException)
 		{
-			throw dtn::exceptions::NotImplementedException("Fragmentation is not supported.");
+			dtn::streams::BundleStreamWriter writer(cout);
+			size_t hsize = getHeaderSize(writer);
+
+			if (hsize <= offset) throw dtn::exceptions::FragmentationException("Fragmentation at this position is not possible.");
+
+			try {
+				setOffset(offset - hsize);
+			} catch (Block::PayloadTooSmallException ex) {
+				throw dtn::exceptions::FragmentationException("Offset outside of the payload area");
+			}
 		}
 	}
 }

@@ -18,6 +18,7 @@
 #include "ibrdtn/streams/StreamConnection.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
+#include "ibrcommon/Exceptions.h"
 
 using namespace dtn::data;
 using namespace dtn::streams;
@@ -26,10 +27,10 @@ namespace dtn
 {
 	namespace api
 	{
-		class ConnectionException : public dtn::exceptions::Exception
+		class ConnectionException : public ibrcommon::Exception
 		{
 		public:
-			ConnectionException(string what = "A connection error occurred.") throw() : Exception(what)
+			ConnectionException(string what = "A connection error occurred.") throw() : ibrcommon::Exception(what)
 			{
 			};
 		};

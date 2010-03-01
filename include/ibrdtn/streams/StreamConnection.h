@@ -16,15 +16,16 @@
 #include "ibrdtn/streams/bpstreambuf.h"
 #include "ibrcommon/thread/Timer.h"
 #include "ibrcommon/thread/TimerCallback.h"
+#include "ibrcommon/Exceptions.h"
 
 namespace dtn
 {
 	namespace streams
 	{
-		class TransmissionInterruptedException : public exceptions::Exception
+		class TransmissionInterruptedException : public ibrcommon::Exception
 		{
 			public:
-				TransmissionInterruptedException(dtn::data::Bundle &bundle, size_t position) : Exception("Transmission was interrupted.")
+				TransmissionInterruptedException(dtn::data::Bundle &bundle, size_t position) : ibrcommon::Exception("Transmission was interrupted.")
 				{
 				};
 		};

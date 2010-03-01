@@ -9,7 +9,7 @@
 #define EVENTSWITCH_H_
 
 #include "ibrdtn/default.h"
-#include "ibrdtn/data/Exceptions.h"
+#include "ibrcommon/Exceptions.h"
 #include "core/Event.h"
 #include "core/EventReceiver.h"
 #include "ibrcommon/thread/Thread.h"
@@ -18,13 +18,11 @@
 #include "core/EventDebugger.h"
 #endif
 
-using namespace dtn::exceptions;
-
 namespace dtn
 {
-	namespace exceptions
+	namespace core
 	{
-		class EventException : public Exception
+		class EventException : public ibrcommon::Exception
 		{
 
 		};
@@ -34,14 +32,11 @@ namespace dtn
 
 		};
 
-		class NoReceiverFoundException : public Exception
+		class NoReceiverFoundException : public ibrcommon::Exception
 		{
 
 		};
-	}
 
-	namespace core
-	{
 		class EventSwitch : public ibrcommon::JoinableThread
 		{
 		private:

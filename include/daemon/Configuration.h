@@ -5,7 +5,7 @@
 #include "ibrcommon/data/ConfigFile.h"
 #include "core/Node.h"
 #include "routing/StaticRoutingExtension.h"
-#include "ibrdtn/data/Exceptions.h"
+#include "ibrcommon/Exceptions.h"
 #include "ibrcommon/net/NetInterface.h"
 
 using namespace dtn::net;
@@ -26,11 +26,11 @@ namespace dtn
 			virtual ~Configuration();
 
 		public:
-			class ParameterNotSetException : dtn::exceptions::Exception
+			class ParameterNotSetException : ibrcommon::Exception
 			{
 			};
 
-			class ParameterNotFoundException : dtn::exceptions::Exception
+			class ParameterNotFoundException : ibrcommon::Exception
 			{
 			};
 

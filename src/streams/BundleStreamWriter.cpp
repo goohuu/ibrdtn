@@ -99,20 +99,27 @@ namespace dtn
 			return write((char*)value.c_str(), value.length());
 		}
 
-		size_t BundleStreamWriter::write(istream &input)
+		size_t BundleStreamWriter::write(istream &src)
 		{
-			// write data from stream to stream
-			char data[512];
-			size_t size = 1;
-			size_t len = 0;
+			size_t ret = 0;
+			char buffer[512];
 
-			while (size > 0)
+			while (src.good() && _output.good())
 			{
-				size = input.readsome(data, 512);
-				len += write(data, size);
+				// read max. 512 bytes at once
+				src.read(buffer, 512);
+
+				// read bytes
+				int bytes = src.gcount();
+
+				// write buffer to the destination stream
+				_output.write(buffer, bytes);
+
+				// increment result
+				ret += bytes;
 			}
 
-			return len;
+			return ret;
 		}
 
 		size_t BundleStreamWriter::write(const dtn::data::Bundle &b)

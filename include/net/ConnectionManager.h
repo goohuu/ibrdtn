@@ -9,30 +9,30 @@
 #define CONNECTIONMANAGER_H_
 
 #include "ibrdtn/config.h"
-#include "ibrdtn/data/Exceptions.h"
 #include "net/BundleConnection.h"
 #include "net/ConvergenceLayer.h"
 #include "net/BundleReceiver.h"
 #include "core/EventReceiver.h"
 #include "ibrdtn/data/EID.h"
 #include "core/Node.h"
+#include "ibrcommon/Exceptions.h"
 
 namespace dtn
 {
 	namespace net
 	{
-		class NeighborNotAvailableException : public dtn::exceptions::Exception
+		class NeighborNotAvailableException : public ibrcommon::Exception
 		{
 		public:
-			NeighborNotAvailableException(string what = "The requested connection is not available.") throw() : Exception(what)
+			NeighborNotAvailableException(string what = "The requested connection is not available.") throw() : ibrcommon::Exception(what)
 			{
 			};
 		};
 
-		class ConnectionNotAvailableException : public dtn::exceptions::Exception
+		class ConnectionNotAvailableException : public ibrcommon::Exception
 		{
 		public:
-			ConnectionNotAvailableException(string what = "The requested connection is not available.") throw() : Exception(what)
+			ConnectionNotAvailableException(string what = "The requested connection is not available.") throw() : ibrcommon::Exception(what)
 			{
 			};
 		};
@@ -54,10 +54,10 @@ namespace dtn
 			 */
 			void raiseEvent(const dtn::core::Event *evt);
 
-			class ShutdownException : public dtn::exceptions::Exception
+			class ShutdownException : public ibrcommon::Exception
 			{
 			public:
-				ShutdownException(string what = "System shutdown") throw() : Exception(what)
+				ShutdownException(string what = "System shutdown") throw() : ibrcommon::Exception(what)
 				{
 				};
 			};
