@@ -108,10 +108,6 @@ namespace dtn
 
 			dtn::core::BundleStorage &getStorage();
 
-			bool isLocal(const dtn::data::Bundle &b) const;
-
-			bool isLocal(const dtn::routing::MetaBundle &b) const;
-
 		private:
 			dtn::core::BundleStorage &_storage;
 			std::list<BaseRouter::Extension*> _extensions;

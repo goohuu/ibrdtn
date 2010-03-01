@@ -159,9 +159,11 @@ namespace dtn
 
 			if (received != NULL)
 			{
-				if ( isLocal(received->getBundle()) )
+				const dtn::data::EID &dest = received->getBundle().destination;
+
+				if ( (dest.getNodeEID() == BundleCore::local.getNodeEID()) && dest.hasApplication() )
 				{
-					// if the bundle is local, do not forward it to routing modules
+					// if the bundle is for a local application, do not forward it to routing modules
 					return;
 				}
 			}
@@ -186,18 +188,6 @@ namespace dtn
 		dtn::core::BundleStorage& BaseRouter::getStorage()
 		{
 			return _storage;
-		}
-
-		bool BaseRouter::isLocal(const dtn::data::Bundle &b) const
-		{
-			if (b._destination.getNodeEID() == BundleCore::local.getNodeEID()) return true;
-			return false;
-		}
-
-		bool BaseRouter::isLocal(const dtn::routing::MetaBundle &b) const
-		{
-			if (b.destination.getNodeEID() == BundleCore::local.getNodeEID()) return true;
-			return false;
 		}
 	}
 }
