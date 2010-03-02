@@ -7,9 +7,7 @@
 
 #include "core/Clock.h"
 #include "core/TimeEvent.h"
-
-#include <math.h>
-#include <time.h>
+#include "ibrdtn/utils/Utils.h"
 
 namespace dtn
 {
@@ -33,12 +31,7 @@ namespace dtn
 
 		size_t Clock::getTime()
 		{
-			time_t rawtime = time(NULL);
-			tm * ptm;
-
-			ptm = gmtime ( &rawtime );
-
-			return mktime(ptm) - 946681200;
+			return dtn::utils::Utils::get_current_dtn_time();
 		}
 
 		void Clock::run()
