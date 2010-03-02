@@ -290,5 +290,16 @@ namespace dtn
                         throw ParameterNotSetException();
                     }
                 }
+
+                Configuration::RoutingExtension Configuration::getRoutingExtension()
+                {
+                    try {
+                    	string mode = _conf.read<string>("routing");
+                    	if ( mode == "epidemic" ) return EPIDEMIC_ROUTING;
+                    	return DEFAULT_ROUTING;
+                    } catch (ConfigFile::key_not_found ex) {
+                        return DEFAULT_ROUTING;
+                    }
+                }
 	}
 }

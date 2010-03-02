@@ -82,6 +82,14 @@ namespace dtn
 
 			string getNotifyCommand();
 
+			enum RoutingExtension
+			{
+				DEFAULT_ROUTING = 0,
+				EPIDEMIC_ROUTING = 1
+			};
+
+			RoutingExtension getRoutingExtension();
+
 		private:
 			ibrcommon::ConfigFile _conf;
 

@@ -151,9 +151,19 @@ int main(int argc, char *argv[])
 	dtn::routing::BaseRouter router(*storage);
 
 	// add routing extensions
-	router.addExtension( new dtn::routing::StaticRoutingExtension( conf.getStaticRoutes() ) );
-	router.addExtension( new dtn::routing::NeighborRoutingExtension() );
-	//router.addExtension( new dtn::routing::EpidemicRoutingExtension() );
+	switch (conf.getRoutingExtension())
+	{
+	case Configuration::EPIDEMIC_ROUTING:
+		cout << "Using epidemic routing extensions" << endl;
+		router.addExtension( new dtn::routing::EpidemicRoutingExtension() );
+		break;
+
+	default:
+		cout << "Using default routing extensions" << endl;
+		router.addExtension( new dtn::routing::StaticRoutingExtension( conf.getStaticRoutes() ) );
+		router.addExtension( new dtn::routing::NeighborRoutingExtension() );
+		break;
+	}
 
 	// get the configuration of the convergence layers
 	list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();
