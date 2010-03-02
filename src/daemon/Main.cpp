@@ -147,6 +147,14 @@ int main(int argc, char *argv[])
 	// set the storage in the core
 	core.setStorage(storage);
 
+	// initialize the DiscoveryAgent
+	dtn::net::IPNDAgent *ipnd = NULL;
+
+	if (conf.doDiscovery())
+	{
+		ipnd = new dtn::net::IPNDAgent( conf.getDiscoveryInterface() );
+	}
+
 	// create the base router
 	dtn::routing::BaseRouter router(*storage);
 
@@ -154,9 +162,13 @@ int main(int argc, char *argv[])
 	switch (conf.getRoutingExtension())
 	{
 	case Configuration::EPIDEMIC_ROUTING:
+	{
 		cout << "Using epidemic routing extensions" << endl;
-		router.addExtension( new dtn::routing::EpidemicRoutingExtension() );
+		dtn::routing::EpidemicRoutingExtension *epidemic = new dtn::routing::EpidemicRoutingExtension();
+		router.addExtension( epidemic );
+		if (ipnd != NULL) ipnd->addService(epidemic);
 		break;
+	}
 
 	default:
 		cout << "Using default routing extensions" << endl;
@@ -167,14 +179,6 @@ int main(int argc, char *argv[])
 
 	// get the configuration of the convergence layers
 	list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();
-
-	// initialize the DiscoveryAgent
-	dtn::net::IPNDAgent *ipnd = NULL;
-
-	if (conf.doDiscovery())
-	{
-		ipnd = new dtn::net::IPNDAgent( conf.getDiscoveryInterface() );
-	}
 
 	// create the convergence layers
  	for (list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)

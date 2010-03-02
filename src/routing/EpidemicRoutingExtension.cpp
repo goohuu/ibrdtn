@@ -22,6 +22,12 @@
 #include <list>
 #include <algorithm>
 
+#include <iomanip>
+#include <ios>
+#include <iostream>
+
+#include <stdlib.h>
+
 namespace dtn
 {
 	namespace routing
@@ -59,6 +65,14 @@ namespace dtn
 
 				}
 			}
+		}
+
+		void EpidemicRoutingExtension::update(std::string &name, std::string &data)
+		{
+			name = "epidemic";
+			stringstream ss;
+			ss << _bundle_vector;
+			data = ss.str();
 		}
 
 		void EpidemicRoutingExtension::readExtensionBlock(const dtn::data::BundleID &id)
@@ -131,6 +145,9 @@ namespace dtn
 
 						// put this bundle to the bundle list
 						_bundles.add(bundle);
+
+						// add this bundle to the summary vector
+						_bundle_vector.add(bundle);
 					}
 
 					// remove the bundle off the queue
@@ -157,6 +174,8 @@ namespace dtn
 								// remove this bundle from all lists
 								_bundles.remove(meta);
 								_forwarded.remove(meta);
+								_bundle_vector.clear();
+								_bundle_vector.add(_bundles);
 							}
 						}
 					}
@@ -233,6 +252,11 @@ namespace dtn
 				// remove this bundle from seen list
 				// remove this bundle from forward-to list
 				// BundleList will do this!
+
+				// rebuild the summary vector
+				_bundle_vector.clear();
+				_bundle_vector.add(_bundles);
+
 			}
 			else if (completed != NULL)
 			{
@@ -254,6 +278,8 @@ namespace dtn
 					// delete it from out list
 					ibrcommon::MutexLock l(_list_mutex);
 					_bundles.remove(meta);
+					_bundle_vector.clear();
+					_bundle_vector.add(_bundles);
 
 					// delete it from our database
 					getRouter()->getStorage().remove(meta);

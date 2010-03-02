@@ -38,10 +38,10 @@ namespace dtn
 					break;
 				}
 
-				// remove this item from public list
+				// remove this item in public list
 				(*this).erase( (*iter).bundle );
 
-				// remove this item from private list
+				// remove this item in private list
 				_bundles.erase( iter );
 			}
 		}

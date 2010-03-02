@@ -14,19 +14,23 @@
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/BundleString.h"
+#include "net/DiscoveryServiceProvider.h"
+#include "routing/SummaryVector.h"
 #include <list>
 
 namespace dtn
 {
 	namespace routing
 	{
-		class EpidemicRoutingExtension : public BaseRouter::ThreadedExtension
+		class EpidemicRoutingExtension : public BaseRouter::ThreadedExtension, public dtn::net::DiscoveryServiceProvider
 		{
 		public:
 			EpidemicRoutingExtension();
 			~EpidemicRoutingExtension();
 
 			void notify(const dtn::core::Event *evt);
+
+			void update(std::string &name, std::string &data);
 
 		protected:
 			void run();
@@ -119,6 +123,8 @@ namespace dtn
 			std::queue<dtn::routing::MetaBundle> _out_queue;
 
 			size_t _timestamp;
+
+			SummaryVector _bundle_vector;
 		};
 	}
 }
