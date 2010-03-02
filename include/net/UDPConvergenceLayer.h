@@ -6,6 +6,7 @@
 #include "ibrcommon/Exceptions.h"
 #include "net/DiscoveryServiceProvider.h"
 #include "ibrcommon/net/NetInterface.h"
+#include "ibrcommon/net/udpsocket.h"
 
 using namespace dtn::data;
 
@@ -21,13 +22,6 @@ namespace dtn
 		class UDPConvergenceLayer : public ConvergenceLayer, public ibrcommon::JoinableThread, public DiscoveryServiceProvider
 		{
 		public:
-			class SocketException : public ibrcommon::Exception
-			{
-			public:
-				SocketException(string error) : ibrcommon::Exception(error)
-				{};
-			};
-
 			/**
 			 * UDP connection class
 			 */
@@ -76,6 +70,8 @@ namespace dtn
 				void run();
 
 		private:
+			ibrcommon::udpsocket _socket;
+
 			ibrcommon::NetInterface _net;
 			int m_socket;
 
@@ -87,6 +83,8 @@ namespace dtn
 			ibrcommon::Mutex m_readlock;
 
 			bool _running;
+
+
 		};
 	}
 }

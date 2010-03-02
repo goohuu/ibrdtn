@@ -32,47 +32,16 @@ namespace dtn
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::NetInterface net, bool broadcast, unsigned int mtu)
-			: _net(net), m_maxmsgsize(mtu), _running(true)
+			: _socket(net, broadcast), _net(net), m_maxmsgsize(mtu), _running(true)
 		{
-			struct sockaddr_in address;
-
-			net.getInterfaceAddress(&(address.sin_addr));
-		  	address.sin_port = htons(net.getPort());
-
-			// Create socket for listening for client connection requests.
-			m_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
-			if (m_socket < 0)
-			{
-				throw SocketException("UDPConvergenceLayer: cannot create listen socket");
-			}
-
-			// enable broadcast
-			int b = 1;
-
-			if (broadcast)
-			{
-				if ( setsockopt(m_socket, SOL_SOCKET, SO_BROADCAST, (char*)&b, sizeof(b)) == -1 )
-				{
-					throw SocketException("UDPConvergenceLayer: cannot send broadcasts");
-				}
-
-				// broadcast addresses should be usable more than once.
-				setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR, (char*)&b, sizeof(b));
-			}
-
-			address.sin_family = AF_INET;
-
-			if ( bind(m_socket, (struct sockaddr *) &address, sizeof(address)) < 0 )
-			{
-				throw SocketException("UDPConvergenceLayer: cannot bind socket");
-			}
+			// bind to interface and port
+			_socket.bind();
 		}
 
 		UDPConvergenceLayer::~UDPConvergenceLayer()
 		{
 			_running = false;
-			::shutdown(m_socket, SHUT_RDWR);
+			_socket.shutdown();
 			join();
 		}
 
@@ -131,19 +100,14 @@ namespace dtn
 			ss << b;
 			string data = ss.str();
 
-			struct sockaddr_in clientAddress;
+			// get a udp peer
+			ibrcommon::udpsocket::peer p = _socket.getPeer(node.getAddress(), node.getPort());
 
-			// destination parameter
-			clientAddress.sin_family = AF_INET;
-
-			// use node to define the destination
-			clientAddress.sin_addr.s_addr = inet_addr(node.getAddress().c_str());
-			clientAddress.sin_port = htons(node.getPort());
-
+			// set write lock
 			ibrcommon::MutexLock l(m_writelock);
 
-			// Send converted line back to client.
-			int ret = sendto(m_socket, data.c_str(), data.length(), 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));
+			// send converted line back to client.
+			int ret = p.send(data.c_str(), data.length());
 
 			if (ret < 0)
 			{
@@ -155,20 +119,10 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(m_readlock);
 
-			struct sockaddr_in clientAddress;
-			socklen_t clientAddressLength = sizeof(clientAddress);
-
 			char data[m_maxmsgsize];
 
-			// first peek if data is incoming, wait max. 100ms
-			struct pollfd psock[1];
-
-			psock[0].fd = m_socket;
-			psock[0].events = POLLIN;
-			psock[0].revents = POLLERR;
-
 			// data waiting
-			int len = recvfrom(m_socket, data, m_maxmsgsize, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
+			int len = _socket.receive(data, m_maxmsgsize);
 
 			if (len < 0)
 			{

@@ -20,6 +20,7 @@
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryAnnouncement.h"
 #include "ibrcommon/net/NetInterface.h"
+#include "ibrcommon/net/udpsocket.h"
 
 using namespace dtn::data;
 
@@ -38,8 +39,7 @@ namespace dtn
 			void run();
 
 		private:
-			ibrcommon::NetInterface _interface;
-			int _socket;
+			ibrcommon::udpsocket _socket;
 		};
 	}
 }

@@ -8,9 +8,6 @@
 #include "net/IPNDAgent.h"
 #include "ibrdtn/data/Exceptions.h"
 #include <sstream>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
 #include <string.h>
 
 namespace dtn
@@ -18,67 +15,30 @@ namespace dtn
 	namespace net
 	{
 		IPNDAgent::IPNDAgent(ibrcommon::NetInterface net)
-		 : _interface(net)
+		 : _socket(net, true)
 		{
-			// Create socket for listening for client connection requests.
-			_socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+			// bind to interface and port
+			_socket.bind();
 
-			if (_socket < 0)
-			{
-				cerr << "IPNDAgent: cannot create listen socket" << endl;
-				::exit(1);
-			}
-
-			struct sockaddr_in address;
-			bzero((char *) &address, sizeof(address));
-			address.sin_family = AF_INET;
-			address.sin_addr.s_addr = htonl(INADDR_ANY);
-			address.sin_port = htons(net.getPort());
-
-			// enable broadcast
-			int b = 1;
-			if ( setsockopt(_socket, SOL_SOCKET, SO_BROADCAST, (char*)&b, sizeof(b)) == -1 )
-			{
-				cerr << "IPNDAgent: set socket to broadcast mode" << endl;
-				::exit(1);
-			}
-
-			if ( bind(_socket, (struct sockaddr *) &address, sizeof(address)) < 0 )
-			{
-				cerr << "IPNDAgent: cannot bind socket to " << net.getAddress() << ":" << net.getPort() << endl;
-				::exit(1);
-			}
-
-			cout << "DiscoveryAgent listen to port " << ntohs(address.sin_port) << endl;
+			cout << "DiscoveryAgent listen to port " << net.getPort() << endl;
 		}
 
 		IPNDAgent::~IPNDAgent()
 		{
-			::shutdown(_socket, SHUT_RDWR);
-			::close(_socket);
+			_socket.shutdown();
 		}
 
 		void IPNDAgent::send(DiscoveryAnnouncement &announcement)
 		{
-                        // update service blocks
-                        announcement.updateServices();
+			// update service blocks
+			announcement.updateServices();
 
 			stringstream ss;
 			ss << announcement;
 
 			string data = ss.str();
 
-			struct sockaddr_in clientAddress;
-
-			// destination parameter
-			clientAddress.sin_family = AF_INET;
-
-			// broadcast
-			_interface.getInterfaceBroadcastAddress(&clientAddress.sin_addr);
-			clientAddress.sin_port = htons(_interface.getPort());
-
-			// send converted line back to client.
-			int ret = sendto(_socket, data.c_str(), data.length(), 0, (struct sockaddr *) &clientAddress, sizeof(clientAddress));
+			int ret = _socket.send(data.c_str(), data.length());
 		}
 
 		void IPNDAgent::run()
@@ -87,11 +47,9 @@ namespace dtn
 			{
 				DiscoveryAnnouncement announce;
 
-				struct sockaddr_in clientAddress;
-				socklen_t clientAddressLength = sizeof(clientAddress);
 				char data[1500];
 
-				int len = recvfrom(_socket, data, 1500, MSG_WAITALL, (struct sockaddr *) &clientAddress, &clientAddressLength);
+				int len = _socket.receive(data, 1500);
 
 				if (len < 0) return;
 

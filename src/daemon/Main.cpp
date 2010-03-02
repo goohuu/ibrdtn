@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
 		} catch (ibrcommon::tcpserver::SocketException ex) {
 				cout << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
 				cout << "      Error: " << ex.what() << endl;
-		} catch (dtn::net::UDPConvergenceLayer::SocketException ex) {
+		} catch (ibrcommon::udpsocket::SocketException ex) {
 				cout << "Failed to add UDP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
 				cout << "      Error: " << ex.what() << endl;
 		}
