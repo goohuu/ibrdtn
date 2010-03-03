@@ -39,7 +39,7 @@ namespace dtn
 			class EpidemicExtensionBlock : public dtn::data::Block
 			{
 			public:
-				static const unsigned char BLOCK_TYPE = 201;
+				static const char BLOCK_TYPE = 201;
 
 				EpidemicExtensionBlock(const SummaryVector &vector);
 				EpidemicExtensionBlock(Block *block);
@@ -59,50 +59,50 @@ namespace dtn
 				SummaryVector _vector;
 			};
 
-			class BundleEIDList
-			{
-			private:
-				class ExpiringList
-				{
-				public:
-					ExpiringList(const MetaBundle b);
-
-					~ExpiringList();
-
-					bool operator!=(const ExpiringList& other) const;
-
-					bool operator==(const ExpiringList& other) const;
-
-					bool operator<(const ExpiringList& other) const;
-					bool operator>(const ExpiringList& other) const;
-					void add(const dtn::data::EID eid);
-
-					void remove(const dtn::data::EID eid);
-
-					bool contains(const dtn::data::EID eid) const;
-
-					const MetaBundle bundle;
-					const size_t expiretime;
-
-				private:
-					std::set<dtn::data::EID> _items;
-				};
-
-			public:
-				BundleEIDList();
-				~BundleEIDList();
-
-				void add(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid);
-
-				void remove(const dtn::routing::MetaBundle bundle);
-
-				bool contains(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid);
-
-				void expire(const size_t timestamp);
-
-			private:
-				std::set<ExpiringList> _bundles;
-			};
+//			class BundleEIDList
+//			{
+//			private:
+//				class ExpiringList
+//				{
+//				public:
+//					ExpiringList(const MetaBundle b);
+//
+//					~ExpiringList();
+//
+//					bool operator!=(const ExpiringList& other) const;
+//
+//					bool operator==(const ExpiringList& other) const;
+//
+//					bool operator<(const ExpiringList& other) const;
+//					bool operator>(const ExpiringList& other) const;
+//					void add(const dtn::data::EID eid);
+//
+//					void remove(const dtn::data::EID eid);
+//
+//					bool contains(const dtn::data::EID eid) const;
+//
+//					const MetaBundle bundle;
+//					const size_t expiretime;
+//
+//				private:
+//					std::set<dtn::data::EID> _items;
+//				};
+//
+//			public:
+//				BundleEIDList();
+//				~BundleEIDList();
+//
+//				void add(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid);
+//
+//				void remove(const dtn::routing::MetaBundle bundle);
+//
+//				bool contains(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid);
+//
+//				void expire(const size_t timestamp);
+//
+//			private:
+//				std::set<ExpiringList> _bundles;
+//			};
 
 			/**
 			 * Check if one bundle was seen before.
@@ -121,7 +121,9 @@ namespace dtn
 			ibrcommon::Mutex _list_mutex;
 			dtn::routing::BundleList _seenlist;
 			dtn::routing::BundleList _bundles;
-			BundleEIDList _forwarded;
+			//BundleEIDList _forwarded;
+
+			std::map<dtn::data::EID, ibrcommon::BloomFilter> _filterlist;
 
 			std::queue<dtn::routing::MetaBundle> _out_queue;
 

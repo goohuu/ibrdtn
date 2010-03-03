@@ -65,7 +65,7 @@ namespace dtn
 			const list<Block*> getBlocks(char type) const;
 			const list<Block*> getBlocks() const;
 
-			template<class T>
+			template<typename T>
 			const std::list<T> getBlocks() const;
 
 			void removeBlock(Block *b);
@@ -102,20 +102,21 @@ namespace dtn
 			EID _custodian;
 		};
 
-		template<class T>
+		template<typename T>
 		const std::list<T> Bundle::getBlocks() const
 		{
 			// create a list of blocks
 			list<T> ret;
 
 			// copy all blocks to the list
-			list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
-
-			while (iter != _blocks.end())
+			for (list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 			{
 				refcnt_ptr<Block> blockref = (*iter);
-				if (blockref->_blocktype == T::BLOCK_TYPE) ret.push_back( T(blockref.getPointer()) );
-				iter++;
+
+				if (blockref->_blocktype == T::BLOCK_TYPE)
+				{
+					ret.push_back( T(blockref.getPointer()) );
+				}
 			}
 
 			return ret;

@@ -61,7 +61,13 @@ namespace dtn
 			{
 				const dtn::core::Node &node = (*iter);
 				try {
-					getRouter()->transferTo(EID(node.getURI()), id);
+					dtn::data::EID dst(node.getURI());
+
+					// only transfer the bundle if it is not in the bloomfilter of the destination
+					if ( !_filterlist[dst].contains(id.toString()) )
+					{
+						getRouter()->transferTo(EID(node.getURI()), id);
+					}
 				} catch (dtn::exceptions::NoBundleFoundException ex) {
 
 				}
@@ -85,7 +91,10 @@ namespace dtn
 			if (!blocks.empty())
 			{
 				const EpidemicExtensionBlock &ext = blocks.front();
-				cout << "Epidemic block found with " << ext.getSummaryVector().count() << " elements in the summary vector" << endl;
+				cout << "Epidemic block found with a bloomfilter based bundle list" << endl;
+
+				// archive the bloom filter for this node!
+				_filterlist[bundle._source] = ext.getSummaryVector().getBloomFilter();
 			}
 		}
 
@@ -95,24 +104,28 @@ namespace dtn
 
 			while (_running)
 			{
+				bool _bundlelist_changed = false;
+
 				// check for expired bundles
 				if (_timestamp > 0)
 				{
 					ibrcommon::MutexLock l(_list_mutex);
 					_seenlist.expire(_timestamp);
 					_bundles.expire(_timestamp);
-					_forwarded.expire(_timestamp);
+					//_forwarded.expire(_timestamp);
 					_timestamp = 0;
 				}
 
-				// transfer queued bundles to all neighbors
+				// process new bundles
 				while (!_out_queue.empty())
 				{
+					// get the next bundle
 					const dtn::routing::MetaBundle &bundle = _out_queue.front();
 
 					// read routing information
 					if (bundle.destination == EID("dtn:epidemic-routing"))
 					{
+						cout << "got epidemic routing bundle" << endl;
 						// read epidemic extension block
 						readExtensionBlock(bundle);
 
@@ -136,6 +149,7 @@ namespace dtn
 
 						// put this bundle to the bundle list
 						_bundles.add(bundle);
+						_bundlelist_changed = true;
 
 						// add this bundle to the summary vector
 						_bundle_vector.add(bundle);
@@ -158,34 +172,41 @@ namespace dtn
 				EpidemicExtensionBlock *eblock = new EpidemicExtensionBlock(_bundle_vector);
 				routingbundle.addBlock(eblock);
 
+				// publish new bundle list to all neighbors
+				if ( _bundlelist_changed )
+				{
+					// forward this bundle to all neighbors
+					broadcast(routingbundle);
+				}
+
 				// send all bundles in (_bundles) to all new neighbors (_available)
 				while (!_available.empty())
 				{
 					const dtn::data::EID &eid = _available.front();
 
-					// send bundle with routing information to this neighbor
+					// always transfer the summary vector to new neighbors
 					getRouter()->transferTo(eid, routingbundle);
 
-					ibrcommon::MutexLock l(_list_mutex);
-					{
-						for (std::set<dtn::routing::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-						{
-							const MetaBundle &meta = (*iter);
-
-							try {
-								if (!_forwarded.contains(meta, eid))
-								{
-									getRouter()->transferTo(eid, meta);
-								}
-							} catch (dtn::exceptions::NoBundleFoundException ex) {
-								// remove this bundle from all lists
-								_bundles.remove(meta);
-								_forwarded.remove(meta);
-								_bundle_vector.clear();
-								_bundle_vector.add(_bundles);
-							}
-						}
-					}
+//					ibrcommon::MutexLock l(_list_mutex);
+//					{
+//						for (std::set<dtn::routing::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+//						{
+//							const MetaBundle &meta = (*iter);
+//
+//							try {
+//								if (!_forwarded.contains(meta, eid))
+//								{
+//									getRouter()->transferTo(eid, meta);
+//								}
+//							} catch (dtn::exceptions::NoBundleFoundException ex) {
+//								// remove this bundle from all lists
+//								_bundles.remove(meta);
+//								_forwarded.remove(meta);
+//								_bundle_vector.clear();
+//								_bundle_vector.add(_bundles);
+//							}
+//						}
+//					}
 
 					_available.pop();
 				}
@@ -270,11 +291,11 @@ namespace dtn
 				dtn::data::EID eid = completed->getPeer();
 				dtn::routing::MetaBundle meta = completed->getBundle();
 
-				// mark this bundle as forwarded to getPeer()
-				{
-					ibrcommon::MutexLock l(_list_mutex);
-					_forwarded.add(meta, eid);
-				}
+//				// mark this bundle as forwarded to getPeer()
+//				{
+//					ibrcommon::MutexLock l(_list_mutex);
+//					_filterlist[eid].insert(meta.toString());
+//				}
 
 				// delete the bundle in the storage if
 				if ( EID(eid.getNodeEID()) == EID(meta.destination) )
@@ -299,93 +320,94 @@ namespace dtn
 			return ( std::find( _seenlist.begin(), _seenlist.end(), id ) != _seenlist.end());
 		}
 
-		EpidemicRoutingExtension::BundleEIDList::ExpiringList::ExpiringList(const MetaBundle b)
-		 : bundle(b), expiretime(b.getTimestamp() + b.lifetime)
-		{ };
-
-		 EpidemicRoutingExtension::BundleEIDList::ExpiringList::~ExpiringList() {};
-
-		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::operator!=(const ExpiringList& other) const
-		{
-			return (other.bundle != this->bundle);
-		}
-
-		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::operator==(const ExpiringList& other) const
-		{
-			return (other.bundle == this->bundle);
-		}
-
-		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::operator<(const ExpiringList& other) const
-		{
-			return (other.expiretime < expiretime);
-		}
-
-		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::operator>(const ExpiringList& other) const
-		{
-			return (other.expiretime > expiretime);
-		}
-
-		void EpidemicRoutingExtension::BundleEIDList::ExpiringList::add(const dtn::data::EID eid)
-		{
-			_items.insert(eid);
-		}
-
-		void EpidemicRoutingExtension::BundleEIDList::ExpiringList::remove(const dtn::data::EID eid)
-		{
-			_items.erase(eid);
-		}
-
-		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::contains(const dtn::data::EID eid) const
-		{
-			return (_items.find(eid) != _items.end());
-		}
-
-
-		EpidemicRoutingExtension::BundleEIDList::BundleEIDList()
-		{};
-
-		EpidemicRoutingExtension::BundleEIDList::~BundleEIDList()
-		{};
-
-		void EpidemicRoutingExtension::BundleEIDList::add(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid)
-		{
-			_bundles.insert(bundle);
-		}
-
-		void EpidemicRoutingExtension::BundleEIDList::remove(const dtn::routing::MetaBundle bundle)
-		{
-			_bundles.erase(bundle);
-		}
-
-		bool EpidemicRoutingExtension::BundleEIDList::contains(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid)
-		{
-			std::set<ExpiringList>::const_iterator iter = _bundles.find(bundle);
-
-			if (iter != _bundles.end())
-			{
-				return (*iter).contains(eid);
-			}
-
-			return false;
-		}
-
-		void EpidemicRoutingExtension::BundleEIDList::expire(const size_t timestamp)
-		{
-			for (std::set<ExpiringList>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-			{
-				if ((*iter).expiretime >= timestamp )
-				{
-					break;
-				}
-
-				// remove this item from list
-				_bundles.erase( iter );
-			}
-		}
+//		EpidemicRoutingExtension::BundleEIDList::ExpiringList::ExpiringList(const MetaBundle b)
+//		 : bundle(b), expiretime(b.getTimestamp() + b.lifetime)
+//		{ };
+//
+//		 EpidemicRoutingExtension::BundleEIDList::ExpiringList::~ExpiringList() {};
+//
+//		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::operator!=(const ExpiringList& other) const
+//		{
+//			return (other.bundle != this->bundle);
+//		}
+//
+//		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::operator==(const ExpiringList& other) const
+//		{
+//			return (other.bundle == this->bundle);
+//		}
+//
+//		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::operator<(const ExpiringList& other) const
+//		{
+//			return (other.expiretime < expiretime);
+//		}
+//
+//		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::operator>(const ExpiringList& other) const
+//		{
+//			return (other.expiretime > expiretime);
+//		}
+//
+//		void EpidemicRoutingExtension::BundleEIDList::ExpiringList::add(const dtn::data::EID eid)
+//		{
+//			_items.insert(eid);
+//		}
+//
+//		void EpidemicRoutingExtension::BundleEIDList::ExpiringList::remove(const dtn::data::EID eid)
+//		{
+//			_items.erase(eid);
+//		}
+//
+//		bool EpidemicRoutingExtension::BundleEIDList::ExpiringList::contains(const dtn::data::EID eid) const
+//		{
+//			return (_items.find(eid) != _items.end());
+//		}
+//
+//
+//		EpidemicRoutingExtension::BundleEIDList::BundleEIDList()
+//		{};
+//
+//		EpidemicRoutingExtension::BundleEIDList::~BundleEIDList()
+//		{};
+//
+//		void EpidemicRoutingExtension::BundleEIDList::add(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid)
+//		{
+//			_bundles.insert(bundle);
+//		}
+//
+//		void EpidemicRoutingExtension::BundleEIDList::remove(const dtn::routing::MetaBundle bundle)
+//		{
+//			_bundles.erase(bundle);
+//		}
+//
+//		bool EpidemicRoutingExtension::BundleEIDList::contains(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid)
+//		{
+//			std::set<ExpiringList>::const_iterator iter = _bundles.find(bundle);
+//
+//			if (iter != _bundles.end())
+//			{
+//				return (*iter).contains(eid);
+//			}
+//
+//			return false;
+//		}
+//
+//		void EpidemicRoutingExtension::BundleEIDList::expire(const size_t timestamp)
+//		{
+//			for (std::set<ExpiringList>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+//			{
+//				if ((*iter).expiretime >= timestamp )
+//				{
+//					break;
+//				}
+//
+//				// remove this item from list
+//				_bundles.erase( iter );
+//			}
+//		}
 
 		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock(const SummaryVector &vector)
 		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE), _data("forwarded through epidemic routing"), _vector(vector)
 		{
+			commit();
 		}
 
 		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock(dtn::data::Block *block)
