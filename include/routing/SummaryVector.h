@@ -28,6 +28,7 @@ namespace dtn
 			virtual bool contains(const dtn::data::BundleID &id) const;
 			virtual void add(const dtn::data::BundleID &id);
 			virtual void clear();
+			virtual size_t count() const;
 
 			virtual void add(const std::set<dtn::routing::MetaBundle> &list);
 
@@ -36,6 +37,7 @@ namespace dtn
 
 		private:
 			dtn::data::BundleString data;
+			std::set<dtn::data::BundleID> _ids;
 		};
 	}
 }

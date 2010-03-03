@@ -41,7 +41,7 @@ namespace dtn
 			public:
 				static const unsigned char BLOCK_TYPE = 201;
 
-				EpidemicExtensionBlock();
+				EpidemicExtensionBlock(const SummaryVector &vector);
 				EpidemicExtensionBlock(Block *block);
 				~EpidemicExtensionBlock();
 
@@ -51,9 +51,12 @@ namespace dtn
 				void set(dtn::data::SDNV value);
 				dtn::data::SDNV get() const;
 
+				const SummaryVector& getSummaryVector() const;
+
 			private:
 				dtn::data::SDNV _counter;
 				dtn::data::BundleString _data;
+				SummaryVector _vector;
 			};
 
 			class BundleEIDList

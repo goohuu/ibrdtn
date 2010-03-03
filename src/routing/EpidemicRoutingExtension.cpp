@@ -17,6 +17,7 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/SyslogStream.h"
 #include "daemon/Configuration.h"
+#include "core/BundleCore.h"
 
 #include <functional>
 #include <list>
@@ -70,9 +71,7 @@ namespace dtn
 		void EpidemicRoutingExtension::update(std::string &name, std::string &data)
 		{
 			name = "epidemic";
-			stringstream ss;
-			ss << _bundle_vector;
-			data = ss.str();
+			data = "version=1";
 		}
 
 		void EpidemicRoutingExtension::readExtensionBlock(const dtn::data::BundleID &id)
@@ -86,25 +85,7 @@ namespace dtn
 			if (!blocks.empty())
 			{
 				const EpidemicExtensionBlock &ext = blocks.front();
-				cout << "Epidemic block found, value: " << ext.get() << endl;
-			}
-			else
-			{
-				// create a new epidemic block
-				EpidemicExtensionBlock *eblock = new EpidemicExtensionBlock();
-
-				// set a value
-				eblock->set(dtn::data::SDNV(1234));
-
-				// no extension block found, add one
-				bundle.addBlock(eblock);
-
-				// store the bundle in the storage
-				dtn::core::BundleStorage &storage = getRouter()->getStorage();
-
-				// store the bundle with the new extension block in the storage.
-				storage.remove(bundle);
-				storage.store(bundle);
+				cout << "Epidemic block found with " << ext.getSummaryVector().count() << " elements in the summary vector" << endl;
 			}
 		}
 
@@ -129,12 +110,22 @@ namespace dtn
 				{
 					const dtn::routing::MetaBundle &bundle = _out_queue.front();
 
-					// ignore the bundle if it was seen before
-					if ( !wasSeenBefore(bundle) )
+					// read routing information
+					if (bundle.destination == EID("dtn:epidemic-routing"))
 					{
 						// read epidemic extension block
 						readExtensionBlock(bundle);
 
+						// delete it
+						getRouter()->getStorage().remove(bundle);
+					}
+					else if ( wasSeenBefore(bundle) )
+					{
+						// ignore/delete the bundle if it was seen before
+						getRouter()->getStorage().remove(bundle);
+					}
+					else
+					{
 						ibrcommon::MutexLock l(_list_mutex);
 
 						// mark the bundle as seen
@@ -154,10 +145,26 @@ namespace dtn
 					_out_queue.pop();
 				}
 
+				/**
+				 * create a routing bundle
+				 * which contains a summary vector
+				 */
+				dtn::data::Bundle routingbundle;
+				routingbundle._lifetime = 10;
+				routingbundle._source = dtn::core::BundleCore::local;
+				routingbundle._destination = EID("dtn:epidemic-routing");
+
+				// create a new epidemic block
+				EpidemicExtensionBlock *eblock = new EpidemicExtensionBlock(_bundle_vector);
+				routingbundle.addBlock(eblock);
+
 				// send all bundles in (_bundles) to all new neighbors (_available)
 				while (!_available.empty())
 				{
 					const dtn::data::EID &eid = _available.front();
+
+					// send bundle with routing information to this neighbor
+					getRouter()->transferTo(eid, routingbundle);
 
 					ibrcommon::MutexLock l(_list_mutex);
 					{
@@ -376,8 +383,8 @@ namespace dtn
 			}
 		}
 
-		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock()
-		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE), _data("forwarded through epidemic routing")
+		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock(const SummaryVector &vector)
+		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE), _data("forwarded through epidemic routing"), _vector(vector)
 		{
 		}
 
@@ -389,6 +396,11 @@ namespace dtn
 
 		EpidemicRoutingExtension::EpidemicExtensionBlock::~EpidemicExtensionBlock()
 		{
+		}
+
+		const SummaryVector& EpidemicRoutingExtension::EpidemicExtensionBlock::getSummaryVector() const
+		{
+			return _vector;
 		}
 
 		void EpidemicRoutingExtension::EpidemicExtensionBlock::set(dtn::data::SDNV value)
@@ -410,6 +422,7 @@ namespace dtn
 
 			(*ref) >> _counter;
 			(*ref) >> _data;
+			(*ref) >> _vector;
 		}
 
 		void EpidemicRoutingExtension::EpidemicExtensionBlock::commit()
@@ -421,6 +434,7 @@ namespace dtn
 
 			(*ref) << _counter;
 			(*ref) << _data;
+			(*ref) << _vector;
 		}
 	}
 }

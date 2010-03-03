@@ -6,12 +6,18 @@
  */
 
 #include "ibrdtn/data/BundleID.h"
-
+#include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/BundleString.h"
 
 namespace dtn
 {
 	namespace data
 	{
+		BundleID::BundleID()
+		: _source(), _timestamp(0), _sequencenumber(0), _fragment(false), _offset(0)
+		{
+		}
+
 		BundleID::BundleID(EID source, size_t timestamp, size_t sequencenumber, bool fragment, size_t offset)
 		: _source(source), _timestamp(timestamp), _sequencenumber(sequencenumber), _fragment(fragment), _offset(offset)
 		{
@@ -92,6 +98,31 @@ namespace dtn
 			ss << "] " << _source.getString();
 
 			return ss.str();
+		}
+
+		std::ostream &operator<<(std::ostream &stream, const BundleID &obj)
+		{
+			dtn::data::SDNV timestamp(obj._timestamp);
+			dtn::data::SDNV sequencenumber(obj._sequencenumber);
+			dtn::data::SDNV offset(obj._offset);
+			dtn::data::BundleString source(obj._source.getString());
+
+			stream << timestamp << sequencenumber << offset << source;
+		}
+
+		std::istream &operator>>(std::istream &stream, BundleID &obj)
+		{
+			dtn::data::SDNV timestamp;
+			dtn::data::SDNV sequencenumber;
+			dtn::data::SDNV offset;
+			dtn::data::BundleString source;
+
+			stream >> timestamp >> sequencenumber >> offset >> source;
+
+			obj._timestamp = timestamp.getValue();
+			obj._sequencenumber = sequencenumber.getValue();
+			obj._offset = offset.getValue();
+			obj._source = dtn::data::EID(source);
 		}
 	}
 }

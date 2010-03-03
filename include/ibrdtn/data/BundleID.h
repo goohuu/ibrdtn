@@ -19,6 +19,7 @@ namespace dtn
 		class BundleID
 		{
 		public:
+			BundleID();
 			BundleID(const dtn::data::Bundle &b);
 			BundleID(EID source, size_t timestamp, size_t sequencenumber, bool fragment = false, size_t offset = 0);
 			virtual ~BundleID();
@@ -30,6 +31,9 @@ namespace dtn
 
 			string toString() const;
 			size_t getTimestamp() const;
+
+			friend std::ostream &operator<<(std::ostream &stream, const BundleID &obj);
+			friend std::istream &operator>>(std::istream &stream, BundleID &obj);
 
 		private:
 			dtn::data::EID _source;
