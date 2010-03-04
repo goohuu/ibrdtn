@@ -59,51 +59,6 @@ namespace dtn
 				SummaryVector _vector;
 			};
 
-//			class BundleEIDList
-//			{
-//			private:
-//				class ExpiringList
-//				{
-//				public:
-//					ExpiringList(const MetaBundle b);
-//
-//					~ExpiringList();
-//
-//					bool operator!=(const ExpiringList& other) const;
-//
-//					bool operator==(const ExpiringList& other) const;
-//
-//					bool operator<(const ExpiringList& other) const;
-//					bool operator>(const ExpiringList& other) const;
-//					void add(const dtn::data::EID eid);
-//
-//					void remove(const dtn::data::EID eid);
-//
-//					bool contains(const dtn::data::EID eid) const;
-//
-//					const MetaBundle bundle;
-//					const size_t expiretime;
-//
-//				private:
-//					std::set<dtn::data::EID> _items;
-//				};
-//
-//			public:
-//				BundleEIDList();
-//				~BundleEIDList();
-//
-//				void add(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid);
-//
-//				void remove(const dtn::routing::MetaBundle bundle);
-//
-//				bool contains(const dtn::routing::MetaBundle bundle, const dtn::data::EID eid);
-//
-//				void expire(const size_t timestamp);
-//
-//			private:
-//				std::set<ExpiringList> _bundles;
-//			};
-
 			/**
 			 * Check if one bundle was seen before.
 			 * @param id The ID of the Bundle.
@@ -111,25 +66,70 @@ namespace dtn
 			 */
 			bool wasSeenBefore(const dtn::data::BundleID &id) const;
 
-			void broadcast(const dtn::data::BundleID &id);
+			/**
+			 * transmit a bundle to all neighbors
+			 * @param id
+			 * @param filter
+			 */
+			void broadcast(const dtn::data::BundleID &id, bool filter = false);
 
+			/**
+			 * extract the bloomfilter of an epidemic routing extension block
+			 * @param id
+			 */
 			void readExtensionBlock(const dtn::data::BundleID &id);
 
-			std::list<dtn::core::Node> _neighbors;
-			std::queue<dtn::data::EID> _available;
+			/**
+			 * remove a bundle out of all local bundle lists
+			 * @param id The ID of the Bundle.
+			 */
+			void remove(const dtn::routing::MetaBundle &meta);
 
+			/**
+			 * contains a lock for bundles lists (_bundles, _seenlist)
+			 */
 			ibrcommon::Mutex _list_mutex;
-			dtn::routing::BundleList _seenlist;
-			dtn::routing::BundleList _bundles;
-			//BundleEIDList _forwarded;
 
+			/**
+			 * contains all available neighbors
+			 */
+			std::set<dtn::data::EID> _neighbors;
+
+			/**
+			 * contains a list of all new neighbors
+			 */
+			std::queue<dtn::data::EID> _new_neighbors;
+
+			/**
+			 * contains a list of bundle references which has been seen previously
+			 */
+			dtn::routing::BundleList _seenlist;
+
+			/**
+			 * contains a map of bloomfilters of other nodes
+			 */
 			std::map<dtn::data::EID, ibrcommon::BloomFilter> _filterlist;
 
-			std::queue<dtn::routing::MetaBundle> _out_queue;
+			/**
+			 * contains references of bundles to process
+			 */
+			std::queue<dtn::routing::MetaBundle> _bundle_queue;
 
+			/**
+			 * contains the current timestamp or is set to zero
+			 */
 			size_t _timestamp;
 
+			/**
+			 * contains the own summary vector for all stored bundles
+			 */
 			SummaryVector _bundle_vector;
+
+			/**
+			 * contains references to all stored bundles
+			 */
+			dtn::routing::BundleList _bundles;
+
 		};
 	}
 }
