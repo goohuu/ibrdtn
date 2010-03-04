@@ -72,6 +72,10 @@ namespace dtn
 								getRouter()->transferTo(dst, id);
 							}
 						}
+						else
+						{
+							getRouter()->transferTo(dst, id);
+						}
 					}
 					else
 					{
@@ -91,34 +95,38 @@ namespace dtn
 
 		void EpidemicRoutingExtension::readExtensionBlock(const dtn::data::BundleID &id)
 		{
-			// get the bundle out of the storage
-			dtn::data::Bundle bundle = getRouter()->getStorage().get(id);
+			try {
+				// get the bundle out of the storage
+				dtn::data::Bundle bundle = getRouter()->getStorage().get(id);
 
-			// get all epidemic extension blocks of this bundle
-			const std::list<EpidemicExtensionBlock> blocks = bundle.getBlocks<EpidemicExtensionBlock>();
+				// get all epidemic extension blocks of this bundle
+				const std::list<EpidemicExtensionBlock> blocks = bundle.getBlocks<EpidemicExtensionBlock>();
 
-			if (!blocks.empty())
-			{
-				const EpidemicExtensionBlock &ext = blocks.front();
-				const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
-
-				if (_filterlist.find(bundle._source) == _filterlist.end())
+				if (!blocks.empty())
 				{
-					// check for all bundles in the bloomfilter
-					for (std::set<dtn::routing::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-					{
-						std::string bundleid = (*iter).toString();
+					const EpidemicExtensionBlock &ext = blocks.front();
+					const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
 
-						if (!filter.contains(bundleid))
+					if (_filterlist.find(bundle._source) == _filterlist.end())
+					{
+						// check for all bundles in the bloomfilter
+						for (std::set<dtn::routing::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 						{
-							// always transfer the summary vector to new neighbors
-							getRouter()->transferTo( bundle._source, (*iter) );
+							std::string bundleid = (*iter).toString();
+
+							if (!filter.contains(bundleid))
+							{
+								// always transfer the summary vector to new neighbors
+								getRouter()->transferTo( bundle._source, (*iter) );
+							}
 						}
 					}
-				}
 
-				// archive the bloom filter for this node!
-				_filterlist[bundle._source] = filter;
+					// archive the bloom filter for this node!
+					_filterlist[bundle._source] = filter;
+				}
+			} catch (dtn::exceptions::NoBundleFoundException ex) {
+
 			}
 		}
 
@@ -228,6 +236,7 @@ namespace dtn
 
 			while (_running)
 			{
+				std::queue<dtn::routing::MetaBundle> routingdata;
 				bool _bundlelist_changed = false;
 
 				// check for expired bundles
@@ -248,11 +257,7 @@ namespace dtn
 					// read routing information
 					if (bundle.destination == EID("dtn:epidemic-routing"))
 					{
-						// read epidemic extension block
-						readExtensionBlock(bundle);
-
-						// delete it
-						getRouter()->getStorage().remove(bundle);
+						routingdata.push(bundle);
 					}
 					else if ( wasSeenBefore(bundle) )
 					{
@@ -316,6 +321,22 @@ namespace dtn
 						// remove the neighbor in the queue
 						_new_neighbors.pop();
 					}
+				}
+
+				// process all new routing data of other nodes
+				while (!routingdata.empty())
+				{
+					// get the next bundle
+					const dtn::routing::MetaBundle &bundle = routingdata.front();
+
+					// read epidemic extension block
+					readExtensionBlock(bundle);
+
+					// delete it
+					getRouter()->getStorage().remove(bundle);
+
+					// remove the element in the queue
+					routingdata.pop();
 				}
 
 				yield();
