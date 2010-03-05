@@ -12,6 +12,12 @@ namespace dtn
 {
 	namespace core
 	{
+		BundleExpiredEvent::BundleExpiredEvent(const dtn::data::BundleID &bundle)
+		 : _bundle(bundle)
+		{
+
+		}
+
 		BundleExpiredEvent::BundleExpiredEvent(const dtn::data::Bundle &bundle)
 		 : _bundle(bundle)
 		{
@@ -24,6 +30,12 @@ namespace dtn
 		}
 
 		void BundleExpiredEvent::raise(const dtn::data::Bundle &bundle)
+		{
+			// raise the new event
+			raiseEvent( new BundleExpiredEvent(bundle) );
+		}
+
+		void BundleExpiredEvent::raise(const dtn::data::BundleID &bundle)
 		{
 			// raise the new event
 			raiseEvent( new BundleExpiredEvent(bundle) );
