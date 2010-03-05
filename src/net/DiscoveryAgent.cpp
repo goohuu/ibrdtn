@@ -58,14 +58,22 @@ namespace dtn
 			n.setTimeout(5);
 
 			const list<DiscoveryService> services = announcement.getServices();
-			list<DiscoveryService>::const_iterator iter = services.begin();
-
-			while (iter != services.end())
+			for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
 			{
 				const DiscoveryService &s = (*iter);
 
-				if (s.getName() == "tcpcl") n.setProtocol(TCP_CONNECTION);
-				if (s.getName() == "udpcl") n.setProtocol(UDP_CONNECTION);
+				if (s.getName() == "tcpcl")
+				{
+					n.setProtocol(TCP_CONNECTION);
+				}
+				else if (s.getName() == "udpcl")
+				{
+					n.setProtocol(UDP_CONNECTION);
+				}
+				else
+				{
+					continue;
+				}
 
 				// parse parameters
 				std::vector<string> parameters = dtn::utils::Utils::tokenize(";", s.getParameters());
@@ -94,8 +102,6 @@ namespace dtn
 
 				// create and raise a new event
 				dtn::core::NodeEvent::raise(n, NODE_INFO_UPDATED);
-
-				iter++;
 			}
 		}
 
