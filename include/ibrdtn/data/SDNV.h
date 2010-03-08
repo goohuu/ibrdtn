@@ -105,6 +105,8 @@ namespace dtn
 			SDNV operator-(const SDNV &value);
 			SDNV& operator-=(const SDNV &value);
 
+			bool operator&(const size_t &value) const;
+
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::SDNV &obj);

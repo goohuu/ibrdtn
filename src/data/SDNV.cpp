@@ -96,6 +96,11 @@ namespace dtn
 			return (*this);
 		}
 
+		bool SDNV::operator&(const size_t &value) const
+		{
+			return (_value & value);
+		}
+
 		std::ostream &operator<<(std::ostream &stream, const dtn::data::SDNV &obj)
 		{
 			size_t len = obj.getLength();
