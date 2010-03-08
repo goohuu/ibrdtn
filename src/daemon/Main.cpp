@@ -219,11 +219,29 @@ int main(int argc, char *argv[])
 				}
 			}
 		} catch (ibrcommon::tcpserver::SocketException ex) {
-				cout << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
-				cout << "      Error: " << ex.what() << endl;
+				if (m_running)
+				{
+					sleep(1);
+					iter--;
+					continue;
+				}
+				else
+				{
+					cout << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
+					cout << "      Error: " << ex.what() << endl;
+				}
 		} catch (ibrcommon::udpsocket::SocketException ex) {
-				cout << "Failed to add UDP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
-				cout << "      Error: " << ex.what() << endl;
+				if (m_running)
+				{
+					sleep(1);
+					iter--;
+					continue;
+				}
+				else
+				{
+					cout << "Failed to add UDP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
+					cout << "      Error: " << ex.what() << endl;
+				}
 		}
 	}
 
