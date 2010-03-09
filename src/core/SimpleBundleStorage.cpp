@@ -5,17 +5,54 @@
 
 #include "ibrdtn/utils/Utils.h"
 
+#include <string.h>
+#include <stdlib.h>
 #include <iostream>
+#include <fstream>
 
 namespace dtn
 {
 	namespace core
 	{
 		SimpleBundleStorage::SimpleBundleStorage()
-		 : _running(true)
+		 : _store(*this), _running(true), _mode(MODE_NONPERSISTENT)
 		{
 			bindEvent(TimeEvent::className);
 			bindEvent(GlobalEvent::className);
+		}
+
+		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir)
+		 : _store(*this), _running(true), _mode(MODE_PERSISTENT), _workdir(workdir)
+		{
+			bindEvent(TimeEvent::className);
+			bindEvent(GlobalEvent::className);
+
+			// load persistent bundles
+			std::list<ibrcommon::File> files;
+			_workdir.getFiles(files);
+
+			for (std::list<ibrcommon::File>::iterator iter = files.begin(); iter != files.end(); iter++)
+			{
+				ibrcommon::File &file = (*iter);
+				if (!file.isDirectory())
+				{
+					std::fstream fs(file.getPath().c_str(), ios::in|ios::binary);
+					dtn::data::Bundle b;
+					fs >> b;
+					fs.close();
+
+					ibrcommon::MutexLock l(_dbchanged);
+
+					// add the file to the index
+					_bundlefiles[dtn::data::BundleID(b)] = file;
+
+					// store the bundle into the storage
+					_store.store(b);
+				}
+			}
+
+			// some output
+			cout << _store.bundles.size() << " Bundles restored." << endl;
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
@@ -51,6 +88,19 @@ namespace dtn
 		void SimpleBundleStorage::clear()
 		{
 			ibrcommon::MutexLock l(_dbchanged);
+
+			if (_mode = MODE_PERSISTENT)
+			{
+				// delete all bundles
+				for (std::map<dtn::data::BundleID, ibrcommon::File>::iterator iter = _bundlefiles.begin(); iter != _bundlefiles.end(); iter++)
+				{
+					ibrcommon::File &file = (*iter).second;
+					file.remove();
+				}
+
+				_bundlefiles.clear();
+			}
+
 			// delete all bundles
 			_store.clear();
 		}
@@ -68,6 +118,27 @@ namespace dtn
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
 			ibrcommon::MutexLock l(_dbchanged);
+
+			if (_mode == MODE_PERSISTENT)
+			{
+				std::string namestr = _workdir.getPath() + "/bundle-XXXXXXXX";
+				char name[namestr.length()];
+				::strcpy(name, namestr.c_str());
+
+				int fd = mkstemp(name);
+				if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
+				::close(fd);
+
+				ibrcommon::File file(name);
+
+				std::fstream out(file.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
+
+				out << bundle;
+
+				// store the bundle into a file
+				_bundlefiles[dtn::data::BundleID(bundle)] = file;
+			}
+
 			_store.store(bundle);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
@@ -146,9 +217,17 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_dbchanged);
 			_store.remove(id);
+
+			if (_mode == MODE_PERSISTENT)
+			{
+				// remove the file
+				_bundlefiles[id].remove();
+				_bundlefiles.erase(id);
+			}
 		}
 
-		SimpleBundleStorage::BundleStore::BundleStore()
+		SimpleBundleStorage::BundleStore::BundleStore(SimpleBundleStorage &sbs)
+		 : _sbs(sbs)
 		{
 		}
 
@@ -200,6 +279,13 @@ namespace dtn
 					bundles.erase(iter);
 					break;
 				}
+			}
+
+			if (_sbs._mode == MODE_PERSISTENT)
+			{
+				// remove the file
+				_sbs._bundlefiles[b.bundle].remove();
+				_sbs._bundlefiles.erase(b.bundle);
 			}
 
 			// raise an event

@@ -138,7 +138,8 @@ int main(int argc, char *argv[])
 
 	try {
 		// new methods for blobs
-		storage = new dtn::core::SQLiteBundleStorage(conf.getPath("storage"), "sqlite.db", 2 UNIT_MB);
+		//storage = new dtn::core::SQLiteBundleStorage(conf.getPath("storage"), "sqlite.db", 2 UNIT_MB);
+		storage = new dtn::core::SimpleBundleStorage(conf.getPath("storage"));
 	} catch (Configuration::ParameterNotSetException ex) {
 		storage = new dtn::core::SimpleBundleStorage();
 	}

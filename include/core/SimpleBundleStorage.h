@@ -11,6 +11,7 @@
 #include "core/EventReceiver.h"
 #include "routing/BundleList.h"
 
+#include "ibrcommon/data/File.h"
 #include "ibrdtn/data/Bundle.h"
 
 #include <set>
@@ -31,6 +32,11 @@ namespace dtn
 			 * Constructor
 			 */
 			SimpleBundleStorage();
+
+			/**
+			 * Constructor
+			 */
+			SimpleBundleStorage(const ibrcommon::File &workdir);
 
 			/**
 			 * Destructor
@@ -83,10 +89,16 @@ namespace dtn
 			void raiseEvent(const Event *evt);
 
 		private:
+			enum RunMode
+			{
+				MODE_NONPERSISTENT = 0,
+				MODE_PERSISTENT = 1
+			};
+
 			class BundleStore : private dtn::routing::BundleList
 			{
 			public:
-				BundleStore();
+				BundleStore(SimpleBundleStorage &sbs);
 				~BundleStore();
 
 				void store(const dtn::data::Bundle &bundle);
@@ -99,6 +111,9 @@ namespace dtn
 
 			protected:
 				virtual void eventBundleExpired(const ExpiringBundle &b);
+
+			private:
+				SimpleBundleStorage &_sbs;
 			};
 
 			BundleStore _store;
@@ -106,6 +121,9 @@ namespace dtn
 			virtual void shutdown();
 
 			bool _running;
+			RunMode _mode;
+			ibrcommon::File _workdir;
+			std::map<dtn::data::BundleID, ibrcommon::File> _bundlefiles;
 
 			ibrcommon::Conditional _dbchanged;
 			ibrcommon::AtomicCounter _blocker;
