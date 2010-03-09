@@ -53,6 +53,34 @@ namespace dtn
 			return true;
 		}
 
+		bool Bundle::operator<(const Bundle& other) const
+		{
+			if (other._source < _source) return true;
+			if (other._timestamp < _timestamp) return true;
+			if (other._sequencenumber < _sequencenumber) return true;
+
+			if (other._procflags & Bundle::FRAGMENT)
+			{
+				if (other._fragmentoffset < _fragmentoffset) return true;
+			}
+
+			return false;
+		}
+
+		bool Bundle::operator>(const Bundle& other) const
+		{
+			if (other._source > _source) return true;
+			if (other._timestamp > _timestamp) return true;
+			if (other._sequencenumber > _sequencenumber) return true;
+
+			if (other._procflags & Bundle::FRAGMENT)
+			{
+				if (other._fragmentoffset > _fragmentoffset) return true;
+			}
+
+			return false;
+		}
+
 		void Bundle::relabel()
 		{
 			_timestamp = utils::Utils::get_current_dtn_time();

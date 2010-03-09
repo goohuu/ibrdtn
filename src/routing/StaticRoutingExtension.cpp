@@ -46,8 +46,7 @@ namespace dtn
 			}
 			else if (aborted != NULL)
 			{
-				// requeue the bundle
-				dtn::routing::RequeueBundleEvent::raise(aborted->getPeer(), aborted->getBundleID());
+				// nothing?
 			}
 		}
 

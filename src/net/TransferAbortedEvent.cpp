@@ -12,10 +12,14 @@ namespace dtn
 {
 	namespace net
 	{
-		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID peer, const dtn::data::Bundle &bundle)
+		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle)
 		 : _peer(peer), _bundle(bundle)
 		{
+		}
 
+		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id)
+		 : _peer(peer), _bundle(id)
+		{
 		}
 
 		TransferAbortedEvent::~TransferAbortedEvent()
@@ -23,10 +27,16 @@ namespace dtn
 
 		}
 
-		void TransferAbortedEvent::raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle)
+		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle)
 		{
 			// raise the new event
 			dtn::core::Event::raiseEvent( new TransferAbortedEvent(peer, bundle) );
+		}
+
+		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::BundleID &id)
+		{
+			// raise the new event
+			dtn::core::Event::raiseEvent( new TransferAbortedEvent(peer, id) );
 		}
 
 		const string TransferAbortedEvent::getName() const

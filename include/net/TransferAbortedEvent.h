@@ -29,15 +29,17 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
+			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle);
+			static void raise(const dtn::data::EID &peer, const dtn::data::BundleID &id);
 
 			dtn::data::EID getPeer() const;
 			dtn::data::BundleID getBundleID() const;
 
 		private:
-			dtn::data::EID _peer;
-			dtn::data::BundleID _bundle;
-			TransferAbortedEvent(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
+			const dtn::data::EID _peer;
+			const dtn::data::BundleID _bundle;
+			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle);
+			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id);
 		};
 	}
 }

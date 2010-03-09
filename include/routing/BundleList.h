@@ -23,10 +23,11 @@ namespace dtn
 
 			void add(const dtn::routing::MetaBundle bundle);
 			void remove(const dtn::routing::MetaBundle bundle);
+			void clear();
 
 			void expire(const size_t timestamp);
 
-		private:
+		protected:
 			class ExpiringBundle
 			{
 			public:
@@ -41,6 +42,8 @@ namespace dtn
 				const MetaBundle bundle;
 				const size_t expiretime;
 			};
+
+			virtual void eventBundleExpired(const ExpiringBundle &b) {};
 
 			std::set<ExpiringBundle> _bundles;
 		};

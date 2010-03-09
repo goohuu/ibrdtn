@@ -255,7 +255,7 @@ namespace dtn
 				// TODO: the connection has been interrupted => create a fragment
 
 				// signal interruption of the transfer
-				TransferAbortedEvent::raise(job._destination, job._bundle);
+				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 
 			} catch (dtn::exceptions::IOException ex) {
 				m.stop();
@@ -266,7 +266,7 @@ namespace dtn
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "Exception: " << ex.what() << endl;
 #endif
 				// signal interruption of the transfer
-				TransferAbortedEvent::raise(job._destination, job._bundle);
+				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 
 			} catch (dtn::net::ConnectionNotAvailableException ex) {
 				// the connection not available
@@ -276,7 +276,7 @@ namespace dtn
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "Exception: " << ex.what() << endl;
 #endif
 				// signal interruption of the transfer
-				TransferAbortedEvent::raise(job._destination, job._bundle);
+				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 
 			}
 		}

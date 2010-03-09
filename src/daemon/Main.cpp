@@ -18,6 +18,7 @@
 #include "routing/StaticRoutingExtension.h"
 #include "routing/NeighborRoutingExtension.h"
 #include "routing/EpidemicRoutingExtension.h"
+#include "routing/RetransmissionExtension.h"
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
@@ -166,6 +167,7 @@ int main(int argc, char *argv[])
 		cout << "Using epidemic routing extensions" << endl;
 		dtn::routing::EpidemicRoutingExtension *epidemic = new dtn::routing::EpidemicRoutingExtension();
 		router.addExtension( epidemic );
+		router.addExtension( new dtn::routing::RetransmissionExtension() );
 		if (ipnd != NULL) ipnd->addService(epidemic);
 		break;
 	}

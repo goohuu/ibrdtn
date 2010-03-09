@@ -25,9 +25,6 @@ namespace dtn
 
 		void RequeueBundleEvent::raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle)
 		{
-			// store the bundle into a storage module
-			dtn::core::BundleCore::getInstance().getStorage().store(bundle);
-
 			// raise the new event
 			raiseEvent( new RequeueBundleEvent(peer, dtn::data::BundleID(bundle)) );
 		}

@@ -9,8 +9,11 @@
 #include "ibrcommon/thread/Conditional.h"
 #include "ibrcommon/thread/AtomicCounter.h"
 #include "core/EventReceiver.h"
+#include "routing/BundleList.h"
 
 #include "ibrdtn/data/Bundle.h"
+
+#include <set>
 
 using namespace dtn::data;
 
@@ -21,7 +24,7 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public ibrcommon::JoinableThread, public BundleStorage, public EventReceiver
+		class SimpleBundleStorage : public BundleStorage, public EventReceiver
 		{
 		public:
 			/**
@@ -79,28 +82,34 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt);
 
-		protected:
-			virtual void run();
-
 		private:
+			class BundleStore : private dtn::routing::BundleList
+			{
+			public:
+				BundleStore();
+				~BundleStore();
+
+				void store(const dtn::data::Bundle &bundle);
+				void remove(const dtn::data::BundleID &id);
+				void clear();
+
+				void expire(const size_t timestamp);
+
+				std::set<dtn::data::Bundle> bundles;
+
+			protected:
+				virtual void eventBundleExpired(const ExpiringBundle &b);
+			};
+
+			BundleStore _store;
+
 			virtual void shutdown();
 
-			list<Bundle> _bundles;
-			list<list<Bundle> > _fragments;
-
-//			/**
-//			 * Try to find outdated bundles and delete them.
-//			 * Additional a deleted report is created if necessary.
-//			 */
-//			void deleteDeprecated();
-
-			ibrcommon::Conditional _clock;
 			bool _running;
 
 			ibrcommon::Conditional _dbchanged;
 			ibrcommon::AtomicCounter _blocker;
-
-			EID _unblock_eid;
+			dtn::data::EID _unblock_eid;
 		};
 	}
 }

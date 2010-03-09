@@ -24,7 +24,6 @@ namespace dtn
 			unbindEvent(GlobalEvent::className);
 
 			shutdown();
-			join();
 		}
 
 		void SimpleBundleStorage::raiseEvent(const Event *evt)
@@ -44,7 +43,7 @@ namespace dtn
 			{
 				if (time->getAction() == dtn::core::TIME_SECOND_TICK)
 				{
-					_clock.signal(true);
+					_store.expire(time->getTimestamp());
 				}
 			}
 		}
@@ -53,25 +52,23 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_dbchanged);
 			// delete all bundles
-			_bundles.clear();
-			_fragments.clear();
+			_store.clear();
 		}
 
 		bool SimpleBundleStorage::empty()
 		{
-			return (_bundles.empty() && _fragments.empty());
+			return _store.bundles.empty();
 		}
 
 		unsigned int SimpleBundleStorage::count()
 		{
-			return (_bundles.size() + _fragments.size());
+			return _store.bundles.size();
 		}
 
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
 			ibrcommon::MutexLock l(_dbchanged);
-			_bundles.push_back(bundle);
-			_dbchanged.signal(true);
+			_store.store(bundle);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			ibrcommon::slog << ibrcommon::SYSLOG_INFO << "Storage: stored bundle " << bundle.toString() << endl;
@@ -87,10 +84,8 @@ namespace dtn
 
 		void SimpleBundleStorage::shutdown()
 		{
-			ibrcommon::MutexLock l1(_clock);
-			ibrcommon::MutexLock l2(_dbchanged);
+			ibrcommon::MutexLock l(_dbchanged);
 			_running = false;
-			_clock.signal(true);
 			_dbchanged.signal(true);
 		}
 
@@ -106,17 +101,13 @@ namespace dtn
 
 			while (_running)
 			{
-				list<Bundle>::iterator iter = _bundles.begin();
-
-				while (iter != _bundles.end())
+				for (std::set<dtn::data::Bundle>::const_iterator iter = _store.bundles.begin(); iter != _store.bundles.end(); iter++)
 				{
-					dtn::data::Bundle &bundle = (*iter);
+					const dtn::data::Bundle &bundle = (*iter);
 					if (bundle._destination == eid)
 					{
 						return bundle;
 					}
-
-					iter++;
 				}
 
 				_dbchanged.wait();
@@ -139,17 +130,13 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_dbchanged);
 
-			list<Bundle>::iterator iter = _bundles.begin();
-
-			while (iter != _bundles.end())
+			for (std::set<dtn::data::Bundle>::const_iterator iter = _store.bundles.begin(); iter != _store.bundles.end(); iter++)
 			{
-				Bundle &bundle = (*iter);
+				const Bundle &bundle = (*iter);
 				if (id == bundle)
 				{
 					return bundle;
 				}
-
-				iter++;
 			}
 
 			throw dtn::exceptions::NoBundleFoundException();
@@ -158,127 +145,56 @@ namespace dtn
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_dbchanged);
+			_store.remove(id);
+		}
 
-			list<Bundle>::iterator iter = _bundles.begin();
+		SimpleBundleStorage::BundleStore::BundleStore()
+		{
+		}
 
-			while (iter != _bundles.end())
+		SimpleBundleStorage::BundleStore::~BundleStore()
+		{
+		}
+
+		void SimpleBundleStorage::BundleStore::expire(const size_t timestamp)
+		{
+			dtn::routing::BundleList::expire(timestamp);
+		}
+
+		void SimpleBundleStorage::BundleStore::store(const dtn::data::Bundle &bundle)
+		{
+			dtn::routing::BundleList::add(dtn::routing::MetaBundle(bundle));
+			bundles.insert(bundle);
+		}
+
+		void SimpleBundleStorage::BundleStore::remove(const dtn::data::BundleID &id)
+		{
+			for (std::set<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 			{
-				Bundle &bundle = (*iter);
-				if (id == bundle)
+				if ( id == (*iter) )
 				{
-					_bundles.erase(iter);
+					// remove item in the bundlelist
+					dtn::routing::BundleList::remove(dtn::routing::MetaBundle(*iter));
+
+					bundles.erase(iter);
+
 					return;
 				}
-
-				iter++;
 			}
 
 			throw dtn::exceptions::NoBundleFoundException();
 		}
 
-		void SimpleBundleStorage::run()
+		void SimpleBundleStorage::BundleStore::clear()
 		{
-			while (_running)
-			{
-				list<dtn::data::BundleID> expired;
-
-				// seek for expired bundles
-				for (list<dtn::data::Bundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-				{
-					const dtn::data::Bundle &bundle = (*iter);
-
-					if ( bundle.isExpired() )
-					{
-						expired.push_back( BundleID(bundle) );
-
-						// raise an event
-						dtn::core::BundleExpiredEvent::raise( *iter );
-					}
-				}
-
-				// remove the expired bundles
-				for (list<dtn::data::BundleID>::const_iterator iter = expired.begin(); iter != expired.end(); iter++)
-				{
-					remove( *iter );
-				}
-
-				yield();
-
-				// wait until the next clock tick
-				{
-					ibrcommon::MutexLock l(_clock);
-					if (_running) _clock.wait();
-				}
-			}
-
-			// wait until all blocking get()-calls are finished.
-			_blocker.wait();
+			bundles.clear();
+			dtn::routing::BundleList::clear();
 		}
 
-//		Bundle SimpleBundleStorage::storeFragment(const Bundle &bundle)
-//		{
-//			// iterate through the list of fragment-lists.
-//			list<list<Bundle> >::iterator iter = m_fragments.begin();
-//			list<Bundle> fragment_list;
-//
-//			// search for a existing list for this fragment
-//			while (iter != m_fragments.end())
-//			{
-//				fragment_list = (*iter);
-//
-//				// list found?
-//				if ( bundle == fragment_list.front() )
-//				{
-//					m_fragments.erase( iter );
-//					break;
-//				}
-//
-//				// next list
-//				iter++;
-//			}
-//
-//			{	// check for duplicates. do this bundle already exists in the list?
-//				list<Bundle>::const_iterator iter = fragment_list.begin();
-//				while (iter != fragment_list.end())
-//				{
-//					if ( (*iter)._fragmentoffset == bundle._fragmentoffset )
-//					{
-//						// bundle found, discard the current fragment.
-//						throw exceptions::DuplicateBundleException();
-//					}
-//					iter++;
-//				}
-//			}	// end check for duplicates
-//
-//			if ( ( bundle._procflags & data::Bundle::CUSTODY_REQUESTED ) && (bundle._custodian != BundleCore::local) )
-//			{
-//				// here i need a copy
-//				Bundle b_copy = bundle;
-//
-//				// set me as custody
-//				b_copy._custodian = BundleCore::local;
-//
-//				// accept custody
-//				EventSwitch::raiseEvent( new CustodyEvent( bundle, CUSTODY_ACCEPT ) );
-//
-//				// bundle isn't in this list, add it
-//				fragment_list.push_back( b_copy );
-//			}
-//			else
-//			{
-//				// bundle isn't in this list, add it
-//				fragment_list.push_back( bundle );
-//			}
-//
-//			try {
-//				// try to merge the fragments
-//				return utils::Utils::merge(fragment_list);
-//			} catch (exceptions::FragmentationException ex) {
-//				// merge not possible, store the list in front of the list of lists.
-//				m_fragments.push_front(fragment_list);
-//			}
-//
-//			throw exceptions::MissingObjectException();
-//		}
+		void SimpleBundleStorage::BundleStore::eventBundleExpired(const ExpiringBundle &b)
+		{
+			// raise an event
+			dtn::core::BundleExpiredEvent::raise( b.bundle );
+		}
 	}
 }

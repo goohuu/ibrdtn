@@ -59,6 +59,8 @@ namespace dtn
 
 			bool operator==(const Bundle& other) const;
 			bool operator!=(const Bundle& other) const;
+			bool operator<(const Bundle& other) const;
+			bool operator>(const Bundle& other) const;
 
 			void addBlock(Block *b);
 

@@ -29,17 +29,27 @@ namespace dtn
 			_bundles.erase(bundle);
 		}
 
+		void BundleList::clear()
+		{
+			_bundles.clear();
+		}
+
 		void BundleList::expire(const size_t timestamp)
 		{
-			for (std::set<ExpiringBundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (std::set<ExpiringBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 			{
-				if ((*iter).expiretime >= timestamp )
+				const ExpiringBundle &b = (*iter);
+
+				if (b.expiretime >= timestamp )
 				{
 					break;
 				}
 
+				// raise expired event
+				eventBundleExpired( b );
+
 				// remove this item in public list
-				(*this).erase( (*iter).bundle );
+				(*this).erase( b.bundle );
 
 				// remove this item in private list
 				_bundles.erase( iter );
