@@ -193,6 +193,15 @@ namespace dtn
 
 		void SimpleBundleStorage::BundleStore::eventBundleExpired(const ExpiringBundle &b)
 		{
+			for (std::set<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				if ( b.bundle == (*iter) )
+				{
+					bundles.erase(iter);
+					break;
+				}
+			}
+
 			// raise an event
 			dtn::core::BundleExpiredEvent::raise( b.bundle );
 		}

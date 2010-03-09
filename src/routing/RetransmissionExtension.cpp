@@ -71,7 +71,7 @@ namespace dtn
 					RetransmissionData data2 = (*iter);
 					data2++;
 
-					if (data2.getCount() > 10)
+					if (data2.getCount() <= 10)
 					{
 						// requeue the bundle
 						_set.insert(data2);
@@ -128,7 +128,7 @@ namespace dtn
 
 		RetransmissionExtension::RetransmissionData& RetransmissionExtension::RetransmissionData::operator++(int value)
 		{
-			_count+=value;
+			_count++;
 			_timestamp = dtn::utils::Utils::get_current_dtn_time();
 			_timestamp += retry;
 		}
