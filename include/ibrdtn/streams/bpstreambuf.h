@@ -11,13 +11,11 @@
 #include "ibrdtn/default.h"
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
-#include "ibrdtn/streams/BundleStreamWriter.h"
-#include "ibrdtn/streams/BundleStreamReader.h"
+#include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/MutexLock.h"
 #include <iostream>
 #include <streambuf>
 #include <queue>
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
 
 using namespace std;
 using namespace dtn::data;
@@ -49,25 +47,22 @@ namespace dtn
 
 			virtual void shutdown();
 
-                        size_t getOutSize();
+			size_t getOutSize();
 
 		protected:
 			virtual int sync();
 			virtual int overflow(int = std::char_traits<char>::eof());
 			virtual int underflow();
 
-			friend std::ostream &operator<<(std::ostream &stream, const StreamDataSegment &seg);
-			friend std::istream &operator>>(std::istream &stream, StreamDataSegment &seg);
+			std::iostream& rawstream();
 
-			friend std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h);
-			friend std::istream &operator>>(std::istream &stream, StreamContactHeader &h);
+			friend bpstreambuf &operator<<(bpstreambuf &buf, const StreamDataSegment &seg);
+			friend bpstreambuf &operator>>(bpstreambuf &buf, StreamDataSegment &seg);
+
+			friend bpstreambuf &operator<<(bpstreambuf &buf, const StreamContactHeader &h);
+			friend bpstreambuf &operator>>(bpstreambuf &buf, StreamContactHeader &h);
 
 		private:
-			void write(const StreamDataSegment &seg, const char *data = NULL);
-			void read(StreamDataSegment &seg);
-			void write(const StreamContactHeader &h);
-			void read(StreamContactHeader &h);
-
 			void setState(bpstreambuf::State state);
 			bool waitState(bpstreambuf::State state);
 			bpstreambuf::State getState();
@@ -83,14 +78,11 @@ namespace dtn
 
 			std::iostream &_stream;
 
-			BundleStreamWriter bundlewriter_;
-			BundleStreamReader bundlereader_;
-
 			size_t in_data_remain_;
 			bool _start_of_bundle;
 			bpstreambuf::State _state;
 
-                        size_t out_size_;
+			size_t out_size_;
 		};
 	}
 }

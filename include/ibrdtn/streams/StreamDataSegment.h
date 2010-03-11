@@ -45,11 +45,6 @@ namespace dtn
 
 			virtual ~StreamDataSegment();
 
-			size_t write( BundleWriter &writer ) const;
-			size_t read( BundleStreamReader &reader );
-			//size_t readHeader( BundleStreamReader &reader );
-
-			//char *_data;
 			size_t _value;
 			SegmentType _type;
 			ShutdownReason _reason;
@@ -57,6 +52,10 @@ namespace dtn
 
 			friend std::ostream &operator<<(std::ostream &stream, const StreamDataSegment &seg);
 			friend std::istream &operator>>(std::istream &stream, StreamDataSegment &seg);
+
+		private:
+			void write( std::ostream &stream ) const;
+			void read( std::istream &stream );
 		};
 	}
 }

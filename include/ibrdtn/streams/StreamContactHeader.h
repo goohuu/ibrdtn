@@ -38,11 +38,12 @@ namespace dtn
 			char _flags;
 			u_int16_t _keepalive;
 
-			void write(dtn::streams::BundleWriter &writer) const;
-			void read(dtn::streams::BundleStreamReader &reader);
-
 			friend std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h);
 			friend std::istream &operator>>(std::istream &stream, StreamContactHeader &h);
+
+		private:
+			void write( std::ostream &stream ) const;
+			void read( std::istream &stream );
 		};
 	}
 }

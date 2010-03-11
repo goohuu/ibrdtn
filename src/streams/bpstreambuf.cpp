@@ -8,6 +8,8 @@
 #include "ibrdtn/streams/bpstreambuf.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
+#include "ibrdtn/streams/StreamDataSegment.h"
+#include "ibrdtn/data/Exceptions.h"
 
 using namespace std;
 
@@ -17,7 +19,7 @@ namespace dtn
 	{
 		bpstreambuf::bpstreambuf(iostream &stream)
 			: in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
-			_stream(stream), bundlewriter_(_stream), bundlereader_(_stream), _start_of_bundle(true), _state(IDLE)
+			  _stream(stream), _start_of_bundle(true), _state(IDLE)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -91,54 +93,60 @@ namespace dtn
 			return out_size_;
 		}
 
-		void bpstreambuf::write(const StreamDataSegment &seg, const char *data)
+		std::iostream& bpstreambuf::rawstream()
 		{
-			if (ifState(SHUTDOWN)) return;
+			return _stream;
+		}
 
-			ibrcommon::MutexLock l(_write_lock);
-			seg.write(bundlewriter_);
+		bpstreambuf &operator<<(bpstreambuf &buf, const StreamDataSegment &seg)
+		{
+			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
 
-			if (data != NULL)
+			ibrcommon::MutexLock l(buf._write_lock);
+			buf.rawstream() << seg;
+		}
+
+		bpstreambuf &operator<<(bpstreambuf &buf, const StreamContactHeader &h)
+		{
+			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
+
+			// write data
 			{
-				_stream.write(data, seg._value);
+				ibrcommon::MutexLock l(buf._write_lock);
+				buf.rawstream() << h;
 			}
+
+			buf.rawstream().flush();
 		}
 
-		void bpstreambuf::write(const StreamContactHeader &h)
+		bpstreambuf &operator>>(bpstreambuf &buf, StreamDataSegment &seg)
 		{
-			if (ifState(SHUTDOWN)) return;
+			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
 
-			_write_lock.enter();
-			h.write(bundlewriter_);
-			_write_lock.leave();
-			_stream.flush();
-		}
-
-		void bpstreambuf::read(StreamDataSegment &seg)
-		{
-			if (ifState(SHUTDOWN)) return;
+			if (!buf.rawstream().good()) throw dtn::exceptions::IOException("stream closed");
 
 			// read the next segment
-			_stream >> seg;
+			buf.rawstream() >> seg;
 
 			// if the segment header indicates new data
 			if ((seg._type == StreamDataSegment::MSG_DATA_SEGMENT) && (seg._value != 0))
 			{
 				// set the new data length
-				in_data_remain_ = seg._value;
+				buf.in_data_remain_ = seg._value;
 
 				// announce the new data block
-				setState(DATA_AVAILABLE);
+				buf.setState(bpstreambuf::DATA_AVAILABLE);
 
 				// and wait until the data is received completely
-				waitState(IDLE);
+				buf.waitState(bpstreambuf::IDLE);
 			}
 		}
 
-		void bpstreambuf::read(StreamContactHeader &h)
+		bpstreambuf &operator>>(bpstreambuf &buf, StreamContactHeader &h)
 		{
-			if (ifState(SHUTDOWN)) return;
-			_stream >> h;
+			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
+			if (!buf.rawstream().good()) throw dtn::exceptions::IOException("stream closed");
+			buf.rawstream() >> h;
 		}
 
 		// This function is called when the output buffer is filled.
@@ -171,7 +179,7 @@ namespace dtn
 			{
 				if (!(seg._flags & 0x01)) seg._flags += 0x01;
 				_start_of_bundle = false;
-                                out_size_ = 0;
+				out_size_ = 0;
 			}
 
 			if (char_traits<char>::eq_int_type(c, char_traits<char>::eof()))
@@ -182,7 +190,8 @@ namespace dtn
 			}
 
 			// write the segment to the stream
-			write(seg, out_buf_);
+			_stream << seg;
+			_stream.write(out_buf_, seg._value);
 
 			// add size to outgoing size
 			out_size_ += seg._value;
@@ -197,8 +206,8 @@ namespace dtn
 			int ret = traits_type::eq_int_type(this->overflow(traits_type::eof()),
 											traits_type::eof()) ? -1 : 0;
 
-			// ... and flush.
-			_stream.flush();
+//			// ... and flush.
+//			_stream.flush();
 
 			return ret;
 		}
@@ -234,66 +243,6 @@ namespace dtn
 			}
 
 			return traits_type::not_eof(in_buf_[0]);
-		}
-
-		std::ostream &operator<<(std::ostream &stream, const StreamDataSegment &seg)
-		{
-			bpstreambuf *buf = dynamic_cast<bpstreambuf*>(stream.rdbuf());
-
-			if (buf == NULL)
-			{
-				BundleStreamWriter writer(stream);
-				seg.write(writer);
-			}
-			else
-			{
-				buf->write(seg);
-			}
-		}
-
-		std::istream &operator>>(std::istream &stream, StreamDataSegment &seg)
-		{
-			bpstreambuf *buf = dynamic_cast<bpstreambuf*>(stream.rdbuf());
-
-			if (buf == NULL)
-			{
-				BundleStreamReader reader(stream);
-				seg.read(reader);
-			}
-			else
-			{
-				buf->read(seg);
-			}
-		}
-
-		std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h)
-		{
-			bpstreambuf *buf = dynamic_cast<bpstreambuf*>(stream.rdbuf());
-
-			if (buf == NULL)
-			{
-				BundleStreamWriter writer(stream);
-				h.write(writer);
-			}
-			else
-			{
-				buf->write(h);
-			}
-		}
-
-		std::istream &operator>>(std::istream &stream, StreamContactHeader &h)
-		{
-			bpstreambuf *buf = dynamic_cast<bpstreambuf*>(stream.rdbuf());
-
-			if (buf == NULL)
-			{
-				BundleStreamReader reader(stream);
-				h.read(reader);
-			}
-			else
-			{
-				buf->read(h);
-			}
 		}
 	}
 }

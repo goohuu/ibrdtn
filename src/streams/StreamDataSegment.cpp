@@ -7,6 +7,8 @@
 
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include <stdlib.h>
+#include <typeinfo>
+#include "ibrdtn/streams/bpstreambuf.h"
 
 using namespace std;
 
@@ -33,11 +35,40 @@ namespace dtn
 		{
 		}
 
-		size_t StreamDataSegment::read( BundleStreamReader &reader )
+		std::ostream &operator<<(std::ostream &stream, const StreamDataSegment &seg)
 		{
-			size_t ret = 0;
+			try {
+				// do we write to a bpstreambuf?
+				bpstreambuf &buf = dynamic_cast<bpstreambuf&>(*stream.rdbuf());
 
-			char header; ret += reader.readChar(header);
+				// write seg
+				buf << seg;
+			} catch (std::bad_cast ex) {
+				// write seg to "stream"
+				seg.write(stream);
+			}
+		}
+
+		std::istream &operator>>(std::istream &stream, StreamDataSegment &seg)
+		{
+			try {
+				// do we write to a bpstreambuf?
+				bpstreambuf &buf = dynamic_cast<bpstreambuf&>(*stream.rdbuf());
+
+				// read seg
+				buf >> seg;
+			} catch (std::bad_cast ex) {
+				// read seg from "stream"
+				seg.read(stream);
+			}
+		}
+
+		void StreamDataSegment::read( std::istream &stream )
+		{
+			dtn::data::SDNV value;
+
+			char header;
+			stream.get(header);
 
 			_type = SegmentType( (header & 0xF0) >> 4 );
 			_flags = (header & 0x0F);
@@ -45,13 +76,15 @@ namespace dtn
 			switch (_type)
 			{
 			case MSG_DATA_SEGMENT:
-				// write the length + data
-				ret += reader.readSDNV(_value);
+				// read the length
+				stream >> value;
+				_value = value.getValue();
 				break;
 
 			case MSG_ACK_SEGMENT:
-				// write the acknowledged length
-				ret += reader.readSDNV(_value);
+				// read the acknowledged length
+				stream >> value;
+				_value = value.getValue();
 				break;
 
 			case MSG_REFUSE_BUNDLE:
@@ -61,62 +94,37 @@ namespace dtn
 				break;
 
 			case MSG_SHUTDOWN:
-				// write the reason (char) + reconnect time (SDNV)
+				// read the reason (char) + reconnect time (SDNV)
 				char reason;
-				ret += reader.readChar(reason);
+				stream.get(reason);
 				_reason = ShutdownReason(reason);
 
-				ret += reader.readSDNV(_value);
+				stream >> value;
+				_value = value.getValue();
 				break;
 			}
-
-			return ret;
 		}
 
-//		size_t StreamDataSegment::read( BundleStreamReader &reader )
-//		{
-//			size_t ret = 0;
-//
-//			// read the header first
-//			ret += readHeader(reader);
-//
-////			if (_data != NULL) free(_data); _data = NULL;
-////
-////			switch (_type)
-////			{
-////			case MSG_DATA_SEGMENT:
-////				_data = (char*)calloc(_value, sizeof(char));
-////				reader.read(_data, _value); ret += _value;
-////				break;
-////
-////			default:
-////				break;
-////			}
-//
-//			return ret;
-//		}
-
-		size_t StreamDataSegment::write( BundleWriter &writer ) const
+		void StreamDataSegment::write( std::ostream &stream ) const
 		{
-			size_t ret = 0;
-
 			char header = _flags;
 			header += ((_type & 0x0F) << 4);
 
 			// write the header (1-byte)
-			ret += writer.write(header);
+			stream.put(header);
+
+			dtn::data::SDNV value(_value);
 
 			switch (_type)
 			{
 			case MSG_DATA_SEGMENT:
 				// write the length + data
-				ret += writer.write(_value);
-				//ret += writer.write(_data, _value);
+				stream << value;
 				break;
 
 			case MSG_ACK_SEGMENT:
 				// write the acknowledged length
-				ret += writer.write(_value);
+				stream << value;
 				break;
 
 			case MSG_REFUSE_BUNDLE:
@@ -127,12 +135,10 @@ namespace dtn
 
 			case MSG_SHUTDOWN:
 				// write the reason (char) + reconnect time (SDNV)
-				ret += writer.write((char)_reason);
-				ret += writer.write(_value);
+				stream.put((char)_reason);
+				stream << value;
 				break;
 			}
-
-			return ret;
 		}
 	}
 }

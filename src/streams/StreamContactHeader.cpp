@@ -8,6 +8,9 @@
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
+#include "ibrdtn/data/BundleString.h"
+#include "ibrdtn/streams/bpstreambuf.h"
+#include <typeinfo>
 
 using namespace dtn::data;
 
@@ -42,60 +45,79 @@ namespace dtn
 			return _localeid;
 		}
 
-		void StreamContactHeader::read(dtn::streams::BundleStreamReader &reader)
+		std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h)
 		{
-			size_t ret = 0;
+			try {
+				// do we write to a bpstreambuf?
+				bpstreambuf &buf = dynamic_cast<bpstreambuf&>(*stream.rdbuf());
+
+				// write header to the buffer
+				buf << h;
+			} catch (std::bad_cast ex) {
+				// write seg to "stream"
+				h.write(stream);
+			}
+		}
+
+		std::istream &operator>>(std::istream &stream, StreamContactHeader &h)
+		{
+			try {
+				// do we write to a bpstreambuf?
+				bpstreambuf &buf = dynamic_cast<bpstreambuf&>(*stream.rdbuf());
+
+				// read seg
+				buf >> h;
+			} catch (std::bad_cast ex) {
+				// read seg from "stream"
+				h.read(stream);
+			}
+		}
+
+		void StreamContactHeader::read( std::istream &stream )
+		{
 			char buffer[512];
+			char magic[5];
 
 			// wait for magic
-			reader.read(buffer, 4);
-			string magic; magic.assign(buffer, 4);
-			if (magic != "dtn!")
+			stream.read(magic, 4); magic[4] = '\0';
+			string str_magic(magic);
+
+			if (str_magic != "dtn!")
 			{
 				throw exceptions::InvalidDataException("not talking dtn");
 			}
 
 			// version
-			char version; reader.readChar(version);
+			char version; stream.get(version);
 			if (version != TCPCL_VERSION)
 			{
 				throw exceptions::InvalidDataException("invalid bundle protocol version");
 			}
 
-			ret = 5;
-
 			// flags
-			ret += reader.readChar(_flags);
-
+			stream.get(_flags);
 
 			// keepalive
 			char keepalive[2];
-			ret += reader.readChar(keepalive[0]);
-			ret += reader.readChar(keepalive[1]);
+			stream.read(keepalive, 2);
+
 			_keepalive = 0;
 			_keepalive += keepalive[0];
 			_keepalive += (keepalive[1] << 8);
 
-			// length of eid
-			size_t length; ret += reader.readSDNV(length);
-
-			// eid
-			reader.read(buffer, length); ret += length;
-			string eid; eid.assign(buffer, length);
+			dtn::data::BundleString eid;
+			stream >> eid;
 			_localeid = EID(eid);
 		}
 
-		void StreamContactHeader::write(dtn::streams::BundleWriter &writer) const
+		void StreamContactHeader::write( std::ostream &stream ) const
 		{
 			//BundleStreamWriter writer(stream);
-			writer.write("dtn!");
-			writer.write(TCPCL_VERSION);
-			writer.write(_flags);
-			writer.write((char*)&_keepalive, 2);
+			stream << "dtn!" << TCPCL_VERSION << _flags;
+			stream.write( (char*)&_keepalive, 2 );
 
-			string eid = _localeid.getString();
-			writer.write(eid.length());
-			writer.write(eid);
+			dtn::data::BundleString eid(_localeid.getString());
+			stream << eid;
 		}
 	}
 }

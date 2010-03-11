@@ -11,6 +11,12 @@
 #include "ibrdtn/default.h"
 #include "ibrdtn/streams/bpstreambuf.h"
 #include "ibrcommon/thread/Thread.h"
+#include "ibrdtn/streams/StreamConnection.h"
+
+#include "ibrcommon/net/NetInterface.h"
+#include "ibrcommon/net/tcpserver.h"
+#include "ibrcommon/net/tcpclient.h"
+#include "ibrcommon/net/tcpstream.h"
 
 namespace dtn
 {
@@ -18,29 +24,34 @@ namespace dtn
 	{
 		class StreamingTestSuite
 		{
-			class StreamingPeer : public std::iostream, public ibrcommon::JoinableThread
+			class StreamChecker : public ibrcommon::JoinableThread
 			{
 			public:
-				StreamingPeer(std::iostream &stream);
+				StreamChecker(ibrcommon::NetInterface &net, int chars = 10);
+				~StreamChecker();
+
 				void run();
 
-				void processHeader(dtn::streams::StreamContactHeader &h);
-				virtual void processSegment(dtn::streams::StreamDataSegment &seg);
-				virtual void datareceived(size_t newdata, size_t complete);
-
-			protected:
-				//virtual void received(dtn::data::Bundle &b) {};
-				virtual void received(dtn::streams::StreamContactHeader &h) {};
-				virtual void disconnected() {};
-
-				virtual void interrupted(dtn::data::Bundle &b, size_t position) {};
+				bool failed;
 
 			private:
-				dtn::streams::bpstreambuf _buf;
+				ibrcommon::tcpserver _srv;
+				int _chars;
+			};
 
+			class StreamConnChecker : public ibrcommon::JoinableThread
+			{
 			public:
-				bool _shutdown;
+				StreamConnChecker(ibrcommon::NetInterface &net, int chars = 10);
+				~StreamConnChecker();
 
+				void run();
+
+				bool failed;
+
+			private:
+				ibrcommon::tcpserver _srv;
+				int _chars;
 			};
 
 		public:
@@ -48,7 +59,8 @@ namespace dtn
 			virtual ~StreamingTestSuite();
 
 			bool runAllTests();
-			bool commonTest();
+			bool tcpstreamTest(int chars = 10);
+			bool streamconnectionTest(int chars = 10);
 		};
 	}
 }
