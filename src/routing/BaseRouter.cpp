@@ -119,13 +119,19 @@ namespace dtn
 		void BaseRouter::addExtension(BaseRouter::Extension *extension)
 		{
 			_extensions.push_back(extension);
+		}
 
-			ThreadedExtension *thread = dynamic_cast<ThreadedExtension*>(extension);
-
-			if (thread != NULL)
+		void BaseRouter::initialize()
+		{
+			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
-				// run the thread
-				thread->start();
+				ThreadedExtension *thread = dynamic_cast<ThreadedExtension*>(*iter);
+
+				if (thread != NULL)
+				{
+					// run the thread
+					thread->start();
+				}
 			}
 		}
 

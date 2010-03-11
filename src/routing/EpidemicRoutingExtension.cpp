@@ -18,6 +18,7 @@
 #include "ibrcommon/SyslogStream.h"
 #include "daemon/Configuration.h"
 #include "core/BundleCore.h"
+#include "core/SimpleBundleStorage.h"
 
 #include <functional>
 #include <list>
@@ -28,6 +29,7 @@
 #include <iostream>
 
 #include <stdlib.h>
+#include <typeinfo>
 
 namespace dtn
 {
@@ -47,6 +49,19 @@ namespace dtn
 
 			// write something to the syslog
 			ibrcommon::slog << "Initializing epidemic routing module for node " << conf.getNodename() << endl;
+
+			try {
+				// scan for bundles in the storage
+				dtn::core::SimpleBundleStorage &storage = dynamic_cast<dtn::core::SimpleBundleStorage&>(getRouter()->getStorage());
+
+				for (dtn::core::SimpleBundleStorage::Iterator iter = storage.begin(); iter != storage.end(); iter++)
+				{
+					// push the bundle into the queue
+					_bundle_queue.push( *iter );
+				}
+			} catch (std::bad_cast ex) {
+				// Another bundle storage is used!
+			}
 		}
 
 		EpidemicRoutingExtension::~EpidemicRoutingExtension()

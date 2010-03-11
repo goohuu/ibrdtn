@@ -13,10 +13,12 @@
 #include "core/Node.h"
 #include "net/ConnectionManager.h"
 #include "ibrcommon/thread/MutexLock.h"
+#include "core/SimpleBundleStorage.h"
 
 #include <functional>
 #include <list>
 #include <algorithm>
+#include <typeinfo>
 
 namespace dtn
 {
@@ -30,6 +32,18 @@ namespace dtn
 
 		NeighborRoutingExtension::NeighborRoutingExtension()
 		{
+			try {
+				// scan for bundles in the storage
+				dtn::core::SimpleBundleStorage &storage = dynamic_cast<dtn::core::SimpleBundleStorage&>(getRouter()->getStorage());
+
+				for (dtn::core::SimpleBundleStorage::Iterator iter = storage.begin(); iter != storage.end(); iter++)
+				{
+					// push the bundle into the queue
+					route( *iter );
+				}
+			} catch (std::bad_cast ex) {
+				// Another bundle storage is used!
+			}
 		}
 
 		NeighborRoutingExtension::~NeighborRoutingExtension()

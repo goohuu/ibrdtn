@@ -21,67 +21,7 @@ namespace dtn
 	{
 		class BundleStorage
 		{
-		protected:
-			class Item
-			{
-			public:
-				virtual ~Item() {};
-				virtual dtn::data::Bundle &getBundle() = 0;
-			};
-
 		public:
-			class Iterator
-			{
-			public:
-				Iterator(BundleStorage::Item *i) : _item(i) {}
-				virtual ~Iterator() {}
-
-				// The assignment and relational operators are straightforward
-				Iterator& operator=(const Iterator& other)
-				{
-					_item = other._item;
-					return(*this);
-				}
-
-				bool operator==(const Iterator& other)
-				{
-					return(_item == other._item);
-				}
-
-				bool operator!=(const Iterator& other)
-				{
-					return(_item != other._item);
-				}
-
-				// Get the next element.
-				virtual Iterator& operator++() = 0;
-
-				virtual Iterator& operator++(int) = 0;
-//					Iterator tmp(*this);
-//					++(*this);
-//					return(tmp);
-//				}
-
-				// Return a reference to the value in the node.  I do this instead
-				// of returning by value so a caller can update the value in the
-				// node directly.
-				dtn::data::Bundle& operator*()
-				{
-					return(_item->getBundle());
-				}
-
-				// Return the address of the value referred to.
-				virtual dtn::data::Bundle* operator->() = 0;
-//				{
-//					return(&*(BundleStorage::Iterator)*this);
-//				}
-
-			private:
-				BundleStorage::Item *_item;
-
-			};
-
-
 			/**
 			 * destructor
 			 */

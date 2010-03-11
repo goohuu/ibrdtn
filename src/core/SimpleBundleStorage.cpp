@@ -14,6 +14,62 @@ namespace dtn
 {
 	namespace core
 	{
+		SimpleBundleStorage::Iterator::Iterator(std::set<dtn::data::Bundle>::iterator iter)
+		: _iter(iter) {}
+
+		SimpleBundleStorage::Iterator::~Iterator()
+		{}
+
+		SimpleBundleStorage::Iterator& SimpleBundleStorage::Iterator::operator=(const SimpleBundleStorage::Iterator& other)
+		{
+			_iter = other._iter;
+			return(*this);
+		}
+
+		bool SimpleBundleStorage::Iterator::operator==(const SimpleBundleStorage::Iterator& other)
+		{
+			return(_iter == other._iter);
+		}
+
+		bool SimpleBundleStorage::Iterator::operator!=(const SimpleBundleStorage::Iterator& other)
+		{
+			return(_iter != other._iter);
+		}
+
+		// Get the next element.
+		SimpleBundleStorage::Iterator& SimpleBundleStorage::Iterator::operator++()
+		{
+			_iter++;
+			return (*this);
+		}
+
+		SimpleBundleStorage::Iterator& SimpleBundleStorage::Iterator::operator++(int)
+		{
+			_iter++;
+			return (*this);
+		}
+
+		const dtn::data::Bundle& SimpleBundleStorage::Iterator::operator*()
+		{
+			return(*_iter);
+		}
+
+		// Return the address of the value referred to.
+		const dtn::data::Bundle* SimpleBundleStorage::Iterator::operator->()
+		{
+			return(&*(SimpleBundleStorage::Iterator)*this);
+		}
+
+		SimpleBundleStorage::Iterator SimpleBundleStorage::begin()
+		{
+			return SimpleBundleStorage::Iterator(_store.bundles.begin());
+		}
+
+		SimpleBundleStorage::Iterator SimpleBundleStorage::end()
+		{
+			return SimpleBundleStorage::Iterator(_store.bundles.end());
+		}
+
 		SimpleBundleStorage::SimpleBundleStorage()
 		 : _store(*this), _running(true), _mode(MODE_NONPERSISTENT)
 		{

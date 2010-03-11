@@ -80,6 +80,11 @@ namespace dtn
 			~BaseRouter();
 
 			/**
+			 * Initialize the routing modules
+			 */
+			void initialize();
+
+			/**
 			 * Add a routing extension to the routing core.
 			 * @param extension
 			 */

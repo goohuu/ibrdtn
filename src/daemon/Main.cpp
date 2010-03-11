@@ -266,6 +266,9 @@ int main(int argc, char *argv[])
 		service->start();
 	}
 
+	// initialize the router
+	router.initialize();
+
 	// announce static nodes, create a list of static nodes
 	list<Node> static_nodes = conf.getStaticNodes();
 

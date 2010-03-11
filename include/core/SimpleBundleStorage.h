@@ -29,6 +29,45 @@ namespace dtn
 		{
 		public:
 			/**
+			 * Iterator for this BundleStorage implementation
+			 */
+			class Iterator : public std::iterator<std::forward_iterator_tag, dtn::data::BundleID>
+			{
+			public:
+				Iterator(std::set<dtn::data::Bundle>::iterator iter);
+				virtual ~Iterator();
+
+				// The assignment and relational operators are straightforward
+				Iterator& operator=(const Iterator& other);
+
+				bool operator==(const Iterator& other);
+
+				bool operator!=(const Iterator& other);
+
+				// Get the next element.
+				Iterator& operator++();
+
+				Iterator& operator++(int);
+
+				// Return a reference to the value in the node.  I do this instead
+				// of returning by value so a caller can update the value in the
+				// node directly.
+				const dtn::data::Bundle& operator*();
+
+				// Return the address of the value referred to.
+				const dtn::data::Bundle* operator->();
+
+			private:
+				std::set<dtn::data::Bundle>::iterator _iter;
+			};
+
+			/**
+			 * Iterator methods
+			 */
+			Iterator begin();
+			Iterator end();
+
+			/**
 			 * Constructor
 			 */
 			SimpleBundleStorage();
