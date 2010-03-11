@@ -1,6 +1,9 @@
 #include "testsuite/BundleTestSuite.h"
 #include "testsuite/SelfTestSuite.h"
 #include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/PayloadBlock.h"
+#include "ibrcommon/data/BLOB.h"
+#include "ibrcommon/data/File.h"
 
 #include "testsuite/TestUtils.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
@@ -9,6 +12,7 @@
 #include "ibrdtn/utils/Utils.h"
 #include <limits.h>
 #include <cstdlib>
+#include <fstream>
 
 using namespace dtn::data;
 
@@ -35,7 +39,51 @@ namespace dtn
 //				ret = false;
 //			}
 
+//			if ( !serializeTest() )
+//			{
+//				cout << endl << "serializeTest failed" << endl;
+//				ret = false;
+//			}
+
 			if (ret) cout << "\t\t\tpassed" << endl;
+
+			return ret;
+		}
+
+		bool BundleTestSuite::serializeTest()
+		{
+			bool ret = true;
+
+			// write a bundle into a file
+			{
+				dtn::data::Bundle b;
+
+				ibrcommon::BLOB::Reference fb = ibrcommon::FileBLOB::create(ibrcommon::File("testfile"));
+				dtn::data::PayloadBlock *p = new dtn::data::PayloadBlock(fb);
+
+				b.addBlock(p);
+
+				std::fstream file("outfile1.test", ios::in|ios::out|ios::binary|ios::trunc);
+
+				file << b;
+				file.close();
+			}
+
+			// read the bundle
+			{
+				dtn::data::Bundle b;
+
+				std::fstream file("outfile1.test", ios::in|ios::binary);
+				file >> b;
+				file.close();
+
+				std::list<dtn::data::PayloadBlock> blist = b.getBlocks<dtn::data::PayloadBlock>();
+
+				std::fstream file2("outfile2.test", ios::in|ios::out|ios::binary|ios::trunc);
+
+				blist.front().getBLOB().read(file2);
+				file2.close();
+			}
 
 			return ret;
 		}

@@ -24,6 +24,7 @@ namespace dtn
 			static const char BLOCK_TYPE = 1;
 
 			PayloadBlock();
+			PayloadBlock(Block *block);
 			PayloadBlock(ibrcommon::BLOB::Reference ref);
 			virtual ~PayloadBlock();
 

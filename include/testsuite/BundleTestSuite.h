@@ -19,6 +19,8 @@ namespace testsuite
 			bool runAllTests();
 
 		private:
+			bool serializeTest();
+
 //			bool createTest();
 //			bool copyTest();
 //			bool instanceTest();

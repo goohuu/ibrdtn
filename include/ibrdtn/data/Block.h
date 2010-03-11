@@ -68,6 +68,8 @@ namespace dtn
 				};
 			};
 
+			Block(Block *block);
+
 			size_t writeHeader( dtn::streams::BundleWriter &writer ) const;
 			size_t getHeaderSize(dtn::streams::BundleWriter &writer) const;
 

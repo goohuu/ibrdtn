@@ -25,6 +25,11 @@ namespace dtn
 		{
 		}
 
+		Block::Block(Block *block)
+		 : _procflags(block->_procflags), _blocktype(block->_blocktype), _blobref(block->_blobref), _payload_offset(block->_payload_offset)
+		{
+		}
+
 		Block::~Block()
 		{
 		}

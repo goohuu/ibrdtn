@@ -17,6 +17,12 @@ namespace dtn
 		{
 		}
 
+		PayloadBlock::PayloadBlock(Block *block)
+		 : Block(block)
+		{
+
+		}
+
 		PayloadBlock::PayloadBlock(ibrcommon::BLOB::Reference ref)
 		 : Block(PayloadBlock::BLOCK_TYPE, ref)
 		{
