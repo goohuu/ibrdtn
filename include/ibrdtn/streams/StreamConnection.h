@@ -49,6 +49,9 @@ namespace dtn
 
 			bool timeout(ibrcommon::Timer *timer);
 
+			bool isCompleted();
+			bool waitCompleted();
+
 		protected:
 			void setTimer(size_t in_timeout, size_t out_timeout);
 			void shutdownTimer();
@@ -64,9 +67,6 @@ namespace dtn
 
 			size_t _recv_size;
 			size_t _ack_size;
-
-			bool isCompleted();
-			bool waitCompleted();
 
 		private:
 			bpstreambuf _buf;

@@ -24,24 +24,17 @@ namespace dtn
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
 			setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
-
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "new bpstreambuf" << endl;
-#endif
 		}
 
 		bpstreambuf::~bpstreambuf()
 		{
 			delete [] in_buf_;
 			delete [] out_buf_;
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "remove bpstreambuf" << endl;
-#endif
 		}
 
 		void bpstreambuf::setState(bpstreambuf::State state)
 		{
-			if (_state == SHUTDOWN) return;
+			if (ifState(SHUTDOWN)) return;
 			ibrcommon::MutexLock l(_state_changed);
 			_state = state;
 			_state_changed.signal(true);
@@ -50,40 +43,31 @@ namespace dtn
 		bool bpstreambuf::waitState(bpstreambuf::State state)
 		{
 			ibrcommon::MutexLock l(_state_changed);
-			bool ret = true;
 
-			if (_state == SHUTDOWN)
-			{
-				ret = false;
-			}
+			if (ifState(SHUTDOWN)) return false;
 
-			while ((_state != state) && (ret))
+			while (!ifState(state))
 			{
 				_state_changed.wait();
 
-				if (_state == SHUTDOWN) ret = false;
+				if (ifState(SHUTDOWN)) return false;
 			}
 
-			return ret;
+			return true;
 		}
 
 		bpstreambuf::State bpstreambuf::getState()
 		{
-			ibrcommon::MutexLock l(_state_changed);
 			return _state;
 		}
 
 		bool bpstreambuf::ifState(bpstreambuf::State state)
 		{
-			ibrcommon::MutexLock l(_state_changed);
 			return (state == _state);
 		}
 
 		void bpstreambuf::shutdown()
 		{
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "shutdown: bpstreambuf" << endl;
-#endif
 			_stream.clear(iostream::eofbit);
 			setState(SHUTDOWN);
 		}
@@ -101,8 +85,6 @@ namespace dtn
 		bpstreambuf &operator<<(bpstreambuf &buf, const StreamDataSegment &seg)
 		{
 			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
-
-			ibrcommon::MutexLock l(buf._write_lock);
 			buf.rawstream() << seg;
 		}
 
@@ -111,12 +93,8 @@ namespace dtn
 			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
 
 			// write data
-			{
-				ibrcommon::MutexLock l(buf._write_lock);
-				buf.rawstream() << h;
-			}
-
-			buf.rawstream().flush();
+			ibrcommon::MutexLock l(buf.write_lock);
+			buf.rawstream() << h;
 		}
 
 		bpstreambuf &operator>>(bpstreambuf &buf, StreamDataSegment &seg)
@@ -190,8 +168,11 @@ namespace dtn
 			}
 
 			// write the segment to the stream
-			_stream << seg;
-			_stream.write(out_buf_, seg._value);
+			{
+				ibrcommon::MutexLock l(write_lock);
+				_stream << seg;
+				_stream.write(out_buf_, seg._value);
+			}
 
 			// add size to outgoing size
 			out_size_ += seg._value;
@@ -206,8 +187,8 @@ namespace dtn
 			int ret = traits_type::eq_int_type(this->overflow(traits_type::eof()),
 											traits_type::eof()) ? -1 : 0;
 
-//			// ... and flush.
-//			_stream.flush();
+			// ... and flush.
+			_stream.flush();
 
 			return ret;
 		}
@@ -224,7 +205,7 @@ namespace dtn
 
 			// currently transferring data
 			size_t readsize = BUFF_SIZE;
-			if (in_data_remain_ <= BUFF_SIZE) readsize = in_data_remain_;
+			if (in_data_remain_ < BUFF_SIZE) readsize = in_data_remain_;
 
 			// here receive the data
 			_stream.read(in_buf_, readsize);

@@ -81,7 +81,7 @@ namespace dtn
 				header._flags += 0x80;
 
 			// transmit the header
-			(*this) << header;
+			(*this) << header; (*this).flush();
 
 			// read the header
 			(*this) >> _header;

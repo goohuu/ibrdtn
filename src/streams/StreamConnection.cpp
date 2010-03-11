@@ -162,7 +162,8 @@ namespace dtn
 					dtn::streams::StreamDataSegment seg;
 
 					// read the segment
-					(*this) >> seg;
+					ibrcommon::MutexLock l(_buf.read_lock);
+					_buf >> seg;
 
 					// reset the timer
 					if (_in_timer != NULL) _in_timer->reset();

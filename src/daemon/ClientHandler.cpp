@@ -85,7 +85,7 @@ namespace dtn
 
 				// reply with own header
 				StreamContactHeader srv_header(dtn::core::BundleCore::local);
-				_connection << srv_header;
+				_connection << srv_header; _connection.flush();
 
 				// initialize the AbstractWorker
 				// deactivate the thread for receiving bundles is bit 0x80 is set

@@ -49,6 +49,9 @@ namespace dtn
 
 			size_t getOutSize();
 
+			ibrcommon::Mutex read_lock;
+			ibrcommon::Mutex write_lock;
+
 		protected:
 			virtual int sync();
 			virtual int overflow(int = std::char_traits<char>::eof());
@@ -68,7 +71,7 @@ namespace dtn
 			bpstreambuf::State getState();
 			bool ifState(bpstreambuf::State state);
 
-			ibrcommon::Mutex _write_lock;
+
 			ibrcommon::Conditional _state_changed;
 
 			// Input buffer

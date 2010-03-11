@@ -160,6 +160,8 @@ namespace dtn
 				stream.flush();
 			}
 
+			stream.waitCompleted();
+
 			client.close();
 			stream.shutdown();
 			receiver.waitFor();
