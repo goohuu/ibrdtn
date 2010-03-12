@@ -28,7 +28,7 @@ namespace dtn
 
 			ibrcommon::tcpstream stream(_srv.accept());
 
-			while (stream.good())
+			while (!stream.eof())
 			{
 				char value;
 
@@ -44,6 +44,8 @@ namespace dtn
 
 				byte++;
 			}
+
+			cout << (byte-1) << " bytes received." << endl;
 
 			stream.close();
 		}
@@ -67,7 +69,7 @@ namespace dtn
 			dtn::streams::StreamConnection stream(tcpstream);
 			stream.start();
 
-			while (stream.good())
+			while (!stream.eof())
 			{
 				char value;
 
@@ -84,10 +86,10 @@ namespace dtn
 				byte++;
 			}
 
-			cout << byte << " bytes received." << endl;
+			cout << (byte-1) << " bytes received." << endl;
 
-			tcpstream.close();
 			stream.shutdown();
+			tcpstream.close();
 		}
 
 		StreamingTestSuite::StreamingTestSuite()
@@ -105,19 +107,19 @@ namespace dtn
 			bool ret = true;
 			cout << "StreamingTestSuite... ";
 
-//			for (int k = 2; k <= 10; k++)
-//			{
-//				cout << endl << "tcpstreamTest with " << k << " chars: ";
-//				if ( !tcpstreamTest(k) )
-//				{
-//					cout << " failed" << endl;
-//					ret = false;
-//				}
-//			}
+			for (int k = 2; k <= 10; k++)
+			{
+				cout << "tcpstreamTest with " << k << " chars: ";
+				if ( !tcpstreamTest(k) )
+				{
+					cout << " failed" << endl;
+					ret = false;
+				}
+			}
 
 			for (int k = 2; k <= 10; k++)
 			{
-				cout << endl << "streamconnectionTest with " << k << " chars: ";
+				cout << "streamconnectionTest with " << k << " chars: ";
 				if ( !streamconnectionTest(k) )
 				{
 					cout << " failed" << endl;
@@ -160,11 +162,15 @@ namespace dtn
 				stream.flush();
 			}
 
-			stream.waitCompleted();
+			if (!stream.waitCompleted())
+			{
+				cout << "not all data acknowleged" << endl;
+			}
 
-			client.close();
 			stream.shutdown();
+			client.close();
 			receiver.waitFor();
+
 			if (receiver.failed) return false;
 
 			return true;

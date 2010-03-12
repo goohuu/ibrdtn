@@ -19,7 +19,7 @@ namespace dtn
 	{
 		bpstreambuf::bpstreambuf(iostream &stream)
 			: in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
-			  _stream(stream), _start_of_bundle(true), _state(IDLE)
+			  _stream(stream), _start_of_bundle(true), _in_state(IDLE), _out_state(IDLE)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -32,44 +32,21 @@ namespace dtn
 			delete [] out_buf_;
 		}
 
-		void bpstreambuf::setState(bpstreambuf::State state)
-		{
-			if (ifState(SHUTDOWN)) return;
-			ibrcommon::MutexLock l(_state_changed);
-			_state = state;
-			_state_changed.signal(true);
-		}
-
-		bool bpstreambuf::waitState(bpstreambuf::State state)
-		{
-			ibrcommon::MutexLock l(_state_changed);
-
-			if (ifState(SHUTDOWN)) return false;
-
-			while (!ifState(state))
-			{
-				_state_changed.wait();
-
-				if (ifState(SHUTDOWN)) return false;
-			}
-
-			return true;
-		}
-
-		bpstreambuf::State bpstreambuf::getState()
-		{
-			return _state;
-		}
-
-		bool bpstreambuf::ifState(bpstreambuf::State state)
-		{
-			return (state == _state);
-		}
-
 		void bpstreambuf::shutdown()
 		{
-			_stream.clear(iostream::eofbit);
-			setState(SHUTDOWN);
+			_stream.clear(iostream::badbit);
+
+			// set in state to shutdown
+			{
+				ibrcommon::MutexLock l(_in_state);
+				_in_state.setState(SHUTDOWN);
+			}
+
+			// set out state to shutdown
+			{
+				ibrcommon::MutexLock l(_out_state);
+				_out_state.setState(SHUTDOWN);
+			}
 		}
 
 		size_t bpstreambuf::getOutSize()
@@ -84,24 +61,27 @@ namespace dtn
 
 		bpstreambuf &operator<<(bpstreambuf &buf, const StreamDataSegment &seg)
 		{
-			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
+			ibrcommon::MutexLock l(buf._out_state);
+			if (buf._out_state.ifState(bpstreambuf::SHUTDOWN)) return buf;
 			buf.rawstream() << seg;
 		}
 
 		bpstreambuf &operator<<(bpstreambuf &buf, const StreamContactHeader &h)
 		{
-			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
+			ibrcommon::MutexLock l(buf._out_state);
+			if (buf._out_state.ifState(bpstreambuf::SHUTDOWN)) return buf;
 
 			// write data
-			ibrcommon::MutexLock l(buf.write_lock);
 			buf.rawstream() << h;
 		}
 
 		bpstreambuf &operator>>(bpstreambuf &buf, StreamDataSegment &seg)
 		{
-			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
-
-			if (!buf.rawstream().good()) throw dtn::exceptions::IOException("stream closed");
+			ibrcommon::MutexLock l(buf._in_state);
+			if (!buf._in_state.waitState(bpstreambuf::IDLE))
+			{
+				throw dtn::exceptions::IOException("stream closed");
+			}
 
 			// read the next segment
 			buf.rawstream() >> seg;
@@ -113,18 +93,32 @@ namespace dtn
 				buf.in_data_remain_ = seg._value;
 
 				// announce the new data block
-				buf.setState(bpstreambuf::DATA_AVAILABLE);
+				buf._in_state.setState(bpstreambuf::DATA_AVAILABLE);
 
 				// and wait until the data is received completely
-				buf.waitState(bpstreambuf::IDLE);
+				buf._in_state.waitState(bpstreambuf::IDLE);
+			}
+
+			if (buf.rawstream().eof())
+			{
+				buf._in_state.setState(bpstreambuf::SHUTDOWN);
 			}
 		}
 
 		bpstreambuf &operator>>(bpstreambuf &buf, StreamContactHeader &h)
 		{
-			if (buf.ifState(bpstreambuf::SHUTDOWN)) return buf;
-			if (!buf.rawstream().good()) throw dtn::exceptions::IOException("stream closed");
+			ibrcommon::MutexLock l(buf._in_state);
+			if (!buf._in_state.waitState(bpstreambuf::IDLE))
+			{
+				throw dtn::exceptions::IOException("stream closed");
+			}
+
 			buf.rawstream() >> h;
+
+			if (buf.rawstream().eof())
+			{
+				buf._in_state.setState(bpstreambuf::SHUTDOWN);
+			}
 		}
 
 		// This function is called when the output buffer is filled.
@@ -132,6 +126,8 @@ namespace dtn
 		// be written to (in this case, the streambuf object that this is controlling).
 		int bpstreambuf::overflow(int c)
 		{
+			ibrcommon::MutexLock l(_out_state);
+
 			char *ibegin = out_buf_;
 			char *iend = pptr();
 
@@ -169,7 +165,6 @@ namespace dtn
 
 			// write the segment to the stream
 			{
-				ibrcommon::MutexLock l(write_lock);
 				_stream << seg;
 				_stream.write(out_buf_, seg._value);
 			}
@@ -187,6 +182,7 @@ namespace dtn
 			int ret = traits_type::eq_int_type(this->overflow(traits_type::eof()),
 											traits_type::eof()) ? -1 : 0;
 
+			ibrcommon::MutexLock l(_out_state);
 			// ... and flush.
 			_stream.flush();
 
@@ -196,12 +192,14 @@ namespace dtn
 		// Fill the input buffer.  This reads out of the streambuf.
 		int bpstreambuf::underflow()
 		{
-			if ( !waitState(DATA_AVAILABLE) )
+			ibrcommon::MutexLock l(_in_state);
+
+			if ( !_in_state.waitState(DATA_AVAILABLE) )
 			{
 				return traits_type::eof();
 			}
 
-			setState(DATA_TRANSFER);
+			_in_state.setState(DATA_TRANSFER);
 
 			// currently transferring data
 			size_t readsize = BUFF_SIZE;
@@ -220,7 +218,7 @@ namespace dtn
 			// if the transmission is completed, return to idle state
 			if (in_data_remain_ == 0)
 			{
-				setState(IDLE);
+				_in_state.setState(IDLE);
 			}
 
 			return traits_type::not_eof(in_buf_[0]);

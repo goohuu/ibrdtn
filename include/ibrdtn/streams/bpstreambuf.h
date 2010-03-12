@@ -49,9 +49,6 @@ namespace dtn
 
 			size_t getOutSize();
 
-			ibrcommon::Mutex read_lock;
-			ibrcommon::Mutex write_lock;
-
 		protected:
 			virtual int sync();
 			virtual int overflow(int = std::char_traits<char>::eof());
@@ -66,13 +63,8 @@ namespace dtn
 			friend bpstreambuf &operator>>(bpstreambuf &buf, StreamContactHeader &h);
 
 		private:
-			void setState(bpstreambuf::State state);
-			bool waitState(bpstreambuf::State state);
-			bpstreambuf::State getState();
-			bool ifState(bpstreambuf::State state);
-
-
-			ibrcommon::Conditional _state_changed;
+			ibrcommon::StatefulConditional<bpstreambuf::State, bpstreambuf::SHUTDOWN> _in_state;
+			ibrcommon::StatefulConditional<bpstreambuf::State, bpstreambuf::SHUTDOWN> _out_state;
 
 			// Input buffer
 			char *in_buf_;
@@ -83,7 +75,6 @@ namespace dtn
 
 			size_t in_data_remain_;
 			bool _start_of_bundle;
-			bpstreambuf::State _state;
 
 			size_t out_size_;
 		};

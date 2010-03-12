@@ -38,28 +38,27 @@ namespace dtn
 				CONNECTION_IDLE = 0,
 				CONNECTION_RECEIVING = 1,
 				CONNECTION_SHUTDOWN = 2,
-				CONNECTION_CLOSED = 3
+				CONNECTION_SHUTDOWN_REQUEST = 3,
+				CONNECTION_CLOSED = 4
 			};
 
 			StreamConnection(iostream &stream);
 			virtual ~StreamConnection();
 
+			virtual void close();
 			virtual void shutdown();
-			virtual bool good();
 
 			bool timeout(ibrcommon::Timer *timer);
 
 			bool isCompleted();
 			bool waitCompleted();
 
+			void waitClosed();
+
 		protected:
 			void setTimer(size_t in_timeout, size_t out_timeout);
 			void shutdownTimer();
 
-			void setState(ConnectionState conn);
-			ConnectionState getState();
-			bool waitState(ConnectionState conn, size_t timeout);
-			bool waitState(ConnectionState conn);
 			void run();
 
 			virtual void eventTimeout() {};
@@ -74,10 +73,8 @@ namespace dtn
 			ibrcommon::Timer *_in_timer;
 			ibrcommon::Timer *_out_timer;
 
-			ibrcommon::Conditional _completed_cond;
-
-			ibrcommon::Conditional _state_cond;
-			ConnectionState _state;
+			ibrcommon::StatefulConditional<ConnectionState, CONNECTION_CLOSED> _in_state;
+			ibrcommon::StatefulConditional<ConnectionState, CONNECTION_CLOSED> _out_state;
 		};
 	}
 }

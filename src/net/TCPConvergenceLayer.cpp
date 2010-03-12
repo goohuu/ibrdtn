@@ -64,7 +64,7 @@ namespace dtn
 			_stream.close();
 
 			// wait for the closed connection
-			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+			StreamConnection::waitClosed();
 		}
 
 		bool TCPConvergenceLayer::TCPConnection::TCPBundleStream::waitCompleted()
@@ -118,7 +118,8 @@ namespace dtn
 				// return with shutdown, if the stream is wrong
 				_stream << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH); flush();
 
-				StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
+				//StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
+				StreamConnection::shutdown();
 
 				// close the stream
 				_stream.close();
@@ -134,7 +135,7 @@ namespace dtn
 			_stream.close();
 
 			// wait for the closed connection
-			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+			StreamConnection::waitClosed();
 
 			// signal timeout
 			_conn.eventTimeout();
@@ -146,7 +147,7 @@ namespace dtn
 			_stream.close();
 
 			// wait for the closed connection
-			StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+			StreamConnection::waitClosed();
 
 			// signal timeout
 			_conn.eventShutdown();
