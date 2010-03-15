@@ -139,7 +139,15 @@ int main(int argc, char *argv[])
 	try {
 		// new methods for blobs
 		//storage = new dtn::core::SQLiteBundleStorage(conf.getPath("storage"), "sqlite.db", 2 UNIT_MB);
-		storage = new dtn::core::SimpleBundleStorage(conf.getPath("storage"));
+		ibrcommon::File path = conf.getPath("storage");
+
+		// create workdir if needed
+		if (!path.exists())
+		{
+			ibrcommon::File::createDirectory(path);
+		}
+
+		storage = new dtn::core::SimpleBundleStorage(path);
 	} catch (Configuration::ParameterNotSetException ex) {
 		storage = new dtn::core::SimpleBundleStorage();
 	}
