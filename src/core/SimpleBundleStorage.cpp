@@ -200,6 +200,8 @@ namespace dtn
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			ibrcommon::slog << ibrcommon::SYSLOG_INFO << "Storage: stored bundle " << bundle.toString() << endl;
 #endif
+
+			_dbchanged.signal(true);
 		}
 
 		void SimpleBundleStorage::unblock(const dtn::data::EID &eid)
