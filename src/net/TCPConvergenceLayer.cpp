@@ -58,7 +58,7 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::shutdown()
 		{
 			// call underlaying shutdown
-			StreamConnection::shutdown();
+			StreamConnection::close();
 
 			// close the stream
 			_stream.close();
@@ -268,11 +268,11 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			// disconnect
-			_stream.shutdown();
-
 			// stop the receiver
 			_receiver.shutdown();
+
+			// disconnect
+			_stream.shutdown();
 
 			// send myself to the graveyard
 			bury();
