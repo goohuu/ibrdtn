@@ -190,7 +190,6 @@ int main(int argc, char *argv[])
 		}
 
 		// Shutdown the client connection.
-		client.shutdown();
 		client.close();
 		conn.close();
 

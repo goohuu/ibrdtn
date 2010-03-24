@@ -93,8 +93,6 @@ namespace dtn
 			/**
 			 * this method gets called if the connection goes down
 			 */
-			virtual void shutdown();
-
 			virtual void eventShutdown();
 			virtual void eventTimeout();
 			virtual void eventConnectionUp(const StreamContactHeader &header);

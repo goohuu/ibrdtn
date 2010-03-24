@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	writeBundle(stdout, filename, b);
 
 	// Shutdown the client connection.
-	client.shutdown();
+	client.close();
 
 	conn.close();
 

@@ -257,7 +257,7 @@ extern "C" void dtn_close_endpoint(DTN_EP ep) {
 		cout << "C_API: Trying to close non existing ep " << ep << endl;
 		return;
 	}
-	dtn_fds[ep].gate->shutdown();
+	dtn_fds[ep].gate->close();
 	dtn_fds[ep].gate==NULL;
 
 }

@@ -154,7 +154,7 @@ int main(int argc, char** argv)
             }
 
             // close the client connection
-            client.shutdown();
+            client.close();
 
             // close the connection
             conn.close();

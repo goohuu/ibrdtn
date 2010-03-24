@@ -45,12 +45,12 @@ namespace dtn
 					yield();
 				}
 			} catch (dtn::api::ConnectionException ex) {
-				_client.shutdown();
+				_client.close();
 			} catch (dtn::exceptions::IOException ex) {
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 				cout << ex.what() << endl;
 #endif
-				_client.shutdown();
+				_client.close();
 			}
 
 		}
@@ -97,12 +97,6 @@ namespace dtn
 		void Client::received(const StreamContactHeader &h)
 		{
 			_connected = true;
-		}
-
-		void Client::shutdown()
-		{
-			_connected = false;
-			StreamConnection::close();
 		}
 
 		void Client::eventTimeout()

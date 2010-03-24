@@ -240,7 +240,7 @@ int main(int argc, char *argv[])
 		gateway.flush();
 	}
 
-	gateway.shutdown();
+	gateway.close();
 
 	::close(tunnel_fd);
 
