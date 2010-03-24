@@ -135,6 +135,9 @@ namespace dtn
 				// close the stream
 				close();
 
+				// call the shutdown event
+				_conn.eventShutdown();
+
 				// forward the catched exception
 				throw ex;
 			}

@@ -72,8 +72,8 @@ namespace dtn
 			 * and will be used with the bundle protocol for TCP (draft-irtf-dtnrg-tcp-clayer-02)
 			 * provided by the StreamConnection class.
 			 */
-			Client(COMMUNICATION_MODE mode, string app, iostream &stream, bool async = true);
-			Client(string app, iostream &stream, bool async = true);
+			Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream, bool async = true);
+			Client(string app, ibrcommon::tcpstream &stream, bool async = true);
 
 			/**
 			 * Virtual destructor for this class.
@@ -107,6 +107,7 @@ namespace dtn
 			virtual void received(const dtn::api::Bundle &b) {};
 
 		private:
+			ibrcommon::tcpstream &_stream;
 			COMMUNICATION_MODE _mode;
 			string _app;
 			bool _connected;

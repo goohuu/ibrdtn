@@ -13,6 +13,7 @@
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/Exceptions.h"
 
+#include "ibrcommon/net/tcpstream.h"
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 
@@ -55,13 +56,13 @@ namespace dtn
 
 		}
 
-		Client::Client(COMMUNICATION_MODE mode, string app, iostream &stream, bool async)
-		  : StreamConnection(*this, stream), _mode(mode), _app(app), _connected(false), _async(async), _receiver(*this)
+		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream, bool async)
+		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _connected(false), _async(async), _receiver(*this)
 		{
 		}
 
-		Client::Client(string app, iostream &stream, bool async)
-		  : StreamConnection(*this, stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _async(async), _receiver(*this)
+		Client::Client(string app, ibrcommon::tcpstream &stream, bool async)
+		  : StreamConnection(*this, stream), _stream(stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _async(async), _receiver(*this)
 		{
 		}
 
@@ -69,6 +70,7 @@ namespace dtn
 		{
 			// wait for the closed connection
 			wait();
+			_stream.close();
 		}
 
 		void Client::connect()
@@ -102,11 +104,13 @@ namespace dtn
 		void Client::eventTimeout()
 		{
 			_connected = false;
+			_stream.done();
 		}
 
 		void Client::eventShutdown()
 		{
 			_connected = false;
+			_stream.done();
 		}
 
 		void Client::eventConnectionUp(const StreamContactHeader &header)

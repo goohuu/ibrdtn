@@ -37,11 +37,12 @@ namespace dtn
 		void ClientHandler::eventShutdown()
 		{
 			// shutdown message received
+			(*_stream).done();
 		}
 
 		void ClientHandler::eventTimeout()
 		{
-			_connected = false;
+			(*_stream).done();
 		}
 
 		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
