@@ -18,6 +18,7 @@
 #include "core/Graveyard.h"
 #include "ibrcommon/net/tcpstream.h"
 #include "core/EventReceiver.h"
+#include <memory>
 
 using namespace dtn::streams;
 
@@ -25,11 +26,10 @@ namespace dtn
 {
 	namespace daemon
 	{
-		class ClientHandler : public dtn::core::AbstractWorker, public ibrcommon::JoinableThread, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver
+		class ClientHandler : public dtn::core::AbstractWorker, public ibrcommon::JoinableThread, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver, public dtn::streams::StreamConnection::Callback
 		{
 		public:
-			ClientHandler(iostream &stream);
-			ClientHandler(int socket);
+			ClientHandler(ibrcommon::tcpstream *stream);
 			virtual ~ClientHandler();
 
 			bool isConnected();
@@ -40,17 +40,20 @@ namespace dtn
 
 			void raiseEvent(const dtn::core::Event *evt);
 
+			virtual void eventShutdown();
+			virtual void eventTimeout();
+			virtual void eventConnectionUp(const StreamContactHeader &header);
+
 		protected:
-			void received(dtn::streams::StreamContactHeader &h);
+			void received(const dtn::streams::StreamContactHeader &h);
 			void run();
 
 		private:
+			auto_ptr<ibrcommon::tcpstream> _stream;
 			dtn::streams::StreamConnection _connection;
 			StreamContactHeader _contact;
 
 			bool _connected;
-
-			ibrcommon::tcpstream _tcpstream;
 		};
 	}
 }

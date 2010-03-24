@@ -18,23 +18,37 @@ namespace dtn
 {
 	namespace daemon
 	{
-		ClientHandler::ClientHandler(iostream &stream)
-		 : _connection(stream), _connected(false)
-		{
-			bindEvent(GlobalEvent::className);
-		}
-
-		ClientHandler::ClientHandler(int socket)
-		 : _tcpstream(socket, ibrcommon::tcpstream::STREAM_INCOMING), _connection(_tcpstream), _connected(false)
+		ClientHandler::ClientHandler(ibrcommon::tcpstream *stream)
+		 : _stream(stream), _connection(*this, *_stream), _connected(false)
 		{
 			bindEvent(GlobalEvent::className);
 		}
 
 		ClientHandler::~ClientHandler()
 		{
-			_connection.waitFor();
+			_connection.wait();
 			unbindEvent(GlobalEvent::className);
 			join();
+		}
+
+		void ClientHandler::eventShutdown()
+		{
+			// shutdown message received
+		}
+
+		void ClientHandler::eventTimeout()
+		{
+			_connected = false;
+		}
+
+		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
+		{
+			// initialize the AbstractWorker
+			// deactivate the thread for receiving bundles is bit 0x80 is set
+			AbstractWorker::initialize(header._localeid.getApplication(), !(header._flags & 0x80));
+
+			// contact received event
+			received(header);
 		}
 
 		void ClientHandler::embalm()
@@ -59,7 +73,7 @@ namespace dtn
 
 		bool ClientHandler::isConnected()
 		{
-			return _connected;
+			return _connection.isConnected();
 		}
 
 		void ClientHandler::shutdown()
@@ -68,9 +82,8 @@ namespace dtn
 			cout << "Client disconnected: " << _eid.getString() << endl;
 			cout << "shutdown: ClientHandler" << endl;
 #endif
-
-			_tcpstream.close();
-			_connection.shutdown();
+			(*_stream).close();
+			_connection.close();
 			AbstractWorker::shutdown();
 
 			bury();
@@ -79,25 +92,13 @@ namespace dtn
 		void ClientHandler::run()
 		{
 			try {
-				// receive the header
-				_connection >> _contact;
-				received(_contact);
-
-				// reply with own header
-				StreamContactHeader srv_header(dtn::core::BundleCore::local);
-				_connection << srv_header; _connection.flush();
-
-				// initialize the AbstractWorker
-				// deactivate the thread for receiving bundles is bit 0x80 is set
-				AbstractWorker::initialize(_contact._localeid.getApplication(), !(_contact._flags & 0x80));
+				// do the handshake
+				_connection.handshake(dtn::core::BundleCore::local, 10);
 
 				// set to connected
 				_connected = true;
 
-				// start the receiver thread
-				_connection.start();
-
-				while (isConnected())
+				while (_connection.good())
 				{
 					Bundle b;
 					_connection >> b;
@@ -130,7 +131,7 @@ namespace dtn
 			_connection.flush();
 		}
 
-		void ClientHandler::received(StreamContactHeader &h)
+		void ClientHandler::received(const StreamContactHeader &h)
 		{
 			_contact = h;
 

@@ -10,10 +10,6 @@
 #define STREAMDATASEGMENT_H_
 
 #include "ibrdtn/default.h"
-#include "ibrdtn/streams/BundleWriter.h"
-#include "ibrdtn/streams/BundleStreamReader.h"
-
-using namespace dtn::data;
 
 namespace dtn
 {
@@ -33,10 +29,10 @@ namespace dtn
 
 			enum ShutdownReason
 			{
-				MSG_SHUTDOWN_NONE = 0x00,
-				MSG_SHUTDOWN_IDLE_TIMEOUT = 0x01,
-				MSG_SHUTDOWN_VERSION_MISSMATCH = 0x02,
-				MSG_SHUTDOWN_BUSY = 0x03
+				MSG_SHUTDOWN_NONE = 0xff,
+				MSG_SHUTDOWN_IDLE_TIMEOUT = 0x00,
+				MSG_SHUTDOWN_VERSION_MISSMATCH = 0x01,
+				MSG_SHUTDOWN_BUSY = 0x02
 			};
 
 			StreamDataSegment(SegmentType type, size_t size); // creates a ACK or DATA segment
@@ -52,10 +48,6 @@ namespace dtn
 
 			friend std::ostream &operator<<(std::ostream &stream, const StreamDataSegment &seg);
 			friend std::istream &operator>>(std::istream &stream, StreamDataSegment &seg);
-
-		private:
-			void write( std::ostream &stream ) const;
-			void read( std::istream &stream );
 		};
 	}
 }

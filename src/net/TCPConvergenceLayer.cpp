@@ -28,136 +28,101 @@ namespace dtn
 {
 	namespace net
 	{
-		/*
-		 * class TCPBundleStream
-		 */
-		TCPConvergenceLayer::TCPConnection::TCPBundleStream::TCPBundleStream(TCPConnection &conn, int socket, ibrcommon::tcpstream::stream_direction d)
-		 : _conn(conn), _stream(socket, d), StreamConnection(_stream), _reactive_fragmentation(false)
-		{
-			_node.setAddress(_stream.getAddress());
-			_node.setPort(_stream.getPort());
-			_node.setProtocol(TCP_CONNECTION);
+//		/*
+//		 * class TCPBundleStream
+//		 */
+//		TCPConvergenceLayer::TCPConnection::TCPBundleStream::TCPBundleStream(TCPConnection &conn, ibrcommon::tcpstream *stream)
+//		 : _conn(conn), _stream(stream), StreamConnection(*_stream), _reactive_fragmentation(false)
+//		{
+//			_node.setAddress(_stream->getAddress());
+//			_node.setPort(_stream->getPort());
+//			_node.setProtocol(TCP_CONNECTION);
+//
+//#ifdef DO_EXTENDED_DEBUG_OUTPUT
+//			cout << "new tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
+//#endif
+//		}
 
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "new tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
-#endif
-		}
+//		TCPConvergenceLayer::TCPConnection::TCPBundleStream::~TCPBundleStream()
+//		{
+//#ifdef DO_EXTENDED_DEBUG_OUTPUT
+//			cout << "removed tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
+//#endif
+//		}
+//
+//		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::TCPBundleStream::getNode() const
+//		{
+//			return _node;
+//		}
 
-		TCPConvergenceLayer::TCPConnection::TCPBundleStream::~TCPBundleStream()
-		{
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "removed tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
-#endif
-		}
 
-		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::TCPBundleStream::getNode() const
-		{
-			return _node;
-		}
+//		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out)
+//		{
+//			// send the header
+//			(*this) << out << std::flush;
+//
+//			try {
+//				// get the header
+//				(*this) >> in;
+//				_node.setURI(in.getEID().getString());
+//
+//				// raise Event
+//				ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, in._localeid, &_conn);
+//
+//				// startup the connection threads
+//				StreamConnection::start();
+//
+//				// set the timer for this connection
+//				StreamConnection::setTimer(out._keepalive, in._keepalive - 5);
+//
+//				// check fragmentation flag
+//				_reactive_fragmentation = (in._flags & 0x02);
+//
+//			} catch (dtn::exceptions::InvalidDataException ex) {
+//
+//				// return with shutdown, if the stream is wrong
+//				(*_stream) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH) << std::flush;
+//
+//				//StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
+//				StreamConnection::shutdown();
+//
+//				// close the stream
+//				_stream->close();
+//
+//				// forward the catched exception
+//				throw ex;
+//			}
+//		}
 
-		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::shutdown()
-		{
-			// call underlaying shutdown
-			StreamConnection::close();
-
-			// close the stream
-			_stream.close();
-
-			// wait for the closed connection
-			StreamConnection::waitClosed();
-		}
-
-		bool TCPConvergenceLayer::TCPConnection::TCPBundleStream::waitCompleted()
-		{
-			// wait until all ACKs are received or the connection is closed
-			if (!StreamConnection::waitCompleted())
-			{
-				// connection is closed before all ACKs are received
-				// if reactive fragmentation is enabled
-				if (_reactive_fragmentation)
-				{
-					// then throw a exception to activate the fragmentation process
-					throw BundleConnection::ConnectionInterruptedException(StreamConnection::_ack_size);
-				}
-				else
-				{
-					// if no fragmentation is possible, requeue the bundle
-					throw dtn::exceptions::IOException("write to stream failed");
-				}
-			}
-
-			StreamConnection::_ack_size = 0;
-
-			return true;
-		}
-
-		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out)
-		{
-			// send the header
-			(*this) << out; (*this).flush();
-
-			try {
-				// get the header
-				(*this) >> in;
-				_node.setURI(in.getEID().getString());
-
-				// raise Event
-				ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, in._localeid, &_conn);
-
-				// startup the connection threads
-				StreamConnection::start();
-
-				// set the timer for this connection
-				StreamConnection::setTimer(out._keepalive, in._keepalive - 5);
-
-				// check fragmentation flag
-				_reactive_fragmentation = (in._flags & 0x02);
-
-			} catch (dtn::exceptions::InvalidDataException ex) {
-
-				// return with shutdown, if the stream is wrong
-				_stream << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH); flush();
-
-				//StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
-				StreamConnection::shutdown();
-
-				// close the stream
-				_stream.close();
-
-				// forward the catched exception
-				throw ex;
-			}
-		}
-
-		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::eventTimeout()
-		{
-			// close the stream
-			_stream.close();
-
-			// wait for the closed connection
-			StreamConnection::waitClosed();
-
-			// signal timeout
-			_conn.eventTimeout();
-		}
-
-		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::eventShutdown()
-		{
-			// close the stream
-			_stream.close();
-
-			// wait for the closed connection
-			StreamConnection::waitClosed();
-
-			// signal timeout
-			_conn.eventShutdown();
-		}
+//		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::eventTimeout()
+//		{
+//			// close the stream
+//			_stream->close();
+//
+//			// wait for the closed connection
+//			StreamConnection::waitClosed();
+//
+//			// signal timeout
+//			_conn.eventTimeout();
+//		}
+//
+//		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::eventShutdown()
+//		{
+//			// close the stream
+//			_stream->close();
+//
+//			// wait for the closed connection
+//			StreamConnection::waitClosed();
+//
+//			// signal timeout
+//			_conn.eventShutdown();
+//		}
 
 		/*
 		 * class TCPConnection
 		 */
-		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d)
-		 : _stream(*this, socket, d), _cl(cl), _receiver(*this), _connected(false)
+		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, ibrcommon::tcpstream *stream)
+		 : _tcpstream(stream), _stream(*this, *_tcpstream), _cl(cl), _receiver(*this)
 		{
 			_cl.add(this);
 
@@ -170,16 +135,19 @@ namespace dtn
 			unbindEvent(GlobalEvent::className);
 			unbindEvent(NodeEvent::className);
 
+			// wait until all data is received
+			_stream.wait();
+
 			// stop the receiver
 			_receiver.shutdown();
 
 			// disconnect
-			_stream.shutdown();
-
-			_receiver.waitFor();
-			_stream.waitFor();
+			_stream.close();
 
 			_cl.remove(this);
+
+			// delete the tcpstream
+			delete _tcpstream;
 		}
 
 		void TCPConvergenceLayer::TCPConnection::embalm()
@@ -217,20 +185,14 @@ namespace dtn
 
 		const StreamContactHeader TCPConvergenceLayer::TCPConnection::getHeader() const
 		{
-			return _in_header;
+			return _peer;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::initialize(dtn::streams::StreamContactHeader header)
+		void TCPConvergenceLayer::TCPConnection::initialize(const dtn::data::EID &name, const size_t timeout)
 		{
 			try {
-				// define the outgoing header
-				_out_header = header;
-
 				// do the handshake
-				_stream.handshake(_in_header, _out_header);
-
-				// set state to connected
-				_connected = true;
+				_stream.handshake(name, timeout);
 
 				// start the receiver for incoming bundles
 				_receiver.start();
@@ -239,7 +201,11 @@ namespace dtn
 				// mark up for deletion
 				bury();
 			}
+		}
 
+		void TCPConvergenceLayer::TCPConnection::eventConnectionUp(const StreamContactHeader &header)
+		{
+			_node.setURI(header._localeid.getString());
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
@@ -248,7 +214,7 @@ namespace dtn
 			_receiver.shutdown();
 
 			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _in_header._localeid, this);
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _peer._localeid, this);
 
 			// send myself to the graveyard
 			bury();
@@ -260,7 +226,7 @@ namespace dtn
 			_receiver.shutdown();
 
 			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _in_header._localeid, this);
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _peer._localeid, this);
 
 			// send myself to the graveyard
 			bury();
@@ -268,11 +234,14 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			// stop the receiver
-			_receiver.shutdown();
+			// wait until the stream is closed
+			_stream.wait();
 
 			// disconnect
-			_stream.shutdown();
+			_stream.close();
+
+			// stop the receiver
+			_receiver.shutdown();
 
 			// send myself to the graveyard
 			bury();
@@ -280,12 +249,12 @@ namespace dtn
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
 		{
-			return _stream.getNode();
+			return _node;
 		}
 
 		bool TCPConvergenceLayer::TCPConnection::isConnected()
 		{
-			return _connected;
+			return _stream.isConnected();
 		}
 
 		bool TCPConvergenceLayer::TCPConnection::isBusy() const
@@ -295,8 +264,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::read(dtn::data::Bundle &bundle)
 		{
-			ibrcommon::MutexLock l(_readlock);
-
 			try {
 				_stream >> bundle;
 				if (!_stream.good()) throw dtn::exceptions::IOException("read from stream failed");
@@ -309,14 +276,13 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::write(const dtn::data::Bundle &bundle)
 		{
-			static ibrcommon::Mutex mutex;
-			ibrcommon::IndicatingLock l(mutex, _busy);
+			ibrcommon::IndicatingLock l(_busymutex, _busy);
 
 			// transmit the bundle and flush
-			_stream << bundle; _stream.flush();
+			_stream << bundle << std::flush;
 
 			// wait until all segments are acknowledged.
-			_stream.waitCompleted();
+			_stream.wait();
 		}
 
 		TCPConvergenceLayer::TCPConnection::Receiver::Receiver(TCPConnection &connection)
@@ -382,9 +348,8 @@ namespace dtn
 		}
 
 		TCPConvergenceLayer::TCPConvergenceLayer(ibrcommon::NetInterface net)
-		 : _net(net), tcpserver(net), _running(true), _header(dtn::core::BundleCore::local)
+		 : _net(net), tcpserver(net), _running(true)
 		{
-			_header._keepalive = 10;
 		}
 
 		TCPConvergenceLayer::~TCPConvergenceLayer()
@@ -426,59 +391,17 @@ namespace dtn
 			}
 
 			// create a connection
-			TCPConnection *conn = new TCPConnection(*this, sock, ibrcommon::tcpstream::STREAM_OUTGOING);
+			TCPConnection *conn = new TCPConnection(*this, new ibrcommon::tcpstream(sock));
 
 			// raise setup event
 			EID eid(n.getURI());
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, eid, conn);
 
 			// start the ClientHandler (service)
-			conn->initialize(_header);
+			conn->initialize(dtn::core::BundleCore::local, 10);
 
 			return conn;
 		}
-
-//		// search a matching Connection or create a new one
-//		BundleConnection* TCPConvergenceLayer::getConnection(const dtn::core::Node &n)
-//		{
-//			if (n.getProtocol() != TCP_CONNECTION) return NULL;
-//
-//			// Lock the connection in this section
-//			{
-//				ibrcommon::MutexLock l(_connection_lock);
-//
-//				std::list<TCPConnection*>::iterator iter = _connections.begin();
-//
-//				EID node_eid(n.getURI());
-//
-//#ifdef DO_EXTENDED_DEBUG_OUTPUT
-//				cout << "search for '" << node_eid.getString() << "' in active connections" << endl;
-//#endif
-//
-//				while (iter != _connections.end())
-//				{
-//					if ( (*iter)->isConnected() )
-//					{
-//#ifdef DO_EXTENDED_DEBUG_OUTPUT
-//						cout << "check node '" << (*iter)->getNode().getURI() << "'" << endl;
-//#endif
-//						EID eid((*iter)->getNode().getURI());
-//
-//						if (eid == node_eid)
-//						{
-//							if ( (*iter)->isConnected() )
-//							{
-//								return (*iter);
-//							}
-//						}
-//					}
-//
-//					iter++;
-//				}
-//			}
-//
-//			return openConnection(n);
-//		}
 
 		void TCPConvergenceLayer::run()
 		{
@@ -488,10 +411,10 @@ namespace dtn
 				if (waitPending())
 				{
 					// create a new Connection
-					TCPConnection *conn = new TCPConnection(*this, accept(), ibrcommon::tcpstream::STREAM_INCOMING);
+					TCPConnection *conn = new TCPConnection(*this, accept());
 
 					// start the ClientHandler (service)
-					conn->initialize(_header);
+					conn->initialize(dtn::core::BundleCore::local, 10);
 				}
 
 				// breakpoint to stop this thread

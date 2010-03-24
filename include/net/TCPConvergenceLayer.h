@@ -25,6 +25,8 @@
 #include "net/DiscoveryServiceProvider.h"
 #include "ibrcommon/net/NetInterface.h"
 
+#include <memory>
+
 namespace dtn
 {
 	namespace net
@@ -39,10 +41,10 @@ namespace dtn
 		 : public ibrcommon::tcpserver, public ibrcommon::JoinableThread, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
-			class TCPConnection : public BundleConnection, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver
+			class TCPConnection : public BundleConnection, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver, public StreamConnection::Callback
 			{
 			public:
-				TCPConnection(TCPConvergenceLayer &cl, int socket, ibrcommon::tcpstream::stream_direction d);
+				TCPConnection(TCPConvergenceLayer &cl, ibrcommon::tcpstream *stream);
 				virtual ~TCPConnection();
 
 				/**
@@ -50,7 +52,7 @@ namespace dtn
 				 * the connection header.
 				 * @param header
 				 */
-				void initialize(dtn::streams::StreamContactHeader header);
+				void initialize(const dtn::data::EID &name, const size_t timeout = 10);
 
 				/**
 				 * shutdown the whole tcp connection
@@ -94,19 +96,14 @@ namespace dtn
 				bool isConnected();
 				bool isBusy() const;
 
+				/**
+				 * callback methods for tcpstream
+				 */
+				virtual void eventShutdown();
+				virtual void eventTimeout();
+				virtual void eventConnectionUp(const StreamContactHeader &header);
+
 			private:
-				/**
-				 * this method gets called by sub-classes
-				 * on a timeout
-				 */
-				void eventTimeout();
-
-				/**
-				 * this method gets called by sub-classes
-				 * on a shutdown (disconnect)
-				 */
-				void eventShutdown();
-
 				/**
 				 * Receiver sub-process
 				 * This sub-process is implemented as a thread
@@ -126,42 +123,11 @@ namespace dtn
 					TCPConnection &_connection;
 				};
 
-				class TCPBundleStream : public dtn::streams::StreamConnection
-				{
-				public:
-					TCPBundleStream(TCPConnection &conn, int socket = 0, ibrcommon::tcpstream::stream_direction d = ibrcommon::tcpstream::STREAM_OUTGOING);
-					virtual ~TCPBundleStream();
+				StreamConnection _stream;
+				ibrcommon::tcpstream *_tcpstream;
 
-					const dtn::core::Node& getNode() const;
-
-					void handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out);
-
-					/**
-					 * shutdown the BundleStream
-					 */
-					virtual void shutdown();
-
-					/**
-					 * This method block until a bundle is fully transfered
-					 * or the connection is terminated.
-					 * @return True, if the bundle is transferred. False, if the connection is terminated.
-					 */
-					virtual bool waitCompleted();
-
-				protected:
-					virtual void eventTimeout();
-					virtual void eventShutdown();
-
-				private:
-					ibrcommon::tcpstream _stream;
-					dtn::core::Node _node;
-
-					bool _reactive_fragmentation;
-
-					TCPConnection &_conn;
-				};
-
-				TCPBundleStream _stream;
+				bool _busy;
+				ibrcommon::Mutex _busymutex;
 
 				TCPConvergenceLayer &_cl;
 
@@ -169,13 +135,8 @@ namespace dtn
 				// to the storage.
 				Receiver _receiver;
 
-				dtn::streams::StreamContactHeader _out_header;
-				dtn::streams::StreamContactHeader _in_header;
-
-				bool _connected;
-				bool _busy;
-
-				ibrcommon::Mutex _readlock;
+				StreamContactHeader _peer;
+				dtn::core::Node _node;
 			};
 
 			/**
@@ -209,7 +170,6 @@ namespace dtn
 
 			std::list<TCPConnection*> _connections;
 
-			dtn::streams::StreamContactHeader _header;
 			ibrcommon::Mutex _connection_lock;
 		};
 	}

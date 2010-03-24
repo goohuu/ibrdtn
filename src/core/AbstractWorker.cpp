@@ -8,7 +8,8 @@
 #include "core/AbstractWorker.h"
 #include "core/BundleCore.h"
 #include "net/BundleReceivedEvent.h"
-
+#include "ibrcommon/thread/MutexLock.h"
+#include <typeinfo>
 
 namespace dtn
 {
@@ -17,12 +18,29 @@ namespace dtn
 		AbstractWorker::AbstractWorkerAsync::AbstractWorkerAsync(AbstractWorker &worker)
 		 : _worker(worker), _running(true)
 		{
-
+			bindEvent(dtn::net::BundleReceivedEvent::className);
 		}
 
 		AbstractWorker::AbstractWorkerAsync::~AbstractWorkerAsync()
 		{
+			unbindEvent(dtn::net::BundleReceivedEvent::className);
 			shutdown();
+		}
+
+		void AbstractWorker::AbstractWorkerAsync::raiseEvent(const dtn::core::Event *evt)
+		{
+			try {
+				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+
+				if (received.getBundle().destination == _worker._eid)
+				{
+					ibrcommon::MutexLock l(_receive_cond);
+					_receive_bundles.push(received.getBundle());
+					_receive_cond.signal(true);
+				}
+			} catch (std::bad_cast ex) {
+
+			}
 		}
 
 		void AbstractWorker::AbstractWorkerAsync::shutdown()
@@ -35,8 +53,13 @@ namespace dtn
 
 			_running = false;
 
-			BundleStorage &storage = BundleCore::getInstance().getStorage();
-			storage.unblock(_worker._eid);
+//			BundleStorage &storage = BundleCore::getInstance().getStorage();
+//			storage.unblock(_worker._eid);
+
+			{
+				ibrcommon::MutexLock l(_receive_cond);
+				_receive_cond.signal(true);
+			}
 
 			join();
 		}
@@ -46,7 +69,18 @@ namespace dtn
 			while (_running)
 			{
 				try {
-					dtn::data::Bundle b = _worker.receive();
+					ibrcommon::MutexLock l(_receive_cond);
+					while (_receive_bundles.empty())
+					{
+						if (!_running) return;
+						_receive_cond.wait();
+					}
+
+					BundleStorage &storage = BundleCore::getInstance().getStorage();
+					dtn::data::Bundle b = storage.get( _receive_bundles.front() );
+					storage.remove(b);
+					_receive_bundles.pop();
+
 					_worker.callbackBundleReceived(b);
 				} catch (dtn::exceptions::NoBundleFoundException ex) {
 					return;
@@ -90,7 +124,7 @@ namespace dtn
 		dtn::data::Bundle AbstractWorker::receive()
 		{
 			BundleStorage &storage = BundleCore::getInstance().getStorage();
-			dtn::data::Bundle b = storage.get(_eid);
+			dtn::data::Bundle b = storage.get( _eid );
 			storage.remove(b);
 			return b;
 		}

@@ -8,7 +8,6 @@
 #include "ibrdtn/data/EID.h"
 
 #include "ibrdtn/utils/Utils.h"
-#include "ibrcommon/net/tcpserver.h"
 #include "limits.h"
 #include <iostream>
 

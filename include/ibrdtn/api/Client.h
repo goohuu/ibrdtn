@@ -12,10 +12,8 @@
 #include "ibrdtn/default.h"
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/streams/BundleStreamWriter.h"
-#include "ibrdtn/streams/BundleStreamReader.h"
-#include "ibrdtn/streams/BundleFactory.h"
 #include "ibrdtn/streams/StreamConnection.h"
+#include "ibrcommon/net/tcpstream.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Exceptions.h"
@@ -42,7 +40,7 @@ namespace dtn
 		 *
 		 * For asynchronous reception of bundle this class implements a thread.
 		 */
-		class Client : public StreamConnection
+		class Client : public StreamConnection, public StreamConnection::Callback
 		{
 		private:
 			class AsyncReceiver : public ibrcommon::JoinableThread
@@ -97,17 +95,18 @@ namespace dtn
 			 */
 			virtual void shutdown();
 
+			virtual void eventShutdown();
+			virtual void eventTimeout();
+			virtual void eventConnectionUp(const StreamContactHeader &header);
+
 		protected:
 			/**
 			 * This method is called on the receipt of the handshake of the daemon. If
 			 * you like to validate your connection you could overload this method, but must
 			 * call the super method.
 			 */
-			virtual void received(dtn::streams::StreamContactHeader &h);
-			virtual void received(dtn::api::Bundle &b) {};
-
-			virtual void eventTimeout();
-			virtual void eventShutdown();
+			virtual void received(const dtn::streams::StreamContactHeader &h);
+			virtual void received(const dtn::api::Bundle &b) {};
 
 		private:
 			COMMUNICATION_MODE _mode;

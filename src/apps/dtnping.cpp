@@ -17,8 +17,8 @@
 class EchoClient : public dtn::api::Client
 {
 	public:
-		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app, std::iostream &stream)
-		 : dtn::api::Client(mode, app, stream, false)
+		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
+		 : dtn::api::Client(mode, app, stream, false), _stream(stream)
 		{
 		}
 
@@ -60,6 +60,9 @@ class EchoClient : public dtn::api::Client
 			// ... flush out
 			flush();
 		}
+
+	private:
+		ibrcommon::tcpstream &_stream;
 };
 
 void print_help()
@@ -188,7 +191,7 @@ int main(int argc, char *argv[])
 
 		// Shutdown the client connection.
 		client.shutdown();
-
+		client.close();
 		conn.close();
 
 	} catch (ibrcommon::tcpclient::SocketException ex) {

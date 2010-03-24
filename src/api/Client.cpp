@@ -56,44 +56,34 @@ namespace dtn
 		}
 
 		Client::Client(COMMUNICATION_MODE mode, string app, iostream &stream, bool async)
-		  : StreamConnection(stream), _mode(mode), _app(app), _connected(false), _async(async), _receiver(*this)
+		  : StreamConnection(*this, stream), _mode(mode), _app(app), _connected(false), _async(async), _receiver(*this)
 		{
 		}
 
 		Client::Client(string app, iostream &stream, bool async)
-		  : StreamConnection(stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _async(async), _receiver(*this)
+		  : StreamConnection(*this, stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _async(async), _receiver(*this)
 		{
 		}
 
 		Client::~Client()
 		{
 			// wait for the closed connection
-			//StreamConnection::waitState(StreamConnection::CONNECTION_CLOSED);
+			wait();
 		}
 
 		void Client::connect()
 		{
 			// do a handshake
-			StreamContactHeader header(EID("dtn:local/" + _app));
+			EID localeid(EID("dtn:local/" + _app));
+
+			// connection flags
+			char flags = 0;
 
 			// set comm. mode
-			if ((_mode == MODE_SENDONLY) && !(header._flags & 0x80))
-				header._flags += 0x80;
+			if (_mode == MODE_SENDONLY) flags += 0x80;
 
-			// transmit the header
-			(*this) << header; (*this).flush();
-
-			// read the header
-			(*this) >> _header;
-
-			// call received method
-			received(_header);
-
-			// set connected to true
-			_connected = true;
-
-			// run myself
-			start();
+			// do the handshake
+			handshake(localeid, 10, flags);
 
 			// run the receiver
 			if (_async) _receiver.start();
@@ -104,7 +94,7 @@ namespace dtn
 			return _connected;
 		}
 
-		void Client::received(StreamContactHeader &h)
+		void Client::received(const StreamContactHeader &h)
 		{
 			_connected = true;
 		}
@@ -112,7 +102,7 @@ namespace dtn
 		void Client::shutdown()
 		{
 			_connected = false;
-			StreamConnection::shutdown();
+			StreamConnection::close();
 		}
 
 		void Client::eventTimeout()
@@ -123,6 +113,15 @@ namespace dtn
 		void Client::eventShutdown()
 		{
 			_connected = false;
+		}
+
+		void Client::eventConnectionUp(const StreamContactHeader &header)
+		{
+			// call received method
+			received(header);
+
+			// set connected to true
+			_connected = true;
 		}
 	}
 }

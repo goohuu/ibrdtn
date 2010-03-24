@@ -12,8 +12,6 @@
 
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/EID.h"
-#include "ibrdtn/streams/BundleWriter.h"
-#include "ibrdtn/streams/BundleStreamReader.h"
 
 using namespace dtn::data;
 
@@ -40,10 +38,6 @@ namespace dtn
 
 			friend std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h);
 			friend std::istream &operator>>(std::istream &stream, StreamContactHeader &h);
-
-		private:
-			void write( std::ostream &stream ) const;
-			void read( std::istream &stream );
 		};
 	}
 }

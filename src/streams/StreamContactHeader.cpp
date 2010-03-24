@@ -9,7 +9,6 @@
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/BundleString.h"
-#include "ibrdtn/streams/bpstreambuf.h"
 #include <typeinfo>
 
 using namespace dtn::data;
@@ -47,33 +46,17 @@ namespace dtn
 
 		std::ostream &operator<<(std::ostream &stream, const StreamContactHeader &h)
 		{
-			try {
-				// do we write to a bpstreambuf?
-				bpstreambuf &buf = dynamic_cast<bpstreambuf&>(*stream.rdbuf());
+			//BundleStreamWriter writer(stream);
+			stream << "dtn!" << TCPCL_VERSION << h._flags;
+			stream.write( (char*)&h._keepalive, 2 );
 
-				// write header to the buffer
-				buf << h;
-			} catch (std::bad_cast ex) {
-				// write seg to "stream"
-				h.write(stream);
-			}
+			dtn::data::BundleString eid(h._localeid.getString());
+			stream << eid;
+
+			return stream;
 		}
 
 		std::istream &operator>>(std::istream &stream, StreamContactHeader &h)
-		{
-			try {
-				// do we write to a bpstreambuf?
-				bpstreambuf &buf = dynamic_cast<bpstreambuf&>(*stream.rdbuf());
-
-				// read seg
-				buf >> h;
-			} catch (std::bad_cast ex) {
-				// read seg from "stream"
-				h.read(stream);
-			}
-		}
-
-		void StreamContactHeader::read( std::istream &stream )
 		{
 			char buffer[512];
 			char magic[5];
@@ -95,29 +78,21 @@ namespace dtn
 			}
 
 			// flags
-			stream.get(_flags);
+			stream.get(h._flags);
 
 			// keepalive
 			char keepalive[2];
 			stream.read(keepalive, 2);
 
-			_keepalive = 0;
-			_keepalive += keepalive[0];
-			_keepalive += (keepalive[1] << 8);
+			h._keepalive = 0;
+			h._keepalive += keepalive[0];
+			h._keepalive += (keepalive[1] << 8);
 
 			dtn::data::BundleString eid;
 			stream >> eid;
-			_localeid = EID(eid);
-		}
+			h._localeid = EID(eid);
 
-		void StreamContactHeader::write( std::ostream &stream ) const
-		{
-			//BundleStreamWriter writer(stream);
-			stream << "dtn!" << TCPCL_VERSION << _flags;
-			stream.write( (char*)&_keepalive, 2 );
-
-			dtn::data::BundleString eid(_localeid.getString());
-			stream << eid;
+			return stream;
 		}
 	}
 }

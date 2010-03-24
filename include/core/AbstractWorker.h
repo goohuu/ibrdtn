@@ -3,9 +3,14 @@
 
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/EID.h"
+#include "core/EventReceiver.h"
 #include "ibrcommon/thread/Mutex.h"
+#include "ibrcommon/thread/Conditional.h"
 #include "net/ConvergenceLayer.h"
+
+#include <queue>
 
 using namespace dtn::data;
 
@@ -15,12 +20,14 @@ namespace dtn
 	{
 		class AbstractWorker : public ibrcommon::Mutex
 		{
-			class AbstractWorkerAsync : public ibrcommon::JoinableThread
+			class AbstractWorkerAsync : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
 			{
 			public:
 				AbstractWorkerAsync(AbstractWorker &worker);
 				~AbstractWorkerAsync();
 				void shutdown();
+
+				virtual void raiseEvent(const dtn::core::Event *evt);
 
 			protected:
 				void run();
@@ -28,6 +35,9 @@ namespace dtn
 			private:
 				AbstractWorker &_worker;
 				bool _running;
+
+				ibrcommon::Conditional _receive_cond;
+				std::queue<dtn::data::BundleID> _receive_bundles;
 			};
 
 			public:

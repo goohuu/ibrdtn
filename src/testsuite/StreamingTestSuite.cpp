@@ -6,50 +6,12 @@
  */
 
 #include "testsuite/StreamingTestSuite.h"
+#include <memory>
 
 namespace dtn
 {
 	namespace testsuite
 	{
-		StreamingTestSuite::StreamChecker::StreamChecker(ibrcommon::NetInterface &net, int chars)
-		 : _srv(net), failed(false), _chars(chars)
-		{
-		}
-
-		StreamingTestSuite::StreamChecker::~StreamChecker()
-		{
-			join();
-		}
-
-		void StreamingTestSuite::StreamChecker::run()
-		{
-			char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-			size_t byte = 0;
-
-			ibrcommon::tcpstream stream(_srv.accept());
-
-			while (!stream.eof())
-			{
-				char value;
-
-				// read one char
-				stream.get(value);
-
-				if ((value != values[byte % _chars]) && stream.good())
-				{
-					cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
-					failed = true;
-					break;
-				}
-
-				byte++;
-			}
-
-			cout << (byte-1) << " bytes received." << endl;
-
-			stream.close();
-		}
-
 		StreamingTestSuite::StreamConnChecker::StreamConnChecker(ibrcommon::NetInterface &net, int chars)
 		 : _srv(net), failed(false), _chars(chars)
 		{
@@ -65,18 +27,19 @@ namespace dtn
 			char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 			size_t byte = 0;
 
-			ibrcommon::tcpstream tcpstream(_srv.accept());
-			dtn::streams::StreamConnection stream(tcpstream);
-			stream.start();
+			ibrcommon::tcpstream *tcpstream = _srv.accept();
+			dtn::streams::StreamConnection *stream = new dtn::streams::StreamConnection(*this, *tcpstream);
 
-			while (!stream.eof())
+			stream->handshake(EID("dtn:local/node2"));
+
+			while (stream->good())
 			{
 				char value;
 
 				// read one char
-				stream.get(value);
+				stream->get(value);
 
-				if ((value != values[byte % _chars]) && stream.good())
+				if ((value != values[byte % _chars]) && stream->good())
 				{
 					cout << "error in byte " << byte << ", " << value << " != " << values[byte % _chars] << endl;
 					failed = true;
@@ -88,8 +51,43 @@ namespace dtn
 
 			cout << (byte-1) << " bytes received." << endl;
 
-			stream.shutdown();
-			tcpstream.close();
+			stream->wait();
+			stream->close();
+
+			delete stream;
+
+			tcpstream->close();
+			delete tcpstream;
+		}
+
+		void StreamingTestSuite::StreamConnChecker::eventShutdown()
+		{
+			std::cout << "StreamingTestSuite::StreamConnChecker::eventShutdown" << std::endl;
+		}
+
+		void StreamingTestSuite::StreamConnChecker::eventTimeout()
+		{
+
+		}
+
+		void StreamingTestSuite::StreamConnChecker::eventConnectionUp(const StreamContactHeader &header)
+		{
+
+		}
+
+		void StreamingTestSuite::eventShutdown()
+		{
+			std::cout << "StreamingTestSuite::eventShutdown" << std::endl;
+		}
+
+		void StreamingTestSuite::eventTimeout()
+		{
+
+		}
+
+		void StreamingTestSuite::eventConnectionUp(const StreamContactHeader &header)
+		{
+
 		}
 
 		StreamingTestSuite::StreamingTestSuite()
@@ -109,16 +107,6 @@ namespace dtn
 
 			for (int k = 2; k <= 10; k++)
 			{
-				cout << "tcpstreamTest with " << k << " chars: ";
-				if ( !tcpstreamTest(k) )
-				{
-					cout << " failed" << endl;
-					ret = false;
-				}
-			}
-
-			for (int k = 2; k <= 10; k++)
-			{
 				cout << "streamconnectionTest with " << k << " chars: ";
 				if ( !streamconnectionTest(k) )
 				{
@@ -134,6 +122,24 @@ namespace dtn
 			return ret;
 		}
 
+		StreamingTestSuite::Receiver::Receiver(dtn::streams::StreamConnection &conn)
+		 : _conn(conn) {}
+
+		StreamingTestSuite::Receiver::~Receiver()
+		{
+			_conn.close();
+			join();
+		}
+
+		void StreamingTestSuite::Receiver::run()
+		{
+			while (!_conn.eof())
+			{
+				_conn.get();
+				yield();
+			}
+		}
+
 		bool StreamingTestSuite::streamconnectionTest(int chars)
 		{
 			ibrcommon::NetInterface net(ibrcommon::NetInterface::NETWORK_TCP, "lo", 4556);
@@ -141,12 +147,15 @@ namespace dtn
 			char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
 
-			StreamConnChecker receiver(net, chars);
-			receiver.start();
+			StreamConnChecker *checker = new StreamConnChecker(net, chars);
+			checker->start();
 
 			ibrcommon::tcpclient client("127.0.0.1", 4556);
-			dtn::streams::StreamConnection stream(client);
-			stream.start();
+			dtn::streams::StreamConnection stream(*this, client);
+			stream.handshake(EID("dtn:local/node1"));
+
+			Receiver receiver(stream);
+			receiver.start();
 
 			// send some data
 			for (size_t j = 0; j < 10; j++)
@@ -158,53 +167,23 @@ namespace dtn
 						stream.put(values[k]);
 					}
 				}
-
-				stream.flush();
 			}
 
-			if (!stream.waitCompleted())
-			{
-				cout << "not all data acknowleged" << endl;
-			}
+			stream.flush();
 
-			stream.shutdown();
-			client.close();
+			stream.wait();
+			stream.close();
+
 			receiver.waitFor();
 
-			if (receiver.failed) return false;
-
-			return true;
-		}
-
-		bool StreamingTestSuite::tcpstreamTest(int chars)
-		{
-			ibrcommon::NetInterface net(ibrcommon::NetInterface::NETWORK_TCP, "lo", 1234);
-
-			char values[10] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-
-			StreamChecker receiver(net, chars);
-			receiver.start();
-
-			ibrcommon::tcpclient client("127.0.0.1", 1234);
-
-			// send some data
-			for (size_t j = 0; j < 10; j++)
-			{
-				for (size_t i = 0; i < 100000; i++)
-				{
-					for (int k = 0; k < chars; k++)
-					{
-						client.put(values[k]);
-					}
-				}
-
-				client.flush();
-			}
-
+			client.flush();
 			client.close();
-			receiver.waitFor();
 
-			if (receiver.failed) return false;
+			checker->waitFor();
+
+			if (checker->failed) return false;
+
+			delete checker;
 
 			return true;
 		}
