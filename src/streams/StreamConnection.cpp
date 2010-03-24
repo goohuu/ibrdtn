@@ -84,7 +84,7 @@ namespace dtn
 
 				// wait until the shutdown is received
 				ibrcommon::MutexLock inl(_in_state);
-				while (!_in_state.ifState(CONNECTION_CLOSED))
+				while (!_in_state.ifState(CONNECTION_CLOSED) && good())
 				{
 					(*this).get();
 				}

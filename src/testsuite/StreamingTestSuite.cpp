@@ -51,8 +51,8 @@ namespace dtn
 
 			cout << (byte-1) << " bytes received." << endl;
 
-			stream->wait();
-			stream->close();
+			//stream->wait();
+			//stream->close();
 
 			delete stream;
 
@@ -167,16 +167,14 @@ namespace dtn
 						stream.put(values[k]);
 					}
 				}
-			}
 
-			stream.flush();
+				stream.flush();
+			}
 
 			stream.wait();
 			stream.close();
 
 			receiver.waitFor();
-
-			client.flush();
 			client.close();
 
 			checker->waitFor();

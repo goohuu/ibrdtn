@@ -123,6 +123,9 @@ namespace dtn
 					TCPConnection &_connection;
 				};
 
+				void cleanup();
+				bool _cleaned;
+
 				StreamConnection _stream;
 				ibrcommon::tcpstream *_tcpstream;
 
@@ -169,8 +172,7 @@ namespace dtn
 			BundleConnection* getConnection(const dtn::core::Node &n);
 
 			std::list<TCPConnection*> _connections;
-
-			ibrcommon::Mutex _connection_lock;
+			ibrcommon::Conditional _connection_lock;
 		};
 	}
 }

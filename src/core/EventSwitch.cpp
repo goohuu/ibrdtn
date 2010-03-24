@@ -47,7 +47,7 @@ namespace dtn
 
 				{
 					ibrcommon::MutexLock l(_cond_queue);
-					if (_queue.empty()) _cond_queue.wait();
+					if (_queue.empty() && _running) _cond_queue.wait();
 					if (!_running) return;
 
 					// get item out of the queue
@@ -132,7 +132,11 @@ namespace dtn
 		void EventSwitch::stop()
 		{
 			EventSwitch &s = EventSwitch::getInstance();
-			s._running = false;
+			{
+				ibrcommon::MutexLock l(s._cond_queue);
+				s._running = false;
+				s._cond_queue.signal(true);
+			}
 			s.join();
 		}
 	}

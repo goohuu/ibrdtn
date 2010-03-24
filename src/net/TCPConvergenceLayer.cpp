@@ -28,101 +28,11 @@ namespace dtn
 {
 	namespace net
 	{
-//		/*
-//		 * class TCPBundleStream
-//		 */
-//		TCPConvergenceLayer::TCPConnection::TCPBundleStream::TCPBundleStream(TCPConnection &conn, ibrcommon::tcpstream *stream)
-//		 : _conn(conn), _stream(stream), StreamConnection(*_stream), _reactive_fragmentation(false)
-//		{
-//			_node.setAddress(_stream->getAddress());
-//			_node.setPort(_stream->getPort());
-//			_node.setProtocol(TCP_CONNECTION);
-//
-//#ifdef DO_EXTENDED_DEBUG_OUTPUT
-//			cout << "new tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
-//#endif
-//		}
-
-//		TCPConvergenceLayer::TCPConnection::TCPBundleStream::~TCPBundleStream()
-//		{
-//#ifdef DO_EXTENDED_DEBUG_OUTPUT
-//			cout << "removed tcpconnection, " << _node.getAddress() << ":" << _node.getPort() << endl;
-//#endif
-//		}
-//
-//		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::TCPBundleStream::getNode() const
-//		{
-//			return _node;
-//		}
-
-
-//		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::handshake(dtn::streams::StreamContactHeader &in, dtn::streams::StreamContactHeader &out)
-//		{
-//			// send the header
-//			(*this) << out << std::flush;
-//
-//			try {
-//				// get the header
-//				(*this) >> in;
-//				_node.setURI(in.getEID().getString());
-//
-//				// raise Event
-//				ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, in._localeid, &_conn);
-//
-//				// startup the connection threads
-//				StreamConnection::start();
-//
-//				// set the timer for this connection
-//				StreamConnection::setTimer(out._keepalive, in._keepalive - 5);
-//
-//				// check fragmentation flag
-//				_reactive_fragmentation = (in._flags & 0x02);
-//
-//			} catch (dtn::exceptions::InvalidDataException ex) {
-//
-//				// return with shutdown, if the stream is wrong
-//				(*_stream) << StreamDataSegment(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH) << std::flush;
-//
-//				//StreamConnection::setState(StreamConnection::CONNECTION_SHUTDOWN);
-//				StreamConnection::shutdown();
-//
-//				// close the stream
-//				_stream->close();
-//
-//				// forward the catched exception
-//				throw ex;
-//			}
-//		}
-
-//		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::eventTimeout()
-//		{
-//			// close the stream
-//			_stream->close();
-//
-//			// wait for the closed connection
-//			StreamConnection::waitClosed();
-//
-//			// signal timeout
-//			_conn.eventTimeout();
-//		}
-//
-//		void TCPConvergenceLayer::TCPConnection::TCPBundleStream::eventShutdown()
-//		{
-//			// close the stream
-//			_stream->close();
-//
-//			// wait for the closed connection
-//			StreamConnection::waitClosed();
-//
-//			// signal timeout
-//			_conn.eventShutdown();
-//		}
-
 		/*
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, ibrcommon::tcpstream *stream)
-		 : _tcpstream(stream), _stream(*this, *_tcpstream), _cl(cl), _receiver(*this)
+		 : _tcpstream(stream), _cleaned(false), _stream(*this, *_tcpstream), _cl(cl), _receiver(*this)
 		{
 			_cl.add(this);
 
@@ -135,19 +45,23 @@ namespace dtn
 			unbindEvent(GlobalEvent::className);
 			unbindEvent(NodeEvent::className);
 
-			// wait until all data is received
-			_stream.wait();
+			cleanup();
+		}
 
-			// stop the receiver
-			_receiver.shutdown();
+		void TCPConvergenceLayer::TCPConnection::cleanup()
+		{
+			if (_cleaned) return;
 
-			// disconnect
-			_stream.close();
+			shutdown();
+
+			// delete the tcpstream
+			_tcpstream->close();
 
 			_cl.remove(this);
 
-			// delete the tcpstream
 			delete _tcpstream;
+
+			_cleaned = true;
 		}
 
 		void TCPConvergenceLayer::TCPConnection::embalm()
@@ -333,6 +247,7 @@ namespace dtn
 
 			// remove the connection out of the list
 			_connections.push_back( conn );
+			_connection_lock.signal(true);
 		}
 
 		void TCPConvergenceLayer::remove(TCPConnection *conn)
@@ -345,6 +260,7 @@ namespace dtn
 
 			// remove the connection out of the list
 			_connections.remove( conn );
+			_connection_lock.signal(true);
 		}
 
 		TCPConvergenceLayer::TCPConvergenceLayer(ibrcommon::NetInterface net)
@@ -354,11 +270,18 @@ namespace dtn
 
 		TCPConvergenceLayer::~TCPConvergenceLayer()
 		{
+			// wait until all connections are closed
+			ibrcommon::MutexLock l(_connection_lock);
+
+			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			{
+				(*iter)->shutdown();
+			}
+
+			while (!_connections.empty()) { _connection_lock.wait(); }
+
 			// stop the tcpserver
 			tcpserver::close();
-
-			// wait until all connections are closed
-			while (!_connections.empty()) { usleep(100); }
 
 			_running = false;
 			join();
@@ -405,20 +328,18 @@ namespace dtn
 
 		void TCPConvergenceLayer::run()
 		{
-			while (_running)
-			{
-				// wait for incoming connections
-				if (waitPending())
+			try {
+				while (_running)
 				{
-					// create a new Connection
+					// wait for incoming connections
 					TCPConnection *conn = new TCPConnection(*this, accept());
-
-					// start the ClientHandler (service)
 					conn->initialize(dtn::core::BundleCore::local, 10);
-				}
 
-				// breakpoint to stop this thread
-				yield();
+					// breakpoint to stop this thread
+					yield();
+				}
+			} catch (ibrcommon::tcpserver::SocketException ex) {
+				// socket is closed
 			}
 		}
 	}

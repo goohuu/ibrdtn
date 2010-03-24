@@ -36,8 +36,11 @@ namespace dtn
 		{
 			if (_out_state.ifState(SHUTDOWN)) return;
 
-			// return with shutdown, if the stream is wrong
-			_stream << StreamDataSegment(reason) << std::flush;
+			if (!_in_state.ifState(SHUTDOWN))
+			{
+				// return with shutdown, if the stream is wrong
+				_stream << StreamDataSegment(reason) << std::flush;
+			}
 
 			// set out state to shutdown
 			_out_state.setState(SHUTDOWN);
@@ -168,6 +171,8 @@ namespace dtn
 
 		void StreamConnection::StreamBuffer::readSegment()
 		{
+			if (_in_state.ifState(SHUTDOWN)) return;
+
 			// container for segment data
 			dtn::streams::StreamDataSegment seg;
 
@@ -178,7 +183,7 @@ namespace dtn
 			if (!_stream.good())
 			{
 				_in_state.setState(SHUTDOWN);
-				throw StreamClosedException();
+				return;
 			}
 
 			// reset the incoming timer
@@ -226,8 +231,6 @@ namespace dtn
 
 					// call the shutdown event
 					_conn.eventShutdown();
-
-					throw StreamClosedException();
 				}
 			}
 		}
@@ -319,15 +322,14 @@ namespace dtn
 				return traits_type::eof();
 			}
 
-			try {
-				// read segments until DATA is AVAILABLE
-				while (!_in_state.ifState(DATA_AVAILABLE))
+			// read segments until DATA is AVAILABLE
+			while (!_in_state.ifState(DATA_AVAILABLE))
+			{
+				readSegment();
+				if (_in_state.ifState(SHUTDOWN))
 				{
-					readSegment();
+					return traits_type::eof();
 				}
-			} catch (StreamClosedException ex) {
-				_in_state.setState(SHUTDOWN);
-				return traits_type::eof();
 			}
 
 			// set state to DATA TRANSFER

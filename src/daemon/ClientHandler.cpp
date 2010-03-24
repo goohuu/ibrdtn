@@ -26,8 +26,11 @@ namespace dtn
 
 		ClientHandler::~ClientHandler()
 		{
-			_connection.wait();
 			unbindEvent(GlobalEvent::className);
+
+			AbstractWorker::shutdown();
+			(*_stream).close();
+
 			join();
 		}
 
@@ -80,12 +83,9 @@ namespace dtn
 		{
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "Client disconnected: " << _eid.getString() << endl;
-			cout << "shutdown: ClientHandler" << endl;
 #endif
-			(*_stream).close();
+			_connection.wait();
 			_connection.close();
-			AbstractWorker::shutdown();
-
 			bury();
 		}
 

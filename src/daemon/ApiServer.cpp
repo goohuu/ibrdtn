@@ -35,20 +35,20 @@ namespace dtn
 
 		void ApiServer::run()
 		{
-			while (_running)
-			{
-				// wait for incoming connections
-				if (waitPending())
+			try {
+				while (_running)
 				{
 					// create a new ClientHandler
 					ClientHandler *handler = new ClientHandler( accept() );
 
 					// start the ClientHandler (service)
 					handler->start();
-				}
 
-				// breakpoint to stop this thread
-				yield();
+					// breakpoint to stop this thread
+					yield();
+				}
+			} catch (ibrcommon::tcpserver::SocketException ex) {
+				// socket is closed
 			}
 		}
 	}
