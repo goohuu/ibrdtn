@@ -97,7 +97,6 @@ namespace dtn
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
 
 			virtual dtn::data::Bundle get(const dtn::data::EID &eid);
-			virtual void unblock(const dtn::data::EID &eid);
 
 			/**
 			 * This method deletes a specific bundle in the storage.
@@ -157,16 +156,12 @@ namespace dtn
 
 			BundleStore _store;
 
-			virtual void shutdown();
-
 			bool _running;
 			RunMode _mode;
 			ibrcommon::File _workdir;
 			std::map<dtn::data::BundleID, ibrcommon::File> _bundlefiles;
 
 			ibrcommon::Conditional _dbchanged;
-			ibrcommon::AtomicCounter _blocker;
-			dtn::data::EID _unblock_eid;
 		};
 	}
 }

@@ -45,9 +45,6 @@ namespace dtn
 
 		void AbstractWorker::AbstractWorkerAsync::shutdown()
 		{
-//			BundleStorage &storage = BundleCore::getInstance().getStorage();
-//			storage.unblock(_worker._eid);
-
 			{
 				ibrcommon::MutexLock l(_receive_cond);
 				_running = false;
@@ -59,25 +56,29 @@ namespace dtn
 
 		void AbstractWorker::AbstractWorkerAsync::run()
 		{
+			BundleStorage &storage = BundleCore::getInstance().getStorage();
+			dtn::data::Bundle b;
+
 			while (_running)
 			{
 				try {
-					ibrcommon::MutexLock l(_receive_cond);
-					while (_receive_bundles.empty())
-					{
-						if (!_running) return;
-						_receive_cond.wait();
-					}
-
-					BundleStorage &storage = BundleCore::getInstance().getStorage();
-					dtn::data::Bundle b = storage.get( _receive_bundles.front() );
+					b = storage.get( _worker._eid );
 					storage.remove(b);
-					_receive_bundles.pop();
-
-					_worker.callbackBundleReceived(b);
 				} catch (dtn::exceptions::NoBundleFoundException ex) {
-					return;
+					{
+						ibrcommon::MutexLock l(_receive_cond);
+						while (_receive_bundles.empty())
+						{
+							if (!_running) return;
+							_receive_cond.wait();
+						}
+
+						b = storage.get( _receive_bundles.front() );
+						storage.remove(b);
+						_receive_bundles.pop();
+					}
 				}
+				_worker.callbackBundleReceived(b);
 			}
 		}
 

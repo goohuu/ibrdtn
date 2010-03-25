@@ -81,7 +81,6 @@ namespace dtn
 		 : _store(*this), _running(true), _mode(MODE_PERSISTENT), _workdir(workdir)
 		{
 			bindEvent(TimeEvent::className);
-			bindEvent(GlobalEvent::className);
 
 			// load persistent bundles
 			std::list<ibrcommon::File> files;
@@ -114,23 +113,11 @@ namespace dtn
 		SimpleBundleStorage::~SimpleBundleStorage()
 		{
 			unbindEvent(TimeEvent::className);
-			unbindEvent(GlobalEvent::className);
-
-			shutdown();
 		}
 
 		void SimpleBundleStorage::raiseEvent(const Event *evt)
 		{
 			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
-			const GlobalEvent *global = dynamic_cast<const GlobalEvent*>(evt);
-
-			if (global != NULL)
-			{
-				if (global->getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
-				{
-					shutdown();
-				}
-			}
 
 			if (time != NULL)
 			{
@@ -204,51 +191,19 @@ namespace dtn
 			_dbchanged.signal(true);
 		}
 
-		void SimpleBundleStorage::unblock(const dtn::data::EID &eid)
-		{
-			ibrcommon::MutexLock l(_dbchanged);
-			_unblock_eid = eid;
-			_dbchanged.signal(true);
-		}
-
-		void SimpleBundleStorage::shutdown()
-		{
-			ibrcommon::MutexLock l(_dbchanged);
-			_running = false;
-			_dbchanged.signal(true);
-		}
-
-
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)
 		{
 			ibrcommon::MutexLock l(_dbchanged);
-			ibrcommon::AtomicCounter::Lock alock(_blocker);
-
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "Storage: get bundle for " << eid.getString() << endl;
 #endif
 
-			while (_running)
+			for (std::set<dtn::data::Bundle>::const_iterator iter = _store.bundles.begin(); iter != _store.bundles.end(); iter++)
 			{
-				for (std::set<dtn::data::Bundle>::const_iterator iter = _store.bundles.begin(); iter != _store.bundles.end(); iter++)
+				const dtn::data::Bundle &bundle = (*iter);
+				if (bundle._destination == eid)
 				{
-					const dtn::data::Bundle &bundle = (*iter);
-					if (bundle._destination == eid)
-					{
-						return bundle;
-					}
-				}
-
-				_dbchanged.wait();
-
-				// step out on shutdown
-				if (!_running) break;
-
-				// leave this method if we need to unblock
-				if (_unblock_eid == eid)
-				{
-					_unblock_eid = EID();
-					break;
+					return bundle;
 				}
 			}
 
