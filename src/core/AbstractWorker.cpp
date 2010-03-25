@@ -45,19 +45,12 @@ namespace dtn
 
 		void AbstractWorker::AbstractWorkerAsync::shutdown()
 		{
-			if (!_running)
-			{
-				join();
-				return;
-			}
-
-			_running = false;
-
 //			BundleStorage &storage = BundleCore::getInstance().getStorage();
 //			storage.unblock(_worker._eid);
 
 			{
 				ibrcommon::MutexLock l(_receive_cond);
+				_running = false;
 				_receive_cond.signal(true);
 			}
 

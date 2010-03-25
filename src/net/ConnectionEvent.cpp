@@ -11,7 +11,7 @@ namespace dtn
 {
 	namespace net
 	{
-		ConnectionEvent::ConnectionEvent(State s, dtn::data::EID &p, dtn::net::BundleConnection *conn)
+		ConnectionEvent::ConnectionEvent(State s, const dtn::data::EID &p, dtn::net::BundleConnection *conn)
 		 : state(s), peer(p), _connection(conn)
 		{
 
@@ -22,7 +22,7 @@ namespace dtn
 
 		}
 
-		void ConnectionEvent::raise(State s, dtn::data::EID &p, dtn::net::BundleConnection *conn)
+		void ConnectionEvent::raise(State s, const dtn::data::EID &p, dtn::net::BundleConnection *conn)
 		{
 			// raise the new event
 			dtn::core::Event::raiseEvent( new ConnectionEvent(s, p, conn) );

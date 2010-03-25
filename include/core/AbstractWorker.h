@@ -24,7 +24,7 @@ namespace dtn
 			{
 			public:
 				AbstractWorkerAsync(AbstractWorker &worker);
-				~AbstractWorkerAsync();
+				virtual ~AbstractWorkerAsync();
 				void shutdown();
 
 				virtual void raiseEvent(const dtn::core::Event *evt);

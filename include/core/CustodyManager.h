@@ -39,7 +39,7 @@ namespace dtn
 				ibrcommon::Mutex m_custodylock;
 				unsigned int m_nextcustodytimer;
 				list<CustodyTimer> m_custodytimer;
-				ibrcommon::WaitForConditional m_breakwait;
+				ibrcommon::Conditional _wait;
 
 				bool _running;
 		};

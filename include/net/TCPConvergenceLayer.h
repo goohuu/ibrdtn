@@ -123,11 +123,8 @@ namespace dtn
 					TCPConnection &_connection;
 				};
 
-				void cleanup();
-				bool _cleaned;
-
+				std::auto_ptr<ibrcommon::tcpstream> _tcpstream;
 				StreamConnection _stream;
-				ibrcommon::tcpstream *_tcpstream;
 
 				bool _busy;
 				ibrcommon::Mutex _busymutex;

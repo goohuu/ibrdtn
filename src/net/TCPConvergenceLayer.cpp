@@ -32,10 +32,8 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(TCPConvergenceLayer &cl, ibrcommon::tcpstream *stream)
-		 : _tcpstream(stream), _cleaned(false), _stream(*this, *_tcpstream), _cl(cl), _receiver(*this)
+		 : _tcpstream(stream), _stream(*this, *stream), _cl(cl), _receiver(*this)
 		{
-			_cl.add(this);
-
 			bindEvent(GlobalEvent::className);
 			bindEvent(NodeEvent::className);
 		}
@@ -45,23 +43,7 @@ namespace dtn
 			unbindEvent(GlobalEvent::className);
 			unbindEvent(NodeEvent::className);
 
-			cleanup();
-		}
-
-		void TCPConvergenceLayer::TCPConnection::cleanup()
-		{
-			if (_cleaned) return;
-
 			shutdown();
-
-			// delete the tcpstream
-			_tcpstream->close();
-
-			_cl.remove(this);
-
-			delete _tcpstream;
-
-			_cleaned = true;
 		}
 
 		void TCPConvergenceLayer::TCPConnection::embalm()
@@ -119,7 +101,10 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionUp(const StreamContactHeader &header)
 		{
+			_peer = header;
 			_node.setURI(header._localeid.getString());
+
+			_cl.add(this);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
@@ -129,6 +114,14 @@ namespace dtn
 
 			// event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _peer._localeid, this);
+
+			// close the tcpstream
+			try {
+				_tcpstream->close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
+			_cl.remove(this);
 
 			// send myself to the graveyard
 			bury();
@@ -142,23 +135,25 @@ namespace dtn
 			// event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _peer._localeid, this);
 
+			// close the tcpstream
+			try {
+				_tcpstream->close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
+			_cl.remove(this);
+
 			// send myself to the graveyard
 			bury();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			// wait until the stream is closed
+			// wait until all data is acknowledged
 			_stream.wait();
 
 			// disconnect
 			_stream.close();
-
-			// stop the receiver
-			_receiver.shutdown();
-
-			// send myself to the graveyard
-			bury();
 		}
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
@@ -248,6 +243,9 @@ namespace dtn
 			// remove the connection out of the list
 			_connections.push_back( conn );
 			_connection_lock.signal(true);
+
+			// raise up event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, conn->getHeader().getEID(), conn);
 		}
 
 		void TCPConvergenceLayer::remove(TCPConnection *conn)
@@ -270,20 +268,21 @@ namespace dtn
 
 		TCPConvergenceLayer::~TCPConvergenceLayer()
 		{
-			// wait until all connections are closed
-			ibrcommon::MutexLock l(_connection_lock);
-
-			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
-				(*iter)->shutdown();
+				for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				{
+					(*iter)->shutdown();
+				}
+
+				// wait until all connections are closed
+				ibrcommon::MutexLock l(_connection_lock);
+				while (!_connections.empty()) { _connection_lock.wait(); }
+
+				// stop the tcpserver
+				tcpserver::close();
+
+				_running = false;
 			}
-
-			while (!_connections.empty()) { _connection_lock.wait(); }
-
-			// stop the tcpserver
-			tcpserver::close();
-
-			_running = false;
 			join();
 		}
 

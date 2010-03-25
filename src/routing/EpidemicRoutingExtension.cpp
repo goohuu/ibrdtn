@@ -348,7 +348,11 @@ namespace dtn
 					readExtensionBlock(bundle);
 
 					// delete it
-					getRouter()->getStorage().remove(bundle);
+					try {
+						getRouter()->getStorage().remove(bundle);
+					} catch (dtn::exceptions::NoBundleFoundException ex) {
+
+					}
 
 					// remove the element in the queue
 					routingdata.pop();

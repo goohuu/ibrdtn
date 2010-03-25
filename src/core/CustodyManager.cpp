@@ -31,8 +31,11 @@ namespace dtn
 
 		CustodyManager::~CustodyManager()
 		{
-			_running = false;
-			m_breakwait.go();
+			{
+				ibrcommon::MutexLock l(_wait);
+				_running = false;
+				_wait.signal(true);
+			}
 			join();
 
 			unbindEvent(CustodyEvent::className);
@@ -49,7 +52,8 @@ namespace dtn
 				if (time->getAction() == TIME_SECOND_TICK)
 				{
 					// the time has changed
-					m_breakwait.go();
+					ibrcommon::MutexLock l(_wait);
+					_wait.signal(true);
 				}
 			}
 			else if (custody != NULL)
@@ -125,10 +129,11 @@ namespace dtn
 
 		void CustodyManager::run()
 		{
+			ibrcommon::MutexLock l(_wait);
 			while (_running)
 			{
 				checkCustodyTimer();
-				m_breakwait.wait();
+				_wait.wait();
 				yield();
 			}
 		}

@@ -37,7 +37,7 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(State state, dtn::data::EID &peer, dtn::net::BundleConnection *conn);
+			static void raise(State state, const dtn::data::EID &peer, dtn::net::BundleConnection *conn);
 
 			const State state;
 			const dtn::data::EID peer;
@@ -46,7 +46,7 @@ namespace dtn
 
 		private:
 			dtn::net::BundleConnection *_connection;
-			ConnectionEvent(State state, dtn::data::EID &peer, dtn::net::BundleConnection *conn);
+			ConnectionEvent(State state, const dtn::data::EID &peer, dtn::net::BundleConnection *conn);
 		};
 	}
 }

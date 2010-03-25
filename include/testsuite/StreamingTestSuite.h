@@ -27,7 +27,7 @@ namespace dtn
 			{
 			public:
 				StreamConnChecker(ibrcommon::NetInterface &net, int chars = 10);
-				~StreamConnChecker();
+				virtual ~StreamConnChecker();
 
 				void run();
 
@@ -46,7 +46,7 @@ namespace dtn
 			{
 			public:
 				Receiver(dtn::streams::StreamConnection &conn);
-				~Receiver();
+				virtual ~Receiver();
 
 				void run();
 

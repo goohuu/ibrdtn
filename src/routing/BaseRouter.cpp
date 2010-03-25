@@ -33,7 +33,9 @@ namespace dtn
 		{ }
 
 		BaseRouter::ThreadedExtension::~ThreadedExtension()
-		{ }
+		{
+			join();
+		}
 
 		void BaseRouter::ThreadedExtension::stopExtension()
 		{

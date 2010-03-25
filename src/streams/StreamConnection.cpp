@@ -81,7 +81,6 @@ namespace dtn
 			else
 			{
 				_buf.shutdown();
-				_callback.eventShutdown();
 
 				// wait until the shutdown is received
 				ibrcommon::MutexLock inl(_in_state);
