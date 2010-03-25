@@ -106,7 +106,6 @@ namespace dtn
 
 		void StreamConnection::eventAck(size_t ack, size_t sent)
 		{
-			ibrcommon::MutexLock l(_in_state);
 			_ack_size = ack;
 			_sent_size = sent;
 			_in_state.signal(true);

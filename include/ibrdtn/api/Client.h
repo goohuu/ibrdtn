@@ -90,6 +90,8 @@ namespace dtn
 			 */
 			bool isConnected();
 
+			void close();
+
 			/**
 			 * this method gets called if the connection goes down
 			 */

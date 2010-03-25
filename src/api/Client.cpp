@@ -96,6 +96,13 @@ namespace dtn
 			return _connected;
 		}
 
+		void Client::close()
+		{
+			// wait for all ACKs
+			StreamConnection::wait();
+			StreamConnection::close();
+		}
+
 		void Client::received(const StreamContactHeader &h)
 		{
 			_connected = true;
