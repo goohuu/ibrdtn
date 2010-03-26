@@ -73,8 +73,13 @@ namespace dtn
 							_receive_cond.wait();
 						}
 
-						b = storage.get( _receive_bundles.front() );
-						storage.remove(b);
+						try {
+							b = storage.get( _receive_bundles.front() );
+							storage.remove(b);
+						} catch (dtn::exceptions::NoBundleFoundException ex) {
+
+						}
+
 						_receive_bundles.pop();
 					}
 				}
