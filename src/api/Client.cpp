@@ -70,7 +70,11 @@ namespace dtn
 		{
 			// wait for the closed connection
 			wait();
-			_stream.close();
+			try {
+				_stream.close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
 		}
 
 		void Client::connect()
