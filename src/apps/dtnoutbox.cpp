@@ -238,7 +238,10 @@ int main(int argc, char** argv)
 					backoff = backoff * 2;
 				}
         	}
-        }
+    	} catch (ibrcommon::ConnectionClosedException ex) {
+        	// set the global connection to NULL
+        	_conn = NULL;
+    	}
     }
 
     return (EXIT_SUCCESS);

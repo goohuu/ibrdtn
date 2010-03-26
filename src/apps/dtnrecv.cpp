@@ -104,7 +104,11 @@ int main(int argc, char *argv[])
 	// Shutdown the client connection.
 	client.close();
 
-	conn.close();
+	try {
+		conn.close();
+	} catch (ibrcommon::ConnectionClosedException ex) {
+
+	}
 
 	try {
 		// write all following bundles

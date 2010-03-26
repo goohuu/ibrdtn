@@ -142,8 +142,12 @@ class TUN2BundleGateway : public dtn::api::Client
 		 */
 		virtual ~TUN2BundleGateway()
 		{
-			// Close the tcp connection.
-			_tcpclient.close();
+			try {
+				// Close the tcp connection.
+				_tcpclient.close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
 		};
 
 	private:

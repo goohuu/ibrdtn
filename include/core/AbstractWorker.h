@@ -52,7 +52,7 @@ namespace dtn
 			protected:
 				void initialize(const string uri, bool async = false);
 				void transmit(const Bundle &bundle);
-				dtn::data::Bundle receive();
+				//dtn::data::Bundle receive();
 
 				EID _eid;
 

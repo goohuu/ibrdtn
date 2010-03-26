@@ -196,6 +196,8 @@ int main(int argc, char *argv[])
 	} catch (ibrcommon::tcpclient::SocketException ex) {
 		cerr << "Can not connect to the daemon. Does it run?" << endl;
 		return -1;
+	} catch (ibrcommon::ConnectionClosedException ex) {
+
 	}
 
 	return 0;

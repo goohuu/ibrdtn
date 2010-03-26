@@ -115,12 +115,12 @@ namespace dtn
 			dtn::net::BundleReceivedEvent::raise(_eid, bundle);
 		}
 
-		dtn::data::Bundle AbstractWorker::receive()
-		{
-			BundleStorage &storage = BundleCore::getInstance().getStorage();
-			dtn::data::Bundle b = storage.get( _eid );
-			storage.remove(b);
-			return b;
-		}
+//		dtn::data::Bundle AbstractWorker::receive()
+//		{
+//			BundleStorage &storage = BundleCore::getInstance().getStorage();
+//			dtn::data::Bundle b = storage.get( _eid );
+//			storage.remove(b);
+//			return b;
+//		}
 	}
 }
