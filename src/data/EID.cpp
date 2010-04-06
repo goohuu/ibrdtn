@@ -23,52 +23,66 @@ namespace data
 	EID::EID(string scheme, string ssp)
 	 : m_value(scheme + ":" + ssp), m_scheme(scheme), m_node(""), m_application("")
 	{
-		// first char not "/", e.g. "//node1" -> 2
-		size_t first_char = ssp.find_first_not_of("/");
+		try {
+			// first char not "/", e.g. "//node1" -> 2
+			size_t first_char = ssp.find_first_not_of("/");
 
-		// start of application part
-		size_t application_start = ssp.find_first_of("/", first_char);
+			// start of application part
+			size_t application_start = ssp.find_first_of("/", first_char);
 
-		if (application_start == string::npos)
-		{
+			if (application_start == string::npos)
+			{
+				m_application = "";
+				m_node = ssp;
+			}
+			else
+			{
+				// extract application
+				m_application = ssp.substr(application_start, ssp.length() - application_start);
+
+				// extract node
+				m_node = ssp.substr(0, application_start);
+			}
+		} catch (std::out_of_range ex) {
+			m_value = "dtn:none";
+			m_scheme = "dtn";
+			m_node = "none";
 			m_application = "";
-			m_node = ssp;
-		}
-		else
-		{
-			// extract application
-			m_application = ssp.substr(application_start, ssp.length() - application_start);
-
-			// extract node
-			m_node = ssp.substr(0, application_start);
 		}
 	}
 
 	EID::EID(string value)
 	: m_value(value)
 	{
-		m_scheme = m_value.substr(0, m_value.find_first_of(":"));
+		try {
+			m_scheme = m_value.substr(0, m_value.find_first_of(":"));
 
-		string ssp = m_value.substr(m_scheme.length() + 1, m_value.length() - m_scheme.length() - 1);
+			string ssp = m_value.substr(m_scheme.length() + 1, m_value.length() - m_scheme.length() - 1);
 
-		// first char not "/", e.g. "//node1" -> 2
-		size_t first_char = ssp.find_first_not_of("/");
+			// first char not "/", e.g. "//node1" -> 2
+			size_t first_char = ssp.find_first_not_of("/");
 
-		// start of application part
-		size_t application_start = ssp.find_first_of("/", first_char);
+			// start of application part
+			size_t application_start = ssp.find_first_of("/", first_char);
 
-		if (application_start == string::npos)
-		{
+			if (application_start == string::npos)
+			{
+				m_application = "";
+				m_node = ssp;
+			}
+			else
+			{
+				// extract application
+				m_application = ssp.substr(application_start, ssp.length() - application_start);
+
+				// extract node
+				m_node = ssp.substr(0, application_start);
+			}
+		} catch (std::out_of_range ex) {
+			m_value = "dtn:none";
+			m_scheme = "dtn";
+			m_node = "none";
 			m_application = "";
-			m_node = ssp;
-		}
-		else
-		{
-			// extract application
-			m_application = ssp.substr(application_start, ssp.length() - application_start);
-
-			// extract node
-			m_node = ssp.substr(0, application_start);
 		}
 	}
 
