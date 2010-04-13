@@ -13,7 +13,6 @@
 #include "core/BundleEvent.h"
 #include "ibrcommon/net/tcpserver.h"
 #include "ibrcommon/TimeMeasurement.h"
-#include "ibrcommon/Math.h"
 #include "core/BundleCore.h"
 #include "routing/RequeueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
@@ -21,6 +20,9 @@
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "net/ConnectionEvent.h"
+
+#include <iostream>
+#include <iomanip>
 
 using namespace dtn::core;
 
@@ -238,7 +240,8 @@ namespace dtn
 				double kbytes_per_second = (job._bundle.getSize() / m.getSeconds()) / 1024;
 
 				// print out throughput
-				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer completed after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer completed after " << m << " with "
+						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << endl;
 
 				// signal completion of the transfer
 				TransferCompletedEvent::raise(job._destination, job._bundle);
@@ -249,7 +252,8 @@ namespace dtn
 				double kbytes_per_second = (ex.getLastAck() / m.getSeconds()) / 1024;
 
 				// print out throughput
-				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer interrupted after " << m << " with " << ibrcommon::Math::Round(kbytes_per_second, 2) << " kb/s" << endl;
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer interrupted after " << m << " with "
+						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << endl;
 
 				// TODO: the connection has been interrupted => create a fragment
 
