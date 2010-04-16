@@ -12,7 +12,7 @@ dnl --------------------------------
 dnl ibrdtn package configuration
 dnl --------------------------------
 
-PACKAGE=ibrdtn
+PACKAGE=ibrdtnd
 
 #release versioning
 GENERIC_MAJOR_VERSION=0
