@@ -1,3 +1,4 @@
+#include "config.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/AutoDelete.h"

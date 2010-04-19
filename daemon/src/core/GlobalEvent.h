@@ -8,6 +8,7 @@
 #ifndef GLOBALEVENT_H_
 #define GLOBALEVENT_H_
 
+#include "config.h"
 #include "core/Event.h"
 
 namespace dtn
@@ -32,7 +33,7 @@ namespace dtn
 			static void raise(const Action a);
 
 #ifdef DO_DEBUG_OUTPUT
-			string toString() const;
+			std::string toString() const;
 #endif
 
 			static const std::string className;

@@ -44,7 +44,7 @@ namespace dtn
 		}
 
 #ifdef DO_DEBUG_OUTPUT
-		string TimeEvent::toString() const
+		std::string TimeEvent::toString() const
 		{
 
 		}

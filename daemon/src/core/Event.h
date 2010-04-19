@@ -8,6 +8,7 @@
 #ifndef EVENT_H_
 #define EVENT_H_
 
+#include "config.h"
 #include "core/EventReceiver.h"
 
 namespace dtn
@@ -21,7 +22,7 @@ namespace dtn
 			virtual const std::string getName() const = 0;
 
 #ifdef DO_DEBUG_OUTPUT
-			virtual string toString() const = 0;
+			virtual std::string toString() const = 0;
 #endif
 
 		protected:

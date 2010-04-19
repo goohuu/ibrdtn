@@ -8,6 +8,7 @@
 #ifndef BUNDLEEVENT_H_
 #define BUNDLEEVENT_H_
 
+#include "config.h"
 #include <string>
 #include "ibrdtn/data/Bundle.h"
 #include "core/Event.h"

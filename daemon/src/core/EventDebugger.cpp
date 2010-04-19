@@ -5,6 +5,8 @@
  *      Author: morgenro
  */
 
+#include "config.h"
+
 #ifdef DO_DEBUG_OUTPUT
 
 #include "core/EventDebugger.h"
