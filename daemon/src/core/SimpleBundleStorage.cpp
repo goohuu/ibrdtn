@@ -3,7 +3,8 @@
 #include "core/GlobalEvent.h"
 #include "core/BundleExpiredEvent.h"
 
-#include "ibrdtn/utils/Utils.h"
+#include <ibrdtn/utils/Utils.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -14,8 +15,8 @@ namespace dtn
 {
 	namespace core
 	{
-		SimpleBundleStorage::Iterator::Iterator(std::set<dtn::data::Bundle>::iterator iter)
-		: _iter(iter) {}
+		SimpleBundleStorage::Iterator::Iterator(std::set<dtn::data::Bundle>::iterator iter, ibrcommon::Mutex &mutex)
+		: _iter(iter), _mutex(mutex) {}
 
 		SimpleBundleStorage::Iterator::~Iterator()
 		{}
@@ -34,6 +35,16 @@ namespace dtn
 		bool SimpleBundleStorage::Iterator::operator!=(const SimpleBundleStorage::Iterator& other)
 		{
 			return(_iter != other._iter);
+		}
+
+		void SimpleBundleStorage::Iterator::enter()
+		{
+			_mutex.enter();
+		}
+
+		void SimpleBundleStorage::Iterator::leave()
+		{
+			_mutex.leave();
 		}
 
 		// Get the next element.
@@ -62,12 +73,12 @@ namespace dtn
 
 		SimpleBundleStorage::Iterator SimpleBundleStorage::begin()
 		{
-			return SimpleBundleStorage::Iterator(_store.bundles.begin());
+			return SimpleBundleStorage::Iterator(_store.bundles.begin(), _store.bundleslock);
 		}
 
 		SimpleBundleStorage::Iterator SimpleBundleStorage::end()
 		{
-			return SimpleBundleStorage::Iterator(_store.bundles.end());
+			return SimpleBundleStorage::Iterator(_store.bundles.end(), _store.bundleslock);
 		}
 
 		SimpleBundleStorage::SimpleBundleStorage()
@@ -150,11 +161,13 @@ namespace dtn
 
 		bool SimpleBundleStorage::empty()
 		{
+			ibrcommon::MutexLock l(_store.bundleslock);
 			return _store.bundles.empty();
 		}
 
 		unsigned int SimpleBundleStorage::count()
 		{
+			ibrcommon::MutexLock l(_store.bundleslock);
 			return _store.bundles.size();
 		}
 
@@ -194,6 +207,7 @@ namespace dtn
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)
 		{
 			ibrcommon::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock bl(_store.bundleslock);
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "Storage: get bundle for " << eid.getString() << endl;
 #endif
@@ -213,6 +227,7 @@ namespace dtn
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_dbchanged);
+			ibrcommon::MutexLock bl(_store.bundleslock);
 
 			for (std::set<dtn::data::Bundle>::const_iterator iter = _store.bundles.begin(); iter != _store.bundles.end(); iter++)
 			{
@@ -229,6 +244,7 @@ namespace dtn
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
 			ibrcommon::MutexLock l(_dbchanged);
+
 			_store.remove(id);
 
 			if (_mode == MODE_PERSISTENT)
@@ -255,12 +271,15 @@ namespace dtn
 
 		void SimpleBundleStorage::BundleStore::store(const dtn::data::Bundle &bundle)
 		{
+			ibrcommon::MutexLock bl(bundleslock);
 			dtn::routing::BundleList::add(dtn::routing::MetaBundle(bundle));
 			bundles.insert(bundle);
 		}
 
 		void SimpleBundleStorage::BundleStore::remove(const dtn::data::BundleID &id)
 		{
+			ibrcommon::MutexLock bl(bundleslock);
+
 			for (std::set<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 			{
 				if ( id == (*iter) )
@@ -279,26 +298,31 @@ namespace dtn
 
 		void SimpleBundleStorage::BundleStore::clear()
 		{
+			ibrcommon::MutexLock bl(bundleslock);
 			bundles.clear();
 			dtn::routing::BundleList::clear();
 		}
 
 		void SimpleBundleStorage::BundleStore::eventBundleExpired(const ExpiringBundle &b)
 		{
-			for (std::set<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 			{
-				if ( b.bundle == (*iter) )
-				{
-					bundles.erase(iter);
-					break;
-				}
-			}
+				ibrcommon::MutexLock bl();
 
-			if (_sbs._mode == MODE_PERSISTENT)
-			{
-				// remove the file
-				_sbs._bundlefiles[b.bundle].remove();
-				_sbs._bundlefiles.erase(b.bundle);
+				for (std::set<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+				{
+					if ( b.bundle == (*iter) )
+					{
+						bundles.erase(iter);
+						break;
+					}
+				}
+
+				if (_sbs._mode == MODE_PERSISTENT)
+				{
+					// remove the file
+					_sbs._bundlefiles[b.bundle].remove();
+					_sbs._bundlefiles.erase(b.bundle);
+				}
 			}
 
 			// raise an event
