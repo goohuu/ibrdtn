@@ -16,7 +16,6 @@
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/thread/Timer.h"
-#include "ibrcommon/thread/TimerCallback.h"
 #include "ibrcommon/Exceptions.h"
 #include <iostream>
 #include <streambuf>
@@ -100,33 +99,11 @@ namespace dtn
 			 */
 			void close(bool force = false);
 
-//			/**
-//			 * Send a shutdown request to the peer and set a timer.
-//			 */
-//			void shutdown();
-
 			/**
 			 * Returns a variable which tells the connection status.
 			 * @return True, if connected.
 			 */
 			bool isConnected();
-
-//			/**
-//			 * This method tells us, if the current data transfer has not acknowledged parts.
-//			 * @return True, if no ACK is outstanding.
-//			 */
-//			bool isCompleted();
-//
-//			/**
-//			 * Wait until all ACKs are received.
-//			 * @return False, if a shutdown has been initiated but not all parts has been received.
-//			 */
-//			bool waitCompleted();
-//
-//			/**
-//			 * Wait until the connection has been closed.
-//			 */
-//			void waitClosed();
 
 			/**
 			 * wait until all data has been acknowledged
@@ -138,10 +115,9 @@ namespace dtn
 			/**
 			 * stream buffer class
 			 */
-			class StreamBuffer : public std::basic_streambuf<char, std::char_traits<char> >, public ibrcommon::TimerCallback
+			class StreamBuffer : public std::basic_streambuf<char, std::char_traits<char> >, public ibrcommon::SimpleTimerCallback
 			{
 			public:
-
 				enum State
 				{
 					INITIAL = 0,
@@ -182,7 +158,8 @@ namespace dtn
 				 * @param timer
 				 * @return
 				 */
-				bool timeout(ibrcommon::Timer *timer);
+				//bool timeout(ibrcommon::Timer *timer);
+				size_t timeout(size_t identifier);
 
 			protected:
 				virtual int sync();
@@ -190,6 +167,13 @@ namespace dtn
 				virtual int underflow();
 
 			private:
+				enum timerNames
+				{
+					TIMER_SHUTDOWN = 0,
+					TIMER_IN = 1,
+					TIMER_OUT = 2
+				};
+
 				void actionShutdown(const StreamDataSegment::ShutdownReason reason);
 				void actionClose();
 				void actionAck(size_t size);
@@ -218,9 +202,9 @@ namespace dtn
 				size_t _sent_size;
 				size_t _recv_size;
 
-				ibrcommon::Timer _in_timer;
-				ibrcommon::Timer _out_timer;
-				ibrcommon::Timer _shutdown_timer;
+				ibrcommon::MultiTimer _timer;
+				size_t _in_timeout;
+				size_t _out_timeout;
 			};
 
 			void connectionTimeout();

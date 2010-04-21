@@ -19,10 +19,18 @@ namespace dtn
 
 		Notifier::Notifier(std::string cmd) : _cmd(cmd)
 		{
-			bindEvent(NodeEvent::className);
 		}
 
 		Notifier::~Notifier()
+		{
+		}
+
+		void Notifier::componentUp()
+		{
+			bindEvent(NodeEvent::className);
+		}
+
+		void Notifier::componentDown()
 		{
 			unbindEvent(NodeEvent::className);
 		}

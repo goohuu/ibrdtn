@@ -8,6 +8,7 @@
 #ifndef BASEROUTER_H_
 #define BASEROUTER_H_
 
+#include "Component.h"
 #include "ibrdtn/data/DTNTime.h"
 #include "ibrdtn/data/BundleID.h"
 #include "core/EventReceiver.h"
@@ -20,7 +21,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		class BaseRouter : public dtn::core::EventReceiver
+		class BaseRouter : public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
 		{
 		public:
 			class Extension
@@ -80,11 +81,6 @@ namespace dtn
 			~BaseRouter();
 
 			/**
-			 * Initialize the routing modules
-			 */
-			void initialize();
-
-			/**
 			 * Add a routing extension to the routing core.
 			 * @param extension
 			 */
@@ -112,6 +108,10 @@ namespace dtn
 			dtn::data::Bundle getBundle(const dtn::data::BundleID &id);
 
 			dtn::core::BundleStorage &getStorage();
+
+		protected:
+			virtual void componentUp();
+			virtual void componentDown();
 
 		private:
 			dtn::core::BundleStorage &_storage;

@@ -10,12 +10,13 @@
 
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/WaitForConditional.h>
+#include "Component.h"
 
 namespace dtn
 {
 	namespace core
 	{
-		class Clock : public ibrcommon::WaitForConditional, public ibrcommon::JoinableThread
+		class Clock : public ibrcommon::WaitForConditional, public dtn::daemon::IndependentComponent
 		{
 		public:
 			/**
@@ -36,7 +37,9 @@ namespace dtn
 			static size_t getTime();
 
 		protected:
-			virtual void run();
+			virtual void componentUp();
+			virtual void componentRun();
+			virtual void componentDown();
 
 		private:
 			size_t _frequency;

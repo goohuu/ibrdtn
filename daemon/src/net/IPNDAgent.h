@@ -36,7 +36,9 @@ namespace dtn
 
 		protected:
 			void send(DiscoveryAnnouncement &announcement);
-			void run();
+			virtual void componentRun();
+			virtual void componentUp();
+			virtual void componentDown();
 
 		private:
 			ibrcommon::udpsocket _socket;

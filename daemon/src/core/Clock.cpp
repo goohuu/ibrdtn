@@ -13,15 +13,16 @@ namespace dtn
 {
 	namespace core
 	{
-		Clock::Clock(size_t frequency) : _frequency(frequency), _next(0)
+		Clock::Clock(size_t frequency) : _frequency(frequency), _next(0), _running(false)
 		{
-			_running = true;
 		}
 
 		Clock::~Clock()
 		{
-			_running = false;
-			join();
+			if (isRunning())
+			{
+				componentDown();
+			}
 		}
 
 		void Clock::sync()
@@ -34,8 +35,20 @@ namespace dtn
 			return dtn::utils::Utils::get_current_dtn_time();
 		}
 
-		void Clock::run()
+		void Clock::componentUp()
 		{
+		}
+
+		void Clock::componentDown()
+		{
+			_running = false;
+			join();
+		}
+
+		void Clock::componentRun()
+		{
+			_running = true;
+
 			while (_running)
 			{
 				size_t dtntime = getTime();

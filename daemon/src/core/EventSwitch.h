@@ -10,7 +10,7 @@
 
 #include "core/Event.h"
 #include "core/EventReceiver.h"
-#include <ibrcommon/thread/Thread.h>
+#include "Component.h"
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
@@ -42,12 +42,11 @@ namespace dtn
 
 		};
 
-		class EventSwitch : public ibrcommon::JoinableThread
+		class EventSwitch : public dtn::daemon::IndependentComponent
 		{
 		private:
 			EventSwitch();
 			virtual ~EventSwitch();
-			static EventSwitch& getInstance();
 
 			ibrcommon::Mutex _receiverlock;
 			std::map<std::string,std::list<EventReceiver*> > _list;
@@ -61,8 +60,11 @@ namespace dtn
 #endif
 
 			const std::list<EventReceiver*>& getReceivers(std::string eventName) const;
+
 		protected:
-			void run();
+			virtual void componentUp();
+			virtual void componentRun();
+			virtual void componentDown();
 
 			friend class Event;
 			friend class EventReceiver;
@@ -72,7 +74,7 @@ namespace dtn
 			static void raiseEvent(Event *evt);
 
 		public:
-			static void stop();
+			static EventSwitch& getInstance();
 		};
 	}
 }

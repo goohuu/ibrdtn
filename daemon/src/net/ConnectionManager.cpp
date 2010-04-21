@@ -31,27 +31,31 @@ namespace dtn
 	namespace net
 	{
 		ConnectionManager::ConnectionManager(int concurrent_transmitter)
-		 : _shutdown(false)
+		 : _shutdown(false), _concurrent_transmitter(concurrent_transmitter)
 		{
-			bindEvent(TimeEvent::className);
-			bindEvent(NodeEvent::className);
-			bindEvent(ConnectionEvent::className);
+		}
 
+		ConnectionManager::~ConnectionManager()
+		{
+		}
+
+		void ConnectionManager::componentUp()
+		{
 			// create transmitter
-			for (int i = 0; i < concurrent_transmitter; i++)
+			for (int i = 0; i < _concurrent_transmitter; i++)
 			{
 				ConnectionManager::Transmitter *t = new ConnectionManager::Transmitter(*this);
 				t->start();
 				_transmitter_list.push_back(t);
 			}
+
+			bindEvent(TimeEvent::className);
+			bindEvent(NodeEvent::className);
+			bindEvent(ConnectionEvent::className);
 		}
 
-		ConnectionManager::~ConnectionManager()
+		void ConnectionManager::componentDown()
 		{
-			unbindEvent(NodeEvent::className);
-			unbindEvent(TimeEvent::className);
-			unbindEvent(ConnectionEvent::className);
-
 			{
 				ibrcommon::MutexLock l(_job_cond);
 				_shutdown = true;
@@ -65,13 +69,12 @@ namespace dtn
 				delete (*iter);
 			}
 
-			list<ConvergenceLayer*>::iterator iter = _cl.begin();
+			// clear the list of convergence layers
+			_cl.clear();
 
-			while (iter != _cl.end())
-			{
-				delete (*iter);
-				iter++;
-			}
+			unbindEvent(NodeEvent::className);
+			unbindEvent(TimeEvent::className);
+			unbindEvent(ConnectionEvent::className);
 		}
 
 		void ConnectionManager::raiseEvent(const dtn::core::Event *evt)

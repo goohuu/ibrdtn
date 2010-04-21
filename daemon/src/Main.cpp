@@ -4,6 +4,7 @@
 #include "ibrcommon/AutoDelete.h"
 
 #include "core/BundleCore.h"
+#include "core/EventSwitch.h"
 #include "core/BundleStorage.h"
 #include "core/SimpleBundleStorage.h"
 #include "core/SQLiteBundleStorage.h"
@@ -31,6 +32,9 @@
 
 #include "ibrdtn/utils/Utils.h"
 #include "ibrcommon/net/NetInterface.h"
+
+#include "Component.h"
+#include <list>
 
 using namespace dtn::core;
 using namespace dtn::daemon;
@@ -96,6 +100,81 @@ void setGlobalVars(Configuration &config)
     }
 }
 
+void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::daemon::Component* > &components)
+{
+	dtn::core::BundleStorage *storage = NULL;
+
+	try {
+		// new methods for blobs
+		//storage = new dtn::core::SQLiteBundleStorage(conf.getPath("storage"), "sqlite.db", 2 UNIT_MB);
+		ibrcommon::File path = conf.getPath("storage");
+
+		// create workdir if needed
+		if (!path.exists())
+		{
+			ibrcommon::File::createDirectory(path);
+		}
+
+		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path);
+		components.push_back(sbs);
+	} catch (Configuration::ParameterNotSetException ex) {
+		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage();
+		components.push_back(sbs);
+		storage = sbs;
+	}
+
+	// set the storage in the core
+	core.setStorage(storage);
+}
+
+void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< dtn::daemon::Component* > &components, dtn::net::IPNDAgent *ipnd)
+{
+	// get the configuration of the convergence layers
+	list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();
+
+	// create the convergence layers
+ 	for (list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+	{
+		const ibrcommon::NetInterface &net = (*iter);
+
+		try {
+			switch (net.getType())
+			{
+				case ibrcommon::NetInterface::NETWORK_UDP:
+				{
+					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net );
+					core.addConvergenceLayer(udpcl);
+					components.push_back(udpcl);
+
+					stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
+					if (ipnd != NULL) ipnd->addService("udpcl", service.str());
+
+					cout << "UDP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
+
+					break;
+				}
+
+				case ibrcommon::NetInterface::NETWORK_TCP:
+				{
+					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net );
+					core.addConvergenceLayer(tcpcl);
+					components.push_back(tcpcl);
+
+					stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
+					if (ipnd != NULL) ipnd->addService("tcpcl", service.str());
+
+					cout << "TCP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
+
+					break;
+				}
+			}
+		} catch (ibrcommon::tcpserver::SocketException ex) {
+			cout << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
+			cout << "      Error: " << ex.what() << endl;
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	// catch process signals
@@ -121,40 +200,24 @@ int main(int argc, char *argv[])
 	// set global vars
 	setGlobalVars(conf);
 
-	dtn::daemon::Notifier *notifier = NULL;
+	// list of components
+	std::list< dtn::daemon::Component* > components;
 
+	// create a notifier if configured
 	try {
-		notifier = new dtn::daemon::Notifier( conf.getNotifyCommand() );
+		components.push_back( new dtn::daemon::Notifier( conf.getNotifyCommand() ) );
 	} catch (Configuration::ParameterNotSetException ex) {
 
 	}
 
 	// create the bundle core object
-	BundleCore& core = BundleCore::getInstance();
+	BundleCore &core = BundleCore::getInstance();
+
+	// create the event switch object
+	dtn::core::EventSwitch &esw = dtn::core::EventSwitch::getInstance();
 
 	// create a storage for bundles
-	dtn::core::BundleStorage *storage = NULL;
-
-	try {
-		// new methods for blobs
-		//storage = new dtn::core::SQLiteBundleStorage(conf.getPath("storage"), "sqlite.db", 2 UNIT_MB);
-		ibrcommon::File path = conf.getPath("storage");
-
-		// create workdir if needed
-		if (!path.exists())
-		{
-			ibrcommon::File::createDirectory(path);
-		}
-
-		storage = new dtn::core::SimpleBundleStorage(path);
-	} catch (Configuration::ParameterNotSetException ex) {
-		storage = new dtn::core::SimpleBundleStorage();
-	}
-
-	ibrcommon::AutoDelete<dtn::core::BundleStorage> storage_cleaner(storage);
-
-	// set the storage in the core
-	core.setStorage(storage);
+	createBundleStorage(core, conf, components);
 
 	// initialize the DiscoveryAgent
 	dtn::net::IPNDAgent *ipnd = NULL;
@@ -162,10 +225,11 @@ int main(int argc, char *argv[])
 	if (conf.doDiscovery())
 	{
 		ipnd = new dtn::net::IPNDAgent( conf.getDiscoveryInterface() );
+		components.push_back(ipnd);
 	}
 
 	// create the base router
-	dtn::routing::BaseRouter router(*storage);
+	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
 	// add routing extensions
 	switch (conf.getRoutingExtension())
@@ -174,85 +238,63 @@ int main(int argc, char *argv[])
 	{
 		cout << "Using epidemic routing extensions" << endl;
 		dtn::routing::EpidemicRoutingExtension *epidemic = new dtn::routing::EpidemicRoutingExtension();
-		router.addExtension( epidemic );
-		router.addExtension( new dtn::routing::RetransmissionExtension() );
+		router->addExtension( epidemic );
+		router->addExtension( new dtn::routing::RetransmissionExtension() );
 		if (ipnd != NULL) ipnd->addService(epidemic);
 		break;
 	}
 
 	default:
 		cout << "Using default routing extensions" << endl;
-		router.addExtension( new dtn::routing::StaticRoutingExtension( conf.getStaticRoutes() ) );
-		router.addExtension( new dtn::routing::NeighborRoutingExtension() );
+		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getStaticRoutes() ) );
+		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
 		break;
 	}
 
-	// get the configuration of the convergence layers
-	list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();
+	components.push_back(router);
 
-	// create the convergence layers
- 	for (list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+	// initialize all convergence layers
+	createConvergenceLayers(core, conf, components, ipnd);
+
+	if (conf.doAPI())
 	{
-		const ibrcommon::NetInterface &net = (*iter);
+		ibrcommon::NetInterface lo = conf.getAPIInterface();
 
 		try {
-			switch (net.getType())
-			{
-				case ibrcommon::NetInterface::NETWORK_UDP:
-				{
-					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net );
-					udpcl->start();
-					core.addConvergenceLayer(udpcl);
-
-					stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
-					if (ipnd != NULL) ipnd->addService("udpcl", service.str());
-					//if (ipnd != NULL) ipnd->addService(udpcl);
-
-					cout << "UDP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
-
-					break;
-				}
-
-				case ibrcommon::NetInterface::NETWORK_TCP:
-				{
-					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net );
-					tcpcl->start();
-					core.addConvergenceLayer(tcpcl);
-
-					stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
-					if (ipnd != NULL) ipnd->addService("tcpcl", service.str());
-					//if (ipnd != NULL) ipnd->addService(tcpcl);
-
-					cout << "TCP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
-
-					break;
-				}
-			}
+			// instance a API server, first create a socket
+			components.push_back( new ApiServer(lo) );
 		} catch (ibrcommon::tcpserver::SocketException ex) {
-				if (m_running)
-				{
-					sleep(1);
-					iter--;
-					continue;
-				}
-				else
-				{
-					cout << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
-					cout << "      Error: " << ex.what() << endl;
-				}
-		} catch (ibrcommon::udpsocket::SocketException ex) {
-				if (m_running)
-				{
-					sleep(1);
-					iter--;
-					continue;
-				}
-				else
-				{
-					cout << "Failed to add UDP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
-					cout << "      Error: " << ex.what() << endl;
-				}
+			cerr << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << endl;
+			exit(-1);
 		}
+	}
+
+	// initialize core component
+	core.initialize();
+
+	// initialize the event switch
+	esw.initialize();
+
+	/**
+	 * initialize all components!
+	 */
+	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
+	{
+		(*iter)->initialize();
+	}
+
+	// run the event switch
+	esw.startup();
+
+	// run core component
+	core.startup();
+
+	/**
+	 * run all components!
+	 */
+	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
+	{
+		(*iter)->startup();
 	}
 
 #ifdef DO_DEBUG_OUTPUT
@@ -266,16 +308,6 @@ int main(int argc, char *argv[])
 	// add DevNull module
 	DevNull devnull;
 
-	// start the services
-	ibrcommon::JoinableThread *service = NULL;
-	if ((service = dynamic_cast<ibrcommon::JoinableThread*>(storage)) != NULL)
-	{
-		service->start();
-	}
-
-	// initialize the router
-	router.initialize();
-
 	// announce static nodes, create a list of static nodes
 	list<Node> static_nodes = conf.getStaticNodes();
 
@@ -284,45 +316,35 @@ int main(int argc, char *argv[])
 		core.addConnection(*iter);
 	}
 
-	ApiServer *apiserv = NULL;
-
-	if (conf.doAPI())
-	{
-		ibrcommon::NetInterface lo = conf.getAPIInterface();
-
-		try {
-			// instance a API server, first create a socket
-			apiserv = new ApiServer(lo);
-			apiserv->start();
-		} catch (ibrcommon::tcpserver::SocketException ex) {
-			cerr << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << endl;
-			exit(-1);
-		}
-	}
-
-	// Fire up the Discovery Agent
-	if (ipnd != NULL) ipnd->start();
-
 	while (m_running)
 	{
 		usleep(10000);
 	}
 
-	if (conf.doAPI())
-	{
-		delete apiserv;
-	}
-
 	ibrcommon::slog << ibrcommon::SYSLOG_INFO << "shutdown dtn node" << endl;
-
-	if (ipnd != NULL) delete ipnd;
-	if (notifier != NULL) delete notifier;
 
 	// send shutdown signal to unbound threads
 	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
 
-	// stop the event switch
-	dtn::core::EventSwitch::stop();
+	/**
+	 * terminate all components!
+	 */
+	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
+	{
+		(*iter)->terminate();
+	}
+
+	// terminate event switch component
+	esw.terminate();
+
+	// terminate core component
+	core.terminate();
+
+	// delete all components
+	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
+	{
+		delete (*iter);
+	}
 
 	return 0;
 };

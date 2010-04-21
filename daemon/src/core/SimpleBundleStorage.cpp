@@ -91,6 +91,14 @@ namespace dtn
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir)
 		 : _store(*this), _running(true), _mode(MODE_PERSISTENT), _workdir(workdir)
 		{
+		}
+
+		SimpleBundleStorage::~SimpleBundleStorage()
+		{
+		}
+
+		void SimpleBundleStorage::componentUp()
+		{
 			bindEvent(TimeEvent::className);
 
 			// load persistent bundles
@@ -121,7 +129,7 @@ namespace dtn
 			cout << _store.bundles.size() << " Bundles restored." << endl;
 		}
 
-		SimpleBundleStorage::~SimpleBundleStorage()
+		void SimpleBundleStorage::componentDown()
 		{
 			unbindEvent(TimeEvent::className);
 		}

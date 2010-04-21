@@ -17,15 +17,11 @@ namespace dtn
 		IPNDAgent::IPNDAgent(ibrcommon::NetInterface net)
 		 : _socket(net, true)
 		{
-			// bind to interface and port
-			_socket.bind();
-
 			cout << "DiscoveryAgent listen to port " << net.getPort() << endl;
 		}
 
 		IPNDAgent::~IPNDAgent()
 		{
-			_socket.shutdown();
 		}
 
 		void IPNDAgent::send(DiscoveryAnnouncement &announcement)
@@ -41,8 +37,24 @@ namespace dtn
 			int ret = _socket.send(data.c_str(), data.length());
 		}
 
-		void IPNDAgent::run()
+		void IPNDAgent::componentUp()
 		{
+			DiscoveryAgent::componentUp();
+
+			// bind to interface and port
+			_socket.bind();
+		}
+
+		void IPNDAgent::componentDown()
+		{
+			_socket.shutdown();
+			DiscoveryAgent::componentDown();
+		}
+
+		void IPNDAgent::componentRun()
+		{
+			_running = true;
+
 			while (_running)
 			{
 				DiscoveryAnnouncement announce;

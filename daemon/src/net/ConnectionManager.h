@@ -9,6 +9,7 @@
 #define CONNECTIONMANAGER_H_
 
 #include "ibrdtn/config.h"
+#include "Component.h"
 #include "net/BundleConnection.h"
 #include "net/ConvergenceLayer.h"
 #include "net/BundleReceiver.h"
@@ -37,7 +38,7 @@ namespace dtn
 			};
 		};
 
-		class ConnectionManager : public dtn::net::BundleReceiver, public dtn::core::EventReceiver
+		class ConnectionManager : public dtn::net::BundleReceiver, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
 		{
 		public:
 			ConnectionManager(int concurrent_transmitter = 1);
@@ -65,6 +66,9 @@ namespace dtn
 		protected:
 			void discovered(dtn::core::Node &node);
 			void check_discovered();
+
+			virtual void componentUp();
+			virtual void componentDown();
 
 		private:
 			class Transmitter : public ibrcommon::JoinableThread
@@ -98,6 +102,7 @@ namespace dtn
 			BundleConnection* getConnection(const dtn::data::EID &eid);
 			BundleConnection* getConnection(const dtn::core::Node &node);
 
+			int _concurrent_transmitter;
 			std::list<Transmitter*> _transmitter_list;
 
 			std::queue<ConnectionManager::Job> _job_queue;

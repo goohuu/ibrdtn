@@ -1,6 +1,7 @@
 #ifndef SIMPLEBUNDLESTORAGE_H_
 #define SIMPLEBUNDLESTORAGE_H_
 
+#include "Component.h"
 #include "core/BundleCore.h"
 #include "core/BundleStorage.h"
 #include "core/Node.h"
@@ -25,7 +26,7 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public BundleStorage, public EventReceiver
+		class SimpleBundleStorage : public BundleStorage, public EventReceiver, public dtn::daemon::IntegratedComponent
 		{
 		public:
 			/**
@@ -132,6 +133,10 @@ namespace dtn
 			 * @param evt
 			 */
 			void raiseEvent(const Event *evt);
+
+		protected:
+			virtual void componentUp();
+			virtual void componentDown();
 
 		private:
 			enum RunMode

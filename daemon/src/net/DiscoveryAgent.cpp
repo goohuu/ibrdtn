@@ -20,12 +20,20 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryAgent::DiscoveryAgent()
-		 : _running(true), _self_announce(false, dtn::core::BundleCore::local)
+		 : _running(false), _self_announce(false, dtn::core::BundleCore::local)
+		{
+		}
+
+		DiscoveryAgent::~DiscoveryAgent()
+		{
+		}
+
+		void DiscoveryAgent::componentUp()
 		{
 			bindEvent(TimeEvent::className);
 		}
 
-		DiscoveryAgent::~DiscoveryAgent()
+		void DiscoveryAgent::componentDown()
 		{
 			unbindEvent(TimeEvent::className);
 

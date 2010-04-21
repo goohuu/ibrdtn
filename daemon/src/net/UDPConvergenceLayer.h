@@ -1,6 +1,7 @@
 #ifndef UDPCONVERGENCELAYER_H_
 #define UDPCONVERGENCELAYER_H_
 
+#include "Component.h"
 #include "net/ConvergenceLayer.h"
 #include "net/BundleConnection.h"
 #include "ibrcommon/Exceptions.h"
@@ -19,7 +20,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for UDP/IP.
 		 * Each bundle is sent in exact one UDP datagram.
 		 */
-		class UDPConvergenceLayer : public ConvergenceLayer, public ibrcommon::JoinableThread, public DiscoveryServiceProvider
+		class UDPConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider
 		{
 		public:
 			/**
@@ -67,7 +68,9 @@ namespace dtn
 			virtual void update(std::string &name, std::string &data);
 
 		protected:
-				void run();
+			virtual void componentUp();
+			virtual void componentRun();
+			virtual void componentDown();
 
 		private:
 			ibrcommon::udpsocket _socket;

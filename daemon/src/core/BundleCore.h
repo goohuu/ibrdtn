@@ -1,6 +1,8 @@
 #ifndef BUNDLECORE_H_
 #define BUNDLECORE_H_
 
+#include "Component.h"
+
 #include "core/BundleStorage.h"
 #include "core/CustodyTimer.h"
 #include "core/CustodyManager.h"
@@ -24,12 +26,10 @@ namespace dtn
 {
 	namespace core
 	{
-//		class AbstractWorker;
-
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
-		class BundleCore
+		class BundleCore : public dtn::daemon::IntegratedComponent
 		{
 		public:
 			static dtn::data::EID local;
@@ -51,6 +51,10 @@ namespace dtn
 			void addConvergenceLayer(dtn::net::ConvergenceLayer *cl);
 
 			void addConnection(const dtn::core::Node &n);
+
+		protected:
+			virtual void componentUp();
+			virtual void componentDown();
 
 		private:
 			/**

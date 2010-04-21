@@ -8,6 +8,7 @@
 #ifndef TCPCONVERGENCELAYER_H_
 #define TCPCONVERGENCELAYER_H_
 
+#include "Component.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrcommon/net/tcpserver.h"
 #include "ibrcommon/net/tcpstream.h"
@@ -37,7 +38,7 @@ namespace dtn
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
 		class TCPConvergenceLayer
-		 : public ibrcommon::tcpserver, public ibrcommon::JoinableThread, public ConvergenceLayer, public DiscoveryServiceProvider
+		 : public ibrcommon::tcpserver, public dtn::daemon::IndependentComponent, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
 			class TCPConnection : public BundleConnection, public dtn::core::Graveyard::Zombie, public dtn::core::EventReceiver, public StreamConnection::Callback
@@ -156,7 +157,9 @@ namespace dtn
 			void update(std::string &name, std::string &data);
 
 		protected:
-			virtual void run();
+			virtual void componentUp();
+			virtual void componentRun();
+			virtual void componentDown();
 			void add(TCPConnection *conn);
 			void remove(TCPConnection *conn);
 

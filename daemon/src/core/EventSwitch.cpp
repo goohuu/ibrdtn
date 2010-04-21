@@ -19,11 +19,30 @@ namespace dtn
 		EventSwitch::EventSwitch()
 		 : _running(false)
 		{
-
 		}
 
 		EventSwitch::~EventSwitch()
 		{
+			if (isRunning())
+			{
+				componentDown();
+			}
+		}
+
+		void EventSwitch::componentUp()
+		{
+		}
+
+		void EventSwitch::componentDown()
+		{
+			EventSwitch &s = EventSwitch::getInstance();
+			{
+				ibrcommon::MutexLock l(s._cond_queue);
+				s._running = false;
+				s._cond_queue.signal(true);
+			}
+			s.join();
+
 			{
 				ibrcommon::MutexLock l(_cond_queue);
 				_running = false;
@@ -40,8 +59,10 @@ namespace dtn
 			}
 		}
 
-		void EventSwitch::run()
+		void EventSwitch::componentRun()
 		{
+			_running = true;
+
 			while (_running)
 			{
 				Event *evt = NULL;
@@ -122,23 +143,7 @@ namespace dtn
 		EventSwitch& EventSwitch::getInstance()
 		{
 			static EventSwitch instance;
-			if (!instance._running)
-			{
-				instance._running = true;
-				instance.start();
-			}
 			return instance;
-		}
-
-		void EventSwitch::stop()
-		{
-			EventSwitch &s = EventSwitch::getInstance();
-			{
-				ibrcommon::MutexLock l(s._cond_queue);
-				s._running = false;
-				s._cond_queue.signal(true);
-			}
-			s.join();
 		}
 	}
 }

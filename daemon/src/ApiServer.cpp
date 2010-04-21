@@ -18,11 +18,24 @@ namespace dtn
 	namespace daemon
 	{
 		ApiServer::ApiServer(ibrcommon::NetInterface net)
-		 : tcpserver(net), _running(true)
+		 : tcpserver(net), _running(false)
 		{
 		}
 
 		ApiServer::~ApiServer()
+		{
+			if (isRunning())
+			{
+				componentDown();
+			}
+		}
+
+		void ApiServer::componentUp()
+		{
+
+		}
+
+		void ApiServer::componentDown()
 		{
 			// set running to false
 			_running = false;
@@ -33,8 +46,10 @@ namespace dtn
 			join();
 		}
 
-		void ApiServer::run()
+		void ApiServer::componentRun()
 		{
+			_running = true;
+
 			try {
 				while (_running)
 				{

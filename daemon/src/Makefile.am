@@ -110,6 +110,8 @@ dtnd_SOURCES =  $(core_SOURCES) $(net_SOURCES) $(routing_SOURCES) \
 				ApiServer.h \
 				ClientHandler.cpp \
 				ClientHandler.h \
+				Component.cpp \
+				Component.h \
 				config.h \
 				Configuration.cpp \
 				Configuration.h \

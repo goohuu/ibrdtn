@@ -13,8 +13,7 @@ namespace dtn
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream)
 			: _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
-			  _stream(stream), _start_of_bundle(true), _in_state(INITIAL), _out_state(INITIAL),
-			  _in_timer(*this, 0), _out_timer(*this, 0), _shutdown_timer(*this, 0)
+			  _stream(stream), _start_of_bundle(true), _in_state(INITIAL), _out_state(INITIAL)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -24,9 +23,9 @@ namespace dtn
 		StreamConnection::StreamBuffer::~StreamBuffer()
 		{
 			// stop all timer
-			_in_timer.stop();
-			_out_timer.stop();
-			_shutdown_timer.stop();
+			_timer.remove(*this, TIMER_SHUTDOWN);
+			_timer.remove(*this, TIMER_IN);
+			_timer.remove(*this, TIMER_OUT);
 
 			delete [] in_buf_;
 			delete [] out_buf_;
@@ -46,12 +45,11 @@ namespace dtn
 			_out_state.setState(SHUTDOWN);
 
 			// stop in/out timer
-			_in_timer.stop();
-			_out_timer.stop();
+			_timer.remove(*this, TIMER_IN);
+			_timer.remove(*this, TIMER_OUT);
 
 			// set timer
-			_shutdown_timer.set(5);
-			_shutdown_timer.start();
+			_timer.set(*this, TIMER_SHUTDOWN, 5);
 		}
 
 		void StreamConnection::StreamBuffer::actionClose()
@@ -120,9 +118,16 @@ namespace dtn
 				StreamContactHeader peer;
 				_stream >> peer;
 
+				// read the timer values
+				_in_timeout = header._keepalive;
+				_out_timeout = peer._keepalive - 2;
+
 				// activate timer
-				_in_timer.set(header._keepalive); _in_timer.start();
-				_out_timer.set(peer._keepalive - 2); _out_timer.start();
+				_timer.set(*this, TIMER_IN, _in_timeout);
+				_timer.set(*this, TIMER_OUT, _out_timeout);
+
+				// start the timer
+				_timer.start();
 
 				// return the received header
 				return peer;
@@ -148,22 +153,22 @@ namespace dtn
 			actionShutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
 		}
 
-		bool StreamConnection::StreamBuffer::timeout(ibrcommon::Timer *timer)
+		size_t StreamConnection::StreamBuffer::timeout(size_t identifier)
 		{
-			if (timer == &_out_timer)
+			switch (identifier)
 			{
-				actionKeepaliveTimeout();
-				return true;
-			}
-			else if (timer == &_in_timer)
-			{
-				actionConnectionTimeout();
-				return false;
-			}
-			else if (timer == &_shutdown_timer)
-			{
+			case TIMER_SHUTDOWN:
 				actionShutdownTimeout();
-				return false;
+				break;
+
+			case TIMER_IN:
+				actionConnectionTimeout();
+				break;
+
+			case TIMER_OUT:
+				actionKeepaliveTimeout();
+				return _out_timeout;
+				break;
 			}
 		}
 
@@ -190,7 +195,7 @@ namespace dtn
 			}
 
 			// reset the incoming timer
-			_in_timer.reset();
+			_timer.set(*this, TIMER_IN, _in_timeout);
 
 			switch (seg._type)
 			{

@@ -8,8 +8,7 @@
 #ifndef DISCOVERYAGENT_H_
 #define DISCOVERYAGENT_H_
 
-#include "ibrdtn/config.h"
-#include "ibrcommon/thread/Thread.h"
+#include "Component.h"
 
 #include "core/Node.h"
 #include "core/EventReceiver.h"
@@ -25,20 +24,22 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryAgent : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
+		class DiscoveryAgent : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
 		{
 		public:
 			DiscoveryAgent();
-			virtual ~DiscoveryAgent();
+			virtual ~DiscoveryAgent() = 0;
 
 			void received(const DiscoveryAnnouncement &announcement);
 			void raiseEvent(const dtn::core::Event *evt);
 
 			void addService(string name, string parameters);
-                        void addService(DiscoveryServiceProvider *provider);
+			void addService(DiscoveryServiceProvider *provider);
 
 		protected:
-			virtual void run() = 0;
+			virtual void componentUp();
+			virtual void componentDown();
+			virtual void componentRun() = 0;
 			virtual void send(DiscoveryAnnouncement &announcement) = 0;
 			bool _running;
 

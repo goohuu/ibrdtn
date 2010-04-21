@@ -85,7 +85,23 @@ namespace dtn
 		{
 			// register myself for all extensions
 			Extension::_router = this;
+		}
 
+		BaseRouter::~BaseRouter()
+		{
+		}
+
+		/**
+		 * Add a routing extension to the routing core.
+		 * @param extension
+		 */
+		void BaseRouter::addExtension(BaseRouter::Extension *extension)
+		{
+			_extensions.push_back(extension);
+		}
+
+		void BaseRouter::componentUp()
+		{
 			bindEvent(dtn::net::TransferAbortedEvent::className);
 			bindEvent(dtn::net::TransferCompletedEvent::className);
 			bindEvent(dtn::net::BundleReceivedEvent::className);
@@ -94,9 +110,20 @@ namespace dtn
 			bindEvent(dtn::core::NodeEvent::className);
 			bindEvent(dtn::core::BundleExpiredEvent::className);
 			bindEvent(dtn::core::TimeEvent::className);
+
+			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
+			{
+				ThreadedExtension *thread = dynamic_cast<ThreadedExtension*>(*iter);
+
+				if (thread != NULL)
+				{
+					// run the thread
+					thread->start();
+				}
+			}
 		}
 
-		BaseRouter::~BaseRouter()
+		void BaseRouter::componentDown()
 		{
 			unbindEvent(dtn::net::TransferAbortedEvent::className);
 			unbindEvent(dtn::net::TransferCompletedEvent::className);
@@ -111,29 +138,6 @@ namespace dtn
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
 				delete (*iter);
-			}
-		}
-
-		/**
-		 * Add a routing extension to the routing core.
-		 * @param extension
-		 */
-		void BaseRouter::addExtension(BaseRouter::Extension *extension)
-		{
-			_extensions.push_back(extension);
-		}
-
-		void BaseRouter::initialize()
-		{
-			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
-			{
-				ThreadedExtension *thread = dynamic_cast<ThreadedExtension*>(*iter);
-
-				if (thread != NULL)
-				{
-					// run the thread
-					thread->start();
-				}
 			}
 		}
 

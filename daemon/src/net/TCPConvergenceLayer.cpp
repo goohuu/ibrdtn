@@ -262,28 +262,16 @@ namespace dtn
 		}
 
 		TCPConvergenceLayer::TCPConvergenceLayer(ibrcommon::NetInterface net)
-		 : _net(net), tcpserver(net), _running(true)
+		 : _net(net), tcpserver(net), _running(false)
 		{
 		}
 
 		TCPConvergenceLayer::~TCPConvergenceLayer()
 		{
+			if (isRunning())
 			{
-				for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
-				{
-					(*iter)->shutdown();
-				}
-
-				// wait until all connections are closed
-				ibrcommon::MutexLock l(_connection_lock);
-				while (!_connections.empty()) { _connection_lock.wait(); }
-
-				// stop the tcpserver
-				tcpserver::close();
-
-				_running = false;
+				componentDown();
 			}
-			join();
 		}
 
 		void TCPConvergenceLayer::update(std::string& name, std::string& data)
@@ -325,8 +313,35 @@ namespace dtn
 			return conn;
 		}
 
-		void TCPConvergenceLayer::run()
+		void TCPConvergenceLayer::componentUp()
 		{
+
+		}
+
+		void TCPConvergenceLayer::componentDown()
+		{
+			{
+				for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				{
+					(*iter)->shutdown();
+				}
+
+				// wait until all connections are closed
+				ibrcommon::MutexLock l(_connection_lock);
+				while (!_connections.empty()) { _connection_lock.wait(); }
+
+				// stop the tcpserver
+				tcpserver::close();
+
+				_running = false;
+			}
+			join();
+		}
+
+		void TCPConvergenceLayer::componentRun()
+		{
+			_running = true;
+
 			try {
 				while (_running)
 				{

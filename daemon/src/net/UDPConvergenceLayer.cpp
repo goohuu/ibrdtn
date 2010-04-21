@@ -32,17 +32,16 @@ namespace dtn
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::NetInterface net, bool broadcast, unsigned int mtu)
-			: _socket(net, broadcast), _net(net), m_maxmsgsize(mtu), _running(true)
+			: _socket(net, broadcast), _net(net), m_maxmsgsize(mtu), _running(false)
 		{
-			// bind to interface and port
-			_socket.bind();
 		}
 
 		UDPConvergenceLayer::~UDPConvergenceLayer()
 		{
-			_running = false;
-			_socket.shutdown();
-			join();
+			if (isRunning())
+			{
+				componentDown();
+			}
 		}
 
 		void UDPConvergenceLayer::update(std::string &name, std::string &data)
@@ -145,8 +144,28 @@ namespace dtn
 			return new dtn::net::UDPConvergenceLayer::UDPConnection(*this, n);
 		}
 
-		void UDPConvergenceLayer::run()
+		void UDPConvergenceLayer::componentUp()
 		{
+			try {
+				// bind to interface and port
+				_socket.bind();
+			} catch (ibrcommon::udpsocket::SocketException ex) {
+				cout << "Failed to add UDP ConvergenceLayer on " << _net.getAddress() << ":" << _net.getPort() << endl;
+				cout << "      Error: " << ex.what() << endl;
+			}
+		}
+
+		void UDPConvergenceLayer::componentDown()
+		{
+			_running = false;
+			_socket.shutdown();
+			join();
+		}
+
+		void UDPConvergenceLayer::componentRun()
+		{
+			_running = true;
+
 			while (_running)
 			{
 				try {
