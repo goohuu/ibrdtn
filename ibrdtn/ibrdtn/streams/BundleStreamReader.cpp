@@ -205,9 +205,9 @@ namespace dtn
 					_handler.endBlob(block_length);
 					_handler.endBlock();
 				}
-			} catch (exceptions::InvalidDataException ex) {
+			} catch (dtn::exceptions::InvalidDataException ex) {
 				// end of bundle
-			} catch (exceptions::IOException ex) {
+			} catch (dtn::exceptions::IOException ex) {
 				// read aborted. let the endBundle-Method check if there is enough
 				// data for a fragment.
 			}

@@ -111,17 +111,23 @@ namespace dtn
 				if (!file.isDirectory())
 				{
 					std::fstream fs(file.getPath().c_str(), ios::in|ios::binary);
-					dtn::data::Bundle b;
-					fs >> b;
-					fs.close();
+					try {
+						dtn::data::Bundle b;
+						fs >> b;
+						fs.close();
 
-					ibrcommon::MutexLock l(_dbchanged);
+						ibrcommon::MutexLock l(_dbchanged);
 
-					// add the file to the index
-					_bundlefiles[dtn::data::BundleID(b)] = file;
+						// add the file to the index
+						_bundlefiles[dtn::data::BundleID(b)] = file;
 
-					// store the bundle into the storage
-					_store.store(b);
+						// store the bundle into the storage
+						_store.store(b);
+					} catch (dtn::exceptions::IOException ex) {
+						// error while reading file
+						fs.close();
+						file.remove();
+					}
 				}
 			}
 
