@@ -18,8 +18,8 @@ namespace dtn
 	namespace streams
 	{
 		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream)
-		 : _buf(*this, stream), _callback(cb), std::iostream(&_buf), _ack_size(0), _sent_size(0),
-		   _in_state(CONNECTION_INITIAL), _out_state(CONNECTION_INITIAL)
+		 : _callback(cb), _ack_size(0), _sent_size(0), _in_state(CONNECTION_INITIAL),
+		   _out_state(CONNECTION_INITIAL), _buf(*this, stream), std::iostream(&_buf)
 		{
 		}
 

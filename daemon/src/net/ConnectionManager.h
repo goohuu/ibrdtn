@@ -10,13 +10,14 @@
 
 #include "ibrdtn/config.h"
 #include "Component.h"
-#include "net/BundleConnection.h"
 #include "net/ConvergenceLayer.h"
 #include "net/BundleReceiver.h"
 #include "core/EventReceiver.h"
 #include "ibrdtn/data/EID.h"
 #include "core/Node.h"
 #include "ibrcommon/Exceptions.h"
+
+#include <set>
 
 namespace dtn
 {
@@ -48,7 +49,8 @@ namespace dtn
 			void addConvergenceLayer(ConvergenceLayer *cl);
 
 			void received(const dtn::data::EID &eid, const dtn::data::Bundle &b);
-			void send(const dtn::data::EID &eid, const dtn::data::Bundle &b);
+
+			void queue(const dtn::data::EID &eid, const dtn::data::Bundle &b);
 
 			/**
 			 * method to receive new events from the EventSwitch
@@ -63,6 +65,8 @@ namespace dtn
 				};
 			};
 
+			void queue(const ConvergenceLayer::Job &job);
+
 		protected:
 			void discovered(dtn::core::Node &node);
 			void check_discovered();
@@ -71,49 +75,14 @@ namespace dtn
 			virtual void componentDown();
 
 		private:
-			class Transmitter : public ibrcommon::JoinableThread
-			{
-			public:
-				Transmitter(ConnectionManager &manager);
-				virtual ~Transmitter();
-
-				void run();
-
-			private:
-				bool _running;
-				ConnectionManager &_manager;
-			};
-
-			class Job
-			{
-			public:
-				Job(const dtn::data::EID &eid, const dtn::data::Bundle &b);
-				~Job();
-
-				dtn::data::Bundle _bundle;
-				dtn::data::EID _destination;
-			};
+			void queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job);
 
 			bool _shutdown;
 
-			ConnectionManager::Job getJob();
-			void send(const ConnectionManager::Job &job);
-
-			BundleConnection* getConnection(const dtn::data::EID &eid);
-			BundleConnection* getConnection(const dtn::core::Node &node);
-
-			int _concurrent_transmitter;
-			std::list<Transmitter*> _transmitter_list;
-
-			std::queue<ConnectionManager::Job> _job_queue;
-			ibrcommon::Conditional _job_cond;
-
-			list<ConvergenceLayer*> _cl;
-			list<dtn::core::Node> _static_connections;
-			list<dtn::core::Node> _discovered_nodes;
-
-			map<dtn::data::EID, BundleConnection*> _active_connections;
-			ibrcommon::Mutex _active_connections_lock;
+			ibrcommon::Mutex _list_lock;
+			std::set<ConvergenceLayer*> _cl;
+			std::set<dtn::core::Node> _static_connections;
+			std::list<dtn::core::Node> _discovered_nodes;
 		};
 	}
 }

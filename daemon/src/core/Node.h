@@ -135,6 +135,8 @@ namespace dtn
 			 * @return true, if the given node is equal to this node.
 			 */
 			 bool equals(const Node &node) const;
+			 bool operator==(const Node &other) const;
+			 int operator<(const Node &other) const;
 
 		private:
 			std::string m_address;

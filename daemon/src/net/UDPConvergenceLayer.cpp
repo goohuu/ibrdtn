@@ -44,6 +44,11 @@ namespace dtn
 			}
 		}
 
+		const dtn::core::NodeProtocol UDPConvergenceLayer::getDiscoveryProtocol() const
+		{
+			return dtn::core::UDP_CONNECTION;
+		}
+
 		void UDPConvergenceLayer::update(std::string &name, std::string &data)
 		{
 			// TODO: update the values
@@ -92,7 +97,7 @@ namespace dtn
 
 				// TODO: transfer the fragment
 
-				throw BundleConnection::ConnectionInterruptedException(0);
+				throw ConnectionInterruptedException(0);
 			}
 
 			stringstream ss;
@@ -137,7 +142,7 @@ namespace dtn
 			ss >> bundle;
 		}
 
-		BundleConnection* UDPConvergenceLayer::getConnection(const dtn::core::Node &n)
+		UDPConvergenceLayer::UDPConnection* UDPConvergenceLayer::getConnection(const dtn::core::Node &n)
 		{
 			if (n.getProtocol() != dtn::core::UDP_CONNECTION) return NULL;
 
@@ -187,6 +192,11 @@ namespace dtn
 			}
 		}
 
+		void UDPConvergenceLayer::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
+		{
+
+		}
+
 		UDPConvergenceLayer::UDPConnection::UDPConnection(UDPConvergenceLayer &cl, const dtn::core::Node &node)
 		 : _cl(cl), _node(node)
 		{
@@ -199,6 +209,11 @@ namespace dtn
 		void UDPConvergenceLayer::UDPConnection::shutdown()
 		{
 
+		}
+
+		dtn::data::EID UDPConvergenceLayer::UDPConnection::getPeer() const
+		{
+			return EID(_node.getURI());
 		}
 
 		void UDPConvergenceLayer::UDPConnection::write(const dtn::data::Bundle &bundle)

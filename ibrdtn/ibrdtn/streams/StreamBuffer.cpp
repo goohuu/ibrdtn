@@ -13,7 +13,7 @@ namespace dtn
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream)
 			: _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
-			  _stream(stream), _start_of_bundle(true), _in_state(INITIAL), _out_state(INITIAL)
+			  _stream(stream), _start_of_bundle(true), _in_state(INITIAL), _out_state(INITIAL), _timer()
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -23,9 +23,7 @@ namespace dtn
 		StreamConnection::StreamBuffer::~StreamBuffer()
 		{
 			// stop all timer
-			_timer.remove(*this, TIMER_SHUTDOWN);
-			_timer.remove(*this, TIMER_IN);
-			_timer.remove(*this, TIMER_OUT);
+			_timer.removeAll();
 
 			delete [] in_buf_;
 			delete [] out_buf_;

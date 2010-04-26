@@ -17,5 +17,14 @@ namespace dtn
 				m_receiver->received(EID(), bundle);
 			}
 		}
+
+		ConvergenceLayer::Job::Job(const dtn::data::EID &eid, const dtn::data::Bundle &b)
+		 : _bundle(b), _destination(eid)
+		{
+		}
+
+		ConvergenceLayer::Job::~Job()
+		{
+		}
 	}
 }

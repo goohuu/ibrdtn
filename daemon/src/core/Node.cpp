@@ -114,5 +114,23 @@ namespace dtn
 			//if (node.getAddress() != getAddress()) return false;
 			return true;
 		}
+
+		bool Node::operator==(const Node &other) const
+		{
+			if (other.getURI() != getURI()) return false;
+			if (other.getProtocol() != getProtocol()) return false;
+			// TODO: enable after testing
+			//if (other.getAddress() != getAddress()) return false;
+			return true;
+		}
+
+		int Node::operator<(const Node &other) const
+		{
+			if (other.getURI() >= getURI()) return false;
+			if (other.getProtocol() >= getProtocol()) return false;
+			// TODO: enable after testing
+			//if (other.getAddress() >= getAddress()) return false;
+			return true;
+		}
 	}
 }

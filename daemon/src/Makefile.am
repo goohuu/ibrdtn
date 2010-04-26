@@ -74,9 +74,7 @@ routing_SOURCES = routing/BaseRouter.cpp \
 				routing/SummaryVector.cpp \
 				routing/SummaryVector.h
 				
-net_SOURCES = net/BundleConnection.cpp \
-				net/BundleConnection.h \
-				net/BundleReceivedEvent.cpp \
+net_SOURCES = 	net/BundleReceivedEvent.cpp \
 				net/BundleReceivedEvent.h \
 				net/BundleReceiver.h \
 				net/ConnectionEvent.cpp \
@@ -92,10 +90,12 @@ net_SOURCES = net/BundleConnection.cpp \
 				net/DiscoveryService.cpp \
 				net/DiscoveryService.h \
 				net/DiscoveryServiceProvider.h \
+				net/GenericServer.h \
 				net/IPNDAgent.cpp \
 				net/IPNDAgent.h \
 				net/Neighbor.cpp \
 				net/Neighbor.h \
+				net/TCPConnection.cpp \
 				net/TCPConvergenceLayer.cpp \
 				net/TCPConvergenceLayer.h \
 				net/TransferAbortedEvent.cpp \

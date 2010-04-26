@@ -202,9 +202,10 @@ namespace dtn
 				size_t _sent_size;
 				size_t _recv_size;
 
-				ibrcommon::MultiTimer _timer;
 				size_t _in_timeout;
 				size_t _out_timeout;
+
+				ibrcommon::MultiTimer _timer;
 			};
 
 			void connectionTimeout();
@@ -216,13 +217,14 @@ namespace dtn
 			size_t _ack_size;
 			size_t _sent_size;
 
-			StreamConnection::StreamBuffer _buf;
 			StreamConnection::Callback &_callback;
 
 			ibrcommon::StatefulConditional<ConnectionState, CONNECTION_CLOSED> _in_state;
 			ibrcommon::StatefulConditional<ConnectionState, CONNECTION_CLOSED> _out_state;
 
 			dtn::streams::StreamContactHeader _peer;
+
+			StreamConnection::StreamBuffer _buf;
 		};
 	}
 }

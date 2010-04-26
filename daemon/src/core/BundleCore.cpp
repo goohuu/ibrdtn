@@ -77,7 +77,7 @@ namespace dtn
 
 		void BundleCore::transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle)
 		{
-			_connectionmanager.send(destination, bundle);
+			_connectionmanager.queue(destination, bundle);
 		}
 
 		void BundleCore::addConvergenceLayer(dtn::net::ConvergenceLayer *cl)

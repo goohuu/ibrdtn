@@ -3,7 +3,6 @@
 
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
-#include "net/BundleConnection.h"
 #include "ibrcommon/Exceptions.h"
 #include "net/DiscoveryServiceProvider.h"
 #include "ibrcommon/net/NetInterface.h"
@@ -26,7 +25,7 @@ namespace dtn
 			/**
 			 * UDP connection class
 			 */
-			class UDPConnection : public BundleConnection
+			class UDPConnection
 			{
 			public:
 				UDPConnection(UDPConvergenceLayer &cl, const dtn::core::Node &node);
@@ -36,6 +35,8 @@ namespace dtn
 				void read(dtn::data::Bundle &bundle);
 
 				void shutdown();
+
+				dtn::data::EID getPeer() const;
 
 			private:
 				UDPConvergenceLayer &_cl;
@@ -63,9 +64,11 @@ namespace dtn
 
 			void receive(dtn::data::Bundle &bundle);
 
-			BundleConnection* getConnection(const dtn::core::Node &n);
-
 			virtual void update(std::string &name, std::string &data);
+
+			const dtn::core::NodeProtocol getDiscoveryProtocol() const;
+
+			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
 
 		protected:
 			virtual void componentUp();
@@ -73,6 +76,8 @@ namespace dtn
 			virtual void componentDown();
 
 		private:
+			UDPConnection* getConnection(const dtn::core::Node &n);
+
 			ibrcommon::udpsocket _socket;
 
 			ibrcommon::NetInterface _net;
