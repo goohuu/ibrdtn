@@ -12,6 +12,7 @@
 #include "ibrcommon/net/NetInterface.h"
 #include "net/ConnectionEvent.h"
 #include <ibrcommon/thread/MutexLock.h>
+#include "routing/RequeueBundleEvent.h"
 
 #include <sys/socket.h>
 #include <streambuf>
@@ -92,11 +93,16 @@ namespace dtn
 				}
 			}
 
-			TCPConvergenceLayer::TCPConnection *conn = getConnection(n);
-			conn->queue(job._bundle);
+			try {
+				TCPConvergenceLayer::TCPConnection *conn = getConnection(n);
+				conn->queue(job._bundle);
 
-			// add the connection to the connection list
-			add(conn);
+				// add the connection to the connection list
+				add(conn);
+			} catch (ibrcommon::tcpserver::SocketException ex) {
+				// signal interruption of the transfer
+				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+			}
 		}
 
 		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::Server::getConnection(const dtn::core::Node &n)
