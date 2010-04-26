@@ -10,7 +10,6 @@
 
 #include "core/Event.h"
 #include "ibrdtn/data/EID.h"
-#include "net/BundleConnection.h"
 
 namespace dtn
 {
