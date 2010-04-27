@@ -77,21 +77,24 @@ namespace dtn
 					_queue.pop();
 				}
 
+				{
+					ibrcommon::MutexLock reglock(_receiverlock);
 #ifdef DO_DEBUG_OUTPUT
-				// forward to debugger
-				_debugger.raiseEvent(evt);
+					// forward to debugger
+					_debugger.raiseEvent(evt);
 #endif
 
-				try {
-					// get the list for this event
-					const list<EventReceiver*> receivers = getReceivers(evt->getName());
+					try {
+						// get the list for this event
+						const list<EventReceiver*> receivers = getReceivers(evt->getName());
 
-					for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
-					{
-						(*iter)->raiseEvent(evt);
+						for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
+						{
+							(*iter)->raiseEvent(evt);
+						}
+					} catch (NoReceiverFoundException ex) {
+						// No receiver available!
 					}
-				} catch (NoReceiverFoundException ex) {
-					// No receiver available!
 				}
 
 				// delete the event

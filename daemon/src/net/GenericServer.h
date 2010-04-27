@@ -28,7 +28,7 @@ namespace dtn
 		};
 
 		template <class T>
-		class GenericServer : public dtn::daemon::IntegratedComponent
+		class GenericServer : public dtn::daemon::IndependentComponent
 		{
 		public:
 			GenericServer()
