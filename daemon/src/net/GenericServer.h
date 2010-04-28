@@ -86,7 +86,11 @@ namespace dtn
 				while (_running)
 				{
 					try {
-						add( accept() );
+						T* obj = accept();
+						if (_running && (obj != NULL))
+						{
+							add( obj );
+						}
 					} catch (...) {
 						// ignore all errors
 					}
