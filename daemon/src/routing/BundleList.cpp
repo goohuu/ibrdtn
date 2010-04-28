@@ -36,7 +36,9 @@ namespace dtn
 
 		void BundleList::expire(const size_t timestamp)
 		{
-			for (std::set<ExpiringBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			std::set<ExpiringBundle>::const_iterator iter = _bundles.begin();
+
+			while (iter != _bundles.end())
 			{
 				const ExpiringBundle &b = (*iter);
 
@@ -52,7 +54,7 @@ namespace dtn
 				(*this).erase( b.bundle );
 
 				// remove this item in private list
-				_bundles.erase( iter );
+				_bundles.erase( iter++ );
 			}
 		}
 
