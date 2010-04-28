@@ -280,6 +280,7 @@ namespace dtn
 
 		void SimpleBundleStorage::BundleStore::expire(const size_t timestamp)
 		{
+			ibrcommon::MutexLock bl(bundleslock);
 			dtn::routing::BundleList::expire(timestamp);
 		}
 
@@ -320,7 +321,7 @@ namespace dtn
 		void SimpleBundleStorage::BundleStore::eventBundleExpired(const ExpiringBundle &b)
 		{
 			{
-				ibrcommon::MutexLock bl();
+				ibrcommon::MutexLock l(_sbs._dbchanged);
 
 				for (std::set<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 				{
