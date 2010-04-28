@@ -133,10 +133,10 @@ namespace dtn
 
 				while (iter != _discovered_nodes.end())
 				{
-					n = (*iter);
-
 					if ( !(*iter).decrementTimeout(1) )
 					{
+						n = (*iter);
+
 						// node is outdated -> remove it
 						_discovered_nodes.erase( iter++ );
 						break;
