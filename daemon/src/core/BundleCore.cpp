@@ -6,6 +6,7 @@
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/EID.h"
+#include "routing/RequeueBundleEvent.h"
 
 #include "ibrdtn/utils/Utils.h"
 #include "limits.h"
@@ -77,7 +78,15 @@ namespace dtn
 
 		void BundleCore::transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle)
 		{
-			_connectionmanager.queue(destination, bundle);
+			try {
+				_connectionmanager.queue(destination, bundle);
+			} catch (dtn::net::NeighborNotAvailableException ex) {
+				// signal interruption of the transfer
+				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
+			} catch (dtn::net::ConnectionNotAvailableException ex) {
+				// signal interruption of the transfer
+				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
+			}
 		}
 
 		void BundleCore::addConvergenceLayer(dtn::net::ConvergenceLayer *cl)
