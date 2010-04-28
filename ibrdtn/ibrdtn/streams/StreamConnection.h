@@ -111,6 +111,11 @@ namespace dtn
 			 */
 			void wait();
 
+			/**
+			 * reset the value for the ACK'd bytes
+			 */
+			void reset();
+
 		private:
 			/**
 			 * stream buffer class

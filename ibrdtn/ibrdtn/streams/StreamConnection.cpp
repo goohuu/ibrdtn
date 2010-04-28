@@ -105,6 +105,7 @@ namespace dtn
 
 		void StreamConnection::eventAck(size_t ack, size_t sent)
 		{
+			ibrcommon::MutexLock l(_in_state);
 			_ack_size = ack;
 			_sent_size = sent;
 			_in_state.signal(true);
@@ -135,6 +136,12 @@ namespace dtn
 				cout << "current size: " << _ack_size << " of " << _sent_size << endl;
 #endif
 			}
+		}
+
+		void StreamConnection::reset()
+		{
+			ibrcommon::MutexLock l(_in_state);
+			_sent_size = 0;
 		}
 
 		void StreamConnection::connectionTimeout()
