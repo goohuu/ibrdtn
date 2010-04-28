@@ -8,6 +8,7 @@
 #include "ClientHandler.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
+#include "net/BundleReceivedEvent.h"
 #include <iostream>
 
 using namespace dtn::data;
@@ -19,60 +20,54 @@ namespace dtn
 	namespace daemon
 	{
 		ClientHandler::ClientHandler(ibrcommon::tcpstream *stream)
-		 : _stream(stream), _connection(*this, *_stream), _connected(false)
+		 : _free(false), _running(true), _stream(stream), _connection(*this, *_stream)
 		{
-			bindEvent(GlobalEvent::className);
 		}
 
 		ClientHandler::~ClientHandler()
 		{
-			unbindEvent(GlobalEvent::className);
-
-			AbstractWorker::shutdown();
-			(*_stream).close();
-
+			shutdown();
 			join();
+		}
+
+		const dtn::data::EID& ClientHandler::getPeer() const
+		{
+			return _eid;
+		}
+
+		void ClientHandler::iamfree()
+		{
+			_free = true;
+		}
+
+		bool ClientHandler::free()
+		{
+			ibrcommon::MutexLock l(_freemutex);
+			return _free;
 		}
 
 		void ClientHandler::eventShutdown()
 		{
 			// shutdown message received
 			(*_stream).done();
+
+			iamfree();
 		}
 
 		void ClientHandler::eventTimeout()
 		{
 			(*_stream).done();
+
+			ibrcommon::MutexLock l(_freemutex);
+			iamfree();
 		}
 
 		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
 		{
-			// initialize the AbstractWorker
-			// deactivate the thread for receiving bundles is bit 0x80 is set
-			AbstractWorker::initialize(header._localeid.getApplication(), !(header._flags & 0x80));
-
 			// contact received event
-			received(header);
-		}
+			std::cout << "Client connected" << std::endl;
 
-		void ClientHandler::embalm()
-		{
-		}
-
-		void ClientHandler::raiseEvent(const dtn::core::Event *evt)
-		{
-			static ibrcommon::Mutex mutex;
-			ibrcommon::MutexLock l(mutex);
-
-			const GlobalEvent *global = dynamic_cast<const GlobalEvent*>(evt);
-
-			if (global != NULL)
-			{
-				if (global->getAction() == GlobalEvent::GLOBAL_SHUTDOWN)
-				{
-					shutdown();
-				}
-			}
+			_eid = BundleCore::local + header._localeid.getApplication();
 		}
 
 		bool ClientHandler::isConnected()
@@ -82,12 +77,10 @@ namespace dtn
 
 		void ClientHandler::shutdown()
 		{
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "Client disconnected: " << _eid.getString() << endl;
-#endif
+			_running = false;
+
 			_connection.wait();
 			_connection.close();
-			bury();
 		}
 
 		void ClientHandler::run()
@@ -96,50 +89,65 @@ namespace dtn
 				// do the handshake
 				_connection.handshake(dtn::core::BundleCore::local, 10);
 
-				// set to connected
-				_connected = true;
+				BundleStorage &storage = BundleCore::getInstance().getStorage();
 
-				while (_connection.good())
+				while (_running)
 				{
-					Bundle b;
-					_connection >> b;
+					try {
+						dtn::data::Bundle b = storage.get( getPeer() );
+						(*this) << b;
+						storage.remove(b);
+					} catch (dtn::exceptions::NoBundleFoundException ex) {
+						break;
+					}
+				}
+
+				while (_running)
+				{
+					dtn::data::Bundle bundle;
+					_connection >> bundle;
 
 					// create a new sequence number
-					b.relabel();
+					bundle.relabel();
 
 					// set the source
-					b._source = _eid;
+					bundle._source = _eid;
 
-					// forward the bundle
-					dtn::core::AbstractWorker::transmit(b);
+					// raise default bundle received event
+					dtn::net::BundleReceivedEvent::raise(EID(), bundle);
 
 					yield();
 				}
 			} catch (dtn::exceptions::IOException ex) {
-
-			} catch (dtn::exceptions::InvalidBundleData ex) {
-
+				_running = false;
+				shutdown();
 			} catch (dtn::exceptions::InvalidDataException ex) {
-
+				_running = false;
+				shutdown();
+			} catch (dtn::exceptions::InvalidBundleData ex) {
+				_running = false;
+				shutdown();
 			}
 
 			shutdown();
 		}
 
-		void ClientHandler::callbackBundleReceived(const Bundle &b)
+		ClientHandler& operator>>(ClientHandler &conn, dtn::data::Bundle &bundle)
 		{
-			_connection << b;
-			_connection.flush();
+			conn._connection >> bundle;
+			if (!conn._connection.good()) throw dtn::exceptions::IOException("read from stream failed");
 		}
 
-		void ClientHandler::received(const StreamContactHeader &h)
+		ClientHandler& operator<<(ClientHandler &conn, const dtn::data::Bundle &bundle)
 		{
-			_contact = h;
+			// reset the ACK value
+			conn._connection.reset();
 
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "New client connected: " << _contact.getEID().getString() << endl;
-#endif
+			// transmit the bundle
+			conn._connection << bundle << std::flush;
 
+			// wait until all segments are acknowledged.
+			conn._connection.wait();
 		}
 	}
 }

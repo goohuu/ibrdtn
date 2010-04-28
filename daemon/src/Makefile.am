@@ -38,8 +38,6 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				core/EventSwitch.h \
 				core/GlobalEvent.cpp \
 				core/GlobalEvent.h \
-				core/Graveyard.cpp \
-				core/Graveyard.h \
 				core/Node.cpp \
 				core/NodeEvent.cpp \
 				core/NodeEvent.h \

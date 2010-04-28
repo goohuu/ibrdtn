@@ -38,7 +38,7 @@ namespace dtn
 		class TCPConvergenceLayer : public dtn::daemon::Component, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
-			class TCPConnection : public GenericConnection, public dtn::core::EventReceiver, public StreamConnection::Callback
+			class TCPConnection : public GenericConnection, public StreamConnection::Callback
 			{
 			public:
 				TCPConnection(ibrcommon::tcpstream *stream);
@@ -60,11 +60,6 @@ namespace dtn
 				 * shutdown the whole tcp connection
 				 */
 				void shutdown();
-
-				/**
-				 * handler for events
-				 */
-				void raiseEvent(const dtn::core::Event *evt);
 
 				/**
 				 * Get the header of this connection
@@ -99,6 +94,8 @@ namespace dtn
 				friend TCPConvergenceLayer::TCPConnection& operator<<(TCPConvergenceLayer::TCPConnection &conn, const dtn::data::Bundle &bundle);
 
 			protected:
+				void handshake(const dtn::data::EID &name, const size_t timeout);
+
 				ibrcommon::Conditional _queue_lock;
 				std::queue<dtn::data::Bundle> _bundles;
 
@@ -130,7 +127,14 @@ namespace dtn
 					void run();
 					void shutdown();
 
+					dtn::data::EID _name;
+					size_t _timeout;
+
 				private:
+					// This thread receives incoming bundles and forward them
+					// to the storage.
+					TCPConnection::Receiver _receiver;
+
 					bool _running;
 					TCPConnection &_connection;
 				};
@@ -144,16 +148,12 @@ namespace dtn
 				std::auto_ptr<ibrcommon::tcpstream> _tcpstream;
 				StreamConnection _stream;
 
-				// This thread receives incoming bundles and forward them
-				// to the storage.
-				Receiver _receiver;
-
 				// This thread gets awaiting bundles of the queue
 				// and transmit them to the peer.
 				Sender _sender;
 			};
 
-			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>
+			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver
 			{
 			public:
 				Server(ibrcommon::NetInterface net);
@@ -164,6 +164,11 @@ namespace dtn
 				 * @param job
 				 */
 				void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+
+				/**
+				 * handler for events
+				 */
+				void raiseEvent(const dtn::core::Event *evt);
 
 			protected:
 				TCPConvergenceLayer::TCPConnection* accept();

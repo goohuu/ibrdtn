@@ -79,7 +79,8 @@ namespace dtn
 
 			bool _shutdown;
 
-			ibrcommon::Mutex _list_lock;
+			ibrcommon::Mutex _node_lock;
+			ibrcommon::Mutex _cl_lock;
 			std::set<ConvergenceLayer*> _cl;
 			std::set<dtn::core::Node> _static_connections;
 			std::list<dtn::core::Node> _discovered_nodes;

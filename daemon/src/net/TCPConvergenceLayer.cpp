@@ -142,11 +142,39 @@ namespace dtn
 		TCPConvergenceLayer::Server::Server(ibrcommon::NetInterface net)
 		 : dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>(), _tcpsrv(net)
 		{
+			bindEvent(NodeEvent::className);
 		}
 
 		TCPConvergenceLayer::Server::~Server()
 		{
+			unbindEvent(NodeEvent::className);
+		}
 
+		void TCPConvergenceLayer::Server::raiseEvent(const Event *evt)
+		{
+			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
+
+			if (node != NULL)
+			{
+				if (node->getAction() == NODE_UNAVAILABLE)
+				{
+					// search for an existing connection
+					ibrcommon::MutexLock l(_connection_lock);
+					for (std::list<TCPConvergenceLayer::TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+					{
+						TCPConvergenceLayer::TCPConnection *conn = (*iter);
+
+						// do not use the connection if it is marked as "free"
+						if (conn->free()) continue;
+
+						if (conn->getNode() == node->getNode())
+						{
+							shutdown();
+							return;
+						}
+					}
+				}
+			}
 		}
 
 		void TCPConvergenceLayer::Server::connectionUp(TCPConvergenceLayer::TCPConnection *conn)

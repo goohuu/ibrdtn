@@ -28,10 +28,8 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : _free(false), _tcpstream(stream), _stream(*this, *stream), _receiver(*this), _sender(*this)
+		 : _free(false), _tcpstream(stream), _stream(*this, *stream), _sender(*this)
 		{
-			bindEvent(GlobalEvent::className);
-			bindEvent(NodeEvent::className);
 		}
 
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()
@@ -42,8 +40,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::iamfree()
 		{
-			unbindEvent(GlobalEvent::className);
-			unbindEvent(NodeEvent::className);
 			_free = true;
 		}
 
@@ -60,58 +56,31 @@ namespace dtn
 			_queue_lock.signal();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::raiseEvent(const Event *evt)
-		{
-			static ibrcommon::Mutex mutex;
-			ibrcommon::MutexLock l(mutex);
-
-			const GlobalEvent *global = dynamic_cast<const GlobalEvent*>(evt);
-
-			if (global != NULL)
-			{
-				if (global->getAction() == GlobalEvent::GLOBAL_SHUTDOWN)
-				{
-					shutdown();
-				}
-			}
-
-			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
-
-			if (node != NULL)
-			{
-				if (node->getAction() == NODE_UNAVAILABLE)
-				{
-					if (node->getNode().equals(getNode()))
-					{
-						shutdown();
-					}
-				}
-			}
-		}
-
 		const StreamContactHeader TCPConvergenceLayer::TCPConnection::getHeader() const
 		{
 			return _peer;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::initialize(const dtn::data::EID &name, const size_t timeout)
+		void TCPConvergenceLayer::TCPConnection::handshake(const dtn::data::EID &name, const size_t timeout)
 		{
 			ibrcommon::MutexLock l(_freemutex);
 
 			try {
 				// do the handshake
 				_stream.handshake(name, timeout);
-
-				// start the receiver for incoming bundles
-				_receiver.start();
-
-				// start the sender for outgoing bundles
-				_sender.start();
-
 			} catch (dtn::exceptions::InvalidDataException ex) {
 				// mark up for deletion
 				iamfree();
 			}
+		}
+
+		void TCPConvergenceLayer::TCPConnection::initialize(const dtn::data::EID &name, const size_t timeout)
+		{
+			_sender._name = name;
+			_sender._timeout = timeout;
+
+			// start the sender for outgoing bundles
+			_sender.start();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionUp(const StreamContactHeader &header)
@@ -125,9 +94,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
 		{
-			// stop the receiver
-			_receiver.shutdown();
-
 			// stop the sender
 			_sender.shutdown();
 
@@ -147,8 +113,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventTimeout()
 		{
-			// stop the receiver
-			_receiver.shutdown();
+			ibrcommon::MutexLock l(_freemutex);
 
 			// stop the sender
 			_sender.shutdown();
@@ -163,8 +128,6 @@ namespace dtn
 
 			}
 
-			// send myself to the graveyard
-			ibrcommon::MutexLock l(_freemutex);
 			iamfree();
 		}
 
@@ -184,22 +147,21 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
-			ibrcommon::MutexLock l(conn._freemutex);
-
 			conn._stream >> bundle;
 			if (!conn._stream.good()) throw dtn::exceptions::IOException("read from stream failed");
 		}
 
 		TCPConvergenceLayer::TCPConnection& operator<<(TCPConvergenceLayer::TCPConnection &conn, const dtn::data::Bundle &bundle)
 		{
-			ibrcommon::MutexLock l(conn._freemutex);
-
 			// prepare a measurement
 			ibrcommon::TimeMeasurement m;
 
 			try {
 				// start the measurement
 				m.start();
+
+				// reset the ACK value
+				conn._stream.reset();
 
 				// transmit the bundle
 				conn._stream << bundle << std::flush;
@@ -288,10 +250,13 @@ namespace dtn
 				}
 			} catch (dtn::exceptions::IOException ex) {
 				_running = false;
+				_connection.shutdown();
 			} catch (dtn::exceptions::InvalidDataException ex) {
 				_running = false;
+				_connection.shutdown();
 			} catch (dtn::exceptions::InvalidBundleData ex) {
 				_running = false;
+				_connection.shutdown();
 			}
 		}
 
@@ -301,7 +266,7 @@ namespace dtn
 		}
 
 		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection)
-		 :  _running(true), _connection(connection)
+		 : _receiver(connection), _running(true), _connection(connection)
 		{
 		}
 
@@ -314,6 +279,12 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
 		{
 			try {
+				// firstly, do the handshake
+				_connection.handshake(_name, _timeout);
+
+				// start the receiver for incoming bundles
+				_receiver.start();
+
 				while (_running)
 				{
 					dtn::data::Bundle bundle;
@@ -351,6 +322,9 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
 		{
+			// stop the receiver
+			_receiver.shutdown();
+
 			ibrcommon::MutexLock l(_connection._queue_lock);
 			_running = false;
 			_connection._queue_lock.signal();

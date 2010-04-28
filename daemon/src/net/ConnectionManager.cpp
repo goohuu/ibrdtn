@@ -45,8 +45,11 @@ namespace dtn
 
 		void ConnectionManager::componentDown()
 		{
-			// clear the list of convergence layers
-			_cl.clear();
+			{
+				ibrcommon::MutexLock l(_cl_lock);
+				// clear the list of convergence layers
+				_cl.clear();
+			}
 
 			unbindEvent(NodeEvent::className);
 			unbindEvent(TimeEvent::className);
@@ -78,7 +81,7 @@ namespace dtn
 		void ConnectionManager::addConnection(const dtn::core::Node &n)
 		{
 			{
-				ibrcommon::MutexLock l(_list_lock);
+				ibrcommon::MutexLock l(_node_lock);
 				_static_connections.insert(n);
 			}
 
@@ -87,30 +90,32 @@ namespace dtn
 
 		void ConnectionManager::addConvergenceLayer(ConvergenceLayer *cl)
 		{
-			ibrcommon::MutexLock l(_list_lock);
+			ibrcommon::MutexLock l(_cl_lock);
 			cl->setBundleReceiver(this);
 			_cl.insert( cl );
 		}
 
 		void ConnectionManager::discovered(dtn::core::Node &node)
 		{
-			ibrcommon::MutexLock l(_list_lock);
-
-			// ignore messages of ourself
-			if (EID(node.getURI()) == dtn::core::BundleCore::local) return;
-
-			std::list<dtn::core::Node>::iterator iter = _discovered_nodes.begin();
-			while (iter != _discovered_nodes.end())
 			{
-				if ((*iter) == node)
-				{
-					(*iter) = node;
-					return;
-				}
-				iter++;
-			}
+				ibrcommon::MutexLock l(_node_lock);
 
-			_discovered_nodes.push_back(node);
+				// ignore messages of ourself
+				if (EID(node.getURI()) == dtn::core::BundleCore::local) return;
+
+				std::list<dtn::core::Node>::iterator iter = _discovered_nodes.begin();
+				while (iter != _discovered_nodes.end())
+				{
+					if ((*iter) == node)
+					{
+						(*iter) = node;
+						return;
+					}
+					iter++;
+				}
+
+				_discovered_nodes.push_back(node);
+			}
 
 			// announce the new node
 			dtn::core::NodeEvent::raise(node, dtn::core::NODE_AVAILABLE);
@@ -118,27 +123,35 @@ namespace dtn
 
 		void ConnectionManager::check_discovered()
 		{
-			ibrcommon::MutexLock l(_list_lock);
+			Node n;
 
-			// search for outdated nodes
-			std::list<Node>::iterator iter = _discovered_nodes.begin();
-
-			while (iter != _discovered_nodes.end())
 			{
-				Node n = (*iter);
+				ibrcommon::MutexLock l(_node_lock);
 
-				if ( !(*iter).decrementTimeout(1) )
-				{
-					// node is outdated -> remove it
-					_discovered_nodes.erase( iter++ );
+				// search for outdated nodes
+				std::list<Node>::iterator iter = _discovered_nodes.begin();
 
-					// announce the node unavailable event
-					dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
-				}
-				else
+				while (iter != _discovered_nodes.end())
 				{
-					iter++;
+					n = (*iter);
+
+					if ( !(*iter).decrementTimeout(1) )
+					{
+						// node is outdated -> remove it
+						_discovered_nodes.erase( iter++ );
+						break;
+					}
+					else
+					{
+						iter++;
+					}
 				}
+			}
+
+			if (n.getAddress() != "dtn:unknown")
+			{
+				// announce the node unavailable event
+				dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
 			}
 		}
 
@@ -153,6 +166,8 @@ namespace dtn
 			if ((node.getProtocol() == UNDEFINED) || (node.getProtocol() == UNSUPPORTED))
 				throw ConnectionNotAvailableException();
 
+			ibrcommon::MutexLock l(_cl_lock);
+
 			// search for the right cl
 			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); iter++)
 			{
@@ -166,7 +181,7 @@ namespace dtn
 
 		void ConnectionManager::queue(const ConvergenceLayer::Job &job)
 		{
-			ibrcommon::MutexLock l(_list_lock);
+			ibrcommon::MutexLock l(_node_lock);
 
 			// seek for a connection in the static list
 			for (std::set<dtn::core::Node>::const_iterator iter = _static_connections.begin(); iter != _static_connections.end(); iter++)
