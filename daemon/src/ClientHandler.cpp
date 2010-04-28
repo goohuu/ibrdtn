@@ -120,13 +120,10 @@ namespace dtn
 				}
 			} catch (dtn::exceptions::IOException ex) {
 				_running = false;
-				shutdown();
 			} catch (dtn::exceptions::InvalidDataException ex) {
 				_running = false;
-				shutdown();
 			} catch (dtn::exceptions::InvalidBundleData ex) {
 				_running = false;
-				shutdown();
 			}
 
 			shutdown();

@@ -105,7 +105,7 @@ namespace dtn
 
 		void StreamConnection::eventAck(size_t ack, size_t sent)
 		{
-			ibrcommon::MutexLock l(_in_state);
+			// NOTE: no lock here because it is already set in underflow()
 			_ack_size = ack;
 			_sent_size = sent;
 			_in_state.signal(true);
@@ -141,7 +141,7 @@ namespace dtn
 		void StreamConnection::reset()
 		{
 			ibrcommon::MutexLock l(_in_state);
-			_sent_size = 0;
+			_ack_size = 0;
 		}
 
 		void StreamConnection::connectionTimeout()
