@@ -117,7 +117,7 @@ namespace dtn
 				_stream >> peer;
 
 				// read the timer values
-				_in_timeout = header._keepalive;
+				_in_timeout = header._keepalive * 2;
 				_out_timeout = peer._keepalive - 2;
 
 				// activate timer
