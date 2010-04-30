@@ -101,6 +101,7 @@ namespace dtn
 
 			// close the tcpstream
 			try {
+				_tcpstream->done();
 				_tcpstream->close();
 			} catch (ibrcommon::ConnectionClosedException ex) {
 
@@ -122,6 +123,7 @@ namespace dtn
 
 			// close the tcpstream
 			try {
+				_tcpstream->done();
 				_tcpstream->close();
 			} catch (ibrcommon::ConnectionClosedException ex) {
 

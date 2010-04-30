@@ -71,6 +71,7 @@ namespace dtn
 			// wait for the closed connection
 			wait();
 			try {
+				_stream.done();
 				_stream.close();
 			} catch (ibrcommon::ConnectionClosedException ex) {
 
@@ -116,12 +117,14 @@ namespace dtn
 		{
 			_connected = false;
 			_stream.done();
+			_stream.close();
 		}
 
 		void Client::eventShutdown()
 		{
 			_connected = false;
 			_stream.done();
+			_stream.close();
 		}
 
 		void Client::eventConnectionUp(const StreamContactHeader &header)

@@ -50,6 +50,7 @@ namespace dtn
 		{
 			// shutdown message received
 			(*_stream).done();
+			(*_stream).close();
 
 			iamfree();
 		}
@@ -57,6 +58,7 @@ namespace dtn
 		void ClientHandler::eventTimeout()
 		{
 			(*_stream).done();
+			(*_stream).close();
 
 			ibrcommon::MutexLock l(_freemutex);
 			iamfree();
