@@ -35,7 +35,6 @@ namespace dtn
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()
 		{
 			shutdown();
-			std::cout << "TCPConnection deleted" << std::endl;
 		}
 
 		void TCPConvergenceLayer::TCPConnection::iamfree()

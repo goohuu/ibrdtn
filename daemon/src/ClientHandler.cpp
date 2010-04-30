@@ -65,8 +65,6 @@ namespace dtn
 		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
 		{
 			// contact received event
-			std::cout << "Client connected" << std::endl;
-
 			_eid = BundleCore::local + header._localeid.getApplication();
 		}
 

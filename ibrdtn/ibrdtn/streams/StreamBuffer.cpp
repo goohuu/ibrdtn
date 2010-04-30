@@ -102,7 +102,7 @@ namespace dtn
 
 		void StreamConnection::StreamBuffer::actionKeepaliveTimeout()
 		{
-			 _stream << StreamDataSegment() << std::flush;
+			_stream << StreamDataSegment() << std::flush;
 		}
 
 		const StreamContactHeader StreamConnection::StreamBuffer::handshake(const StreamContactHeader &header)

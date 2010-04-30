@@ -127,15 +127,19 @@ namespace dtn
 			ibrcommon::MutexLock l(_in_state);
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			if (_sent_size != _ack_size)
-					cout << "wait for completion of transmission, current size: " << _ack_size << " of " << _sent_size << endl;
+					cout << "StreamConnection::wait(): wait for completion of transmission, current size: " << _ack_size << " of " << _sent_size << endl;
 #endif
 			while ((_sent_size != _ack_size) && (_in_state.getState() == CONNECTION_CONNECTED))
 			{
 				_in_state.wait();
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
-				cout << "current size: " << _ack_size << " of " << _sent_size << endl;
+				cout << "StreamConnection::wait(): current size: " << _ack_size << " of " << _sent_size << endl;
 #endif
 			}
+
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			std::cout << "StreamConnection::wait(): transfer completed" << std::endl;
+#endif
 		}
 
 		void StreamConnection::reset()
