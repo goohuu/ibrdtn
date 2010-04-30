@@ -25,8 +25,6 @@ namespace dtn
 
 		StreamConnection::~StreamConnection()
 		{
-			// do a forced close
-			close(true);
 		}
 
 		void StreamConnection::handshake(const dtn::data::EID &eid, const size_t timeout, const char flags)
@@ -60,39 +58,18 @@ namespace dtn
 			}
 		}
 
-		void StreamConnection::close(bool force)
+		void StreamConnection::close()
 		{
-			if (force)
+			// send shutdown and close the connection
+			_buf.shutdown();
+
 			{
-				// and close the connection
-				_buf.close();
-
-				// connection closed
-				{
-					ibrcommon::MutexLock l(_in_state);
-					_in_state.setState(CONNECTION_CLOSED);
-				}
-
-				{
-					ibrcommon::MutexLock l(_out_state);
-					_out_state.setState(CONNECTION_CLOSED);
-				}
+				ibrcommon::MutexLock l(_in_state);
+				_in_state.setState(CONNECTION_CLOSED);
 			}
-			else
+
 			{
-				_buf.shutdown();
-
-				// wait until the shutdown is received
-				ibrcommon::MutexLock inl(_in_state);
-				while (!_in_state.ifState(CONNECTION_CLOSED) && good())
-				{
-					(*this).get();
-				}
-
-				_buf.close();
-
-				// connection closed
-				ibrcommon::MutexLock outl(_out_state);
+				ibrcommon::MutexLock l(_out_state);
 				_out_state.setState(CONNECTION_CLOSED);
 			}
 		}

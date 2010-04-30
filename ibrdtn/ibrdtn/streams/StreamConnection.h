@@ -97,7 +97,7 @@ namespace dtn
 			/**
 			 * Close this stream connection
 			 */
-			void close(bool force = false);
+			void close();
 
 			/**
 			 * Returns a variable which tells the connection status.
@@ -156,7 +156,7 @@ namespace dtn
 				/**
 				 * send a shutdown message to the peer
 				 */
-				void shutdown();
+				void shutdown(const StreamDataSegment::ShutdownReason reason = StreamDataSegment::MSG_SHUTDOWN_NONE);
 
 				/**
 				 * This method is called by the timers.
@@ -174,17 +174,12 @@ namespace dtn
 			private:
 				enum timerNames
 				{
-					TIMER_SHUTDOWN = 0,
+					//TIMER_SHUTDOWN = 0,
 					TIMER_IN = 1,
 					TIMER_OUT = 2
 				};
 
-				void actionShutdown(const StreamDataSegment::ShutdownReason reason);
-				void actionClose();
-				void actionAck(size_t size);
-
 				void actionConnectionTimeout();
-				void actionShutdownTimeout();
 				void actionKeepaliveTimeout();
 
 				void readSegment();

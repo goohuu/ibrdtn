@@ -51,8 +51,28 @@ void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
 	}
 }
 
+dtn::api::Client *_client = NULL;
+ibrcommon::tcpclient *_conn = NULL;
+
+void term(int signal)
+{
+	if (signal >= 1)
+	{
+		if (_client != NULL)
+		{
+			_client->close();
+			_conn->close();
+		}
+		exit(0);
+	}
+}
+
 int main(int argc, char *argv[])
 {
+	// catch process signals
+	signal(SIGINT, term);
+	signal(SIGTERM, term);
+
 	string filename = "";
 	string name = "filetransfer";
 	bool stdout = true;
@@ -85,6 +105,10 @@ int main(int argc, char *argv[])
 
 	// Initiate a client for synchronous receiving
 	dtn::api::Client client(name, conn, false);
+
+	// export objects for the signal handler
+	_conn = &conn;
+	_client = &client;
 
 	// Connect to the server. Actually, this function initiate the
 	// stream protocol by starting the thread and sending the contact header.

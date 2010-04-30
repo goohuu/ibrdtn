@@ -25,46 +25,9 @@ namespace dtn
 			// stop all timer
 			_timer.removeAll();
 
+			// clear the own buffer
 			delete [] in_buf_;
 			delete [] out_buf_;
-		}
-
-		void StreamConnection::StreamBuffer::actionShutdown(const StreamDataSegment::ShutdownReason reason)
-		{
-			if (_out_state.ifState(SHUTDOWN)) return;
-
-			if (!_in_state.ifState(SHUTDOWN))
-			{
-				// return with shutdown, if the stream is wrong
-				_stream << StreamDataSegment(reason) << std::flush;
-			}
-
-			// set out state to shutdown
-			_out_state.setState(SHUTDOWN);
-
-			// stop in/out timer
-			_timer.remove(*this, TIMER_IN);
-			_timer.remove(*this, TIMER_OUT);
-
-			// set timer
-			_timer.set(*this, TIMER_SHUTDOWN, 5);
-		}
-
-		void StreamConnection::StreamBuffer::actionClose()
-		{
-			//_stream.clear(iostream::badbit);
-
-			// set in state to shutdown
-			_in_state.setState(SHUTDOWN);
-
-			// set out state to shutdown
-			_out_state.setState(SHUTDOWN);
-		}
-
-		void StreamConnection::StreamBuffer::actionAck(size_t size)
-		{
-			// New data segment received. Send an ACK.
-			_stream << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, size) << std::flush;
 		}
 
 		void StreamConnection::StreamBuffer::actionConnectionTimeout()
@@ -73,31 +36,10 @@ namespace dtn
 			cout << "Connection timed out" << endl;
 #endif
 			// send shutdown message
-			actionShutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
+			shutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
 
 			// signal timeout
 			_conn.connectionTimeout();
-		}
-
-		void StreamConnection::StreamBuffer::actionShutdownTimeout()
-		{
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "shutdown timer" << endl;
-#endif
-			{
-				ibrcommon::MutexLock l(_in_state);
-				// set in state to shutdown
-				_in_state.setState(SHUTDOWN);
-			}
-
-			{
-				ibrcommon::MutexLock l(_out_state);
-				// set out state to shutdown
-				_out_state.setState(SHUTDOWN);
-			}
-
-			// signal the timeout
-			_conn.shutdownTimeout();
 		}
 
 		void StreamConnection::StreamBuffer::actionKeepaliveTimeout()
@@ -105,6 +47,14 @@ namespace dtn
 			_stream << StreamDataSegment() << std::flush;
 		}
 
+		/**
+		 * This method do a handshake with the peer including send and receive
+		 * the contact header and set the IN/OUT timer. If the handshake was not
+		 * successful a SHUTDOWN message is sent, the eventShutdown() is called and
+		 * a exception is thrown.
+		 * @param header
+		 * @return
+		 */
 		const StreamContactHeader StreamConnection::StreamBuffer::handshake(const StreamContactHeader &header)
 		{
 			try {
@@ -133,10 +83,7 @@ namespace dtn
 			} catch (dtn::exceptions::InvalidDataException ex) {
 
 				// shutdown the stream
-				actionShutdown(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH);
-
-				// close the stream
-				close();
+				shutdown(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH);
 
 				// call the shutdown event
 				_conn.eventShutdown();
@@ -146,19 +93,34 @@ namespace dtn
 			}
 		}
 
-		void StreamConnection::StreamBuffer::shutdown()
+		/**
+		 * This method is called by the super class and shutdown the hole
+		 * connection. While we have no access to the connection itself this
+		 * method send a SHUTDOWN message and set this connection as closed.
+		 */
+		void StreamConnection::StreamBuffer::shutdown(const StreamDataSegment::ShutdownReason reason)
 		{
-			actionShutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
+			// send a SHUTDOWN message
+			_stream << StreamDataSegment(reason) << std::flush;
+
+			// close the stream
+			close();
 		}
 
+		/**
+		 * This method is called by the timer object.
+		 * In this class we have two timer.
+		 *
+		 * TIMER_IN: is raised if no data was received for a specified amount of time.
+		 * TIMER_OUT: is raised every x seconds to send a keepalive message
+		 *
+		 * @param identifier Identifier for the timer.
+		 * @return The new value for this timer.
+		 */
 		size_t StreamConnection::StreamBuffer::timeout(size_t identifier)
 		{
 			switch (identifier)
 			{
-			case TIMER_SHUTDOWN:
-				actionShutdownTimeout();
-				break;
-
 			case TIMER_IN:
 				actionConnectionTimeout();
 				break;
@@ -172,7 +134,11 @@ namespace dtn
 
 		void StreamConnection::StreamBuffer::close()
 		{
-			actionClose();
+			// set in state to shutdown
+			_in_state.setState(SHUTDOWN);
+
+			// set out state to shutdown
+			_out_state.setState(SHUTDOWN);
 		}
 
 		void StreamConnection::StreamBuffer::readSegment()
@@ -230,10 +196,8 @@ namespace dtn
 
 				case StreamDataSegment::MSG_SHUTDOWN:
 				{
-					actionShutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
-
-					// close the connection
-					actionClose();
+					// close the stream
+					close();
 
 					// call the shutdown event
 					_conn.eventShutdown();
@@ -368,7 +332,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_out_state);
 
 				// New data segment received. Send an ACK.
-				actionAck(_recv_size);
+				_stream << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size) << std::flush;
 
 				// return to idle state
 				_in_state.setState(IDLE);
