@@ -169,7 +169,7 @@ namespace dtn
 
 						if (conn->getNode() == node->getNode())
 						{
-							shutdown();
+							conn->shutdown();
 							return;
 						}
 					}
