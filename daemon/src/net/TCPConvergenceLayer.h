@@ -78,7 +78,9 @@ namespace dtn
 				 */
 				virtual void eventShutdown();
 				virtual void eventTimeout();
+				virtual void eventError();
 				virtual void eventConnectionUp(const StreamContactHeader &header);
+				virtual void eventConnectionDown();
 
 				bool free();
 

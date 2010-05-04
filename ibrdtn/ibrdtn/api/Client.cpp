@@ -46,12 +46,12 @@ namespace dtn
 					yield();
 				}
 			} catch (dtn::api::ConnectionException ex) {
-				_client.close();
+				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (dtn::exceptions::IOException ex) {
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 				cout << ex.what() << endl;
 #endif
-				_client.close();
+				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 
 		}
@@ -68,14 +68,7 @@ namespace dtn
 
 		Client::~Client()
 		{
-			// wait for the closed connection
-			wait();
-			try {
-				_stream.done();
-				_stream.close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
+			close();
 		}
 
 		void Client::connect()
@@ -103,9 +96,7 @@ namespace dtn
 
 		void Client::close()
 		{
-			// wait for all ACKs
-			StreamConnection::wait();
-			StreamConnection::close();
+			StreamConnection::shutdown();
 		}
 
 		void Client::received(const StreamContactHeader &h)
@@ -115,14 +106,12 @@ namespace dtn
 
 		void Client::eventTimeout()
 		{
-			_connected = false;
 			_stream.done();
 			_stream.close();
 		}
 
 		void Client::eventShutdown()
 		{
-			_connected = false;
 			_stream.done();
 			_stream.close();
 		}
@@ -134,6 +123,17 @@ namespace dtn
 
 			// set connected to true
 			_connected = true;
+		}
+
+		void Client::eventError()
+		{
+			_stream.done();
+			_stream.close();
+		}
+
+		void Client::eventConnectionDown()
+		{
+			_connected = false;
 		}
 	}
 }

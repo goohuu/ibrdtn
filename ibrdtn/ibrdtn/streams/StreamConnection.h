@@ -36,6 +36,16 @@ namespace dtn
 				CONNECTION_CLOSED = 3
 			};
 
+			enum ConnectionShutdownCases
+			{
+				CONNECTION_SHUTDOWN_NOTSET = 0,
+				CONNECTION_SHUTDOWN_IDLE = 1,
+				CONNECTION_SHUTDOWN_ERROR = 2,
+				CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN = 3,
+				CONNECTION_SHUTDOWN_NODE_TIMEOUT = 4,
+				CONNECTION_SHUTDOWN_PEER_SHUTDOWN = 5
+			};
+
 			class TransmissionInterruptedException : public ibrcommon::Exception
 			{
 				public:
@@ -48,6 +58,22 @@ namespace dtn
 			{
 			public:
 				StreamClosedException(string what = "The stream has been closed.") throw() : Exception(what)
+				{
+				};
+			};
+
+			class StreamErrorException : public ibrcommon::Exception
+			{
+			public:
+				StreamErrorException(string what = "StreamError") throw() : Exception(what)
+				{
+				};
+			};
+
+			class StreamShutdownException : public ibrcommon::Exception
+			{
+			public:
+				StreamShutdownException(string what = "Shutdown message received.") throw() : Exception(what)
 				{
 				};
 			};
@@ -68,10 +94,20 @@ namespace dtn
 				virtual void eventTimeout() = 0;
 
 				/**
+				 * This method is called if a error occured in the stream.
+				 */
+				virtual void eventError() = 0;
+
+				/**
 				 * This method is called if a handshake was successful.
 				 * @param header
 				 */
 				virtual void eventConnectionUp(const StreamContactHeader &header) = 0;
+
+				/**
+				 * This method is called if a connection went down.
+				 */
+				virtual void eventConnectionDown() = 0;
 			};
 
 			/**
@@ -95,11 +131,6 @@ namespace dtn
 			void handshake(const dtn::data::EID &eid, const size_t timeout = 10, const char flags = 0);
 
 			/**
-			 * Close this stream connection
-			 */
-			void close();
-
-			/**
 			 * Returns a variable which tells the connection status.
 			 * @return True, if connected.
 			 */
@@ -115,6 +146,29 @@ namespace dtn
 			 * reset the value for the ACK'd bytes
 			 */
 			void reset();
+
+			/**
+			 * This method shutdown the whole connection handling process. To differ between the
+			 * expected cases of disconnection a connection shutdown case is needed.
+			 *
+			 * CONNECTION_SHUTDOWN_IDLE
+			 * The connection was idle and should go down now.
+			 *
+			 * CONNECTION_SHUTDOWN_ERROR
+			 * A critical tcp error occured and the connection is closed.
+			 *
+			 * CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN
+			 * The connection is ok, but a shutdown is requested from anywhere.
+			 *
+			 * CONNECTION_SHUTDOWN_NODE_TIMEOUT
+			 * The node of this connection is gone. So shutdown this connection.
+			 *
+			 * CONNECTION_SHUTDOWN_PEER_SHUTDOWN
+			 * The peer has shutdown this connection by a shutdown message.
+			 *
+			 * @param csc The case of the requested shutdown.
+			 */
+			void shutdown(ConnectionShutdownCases csc = CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
 
 		private:
 			/**
@@ -179,11 +233,6 @@ namespace dtn
 					TIMER_OUT = 2
 				};
 
-				void actionConnectionTimeout();
-				void actionKeepaliveTimeout();
-
-				void readSegment();
-
 				ibrcommon::StatefulConditional<StreamBuffer::State, StreamBuffer::SHUTDOWN> _in_state;
 				ibrcommon::StatefulConditional<StreamBuffer::State, StreamBuffer::SHUTDOWN> _out_state;
 
@@ -208,8 +257,12 @@ namespace dtn
 				ibrcommon::MultiTimer _timer;
 			};
 
+			/**
+			 * Close this stream connection
+			 */
+			void close();
+
 			void connectionTimeout();
-			void shutdownTimeout();
 
 			void eventShutdown();
 			void eventAck(size_t ack, size_t sent);
@@ -225,6 +278,9 @@ namespace dtn
 			dtn::streams::StreamContactHeader _peer;
 
 			StreamConnection::StreamBuffer _buf;
+
+			ibrcommon::Mutex _shutdown_reason_lock;
+			ConnectionShutdownCases _shutdown_reason;
 		};
 	}
 }

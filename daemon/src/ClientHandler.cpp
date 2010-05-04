@@ -51,23 +51,30 @@ namespace dtn
 			// shutdown message received
 			(*_stream).done();
 			(*_stream).close();
-
-			iamfree();
 		}
 
 		void ClientHandler::eventTimeout()
 		{
 			(*_stream).done();
 			(*_stream).close();
-
-			ibrcommon::MutexLock l(_freemutex);
-			iamfree();
 		}
 
 		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
 		{
 			// contact received event
 			_eid = BundleCore::local + header._localeid.getApplication();
+		}
+
+		void ClientHandler::eventError()
+		{
+			(*_stream).done();
+			(*_stream).close();
+		}
+
+		void ClientHandler::eventConnectionDown()
+		{
+			ibrcommon::MutexLock l(_freemutex);
+			iamfree();
 		}
 
 		bool ClientHandler::isConnected()
@@ -77,10 +84,7 @@ namespace dtn
 
 		void ClientHandler::shutdown()
 		{
-			_running = false;
-
-			_connection.wait();
-			_connection.close();
+			_connection.shutdown();
 		}
 
 		void ClientHandler::run()
@@ -118,15 +122,18 @@ namespace dtn
 
 					yield();
 				}
+
+				_connection.shutdown();
 			} catch (dtn::exceptions::IOException ex) {
+				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				_running = false;
 			} catch (dtn::exceptions::InvalidDataException ex) {
+				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				_running = false;
 			} catch (dtn::exceptions::InvalidBundleData ex) {
+				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				_running = false;
 			}
-
-			shutdown();
 		}
 
 		ClientHandler& operator>>(ClientHandler &conn, dtn::data::Bundle &bundle)

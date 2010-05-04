@@ -30,23 +30,6 @@ namespace dtn
 			delete [] out_buf_;
 		}
 
-		void StreamConnection::StreamBuffer::actionConnectionTimeout()
-		{
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "Connection timed out" << endl;
-#endif
-			// send shutdown message
-			shutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
-
-			// signal timeout
-			_conn.connectionTimeout();
-		}
-
-		void StreamConnection::StreamBuffer::actionKeepaliveTimeout()
-		{
-			_stream << StreamDataSegment() << std::flush;
-		}
-
 		/**
 		 * This method do a handshake with the peer including send and receive
 		 * the contact header and set the IN/OUT timer. If the handshake was not
@@ -86,7 +69,7 @@ namespace dtn
 				shutdown(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH);
 
 				// call the shutdown event
-				_conn.eventShutdown();
+				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 
 				// forward the catched exception
 				throw ex;
@@ -100,11 +83,10 @@ namespace dtn
 		 */
 		void StreamConnection::StreamBuffer::shutdown(const StreamDataSegment::ShutdownReason reason)
 		{
+			ibrcommon::MutexLock l(_out_state);
+
 			// send a SHUTDOWN message
 			_stream << StreamDataSegment(reason) << std::flush;
-
-			// close the stream
-			close();
 		}
 
 		/**
@@ -122,86 +104,33 @@ namespace dtn
 			switch (identifier)
 			{
 			case TIMER_IN:
-				actionConnectionTimeout();
+				_conn.shutdown(CONNECTION_SHUTDOWN_IDLE);
 				break;
 
 			case TIMER_OUT:
-				actionKeepaliveTimeout();
-				return _out_timeout;
+				{
+					ibrcommon::MutexLock l(_out_state);
+					_stream << StreamDataSegment() << std::flush;
+					return _out_timeout;
+				}
 				break;
 			}
 		}
 
 		void StreamConnection::StreamBuffer::close()
 		{
-			// set in state to shutdown
-			_in_state.setState(SHUTDOWN);
-
-			// set out state to shutdown
-			_out_state.setState(SHUTDOWN);
-		}
-
-		void StreamConnection::StreamBuffer::readSegment()
-		{
-			if (_in_state.ifState(SHUTDOWN)) return;
-
-			// container for segment data
-			dtn::streams::StreamDataSegment seg;
-
-			// read the segment
-			_stream >> seg;
-
-			// check for read errors or end of stream
-			if (!_stream.good())
 			{
+				ibrcommon::MutexLock l(_in_state);
+
+				// set in state to shutdown
 				_in_state.setState(SHUTDOWN);
-				return;
 			}
 
-			// reset the incoming timer
-			_timer.set(*this, TIMER_IN, _in_timeout);
-
-			switch (seg._type)
 			{
-				case StreamDataSegment::MSG_DATA_SEGMENT:
-				{
-					if (seg._flags & 0x01)
-					{
-						_recv_size = seg._value;
-					}
-					else
-					{
-						_recv_size += seg._value;
-					}
+				ibrcommon::MutexLock l(_out_state);
 
-					// set the new data length
-					in_data_remain_ = seg._value;
-
-					// announce the new data block
-					_in_state.setState(DATA_AVAILABLE);
-					break;
-				}
-
-				case StreamDataSegment::MSG_ACK_SEGMENT:
-				{
-					_conn.eventAck(seg._value, _sent_size);
-					break;
-				}
-
-				case StreamDataSegment::MSG_KEEPALIVE:
-					break;
-
-				case StreamDataSegment::MSG_REFUSE_BUNDLE:
-					break;
-
-				case StreamDataSegment::MSG_SHUTDOWN:
-				{
-					// close the stream
-					close();
-
-					// call the shutdown event
-					_conn.eventShutdown();
-				}
+				// set out state to shutdown
+				_out_state.setState(SHUTDOWN);
 			}
 		}
 
@@ -210,63 +139,69 @@ namespace dtn
 		// be written to (in this case, the streambuf object that this is controlling).
 		int StreamConnection::StreamBuffer::overflow(int c)
 		{
-			ibrcommon::MutexLock l(_out_state);
+			try {
+				ibrcommon::MutexLock l(_out_state);
 
-			if (_out_state.ifState(SHUTDOWN) || !_stream.good())
-			{
-				_out_state.setState(SHUTDOWN);
-				return traits_type::eof();
-			}
+				if (_out_state.ifState(SHUTDOWN) || !_stream.good())
+				{
+					throw StreamClosedException();
+				}
 
-			char *ibegin = out_buf_;
-			char *iend = pptr();
+				char *ibegin = out_buf_;
+				char *iend = pptr();
 
-			// mark the buffer as free
-			setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
+				// mark the buffer as free
+				setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
 
-			// append the last character
-			if(!traits_type::eq_int_type(c, traits_type::eof())) {
-				*iend++ = traits_type::to_char_type(c);
-			}
+				// append the last character
+				if(!traits_type::eq_int_type(c, traits_type::eof())) {
+					*iend++ = traits_type::to_char_type(c);
+				}
 
-			// if there is nothing to send, just return
-			if ((iend - ibegin) == 0)
-			{
+				// if there is nothing to send, just return
+				if ((iend - ibegin) == 0)
+				{
+					return traits_type::not_eof(c);
+				}
+
+				// wrap a segment around the data
+				StreamDataSegment seg(StreamDataSegment::MSG_DATA_SEGMENT, (iend - ibegin));
+
+				// set the start flag
+				if (_start_of_bundle)
+				{
+					if (!(seg._flags & 0x01)) seg._flags += 0x01;
+					_start_of_bundle = false;
+					_sent_size = 0;
+				}
+
+				if (char_traits<char>::eq_int_type(c, char_traits<char>::eof()))
+				{
+					// set the end flag
+					if (!(seg._flags & 0x02)) seg._flags += 0x02;
+					_start_of_bundle = true;
+				}
+
+				// write the segment to the stream
+				_stream << seg;
+				_stream.write(out_buf_, seg._value);
+
+				if (!_stream.good())
+				{
+					throw StreamErrorException();
+				}
+
+				// add size to outgoing size
+				_sent_size += seg._value;
+
 				return traits_type::not_eof(c);
+			} catch (StreamClosedException ex) {
+				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (StreamErrorException ex) {
+				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 
-			// wrap a segment around the data
-			StreamDataSegment seg(StreamDataSegment::MSG_DATA_SEGMENT, (iend - ibegin));
-
-			// set the start flag
-			if (_start_of_bundle)
-			{
-				if (!(seg._flags & 0x01)) seg._flags += 0x01;
-				_start_of_bundle = false;
-				_sent_size = 0;
-			}
-
-			if (char_traits<char>::eq_int_type(c, char_traits<char>::eof()))
-			{
-				// set the end flag
-				if (!(seg._flags & 0x02)) seg._flags += 0x02;
-				_start_of_bundle = true;
-			}
-
-			// write the segment to the stream
-			_stream << seg;
-			_stream.write(out_buf_, seg._value);
-
-			if (!_stream.good())
-			{
-				_out_state.setState(SHUTDOWN);
-				return traits_type::eof();
-			}
-
-			// add size to outgoing size
-			_sent_size += seg._value;
-
-			return traits_type::not_eof(c);
+			return traits_type::eof();
 		}
 
 		// This is called to flush the buffer.
@@ -285,60 +220,118 @@ namespace dtn
 		// Fill the input buffer.  This reads out of the streambuf.
 		int StreamConnection::StreamBuffer::underflow()
 		{
-			ibrcommon::MutexLock l(_in_state);
+			try {
+				ibrcommon::MutexLock l(_in_state);
 
-			if (_in_state.ifState(SHUTDOWN))
-			{
-				return traits_type::eof();
-			}
-
-			// read segments until DATA is AVAILABLE
-			while (!_in_state.ifState(DATA_AVAILABLE))
-			{
-				readSegment();
+				// check if the connection is already closed
 				if (_in_state.ifState(SHUTDOWN))
 				{
-					return traits_type::eof();
+					throw StreamClosedException();
 				}
+
+				// read segments until DATA is AVAILABLE
+				while (!_in_state.ifState(DATA_AVAILABLE))
+				{
+					// container for segment data
+					dtn::streams::StreamDataSegment seg;
+
+					// read the segment
+					_stream >> seg;
+
+					// check for read errors or end of stream
+					if (!_stream.good())
+					{
+						throw StreamErrorException();
+					}
+
+					// reset the incoming timer
+					_timer.set(*this, TIMER_IN, _in_timeout);
+
+					switch (seg._type)
+					{
+						case StreamDataSegment::MSG_DATA_SEGMENT:
+						{
+							if (seg._flags & 0x01)
+							{
+								_recv_size = seg._value;
+							}
+							else
+							{
+								_recv_size += seg._value;
+							}
+
+							// set the new data length
+							in_data_remain_ = seg._value;
+
+							// announce the new data block
+							_in_state.setState(DATA_AVAILABLE);
+							break;
+						}
+
+						case StreamDataSegment::MSG_ACK_SEGMENT:
+						{
+							_conn.eventAck(seg._value, _sent_size);
+							break;
+						}
+
+						case StreamDataSegment::MSG_KEEPALIVE:
+							break;
+
+						case StreamDataSegment::MSG_REFUSE_BUNDLE:
+							break;
+
+						case StreamDataSegment::MSG_SHUTDOWN:
+						{
+							throw StreamShutdownException();
+						}
+					}
+				}
+
+				// set state to DATA TRANSFER
+				_in_state.setState(DATA_TRANSFER);
+
+				// currently transferring data
+				size_t readsize = BUFF_SIZE;
+				if (in_data_remain_ < BUFF_SIZE) readsize = in_data_remain_;
+
+				// here receive the data
+				_stream.read(in_buf_, readsize);
+
+				// check for read errors or end of stream
+				if (_stream.eof())
+				{
+					throw StreamErrorException();
+				}
+
+				// Since the input buffer content is now valid (or is new)
+				// the get pointer should be initialized (or reset).
+				setg(in_buf_, in_buf_, in_buf_ + readsize);
+
+				// adjust the remain counter
+				in_data_remain_ -= readsize;
+
+				// if the transmission is completed
+				if (in_data_remain_ == 0)
+				{
+					ibrcommon::MutexLock l(_out_state);
+
+					// New data segment received. Send an ACK.
+					_stream << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size) << std::flush;
+
+					// return to idle state
+					_in_state.setState(IDLE);
+				}
+
+				return traits_type::not_eof(in_buf_[0]);
+			} catch (StreamClosedException ex) {
+				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (StreamErrorException ex) {
+				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (StreamShutdownException ex) {
+				_conn.shutdown(CONNECTION_SHUTDOWN_PEER_SHUTDOWN);
 			}
 
-			// set state to DATA TRANSFER
-			_in_state.setState(DATA_TRANSFER);
-
-			// currently transferring data
-			size_t readsize = BUFF_SIZE;
-			if (in_data_remain_ < BUFF_SIZE) readsize = in_data_remain_;
-
-			// here receive the data
-			_stream.read(in_buf_, readsize);
-
-			// check for read errors or end of stream
-			if (_stream.eof())
-			{
-				_in_state.setState(SHUTDOWN);
-				return traits_type::eof();
-			}
-
-			// Since the input buffer content is now valid (or is new)
-			// the get pointer should be initialized (or reset).
-			setg(in_buf_, in_buf_, in_buf_ + readsize);
-
-			// adjust the remain counter
-			in_data_remain_ -= readsize;
-
-			// if the transmission is completed
-			if (in_data_remain_ == 0)
-			{
-				ibrcommon::MutexLock l(_out_state);
-
-				// New data segment received. Send an ACK.
-				_stream << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size) << std::flush;
-
-				// return to idle state
-				_in_state.setState(IDLE);
-			}
-
-			return traits_type::not_eof(in_buf_[0]);
+			return traits_type::eof();
 		}
 	}
 }

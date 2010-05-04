@@ -143,7 +143,7 @@ namespace dtn
 						{
 							if ( (*iter)->free() )
 							{
-								_callback.connectionDown(*iter);
+								_callback.__connectionDown(*iter);
 
 								// free the object
 								delete (*iter);
@@ -167,7 +167,7 @@ namespace dtn
 				GenericServer &_callback;
 			};
 
-			void connectionDown(GenericConnection *conn)
+			void __connectionDown(GenericConnection *conn)
 			{
 				T *tconn = dynamic_cast<T*>(conn);
 				if (tconn != NULL)

@@ -19,7 +19,8 @@ namespace dtn
 	{
 		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream)
 		 : _callback(cb), _ack_size(0), _sent_size(0), _in_state(CONNECTION_INITIAL),
-		   _out_state(CONNECTION_INITIAL), _buf(*this, stream), std::iostream(&_buf)
+		   _out_state(CONNECTION_INITIAL), _buf(*this, stream), std::iostream(&_buf),
+		   _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
 		{
 		}
 
@@ -54,15 +55,12 @@ namespace dtn
 				// signal the complete handshake
 				_callback.eventConnectionUp(_peer);
 			} catch (dtn::exceptions::InvalidDataException ex) {
-				close();
+
 			}
 		}
 
 		void StreamConnection::close()
 		{
-			// send shutdown and close the connection
-			_buf.shutdown();
-
 			{
 				ibrcommon::MutexLock l(_in_state);
 				_in_state.setState(CONNECTION_CLOSED);
@@ -72,6 +70,42 @@ namespace dtn
 				ibrcommon::MutexLock l(_out_state);
 				_out_state.setState(CONNECTION_CLOSED);
 			}
+		}
+
+		void StreamConnection::shutdown(ConnectionShutdownCases csc)
+		{
+			// skip if another shutdown is in progress
+			{
+				ibrcommon::MutexLock l(_shutdown_reason_lock);
+				if (_shutdown_reason != CONNECTION_SHUTDOWN_NOTSET) return;
+				_shutdown_reason = csc;
+			}
+
+			switch (csc)
+			{
+				case CONNECTION_SHUTDOWN_IDLE:
+					_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
+					_callback.eventTimeout();
+					break;
+				case CONNECTION_SHUTDOWN_ERROR:
+					_callback.eventError();
+					break;
+				case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
+					wait();
+					_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
+					_callback.eventShutdown();
+					break;
+				case CONNECTION_SHUTDOWN_NODE_TIMEOUT:
+					_callback.eventTimeout();
+					break;
+				case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
+					_callback.eventShutdown();
+					break;
+			}
+
+			_buf.close();
+			close();
+			_callback.eventConnectionDown();
 		}
 
 		void StreamConnection::eventShutdown()
@@ -126,11 +160,6 @@ namespace dtn
 		}
 
 		void StreamConnection::connectionTimeout()
-		{
-
-		}
-
-		void StreamConnection::shutdownTimeout()
 		{
 			// connection closed
 			{

@@ -62,14 +62,11 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::handshake(const dtn::data::EID &name, const size_t timeout)
 		{
-			ibrcommon::MutexLock l(_freemutex);
-
 			try {
 				// do the handshake
 				_stream.handshake(name, timeout);
 			} catch (dtn::exceptions::InvalidDataException ex) {
-				// mark up for deletion
-				iamfree();
+
 			}
 		}
 
@@ -91,13 +88,19 @@ namespace dtn
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, header.getEID());
 		}
 
+		void TCPConvergenceLayer::TCPConnection::eventConnectionDown()
+		{
+			// event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _peer._localeid);
+
+			ibrcommon::MutexLock l(_freemutex);
+			iamfree();
+		}
+
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
 		{
 			// stop the sender
 			_sender.shutdown();
-
-			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _peer._localeid);
 
 			// close the tcpstream
 			try {
@@ -106,15 +109,10 @@ namespace dtn
 			} catch (ibrcommon::ConnectionClosedException ex) {
 
 			}
-
-			// send myself to the graveyard
-			iamfree();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventTimeout()
 		{
-			ibrcommon::MutexLock l(_freemutex);
-
 			// stop the sender
 			_sender.shutdown();
 
@@ -128,17 +126,25 @@ namespace dtn
 			} catch (ibrcommon::ConnectionClosedException ex) {
 
 			}
+		}
 
-			iamfree();
+		void TCPConvergenceLayer::TCPConnection::eventError()
+		{
+			// stop the sender
+			_sender.shutdown();
+
+			// close the tcpstream
+			try {
+				_tcpstream->done();
+				_tcpstream->close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			// wait until all data is acknowledged
-			_stream.wait();
-
-			// disconnect
-			_stream.close();
+			_stream.shutdown();
 		}
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
@@ -199,6 +205,9 @@ namespace dtn
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
 
+				// forward exception
+				throw ex;
+
 			} catch (dtn::exceptions::IOException ex) {
 				// stop the time measurement
 				m.stop();
@@ -212,6 +221,9 @@ namespace dtn
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
 
+				// forward exception
+				throw ex;
+
 			} catch (dtn::net::ConnectionNotAvailableException ex) {
 				// the connection not available
 
@@ -222,6 +234,8 @@ namespace dtn
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
 
+				// forward exception
+				throw ex;
 			}
 		}
 
@@ -251,13 +265,10 @@ namespace dtn
 				}
 			} catch (dtn::exceptions::IOException ex) {
 				_running = false;
-				_connection.shutdown();
 			} catch (dtn::exceptions::InvalidDataException ex) {
 				_running = false;
-				_connection.shutdown();
 			} catch (dtn::exceptions::InvalidBundleData ex) {
 				_running = false;
-				_connection.shutdown();
 			}
 		}
 
@@ -310,14 +321,14 @@ namespace dtn
 					yield();
 				}
 			} catch (dtn::exceptions::IOException ex) {
-				ibrcommon::MutexLock l(_connection._queue_lock);
 				_running = false;
+				_receiver.shutdown();
 			} catch (dtn::exceptions::InvalidDataException ex) {
-				ibrcommon::MutexLock l(_connection._queue_lock);
 				_running = false;
+				_receiver.shutdown();
 			} catch (dtn::exceptions::InvalidBundleData ex) {
-				ibrcommon::MutexLock l(_connection._queue_lock);
 				_running = false;
+				_receiver.shutdown();
 			}
 		}
 
