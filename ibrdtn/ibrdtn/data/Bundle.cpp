@@ -92,7 +92,7 @@ namespace dtn
 		{
 			if ((dynamic_cast<CustodySignalBlock*>(b) != NULL) || (dynamic_cast<StatusReportBlock*>(b) != NULL))
 			{
-				_procflags &= Bundle::APPDATA_IS_ADMRECORD;
+				_procflags |= Bundle::APPDATA_IS_ADMRECORD;
 			}
 
 			// set the last block flag
@@ -102,7 +102,7 @@ namespace dtn
 			{
 				// remove the last block flag of the previous block
 				refcnt_ptr<Block> lastblock = _blocks.back();
-				lastblock->_procflags &= Block::LAST_BLOCK;
+				lastblock->_procflags &= ~(Block::LAST_BLOCK);
 			}
 
 			refcnt_ptr<Block> ref(b);

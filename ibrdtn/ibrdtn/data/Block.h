@@ -32,13 +32,13 @@ namespace dtn
 		public:
 			enum ProcFlags
 			{
-				REPLICATE_IN_EVERY_FRAGMENT = 1 << 0x08, 			// 0 - Block must be replicated in every fragment.
-				TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED = 1 << 0x07, // 1 - Transmit status report if block can't be processed.
-				DELETE_BUNDLE_IF_NOT_PROCESSED = 1 << 0x06, 		// 2 - Delete bundle if block can't be processed.
-				LAST_BLOCK = 1 << 0x05,								// 3 - Last block.
+				REPLICATE_IN_EVERY_FRAGMENT = 1, 			// 0 - Block must be replicated in every fragment.
+				TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED = 1 << 0x01, // 1 - Transmit status report if block can't be processed.
+				DELETE_BUNDLE_IF_NOT_PROCESSED = 1 << 0x02, 		// 2 - Delete bundle if block can't be processed.
+				LAST_BLOCK = 1 << 0x03,								// 3 - Last block.
 				DISCARD_IF_NOT_PROCESSED = 1 << 0x04,				// 4 - Discard block if it can't be processed.
-				FORWARDED_WITHOUT_PROCESSED = 1 << 0x03,			// 5 - Block was forwarded without being processed.
-				BLOCK_CONTAINS_EIDS = 1 << 0x02						// 6 - Block contains an EID-reference field.
+				FORWARDED_WITHOUT_PROCESSED = 1 << 0x05,			// 5 - Block was forwarded without being processed.
+				BLOCK_CONTAINS_EIDS = 1 << 0x06						// 6 - Block contains an EID-reference field.
 			};
 
 			Block(char blocktype);
