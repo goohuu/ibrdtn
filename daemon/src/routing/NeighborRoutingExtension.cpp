@@ -155,14 +155,14 @@ namespace dtn
 		void NeighborRoutingExtension::route(const dtn::routing::MetaBundle &meta)
 		{
 			try {
-				if 	( isNeighbor( meta.destination ) )
-				{
-					getRouter()->transferTo( meta.destination, meta );
-					return;
-				}
-
 				// get the destination node
 				dtn::data::EID dest = meta.destination.getNodeEID();
+
+				if 	( isNeighbor( dest ) )
+				{
+					getRouter()->transferTo( dest, meta );
+					return;
+				}
 
 				// get the queue for this destination
 				std::queue<dtn::data::BundleID> &q = _stored_bundles[dest];
