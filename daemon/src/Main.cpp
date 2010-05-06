@@ -1,7 +1,11 @@
 #include "config.h"
-#include "ibrcommon/data/BLOB.h"
-#include "ibrcommon/data/File.h"
-#include "ibrcommon/AutoDelete.h"
+
+#include <ibrcommon/data/BLOB.h>
+#include <ibrcommon/data/File.h>
+#include <ibrcommon/AutoDelete.h>
+#include <ibrcommon/net/NetInterface.h>
+#include <ibrdtn/utils/Utils.h>
+#include <list>
 
 #include "core/BundleCore.h"
 #include "core/EventSwitch.h"
@@ -22,19 +26,15 @@
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
+#include "net/IPNDAgent.h"
 
 #include "ApiServer.h"
 #include "Configuration.h"
 #include "EchoWorker.h"
 #include "Notifier.h"
 #include "DevNull.h"
-#include "net/IPNDAgent.h"
-
-#include "ibrdtn/utils/Utils.h"
-#include "ibrcommon/net/NetInterface.h"
-
+#include "StatisticLogger.h"
 #include "Component.h"
-#include <list>
 
 using namespace dtn::core;
 using namespace dtn::daemon;
@@ -266,6 +266,36 @@ int main(int argc, char *argv[])
 		} catch (ibrcommon::tcpserver::SocketException ex) {
 			cerr << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << endl;
 			exit(-1);
+		}
+	}
+
+	// create a statistic logger if configured
+	if (conf.useStatLogger())
+	{
+		try {
+			if (conf.getStatLogType() == "stdout")
+			{
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatLogInterval() ) );
+			}
+			else if (conf.getStatLogType() == "syslog")
+			{
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_SYSLOG, conf.getStatLogInterval() ) );
+			}
+			else if (conf.getStatLogType() == "plain")
+			{
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_PLAIN, conf.getStatLogInterval(), conf.getStatLogfile() ) );
+			}
+			else if (conf.getStatLogType() == "cvs")
+			{
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_CVS, conf.getStatLogInterval(), conf.getStatLogfile() ) );
+			}
+			else if (conf.getStatLogType() == "stat")
+			{
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_STAT, conf.getStatLogInterval(), conf.getStatLogfile() ) );
+			}
+		} catch (Configuration::ParameterNotSetException ex) {
+			std::cout << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << std::endl;
+			components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatLogInterval() ) );
 		}
 	}
 

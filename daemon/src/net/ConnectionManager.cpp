@@ -214,5 +214,23 @@ namespace dtn
 		{
 			queue( ConvergenceLayer::Job(eid, b) );
 		}
+
+		const std::list<dtn::core::Node> ConnectionManager::getNeighbors()
+		{
+			ibrcommon::MutexLock l(_node_lock);
+			std::list<dtn::core::Node> _nodes;
+
+			for (std::set<dtn::core::Node>::const_iterator iter = _static_connections.begin(); iter != _static_connections.end(); iter++)
+			{
+				_nodes.push_back( *iter );
+			}
+
+			for (std::list<dtn::core::Node>::const_iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
+			{
+				_nodes.push_back( *iter );
+			}
+
+			return _nodes;
+		}
 	}
 }

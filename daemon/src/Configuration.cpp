@@ -12,16 +12,16 @@ namespace dtn
 {
 	namespace daemon
 	{
-                void Configuration::version(std::ostream &stream)
-                {
-                        stream << PACKAGE_VERSION;
-                #ifdef SVN_REV
-                        stream << "-r" << SVN_REV;
-                #endif
-                }
+		void Configuration::version(std::ostream &stream)
+		{
+				stream << PACKAGE_VERSION;
+		#ifdef SVN_REV
+				stream << "-r" << SVN_REV;
+		#endif
+		}
 
 		Configuration::Configuration()
-                 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true)
+		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true)
 		{}
 
 		Configuration::~Configuration()
@@ -33,56 +33,56 @@ namespace dtn
 			return conf;
 		}
 
-                void Configuration::load(int argc, char *argv[])
-                {
-                    for (int i = 0; i < argc; i++)
-                    {
-                            string arg = argv[i];
+		void Configuration::load(int argc, char *argv[])
+		{
+			for (int i = 0; i < argc; i++)
+			{
+					string arg = argv[i];
 
-                            if (arg == "-c" && argc > i)
-                            {
-                                    _filename = argv[i + 1];
-                            }
+					if (arg == "-c" && argc > i)
+					{
+							_filename = argv[i + 1];
+					}
 
-                            if (arg == "-i" && argc > i)
-                            {
-                                    _default_net = argv[i + 1];
-                                    _use_default_net = true;
-                            }
+					if (arg == "-i" && argc > i)
+					{
+							_default_net = argv[i + 1];
+							_use_default_net = true;
+					}
 
-                            if (arg == "--noapi")
-                            {
-                                    cout << "API disabled" << endl;
-                                    _doapi = false;
-                            }
+					if (arg == "--noapi")
+					{
+							cout << "API disabled" << endl;
+							_doapi = false;
+					}
 
-                            if ((arg == "--version") || (arg == "-v"))
-                            {
-                                    cout << "IBR-DTN version: "; version(cout); cout << endl;
-                                    exit(0);
-                            }
+					if ((arg == "--version") || (arg == "-v"))
+					{
+							cout << "IBR-DTN version: "; version(cout); cout << endl;
+							exit(0);
+					}
 
-                            if (arg == "--nodiscovery")
-                            {
-                                    cout << "Discovery disabled" << endl;
-                                    _dodiscovery = false;
-                            }
-                    }
+					if (arg == "--nodiscovery")
+					{
+							cout << "Discovery disabled" << endl;
+							_dodiscovery = false;
+					}
+			}
 
-                    // load the configuration
-                    load(_filename);
-                }
+			// load the configuration
+			load(_filename);
+		}
 
-                void Configuration::load(string filename)
-                {
-                    try {
-                            _conf = ibrcommon::ConfigFile(filename);;
-                            cout << "Configuration: " << filename << endl;
-                    } catch (ibrcommon::ConfigFile::file_not_found ex) {
-                            cout << "Using defaults. To use custom config file use parameter -c configfile." << endl;
-                            _conf = ConfigFile();
-                    }
-                }
+		void Configuration::load(string filename)
+		{
+			try {
+					_conf = ibrcommon::ConfigFile(filename);;
+					cout << "Configuration: " << filename << endl;
+			} catch (ibrcommon::ConfigFile::file_not_found ex) {
+					cout << "Using defaults. To use custom config file use parameter -c configfile." << endl;
+					_conf = ConfigFile();
+			}
+		}
 
 		string Configuration::getNodename()
 		{
@@ -108,74 +108,74 @@ namespace dtn
 			}
 		}
 
-                NetInterface Configuration::getNetInterface(string name)
-                {
-                    list<NetInterface> nets = getNetInterfaces();
+		NetInterface Configuration::getNetInterface(string name)
+		{
+			list<NetInterface> nets = getNetInterfaces();
 
-                    for (list<NetInterface>::iterator iter = nets.begin(); iter != nets.end(); iter++)
-                    {
-                        if ((*iter).getName() == name)
-                        {
-                            return (*iter);
-                        }
-                    }
+			for (list<NetInterface>::iterator iter = nets.begin(); iter != nets.end(); iter++)
+			{
+				if ((*iter).getName() == name)
+				{
+					return (*iter);
+				}
+			}
 
-                    throw ParameterNotFoundException();
-                }
+			throw ParameterNotFoundException();
+		}
 
-                list<NetInterface> Configuration::getNetInterfaces()
-                {
-                    list<NetInterface> ret;
+		list<NetInterface> Configuration::getNetInterfaces()
+		{
+			list<NetInterface> ret;
 
-                    if (_use_default_net)
-                    {
-                        ret.push_back( NetInterface(NetInterface::NETWORK_TCP, "default", _default_net, 4556) );
-                        return ret;
-                    }
+			if (_use_default_net)
+			{
+				ret.push_back( NetInterface(NetInterface::NETWORK_TCP, "default", _default_net, 4556) );
+				return ret;
+			}
 
-                    try {
-                        vector<string> nets = dtn::utils::Utils::tokenize(" ", _conf.read<string>("net_interfaces") );
-                        for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
-                        {
-                            string key_type = "net_"; key_type.append(*iter); key_type.append("_type");
-                            string key_port = "net_"; key_port.append(*iter); key_port.append("_port");
-                            string key_interface = "net_"; key_interface.append(*iter); key_interface.append("_interface");
+			try {
+				vector<string> nets = dtn::utils::Utils::tokenize(" ", _conf.read<string>("net_interfaces") );
+				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+				{
+					string key_type = "net_"; key_type.append(*iter); key_type.append("_type");
+					string key_port = "net_"; key_port.append(*iter); key_port.append("_port");
+					string key_interface = "net_"; key_interface.append(*iter); key_interface.append("_interface");
 
-                            string type_name = _conf.read<string>(key_type, "tcp");
-                            NetInterface::NetworkType type = NetInterface::NETWORK_UNKNOWN;
+					string type_name = _conf.read<string>(key_type, "tcp");
+					NetInterface::NetworkType type = NetInterface::NETWORK_UNKNOWN;
 
-                            if (type_name == "tcp") type = NetInterface::NETWORK_TCP;
-                            if (type_name == "udp") type = NetInterface::NETWORK_UDP;
+					if (type_name == "tcp") type = NetInterface::NETWORK_TCP;
+					if (type_name == "udp") type = NetInterface::NETWORK_UDP;
 
-                            string systemname = _conf.read<string>(key_interface, "lo");
-                            unsigned int port = _conf.read<unsigned int>(key_port, 4556);
+					string systemname = _conf.read<string>(key_interface, "lo");
+					unsigned int port = _conf.read<unsigned int>(key_port, 4556);
 
-                            NetInterface net(type, (*iter), systemname, port);
+					NetInterface net(type, (*iter), systemname, port);
 
-                            ret.push_back(net);
-                        }
-                    } catch (ConfigFile::key_not_found ex) {
-                        return ret;
-                    }
+					ret.push_back(net);
+				}
+			} catch (ConfigFile::key_not_found ex) {
+				return ret;
+			}
 
-                    return ret;
-                }
+			return ret;
+		}
 
 		NetInterface Configuration::getDiscoveryInterface()
 		{
-                    if (_use_default_net)
-                    {
-                        return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, 4551);
-                    }
+			if (_use_default_net)
+			{
+				return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, 4551);
+			}
 
-                    try {
-                            string interface = _conf.read<string>("discovery_interface");
-                            return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, _conf.read<int>("discovery_port", 4551));
-                    } catch (ConfigFile::key_not_found ex) {
-                    } catch (ParameterNotFoundException ex) {
-                    }
+			try {
+					string interface = _conf.read<string>("discovery_interface");
+					return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, _conf.read<int>("discovery_port", 4551));
+			} catch (ConfigFile::key_not_found ex) {
+			} catch (ParameterNotFoundException ex) {
+			}
 
-                    return NetInterface(NetInterface::NETWORK_UDP, "disco", "255.255.255.255", "255.255.255.255", 4551);
+			return NetInterface(NetInterface::NETWORK_UDP, "disco", "255.255.255.255", "255.255.255.255", 4551);
 		}
 
 		NetInterface Configuration::getAPIInterface()
@@ -235,71 +235,95 @@ namespace dtn
 			return nodes;
 		}
 
-                int Configuration::getTimezone()
-                {
-                    return _conf.read<int>( "timezone", 0 );
-                }
+		int Configuration::getTimezone()
+		{
+			return _conf.read<int>( "timezone", 0 );
+		}
 
-                ibrcommon::File Configuration::getPath(string name)
-                {
-                    stringstream ss;
-                    ss << name << "_path";
-                    string key; ss >> key;
+		ibrcommon::File Configuration::getPath(string name)
+		{
+			stringstream ss;
+			ss << name << "_path";
+			string key; ss >> key;
 
-                    try {
-                        return ibrcommon::File(_conf.read<string>(key));
-                    } catch (ConfigFile::key_not_found ex) {
-                        throw ParameterNotSetException();
-                    }
-                }
+			try {
+				return ibrcommon::File(_conf.read<string>(key));
+			} catch (ConfigFile::key_not_found ex) {
+				throw ParameterNotSetException();
+			}
+		}
 
-                unsigned int Configuration::getUID()
-                {
-                    try {
-                        return _conf.read<unsigned int>("user");
-                    } catch (ConfigFile::key_not_found ex) {
-                        throw ParameterNotSetException();
-                    }
-                }
+		unsigned int Configuration::getUID()
+		{
+			try {
+				return _conf.read<unsigned int>("user");
+			} catch (ConfigFile::key_not_found ex) {
+				throw ParameterNotSetException();
+			}
+		}
 
-                unsigned int Configuration::getGID()
-                {
-                    try {
-                        return _conf.read<unsigned int>("group");
-                    } catch (ConfigFile::key_not_found ex) {
-                        throw ParameterNotSetException();
-                    }
-                }
+		unsigned int Configuration::getGID()
+		{
+			try {
+				return _conf.read<unsigned int>("group");
+			} catch (ConfigFile::key_not_found ex) {
+				throw ParameterNotSetException();
+			}
+		}
 
 
-                bool Configuration::doDiscovery()
-                {
-                    return _dodiscovery;
-                }
+		bool Configuration::doDiscovery()
+		{
+			return _dodiscovery;
+		}
 
-                bool Configuration::doAPI()
-                {
-                    return _doapi;
-                }
+		bool Configuration::doAPI()
+		{
+			return _doapi;
+		}
 
-                string Configuration::getNotifyCommand()
-                {
-                    try {
-                        return _conf.read<string>("notify_cmd");
-                    } catch (ConfigFile::key_not_found ex) {
-                        throw ParameterNotSetException();
-                    }
-                }
+		string Configuration::getNotifyCommand()
+		{
+			try {
+				return _conf.read<string>("notify_cmd");
+			} catch (ConfigFile::key_not_found ex) {
+				throw ParameterNotSetException();
+			}
+		}
 
-                Configuration::RoutingExtension Configuration::getRoutingExtension()
-                {
-                    try {
-                    	string mode = _conf.read<string>("routing");
-                    	if ( mode == "epidemic" ) return EPIDEMIC_ROUTING;
-                    	return DEFAULT_ROUTING;
-                    } catch (ConfigFile::key_not_found ex) {
-                        return DEFAULT_ROUTING;
-                    }
-                }
+		Configuration::RoutingExtension Configuration::getRoutingExtension()
+		{
+			try {
+				string mode = _conf.read<string>("routing");
+				if ( mode == "epidemic" ) return EPIDEMIC_ROUTING;
+				return DEFAULT_ROUTING;
+			} catch (ConfigFile::key_not_found ex) {
+				return DEFAULT_ROUTING;
+			}
+		}
+
+		bool Configuration::useStatLogger()
+		{
+			return _conf.keyExists("statistic_type");
+		}
+
+		std::string Configuration::getStatLogfile()
+		{
+			try {
+				return _conf.read<std::string>("statistic_file");
+			} catch (ConfigFile::key_not_found ex) {
+				throw ParameterNotSetException();
+			}
+		}
+
+		std::string Configuration::getStatLogType()
+		{
+			return _conf.read<std::string>("statistic_type", "stdout");
+		}
+
+		unsigned int Configuration::getStatLogInterval()
+		{
+			return _conf.read<unsigned int>("statistic_interval", 300);
+		}
 	}
 }

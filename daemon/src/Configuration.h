@@ -89,6 +89,11 @@ namespace dtn
 
 			RoutingExtension getRoutingExtension();
 
+			bool useStatLogger();
+			std::string getStatLogfile();
+			std::string getStatLogType();
+			unsigned int getStatLogInterval();
+
 		private:
 			ibrcommon::ConfigFile _conf;
 

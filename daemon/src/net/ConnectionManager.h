@@ -67,6 +67,8 @@ namespace dtn
 
 			void queue(const ConvergenceLayer::Job &job);
 
+			const std::list<dtn::core::Node> getNeighbors();
+
 		protected:
 			void discovered(dtn::core::Node &node);
 			void check_discovered();

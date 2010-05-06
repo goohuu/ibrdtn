@@ -52,6 +52,8 @@ namespace dtn
 
 			void addConnection(const dtn::core::Node &n);
 
+			const std::list<dtn::core::Node> getNeighbors();
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();

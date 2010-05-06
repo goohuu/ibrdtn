@@ -121,4 +121,6 @@ dtnd_SOURCES =  $(core_SOURCES) $(net_SOURCES) $(routing_SOURCES) \
 				EchoWorker.h \
 				Main.cpp \
 				Notifier.cpp \
-				Notifier.h
+				Notifier.h \
+				StatisticLogger.h \
+				StatisticLogger.cpp
