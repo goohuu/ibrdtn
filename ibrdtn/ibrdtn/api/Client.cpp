@@ -56,13 +56,13 @@ namespace dtn
 
 		}
 
-		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream, bool async)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _connected(false), _async(async), _receiver(*this)
+		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
+		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _connected(false), _receiver(*this)
 		{
 		}
 
-		Client::Client(string app, ibrcommon::tcpstream &stream, bool async)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _async(async), _receiver(*this)
+		Client::Client(string app, ibrcommon::tcpstream &stream)
+		  : StreamConnection(*this, stream), _stream(stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _receiver(*this)
 		{
 		}
 
@@ -86,7 +86,7 @@ namespace dtn
 			handshake(localeid, 10, flags);
 
 			// run the receiver
-			if (_async) _receiver.start();
+			_receiver.start();
 		}
 
 		bool Client::isConnected()
@@ -134,6 +134,30 @@ namespace dtn
 		void Client::eventConnectionDown()
 		{
 			_connected = false;
+		}
+
+		void Client::received(const dtn::api::Bundle &b)
+		{
+			if (_mode != dtn::api::Client::MODE_SENDONLY)
+			{
+				ibrcommon::MutexLock l(_queuelock);
+				_inqueue.push(b);
+				_queuelock.signal();
+			}
+		}
+
+		dtn::api::Bundle Client::getBundle()
+		{
+			ibrcommon::MutexLock l(_queuelock);
+			while (isConnected() && _inqueue.empty())
+			{
+				_queuelock.wait(100);
+			}
+
+			dtn::api::Bundle b = _inqueue.front();
+			_inqueue.pop();
+
+			return b;
 		}
 	}
 }

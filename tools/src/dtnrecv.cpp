@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
 	// Initiate a client for synchronous receiving
-	dtn::api::Client client(name, conn, false);
+	dtn::api::Client client(name, conn);
 
 	// export objects for the signal handler
 	_conn = &conn;
@@ -114,13 +114,10 @@ int main(int argc, char *argv[])
 	// stream protocol by starting the thread and sending the contact header.
 	client.connect();
 
-	// create a bundle
-	dtn::api::Bundle b;
-
 	if (!stdout) cout << "Wait for incoming bundle... ";
 
 	// receive the bundle
-	client >> b;
+	dtn::api::Bundle b = client.getBundle();
 
 	// write the bundle to stdout/file
 	writeBundle(stdout, filename, b);

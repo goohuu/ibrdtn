@@ -115,7 +115,7 @@ int main(int argc, char** argv)
         	_conn = &conn;
 
             // Initiate a client for synchronous receiving
-            dtn::api::Client client(conf["name"], conn, false);
+            dtn::api::Client client(conf["name"], conn);
 
             // Connect to the server. Actually, this function initiate the
             // stream protocol by starting the thread and sending the contact header.
@@ -127,11 +127,8 @@ int main(int argc, char** argv)
             // check the connection
             while (client.isConnected() && _running)
             {
-            	// create a bundle
-            	dtn::api::Bundle b;
-
             	// receive the bundle
-            	client >> b;
+            	dtn::api::Bundle b = client.getBundle();
 
             	// get the reference to the blob
             	ibrcommon::BLOB::Reference ref = b.getData();

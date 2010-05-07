@@ -18,7 +18,7 @@ class EchoClient : public dtn::api::Client
 {
 	public:
 		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
-		 : dtn::api::Client(mode, app, stream, false), _stream(stream)
+		 : dtn::api::Client(mode, app, stream), _stream(stream)
 		{
 		}
 
@@ -28,9 +28,7 @@ class EchoClient : public dtn::api::Client
 
 		dtn::api::Bundle reply()
 		{
-			dtn::api::Bundle b;
-
-			(*this) >> b;
+			dtn::api::Bundle b = (*this).getBundle();
 
 			// return the bundle
 			return b;

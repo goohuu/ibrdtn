@@ -18,6 +18,8 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Exceptions.h"
 
+#include <queue>
+
 using namespace dtn::data;
 using namespace dtn::streams;
 
@@ -72,8 +74,8 @@ namespace dtn
 			 * and will be used with the bundle protocol for TCP (draft-irtf-dtnrg-tcp-clayer-02)
 			 * provided by the StreamConnection class.
 			 */
-			Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream, bool async = true);
-			Client(string app, ibrcommon::tcpstream &stream, bool async = true);
+			Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream);
+			Client(string app, ibrcommon::tcpstream &stream);
 
 			/**
 			 * Virtual destructor for this class.
@@ -101,6 +103,8 @@ namespace dtn
 			virtual void eventConnectionUp(const StreamContactHeader &header);
 			virtual void eventConnectionDown();
 
+			dtn::api::Bundle getBundle();
+
 		protected:
 			/**
 			 * This method is called on the receipt of the handshake of the daemon. If
@@ -108,7 +112,7 @@ namespace dtn
 			 * call the super method.
 			 */
 			virtual void received(const dtn::streams::StreamContactHeader &h);
-			virtual void received(const dtn::api::Bundle &b) {};
+			virtual void received(const dtn::api::Bundle &b);
 
 		private:
 			ibrcommon::tcpstream &_stream;
@@ -118,6 +122,9 @@ namespace dtn
 			bool _async;
 			dtn::streams::StreamContactHeader _header;
 			Client::AsyncReceiver _receiver;
+
+			ibrcommon::Conditional _queuelock;
+			std::queue<dtn::api::Bundle> _inqueue;
 		};
 	}
 }
