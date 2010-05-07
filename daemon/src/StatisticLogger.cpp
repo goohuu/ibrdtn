@@ -10,6 +10,7 @@
 #include "net/TransferCompletedEvent.h"
 #include <ibrdtn/utils/Utils.h>
 #include <typeinfo>
+#include <ctime>
 
 namespace dtn
 {
@@ -35,7 +36,7 @@ namespace dtn
 
 		void StatisticLogger::componentUp()
 		{
-			if ((_type == LOGGER_FILE_PLAIN) || (_type == LOGGER_FILE_CVS))
+			if ((_type == LOGGER_FILE_PLAIN) || (_type == LOGGER_FILE_CSV))
 			{
 				// open statistic file
 				if (_file.exists())
@@ -73,8 +74,8 @@ namespace dtn
 				writePlainLog(_fileout);
 				break;
 
-			case LOGGER_FILE_CVS:
-				writeCvsLog(_fileout);
+			case LOGGER_FILE_CSV:
+				writeCsvLog(_fileout);
 				break;
 
 			case LOGGER_FILE_STAT:
@@ -154,7 +155,7 @@ namespace dtn
 					<< storage.count() << std::endl;
 		}
 
-		void StatisticLogger::writeCvsLog(std::ostream &stream)
+		void StatisticLogger::writeCsvLog(std::ostream &stream)
 		{
 			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
 			size_t timestamp = dtn::utils::Utils::get_current_dtn_time();
@@ -176,9 +177,15 @@ namespace dtn
 			size_t timestamp = dtn::utils::Utils::get_current_dtn_time();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
+			time_t time_now = time(NULL);
+			struct tm * timeinfo;
+			timeinfo = localtime (&time_now);
+			std::string datetime = asctime(timeinfo);
+			datetime = datetime.substr(0, datetime.length() -1);
+
 			_fileout << "IBR-DTN statistics" << std::endl;
 			_fileout << std::endl;
-			_fileout << "timestamp: " << timestamp << std::endl;
+			_fileout << "dtn timestamp: " << timestamp << " (" << datetime << ")" << std::endl;
 			_fileout << "bundles sent: " << _sentbundles << std::endl;
 			_fileout << "bundles received: " << _recvbundles << std::endl;
 			_fileout << std::endl;

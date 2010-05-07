@@ -82,17 +82,22 @@ int main(int argc, char *argv[])
 
 	cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
 
-	// create a bundle from the file
-	dtn::api::FileBundle b(file_destination, filename);
+	try {
+		// create a bundle from the file
+		dtn::api::FileBundle b(file_destination, filename);
 
-        // set the lifetime
-        b.setLifetime(lifetime);
+			// set the lifetime
+			b.setLifetime(lifetime);
 
-	// send the bundle
-	client << b;
+		// send the bundle
+		client << b;
 
-	// flush the buffers
-	client.flush();
+		// flush the buffers
+		client.flush();
+	} catch (ibrcommon::IOException ex) {
+		std::cerr << "Error while sending bundle." << std::endl;
+		std::cerr << "\t" << ex.what() << std::endl;
+	}
 
 	// Shutdown the client connection.
 	client.close();

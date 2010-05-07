@@ -42,7 +42,7 @@ namespace dtn
 				LOGGER_STDOUT = 0,		// All output is human readable and directed into stdout.
 				LOGGER_SYSLOG = 1,		// All output is human readable and directed into the syslog.
 				LOGGER_FILE_PLAIN = 10,	// All output is machine readable only and appended into a file.
-				LOGGER_FILE_CVS = 11,	// All output is machine readable only and appended into a cvs file.
+				LOGGER_FILE_CSV = 11,	// All output is machine readable only and appended into a csv file.
 				LOGGER_FILE_STAT = 12	// All output is machine readable only and directed into a stat file. This file contains only one dataset.
 			};
 
@@ -60,7 +60,7 @@ namespace dtn
 			void writeStdLog(std::ostream &stream);
 			void writeSyslog(std::ostream &stream);
 			void writePlainLog(std::ostream &stream);
-			void writeCvsLog(std::ostream &stream);
+			void writeCsvLog(std::ostream &stream);
 			void writeStatLog();
 
 			ibrcommon::SimpleTimer _timer;

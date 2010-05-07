@@ -285,9 +285,9 @@ int main(int argc, char *argv[])
 			{
 				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_PLAIN, conf.getStatLogInterval(), conf.getStatLogfile() ) );
 			}
-			else if (conf.getStatLogType() == "cvs")
+			else if (conf.getStatLogType() == "csv")
 			{
-				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_CVS, conf.getStatLogInterval(), conf.getStatLogfile() ) );
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_CSV, conf.getStatLogInterval(), conf.getStatLogfile() ) );
 			}
 			else if (conf.getStatLogType() == "stat")
 			{

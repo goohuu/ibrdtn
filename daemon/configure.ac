@@ -152,6 +152,7 @@ dnl -----------------------------------------------
 AC_CONFIG_FILES([Makefile \
 	src/Makefile \
 	doc/Makefile \
-	man/Makefile])
+	man/Makefile \
+	etc/Makefile])
 	
 AC_OUTPUT
