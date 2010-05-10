@@ -179,7 +179,7 @@ int main(int argc, char** argv)
     			{
     				ibrcommon::BLOB::Reference data = payload->getBLOB();
     				ibrcommon::MutexLock l(data);
-    				data.write(stream);
+    				(*data) << stream.rdbuf();
     			}
 
     			// add the payload block to the bundle

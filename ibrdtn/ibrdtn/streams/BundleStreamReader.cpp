@@ -179,27 +179,27 @@ namespace dtn
 					// BLOCK_PAYLOAD
 					_handler.beginBlob();
 
-					char data[512];
+					const int buffer_size = 0x1000;
+					char buffer[buffer_size];
 					size_t ret = 1;
-					size_t step = 512;
-					size_t remain = block_length;
+					ssize_t remain = block_length;
 
 					while (remain > 0)
 					{
-						if (remain > 512)
+						if (remain > buffer_size)
 						{
-							_input.read(data, 512);
-							_handler.dataBlob(data, 512);
-							pos += 512;
-							remain -= 512;
+							_input.read(buffer, buffer_size);
 						}
 						else
 						{
-							_input.read(data, remain);
-							_handler.dataBlob(data, remain);
-							pos += remain;
-							remain -= remain;
+							_input.read(buffer, remain);
 						}
+
+						_handler.dataBlob(buffer, _input.gcount());
+						pos += _input.gcount();
+						remain -= _input.gcount();
+
+						if (_input.eof()) throw dtn::exceptions::IOException("block not complete");
 					}
 
 					_handler.endBlob(block_length);

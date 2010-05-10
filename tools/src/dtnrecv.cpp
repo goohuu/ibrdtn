@@ -33,7 +33,7 @@ void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
 	if (stdout)
 	{
 		ibrcommon::MutexLock l(data);
-		data.read(cout);
+		cout << (*data).rdbuf();
 	}
 	else
 	{
@@ -43,7 +43,7 @@ void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
 		fstream file(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
 
 		ibrcommon::MutexLock l(data);
-		data.read(file);
+		file << (*data).rdbuf();
 
 		file.close();
 
