@@ -4,9 +4,36 @@
 START=90
 
 start() {
-	/usr/sbin/dtnd -c /etc/config/ibrdtn &
+	echo -n "running dtnd ..."
+	/usr/sbin/dtnd -c /etc/config/ibrdtn > /var/log/ibrdtn.log 2> /var/log/ibrdtn.err &
+	echo " done"
 }
 
-stop() {
-	killall dtnd
+stop() { 
+	echo -n "stopping dtnd ..."
+	killall dtnd 2> /dev/null >/dev/null
+	
+	# wait for some time
+	TIMEOUT=0;
+	
+	# check if the daemon is running
+	while [ -n "`ps ax | grep dtnd | grep -v grep`" ]; do
+		# check if the daemon is still running
+		if [ $TIMEOUT -ge 10 ]; then
+			echo " killing"
+			# kill all processes of dtnd
+			killall -9 dtnd 2> /dev/null >/dev/null
+			return
+		fi
+		
+		# increment timeout
+		TIMEOUT=`expr $TIMEOUT + 1`
+		
+		echo -n "."
+		
+		# wait some time
+		/bin/sleep 1
+	done
+	
+	echo " done"
 }
