@@ -117,6 +117,7 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 
 		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path);
 		components.push_back(sbs);
+		storage = sbs;
 	} catch (Configuration::ParameterNotSetException ex) {
 		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage();
 		components.push_back(sbs);
