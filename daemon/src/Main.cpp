@@ -183,6 +183,9 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, term);
 	signal(SIGHUP, reload);
 
+	// init syslog
+	ibrcommon::SyslogStream::open("ibrdtn-daemon", LOG_PID, LOG_DAEMON);
+
 	// create a configuration
 	Configuration &conf = Configuration::getInstance();
 
