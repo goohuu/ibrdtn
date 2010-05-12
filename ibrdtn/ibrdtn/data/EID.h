@@ -37,9 +37,6 @@ namespace data
 
 		EID operator+(string suffix);
 
-		bool equal(string const& other) const;
-		bool equal(EID const& other) const;
-
 		bool sameHost(string const& other) const;
 		bool sameHost(EID const& other) const;
 

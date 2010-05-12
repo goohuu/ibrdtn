@@ -55,13 +55,13 @@ namespace dtn
 
 		bool Bundle::operator<(const Bundle& other) const
 		{
-			if (other._source < _source) return true;
-			if (other._timestamp < _timestamp) return true;
-			if (other._sequencenumber < _sequencenumber) return true;
+			if (_source < other._source) return true;
+			if (_timestamp < other._timestamp) return true;
+			if (_sequencenumber < other._sequencenumber) return true;
 
 			if (other._procflags & Bundle::FRAGMENT)
 			{
-				if (other._fragmentoffset < _fragmentoffset) return true;
+				if (_fragmentoffset < other._fragmentoffset) return true;
 			}
 
 			return false;
@@ -69,13 +69,13 @@ namespace dtn
 
 		bool Bundle::operator>(const Bundle& other) const
 		{
-			if (other._source > _source) return true;
-			if (other._timestamp > _timestamp) return true;
-			if (other._sequencenumber > _sequencenumber) return true;
+			if (_source > other._source) return true;
+			if (_timestamp > other._timestamp) return true;
+			if (_sequencenumber > other._sequencenumber) return true;
 
 			if (other._procflags & Bundle::FRAGMENT)
 			{
-				if (other._fragmentoffset > _fragmentoffset) return true;
+				if (_fragmentoffset > other._fragmentoffset) return true;
 			}
 
 			return false;

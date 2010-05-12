@@ -102,46 +102,22 @@ namespace data
 
 	bool EID::operator==(EID const& other) const
 	{
-		return equal(other);
+		return (m_value == other.m_value);
 	}
 
 	bool EID::operator==(string const& other) const
 	{
-		return equal(other);
+		return (m_value == other);
 	}
 
 	bool EID::operator!=(EID const& other) const
 	{
-		return !equal(other);
+		return !((*this) == other);
 	}
 
 	EID EID::operator+(string suffix)
 	{
 		return EID(m_value + suffix);
-	}
-
-	bool EID::equal(string const& other) const
-	{
-		if (m_value == other)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	bool EID::equal(EID const& other) const
-	{
-		if (m_value == other.m_value)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
 	}
 
 	bool EID::sameHost(string const& other) const

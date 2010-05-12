@@ -19,30 +19,62 @@ namespace dtn
 
 		void BundleList::add(const dtn::routing::MetaBundle bundle)
 		{
+			ExpiringBundle exbundle(bundle);
+
+			// sorted insert of the bundle
+			for (std::list<ExpiringBundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			{
+				if ((*iter) == exbundle) return;
+
+				if ((*iter) > exbundle)
+				{
+					// put the new bundle in front of the greater bundle
+					_bundles.insert( iter, exbundle );
+
+					// insert the bundle
+					this->insert(bundle);
+
+					return;
+				}
+			}
+
+			// the list is empty or no "greater" bundle available,
+			// put the bundle at the end of the list
+			_bundles.push_back( exbundle );
+
+			// insert the bundle
 			this->insert(bundle);
-			_bundles.insert(bundle);
 		}
 
 		void BundleList::remove(const dtn::routing::MetaBundle bundle)
 		{
 			this->erase(bundle);
-			_bundles.erase(bundle);
+
+			for (std::list<ExpiringBundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			{
+				if ((*iter) == bundle)
+				{
+					_bundles.erase( iter );
+					return;
+				}
+			}
 		}
 
 		void BundleList::clear()
 		{
 			_bundles.clear();
+			std::set<dtn::routing::MetaBundle>::clear();
 		}
 
 		void BundleList::expire(const size_t timestamp)
 		{
-			std::set<ExpiringBundle>::const_iterator iter = _bundles.begin();
+			std::list<ExpiringBundle>::iterator iter = _bundles.begin();
 
 			while (iter != _bundles.end())
 			{
 				const ExpiringBundle &b = (*iter);
 
-				if (b.expiretime >= timestamp )
+				if ( b.expiretime >= timestamp )
 				{
 					break;
 				}
@@ -77,12 +109,18 @@ namespace dtn
 
 		bool BundleList::ExpiringBundle::operator<(const ExpiringBundle& other) const
 		{
-			return (other.expiretime < expiretime);
+			if (expiretime < other.expiretime) return true;
+			if (bundle < other.bundle) return true;
+
+			return false;
 		}
 
 		bool BundleList::ExpiringBundle::operator>(const ExpiringBundle& other) const
 		{
-			return (other.expiretime > expiretime);
+			if (expiretime > other.expiretime) return true;
+			if (bundle > other.bundle) return true;
+
+			return false;
 		}
 	}
 }
