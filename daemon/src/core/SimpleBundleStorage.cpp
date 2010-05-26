@@ -91,16 +91,6 @@ namespace dtn
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir)
 		 : _store(*this), _running(true), _mode(MODE_PERSISTENT), _workdir(workdir)
 		{
-		}
-
-		SimpleBundleStorage::~SimpleBundleStorage()
-		{
-		}
-
-		void SimpleBundleStorage::componentUp()
-		{
-			bindEvent(TimeEvent::className);
-
 			// load persistent bundles
 			std::list<ibrcommon::File> files;
 			_workdir.getFiles(files);
@@ -127,12 +117,25 @@ namespace dtn
 						// error while reading file
 						fs.close();
 						file.remove();
+					} catch (std::out_of_range ex) {
+						// error while reading file
+						fs.close();
+						file.remove();
 					}
 				}
 			}
 
 			// some output
 			cout << _store.bundles.size() << " Bundles restored." << endl;
+		}
+
+		SimpleBundleStorage::~SimpleBundleStorage()
+		{
+		}
+
+		void SimpleBundleStorage::componentUp()
+		{
+			bindEvent(TimeEvent::className);
 		}
 
 		void SimpleBundleStorage::componentDown()
