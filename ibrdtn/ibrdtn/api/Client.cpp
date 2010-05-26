@@ -154,6 +154,11 @@ namespace dtn
 				_queuelock.wait(100);
 			}
 
+			if (_inqueue.empty())
+			{
+				throw ibrcommon::ConnectionClosedException();
+			}
+
 			dtn::api::Bundle b = _inqueue.front();
 			_inqueue.pop();
 

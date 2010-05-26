@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
 	signal(SIGINT, term);
 	signal(SIGTERM, term);
 
+	int ret = EXIT_SUCCESS;
 	string filename = "";
 	string name = "filetransfer";
 	bool stdout = true;
@@ -85,7 +86,7 @@ int main(int argc, char *argv[])
 		if (arg == "-h" || arg == "--help")
 		{
 			print_help();
-			return 0;
+			return ret;
 		}
 
 		if (arg == "--name" && argc > i)
@@ -116,33 +117,36 @@ int main(int argc, char *argv[])
 
 	if (!stdout) cout << "Wait for incoming bundle... ";
 
-	// receive the bundle
-	dtn::api::Bundle b = client.getBundle();
-
-	// write the bundle to stdout/file
-	writeBundle(stdout, filename, b);
-
-	// Shutdown the client connection.
-	client.close();
-
 	try {
-		conn.close();
-	} catch (ibrcommon::ConnectionClosedException ex) {
+		// receive the bundle
+		dtn::api::Bundle b = client.getBundle();
 
-	}
+		// write the bundle to stdout/file
+		writeBundle(stdout, filename, b);
 
-	try {
-		// write all following bundles
-		while (!client.eof())
-		{
-			client >> b;
+		try {
+			// Shutdown the client connection.
+			client.close();
 
-			// write the bundle to stdout/file
-			writeBundle(stdout, filename, b);
+			// close the tcp connection
+			conn.close();
+
+			// write all following bundles
+			while (!client.eof())
+			{
+				client >> b;
+
+				// write the bundle to stdout/file
+				writeBundle(stdout, filename, b);
+			}
+		} catch (ibrcommon::ConnectionClosedException ex) {
+			ret = EXIT_FAILURE;
+		} catch (dtn::exceptions::IOException ex) {
+			ret = EXIT_FAILURE;
 		}
-	} catch (dtn::exceptions::IOException ex) {
-
+	} catch (ibrcommon::ConnectionClosedException ex) {
+		ret = EXIT_FAILURE;
 	}
 
-	return 0;
+	return ret;
 }
