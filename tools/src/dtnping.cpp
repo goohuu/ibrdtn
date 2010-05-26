@@ -42,15 +42,26 @@ class EchoClient : public dtn::api::Client
 			// set lifetime
 			b.setLifetime(lifetime);
 
-			char data[size];
-			for (int i = 0; i < size; i++)
+			// create testing pattern
+			char pattern[2000];
+			for (int i = 0; i < 2000; i++)
 			{
-				data[i] = i % 10;
-				data[i] += '0';
+				pattern[i] = '0';
+				pattern[i] += i % 10;
 			}
 
-			// some data
-			b.append(string(data, size));
+			// create data blob
+			for (int i = 0; i < size; i += 2000)
+			{
+				if (i < (size - 2000))
+				{
+					b.append(string(pattern, 2000));
+				}
+				else
+				{
+					b.append(string(pattern, size - i));
+				}
+			}
 
 			// send the bundle
 			(*this) << b;
