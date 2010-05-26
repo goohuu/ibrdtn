@@ -109,6 +109,9 @@ namespace dtn
 
 			case TIMER_OUT:
 				{
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+					std::cout << "KEEPALIVE timeout" << std::endl;
+#endif
 					ibrcommon::MutexLock l(_out_state);
 					_stream << StreamDataSegment() << std::flush;
 					return _out_timeout;

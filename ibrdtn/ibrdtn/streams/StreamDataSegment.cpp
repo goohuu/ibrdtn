@@ -43,30 +43,31 @@ namespace dtn
 			// write the header (1-byte)
 			stream.put(header);
 
-			dtn::data::SDNV value(seg._value);
-
 			switch (seg._type)
 			{
 			case StreamDataSegment::MSG_DATA_SEGMENT:
 				// write the length + data
-				stream << value;
+				stream << dtn::data::SDNV(seg._value);
 				break;
 
 			case StreamDataSegment::MSG_ACK_SEGMENT:
 				// write the acknowledged length
-				stream << value;
+				stream << dtn::data::SDNV(seg._value);
 				break;
 
 			case StreamDataSegment::MSG_REFUSE_BUNDLE:
 				break;
 
 			case StreamDataSegment::MSG_KEEPALIVE:
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+					std::cout << "KEEPALIVE sent" << std::endl;
+#endif
 				break;
 
 			case StreamDataSegment::MSG_SHUTDOWN:
 				// write the reason (char) + reconnect time (SDNV)
 				stream.put((char)seg._reason);
-				stream << value;
+				stream << dtn::data::SDNV(seg._value);
 				break;
 			}
 
