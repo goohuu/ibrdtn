@@ -101,23 +101,23 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// Create a stream to the server using TCP.
-	ibrcommon::tcpclient conn("127.0.0.1", 4550);
-
-	// Initiate a client for synchronous receiving
-	dtn::api::Client client(name, conn);
-
-	// export objects for the signal handler
-	_conn = &conn;
-	_client = &client;
-
-	// Connect to the server. Actually, this function initiate the
-	// stream protocol by starting the thread and sending the contact header.
-	client.connect();
-
-	if (!stdout) std::cout << "Wait for incoming bundle... " << std::flush;
-
 	try {
+		// Create a stream to the server using TCP.
+		ibrcommon::tcpclient conn("127.0.0.1", 4550);
+
+		// Initiate a client for synchronous receiving
+		dtn::api::Client client(name, conn);
+
+		// export objects for the signal handler
+		_conn = &conn;
+		_client = &client;
+
+		// Connect to the server. Actually, this function initiate the
+		// stream protocol by starting the thread and sending the contact header.
+		client.connect();
+
+		if (!stdout) std::cout << "Wait for incoming bundle... " << std::flush;
+
 		// receive the bundle
 		dtn::api::Bundle b = client.getBundle();
 
