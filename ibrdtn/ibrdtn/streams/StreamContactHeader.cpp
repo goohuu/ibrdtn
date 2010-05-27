@@ -24,7 +24,7 @@ namespace dtn
 		}
 
 		StreamContactHeader::StreamContactHeader(EID localeid)
-		 : _localeid(localeid), _flags(1), _keepalive(0)
+		 : _localeid(localeid), _flags(REQUEST_ACKNOWLEDGMENTS), _keepalive(0)
 		{
 		}
 

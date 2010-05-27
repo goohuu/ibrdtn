@@ -266,8 +266,12 @@ namespace dtn
 
 			if (_mode == MODE_PERSISTENT)
 			{
-				// remove the file
-				_bundlefiles[id].remove();
+				try {
+					// remove the file
+					_bundlefiles[id].remove();
+				} catch (std::out_of_range ex) {
+
+				}
 				_bundlefiles.erase(id);
 			}
 		}

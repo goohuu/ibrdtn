@@ -255,6 +255,8 @@ namespace dtn
 				size_t _out_timeout;
 
 				ibrcommon::MultiTimer _timer;
+
+				bool _ack_support;
 			};
 
 			/**

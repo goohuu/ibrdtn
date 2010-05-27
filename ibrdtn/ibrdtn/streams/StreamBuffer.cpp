@@ -13,7 +13,7 @@ namespace dtn
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream)
 			: _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
-			  _stream(stream), _start_of_bundle(true), _in_state(INITIAL), _out_state(INITIAL), _timer()
+			  _stream(stream), _start_of_bundle(true), _in_state(INITIAL), _out_state(INITIAL), _timer(), _ack_support(false)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -41,13 +41,15 @@ namespace dtn
 		const StreamContactHeader StreamConnection::StreamBuffer::handshake(const StreamContactHeader &header)
 		{
 			try {
-
 				// transfer the local header
 				_stream << header << std::flush;
 
 				// receive the remote header
 				StreamContactHeader peer;
 				_stream >> peer;
+
+				// enable/disable ACK support
+				_ack_support = peer._flags & StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 
 				// read the timer values
 				_in_timeout = header._keepalive * 2;
@@ -197,6 +199,12 @@ namespace dtn
 				// add size to outgoing size
 				_sent_size += seg._value;
 
+				// fake ACK if no support of the other side is available
+				if (!_ack_support)
+				{
+					_conn.eventAck(_sent_size, _sent_size);
+				}
+
 				return traits_type::not_eof(c);
 			} catch (StreamClosedException ex) {
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
@@ -319,7 +327,10 @@ namespace dtn
 					ibrcommon::MutexLock l(_out_state);
 
 					// New data segment received. Send an ACK.
-					_stream << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size) << std::flush;
+					if (_ack_support)
+					{
+						_stream << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size) << std::flush;
+					}
 
 					// return to idle state
 					_in_state.setState(IDLE);
