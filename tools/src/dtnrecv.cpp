@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 	// stream protocol by starting the thread and sending the contact header.
 	client.connect();
 
-	if (!stdout) cout << "Wait for incoming bundle... ";
+	if (!stdout) std::cout << "Wait for incoming bundle... " << std::flush;
 
 	try {
 		// receive the bundle
