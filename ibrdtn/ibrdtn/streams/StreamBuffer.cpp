@@ -54,8 +54,8 @@ namespace dtn
 				_out_timeout = peer._keepalive - 2;
 
 				// activate timer
-				_timer.set(*this, TIMER_IN, _in_timeout);
 				_timer.set(*this, TIMER_OUT, _out_timeout);
+				_timer.set(*this, TIMER_IN, _in_timeout);
 
 				// start the timer
 				_timer.start();
