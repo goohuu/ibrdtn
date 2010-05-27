@@ -12,6 +12,8 @@
 
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/EID.h"
+#include <sys/types.h>
+
 
 using namespace dtn::data;
 

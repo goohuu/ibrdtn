@@ -9,6 +9,7 @@
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/BundleString.h"
+#include <netinet/in.h>
 #include <typeinfo>
 
 using namespace dtn::data;
@@ -48,7 +49,10 @@ namespace dtn
 		{
 			//BundleStreamWriter writer(stream);
 			stream << "dtn!" << TCPCL_VERSION << h._flags;
-			stream.write( (char*)&h._keepalive, 2 );
+
+			// convert to network byte order
+			u_int16_t ka = htons(h._keepalive);
+			stream.write( (char*)&ka, 2 );
 
 			dtn::data::BundleString eid(h._localeid.getString());
 			stream << eid;
@@ -80,13 +84,11 @@ namespace dtn
 			// flags
 			stream.get(h._flags);
 
-			// keepalive
-			char keepalive[2];
-			stream.read(keepalive, 2);
+			u_int16_t ka = 0;
+			stream.read((char*)&ka, 2);
 
-			h._keepalive = 0;
-			h._keepalive += keepalive[0];
-			h._keepalive += (keepalive[1] << 8);
+			// convert from network byte order
+			h._keepalive = ntohs(ka);
 
 			dtn::data::BundleString eid;
 			stream >> eid;
