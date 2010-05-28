@@ -31,6 +31,7 @@ namespace dtn
 		class IPNDAgent : public DiscoveryAgent
 		{
 		public:
+			IPNDAgent(std::string address, int port);
 			IPNDAgent(ibrcommon::NetInterface net);
 			virtual ~IPNDAgent();
 

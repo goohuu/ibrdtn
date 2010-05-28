@@ -161,16 +161,30 @@ namespace dtn
 			return ret;
 		}
 
+		std::string Configuration::getDiscoveryAddress()
+		{
+			try {
+				return _conf.read<string>("discovery_address");
+			} catch (ConfigFile::key_not_found ex) {
+				throw ParameterNotFoundException();
+			}
+		}
+
+		int Configuration::getDiscoveryPort()
+		{
+			return _conf.read<int>("discovery_port", 4551);
+		}
+
 		NetInterface Configuration::getDiscoveryInterface()
 		{
 			if (_use_default_net)
 			{
-				return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, 4551);
+				return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, getDiscoveryPort());
 			}
 
 			try {
 					string interface = _conf.read<string>("discovery_interface");
-					return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, _conf.read<int>("discovery_port", 4551));
+					return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, getDiscoveryPort());
 			} catch (ConfigFile::key_not_found ex) {
 			} catch (ParameterNotFoundException ex) {
 			}

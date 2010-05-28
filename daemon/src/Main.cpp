@@ -228,7 +228,11 @@ int main(int argc, char *argv[])
 
 	if (conf.doDiscovery())
 	{
-		ipnd = new dtn::net::IPNDAgent( conf.getDiscoveryInterface() );
+		try {
+			ipnd = new dtn::net::IPNDAgent( conf.getDiscoveryAddress(), conf.getDiscoveryPort() );
+		} catch (Configuration::ParameterNotFoundException ex) {
+			ipnd = new dtn::net::IPNDAgent( conf.getDiscoveryInterface() );
+		}
 		components.push_back(ipnd);
 	}
 
