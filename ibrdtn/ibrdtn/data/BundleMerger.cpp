@@ -18,13 +18,16 @@ namespace dtn
 		 : _bundle(b), _blob(ref)
 		{
 			// check if the given bundle is a fragment
-			if (!(_bundle._procflags & dtn::data::Bundle::FRAGMENT)) throw dtn::exceptions::FragmentationException("This bundle is not a fragment!");
+			if (!(_bundle._procflags & dtn::data::Bundle::FRAGMENT))
+			{
+				throw dtn::exceptions::FragmentationException("This bundle is not a fragment!");
+			}
 
 			// remove all block of the copy
 			_bundle.clearBlocks();
 
 			// mark the copy as non-fragment
-			_bundle._procflags -= dtn::data::Bundle::FRAGMENT;
+			_bundle._procflags &= ~(dtn::data::Bundle::FRAGMENT);
 
 			// add a new payloadblock
 			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(_blob);

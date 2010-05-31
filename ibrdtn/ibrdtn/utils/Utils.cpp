@@ -185,7 +185,7 @@ namespace dtn
 //			if (payload_s == destination._appdatalength)
 //			{
 //				// remove the fragment fields of the bundle data
-//				if (destination._procflags & dtn::data::Bundle::FRAGMENT) destination._procflags -= dtn::data::Bundle::FRAGMENT;
+//				destination._procflags &= ~(dtn::data::Bundle::FRAGMENT);
 //			}
 //
 //			return destination;

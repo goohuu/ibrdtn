@@ -54,10 +54,18 @@ namespace dtn
 				// scan for bundles in the storage
 				dtn::core::SimpleBundleStorage &storage = dynamic_cast<dtn::core::SimpleBundleStorage&>(getRouter()->getStorage());
 
-				for (dtn::core::SimpleBundleStorage::Iterator iter = storage.begin(); iter != storage.end(); iter++)
+				std::list<dtn::data::BundleID> list = storage.getList();
+
+				for (std::list<dtn::data::BundleID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 				{
-					// push the bundle into the queue
-					_bundle_queue.push( *iter );
+					try {
+						dtn::routing::MetaBundle meta( storage.get(*iter) );
+
+						// push the bundle into the queue
+						_bundle_queue.push( meta );
+					} catch (dtn::exceptions::NoBundleFoundException) {
+						// error, bundle not found!
+					}
 				}
 			} catch (std::bad_cast ex) {
 				// Another bundle storage is used!

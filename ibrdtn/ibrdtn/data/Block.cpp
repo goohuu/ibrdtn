@@ -39,7 +39,7 @@ namespace dtn
 			_eids.push_back(eid);
 
 			// add proc flag if not set
-			if (!(_procflags & Block::BLOCK_CONTAINS_EIDS)) _procflags += Block::BLOCK_CONTAINS_EIDS;
+			_procflags |= Block::BLOCK_CONTAINS_EIDS;
 		}
 
 		list<EID> Block::getEIDList() const

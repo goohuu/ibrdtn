@@ -30,52 +30,6 @@ namespace dtn
 		{
 		public:
 			/**
-			 * Iterator for this BundleStorage implementation
-			 */
-			class Iterator : public std::iterator<std::forward_iterator_tag, dtn::data::BundleID>, public ibrcommon::Mutex
-			{
-			public:
-				Iterator(std::set<dtn::data::Bundle>::iterator iter, ibrcommon::Mutex &mutex);
-				virtual ~Iterator();
-
-				/**
-				 * Mutex methods to lock the iterator
-				 */
-				void enter();
-				void leave();
-
-				// The assignment and relational operators are straightforward
-				Iterator& operator=(const Iterator& other);
-
-				bool operator==(const Iterator& other);
-
-				bool operator!=(const Iterator& other);
-
-				// Get the next element.
-				Iterator& operator++();
-
-				Iterator& operator++(int);
-
-				// Return a reference to the value in the node.  I do this instead
-				// of returning by value so a caller can update the value in the
-				// node directly.
-				const dtn::data::Bundle& operator*();
-
-				// Return the address of the value referred to.
-				const dtn::data::Bundle* operator->();
-
-			private:
-				ibrcommon::Mutex &_mutex;
-				std::set<dtn::data::Bundle>::iterator _iter;
-			};
-
-			/**
-			 * Iterator methods
-			 */
-			Iterator begin();
-			Iterator end();
-
-			/**
 			 * Constructor
 			 */
 			SimpleBundleStorage();
@@ -103,8 +57,10 @@ namespace dtn
 			 * @return A bundle object of the
 			 */
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
-
 			virtual dtn::data::Bundle get(const dtn::data::EID &eid);
+
+
+			const std::list<dtn::data::BundleID> getList() const;
 
 			/**
 			 * This method deletes a specific bundle in the storage.
@@ -145,36 +101,81 @@ namespace dtn
 				MODE_PERSISTENT = 1
 			};
 
+			class BundleContainer : public dtn::data::BundleID
+			{
+			public:
+				BundleContainer(const dtn::data::Bundle &b);
+				BundleContainer(const ibrcommon::File &file);
+				BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir);
+				~BundleContainer();
+
+				bool operator!=(const BundleContainer& other) const;
+				bool operator==(const BundleContainer& other) const;
+				bool operator<(const BundleContainer& other) const;
+				bool operator>(const BundleContainer& other) const;
+
+				dtn::data::Bundle& operator*();
+				const dtn::data::Bundle& operator*() const;
+
+				BundleContainer& operator= (const BundleContainer &right);
+				BundleContainer& operator= (BundleContainer &right);
+				BundleContainer(const BundleContainer& right);
+
+				void remove();
+
+			protected:
+				class Holder
+				{
+				public:
+					Holder( const dtn::data::Bundle &b );
+					Holder( const ibrcommon::File &file );
+					Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir );
+					~Holder();
+
+					dtn::data::Bundle _bundle;
+					ibrcommon::File _container;
+					RunMode _mode;
+					unsigned _count;
+
+					bool deletion;
+				};
+
+			private:
+				Holder *_holder;
+			};
+
 			class BundleStore : private dtn::routing::BundleList
 			{
 			public:
-				BundleStore(SimpleBundleStorage &sbs);
+				BundleStore();
+				BundleStore(ibrcommon::File workdir);
 				~BundleStore();
 
+				void load(const ibrcommon::File &file);
 				void store(const dtn::data::Bundle &bundle);
 				void remove(const dtn::data::BundleID &id);
 				void clear();
 
+				dtn::data::Bundle get(const dtn::data::EID &eid);
+				dtn::data::Bundle get(const dtn::data::BundleID &id);
+
+				const std::list<dtn::data::BundleID> getList() const;
+
 				void expire(const size_t timestamp);
 
-				std::set<dtn::data::Bundle> bundles;
+				std::set<BundleContainer> bundles;
 				ibrcommon::Mutex bundleslock;
 
 			protected:
 				virtual void eventBundleExpired(const ExpiringBundle &b);
 
 			private:
-				SimpleBundleStorage &_sbs;
+				ibrcommon::File _workdir;
+				RunMode _mode;
 			};
 
 			BundleStore _store;
-
 			bool _running;
-			RunMode _mode;
-			ibrcommon::File _workdir;
-			std::map<dtn::data::BundleID, ibrcommon::File> _bundlefiles;
-
-			ibrcommon::Conditional _dbchanged;
 		};
 	}
 }

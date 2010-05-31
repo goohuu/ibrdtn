@@ -15,118 +15,16 @@ namespace dtn
 {
 	namespace core
 	{
-		SimpleBundleStorage::Iterator::Iterator(std::set<dtn::data::Bundle>::iterator iter, ibrcommon::Mutex &mutex)
-		: _iter(iter), _mutex(mutex) {}
-
-		SimpleBundleStorage::Iterator::~Iterator()
-		{}
-
-		SimpleBundleStorage::Iterator& SimpleBundleStorage::Iterator::operator=(const SimpleBundleStorage::Iterator& other)
-		{
-			_iter = other._iter;
-			return(*this);
-		}
-
-		bool SimpleBundleStorage::Iterator::operator==(const SimpleBundleStorage::Iterator& other)
-		{
-			return(_iter == other._iter);
-		}
-
-		bool SimpleBundleStorage::Iterator::operator!=(const SimpleBundleStorage::Iterator& other)
-		{
-			return(_iter != other._iter);
-		}
-
-		void SimpleBundleStorage::Iterator::enter()
-		{
-			_mutex.enter();
-		}
-
-		void SimpleBundleStorage::Iterator::leave()
-		{
-			_mutex.leave();
-		}
-
-		// Get the next element.
-		SimpleBundleStorage::Iterator& SimpleBundleStorage::Iterator::operator++()
-		{
-			_iter++;
-			return (*this);
-		}
-
-		SimpleBundleStorage::Iterator& SimpleBundleStorage::Iterator::operator++(int)
-		{
-			_iter++;
-			return (*this);
-		}
-
-		const dtn::data::Bundle& SimpleBundleStorage::Iterator::operator*()
-		{
-			return(*_iter);
-		}
-
-		// Return the address of the value referred to.
-		const dtn::data::Bundle* SimpleBundleStorage::Iterator::operator->()
-		{
-			return(&*(SimpleBundleStorage::Iterator)*this);
-		}
-
-		SimpleBundleStorage::Iterator SimpleBundleStorage::begin()
-		{
-			return SimpleBundleStorage::Iterator(_store.bundles.begin(), _store.bundleslock);
-		}
-
-		SimpleBundleStorage::Iterator SimpleBundleStorage::end()
-		{
-			return SimpleBundleStorage::Iterator(_store.bundles.end(), _store.bundleslock);
-		}
-
 		SimpleBundleStorage::SimpleBundleStorage()
-		 : _store(*this), _running(true), _mode(MODE_NONPERSISTENT)
+		 : _store(), _running(true)
 		{
 			bindEvent(TimeEvent::className);
 			bindEvent(GlobalEvent::className);
 		}
 
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir)
-		 : _store(*this), _running(true), _mode(MODE_PERSISTENT), _workdir(workdir)
+		 : _store(workdir), _running(true)
 		{
-			// load persistent bundles
-			std::list<ibrcommon::File> files;
-			_workdir.getFiles(files);
-
-			for (std::list<ibrcommon::File>::iterator iter = files.begin(); iter != files.end(); iter++)
-			{
-				ibrcommon::File &file = (*iter);
-				if (!file.isDirectory())
-				{
-					std::fstream fs(file.getPath().c_str(), ios::in|ios::binary);
-					try {
-						dtn::data::Bundle b;
-						fs >> b;
-						fs.close();
-
-						ibrcommon::MutexLock l(_dbchanged);
-
-						// add the file to the index
-						_bundlefiles[dtn::data::BundleID(b)] = file;
-
-						// store the bundle into the storage
-						_store.store(b);
-					} catch (dtn::exceptions::IOException ex) {
-						// error while reading file
-						fs.close();
-						file.remove();
-					} catch (std::out_of_range ex) {
-						// error while reading file
-						fs.close();
-						file.remove();
-					}
-				}
-			}
-
-			// some output
-			cout << _store.bundles.size() << " Bundles restored." << endl;
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
@@ -158,20 +56,6 @@ namespace dtn
 
 		void SimpleBundleStorage::clear()
 		{
-			ibrcommon::MutexLock l(_dbchanged);
-
-			if (_mode = MODE_PERSISTENT)
-			{
-				// delete all bundles
-				for (std::map<dtn::data::BundleID, ibrcommon::File>::iterator iter = _bundlefiles.begin(); iter != _bundlefiles.end(); iter++)
-				{
-					ibrcommon::File &file = (*iter).second;
-					file.remove();
-				}
-
-				_bundlefiles.clear();
-			}
-
 			// delete all bundles
 			_store.clear();
 		}
@@ -190,125 +74,155 @@ namespace dtn
 
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
-			ibrcommon::MutexLock l(_dbchanged);
-
-			if (_mode == MODE_PERSISTENT)
-			{
-				std::string namestr = _workdir.getPath() + "/bundle-XXXXXXXX";
-				char name[namestr.length()];
-				::strcpy(name, namestr.c_str());
-
-				int fd = mkstemp(name);
-				if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
-				::close(fd);
-
-				ibrcommon::File file(name);
-
-				std::fstream out(file.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
-
-				out << bundle;
-
-				// store the bundle into a file
-				_bundlefiles[dtn::data::BundleID(bundle)] = file;
-			}
-
 			_store.store(bundle);
 
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			ibrcommon::slog << ibrcommon::SYSLOG_INFO << "Storage: stored bundle " << bundle.toString() << endl;
 #endif
 
-			_dbchanged.signal(true);
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)
 		{
-			ibrcommon::MutexLock l(_dbchanged);
-			ibrcommon::MutexLock bl(_store.bundleslock);
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			cout << "Storage: get bundle for " << eid.getString() << endl;
 #endif
 
-			for (std::set<dtn::data::Bundle>::const_iterator iter = _store.bundles.begin(); iter != _store.bundles.end(); iter++)
-			{
-				const dtn::data::Bundle &bundle = (*iter);
-				if (bundle._destination == eid)
-				{
-					return bundle;
-				}
-			}
-
-			throw dtn::exceptions::NoBundleFoundException();
+			return _store.get(eid);
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)
 		{
-			ibrcommon::MutexLock l(_dbchanged);
-			ibrcommon::MutexLock bl(_store.bundleslock);
+			return _store.get(id);
+		}
 
-			for (std::set<dtn::data::Bundle>::const_iterator iter = _store.bundles.begin(); iter != _store.bundles.end(); iter++)
-			{
-				const Bundle &bundle = (*iter);
-				if (id == bundle)
-				{
-					return bundle;
-				}
-			}
-
-			throw dtn::exceptions::NoBundleFoundException();
+		const std::list<dtn::data::BundleID> SimpleBundleStorage::getList() const
+		{
+			return _store.getList();
 		}
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
-			ibrcommon::MutexLock l(_dbchanged);
-
 			_store.remove(id);
-
-			if (_mode == MODE_PERSISTENT)
-			{
-				try {
-					// remove the file
-					_bundlefiles[id].remove();
-				} catch (std::out_of_range ex) {
-
-				}
-				_bundlefiles.erase(id);
-			}
 		}
 
-		SimpleBundleStorage::BundleStore::BundleStore(SimpleBundleStorage &sbs)
-		 : _sbs(sbs)
+		SimpleBundleStorage::BundleStore::BundleStore()
+		 : _mode(MODE_NONPERSISTENT)
 		{
+		}
+
+		SimpleBundleStorage::BundleStore::BundleStore(ibrcommon::File workdir)
+		 : _mode(MODE_PERSISTENT), _workdir(workdir)
+		{
+			// load persistent bundles
+			std::list<ibrcommon::File> files;
+			_workdir.getFiles(files);
+
+			for (std::list<ibrcommon::File>::iterator iter = files.begin(); iter != files.end(); iter++)
+			{
+				ibrcommon::File &file = (*iter);
+				if (!file.isDirectory() && !file.isSystem())
+				{
+					try {
+						// load a bundle into the storage
+						load(file);
+					} catch (dtn::exceptions::IOException ex) {
+						// error while reading file
+						file.remove();
+					} catch (std::out_of_range ex) {
+						// error while reading file
+						file.remove();
+					}
+				}
+			}
+
+			// some output
+			cout << bundles.size() << " Bundles restored." << endl;
 		}
 
 		SimpleBundleStorage::BundleStore::~BundleStore()
 		{
 		}
 
+		dtn::data::Bundle SimpleBundleStorage::BundleStore::get(const dtn::data::EID &eid)
+		{
+			ibrcommon::MutexLock l(bundleslock);
+			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				const BundleContainer &bundle = (*iter);
+				if ((*bundle)._destination == eid)
+				{
+					return (*bundle);
+				}
+			}
+
+			throw dtn::exceptions::NoBundleFoundException();
+		}
+
+		dtn::data::Bundle SimpleBundleStorage::BundleStore::get(const dtn::data::BundleID &id)
+		{
+			ibrcommon::MutexLock l(bundleslock);
+
+			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				const BundleContainer &bundle = (*iter);
+				if (id == (*bundle))
+				{
+					return (*bundle);
+				}
+			}
+
+			throw dtn::exceptions::NoBundleFoundException();
+		}
+
 		void SimpleBundleStorage::BundleStore::expire(const size_t timestamp)
 		{
-			ibrcommon::MutexLock bl(bundleslock);
 			dtn::routing::BundleList::expire(timestamp);
+		}
+
+		void SimpleBundleStorage::BundleStore::load(const ibrcommon::File &file)
+		{
+			ibrcommon::MutexLock l(bundleslock);
+
+			BundleContainer container(file);
+			bundles.insert( container );
+
+			// add it to the bundle list
+			dtn::routing::BundleList::add(dtn::routing::MetaBundle(*container));
 		}
 
 		void SimpleBundleStorage::BundleStore::store(const dtn::data::Bundle &bundle)
 		{
-			ibrcommon::MutexLock bl(bundleslock);
+			ibrcommon::MutexLock l(bundleslock);
+			if (_mode == MODE_PERSISTENT)
+			{
+				bundles.insert( BundleContainer(bundle, _workdir) );
+			}
+			else
+			{
+				bundles.insert( BundleContainer(bundle) );
+			}
 			dtn::routing::BundleList::add(dtn::routing::MetaBundle(bundle));
-			bundles.insert(bundle);
 		}
 
 		void SimpleBundleStorage::BundleStore::remove(const dtn::data::BundleID &id)
 		{
-			ibrcommon::MutexLock bl(bundleslock);
+			ibrcommon::MutexLock l(bundleslock);
 
-			for (std::set<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 			{
-				if ( id == (*iter) )
+				if ( id == (*(*iter)) )
 				{
 					// remove item in the bundlelist
-					dtn::routing::BundleList::remove(dtn::routing::MetaBundle(*iter));
+					BundleContainer container = (*iter);
 
+					// mark for deletion
+					container.remove();
+
+					// remove it from the bundle list
+					dtn::routing::BundleList::remove(dtn::routing::MetaBundle(*container));
+
+					// remove the container
 					bundles.erase(iter);
 
 					return;
@@ -320,7 +234,17 @@ namespace dtn
 
 		void SimpleBundleStorage::BundleStore::clear()
 		{
-			ibrcommon::MutexLock bl(bundleslock);
+			ibrcommon::MutexLock l(bundleslock);
+
+			// mark all bundles for deletion
+			for (std::set<BundleContainer>::iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				BundleContainer container = (*iter);
+
+				// mark for deletion
+				container.remove();
+			}
+
 			bundles.clear();
 			dtn::routing::BundleList::clear();
 		}
@@ -328,27 +252,151 @@ namespace dtn
 		void SimpleBundleStorage::BundleStore::eventBundleExpired(const ExpiringBundle &b)
 		{
 			{
-				ibrcommon::MutexLock l(_sbs._dbchanged);
-
-				for (std::set<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+				ibrcommon::MutexLock l(bundleslock);
+				for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 				{
-					if ( b.bundle == (*iter) )
+					if ( b.bundle == (*(*iter)) )
 					{
+						BundleContainer container = (*iter);
+
+						container.remove();
 						bundles.erase(iter);
 						break;
 					}
-				}
-
-				if (_sbs._mode == MODE_PERSISTENT)
-				{
-					// remove the file
-					_sbs._bundlefiles[b.bundle].remove();
-					_sbs._bundlefiles.erase(b.bundle);
 				}
 			}
 
 			// raise an event
 			dtn::core::BundleExpiredEvent::raise( b.bundle );
+		}
+
+		const std::list<dtn::data::BundleID> SimpleBundleStorage::BundleStore::getList() const
+		{
+			std::list<dtn::data::BundleID> ret;
+
+			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				const BundleContainer &container = (*iter);
+				ret.push_back( dtn::data::BundleID(*container) );
+			}
+
+			return ret;
+		}
+
+		SimpleBundleStorage::BundleContainer::BundleContainer(const dtn::data::Bundle &b)
+		 : _holder( new SimpleBundleStorage::BundleContainer::Holder(b) )
+		{
+		}
+
+		SimpleBundleStorage::BundleContainer::BundleContainer(const ibrcommon::File &file)
+		 : _holder( new SimpleBundleStorage::BundleContainer::Holder(file) )
+		{
+		}
+
+		SimpleBundleStorage::BundleContainer::BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir)
+		 : _holder( new SimpleBundleStorage::BundleContainer::Holder(b, workdir) )
+		{
+		}
+
+		SimpleBundleStorage::BundleContainer::~BundleContainer()
+		{
+			if (--_holder->_count == 0) delete _holder;
+		}
+
+		bool SimpleBundleStorage::BundleContainer::operator<(const SimpleBundleStorage::BundleContainer& other) const
+		{
+			return (*(*this) < *other);
+		}
+
+		bool SimpleBundleStorage::BundleContainer::operator>(const SimpleBundleStorage::BundleContainer& other) const
+		{
+			return (*(*this) > *other);
+		}
+
+		bool SimpleBundleStorage::BundleContainer::operator!=(const SimpleBundleStorage::BundleContainer& other) const
+		{
+			return !((*this) == other);
+		}
+
+		bool SimpleBundleStorage::BundleContainer::operator==(const SimpleBundleStorage::BundleContainer& other) const
+		{
+			return (*(*this) == *other);
+		}
+
+		SimpleBundleStorage::BundleContainer& SimpleBundleStorage::BundleContainer::operator= (const SimpleBundleStorage::BundleContainer &right)
+		{
+			++right._holder->_count;
+			if (--_holder->_count == 0) delete _holder;
+			_holder = right._holder;
+			return *this;
+		}
+
+		SimpleBundleStorage::BundleContainer& SimpleBundleStorage::BundleContainer::operator= (SimpleBundleStorage::BundleContainer &right)
+		{
+			++right._holder->_count;
+			if (--_holder->_count == 0) delete _holder;
+			_holder = right._holder;
+			return *this;
+		}
+
+		SimpleBundleStorage::BundleContainer::BundleContainer(const SimpleBundleStorage::BundleContainer& right)
+		 : _holder(right._holder)
+		{
+			++_holder->_count;
+		}
+
+		dtn::data::Bundle& SimpleBundleStorage::BundleContainer::operator*()
+		{
+			return _holder->_bundle;
+		}
+
+		const dtn::data::Bundle& SimpleBundleStorage::BundleContainer::operator*() const
+		{
+			return _holder->_bundle;
+		}
+
+		void SimpleBundleStorage::BundleContainer::remove()
+		{
+			_holder->deletion = true;
+		}
+
+		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b )
+		 : _bundle(b), _mode(MODE_NONPERSISTENT), _count(1), deletion(false)
+		{
+		}
+
+		SimpleBundleStorage::BundleContainer::Holder::Holder( const ibrcommon::File &file )
+		 : _bundle(), _container(file), _mode(MODE_PERSISTENT), _count(1), deletion(false)
+		{
+			std::fstream fs(file.getPath().c_str(), ios::in|ios::binary);
+			fs >> _bundle;
+			fs.close();
+		}
+
+		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir )
+		 : _bundle(b), _mode(MODE_PERSISTENT), _count(1), deletion(false)
+		{
+			std::string namestr = workdir.getPath() + "/bundle-XXXXXXXX";
+			char name[namestr.length()];
+			::strcpy(name, namestr.c_str());
+
+			int fd = mkstemp(name);
+			if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
+			::close(fd);
+
+			_container = ibrcommon::File(name);
+
+			std::fstream out(_container.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
+			out << b << std::flush;
+			out.close();
+		}
+
+		SimpleBundleStorage::BundleContainer::Holder::~Holder()
+		{
+			if (_mode == MODE_PERSISTENT && deletion)
+			{
+				_container.remove();
+			}
 		}
 	}
 }

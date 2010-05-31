@@ -75,8 +75,7 @@ namespace dtn
 
 			case PAYLOAD_BLOCK_DATA:
 				// create a fragment
-				if (!(_bundle._procflags & dtn::data::Bundle::FRAGMENT))
-					_bundle._procflags += dtn::data::Bundle::FRAGMENT;
+				_bundle._procflags |= dtn::data::Bundle::FRAGMENT;
 
 				// set the application length
 				_bundle._appdatalength = _last_blocksize;
