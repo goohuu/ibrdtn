@@ -9,7 +9,6 @@
 #define BUNDLELIST_H_
 
 #include "routing/MetaBundle.h"
-#include <list>
 #include <set>
 
 namespace dtn
@@ -46,7 +45,7 @@ namespace dtn
 
 			virtual void eventBundleExpired(const ExpiringBundle &b) {};
 
-			std::list<ExpiringBundle> _bundles;
+			std::multiset<ExpiringBundle> _bundles;
 		};
 
 	}

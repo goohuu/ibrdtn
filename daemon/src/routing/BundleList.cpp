@@ -19,45 +19,20 @@ namespace dtn
 
 		void BundleList::add(const dtn::routing::MetaBundle bundle)
 		{
-			ExpiringBundle exbundle(bundle);
+			// insert bundle id to the private list
+			_bundles.insert(bundle);
 
-			// sorted insert of the bundle
-			for (std::list<ExpiringBundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-			{
-				if ((*iter) == exbundle) return;
-
-				if ((*iter) > exbundle)
-				{
-					// put the new bundle in front of the greater bundle
-					_bundles.insert( iter, exbundle );
-
-					// insert the bundle
-					this->insert(bundle);
-
-					return;
-				}
-			}
-
-			// the list is empty or no "greater" bundle available,
-			// put the bundle at the end of the list
-			_bundles.push_back( exbundle );
-
-			// insert the bundle
+			// insert the bundle to the public list
 			this->insert(bundle);
 		}
 
 		void BundleList::remove(const dtn::routing::MetaBundle bundle)
 		{
-			this->erase(bundle);
+			// delete bundle id in the private list
+			_bundles.erase(bundle);
 
-			for (std::list<ExpiringBundle>::iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-			{
-				if ((*iter) == bundle)
-				{
-					_bundles.erase( iter );
-					return;
-				}
-			}
+			// delete bundle id in the public list
+			this->erase(bundle);
 		}
 
 		void BundleList::clear()
@@ -68,7 +43,7 @@ namespace dtn
 
 		void BundleList::expire(const size_t timestamp)
 		{
-			std::list<ExpiringBundle>::iterator iter = _bundles.begin();
+			std::multiset<ExpiringBundle>::iterator iter = _bundles.begin();
 
 			while (iter != _bundles.end())
 			{
