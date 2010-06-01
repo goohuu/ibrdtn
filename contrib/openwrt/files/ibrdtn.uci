@@ -1,0 +1,90 @@
+#
+# main section
+#
+config 'daemon' 'main'
+	# The local eid of the dtn node. Default is the hostname.
+#	option uri			dtn://node.dtn
+	
+	# timezone offset in hours
+#	option timezone		+1
+	
+	# logfile for standard output
+	option logfile		/tmp/ibrdtn.log
+	option errfile		/tmp/ibrdtn.err
+	
+#
+# storage specific settings
+#
+config 'daemon' 'storage'
+	option blobs		/tmp/ibrdtn/blobs
+	option bundles		/tmp/ibrdtn/bundles
+	option limit		2GB
+
+#
+# statistic logging
+#
+config 'daemon' 'statistic'
+	# types: stdout | syslog | plain | csv | stat
+	option type			stdout
+	option interval		2
+	option file			/tmp/ibrdtn.stats
+
+#
+# routing mode
+#
+# values: default | epidemic
+#
+# In the "default" the daemon only delivers bundles to neighbors and static
+# available nodes. The alternative module "epidemic" spread all bundles to
+# all available neighbors.
+#
+config 'daemon' 'main'
+	option	routing		default
+
+#
+# static routing rules
+# - only available with "routing = default"
+# - a rule contains max. one asterisk.
+# - format is <target-scheme> <routing-node>
+#
+config 'static-route'
+	list pattern		dtn://*
+	option destination	dtn://router.dtn
+
+#
+# static connections
+#
+config 'static-connection'
+	option uri			dtn://node-five.dtn
+	option address		10.0.0.5
+	option port			4556
+	option protocol		tcp
+
+config 'static-connection'
+	option uri			dtn://node-ten
+	option address		10.0.0.10
+	option port			4556
+	option protocol		udp
+
+#
+# discovery over UDP/IP
+#
+# You can specify a network interface (such as eth0, wlan0, etc.)
+# or an address to listen to. Multicast addresses are supported with
+# the second option. If no option is specified the default broadcast
+# address is used.
+#
+config 'daemon' 'discovery'
+	option interface	eth0
+#	option address		224.0.0.1
+
+config 'network'
+	option type			tcp
+	option interface	eth0
+	option port			4556
+	
+config 'network'
+	option type			tcp
+	option interface	wlan0
+	option port			4556
+	
