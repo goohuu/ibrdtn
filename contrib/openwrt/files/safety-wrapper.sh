@@ -22,10 +22,16 @@ LOG_FILE=`uci -q get ibrdtn.main.logfile`
 ERR_FILE=`uci -q get ibrdtn.main.errfile`
 
 # create blob & bundle path
-/bin/mkdir -p $BLOB_PATH $BUNDLE_PATH
+if [ -n "$BLOB_PATH" ]; then
+	/bin/mkdir -p $BLOB_PATH
+	
+	# clean the blob directory on startup
+	/bin/rm -f $BLOB_PATH/file*
+fi
 
-# clean the blob directory on startup
-/bin/rm -f $BLOB_PATH/file*
+if [ -n "$BUNDLE_PATH" ]; then
+	/bin/mkdir -p $BUNDLE_PATH
+fi
 
 # run the daemon
 $DTND -c $TMPCONF > $LOG_FILE 2> $ERR_FILE &
