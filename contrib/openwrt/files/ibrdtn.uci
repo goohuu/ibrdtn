@@ -15,19 +15,18 @@ config 'daemon' 'main'
 #
 # storage specific settings
 #
-config 'daemon' 'storage'
-	option blobs		/tmp/ibrdtn/blobs
-	option bundles		/tmp/ibrdtn/bundles
-	option limit		2GB
+#config 'daemon' 'storage'
+#	option blobs		/tmp/ibrdtn/blobs
+#	option bundles		/tmp/ibrdtn/bundles
 
 #
 # statistic logging
 #
-config 'daemon' 'statistic'
-	# types: stdout | syslog | plain | csv | stat
-	option type			stdout
-	option interval		2
-	option file			/tmp/ibrdtn.stats
+#config 'daemon' 'statistic'
+#	# types: stdout | syslog | plain | csv | stat
+#	option type			stdout
+#	option interval		2
+#	option file			/tmp/ibrdtn.stats
 
 #
 # routing mode
@@ -38,8 +37,8 @@ config 'daemon' 'statistic'
 # available nodes. The alternative module "epidemic" spread all bundles to
 # all available neighbors.
 #
-config 'daemon' 'main'
-	option	routing		default
+#config 'daemon' 'main'
+#	option	routing		default
 
 #
 # static routing rules
@@ -47,24 +46,24 @@ config 'daemon' 'main'
 # - a rule contains max. one asterisk.
 # - format is <target-scheme> <routing-node>
 #
-config 'static-route'
-	list pattern		dtn://*
-	option destination	dtn://router.dtn
+#config 'static-route'
+#	list pattern		dtn://*
+#	option destination	dtn://router.dtn
 
 #
 # static connections
 #
-config 'static-connection'
-	option uri			dtn://node-five.dtn
-	option address		10.0.0.5
-	option port			4556
-	option protocol		tcp
+#config 'static-connection'
+#	option uri			dtn://node-five.dtn
+#	option address		10.0.0.5
+#	option port			4556
+#	option protocol		tcp
 
-config 'static-connection'
-	option uri			dtn://node-ten
-	option address		10.0.0.10
-	option port			4556
-	option protocol		udp
+#config 'static-connection'
+#	option uri			dtn://node-ten
+#	option address		10.0.0.10
+#	option port			4556
+#	option protocol		udp
 
 #
 # discovery over UDP/IP
@@ -83,8 +82,8 @@ config 'network'
 	option interface	eth0
 	option port			4556
 	
-config 'network'
-	option type			tcp
-	option interface	wlan0
-	option port			4556
+#config 'network'
+#	option type			tcp
+#	option interface	wlan0
+#	option port			4556
 	
