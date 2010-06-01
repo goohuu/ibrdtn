@@ -79,6 +79,9 @@ namespace dtn
 			// connection flags
 			char flags = 0;
 
+			// request acknowledgements
+			flags &= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+
 			// set comm. mode
 			if (_mode == MODE_SENDONLY) flags += 0x80;
 

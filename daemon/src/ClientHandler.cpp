@@ -90,8 +90,13 @@ namespace dtn
 		void ClientHandler::run()
 		{
 			try {
+				char flags = 0;
+
+				// request acknowledgements
+				flags &= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+
 				// do the handshake
-				_connection.handshake(dtn::core::BundleCore::local, 10);
+				_connection.handshake(dtn::core::BundleCore::local, 10, flags);
 
 				BundleStorage &storage = BundleCore::getInstance().getStorage();
 
