@@ -34,5 +34,14 @@ if [ -n "$BUNDLE_PATH" ]; then
 	/bin/mkdir -p $BUNDLE_PATH
 fi
 
+LOGGING=""
+if [ -n "$LOG_FILE" ]; then
+	LOGGING="$LOGGING > $LOG_FILE"
+fi
+
+if [ -n "$ERR_FILE" ]; then
+	LOGGING="$LOGGING 2> $ERR_FILE"
+fi
+
 # run the daemon
-$DTND -c $TMPCONF > $LOG_FILE 2> $ERR_FILE &
+$DTND -c $TMPCONF $LOGGING &
