@@ -200,15 +200,28 @@ namespace dtn
 		void SimpleBundleStorage::BundleStore::store(const dtn::data::Bundle &bundle)
 		{
 			ibrcommon::MutexLock l(bundleslock);
+
+			pair<set<BundleContainer>::iterator,bool> ret;
+
 			if (_mode == MODE_PERSISTENT)
 			{
-				bundles.insert( BundleContainer(bundle, _workdir) );
+				ret = bundles.insert( BundleContainer(bundle, _workdir) );
 			}
 			else
 			{
-				bundles.insert( BundleContainer(bundle) );
+				ret = bundles.insert( BundleContainer(bundle) );
 			}
-			dtn::routing::BundleList::add(dtn::routing::MetaBundle(bundle));
+
+			if (ret.second)
+			{
+				dtn::routing::BundleList::add(dtn::routing::MetaBundle(bundle));
+			}
+#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			else
+			{
+				ibrcommon::slog << ibrcommon::SYSLOG_INFO << "Storage: got bundle duplicate " << bundle.toString() << std::endl;
+			}
+#endif
 		}
 
 		void SimpleBundleStorage::BundleStore::remove(const dtn::data::BundleID &id)
