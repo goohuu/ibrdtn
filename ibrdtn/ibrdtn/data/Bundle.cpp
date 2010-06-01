@@ -46,7 +46,7 @@ namespace dtn
 			{
 				if (!(_procflags & Bundle::FRAGMENT)) return false;
 
-				//if (other._fragmentoffset != _fragmentoffset) return false;
+				if (other._fragmentoffset != _fragmentoffset) return false;
 				if (other._appdatalength != _appdatalength) return false;
 			}
 
