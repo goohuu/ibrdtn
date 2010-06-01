@@ -205,7 +205,12 @@ namespace dtn
 
 			if (_mode == MODE_PERSISTENT)
 			{
-				ret = bundles.insert( BundleContainer(bundle, _workdir) );
+				try {
+					ret = bundles.insert( BundleContainer(bundle, _workdir) );
+				} catch (ibrcommon::IOException ex) {
+					ibrcommon::slog << ibrcommon::SYSLOG_ERR << "Storage: unable to store bundle " << bundle.toString() << std::endl;
+					return;
+				}
 			}
 			else
 			{
