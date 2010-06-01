@@ -318,8 +318,12 @@ namespace dtn
 				routingbundle._destination = EID("dtn:epidemic-routing");
 
 				// create a new epidemic block
-				EpidemicExtensionBlock *eblock = new EpidemicExtensionBlock(_bundle_vector);
-				routingbundle.addBlock(eblock);
+				{
+					// lock the lists
+					ibrcommon::MutexLock l(_list_mutex);
+					EpidemicExtensionBlock *eblock = new EpidemicExtensionBlock(_bundle_vector);
+					routingbundle.addBlock(eblock);
+				}
 
 				// publish new bundle list to all neighbors
 				if ( _bundlelist_changed )
