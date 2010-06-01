@@ -12,14 +12,15 @@
 
 DTND=/usr/sbin/dtnd
 TMPCONF=/tmp/ibrdtn.config
+UCI=/sbin/uci
 
 . /usr/sbin/dtnd-build-config.sh $TMPCONF
 
 # read uci configuration
-BLOB_PATH=`uci -q get ibrdtn.storage.blobs`
-BUNDLE_PATH=`uci -q get ibrdtn.storage.bundles`
-LOG_FILE=`uci -q get ibrdtn.main.logfile`
-ERR_FILE=`uci -q get ibrdtn.main.errfile`
+BLOB_PATH=`$UCI -q get ibrdtn.storage.blobs`
+BUNDLE_PATH=`$UCI -q get ibrdtn.storage.bundles`
+LOG_FILE=`$UCI -q get ibrdtn.main.logfile`
+ERR_FILE=`$UCI -q get ibrdtn.main.errfile`
 
 # create blob & bundle path
 if [ -n "$BLOB_PATH" ]; then
