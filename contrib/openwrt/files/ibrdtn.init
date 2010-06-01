@@ -5,7 +5,7 @@ START=90
 
 start() {
 	echo -n "running dtnd ..."
-	/usr/sbin/dtnd -c /etc/config/ibrdtn > /var/log/ibrdtn.log 2> /var/log/ibrdtn.err &
+	/usr/sbin/dtnd-safety-wrapper.sh
 	echo " done"
 }
 
