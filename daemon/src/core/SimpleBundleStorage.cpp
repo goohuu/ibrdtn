@@ -68,8 +68,13 @@ namespace dtn
 
 		unsigned int SimpleBundleStorage::count()
 		{
-			ibrcommon::MutexLock l(_store.bundleslock);
-			return _store.bundles.size();
+			return _store.count();
+		}
+
+		unsigned int SimpleBundleStorage::BundleStore::count()
+		{
+			ibrcommon::MutexLock l(bundleslock);
+			return bundles.size();
 		}
 
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
@@ -96,7 +101,7 @@ namespace dtn
 			return _store.get(id);
 		}
 
-		const std::list<dtn::data::BundleID> SimpleBundleStorage::getList() const
+		const std::list<dtn::data::BundleID> SimpleBundleStorage::getList()
 		{
 			return _store.getList();
 		}
@@ -177,6 +182,7 @@ namespace dtn
 
 		void SimpleBundleStorage::BundleStore::expire(const size_t timestamp)
 		{
+			ibrcommon::MutexLock l(bundleslock);
 			dtn::routing::BundleList::expire(timestamp);
 		}
 
@@ -251,18 +257,15 @@ namespace dtn
 
 		void SimpleBundleStorage::BundleStore::eventBundleExpired(const ExpiringBundle &b)
 		{
+			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 			{
-				ibrcommon::MutexLock l(bundleslock);
-				for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+				if ( b.bundle == (*(*iter)) )
 				{
-					if ( b.bundle == (*(*iter)) )
-					{
-						BundleContainer container = (*iter);
+					BundleContainer container = (*iter);
 
-						container.remove();
-						bundles.erase(iter);
-						break;
-					}
+					container.remove();
+					bundles.erase(iter);
+					break;
 				}
 			}
 
@@ -270,8 +273,9 @@ namespace dtn
 			dtn::core::BundleExpiredEvent::raise( b.bundle );
 		}
 
-		const std::list<dtn::data::BundleID> SimpleBundleStorage::BundleStore::getList() const
+		const std::list<dtn::data::BundleID> SimpleBundleStorage::BundleStore::getList()
 		{
+			ibrcommon::MutexLock l(bundleslock);
 			std::list<dtn::data::BundleID> ret;
 
 			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)

@@ -60,7 +60,7 @@ namespace dtn
 			virtual dtn::data::Bundle get(const dtn::data::EID &eid);
 
 
-			const std::list<dtn::data::BundleID> getList() const;
+			const std::list<dtn::data::BundleID> getList();
 
 			/**
 			 * This method deletes a specific bundle in the storage.
@@ -156,10 +156,12 @@ namespace dtn
 				void remove(const dtn::data::BundleID &id);
 				void clear();
 
+				unsigned int count();
+
 				dtn::data::Bundle get(const dtn::data::EID &eid);
 				dtn::data::Bundle get(const dtn::data::BundleID &id);
 
-				const std::list<dtn::data::BundleID> getList() const;
+				const std::list<dtn::data::BundleID> getList();
 
 				void expire(const size_t timestamp);
 
