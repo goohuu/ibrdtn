@@ -93,7 +93,7 @@ namespace dtn
 				char flags = 0;
 
 				// request acknowledgements
-				flags &= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+				flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 
 				// do the handshake
 				_connection.handshake(dtn::core::BundleCore::local, 10, flags);

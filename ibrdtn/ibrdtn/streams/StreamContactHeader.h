@@ -28,8 +28,8 @@ namespace dtn
 		public:
 			enum HEADER_BITS
 			{
-				REQUEST_ACKNOWLEDGMENTS = 1 << 7,
-				REQUEST_FRAGMENTATION = 1 << 6
+				REQUEST_ACKNOWLEDGMENTS = 1 << 0,
+				REQUEST_FRAGMENTATION = 1 << 1
 			};
 
 			StreamContactHeader();

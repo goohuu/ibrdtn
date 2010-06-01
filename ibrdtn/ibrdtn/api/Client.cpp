@@ -80,10 +80,10 @@ namespace dtn
 			char flags = 0;
 
 			// request acknowledgements
-			flags &= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+			flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 
 			// set comm. mode
-			if (_mode == MODE_SENDONLY) flags += 0x80;
+			if (_mode == MODE_SENDONLY) flags |= 0x80;
 
 			// do the handshake
 			handshake(localeid, 10, flags);

@@ -291,6 +291,10 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
 		{
 			try {
+				char flags = 0;
+				// request acknowledgements
+				flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+
 				// firstly, do the handshake
 				_connection.handshake(_name, _timeout);
 
