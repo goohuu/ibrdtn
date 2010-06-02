@@ -44,4 +44,4 @@ if [ -n "$ERR_FILE" ]; then
 fi
 
 # run the daemon
-$DTND -c $TMPCONF $LOGGING &
+echo "${DTND} -c ${TMPCONF} ${LOGGING} &" | /bin/sh
