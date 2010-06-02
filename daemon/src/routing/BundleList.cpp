@@ -74,28 +74,23 @@ namespace dtn
 
 		bool BundleList::ExpiringBundle::operator!=(const ExpiringBundle& other) const
 		{
-			return (other.bundle != this->bundle);
+			return !(other == *this);
 		}
 
 		bool BundleList::ExpiringBundle::operator==(const ExpiringBundle& other) const
 		{
 			return (other.bundle == this->bundle);
+//			return (expiretime == other.expiretime);
 		}
 
 		bool BundleList::ExpiringBundle::operator<(const ExpiringBundle& other) const
 		{
-			if (expiretime < other.expiretime) return true;
-			if (bundle < other.bundle) return true;
-
-			return false;
+			return (expiretime < other.expiretime);
 		}
 
 		bool BundleList::ExpiringBundle::operator>(const ExpiringBundle& other) const
 		{
-			if (expiretime > other.expiretime) return true;
-			if (bundle > other.bundle) return true;
-
-			return false;
+			return (expiretime > other.expiretime);
 		}
 	}
 }
