@@ -4,13 +4,39 @@
 START=90
 
 start() {
+	# check if the daemon is disabled
+	if [ "`/sbin/uci -P/var/state -q get ibrdtn.disable`" == "1" ]; then
+		/bin/echo "dtnd is disabled"
+		return
+	fi
+	
 	echo -n "running dtnd ..."
-	/usr/sbin/dtnd-safety-wrapper.sh
+	
+	# startup the safety-wrapper for the daemon
+	/usr/sbin/dtnd-safety-wrapper.sh &
+	
+	# store the pid of the process in uci states
+	/sbin/uci -P/var/state -q set ibrdtn.safetypid=`echo $!`
+	
 	echo " done"
 }
 
 stop() { 
+	# check if the daemon is disabled
+	if [ "`/sbin/uci -P/var/state -q get ibrdtn.disable`" == "1" ]; then
+		/bin/echo "dtnd is disabled"
+		return
+	fi
+	
 	echo -n "stopping dtnd ..."
+	
+	# set state to None, this indicates a clear shutdown to the safety-wrapper.
+	/sbin/uci -P/var/state -q set ibrdtn.state=None
+	
+	# stop the safety-wrapper
+	kill `/sbin/uci -P/var/state -q get ibrdtn.safetypid`
+	
+	# send a kill signal to the daemon
 	killall dtnd 2> /dev/null >/dev/null
 	
 	# wait for some time

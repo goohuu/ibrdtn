@@ -14,13 +14,28 @@ DTND=/usr/sbin/dtnd
 TMPCONF=/tmp/ibrdtn.config
 UCI=/sbin/uci
 
+getstate() {
+	$UCI -P/var/state -q get ibrdtn.$1
+	return $?
+}
+
+setstate() {
+	$UCI -P/var/state -q set ibrdtn.$1=$2
+	return $?
+}
+
+getconfig() {
+	$UCI -q get ibrdtn.$1
+	return $?
+}
+
 . /usr/sbin/dtnd-build-config.sh $TMPCONF
 
 # read uci configuration
-BLOB_PATH=`$UCI -q get ibrdtn.storage.blobs`
-BUNDLE_PATH=`$UCI -q get ibrdtn.storage.bundles`
-LOG_FILE=`$UCI -q get ibrdtn.main.logfile`
-ERR_FILE=`$UCI -q get ibrdtn.main.errfile`
+BLOB_PATH=`getconfig storage.blobs`
+BUNDLE_PATH=`getconfig storage.bundles`
+LOG_FILE=`getconfig main.logfile`
+ERR_FILE=`getconfig main.errfile`
 
 # create blob & bundle path
 if [ -n "$BLOB_PATH" ]; then
@@ -43,5 +58,48 @@ if [ -n "$ERR_FILE" ]; then
 	LOGGING="$LOGGING 2> $ERR_FILE"
 fi
 
+# set the crash counter to zero
+CRASH=0
+
 # run the daemon
-echo "${DTND} -c ${TMPCONF} ${LOGGING} &" | /bin/sh
+setstate state running
+
+while [ "`getstate state`" == "running" ]; do
+	# measure the running time
+	TIMESTART=`/bin/date +%s`
+	
+	# run the daemon
+	echo "${DTND} -c ${TMPCONF} ${LOGGING}" | /bin/sh
+	
+	# measure the stopping time
+	TIMESTOP=`/bin/date +%s`
+	
+	# calc the running time
+	let TIMERUN=$TIMESTOP-$TIMESTART
+	
+	# reset the CRASH counter if there is one hour between the crashes
+	if [ $TIMERUN -ge 3600 ]; then
+		CRASH=0
+	fi
+	
+	# check if the daemon is crashed
+	if [ "`getstate state`" == "running" ]; then
+		# increment the crash counter
+		let CRASH=$CRASH+1
+		
+		# backoff wait timer
+		let WAIT=2**$CRASH
+		
+		# set a upper limit for the wait time
+		if [ $WAIT -ge 1800 ]; then
+			WAIT=1800
+		fi
+
+		# log the crash
+		/usr/bin/logger -t "ibrdtn-safe-wrapper" -p 2 "IBR-DTN daemon crashed $CRASH times! Wait $WAIT seconds."
+		
+		# wait sometime
+		/bin/sleep $WAIT
+	fi
+done
+
