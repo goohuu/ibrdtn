@@ -69,47 +69,47 @@ namespace dtn
 			return value * pi / 180;
 		 }
 
-		dtn::data::CustodySignalBlock* Utils::getCustodySignalBlock(const dtn::data::Bundle &bundle)
-		{
-			const std::list<dtn::data::Block*> blocks = bundle.getBlocks();
-			std::list<dtn::data::Block*>::const_iterator iter = blocks.begin();
-
-			while (iter != blocks.end())
-			{
-				dtn::data::CustodySignalBlock *block = dynamic_cast<dtn::data::CustodySignalBlock*>(*iter);
-				if (block != NULL) return block;
-			}
-
-			return NULL;
-		}
-
-		dtn::data::StatusReportBlock* Utils::getStatusReportBlock(const dtn::data::Bundle &bundle)
-		{
-			const list<dtn::data::Block*> blocks = bundle.getBlocks();
-			list<dtn::data::Block*>::const_iterator iter = blocks.begin();
-
-			while (iter != blocks.end())
-			{
-				dtn::data::StatusReportBlock *block = dynamic_cast<dtn::data::StatusReportBlock*>(*iter);
-				if (block != NULL) return block;
-			}
-
-			return NULL;
-		}
-
-		dtn::data::PayloadBlock* Utils::getPayloadBlock(const dtn::data::Bundle &bundle)
-		{
-			const list<dtn::data::Block*> blocks = bundle.getBlocks();
-			list<dtn::data::Block*>::const_iterator iter = blocks.begin();
-
-			while (iter != blocks.end())
-			{
-				dtn::data::PayloadBlock *payload = dynamic_cast<dtn::data::PayloadBlock*>(*iter);
-				if (payload != NULL) return payload;
-			}
-
-			return NULL;
-		}
+//		dtn::data::CustodySignalBlock* Utils::getCustodySignalBlock(const dtn::data::Bundle &bundle)
+//		{
+//			const std::list<dtn::data::Block*> blocks = bundle.getBlocks();
+//			std::list<dtn::data::Block*>::const_iterator iter = blocks.begin();
+//
+//			while (iter != blocks.end())
+//			{
+//				dtn::data::CustodySignalBlock *block = dynamic_cast<dtn::data::CustodySignalBlock*>(*iter);
+//				if (block != NULL) return block;
+//			}
+//
+//			return NULL;
+//		}
+//
+//		dtn::data::StatusReportBlock* Utils::getStatusReportBlock(const dtn::data::Bundle &bundle)
+//		{
+//			const list<dtn::data::Block*> blocks = bundle.getBlocks();
+//			list<dtn::data::Block*>::const_iterator iter = blocks.begin();
+//
+//			while (iter != blocks.end())
+//			{
+//				dtn::data::StatusReportBlock *block = dynamic_cast<dtn::data::StatusReportBlock*>(*iter);
+//				if (block != NULL) return block;
+//			}
+//
+//			return NULL;
+//		}
+//
+//		dtn::data::PayloadBlock* Utils::getPayloadBlock(const dtn::data::Bundle &bundle)
+//		{
+//			const list<dtn::data::Block*> blocks = bundle.getBlocks();
+//			list<dtn::data::Block*>::const_iterator iter = blocks.begin();
+//
+//			while (iter != blocks.end())
+//			{
+//				dtn::data::PayloadBlock *payload = dynamic_cast<dtn::data::PayloadBlock*>(*iter);
+//				if (payload != NULL) return payload;
+//			}
+//
+//			return NULL;
+//		}
 
 //		pair<dtn::data::PayloadBlock*, dtn::data::PayloadBlock*> Utils::split(dtn::data::PayloadBlock *block, size_t split_position)
 //		{

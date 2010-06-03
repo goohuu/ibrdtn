@@ -12,6 +12,7 @@
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/BundleString.h"
+#include <ibrcommon/data/BLOB.h>
 #include <list>
 
 namespace dtn

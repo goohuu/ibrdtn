@@ -28,6 +28,24 @@
 /* Define to 1 if you have the `memset' function. */
 #undef HAVE_MEMSET
 
+/* "pthread clocking" */
+#undef HAVE_PTHREAD_CONDATTR_SETCLOCK
+
+/* "pthread delay" */
+#undef HAVE_PTHREAD_DELAY
+
+/* "pthread delay np" */
+#undef HAVE_PTHREAD_DELAY_NP
+
+/* "pthread concurrency" */
+#undef HAVE_PTHREAD_SETCONCURRENCY
+
+/* "pthread scheduling" */
+#undef HAVE_PTHREAD_SETSCHEDPRIO
+
+/* "pthread yield" */
+#undef HAVE_PTHREAD_YIELD
+
 /* Define to 1 if stdbool.h conforms to C99. */
 #undef HAVE_STDBOOL_H
 

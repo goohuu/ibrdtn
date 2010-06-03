@@ -16,6 +16,7 @@
 #include "ibrdtn/data/BundleString.h"
 #include "net/DiscoveryServiceProvider.h"
 #include "routing/SummaryVector.h"
+#include "ibrdtn/data/ExtensionBlockFactory.h"
 #include <list>
 
 namespace dtn
@@ -32,32 +33,40 @@ namespace dtn
 
 			void update(std::string &name, std::string &data);
 
-		protected:
-			void run();
-
-		private:
 			class EpidemicExtensionBlock : public dtn::data::Block
 			{
 			public:
+				class Factory : public dtn::data::ExtensionBlockFactory
+				{
+				public:
+					Factory() : dtn::data::ExtensionBlockFactory(EpidemicExtensionBlock::BLOCK_TYPE) {};
+					virtual ~Factory() {};
+					virtual dtn::data::Block* create();
+				};
+
 				static const char BLOCK_TYPE = 201;
 
-				EpidemicExtensionBlock(const SummaryVector &vector);
-				EpidemicExtensionBlock(Block *block);
+				EpidemicExtensionBlock();
 				~EpidemicExtensionBlock();
-
-				void read();
-				void commit();
 
 				void set(dtn::data::SDNV value);
 				dtn::data::SDNV get() const;
 
+				void setSummaryVector(const SummaryVector &vector);
 				const SummaryVector& getSummaryVector() const;
+
+                                virtual const size_t getLength() const;
+				virtual std::ostream &serialize(std::ostream &stream) const;
+				virtual std::istream &deserialize(std::istream &stream);
 
 			private:
 				dtn::data::SDNV _counter;
 				dtn::data::BundleString _data;
 				SummaryVector _vector;
 			};
+
+		protected:
+			void run();
 
 			/**
 			 * Check if one bundle was seen before.
@@ -129,8 +138,12 @@ namespace dtn
 			 * contains references to all stored bundles
 			 */
 			dtn::routing::BundleList _bundles;
-
 		};
+
+		/**
+		 * This creates a static bundle factory
+		 */
+		static EpidemicRoutingExtension::EpidemicExtensionBlock::Factory __EpidemicExtensionFactory__;
 	}
 }
 

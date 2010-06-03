@@ -12,12 +12,9 @@ namespace dtn
 {
 	namespace api
 	{
-		StringBundle::StringBundle(dtn::data::EID destination) : Bundle(destination)
+		StringBundle::StringBundle(dtn::data::EID destination)
+		 : Bundle(destination), _payload(_b.appendBlock<dtn::data::PayloadBlock>())
 		{
-			_payload = new dtn::data::PayloadBlock(ibrcommon::StringBLOB::create());
-
-			// add the payload block to the bundle
-			_b.addBlock(_payload);
 		}
 
 		StringBundle::~StringBundle()
@@ -26,7 +23,7 @@ namespace dtn
 
 		void StringBundle::append(string data)
 		{
-			(*_payload->getBLOB()) << data;
+			(*_payload.getBLOB()) << data;
 		}
 	}
 }

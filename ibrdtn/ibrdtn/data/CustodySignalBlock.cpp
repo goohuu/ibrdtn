@@ -16,20 +16,7 @@ namespace dtn
 	namespace data
 	{
 		CustodySignalBlock::CustodySignalBlock()
-		 : PayloadBlock(ibrcommon::StringBLOB::create()), _admfield(32), _status(0), _fragment_offset(0),
-		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
-		{
-		}
-
-		CustodySignalBlock::CustodySignalBlock(Block *block)
-		 : PayloadBlock(block->getBLOB()), _admfield(32), _status(0), _fragment_offset(0),
-		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
-		{
-			read();
-		}
-
-		CustodySignalBlock::CustodySignalBlock(ibrcommon::BLOB::Reference ref)
-		 : PayloadBlock(ref), _admfield(32), _status(0), _fragment_offset(0),
+		 : Block(dtn::data::PayloadBlock::BLOCK_TYPE), _admfield(32), _status(0), _fragment_offset(0),
 		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 		}
@@ -38,50 +25,72 @@ namespace dtn
 		{
 		}
 
-		void CustodySignalBlock::read()
+		const size_t CustodySignalBlock::getLength() const
 		{
-			// read the attributes out of the BLOB
-			ibrcommon::BLOB::Reference ref = Block::getBLOB();
-			ibrcommon::MutexLock l(ref);
-
-			(*ref) >> _admfield;
-			(*ref) >> _status;
+			// determine the block size
+			size_t len = 0;
+			len += sizeof(_admfield);
+			len += sizeof(_status);
 
 			if ( _admfield & 0x01 )
 			{
-				(*ref) >> _fragment_offset;
-				(*ref) >> _fragment_length;
+				len += _fragment_offset.getLength();
+				len += _fragment_length.getLength();
 			}
 
-			(*ref) >> _timeofsignal;
-			(*ref) >> _bundle_timestamp;
-			(*ref) >> _bundle_sequence;
+			len += _timeofsignal.getLength();
+			len += _bundle_timestamp.getLength();
+			len += _bundle_sequence.getLength();
 
-			BundleString source;
-			(*ref) >> source;
-			_source = EID(source);
+			BundleString sourceid(_source.getString());
+			len += sourceid.getLength();
+
+			return len;
 		}
 
-		void CustodySignalBlock::commit()
+		std::istream& CustodySignalBlock::deserialize(std::istream &stream)
 		{
-			// read the attributes out of the BLOB
-			ibrcommon::BLOB::Reference ref = Block::getBLOB();
-			ibrcommon::MutexLock l(ref);
-			ref.clear();
-
-			(*ref) << _admfield
-				   << _status;
+			stream >> _admfield;
+			stream >> _status;
 
 			if ( _admfield & 0x01 )
 			{
-				(*ref) << _fragment_offset
-				   << _fragment_length;
+				stream >> _fragment_offset;
+				stream >> _fragment_length;
 			}
 
-			(*ref) << _timeofsignal
+			stream >> _timeofsignal;
+			stream >> _bundle_timestamp;
+			stream >> _bundle_sequence;
+
+			BundleString source;
+			stream >> source;
+			_source = EID(source);
+
+			// unset block not processed bit
+			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);
+
+			return stream;
+		}
+
+		std::ostream& CustodySignalBlock::serialize(std::ostream &stream) const
+		{
+			// write the content
+			stream << _admfield;
+			stream << _status;
+
+			if ( _admfield & 0x01 )
+			{
+				stream << _fragment_offset;
+				stream << _fragment_length;
+			}
+
+			BundleString sourceid(_source.getString());
+
+			stream << _timeofsignal
 			   << _bundle_timestamp
 			   << _bundle_sequence
-			   << BundleString(_source.getString());
+			   << sourceid;
 		}
 
 		void CustodySignalBlock::setMatch(const Bundle& other)

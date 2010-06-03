@@ -30,8 +30,7 @@ namespace dtn
 			_bundle._procflags &= ~(dtn::data::Bundle::FRAGMENT);
 
 			// add a new payloadblock
-			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(_blob);
-			_bundle.addBlock(payload);
+			dtn::data::PayloadBlock &payload = _bundle.appendPayloadBlock(_blob);
 		}
 
 		BundleMerger::Container::~Container()
@@ -49,7 +48,7 @@ namespace dtn
 			return _bundle;
 		}
 
-		BundleMerger::Container &operator<<(BundleMerger::Container &c, const dtn::data::Bundle &obj)
+		BundleMerger::Container &operator<<(BundleMerger::Container &c, dtn::data::Bundle &obj)
 		{
 			if (	(c._bundle._timestamp != obj._timestamp) ||
 					(c._bundle._sequencenumber != obj._sequencenumber) ||
@@ -59,24 +58,21 @@ namespace dtn
 			ibrcommon::MutexLock l(c._blob);
 			(*c._blob).seekp(obj._fragmentoffset);
 
-			const list<dtn::data::Block*> blocks = obj.getBlocks(dtn::data::PayloadBlock::BLOCK_TYPE);
+			dtn::data::PayloadBlock &p = obj.getBlock<dtn::data::PayloadBlock>();
 
-			for (list<dtn::data::Block*>::const_iterator iter = blocks.begin(); iter != blocks.end(); iter++)
+			ibrcommon::BLOB::Reference ref = p.getBLOB();
+			ibrcommon::MutexLock reflock(ref);
+
+			size_t ret = 0;
+			istream &s = (*ref);
+			s.seekg(0);
+
+			while (!s.eof())
 			{
-				ibrcommon::BLOB::Reference ref = (*iter)->getBLOB();
-				ibrcommon::MutexLock reflock(ref);
-
-				size_t ret = 0;
-				istream &s = (*ref);
-				s.seekg(0);
-
-				while (!s.eof())
-				{
-					char buf;
-					s.get(buf);
-					(*c._blob).put(buf);
-					ret++;
-				}
+				char buf;
+				s.get(buf);
+				(*c._blob).put(buf);
+				ret++;
 			}
 
 			return c;

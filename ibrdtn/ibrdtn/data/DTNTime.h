@@ -33,6 +33,8 @@ namespace dtn
 
 			void operator+=(const size_t value);
 
+			size_t getLength() const;
+
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::DTNTime &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::DTNTime &obj);

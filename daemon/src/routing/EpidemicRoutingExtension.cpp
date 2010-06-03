@@ -123,32 +123,30 @@ namespace dtn
 				dtn::data::Bundle bundle = getRouter()->getStorage().get(id);
 
 				// get all epidemic extension blocks of this bundle
-				const std::list<EpidemicExtensionBlock> blocks = bundle.getBlocks<EpidemicExtensionBlock>();
+				const EpidemicExtensionBlock &ext = bundle.getBlock<EpidemicExtensionBlock>();
 
-				if (!blocks.empty())
+				const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
+
+				if (_filterlist.find(bundle._source) == _filterlist.end())
 				{
-					const EpidemicExtensionBlock &ext = blocks.front();
-					const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
-
-					if (_filterlist.find(bundle._source) == _filterlist.end())
+					// check for all bundles in the bloomfilter
+					for (std::set<dtn::routing::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 					{
-						// check for all bundles in the bloomfilter
-						for (std::set<dtn::routing::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
-						{
-							std::string bundleid = (*iter).toString();
+						std::string bundleid = (*iter).toString();
 
-							if (!filter.contains(bundleid))
-							{
-								// always transfer the summary vector to new neighbors
-								getRouter()->transferTo( bundle._source, (*iter) );
-							}
+						if (!filter.contains(bundleid))
+						{
+							// always transfer the summary vector to new neighbors
+							getRouter()->transferTo( bundle._source, (*iter) );
 						}
 					}
-
-					// archive the bloom filter for this node!
-					_filterlist[bundle._source] = filter;
 				}
+
+				// archive the bloom filter for this node!
+				_filterlist[bundle._source] = filter;
 			} catch (dtn::exceptions::NoBundleFoundException ex) {
+
+			} catch (dtn::data::Bundle::NoSuchBlockFoundException ex) {
 
 			}
 		}
@@ -321,8 +319,8 @@ namespace dtn
 				{
 					// lock the lists
 					ibrcommon::MutexLock l(_list_mutex);
-					EpidemicExtensionBlock *eblock = new EpidemicExtensionBlock(_bundle_vector);
-					routingbundle.addBlock(eblock);
+					EpidemicExtensionBlock &eblock = routingbundle.appendBlock<EpidemicExtensionBlock>();
+					eblock.setSummaryVector(_bundle_vector);
 				}
 
 				// publish new bundle list to all neighbors
@@ -380,20 +378,23 @@ namespace dtn
 			return ( std::find( _seenlist.begin(), _seenlist.end(), id ) != _seenlist.end());
 		}
 
-		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock(const SummaryVector &vector)
-		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE), _data("forwarded through epidemic routing"), _vector(vector)
+		dtn::data::Block* EpidemicRoutingExtension::EpidemicExtensionBlock::Factory::create()
 		{
-			commit();
+			return new EpidemicRoutingExtension::EpidemicExtensionBlock();
 		}
 
-		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock(dtn::data::Block *block)
-		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE, block->getBLOB())
+		EpidemicRoutingExtension::EpidemicExtensionBlock::EpidemicExtensionBlock()
+		 : dtn::data::Block(EpidemicExtensionBlock::BLOCK_TYPE), _data("forwarded through epidemic routing")
 		{
-			read();
 		}
 
 		EpidemicRoutingExtension::EpidemicExtensionBlock::~EpidemicExtensionBlock()
 		{
+		}
+
+		void EpidemicRoutingExtension::EpidemicExtensionBlock::setSummaryVector(const SummaryVector &vector)
+		{
+			_vector = vector;
 		}
 
 		const SummaryVector& EpidemicRoutingExtension::EpidemicExtensionBlock::getSummaryVector() const
@@ -404,7 +405,6 @@ namespace dtn
 		void EpidemicRoutingExtension::EpidemicExtensionBlock::set(dtn::data::SDNV value)
 		{
 			_counter = value;
-			commit();
 		}
 
 		dtn::data::SDNV EpidemicRoutingExtension::EpidemicExtensionBlock::get() const
@@ -412,27 +412,30 @@ namespace dtn
 			return _counter;
 		}
 
-		void EpidemicRoutingExtension::EpidemicExtensionBlock::read()
+		const size_t EpidemicRoutingExtension::EpidemicExtensionBlock::getLength() const
 		{
-			// read the attributes out of the BLOB
-			ibrcommon::BLOB::Reference ref = dtn::data::Block::getBLOB();
-			ibrcommon::MutexLock l(ref);
-
-			(*ref) >> _counter;
-			(*ref) >> _data;
-			(*ref) >> _vector;
+			return _counter.getLength() + _data.getLength() + _vector.getLength();
 		}
 
-		void EpidemicRoutingExtension::EpidemicExtensionBlock::commit()
+		std::istream& EpidemicRoutingExtension::EpidemicExtensionBlock::deserialize(std::istream &stream)
 		{
-			// read the attributes out of the BLOB
-			ibrcommon::BLOB::Reference ref = dtn::data::Block::getBLOB();
-			ibrcommon::MutexLock l(ref);
-			ref.clear();
+			stream >> _counter;
+			stream >> _data;
+			stream >> _vector;
 
-			(*ref) << _counter;
-			(*ref) << _data;
-			(*ref) << _vector;
+			// unset block not processed bit
+			dtn::data::Block::set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);
+
+			return stream;
+		}
+
+		std::ostream &EpidemicRoutingExtension::EpidemicExtensionBlock::serialize(std::ostream &stream) const
+		{
+			stream << _counter;
+			stream << _data;
+			stream << _vector;
+
+			return stream;
 		}
 	}
 }

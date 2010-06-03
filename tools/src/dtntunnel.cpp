@@ -14,6 +14,7 @@
 
 // Container for bundles.
 #include "ibrdtn/api/Bundle.h"
+#include "ibrdtn/api/BLOBBundle.h"
 
 // Container for bundles carrying strings.
 #include "ibrdtn/api/StringBundle.h"
@@ -227,17 +228,14 @@ int main(int argc, char *argv[])
 
 		cout << "received " << ret << " bytes" << endl;
 
-		dtn::data::Bundle b;
-		b._destination = dtn::data::EID(argv[4]);
-
-		dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::StringBLOB::create());
-
-		// add the payload block to the bundle
-		b.addBlock(payload);
+		// create a blob
+		ibrcommon::BLOB::Reference blob = ibrcommon::StringBLOB::create();
 
 		// add the data
-		ibrcommon::BLOB::Reference ref = payload->getBLOB();
-		(*ref).write(data, ret);
+		(*blob).write(data, ret);
+
+		// create a new bundle
+		dtn::api::BLOBBundle b(dtn::data::EID(argv[4]), blob);
 
 		// transmit the packet
 		gateway << b;

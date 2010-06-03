@@ -96,6 +96,8 @@ namespace dtn
 			 */
 			size_t encode(char *data, const size_t len) const;
 
+			size_t operator=(const size_t &value);
+
 			bool operator==(const SDNV &value) const;
 			bool operator!=(const SDNV &value) const;
 

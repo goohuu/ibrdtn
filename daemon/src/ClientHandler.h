@@ -9,9 +9,6 @@
 #define CLIENTHANDLER_H_
 
 #include "core/AbstractWorker.h"
-#include "ibrdtn/streams/BundleStreamWriter.h"
-#include "ibrdtn/streams/BundleStreamReader.h"
-#include "ibrdtn/streams/BundleFactory.h"
 #include "ibrdtn/streams/StreamConnection.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrcommon/net/tcpstream.h"

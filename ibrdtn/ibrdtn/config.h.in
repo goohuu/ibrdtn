@@ -28,6 +28,24 @@
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
+/* "pthread clocking" */
+#undef HAVE_PTHREAD_CONDATTR_SETCLOCK
+
+/* "pthread delay" */
+#undef HAVE_PTHREAD_DELAY
+
+/* "pthread delay np" */
+#undef HAVE_PTHREAD_DELAY_NP
+
+/* "pthread concurrency" */
+#undef HAVE_PTHREAD_SETCONCURRENCY
+
+/* "pthread scheduling" */
+#undef HAVE_PTHREAD_SETSCHEDPRIO
+
+/* "pthread yield" */
+#undef HAVE_PTHREAD_YIELD
+
 /* Define to 1 if you have the `sqrt' function. */
 #undef HAVE_SQRT
 

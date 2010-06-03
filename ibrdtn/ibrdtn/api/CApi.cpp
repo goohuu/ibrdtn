@@ -49,13 +49,10 @@ class CAPIGateway : public dtn::api::Client
 		void send(char *dst_uri, char *data, uint32_t length) {
 			dtn::data::Bundle b;
 			b._destination = dtn::data::EID(dst_uri);
-			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::StringBLOB::create());
-
-			// add the payload block to the bundle
-			b.addBlock(payload);
+			dtn::data::PayloadBlock &payload = b.appendBlock<dtn::data::PayloadBlock>();
 
 			// add the data
-			(*payload->getBLOB()).write(data, length);
+			(*payload.getBLOB()).write(data, length);
 
 			// transmit the packet
 			(*this) << b;
@@ -99,13 +96,10 @@ class CAPIGateway : public dtn::api::Client
 				return;
 			dtn::data::Bundle b;
 			b._destination = dtn::data::EID(this->dst_eid);
-			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::StringBLOB::create());
-
-			// add the payload block to the bundle
-			b.addBlock(payload);
+			dtn::data::PayloadBlock &payload = b.appendBlock<dtn::data::PayloadBlock>();
 
 			// add the data
-			(*payload->getBLOB()).write(tx_buffer, tx_buffer_position); //+1 is wrong =?!?
+			(*payload.getBLOB()).write(tx_buffer, tx_buffer_position); //+1 is wrong =?!?
 
 			// transmit the packet
 			(*this) << b;

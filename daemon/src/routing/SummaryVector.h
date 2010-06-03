@@ -31,6 +31,8 @@ namespace dtn
 			virtual void clear();
 			virtual void add(const std::set<dtn::routing::MetaBundle> &list);
 
+			const size_t getLength() const;
+
 			const ibrcommon::BloomFilter& getBloomFilter() const;
 
 			const std::list<dtn::data::BundleID> getNotIn(ibrcommon::BloomFilter &filter) const;

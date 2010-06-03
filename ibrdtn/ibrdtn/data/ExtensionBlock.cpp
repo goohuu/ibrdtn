@@ -1,11 +1,11 @@
 /*
- * PayloadBlock.cpp
+ * ExtensionBlock.cpp
  *
- *  Created on: 29.05.2009
+ *  Created on: 26.05.2010
  *      Author: morgenro
  */
 
-#include "ibrdtn/data/PayloadBlock.h"
+#include "ibrdtn/data/ExtensionBlock.h"
 #include "ibrdtn/data/Exceptions.h"
 #include <ibrcommon/thread/MutexLock.h>
 
@@ -13,42 +13,43 @@ namespace dtn
 {
 	namespace data
 	{
-		PayloadBlock::PayloadBlock()
-		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ibrcommon::TmpFileBLOB::create())
+		ExtensionBlock::ExtensionBlock()
+		 : Block(0), _blobref(ibrcommon::TmpFileBLOB::create())
 		{
 		}
 
-		PayloadBlock::PayloadBlock(ibrcommon::BLOB::Reference ref)
-		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ref)
+		ExtensionBlock::ExtensionBlock(ibrcommon::BLOB::Reference ref)
+		 : Block(0), _blobref(ref)
 		{
 		}
 
-		PayloadBlock::~PayloadBlock()
+		ExtensionBlock::~ExtensionBlock()
 		{
 		}
 
-		ibrcommon::BLOB::Reference PayloadBlock::getBLOB() const
+		ibrcommon::BLOB::Reference ExtensionBlock::getBLOB()
 		{
 			return _blobref;
 		}
 
-		const size_t PayloadBlock::getLength() const
+		const size_t ExtensionBlock::getLength() const
 		{
 			return _blobref.getSize();
 		}
 
-		std::ostream& PayloadBlock::serialize(std::ostream &stream) const
+		std::ostream& ExtensionBlock::serialize(std::ostream &stream) const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::MutexLock l(blobref);
 
 			// write payload
+			(*blobref).seekg(0);
 			stream << (*blobref).rdbuf();
 
 			return stream;
 		}
 
-		std::istream& PayloadBlock::deserialize(std::istream &stream)
+		std::istream& ExtensionBlock::deserialize(std::istream &stream)
 		{
 			// clear the blob
 			_blobref.clear();
@@ -79,8 +80,8 @@ namespace dtn
 				if (stream.eof()) throw dtn::exceptions::IOException("block not complete");
 			}
 
-			// unset block not processed bit
-			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);
+			// set block not processed bit
+			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, true);
 
 			return stream;
 		}

@@ -8,239 +8,186 @@
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
-#include "ibrdtn/utils/Utils.h"
-#include "ibrdtn/streams/BundleStreamReader.h"
-#include "ibrdtn/streams/BundleStreamWriter.h"
-#include "ibrdtn/streams/BundleCopier.h"
+#include "ibrdtn/data/ExtensionBlock.h"
+#include "ibrdtn/data/ExtensionBlockFactory.h"
+#include "ibrdtn/data/Serializer.h"
 
 namespace dtn
 {
 	namespace data
 	{
-		size_t Bundle::__sequencenumber = 0;
+		std::map<char, ExtensionBlockFactory*>& Bundle::getExtensionBlockFactories()
+		{
+			static std::map<char, ExtensionBlockFactory*> factories;
+			return factories;
+		}
 
 		Bundle::Bundle()
-		 : _procflags(0), _timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
-			_timestamp = utils::Utils::get_current_dtn_time();
-			_sequencenumber = __sequencenumber;
-			__sequencenumber++;
 		}
 
 		Bundle::~Bundle()
 		{
+			clearBlocks();
 		}
 
-		bool Bundle::operator!=(const Bundle& other) const
+		Bundle::BlockList::BlockList()
 		{
-			return !((*this) == other);
 		}
 
-		bool Bundle::operator==(const Bundle& other) const
+		Bundle::BlockList::~BlockList()
 		{
-			if (other._timestamp != _timestamp) return false;
-			if (other._sequencenumber != _sequencenumber) return false;
-			if (other._source != _source) return false;
-
-			if (other._procflags & Bundle::FRAGMENT)
-			{
-				if (!(_procflags & Bundle::FRAGMENT)) return false;
-
-				if (other._fragmentoffset != _fragmentoffset) return false;
-				if (other._appdatalength != _appdatalength) return false;
-			}
-
-			return true;
 		}
 
-		bool Bundle::operator<(const Bundle& other) const
+		void Bundle::BlockList::append(Block *block)
 		{
-			if (_source < other._source) return true;
-			if (_timestamp < other._timestamp) return true;
-			if (_sequencenumber < other._sequencenumber) return true;
-
-			if (other._procflags & Bundle::FRAGMENT)
-			{
-				if (_fragmentoffset < other._fragmentoffset) return true;
-			}
-
-			return false;
-		}
-
-		bool Bundle::operator>(const Bundle& other) const
-		{
-			if (_source > other._source) return true;
-			if (_timestamp > other._timestamp) return true;
-			if (_sequencenumber > other._sequencenumber) return true;
-
-			if (other._procflags & Bundle::FRAGMENT)
-			{
-				if (_fragmentoffset > other._fragmentoffset) return true;
-			}
-
-			return false;
-		}
-
-		void Bundle::relabel()
-		{
-			_timestamp = utils::Utils::get_current_dtn_time();
-			_sequencenumber = __sequencenumber;
-			__sequencenumber++;
-		}
-
-		void Bundle::addBlock(Block *b)
-		{
-			if ((dynamic_cast<CustodySignalBlock*>(b) != NULL) || (dynamic_cast<StatusReportBlock*>(b) != NULL))
-			{
-				_procflags |= Bundle::APPDATA_IS_ADMRECORD;
-			}
-
 			// set the last block flag
-			b->_procflags |= Block::LAST_BLOCK;
+			block->_procflags |= dtn::data::Block::LAST_BLOCK;
 
 			if (_blocks.size() > 0)
 			{
 				// remove the last block flag of the previous block
-				refcnt_ptr<Block> lastblock = _blocks.back();
-				lastblock->_procflags &= ~(Block::LAST_BLOCK);
+				dtn::data::Block *lastblock = (_blocks.back().getPointer());
+				lastblock->set(dtn::data::Block::LAST_BLOCK, false);
 			}
 
-			refcnt_ptr<Block> ref(b);
-			_blocks.push_back( ref );
+			_blocks.push_back(refcnt_ptr<Block>(block));
 		}
 
-		const list<Block*> Bundle::getBlocks(char type) const
+		void Bundle::BlockList::insert(Block *block, const Block *before)
 		{
-			// create a list of blocks
-			list<Block*> ret;
 
-			// copy all blocks to the list
-			list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
+		}
 
-			while (iter != _blocks.end())
+		void Bundle::BlockList::remove(const Block *block)
+		{
+			// delete all blocks
+			for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 			{
-				refcnt_ptr<Block> blockref = (*iter);
-				if (blockref->_blocktype == type) ret.push_back( blockref.getPointer() );
-				iter++;
+				const dtn::data::Block &lb = (*(*iter));
+				if ( &lb == block )
+				{
+					_blocks.erase(iter++);
+
+					// set the last block bit
+					(*_blocks.back()).set(dtn::data::Block::LAST_BLOCK, true);
+
+					return;
+				}
 			}
-
-			return ret;
 		}
 
-		const list<Block*> Bundle::getBlocks() const
-		{
-			// create a list of blocks
-			list<Block*> ret;
-
-			// copy all blocks to the list
-			list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
-
-			while (iter != _blocks.end())
-			{
-				refcnt_ptr<Block> blockref = (*iter);
-				ret.push_back( blockref.getPointer() );
-				iter++;
-			}
-
-			return ret;
-		}
-
-		void Bundle::removeBlock(Block *b)
-		{
-		}
-
-		void Bundle::clearBlocks()
+		void Bundle::BlockList::clear()
 		{
 			// clear the list of objects
 			_blocks.clear();
 		}
 
-		bool Bundle::isExpired() const
+		const std::list<const Block*> Bundle::BlockList::getList() const
 		{
-			if (utils::Utils::get_current_dtn_time() > (_lifetime + _timestamp)) return true;
-			return false;
+			std::list<const dtn::data::Block*> ret;
+
+			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+			{
+				ret.push_back( (*iter).getPointer() );
+			}
+
+			return ret;
 		}
+
+		const std::set<dtn::data::EID> Bundle::BlockList::getEIDs() const
+		{
+			std::set<dtn::data::EID> ret;
+
+			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+			{
+				std::list<EID> elist = (*iter)->getEIDList();
+
+				for (std::list<dtn::data::EID>::const_iterator iter = elist.begin(); iter != elist.end(); iter++)
+				{
+					ret.insert(*iter);
+				}
+			}
+
+			return ret;
+		}
+
+		bool Bundle::operator!=(const Bundle& other) const
+		{
+			return PrimaryBlock(*this) != other;
+		}
+
+		bool Bundle::operator==(const Bundle& other) const
+		{
+			return PrimaryBlock(*this) == other;
+		}
+
+		bool Bundle::operator<(const Bundle& other) const
+		{
+			return PrimaryBlock(*this) < other;
+		}
+
+		bool Bundle::operator>(const Bundle& other) const
+		{
+			return PrimaryBlock(*this) > other;
+		}
+
+		const std::list<const dtn::data::Block*> Bundle::getBlocks() const
+		{
+			return _blocks.getList();
+		}
+
+		void Bundle::removeBlock(const dtn::data::Block &block)
+		{
+			_blocks.remove(&block);
+		}
+
+		void Bundle::clearBlocks()
+		{
+			_blocks.clear();
+		}
+
+		dtn::data::Block& Bundle::appendBlock(dtn::data::ExtensionBlockFactory &factory)
+		{
+			dtn::data::Block *block = factory.create();
+			assert(block != NULL);
+			_blocks.append(block);
+			return (*block);
+		}
+
+		dtn::data::PayloadBlock& Bundle::appendPayloadBlock(ibrcommon::BLOB::Reference &ref)
+		{
+			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
+			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+			assert(block != NULL);
+			_blocks.append(block);
+			return (*tmpblock);
+		}
+
+//		dtn::data::PayloadBlock& Bundle::insertPayloadBlock(dtn::data::Block &before, ibrcommon::BLOB::Reference &ref)
+//		{
+//			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(*this, ref);
+//			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+//			assert(block != NULL);
+//
+//			_blocks.push_front(block);
+//			return (*tmpblock);
+//		}
 
 		string Bundle::toString() const
 		{
-			stringstream ss;
-			ss << "[" << _timestamp << "." << _sequencenumber << "] " << _source.getString() << " -> " << _destination.getString() << " [size: " << getSize() << "]";
-			return ss.str();
-		}
-
-		size_t Bundle::getSize() const
-		{
-			dtn::streams::BundleStreamWriter writer(std::cout);
-			size_t len = 0;
-
-			len += writer.getSizeOf(BUNDLE_VERSION);		// bundle version
-			len += writer.getSizeOf(_procflags);			// processing flags
-
-			// create a dictionary
-			Dictionary dict;
-
-			// add own eids of the primary block
-			dict.add(_source);
-			dict.add(_destination);
-			dict.add(_reportto);
-			dict.add(_custodian);
-
-			// add eids of attached blocks
-			list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
-
-			while (iter != _blocks.end())
-			{
-				refcnt_ptr<Block> ref = (*iter);
-				list<EID> eids = ref->getEIDList();
-				dict.add( eids );
-				iter++;
-			}
-
-			// predict the block length
-			size_t length =
-				writer.getSizeOf( dict.getRef(_destination) ) +
-				writer.getSizeOf( dict.getRef(_source) ) +
-				writer.getSizeOf( dict.getRef(_reportto) ) +
-				writer.getSizeOf( dict.getRef(_custodian) ) +
-				writer.getSizeOf(_timestamp) +
-				writer.getSizeOf(_sequencenumber) +
-				writer.getSizeOf(_lifetime) +
-				writer.getSizeOf( dict.getSize() ) +
-				dict.getSize();
-
-			if (_procflags & Bundle::FRAGMENT)
-			{
-				length += writer.getSizeOf(_fragmentoffset) + writer.getSizeOf(_appdatalength);
-			}
-
-			/*
-			 * secondary blocks
-			 */
-			iter = _blocks.begin();
-
-			while (iter != _blocks.end())
-			{
-				refcnt_ptr<Block> ref = (*iter);
-				length += ref->getSize();
-				iter++;
-			}
-
-			return length;
+			return PrimaryBlock::toString();
 		}
 
 		std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &b)
 		{
-			dtn::streams::BundleStreamWriter writer(stream);
-			writer.write(b);
+			DefaultSerializer(stream) << b;
 			return stream;
 		}
 
 		std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b)
 		{
-			dtn::streams::BundleCopier copier(b);
-			dtn::streams::BundleStreamReader reader(stream, copier);
-			reader.readBundle();
-
+			DefaultDeserializer(stream) >> b;
 			return stream;
 		}
 	}

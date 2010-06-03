@@ -76,21 +76,17 @@ namespace dtn
 
 			if (bundle._procflags & Bundle::CUSTODY_REQUESTED)
 			{
-				// send a custody signal with accept flag
-				CustodySignalBlock *signal = new CustodySignalBlock();
-
-				// set the bundle to match
-				signal->setMatch(bundle);
-
-				// set accepted
-				if (!(signal->_status & 1)) signal->_status += 1;
-
-				// commit the signal data
-				signal->commit();
-
 				// create a new bundle
 				Bundle b;
-				b.addBlock(signal);
+
+				// send a custody signal with accept flag
+				CustodySignalBlock &signal = b.appendBlock<CustodySignalBlock>();
+
+				// set the bundle to match
+				signal.setMatch(bundle);
+
+				// set accepted
+				signal._status |= 1;
 
 				b._destination = bundle._custodian;
 				b._source = BundleCore::local;
@@ -106,18 +102,14 @@ namespace dtn
 
 			if (bundle._procflags & Bundle::CUSTODY_REQUESTED)
 			{
-				// send a custody signal with accept flag
-				CustodySignalBlock *signal = new CustodySignalBlock();
-
-				// set the bundle to match
-				signal->setMatch(bundle);
-
-				// commit the signal data
-				signal->commit();
-
 				// create a new bundle
 				Bundle b;
-				b.addBlock(signal);
+
+				// send a custody signal with reject flag
+				CustodySignalBlock &signal = b.appendBlock<CustodySignalBlock>();
+
+				// set the bundle to match
+				signal.setMatch(bundle);
 
 				b._destination = bundle._custodian;
 				b._source = BundleCore::local;

@@ -10,7 +10,7 @@
 #ifndef STATUSREPORTBLOCK_H_
 #define STATUSREPORTBLOCK_H_
 
-#include "ibrdtn/data/PayloadBlock.h"
+#include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/DTNTime.h"
@@ -19,7 +19,7 @@ namespace dtn
 {
 	namespace data
 	{
-		class StatusReportBlock : public PayloadBlock
+		class StatusReportBlock : public Block
 		{
 		public:
 			enum TYPE
@@ -45,12 +45,11 @@ namespace dtn
 			};
 
 			StatusReportBlock();
-			StatusReportBlock(Block *block);
-			StatusReportBlock(ibrcommon::BLOB::Reference ref);
 			virtual ~StatusReportBlock();
 
-			void read();
-			void commit();
+                        virtual const size_t getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream) const;
+			virtual std::istream &deserialize(std::istream &stream);
 
 			char _admfield;
 			char _status;

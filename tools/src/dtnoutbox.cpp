@@ -12,7 +12,7 @@
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/api/BLOBBundle.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrcommon/data/File.h"
 #include "ibrcommon/appstreambuf.h"
@@ -169,24 +169,18 @@ int main(int argc, char** argv)
             	appstreambuf app(cmd.str(), appstreambuf::MODE_READ);
             	istream stream(&app);
 
-    			// create a bundle
-    			dtn::data::Bundle b;
-
-            	// create a payloadblock
-    			dtn::data::PayloadBlock *payload = new dtn::data::PayloadBlock(ibrcommon::TmpFileBLOB::create());
+    			// create a blob
+            	ibrcommon::BLOB::Reference blob = ibrcommon::TmpFileBLOB::create();
 
     			// stream the content of "tar" to the payload block
     			{
-    				ibrcommon::BLOB::Reference data = payload->getBLOB();
-    				ibrcommon::MutexLock l(data);
-    				(*data) << stream.rdbuf();
+    				ibrcommon::MutexLock l(blob);
+    				(*blob) << stream.rdbuf();
     			}
 
-    			// add the payload block to the bundle
-    			b.addBlock(payload);
-
-    			// set the destination
-    			b._destination = EID(conf["destination"]);
+            	// create a new bundle
+    			dtn::data::EID destination = EID(conf["destination"]);
+    			dtn::api::BLOBBundle b(destination, blob);
 
                 // send the bundle
     			client << b; client.flush();

@@ -16,19 +16,15 @@ namespace dtn
 
 		void EchoWorker::callbackBundleReceived(const Bundle &b)
 		{
-			PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
+			try {
+				const PayloadBlock &payload = b.getBlock<PayloadBlock>();
 
-			// check if a payload block exists
-			if ( payload != NULL )
-			{
 				// generate a echo
 				Bundle echo;
 
 				// make a copy of the payload block
-				PayloadBlock *payload_copy = new PayloadBlock(payload->getBLOB());
-
-				// append to the bundle
-				echo.addBlock(payload_copy);
+				ibrcommon::BLOB::Reference ref = payload.getBLOB();
+				PayloadBlock &payload_copy = echo.appendPayloadBlock(ref);
 
 				// set destination and source
 				echo._destination = b._source;
@@ -40,6 +36,8 @@ namespace dtn
 
 				// send it
 				transmit( echo );
+			} catch (dtn::data::Bundle::NoSuchBlockFoundException ex) {
+
 			}
 		}
 	}

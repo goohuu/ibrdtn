@@ -9,23 +9,27 @@
 #define TCPCONVERGENCELAYER_H_
 
 #include "Component.h"
-#include "net/GenericServer.h"
-#include "ibrdtn/data/Bundle.h"
-#include "ibrcommon/net/tcpserver.h"
-#include "ibrcommon/net/tcpstream.h"
-#include "ibrdtn/streams/StreamConnection.h"
-#include "ibrdtn/streams/StreamContactHeader.h"
 
 #include "core/EventReceiver.h"
 #include "core/Node.h"
 
+#include "net/GenericServer.h"
 #include "net/ConvergenceLayer.h"
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryServiceProvider.h"
-#include "ibrcommon/net/NetInterface.h"
+
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/streams/StreamConnection.h>
+#include <ibrdtn/streams/StreamContactHeader.h>
+
+#include <ibrcommon/net/tcpserver.h>
+#include <ibrcommon/net/tcpstream.h>
+#include <ibrcommon/net/NetInterface.h>
 
 #include <memory>
 #include <queue>
+
+using namespace dtn::streams;
 
 namespace dtn
 {

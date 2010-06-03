@@ -64,6 +64,12 @@ namespace dtn
 			return encode(_value, (unsigned char*)data, len);
 		}
 
+		size_t SDNV::operator=(const size_t &value)
+		{
+			_value = value;
+			return _value;
+		}
+
 		bool SDNV::operator==(const SDNV &value) const
 		{
 			return (_value == value._value);

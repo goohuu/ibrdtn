@@ -17,6 +17,8 @@
 #include "routing/RequeueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 
+#include <ibrdtn/data/Serializer.h>
+
 #include <iostream>
 #include <iomanip>
 
@@ -154,7 +156,7 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
-			conn._stream >> bundle;
+			dtn::data::DefaultDeserializer(conn._stream) >> bundle;
 			if (!conn._stream.good()) throw dtn::exceptions::IOException("read from stream failed");
 		}
 
@@ -170,14 +172,20 @@ namespace dtn
 				// reset the ACK value
 				conn._stream.reset();
 
+				// create a serializer
+				dtn::data::DefaultSerializer serializer(conn._stream);
+
 				// transmit the bundle
-				conn._stream << bundle << std::flush;
+				serializer << bundle;
+
+				// flush the stream
+				conn._stream << std::flush;
 
 				// stop the time measurement
 				m.stop();
 
 				// get throughput
-				double kbytes_per_second = (bundle.getSize() / m.getSeconds()) / 1024;
+				double kbytes_per_second = (serializer.getLength(bundle) / m.getSeconds()) / 1024;
 
 				// print out throughput
 				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "transfer completed after " << m << " with "
@@ -256,7 +264,8 @@ namespace dtn
 				while (_running)
 				{
 					dtn::data::Bundle bundle;
-					_connection >> bundle;
+
+					dtn::data::DefaultDeserializer((std::istream&)_connection) >> bundle;
 
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(EID(), bundle);

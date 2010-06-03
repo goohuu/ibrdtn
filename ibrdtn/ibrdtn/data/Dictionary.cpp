@@ -26,10 +26,19 @@ namespace data
 		_bytestream.write(data, size);
 	}
 
-	void Dictionary::read(const char *data, size_t size)
+	Dictionary::Dictionary(const Dictionary &d)
 	{
-		_bytestream.str("");
-		_bytestream.write(data, size);
+		_bytestream << d._bytestream.rdbuf();
+	}
+
+	/**
+	 * assign operator
+	 */
+	Dictionary Dictionary::operator=(const Dictionary &d)
+	{
+		_bytestream.clear();
+		_bytestream << d._bytestream.rdbuf();
+		return (*this);
 	}
 
 	Dictionary::~Dictionary()
@@ -102,19 +111,15 @@ namespace data
 		return make_pair(scheme_pos, ssp_pos);
 	}
 
-	size_t Dictionary::writeRef( BundleWriter &writer, const EID &eid ) const
+	std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj)
 	{
-		return writer.write( getRef(eid) );
+		stream << obj._bytestream.rdbuf();
 	}
 
-	size_t Dictionary::writeLength( BundleWriter &writer ) const
+	std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj)
 	{
-		return writer.write( _bytestream.str().length() );
-	}
-
-	size_t Dictionary::writeByteArray( BundleWriter &writer ) const
-	{
-		return writer.write( (istream&)_bytestream );
+		obj._bytestream.clear();
+		stream >> obj._bytestream.rdbuf();
 	}
 }
 }

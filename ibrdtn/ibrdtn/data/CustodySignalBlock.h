@@ -20,19 +20,18 @@ namespace dtn
 {
 	namespace data
 	{
-		class CustodySignalBlock : public PayloadBlock
+		class CustodySignalBlock : public Block
 		{
 		public:
 			CustodySignalBlock();
-			CustodySignalBlock(Block *block);
-			CustodySignalBlock(ibrcommon::BLOB::Reference ref);
 			virtual ~CustodySignalBlock();
-
-			void read();
-			void commit();
 
 			void setMatch(const Bundle& other);
 			bool match(const Bundle& other) const;
+
+                        virtual const size_t getLength() const;
+			virtual std::ostream &serialize(std::ostream &stream) const;
+			virtual std::istream &deserialize(std::istream &stream);
 
 			char _admfield;
 			char _status;

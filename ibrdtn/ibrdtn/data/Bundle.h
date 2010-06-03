@@ -9,49 +9,68 @@
 #define BUNDLE_H_
 
 #include "ibrdtn/default.h"
-#include "ibrdtn/streams/BundleWriter.h"
-#include "ibrdtn/streams/BundleStreamWriter.h"
 #include "ibrdtn/data/Dictionary.h"
+#include "ibrdtn/data/PrimaryBlock.h"
 #include "ibrdtn/data/Block.h"
+#include "ibrdtn/data/PayloadBlock.h"
+#include "ibrdtn/data/EID.h"
 #include "ibrcommon/refcnt_ptr.h"
 #include <ostream>
-
-using namespace dtn::streams;
+#include <cassert>
+#include <set>
+#include <map>
 
 namespace dtn
 {
 	namespace data
 	{
-		static const unsigned char BUNDLE_VERSION = 0x06;
+		class ExtensionBlockFactory;
 
-		class Bundle
+		class Bundle : public PrimaryBlock
 		{
-			friend class BundleStreamWriter;
+                        friend class DefaultSerializer;
+                        friend class DefaultDeserializer;
 
 		public:
-			enum FLAGS
+			static std::map<char, ExtensionBlockFactory*>& getExtensionBlockFactories();
+
+			class NoSuchBlockFoundException : public ibrcommon::Exception
 			{
-				FRAGMENT = 1 << 0x00,
-				APPDATA_IS_ADMRECORD = 1 << 0x01,
-				DONT_FRAGMENT = 1 << 0x02,
-				CUSTODY_REQUESTED = 1 << 0x03,
-				DESTINATION_IS_SINGLETON = 1 << 0x04,
-				ACKOFAPP_REQUESTED = 1 << 0x05,
-				RESERVED_6 = 1 << 0x06,
-				PRIORITY_BIT1 = 1 << 0x07,
-				PRIORITY_BIT2 = 1 << 0x08,
-				CLASSOFSERVICE_9 = 1 << 0x09,
-				CLASSOFSERVICE_10 = 1 << 0x0A,
-				CLASSOFSERVICE_11 = 1 << 0x0B,
-				CLASSOFSERVICE_12 = 1 << 0x0C,
-				CLASSOFSERVICE_13 = 1 << 0x0D,
-				REQUEST_REPORT_OF_BUNDLE_RECEPTION = 1 << 0x0E,
-				REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE = 1 << 0x0F,
-				REQUEST_REPORT_OF_BUNDLE_FORWARDING = 1 << 0x10,
-				REQUEST_REPORT_OF_BUNDLE_DELIVERY = 1 << 0x11,
-				REQUEST_REPORT_OF_BUNDLE_DELETION = 1 << 0x12,
-				STATUS_REPORT_REQUEST_19 = 1 << 0x13,
-				STATUS_REPORT_REQUEST_20 = 1 << 0x14
+				public:
+					NoSuchBlockFoundException() : ibrcommon::Exception("No block found with this Block ID.")
+					{
+					};
+			};
+
+			class BlockList
+			{
+                            friend class DefaultSerializer;
+                            friend class DefaultDeserializer;
+                            
+			public:
+				BlockList();
+				~BlockList();
+
+				void append(Block *block);
+				void insert(Block *block, const Block *before);
+				void remove(const Block *block);
+				void clear();
+
+				const std::set<dtn::data::EID> getEIDs() const;
+
+				template<typename T>
+				T& append();
+
+				template<typename T> T& get();
+				template<typename T> const T& get() const;
+
+				template<typename T>
+				const std::list<const T*> getList() const;
+
+				const std::list<const Block*> getList() const;
+
+			private:
+				std::list<refcnt_ptr<Block> > _blocks;
 			};
 
 			Bundle();
@@ -62,67 +81,141 @@ namespace dtn
 			bool operator<(const Bundle& other) const;
 			bool operator>(const Bundle& other) const;
 
-			void addBlock(Block *b);
-
-			const list<Block*> getBlocks(char type) const;
-			const list<Block*> getBlocks() const;
+			const std::list<const dtn::data::Block*> getBlocks() const;
 
 			template<typename T>
-			const std::list<T> getBlocks() const;
+			T& getBlock();
 
-			void removeBlock(Block *b);
+			template<typename T>
+			const T& getBlock() const;
+
+			template<typename T>
+			const std::list<const T*> getBlocks() const;
+
+			dtn::data::PayloadBlock& appendPayloadBlock(ibrcommon::BLOB::Reference &ref);
+			dtn::data::PayloadBlock& insertPayloadBlock(dtn::data::Block &before, ibrcommon::BLOB::Reference &ref);
+
+			template<typename T>
+			T& appendBlock();
+
+			dtn::data::Block& appendBlock(dtn::data::ExtensionBlockFactory &factory);
+
+//			template<typename T>
+//			T& insertBlock(dtn::data::Block &before);
+
+			void removeBlock(const dtn::data::Block &block);
 			void clearBlocks();
 
-			bool isExpired() const;
 			string toString() const;
 
-			size_t getSize() const;
-
-			/**
-			 * relabel the bundle with a new sequence number and a timestamp
-			 */
-			void relabel();
-
 		private:
-			static size_t __sequencenumber;
-			std::list< refcnt_ptr<Block> > _blocks;
+			BlockList _blocks;
 
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &obj);
 			friend std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b);
-
-		public:
-			size_t _procflags;
-			size_t _timestamp;
-			size_t _sequencenumber;
-			size_t _lifetime;
-			size_t _fragmentoffset;
-			size_t _appdatalength;
-
-			EID _source;
-			EID _destination;
-			EID _reportto;
-			EID _custodian;
 		};
 
 		template<typename T>
-		const std::list<T> Bundle::getBlocks() const
+		const std::list<const T*> Bundle::getBlocks() const
+		{
+			return _blocks.getList<T>();
+		}
+
+		template<typename T>
+		T& Bundle::getBlock()
+		{
+			return _blocks.get<T>();
+		}
+
+		template<typename T>
+		const T& Bundle::getBlock() const
+		{
+			return _blocks.get<T>();
+		}
+
+		template<typename T>
+		const T& Bundle::BlockList::get() const
+		{
+			// copy all blocks to the list
+			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+			{
+				if ((*iter)->_blocktype == T::BLOCK_TYPE)
+				{
+					const Block *b = (*iter).getPointer();
+					return static_cast<const T&>(*b);
+				}
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<typename T>
+		T& Bundle::BlockList::get()
+		{
+			// copy all blocks to the list
+			for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+			{
+				if ((*iter)->_blocktype == T::BLOCK_TYPE)
+				{
+					T *b = dynamic_cast<T*>((*iter).getPointer());
+					if (b != NULL)
+					{
+						return (*b);
+					}
+				}
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<typename T>
+		const std::list<const T*> Bundle::BlockList::getList() const
 		{
 			// create a list of blocks
-			list<T> ret;
+			std::list<const T*> ret;
 
 			// copy all blocks to the list
-			for (list< refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 			{
-				refcnt_ptr<Block> blockref = (*iter);
-
-				if (blockref->_blocktype == T::BLOCK_TYPE)
+				if ((*(*iter))._blocktype == T::BLOCK_TYPE)
 				{
-					ret.push_back( T(blockref.getPointer()) );
+					const T* obj = dynamic_cast<const T*>((*iter).getPointer());
+
+					if (obj != NULL)
+					{
+						ret.push_back( obj );
+					}
 				}
 			}
 
 			return ret;
 		}
+
+		template<typename T>
+		T& Bundle::appendBlock()
+		{
+			return _blocks.append<T>();
+		}
+
+		template<typename T>
+		T& Bundle::BlockList::append()
+		{
+			T *tmpblock = new T();
+			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+			assert(block != NULL);
+			append(block);
+			return (*tmpblock);
+		}
+
+//		template<typename T>
+//		T& Bundle::insertBlock(dtn::data::Block &before)
+//		{
+//			T *tmpblock = new T(*this);
+//			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+//			assert(block != NULL);
+//			_blocks.push_front(block);
+//			return (*block);
+//		}
 	}
 }
 

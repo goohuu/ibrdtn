@@ -10,14 +10,12 @@
 #ifndef DICTIONARY_H_
 #define DICTIONARY_H_
 
-#include "ibrdtn/streams/BundleWriter.h"
 #include "ibrdtn/data/EID.h"
 #include <list>
 #include <sstream>
 #include <list>
 
 using namespace std;
-using namespace dtn::streams;
 
 namespace dtn
 {
@@ -37,14 +35,19 @@ namespace dtn
 			Dictionary(const char *data, size_t size);
 
 			/**
+			 * copy constructor
+			 */
+			Dictionary(const Dictionary &d);
+
+			/**
+			 * assign operator
+			 */
+			Dictionary operator=(const Dictionary &d);
+
+			/**
 			 * destructor
 			 */
 			virtual ~Dictionary();
-
-			/**
-			 * overwrites the dictionary
-			 */
-			void read(const char *data, size_t size);
 
 			/**
 			 * add a eid to the dictionary
@@ -76,32 +79,10 @@ namespace dtn
 			 */
 			pair<size_t, size_t> getRef(const EID &eid) const;
 
-			/**
-			 * write a reference (scheme + ssp)
-			 */
-			size_t writeRef( BundleWriter &writer, const EID &eid ) const;
-
-			/**
-			 * write the length of the bytearray
-			 */
-			size_t writeLength( BundleWriter &writer ) const;
-
-			/**
-			 * write the bytearray
-			 */
-			size_t writeByteArray( BundleWriter &writer ) const;
+			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj);
+			friend std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj);
 
 		private:
-			/**
-			 * copy constructor
-			 */
-			Dictionary(const Dictionary &d) {};
-
-			/**
-			 * assign operator
-			 */
-			Dictionary operator=(const Dictionary &d) { return Dictionary(); };
-
 			stringstream _bytestream;
 		};
 	}

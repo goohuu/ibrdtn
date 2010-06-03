@@ -76,6 +76,11 @@ namespace dtn
 			return ret;
 		}
 
+		const size_t SummaryVector::getLength() const
+		{
+			return dtn::data::SDNV(_bf.size()).getLength() + _bf.size();
+		}
+
 		std::ostream &operator<<(std::ostream &stream, const SummaryVector &obj)
 		{
 			dtn::data::SDNV size(obj._bf.size());

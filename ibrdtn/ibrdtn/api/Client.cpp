@@ -52,6 +52,8 @@ namespace dtn
 				cout << ex.what() << endl;
 #endif
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (dtn::exceptions::InvalidBundleData ex) {
+				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 
 		}

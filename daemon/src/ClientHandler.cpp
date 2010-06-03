@@ -9,6 +9,8 @@
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
 #include "net/BundleReceivedEvent.h"
+#include <ibrdtn/streams/StreamContactHeader.h>
+#include <ibrdtn/data/Serializer.h>
 #include <iostream>
 
 using namespace dtn::data;
@@ -104,7 +106,7 @@ namespace dtn
 				{
 					try {
 						dtn::data::Bundle b = storage.get( getPeer() );
-						(*this) << b;
+						dtn::data::DefaultSerializer( (std::ostream&)(*this) ) << b;
 						storage.remove(b);
 					} catch (dtn::exceptions::NoBundleFoundException ex) {
 						break;
@@ -114,7 +116,7 @@ namespace dtn
 				while (_running)
 				{
 					dtn::data::Bundle bundle;
-					_connection >> bundle;
+					dtn::data::DefaultDeserializer(_connection) >> bundle;
 
 					// create a new sequence number
 					bundle.relabel();
@@ -143,7 +145,7 @@ namespace dtn
 
 		ClientHandler& operator>>(ClientHandler &conn, dtn::data::Bundle &bundle)
 		{
-			conn._connection >> bundle;
+			dtn::data::DefaultDeserializer(conn._connection) >> bundle;
 			if (!conn._connection.good()) throw dtn::exceptions::IOException("read from stream failed");
 		}
 
@@ -153,7 +155,9 @@ namespace dtn
 			conn._connection.reset();
 
 			// transmit the bundle
-			conn._connection << bundle << std::flush;
+			dtn::data::DefaultSerializer(conn._connection) << bundle;
+
+			conn._connection << std::flush;
 
 			// wait until all segments are acknowledged.
 			conn._connection.wait();

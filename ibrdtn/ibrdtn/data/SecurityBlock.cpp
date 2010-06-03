@@ -43,37 +43,37 @@ namespace dtn
 
 		void SecurityBlock::read()
 		{
-			ibrcommon::BLOB::Reference ref = getBLOB();
-			ibrcommon::MutexLock l(ref);
-
-			(*ref) >> _ciphersuite_id;
-			(*ref) >> _ciphersuite_flags;
-
-			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
-				(*ref) >> _correlator;
-
-			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
-				(*ref) >> _ciphersuite_params;
-
-			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
-				(*ref) >> _security_result;
+//			ibrcommon::BLOB::Reference ref = getBLOB();
+//			ibrcommon::MutexLock l(ref);
+//
+//			(*ref) >> _ciphersuite_id;
+//			(*ref) >> _ciphersuite_flags;
+//
+//			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
+//				(*ref) >> _correlator;
+//
+//			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
+//				(*ref) >> _ciphersuite_params;
+//
+//			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
+//				(*ref) >> _security_result;
 		}
 
 		void SecurityBlock::commit()
 		{
-			ibrcommon::BLOB::Reference ref = getBLOB();
-			ibrcommon::MutexLock l(ref);
-
-			(*ref) << _ciphersuite_id << _ciphersuite_flags;
-
-			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
-				(*ref) << _correlator;
-
-			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
-				(*ref) << _ciphersuite_params;
-
-			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
-				(*ref) << _security_result;
+//			ibrcommon::BLOB::Reference ref = getBLOB();
+//			ibrcommon::MutexLock l(ref);
+//
+//			(*ref) << _ciphersuite_id << _ciphersuite_flags;
+//
+//			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
+//				(*ref) << _correlator;
+//
+//			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
+//				(*ref) << _ciphersuite_params;
+//
+//			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
+//				(*ref) << _security_result;
 		}
 	}
 }

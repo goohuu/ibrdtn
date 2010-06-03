@@ -44,8 +44,6 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				core/Node.h \
 				core/SimpleBundleStorage.cpp \
 				core/SimpleBundleStorage.h \
-				core/SQLiteBundleStorage.cpp \
-				core/SQLiteBundleStorage.h \
 				core/StatusReportGenerator.cpp \
 				core/StatusReportGenerator.h \
 				core/TimeEvent.cpp \

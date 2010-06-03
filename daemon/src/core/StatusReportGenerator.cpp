@@ -32,34 +32,34 @@ namespace dtn
 			Bundle bundle;
 
 			// create a new statusreport block
-			StatusReportBlock *report = new StatusReportBlock();
+			StatusReportBlock &report = bundle.appendBlock<StatusReportBlock>();
 
 			// get the flags and set the status flag
-			if (!(report->_status & type)) report->_status += type;
+			report._status |= type;
 
 			// set the reason code
-			if (!(report->_reasoncode & reason)) report->_reasoncode += reason;
+			report._reasoncode |= reason;
 
 			switch (type)
 			{
 				case StatusReportBlock::RECEIPT_OF_BUNDLE:
-					report->_timeof_receipt.set();
+					report._timeof_receipt.set();
 				break;
 
 				case StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE:
-					report->_timeof_custodyaccept.set();
+					report._timeof_custodyaccept.set();
 				break;
 
 				case StatusReportBlock::FORWARDING_OF_BUNDLE:
-					report->_timeof_forwarding.set();
+					report._timeof_forwarding.set();
 				break;
 
 				case StatusReportBlock::DELIVERY_OF_BUNDLE:
-					report->_timeof_delivery.set();
+					report._timeof_delivery.set();
 				break;
 
 				case StatusReportBlock::DELETION_OF_BUNDLE:
-					report->_timeof_deletion.set();
+					report._timeof_deletion.set();
 				break;
 
 				default:
@@ -74,21 +74,15 @@ namespace dtn
 			// set bundle parameter
 			if (b._procflags & Bundle::FRAGMENT)
 			{
-				report->_fragment_offset = b._fragmentoffset;
-				report->_fragment_length = b._appdatalength;
+				report._fragment_offset = b._fragmentoffset;
+				report._fragment_length = b._appdatalength;
 
-				if (!(report->_admfield & 1)) report->_admfield += 1;
+				if (!(report._admfield & 1)) report._admfield += 1;
 			}
 
-			report->_bundle_timestamp = b._timestamp;
-			report->_bundle_sequence = b._sequencenumber;
-			report->_source = b._source;
-
-			// commit the data
-			report->commit();
-
-			// add the report to the bundle
-			bundle.addBlock(report);
+			report._bundle_timestamp = b._timestamp;
+			report._bundle_sequence = b._sequencenumber;
+			report._source = b._source;
 
 			return bundle;
 		}

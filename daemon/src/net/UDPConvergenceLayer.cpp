@@ -1,11 +1,11 @@
 #include "net/UDPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
 
-#include "ibrdtn/streams/BundleFactory.h"
-#include "ibrdtn/streams/BundleStreamReader.h"
-#include "ibrcommon/data/BLOB.h"
+#include <ibrcommon/data/BLOB.h>
 
-#include "ibrdtn/utils/Utils.h"
+#include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/data/Serializer.h>
+
 #include <sys/socket.h>
 #include <poll.h>
 #include <errno.h>
@@ -56,7 +56,10 @@ namespace dtn
 
 		void UDPConvergenceLayer::transmit(const dtn::data::Bundle &b, const dtn::core::Node &node)
 		{
-			unsigned int size = b.getSize();
+			std::stringstream ss;
+			dtn::data::DefaultSerializer serializer(ss);
+
+			unsigned int size = serializer.getLength(b);
 
 			if (size > m_maxmsgsize)
 			{
@@ -100,8 +103,7 @@ namespace dtn
 				throw ConnectionInterruptedException(0);
 			}
 
-			stringstream ss;
-			ss << b;
+			serializer << b;
 			string data = ss.str();
 
 			// get a udp peer
@@ -139,7 +141,7 @@ namespace dtn
 			ss.write(data, len);
 
 			// get the bundle
-			ss >> bundle;
+			dtn::data::DefaultDeserializer(ss) >> bundle;
 		}
 
 		UDPConvergenceLayer::UDPConnection* UDPConvergenceLayer::getConnection(const dtn::core::Node &n)

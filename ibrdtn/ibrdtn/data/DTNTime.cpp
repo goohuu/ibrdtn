@@ -44,6 +44,11 @@ namespace dtn
 			}
 		}
 
+		size_t DTNTime::getLength() const
+		{
+			return _seconds.getLength() + _nanoseconds.getLength();
+		}
+
 		SDNV DTNTime::getTimestamp()
 		{
 			return _seconds;

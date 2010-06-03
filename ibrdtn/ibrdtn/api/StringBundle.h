@@ -40,7 +40,7 @@ namespace dtn
 			void append(string data);
 
 		private:
-			dtn::data::PayloadBlock *_payload;
+			dtn::data::PayloadBlock &_payload;
 		};
 	}
 }

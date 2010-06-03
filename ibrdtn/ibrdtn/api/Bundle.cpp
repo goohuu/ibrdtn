@@ -18,6 +18,7 @@ namespace dtn
 		 : _priority(PRIO_MEDIUM)
 		{
 			_security = SecurityManager::getDefault();
+			setPriority(PRIO_MEDIUM);
 		}
 
 		Bundle::Bundle(dtn::data::Bundle &b)
@@ -40,62 +41,35 @@ namespace dtn
 		{
 			_b._destination = destination;
 			_security = SecurityManager::getDefault();
+			setPriority(PRIO_MEDIUM);
 		}
 
 		Bundle::~Bundle()
 		{
 		}
 
-                void Bundle::setLifetime(unsigned int lifetime)
-                {
-                    _lifetime = lifetime;
-                }
-
-                unsigned int Bundle::getLifetime()
-                {
-                    return _lifetime;
-                }
-
-		dtn::data::EID Bundle::getDestination()
+		void Bundle::setLifetime(unsigned int lifetime)
 		{
-			return _b._destination;
+			_lifetime = lifetime;
+
+			// set the lifetime
+			_b._lifetime = _lifetime;
 		}
 
-		dtn::data::EID Bundle::getSource()
+		unsigned int Bundle::getLifetime()
 		{
-			return _b._source;
+			return _lifetime;
 		}
 
-		ibrcommon::BLOB::Reference Bundle::getData()
+		Bundle::BUNDLE_PRIORITY Bundle::getPriority()
 		{
-			const list<dtn::data::Block* > blocks = _b.getBlocks(dtn::data::PayloadBlock::BLOCK_TYPE);
-			if (blocks.size() < 1) throw dtn::exceptions::MissingObjectException("No payload block exists!");
-
-			dtn::data::Block *block = (*blocks.begin());
-			return block->getBLOB();
+			return _priority;
 		}
 
-		void Bundle::read(std::istream &stream)
+		void Bundle::setPriority(Bundle::BUNDLE_PRIORITY p)
 		{
-			stream >> _b;
+			_priority = p;
 
-			// read priority
-			if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT1)
-			{
-				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2) _priority = PRIO_HIGH;
-				else _priority = PRIO_MEDIUM;
-			}
-			else
-			{
-				_priority = PRIO_LOW;
-			}
-
-                        // read the lifetime
-                        _lifetime = _b._lifetime;
-		}
-
-		void Bundle::write(std::ostream &stream)
-		{
 			// set the priority to the real bundle
 			switch (_priority)
 			{
@@ -114,12 +88,27 @@ namespace dtn
 				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2) _b._procflags -= dtn::data::Bundle::PRIORITY_BIT2;
 				break;
 			}
+		}
 
-                        // set the lifetime
-                        _b._lifetime = _lifetime;
 
-			// send the bundle
-			stream << _b;
+		dtn::data::EID Bundle::getDestination()
+		{
+			return _b._destination;
+		}
+
+		dtn::data::EID Bundle::getSource()
+		{
+			return _b._source;
+		}
+
+		ibrcommon::BLOB::Reference Bundle::getData()
+		{
+			try {
+				dtn::data::PayloadBlock &p = _b.getBlock<dtn::data::PayloadBlock>();
+				return p.getBLOB();
+			} catch(dtn::data::Bundle::NoSuchBlockFoundException ex) {
+				throw dtn::exceptions::MissingObjectException("No payload block exists!");
+			}
 		}
 	}
 }

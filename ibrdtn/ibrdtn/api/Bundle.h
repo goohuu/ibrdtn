@@ -87,15 +87,15 @@ namespace dtn
 			 */
 			BUNDLE_SECURITY getSecurity();
 
-                        /**
-                         * Set the lifetime of a bundle
-                         */
-                        void setLifetime(unsigned int lifetime);
+			/**
+			 * Set the lifetime of a bundle
+			 */
+			void setLifetime(unsigned int lifetime);
 
-                        /**
-                         * Returns the lifetime of a bundle
-                         */
-                        unsigned int getLifetime();
+			/**
+			 * Returns the lifetime of a bundle
+			 */
+			unsigned int getLifetime();
 
 			/**
 			 * Set the priority for this bundle.
@@ -108,24 +108,37 @@ namespace dtn
 			BUNDLE_PRIORITY getPriority();
 
 			/**
-			 * Serialize this object into a stream.
-			 */
-			virtual void write(std::ostream &stream);
-			virtual void read(std::istream &stream);
-
-			/**
 			 * Serialize a Bundle into a stream.
 			 */
-			friend std::ostream &operator<<(std::ostream &stream, dtn::api::Bundle &b)
+			friend std::ostream &operator<<(std::ostream &stream, const dtn::api::Bundle &b)
 			{
-				b.write(stream);
-				return stream;
+                            const dtn::data::Bundle &_b = b._b;
+
+                            // send the bundle
+                            stream << _b;
+
+                            return stream;
 			}
 
 			friend std::istream &operator>>(std::istream &stream, dtn::api::Bundle &b)
 			{
-				b.read(stream);
-				return stream;
+                            stream >> b._b;
+
+                            // read priority
+                            if (b._b._procflags & dtn::data::Bundle::PRIORITY_BIT1)
+                            {
+                                    if (b._b._procflags & dtn::data::Bundle::PRIORITY_BIT2) b._priority = PRIO_HIGH;
+                                    else b._priority = PRIO_MEDIUM;
+                            }
+                            else
+                            {
+                                    b._priority = PRIO_LOW;
+                            }
+
+                            // read the lifetime
+                            b._lifetime = b._b._lifetime;
+
+                            return stream;
 			}
 
 			/**
@@ -146,7 +159,7 @@ namespace dtn
 			dtn::data::Bundle _b;
 			BUNDLE_SECURITY _security;
 			BUNDLE_PRIORITY _priority;
-                        unsigned int _lifetime;
+			unsigned int _lifetime;
 		};
 	}
 }

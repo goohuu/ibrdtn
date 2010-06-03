@@ -28,7 +28,7 @@ namespace dtn
 
 				Bundle getBundle();
 
-				friend Container &operator<<(Container &c, const dtn::data::Bundle &obj);
+				friend Container &operator<<(Container &c, dtn::data::Bundle &obj);
 
 			private:
 				dtn::data::Bundle _bundle;

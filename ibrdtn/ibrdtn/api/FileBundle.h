@@ -35,12 +35,6 @@ namespace dtn
 			 */
 			virtual ~FileBundle();
 
-			/**
-			 * Overload the Bundle::write method and writes this Bundle to the
-			 * given stream.
-			 */
-			void write(std::ostream &stream);
-
 		private:
 			//std::fstream &_file;
 			std::string _filename;
