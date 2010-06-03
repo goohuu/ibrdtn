@@ -29,6 +29,9 @@ getconfig() {
 	return $?
 }
 
+# remove the old state file
+/bin/rm /var/state/ibrdtn
+
 . /usr/sbin/dtnd-build-config.sh $TMPCONF
 
 # read uci configuration
