@@ -109,12 +109,11 @@ namespace dtn
 			unsigned char version;
 
 			stream >> version;
-			if (stream.fail()) throw dtn::exceptions::IOException("read from stream failed.");
 
 			if (version != DiscoveryAnnouncement::VERSION)
 			{
 				// Error, throw Exception!
-				throw exceptions::InvalidDataException();
+				throw InvalidProtocolException("The received data does not match the discovery protocol.");
 			}
 
 			stream >> announcement._flags;

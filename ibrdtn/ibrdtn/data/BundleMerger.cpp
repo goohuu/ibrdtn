@@ -20,7 +20,7 @@ namespace dtn
 			// check if the given bundle is a fragment
 			if (!(_bundle._procflags & dtn::data::Bundle::FRAGMENT))
 			{
-				throw dtn::exceptions::FragmentationException("This bundle is not a fragment!");
+				throw ibrcommon::Exception("This bundle is not a fragment!");
 			}
 
 			// remove all block of the copy
@@ -53,7 +53,7 @@ namespace dtn
 			if (	(c._bundle._timestamp != obj._timestamp) ||
 					(c._bundle._sequencenumber != obj._sequencenumber) ||
 					(c._bundle._source != obj._source) )
-				throw dtn::exceptions::FragmentationException("This fragment does not belongs to the others.");
+				throw ibrcommon::Exception("This fragment does not belongs to the others.");
 
 			ibrcommon::MutexLock l(c._blob);
 			(*c._blob).seekp(obj._fragmentoffset);

@@ -11,19 +11,17 @@
 
 namespace dtn
 {
-    namespace data
-    {
-        DefaultSerializer::DefaultSerializer(std::ostream& stream)
-         : _stream(stream)
-        {
+	namespace data
+	{
+		DefaultSerializer::DefaultSerializer(std::ostream& stream)
+		 : _stream(stream)
+		{
+		}
 
-        }
-
-        DefaultSerializer::DefaultSerializer(std::ostream& stream, const Dictionary &d)
-         : _stream(stream), _dictionary(d)
-        {
-
-        }
+		DefaultSerializer::DefaultSerializer(std::ostream& stream, const Dictionary &d)
+		 : _stream(stream), _dictionary(d)
+		{
+		}
 
 		void DefaultSerializer::rebuildDictionary(const dtn::data::Bundle &obj)
 		{
@@ -36,7 +34,7 @@ namespace dtn
 			_dictionary.add(obj._reportto);
 			_dictionary.add(obj._custodian);
 
-            // add EID of all secondary blocks
+			// add EID of all secondary blocks
 			std::list<refcnt_ptr<Block> > list = obj._blocks._blocks;
 
 			for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
@@ -46,15 +44,15 @@ namespace dtn
 			}
 		}
 
-        Serializer& DefaultSerializer::operator <<(const dtn::data::Bundle& obj)
-        {
+		Serializer& DefaultSerializer::operator <<(const dtn::data::Bundle& obj)
+		{
 			// rebuild the dictionary
 			rebuildDictionary(obj);
 
-            // serialize the primary block
-            (*this) << (PrimaryBlock&)obj;
+			// serialize the primary block
+			(*this) << (PrimaryBlock&)obj;
 
-            // serialize all secondary blocks
+			// serialize all secondary blocks
 			std::list<refcnt_ptr<Block> > list = obj._blocks._blocks;
 			
 			for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
@@ -63,8 +61,8 @@ namespace dtn
 				(*this) << b;
 			}
 
-            return (*this);
-        }
+			return (*this);
+		}
 
 		Serializer& DefaultSerializer::operator <<(const dtn::data::PrimaryBlock& obj)
 		{
@@ -147,8 +145,8 @@ namespace dtn
 			return (*this);
 		}
 
-        Serializer& DefaultSerializer::operator <<(const dtn::data::Block& obj)
-        {
+		Serializer& DefaultSerializer::operator <<(const dtn::data::Block& obj)
+		{
 			_stream << obj._blocktype;
 			_stream << dtn::data::SDNV(obj._procflags);
 
@@ -172,11 +170,11 @@ namespace dtn
 			// write the payload of the block
 			obj.serialize(_stream);
 
-            return (*this);
-        }
+			return (*this);
+		}
 
-        const size_t DefaultSerializer::getLength(const dtn::data::Bundle &obj) const
-        {
+		const size_t DefaultSerializer::getLength(const dtn::data::Bundle &obj) const
+		{
 			// check if the dictionary is empty
 			assert(_dictionary.getSize() > 0);
 
@@ -193,7 +191,7 @@ namespace dtn
 			}
 
 			return len;
-        }
+		}
 
 		const size_t DefaultSerializer::getLength(const dtn::data::PrimaryBlock& obj) const
 		{
@@ -257,8 +255,8 @@ namespace dtn
 			return len;
 		}
 
-        const size_t DefaultSerializer::getLength(const dtn::data::Block &obj) const
-        {
+		const size_t DefaultSerializer::getLength(const dtn::data::Block &obj) const
+		{
 			size_t len = 0;
 
 			len += sizeof(obj._blocktype);
@@ -282,136 +280,129 @@ namespace dtn
 			len += obj.getLength();
 
 			return len;
-        }
+		}
 
-        DefaultDeserializer::DefaultDeserializer(std::istream& stream)
-         : _stream(stream)
-        {
-        }
+		DefaultDeserializer::DefaultDeserializer(std::istream& stream)
+		 : _stream(stream)
+		{
+		}
 
 		DefaultDeserializer::DefaultDeserializer(std::istream &stream, const Dictionary &d)
 		 : _stream(stream), _dictionary(d)
 		{
 		}
 
-        Deserializer& DefaultDeserializer::operator >>(dtn::data::Bundle& obj)
-        {
-            (*this) >> (PrimaryBlock&)obj;
+		Deserializer& DefaultDeserializer::operator >>(dtn::data::Bundle& obj)
+		{
+			(*this) >> (PrimaryBlock&)obj;
 
-            // read until the last block
-            bool lastblock = false;
+			// read until the last block
+			bool lastblock = false;
 
-            try {
-				// read all BLOCKs
-				while (!_stream.eof() && !lastblock)
+			// read all BLOCKs
+			while (!_stream.eof() && !lastblock)
+			{
+				char block_type;
+				size_t block_flags = 0;
+				size_t block_length = 0;
+
+				// BLOCK_TYPE
+				block_type = _stream.peek();
+
+				switch (block_type)
 				{
-					char block_type;
-					size_t block_flags = 0;
-					size_t block_length = 0;
-
-					// BLOCK_TYPE
-					block_type = _stream.peek();
-
-					switch (block_type)
+					case 0:
 					{
-						case 0:
-						{
-							throw dtn::exceptions::InvalidDataException("block type is zero");
-							break;
-						}
+						throw dtn::InvalidDataException("block type is zero");
+						break;
+					}
 
-						case dtn::data::PayloadBlock::BLOCK_TYPE:
+					case dtn::data::PayloadBlock::BLOCK_TYPE:
+					{
+						if (obj._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
 						{
-							if (obj._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
+							// create a temporary block
+							dtn::data::ExtensionBlock &block = obj.appendBlock<dtn::data::ExtensionBlock>();
+
+							// read the block data
+							(*this) >> block;
+
+							// access the payload to get the first byte
+							ibrcommon::BLOB::Reference ref = block.getBLOB();
+							char admfield; (*ref) >> admfield;
+
+							// write the block into a temporary stream
+							stringstream ss;
+							DefaultSerializer serializer(ss, _dictionary);
+							DefaultDeserializer deserializer(ss, _dictionary);
+
+							serializer << block;
+
+							// remove the temporary block
+							obj.removeBlock(block);
+
+							switch (admfield >> 4)
 							{
-								// create a temporary block
-								dtn::data::ExtensionBlock &block = obj.appendBlock<dtn::data::ExtensionBlock>();
-
-								// read the block data
-								(*this) >> block;
-
-								// access the payload to get the first byte
-								ibrcommon::BLOB::Reference ref = block.getBLOB();
-								char admfield; (*ref) >> admfield;
-
-								// write the block into a temporary stream
-								stringstream ss;
-								DefaultSerializer serializer(ss, _dictionary);
-								DefaultDeserializer deserializer(ss, _dictionary);
-
-								serializer << block;
-
-								// remove the temporary block
-								obj.removeBlock(block);
-
-								switch (admfield >> 4)
+								case 1:
 								{
-									case 1:
-									{
-										dtn::data::StatusReportBlock &block = obj.appendBlock<dtn::data::StatusReportBlock>();
-										deserializer >> block;
-										lastblock = block.get(Block::LAST_BLOCK);
-										break;
-									}
-
-									case 2:
-									{
-										dtn::data::CustodySignalBlock &block = obj.appendBlock<dtn::data::CustodySignalBlock>();
-										deserializer >> block;
-										lastblock = block.get(Block::LAST_BLOCK);
-										break;
-									}
-
-									default:
-									{
-										// drop unknown administrative block
-										break;
-									}
+									dtn::data::StatusReportBlock &block = obj.appendBlock<dtn::data::StatusReportBlock>();
+									deserializer >> block;
+									lastblock = block.get(Block::LAST_BLOCK);
+									break;
 								}
 
-							}
-							else
-							{
-								dtn::data::PayloadBlock &block = obj.appendBlock<dtn::data::PayloadBlock>();
-								(*this) >> block;
+								case 2:
+								{
+									dtn::data::CustodySignalBlock &block = obj.appendBlock<dtn::data::CustodySignalBlock>();
+									deserializer >> block;
+									lastblock = block.get(Block::LAST_BLOCK);
+									break;
+								}
 
-								lastblock = block.get(Block::LAST_BLOCK);
+								default:
+								{
+									// drop unknown administrative block
+									break;
+								}
 							}
-							break;
+
 						}
-
-						default:
+						else
 						{
-							// get a extension block factory
-							std::map<char, ExtensionBlockFactory*> &factories = dtn::data::Bundle::getExtensionBlockFactories();
-							std::map<char, ExtensionBlockFactory*>::iterator iter = factories.find(block_type);
+							dtn::data::PayloadBlock &block = obj.appendBlock<dtn::data::PayloadBlock>();
+							(*this) >> block;
 
-							if (iter != factories.end())
-							{
-								ExtensionBlockFactory &f = (*iter->second);
-								dtn::data::Block &block = obj.appendBlock(f);
-								(*this) >> block;
-								lastblock = block.get(Block::LAST_BLOCK);
-							}
-							else
-							{
-								dtn::data::ExtensionBlock &block = obj.appendBlock<dtn::data::ExtensionBlock>();
-								(*this) >> block;
-								lastblock = block.get(Block::LAST_BLOCK);
-							}
-							break;
+							lastblock = block.get(Block::LAST_BLOCK);
 						}
+						break;
+					}
+
+					default:
+					{
+						// get a extension block factory
+						std::map<char, ExtensionBlockFactory*> &factories = dtn::data::Bundle::getExtensionBlockFactories();
+						std::map<char, ExtensionBlockFactory*>::iterator iter = factories.find(block_type);
+
+						if (iter != factories.end())
+						{
+							ExtensionBlockFactory &f = (*iter->second);
+							dtn::data::Block &block = obj.appendBlock(f);
+							(*this) >> block;
+							lastblock = block.get(Block::LAST_BLOCK);
+						}
+						else
+						{
+							dtn::data::ExtensionBlock &block = obj.appendBlock<dtn::data::ExtensionBlock>();
+							(*this) >> block;
+							lastblock = block.get(Block::LAST_BLOCK);
+						}
+						break;
 					}
 				}
-			} catch (dtn::exceptions::InvalidDataException ex) {
-				// end of bundle
-			} catch (dtn::exceptions::IOException ex) {
-				// read aborted. let the endBundle-Method check if there is enough
-				// data for a fragment.
 			}
-            
-            return (*this);
-        }
+
+			return (*this);
+		}
 
 		Deserializer& DefaultDeserializer::operator >>(dtn::data::PrimaryBlock& obj)
 		{
@@ -421,7 +412,7 @@ namespace dtn
 
 			// check for the right version
 			_stream >> version;
-			if (version != dtn::data::BUNDLE_VERSION) throw exceptions::InvalidBundleData("Bundle version differ from ours.");
+			if (version != dtn::data::BUNDLE_VERSION) throw dtn::InvalidProtocolException("Bundle version differ from ours.");
 
 			// PROCFLAGS
 			_stream >> tmpsdnv;	// processing flags
@@ -477,8 +468,8 @@ namespace dtn
 			return (*this);
 		}
 
-        Deserializer&  DefaultDeserializer::operator >>(dtn::data::Block& obj)
-        {
+		Deserializer&  DefaultDeserializer::operator >>(dtn::data::Block& obj)
+		{
 			dtn::data::SDNV procflags_sdnv;
 			_stream >> obj._blocktype;
 			_stream >> procflags_sdnv;
@@ -494,7 +485,7 @@ namespace dtn
 			// read the payload of the block
 			obj.deserialize(_stream);
 			
-            return (*this);
-        }
-    }
+			return (*this);
+		}
+	}
 }

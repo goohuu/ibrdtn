@@ -22,7 +22,7 @@ namespace dtn
 	namespace daemon
 	{
 		ClientHandler::ClientHandler(ibrcommon::tcpstream *stream)
-		 : _free(false), _running(true), _stream(stream), _connection(*this, *_stream)
+		 : ibrcommon::JoinableThread(), _free(false), _running(true), _stream(stream), _connection(*this, *_stream)
 		{
 		}
 
@@ -108,7 +108,7 @@ namespace dtn
 						dtn::data::Bundle b = storage.get( getPeer() );
 						dtn::data::DefaultSerializer( (std::ostream&)(*this) ) << b;
 						storage.remove(b);
-					} catch (dtn::exceptions::NoBundleFoundException ex) {
+					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 						break;
 					}
 				}
@@ -131,13 +131,10 @@ namespace dtn
 				}
 
 				_connection.shutdown();
-			} catch (dtn::exceptions::IOException ex) {
+			} catch (ibrcommon::IOException ex) {
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				_running = false;
-			} catch (dtn::exceptions::InvalidDataException ex) {
-				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-				_running = false;
-			} catch (dtn::exceptions::InvalidBundleData ex) {
+			} catch (dtn::InvalidDataException ex) {
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				_running = false;
 			}
@@ -146,7 +143,6 @@ namespace dtn
 		ClientHandler& operator>>(ClientHandler &conn, dtn::data::Bundle &bundle)
 		{
 			dtn::data::DefaultDeserializer(conn._connection) >> bundle;
-			if (!conn._connection.good()) throw dtn::exceptions::IOException("read from stream failed");
 		}
 
 		ClientHandler& operator<<(ClientHandler &conn, const dtn::data::Bundle &bundle)

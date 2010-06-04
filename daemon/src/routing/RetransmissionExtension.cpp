@@ -44,7 +44,7 @@ namespace dtn
 						try {
 							// retransmit the bundle
 							getRouter()->transferTo(data.destination, data);
-						} catch (dtn::exceptions::NoBundleFoundException ex) {
+						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 							// bundle is not available, stop retransmission.
 							dtn::net::TransferAbortedEvent::raise(data.destination, data);
 						}

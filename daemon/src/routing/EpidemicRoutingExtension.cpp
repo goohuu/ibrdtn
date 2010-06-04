@@ -63,7 +63,7 @@ namespace dtn
 
 						// push the bundle into the queue
 						_bundle_queue.push( meta );
-					} catch (dtn::exceptions::NoBundleFoundException) {
+					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 						// error, bundle not found!
 					}
 				}
@@ -104,7 +104,7 @@ namespace dtn
 					{
 						getRouter()->transferTo(dst, id);
 					}
-				} catch (dtn::exceptions::NoBundleFoundException ex) {
+				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 
 				}
 			}
@@ -144,7 +144,7 @@ namespace dtn
 
 				// archive the bloom filter for this node!
 				_filterlist[bundle._source] = filter;
-			} catch (dtn::exceptions::NoBundleFoundException ex) {
+			} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 
 			} catch (dtn::data::Bundle::NoSuchBlockFoundException ex) {
 
@@ -360,7 +360,7 @@ namespace dtn
 					// delete it
 					try {
 						getRouter()->getStorage().remove(bundle);
-					} catch (dtn::exceptions::NoBundleFoundException ex) {
+					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 
 					}
 

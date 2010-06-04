@@ -216,7 +216,7 @@ int main(int argc, char** argv)
 					backoff = backoff * 2;
 				}
         	}
-        } catch (dtn::exceptions::IOException ex) {
+        } catch (ibrcommon::IOException ex) {
         	// set the global connection to NULL
         	_conn = NULL;
 

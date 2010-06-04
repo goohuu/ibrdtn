@@ -25,11 +25,15 @@ namespace dtn
 
 		void BundleReceivedEvent::raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle)
 		{
-			// store the bundle into a storage module
-			dtn::core::BundleCore::getInstance().getStorage().store(bundle);
+			try {
+				// store the bundle into a storage module
+				dtn::core::BundleCore::getInstance().getStorage().store(bundle);
 
-			// raise the new event
-			dtn::core::Event::raiseEvent( new BundleReceivedEvent(peer, bundle) );
+				// raise the new event
+				dtn::core::Event::raiseEvent( new BundleReceivedEvent(peer, bundle) );
+			} catch (ibrcommon::IOException ex) {
+				ibrcommon::slog << ibrcommon::SYSLOG_ERR << "Unable to store bundle " << bundle.toString() << std::endl;
+			}
 		}
 
 		const string BundleReceivedEvent::getName() const

@@ -185,9 +185,9 @@ namespace dtn
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(sender, bundle);
 
-				} catch (dtn::exceptions::InvalidBundleData ex) {
+				} catch (dtn::InvalidDataException ex) {
 					cerr << "Received a invalid bundle: " << ex.what() << endl;
-				} catch (dtn::exceptions::IOException ex) {
+				} catch (ibrcommon::IOException ex) {
 
 				}
 				yield();

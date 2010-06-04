@@ -181,7 +181,7 @@ namespace dtn
 				iter++;
 			}
 
-			throw dtn::exceptions::NoTimerFoundException();
+			throw CustodyManager::NoTimerFoundException();
 		}
 
 		void CustodyManager::checkCustodyTimer()

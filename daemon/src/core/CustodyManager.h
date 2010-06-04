@@ -16,6 +16,14 @@ namespace dtn
 		class CustodyManager : public ibrcommon::JoinableThread, public EventReceiver
 		{
 			public:
+				class NoTimerFoundException : public dtn::MissingObjectException
+				{
+				public:
+					NoTimerFoundException(string what = "No matching timer was found.") throw() : MissingObjectException(what)
+					{
+					};
+				};
+
 				CustodyManager();
 
 				virtual ~CustodyManager();

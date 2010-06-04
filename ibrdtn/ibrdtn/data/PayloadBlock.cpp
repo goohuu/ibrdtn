@@ -16,11 +16,13 @@ namespace dtn
 		PayloadBlock::PayloadBlock()
 		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ibrcommon::TmpFileBLOB::create())
 		{
+			(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 		}
 
 		PayloadBlock::PayloadBlock(ibrcommon::BLOB::Reference ref)
 		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ref)
 		{
+			(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 		}
 
 		PayloadBlock::~PayloadBlock()
@@ -55,29 +57,45 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_blobref);
 
-			// read payload
-			const int buffer_size = 0x1000;
-			char buffer[buffer_size];
-			size_t ret = 1;
-			ssize_t remain = _blocksize;
+			// remember the old exceptions state
+			std::ios::iostate oldstate = (*_blobref).exceptions();
 
-			while (remain > 0)
-			{
-				if (remain > buffer_size)
+			// activate exceptions for this method
+			(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+
+			try {
+				// read payload
+				const int buffer_size = 0x1000;
+				char buffer[buffer_size];
+				size_t ret = 1;
+				ssize_t remain = _blocksize;
+
+				while (remain > 0 && stream.good())
 				{
-					stream.read(buffer, buffer_size);
+					if (remain > buffer_size)
+					{
+						stream.read(buffer, buffer_size);
+					}
+					else
+					{
+						stream.read(buffer, remain);
+					}
+
+					(*_blobref).write(buffer, stream.gcount());
+
+					remain -= stream.gcount();
 				}
-				else
-				{
-					stream.read(buffer, remain);
-				}
+			} catch (std::ios_base::failure ex) {
+				throw dtn::SerializationFailedException();
+			} catch (...) {
+				// restore the old state
+				(*_blobref).exceptions(oldstate);
 
-				(*_blobref).write(buffer, stream.gcount());
-
-				remain -= stream.gcount();
-
-				if (stream.eof()) throw dtn::exceptions::IOException("block not complete");
+				throw;
 			}
+
+			// restore the old state
+			(*_blobref).exceptions(oldstate);
 
 			// unset block not processed bit
 			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);

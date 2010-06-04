@@ -131,10 +131,16 @@ namespace dtn
 					try {
 						// load a bundle into the storage
 						load(file);
-					} catch (dtn::exceptions::IOException ex) {
+					} catch (ibrcommon::IOException ex) {
+						// report this error to the console
+						std::cerr << "Error: Unable to restore bundle in file " << file.getPath() << std::endl;
+
 						// error while reading file
 						file.remove();
-					} catch (std::out_of_range ex) {
+					} catch (dtn::InvalidDataException ex) {
+						// report this error to the console
+						std::cerr << "Error: Unable to restore bundle in file " << file.getPath() << std::endl;
+
 						// error while reading file
 						file.remove();
 					}
@@ -161,7 +167,7 @@ namespace dtn
 				}
 			}
 
-			throw dtn::exceptions::NoBundleFoundException();
+			throw BundleStorage::NoBundleFoundException();
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::BundleStore::get(const dtn::data::BundleID &id)
@@ -177,7 +183,7 @@ namespace dtn
 				}
 			}
 
-			throw dtn::exceptions::NoBundleFoundException();
+			throw dtn::core::BundleStorage::NoBundleFoundException();
 		}
 
 		void SimpleBundleStorage::BundleStore::expire(const size_t timestamp)
@@ -208,8 +214,7 @@ namespace dtn
 				try {
 					ret = bundles.insert( BundleContainer(bundle, _workdir) );
 				} catch (ibrcommon::IOException ex) {
-					ibrcommon::slog << ibrcommon::SYSLOG_ERR << "Storage: unable to store bundle " << bundle.toString() << std::endl;
-					return;
+					throw ex;
 				}
 			}
 			else
@@ -253,7 +258,7 @@ namespace dtn
 				}
 			}
 
-			throw dtn::exceptions::NoBundleFoundException();
+			throw BundleStorage::NoBundleFoundException();
 		}
 
 		void SimpleBundleStorage::BundleStore::clear()
@@ -391,7 +396,14 @@ namespace dtn
 		 : _bundle(), _container(file), _mode(MODE_PERSISTENT), _count(1), deletion(false)
 		{
 			std::fstream fs(file.getPath().c_str(), ios::in|ios::binary);
-			fs >> _bundle;
+
+			try {
+				fs.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+				dtn::data::DefaultDeserializer(fs) >> _bundle;
+			} catch (ios_base::failure ex) {
+				throw dtn::SerializationFailedException("can not load bundle data" + std::string(ex.what()));
+			}
+
 			fs.close();
 		}
 
@@ -408,9 +420,14 @@ namespace dtn
 
 			_container = ibrcommon::File(name);
 
-			std::fstream out(_container.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
-			out << b << std::flush;
-			out.close();
+			try {
+				std::fstream out(_container.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
+				out.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+				dtn::data::DefaultSerializer(out) << b; out << std::flush;
+				out.close();
+			} catch (ios_base::failure ex) {
+				throw dtn::SerializationFailedException("can not write data to the storage; " + std::string(ex.what()));
+			}
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::~Holder()

@@ -64,12 +64,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::handshake(const dtn::data::EID &name, const size_t timeout)
 		{
-			try {
-				// do the handshake
-				_stream.handshake(name, timeout);
-			} catch (dtn::exceptions::InvalidDataException ex) {
-
-			}
+			// do the handshake
+			_stream.handshake(name, timeout);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::initialize(const dtn::data::EID &name, const size_t timeout)
@@ -157,7 +153,6 @@ namespace dtn
 		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
 			dtn::data::DefaultDeserializer(conn._stream) >> bundle;
-			if (!conn._stream.good()) throw dtn::exceptions::IOException("read from stream failed");
 		}
 
 		TCPConvergenceLayer::TCPConnection& operator<<(TCPConvergenceLayer::TCPConnection &conn, const dtn::data::Bundle &bundle)
@@ -215,8 +210,18 @@ namespace dtn
 
 				// forward exception
 				throw ex;
+			} catch (ConnectionNotAvailableException ex) {
+				// the connection not available
+#ifdef DO_DEBUG_OUTPUT
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "connection error => requeue the bundle" << endl;
+				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "Exception: " << ex.what() << endl;
+#endif
+				// signal interruption of the transfer
+				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
 
-			} catch (dtn::exceptions::IOException ex) {
+				// forward exception
+				throw ex;
+			} catch (ibrcommon::IOException ex) {
 				// stop the time measurement
 				m.stop();
 
@@ -231,20 +236,8 @@ namespace dtn
 
 				// forward exception
 				throw ex;
-
-			} catch (dtn::net::ConnectionNotAvailableException ex) {
-				// the connection not available
-
-#ifdef DO_DEBUG_OUTPUT
-				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "connection error => requeue the bundle" << endl;
-				ibrcommon::slog << ibrcommon::SYSLOG_DEBUG << "Exception: " << ex.what() << endl;
-#endif
-				// signal interruption of the transfer
-				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
-
-				// forward exception
-				throw ex;
 			}
+
 		}
 
 		TCPConvergenceLayer::TCPConnection::Receiver::Receiver(TCPConnection &connection)
@@ -272,11 +265,9 @@ namespace dtn
 
 					yield();
 				}
-			} catch (dtn::exceptions::IOException ex) {
+			} catch (ibrcommon::IOException ex) {
 				_running = false;
-			} catch (dtn::exceptions::InvalidDataException ex) {
-				_running = false;
-			} catch (dtn::exceptions::InvalidBundleData ex) {
+			} catch (dtn::InvalidDataException ex) {
 				_running = false;
 			}
 		}
@@ -333,13 +324,10 @@ namespace dtn
 					// idle a little bit
 					yield();
 				}
-			} catch (dtn::exceptions::IOException ex) {
+			} catch (ibrcommon::IOException ex) {
 				_running = false;
 				_receiver.shutdown();
-			} catch (dtn::exceptions::InvalidDataException ex) {
-				_running = false;
-				_receiver.shutdown();
-			} catch (dtn::exceptions::InvalidBundleData ex) {
+			} catch (dtn::InvalidDataException ex) {
 				_running = false;
 				_receiver.shutdown();
 			}

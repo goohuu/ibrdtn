@@ -33,7 +33,7 @@ namespace dtn
 
 						// push the bundle into the queue
 						route( meta );
-					} catch (dtn::exceptions::NoBundleFoundException) {
+					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
 						// error, bundle not found!
 					}
 				}

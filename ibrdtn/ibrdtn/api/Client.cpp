@@ -47,12 +47,12 @@ namespace dtn
 				}
 			} catch (dtn::api::ConnectionException ex) {
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
-			} catch (dtn::exceptions::IOException ex) {
+			} catch (ibrcommon::IOException ex) {
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 				cout << ex.what() << endl;
 #endif
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
-			} catch (dtn::exceptions::InvalidBundleData ex) {
+			} catch (dtn::InvalidDataException ex) {
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 
@@ -132,7 +132,6 @@ namespace dtn
 
 		void Client::eventError()
 		{
-			_stream.done();
 			_stream.close();
 		}
 

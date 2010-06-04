@@ -169,8 +169,8 @@ namespace dtn
 			val_len++;
 		  } while (tmp != 0);
 
-		  if (!(val_len > 0)) throw exceptions::SDNVDecodeFailed("ERROR(SDNV): !(val_len > 0)");
-		  if (!(val_len <= MAX_LENGTH)) throw exceptions::SDNVDecodeFailed("ERROR(SDNV): !(val_len <= MAX_LENGTH)");
+		  if (!(val_len > 0)) throw InvalidDataException("ERROR(SDNV): !(val_len > 0)");
+		  if (!(val_len <= MAX_LENGTH)) throw InvalidDataException("ERROR(SDNV): !(val_len <= MAX_LENGTH)");
 		  // Make sure we have enough buffer space.
 		  if (len < val_len) {
 			return -1;
@@ -186,7 +186,7 @@ namespace dtn
 			val = val >> 7;
 		  } while (val != 0);
 
-		  if (!(bp == start)) throw exceptions::SDNVDecodeFailed("ERROR(SDNV): !(bp == start)");
+		  if (!(bp == start)) throw InvalidDataException("ERROR(SDNV): !(bp == start)");
 
 		  return val_len;
 		}
@@ -198,7 +198,7 @@ namespace dtn
 		size_t SDNV::encoding_len(u_int64_t val){
 		  u_char buf[16];
 		  int ret = encode(val, buf, sizeof(buf));
-		  if (!(ret != -1 && ret != 0)) throw exceptions::SDNVDecodeFailed("ERROR(SDNV): !(ret != -1 && ret != 0)");
+		  if (!(ret != -1 && ret != 0)) throw InvalidDataException("ERROR(SDNV): !(ret != -1 && ret != 0)");
 		  return ret;
 		}
 
@@ -223,7 +223,7 @@ namespace dtn
 		  const u_char* start = bp;
 
 		  if (!val) {
-			throw exceptions::SDNVDecodeFailed();
+			throw InvalidDataException();
 		  }
 
 		  // Zero out the existing value, then shift in the bytes of the
@@ -253,7 +253,7 @@ namespace dtn
 		  // This is OK because a spec update says that behavior
 		  // is undefined for values > 64 bits.
 		  if ((val_len > MAX_LENGTH) || ((val_len == MAX_LENGTH) && (*start != 0x81))){
-			throw exceptions::SDNVDecodeFailed("ERROR(SDNV): overflow value in sdnv");
+			throw InvalidDataException("ERROR(SDNV): overflow value in sdnv");
 		  }
 
 		  return val_len;
@@ -270,7 +270,7 @@ namespace dtn
 		  int ret = decode(bp, len, &lval);
 
 		  if (lval > 0xffffffffLL) {
-			throw exceptions::SDNVDecodeFailed();
+			throw InvalidDataException();
 		  }
 
 		  *val = (u_int32_t)lval;
@@ -289,7 +289,7 @@ namespace dtn
 		  int ret = decode(bp, len, &lval);
 
 		  if (lval > 0xffffffffLL) {
-			throw exceptions::SDNVDecodeFailed();
+			throw InvalidDataException();
 		  }
 
 		  *val = (u_int16_t)lval;
@@ -308,7 +308,7 @@ namespace dtn
 		  int ret = decode(bp, len, &lval);
 
 		  if (lval > 0xffffffffLL) {
-			throw exceptions::SDNVDecodeFailed();
+			throw InvalidDataException();
 		  }
 
 		  float fval;

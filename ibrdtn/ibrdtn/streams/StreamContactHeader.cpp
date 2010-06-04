@@ -71,14 +71,14 @@ namespace dtn
 
 			if (str_magic != "dtn!")
 			{
-				throw exceptions::InvalidDataException("not talking dtn");
+				throw InvalidProtocolException("not talking dtn");
 			}
 
 			// version
 			char version; stream.get(version);
 			if (version != TCPCL_VERSION)
 			{
-				throw exceptions::InvalidDataException("invalid bundle protocol version");
+				throw InvalidProtocolException("invalid bundle protocol version");
 			}
 
 			// flags

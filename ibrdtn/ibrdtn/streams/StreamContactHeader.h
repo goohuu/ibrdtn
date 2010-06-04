@@ -12,6 +12,7 @@
 
 #include "ibrdtn/default.h"
 #include "ibrdtn/data/EID.h"
+#include "ibrdtn/data/Exceptions.h"
 #include <sys/types.h>
 
 

@@ -179,17 +179,17 @@ namespace dtn
 			return PrimaryBlock::toString();
 		}
 
-		std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &b)
-		{
-			DefaultSerializer(stream) << b;
-			return stream;
-		}
-
-		std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b)
-		{
-			DefaultDeserializer(stream) >> b;
-			return stream;
-		}
+//		std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &b)
+//		{
+//			DefaultSerializer(stream) << b;
+//			return stream;
+//		}
+//
+//		std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b)
+//		{
+//			DefaultDeserializer(stream) >> b;
+//			return stream;
+//		}
 	}
 }
 

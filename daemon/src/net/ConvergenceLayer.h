@@ -12,10 +12,10 @@ namespace dtn
 	{
 		class BundleReceiver;
 
-		class ConnectionInterruptedException : public dtn::exceptions::IOException
+		class ConnectionInterruptedException : public ibrcommon::IOException
 		{
 		public:
-			ConnectionInterruptedException(size_t last_ack = 0) : dtn::exceptions::IOException("The connection has been interrupted."), _last_ack(last_ack)
+			ConnectionInterruptedException(size_t last_ack = 0) : ibrcommon::IOException("The connection has been interrupted."), _last_ack(last_ack)
 			{
 			}
 

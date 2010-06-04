@@ -47,6 +47,7 @@ namespace dtn
 				return handler;
 			} catch (ibrcommon::tcpserver::SocketException ex) {
 				// socket is closed
+				return NULL;
 			}
 		}
 
@@ -126,13 +127,11 @@ namespace dtn
 								dtn::data::Bundle bundle = storage.get( mb );
 								(*handler) << bundle;
 								storage.remove(bundle);
-							} catch (dtn::exceptions::NoBundleFoundException ex) {
+							} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 
-							} catch (dtn::exceptions::IOException ex) {
+							} catch (ibrcommon::IOException ex) {
 								handler->shutdown();
-							} catch (dtn::exceptions::InvalidDataException ex) {
-								handler->shutdown();
-							} catch (dtn::exceptions::InvalidBundleData ex) {
+							} catch (dtn::InvalidDataException ex) {
 								handler->shutdown();
 							}
 						}

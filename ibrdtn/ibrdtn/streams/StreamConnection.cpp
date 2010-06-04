@@ -30,33 +30,29 @@ namespace dtn
 
 		void StreamConnection::handshake(const dtn::data::EID &eid, const size_t timeout, const char flags)
 		{
-			try {
-				// create a new header
-				dtn::streams::StreamContactHeader header(eid);
+			// create a new header
+			dtn::streams::StreamContactHeader header(eid);
 
-				// set timeout
-				header._keepalive = timeout;
+			// set timeout
+			header._keepalive = timeout;
 
-				// set flags
-				header._flags = flags;
+			// set flags
+			header._flags = flags;
 
-				// do the handshake
-				_peer = _buf.handshake(header);
+			// do the handshake
+			_peer = _buf.handshake(header);
 
-				// set the stream state
-				{
-					ibrcommon::MutexLock out_lock(_out_state);
-					_out_state.setState(CONNECTION_CONNECTED);
+			// set the stream state
+			{
+				ibrcommon::MutexLock out_lock(_out_state);
+				_out_state.setState(CONNECTION_CONNECTED);
 
-					ibrcommon::MutexLock in_lock(_in_state);
-					_in_state.setState(CONNECTION_CONNECTED);
-				}
-
-				// signal the complete handshake
-				_callback.eventConnectionUp(_peer);
-			} catch (dtn::exceptions::InvalidDataException ex) {
-
+				ibrcommon::MutexLock in_lock(_in_state);
+				_in_state.setState(CONNECTION_CONNECTED);
 			}
+
+			// signal the complete handshake
+			_callback.eventConnectionUp(_peer);
 		}
 
 		void StreamConnection::close()
@@ -81,26 +77,30 @@ namespace dtn
 				_shutdown_reason = csc;
 			}
 
-			switch (csc)
-			{
-				case CONNECTION_SHUTDOWN_IDLE:
-					_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
-					_callback.eventTimeout();
-					break;
-				case CONNECTION_SHUTDOWN_ERROR:
-					_callback.eventError();
-					break;
-				case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
-					wait();
-					_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
-					_callback.eventShutdown();
-					break;
-				case CONNECTION_SHUTDOWN_NODE_TIMEOUT:
-					_callback.eventTimeout();
-					break;
-				case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
-					_callback.eventShutdown();
-					break;
+			try {
+				switch (csc)
+				{
+					case CONNECTION_SHUTDOWN_IDLE:
+						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
+						_callback.eventTimeout();
+						break;
+					case CONNECTION_SHUTDOWN_ERROR:
+						_callback.eventError();
+						break;
+					case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
+						wait();
+						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
+						_callback.eventShutdown();
+						break;
+					case CONNECTION_SHUTDOWN_NODE_TIMEOUT:
+						_callback.eventTimeout();
+						break;
+					case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
+						_callback.eventShutdown();
+						break;
+				}
+			} catch (StreamConnection::StreamErrorException ex) {
+				_callback.eventError();
 			}
 
 			_buf.close();

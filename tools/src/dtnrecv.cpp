@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 			}
 		} catch (ibrcommon::ConnectionClosedException ex) {
 			ret = EXIT_FAILURE;
-		} catch (dtn::exceptions::IOException ex) {
+		} catch (ibrcommon::IOException ex) {
 			ret = EXIT_FAILURE;
 		}
 	} catch (ibrcommon::ConnectionClosedException ex) {

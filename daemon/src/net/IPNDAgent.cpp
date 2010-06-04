@@ -77,8 +77,8 @@ namespace dtn
 				try {
 					ss >> announce;
 					received(announce);
-				} catch (dtn::exceptions::InvalidDataException ex) {
-				} catch (dtn::exceptions::IOException ex) {
+				} catch (dtn::InvalidDataException ex) {
+				} catch (ibrcommon::IOException ex) {
 				}
 
 				yield();

@@ -24,6 +24,36 @@ namespace dtn
 		class BaseRouter : public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
 		{
 		public:
+			class RoutingException : public ibrcommon::Exception
+			{
+				public:
+					RoutingException(string what = "An error occured during routing.") throw() : Exception(what)
+					{
+					};
+			};
+
+			/**
+			 * If no neighbour was found, this exception is thrown.
+			 */
+			class NoNeighbourFoundException : public RoutingException
+			{
+				public:
+					NoNeighbourFoundException(string what = "No neighbour was found.") throw() : RoutingException(what)
+					{
+					};
+			};
+
+			/**
+			 * If no route can be found, this exception is thrown.
+			 */
+			class NoRouteFoundException : public RoutingException
+			{
+				public:
+					NoRouteFoundException(string what = "No route found.") throw() : RoutingException(what)
+					{
+					};
+			};
+
 			class Extension
 			{
 			public:

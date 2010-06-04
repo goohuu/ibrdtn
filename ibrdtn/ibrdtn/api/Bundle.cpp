@@ -107,7 +107,7 @@ namespace dtn
 				dtn::data::PayloadBlock &p = _b.getBlock<dtn::data::PayloadBlock>();
 				return p.getBLOB();
 			} catch(dtn::data::Bundle::NoSuchBlockFoundException ex) {
-				throw dtn::exceptions::MissingObjectException("No payload block exists!");
+				throw dtn::MissingObjectException("No payload block exists!");
 			}
 		}
 	}

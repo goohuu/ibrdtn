@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 			}
 		} catch (dtn::api::ConnectionException ex) {
 			cout << "Disconnected." << endl;
-		} catch (dtn::exceptions::IOException ex) {
+		} catch (ibrcommon::IOException ex) {
 			cout << "Error while receiving a bundle." << endl;
 		}
 

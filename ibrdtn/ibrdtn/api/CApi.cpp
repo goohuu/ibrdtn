@@ -55,7 +55,7 @@ class CAPIGateway : public dtn::api::Client
 			(*payload.getBLOB()).write(data, length);
 
 			// transmit the packet
-			(*this) << b;
+			dtn::data::DefaultSerializer(*this) << b;
 			Client::flush();
 		}
 
@@ -102,7 +102,7 @@ class CAPIGateway : public dtn::api::Client
 			(*payload.getBLOB()).write(tx_buffer, tx_buffer_position); //+1 is wrong =?!?
 
 			// transmit the packet
-			(*this) << b;
+			dtn::data::DefaultSerializer(*this) << b;
 			Client::flush();
 			tx_buffer_position=0;
 		}

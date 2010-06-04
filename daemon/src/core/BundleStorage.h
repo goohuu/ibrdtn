@@ -21,6 +21,14 @@ namespace dtn
 		class BundleStorage
 		{
 		public:
+			class NoBundleFoundException : public dtn::MissingObjectException
+			{
+			public:
+				NoBundleFoundException(string what = "No bundle match the specified criteria.") throw() : dtn::MissingObjectException(what)
+				{
+				};
+			};
+
 			/**
 			 * destructor
 			 */

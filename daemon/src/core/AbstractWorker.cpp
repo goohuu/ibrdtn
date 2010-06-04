@@ -64,7 +64,7 @@ namespace dtn
 				try {
 					b = storage.get( _worker._eid );
 					storage.remove(b);
-				} catch (dtn::exceptions::NoBundleFoundException ex) {
+				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 					{
 						ibrcommon::MutexLock l(_receive_cond);
 						while (_receive_bundles.empty())
@@ -76,7 +76,7 @@ namespace dtn
 						try {
 							b = storage.get( _receive_bundles.front() );
 							storage.remove(b);
-						} catch (dtn::exceptions::NoBundleFoundException ex) {
+						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 
 						}
 

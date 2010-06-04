@@ -45,7 +45,7 @@ namespace dtn
 
 						// push the bundle into the queue
 						route( meta );
-					} catch (dtn::exceptions::NoBundleFoundException) {
+					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
 						// error, bundle not found!
 					}
 				}
@@ -84,9 +84,9 @@ namespace dtn
 							{
 								try {
 									getRouter()->transferTo(eid, id);
-								} catch (dtn::exceptions::NoRouteFoundException ex) {
+								} catch (BaseRouter::NoRouteFoundException ex) {
 									bundlequeue.push(id);
-								} catch (dtn::exceptions::NoBundleFoundException ex) {
+								} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 									// bundle may expired, ignore it.
 								}
 							}

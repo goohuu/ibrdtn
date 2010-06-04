@@ -15,6 +15,9 @@ namespace dtn
 			: _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
 			  _stream(stream), _start_of_bundle(true), _in_state(INITIAL), _out_state(INITIAL), _timer(), _ack_support(false)
 		{
+			// enable exceptions on the stream
+			stream.exceptions(std::ios::badbit | std::ios::eofbit);
+
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
 			setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
@@ -65,7 +68,7 @@ namespace dtn
 				// return the received header
 				return peer;
 
-			} catch (dtn::exceptions::InvalidDataException ex) {
+			} catch (dtn::InvalidDataException ex) {
 
 				// shutdown the stream
 				shutdown(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH);
@@ -75,6 +78,9 @@ namespace dtn
 
 				// forward the catched exception
 				throw ex;
+			} catch (ios_base::failure ex) {
+				// EOF or BAD?
+				throw StreamErrorException("handshake not completed");
 			}
 		}
 
@@ -85,10 +91,14 @@ namespace dtn
 		 */
 		void StreamConnection::StreamBuffer::shutdown(const StreamDataSegment::ShutdownReason reason)
 		{
-			ibrcommon::MutexLock l(_out_state);
-
-			// send a SHUTDOWN message
-			_stream << StreamDataSegment(reason) << std::flush;
+			try {
+				ibrcommon::MutexLock l(_out_state);
+				// send a SHUTDOWN message
+				_stream << StreamDataSegment(reason) << std::flush;
+			} catch (ios_base::failure ex) {
+				// EOF or BAD?
+				throw StreamErrorException("can not send shutdown message");
+			}
 		}
 
 		/**
@@ -114,9 +124,14 @@ namespace dtn
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 					std::cout << "KEEPALIVE timeout" << std::endl;
 #endif
-					ibrcommon::MutexLock l(_out_state);
-					_stream << StreamDataSegment() << std::flush;
-					return _out_timeout;
+					try {
+						ibrcommon::MutexLock l(_out_state);
+						_stream << StreamDataSegment() << std::flush;
+						return _out_timeout;
+					} catch (ios_base::failure ex) {
+						// EOF or BAD?
+						return 0;
+					}
 				}
 				break;
 			}
@@ -147,10 +162,7 @@ namespace dtn
 			try {
 				ibrcommon::MutexLock l(_out_state);
 
-				if (_out_state.ifState(SHUTDOWN) || !_stream.good())
-				{
-					throw StreamClosedException();
-				}
+				if (_out_state.ifState(SHUTDOWN)) throw StreamClosedException();
 
 				char *ibegin = out_buf_;
 				char *iend = pptr();
@@ -191,11 +203,6 @@ namespace dtn
 				_stream << seg;
 				_stream.write(out_buf_, seg._value);
 
-				if (!_stream.good())
-				{
-					throw StreamErrorException();
-				}
-
 				// add size to outgoing size
 				_sent_size += seg._value;
 
@@ -210,6 +217,9 @@ namespace dtn
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (StreamErrorException ex) {
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (ios_base::failure ex) {
+				// EOF or BAD?
+				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 
 			return traits_type::eof();
@@ -222,8 +232,13 @@ namespace dtn
 			int ret = traits_type::eq_int_type(this->overflow(traits_type::eof()),
 											traits_type::eof()) ? -1 : 0;
 
-			// ... and flush.
-			_stream.flush();
+			try {
+				// ... and flush.
+				_stream.flush();
+			} catch (ios_base::failure ex) {
+				// EOF or BAD?
+				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			}
 
 			return ret;
 		}
@@ -248,12 +263,6 @@ namespace dtn
 
 					// read the segment
 					_stream >> seg;
-
-					// check for read errors or end of stream
-					if (!_stream.good())
-					{
-						throw StreamErrorException();
-					}
 
 					// reset the incoming timer
 					_timer.set(*this, TIMER_IN, _in_timeout);
@@ -308,12 +317,6 @@ namespace dtn
 				// here receive the data
 				_stream.read(in_buf_, readsize);
 
-				// check for read errors or end of stream
-				if (_stream.eof())
-				{
-					throw StreamErrorException();
-				}
-
 				// Since the input buffer content is now valid (or is new)
 				// the get pointer should be initialized (or reset).
 				setg(in_buf_, in_buf_, in_buf_ + readsize);
@@ -343,6 +346,9 @@ namespace dtn
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (StreamShutdownException ex) {
 				_conn.shutdown(CONNECTION_SHUTDOWN_PEER_SHUTDOWN);
+			} catch (ios_base::failure ex) {
+				// EOF or BAD?
+				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 
 			return traits_type::eof();

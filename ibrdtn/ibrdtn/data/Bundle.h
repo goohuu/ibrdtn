@@ -111,8 +111,8 @@ namespace dtn
 		private:
 			BlockList _blocks;
 
-			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &obj);
-			friend std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b);
+//			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &obj);
+//			friend std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b);
 		};
 
 		template<typename T>

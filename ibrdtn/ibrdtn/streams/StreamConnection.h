@@ -46,34 +46,34 @@ namespace dtn
 				CONNECTION_SHUTDOWN_PEER_SHUTDOWN = 5
 			};
 
-			class TransmissionInterruptedException : public ibrcommon::Exception
+			class TransmissionInterruptedException : public ibrcommon::IOException
 			{
 				public:
-					TransmissionInterruptedException(dtn::data::Bundle &bundle, size_t position) : ibrcommon::Exception("Transmission was interrupted.")
+					TransmissionInterruptedException(dtn::data::Bundle &bundle, size_t position) : ibrcommon::IOException("Transmission was interrupted.")
 					{
 					};
 			};
 
-			class StreamClosedException : public ibrcommon::Exception
+			class StreamClosedException : public ibrcommon::IOException
 			{
 			public:
-				StreamClosedException(string what = "The stream has been closed.") throw() : Exception(what)
+				StreamClosedException(string what = "The stream has been closed.") throw() : IOException(what)
 				{
 				};
 			};
 
-			class StreamErrorException : public ibrcommon::Exception
+			class StreamErrorException : public ibrcommon::IOException
 			{
 			public:
-				StreamErrorException(string what = "StreamError") throw() : Exception(what)
+				StreamErrorException(string what = "StreamError") throw() : IOException(what)
 				{
 				};
 			};
 
-			class StreamShutdownException : public ibrcommon::Exception
+			class StreamShutdownException : public ibrcommon::IOException
 			{
 			public:
-				StreamShutdownException(string what = "Shutdown message received.") throw() : Exception(what)
+				StreamShutdownException(string what = "Shutdown message received.") throw() : IOException(what)
 				{
 				};
 			};

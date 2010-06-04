@@ -112,33 +112,33 @@ namespace dtn
 			 */
 			friend std::ostream &operator<<(std::ostream &stream, const dtn::api::Bundle &b)
 			{
-                            const dtn::data::Bundle &_b = b._b;
+				const dtn::data::Bundle &_b = b._b;
 
-                            // send the bundle
-                            stream << _b;
+				// send the bundle
+				dtn::data::DefaultSerializer(stream) << _b;
 
-                            return stream;
+				return stream;
 			}
 
 			friend std::istream &operator>>(std::istream &stream, dtn::api::Bundle &b)
 			{
-                            stream >> b._b;
+				dtn::data::DefaultDeserializer(stream) >> b._b;
 
-                            // read priority
-                            if (b._b._procflags & dtn::data::Bundle::PRIORITY_BIT1)
-                            {
-                                    if (b._b._procflags & dtn::data::Bundle::PRIORITY_BIT2) b._priority = PRIO_HIGH;
-                                    else b._priority = PRIO_MEDIUM;
-                            }
-                            else
-                            {
-                                    b._priority = PRIO_LOW;
-                            }
+				// read priority
+				if (b._b._procflags & dtn::data::Bundle::PRIORITY_BIT1)
+				{
+						if (b._b._procflags & dtn::data::Bundle::PRIORITY_BIT2) b._priority = PRIO_HIGH;
+						else b._priority = PRIO_MEDIUM;
+				}
+				else
+				{
+						b._priority = PRIO_LOW;
+				}
 
-                            // read the lifetime
-                            b._lifetime = b._b._lifetime;
+				// read the lifetime
+				b._lifetime = b._b._lifetime;
 
-                            return stream;
+				return stream;
 			}
 
 			/**
