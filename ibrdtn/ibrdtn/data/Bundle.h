@@ -28,8 +28,8 @@ namespace dtn
 
 		class Bundle : public PrimaryBlock
 		{
-                        friend class DefaultSerializer;
-                        friend class DefaultDeserializer;
+			friend class DefaultSerializer;
+			friend class DefaultDeserializer;
 
 		public:
 			static std::map<char, ExtensionBlockFactory*>& getExtensionBlockFactories();
@@ -44,22 +44,20 @@ namespace dtn
 
 			class BlockList
 			{
-                            friend class DefaultSerializer;
-                            friend class DefaultDeserializer;
-                            
+				friend class DefaultSerializer;
+				friend class DefaultDeserializer;
+
 			public:
 				BlockList();
 				~BlockList();
 
-				void append(Block *block);
+				void push_front(Block *block);
+				void push_back(Block *block);
 				void insert(Block *block, const Block *before);
 				void remove(const Block *block);
 				void clear();
 
 				const std::set<dtn::data::EID> getEIDs() const;
-
-				template<typename T>
-				T& append();
 
 				template<typename T> T& get();
 				template<typename T> const T& get() const;
@@ -92,27 +90,28 @@ namespace dtn
 			template<typename T>
 			const std::list<const T*> getBlocks() const;
 
-			dtn::data::PayloadBlock& appendPayloadBlock(ibrcommon::BLOB::Reference &ref);
-			dtn::data::PayloadBlock& insertPayloadBlock(dtn::data::Block &before, ibrcommon::BLOB::Reference &ref);
+			template<typename T>
+			T& push_front();
 
 			template<typename T>
-			T& appendBlock();
+			T& push_back();
 
-			dtn::data::Block& appendBlock(dtn::data::ExtensionBlockFactory &factory);
+			template<typename T>
+			T& insert(const dtn::data::Block &before);
 
-//			template<typename T>
-//			T& insertBlock(dtn::data::Block &before);
+			dtn::data::PayloadBlock& push_front(ibrcommon::BLOB::Reference &ref);
+			dtn::data::PayloadBlock& push_back(ibrcommon::BLOB::Reference &ref);
+			dtn::data::PayloadBlock& insert(const dtn::data::Block &before, ibrcommon::BLOB::Reference &ref);
 
-			void removeBlock(const dtn::data::Block &block);
+			dtn::data::Block& push_back(dtn::data::ExtensionBlockFactory &factory);
+
+			void remove(const dtn::data::Block &block);
 			void clearBlocks();
 
 			string toString() const;
 
 		private:
 			BlockList _blocks;
-
-//			friend std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &obj);
-//			friend std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b);
 		};
 
 		template<typename T>
@@ -192,30 +191,34 @@ namespace dtn
 		}
 
 		template<typename T>
-		T& Bundle::appendBlock()
-		{
-			return _blocks.append<T>();
-		}
-
-		template<typename T>
-		T& Bundle::BlockList::append()
+		T& Bundle::push_front()
 		{
 			T *tmpblock = new T();
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
 			assert(block != NULL);
-			append(block);
+			_blocks.push_front(block);
 			return (*tmpblock);
 		}
 
-//		template<typename T>
-//		T& Bundle::insertBlock(dtn::data::Block &before)
-//		{
-//			T *tmpblock = new T(*this);
-//			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
-//			assert(block != NULL);
-//			_blocks.push_front(block);
-//			return (*block);
-//		}
+		template<typename T>
+		T& Bundle::push_back()
+		{
+			T *tmpblock = new T();
+			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+			assert(block != NULL);
+			_blocks.push_back(block);
+			return (*tmpblock);
+		}
+
+		template<typename T>
+		T& Bundle::insert(const dtn::data::Block &before)
+		{
+			T *tmpblock = new T(*this);
+			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+			assert(block != NULL);
+			_blocks.insert(block, &before);
+			return (*tmpblock);
+		}
 	}
 }
 

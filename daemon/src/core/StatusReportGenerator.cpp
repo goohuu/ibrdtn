@@ -32,7 +32,7 @@ namespace dtn
 			Bundle bundle;
 
 			// create a new statusreport block
-			StatusReportBlock &report = bundle.appendBlock<StatusReportBlock>();
+			StatusReportBlock &report = bundle.push_back<StatusReportBlock>();
 
 			// get the flags and set the status flag
 			report._status |= type;

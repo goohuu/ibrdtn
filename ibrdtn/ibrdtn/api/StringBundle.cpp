@@ -13,7 +13,7 @@ namespace dtn
 	namespace api
 	{
 		StringBundle::StringBundle(dtn::data::EID destination)
-		 : Bundle(destination), _payload(_b.appendBlock<dtn::data::PayloadBlock>())
+		 : Bundle(destination), _payload(_b.push_back<dtn::data::PayloadBlock>())
 		{
 		}
 

@@ -39,12 +39,23 @@ namespace dtn
 		{
 		}
 
-		void Bundle::BlockList::append(Block *block)
+		void Bundle::BlockList::push_front(Block *block)
+		{
+			if (_blocks.empty())
+			{
+				// set the last block flag
+				block->_procflags |= dtn::data::Block::LAST_BLOCK;
+			}
+
+			_blocks.push_front(refcnt_ptr<Block>(block));
+		}
+
+		void Bundle::BlockList::push_back(Block *block)
 		{
 			// set the last block flag
 			block->_procflags |= dtn::data::Block::LAST_BLOCK;
 
-			if (_blocks.size() > 0)
+			if (!_blocks.empty())
 			{
 				// remove the last block flag of the previous block
 				dtn::data::Block *lastblock = (_blocks.back().getPointer());
@@ -56,7 +67,16 @@ namespace dtn
 
 		void Bundle::BlockList::insert(Block *block, const Block *before)
 		{
+			for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+			{
+				const dtn::data::Block *lb = (*iter).getPointer();
 
+				if (lb == before)
+				{
+					_blocks.insert(iter, refcnt_ptr<Block>(block) );
+					return;
+				}
+			}
 		}
 
 		void Bundle::BlockList::remove(const Block *block)
@@ -137,7 +157,7 @@ namespace dtn
 			return _blocks.getList();
 		}
 
-		void Bundle::removeBlock(const dtn::data::Block &block)
+		void Bundle::remove(const dtn::data::Block &block)
 		{
 			_blocks.remove(&block);
 		}
@@ -147,49 +167,45 @@ namespace dtn
 			_blocks.clear();
 		}
 
-		dtn::data::Block& Bundle::appendBlock(dtn::data::ExtensionBlockFactory &factory)
-		{
-			dtn::data::Block *block = factory.create();
-			assert(block != NULL);
-			_blocks.append(block);
-			return (*block);
-		}
-
-		dtn::data::PayloadBlock& Bundle::appendPayloadBlock(ibrcommon::BLOB::Reference &ref)
+		dtn::data::PayloadBlock& Bundle::insert(const dtn::data::Block &before, ibrcommon::BLOB::Reference &ref)
 		{
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
 			assert(block != NULL);
-			_blocks.append(block);
+			_blocks.insert(block, &before);
 			return (*tmpblock);
 		}
 
-//		dtn::data::PayloadBlock& Bundle::insertPayloadBlock(dtn::data::Block &before, ibrcommon::BLOB::Reference &ref)
-//		{
-//			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(*this, ref);
-//			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
-//			assert(block != NULL);
-//
-//			_blocks.push_front(block);
-//			return (*tmpblock);
-//		}
+		dtn::data::PayloadBlock& Bundle::push_front(ibrcommon::BLOB::Reference &ref)
+		{
+			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
+			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+			assert(block != NULL);
+			_blocks.push_front(block);
+			return (*tmpblock);
+		}
+
+		dtn::data::PayloadBlock& Bundle::push_back(ibrcommon::BLOB::Reference &ref)
+		{
+			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
+			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+			assert(block != NULL);
+			_blocks.push_back(block);
+			return (*tmpblock);
+		}
+
+		dtn::data::Block& Bundle::push_back(dtn::data::ExtensionBlockFactory &factory)
+		{
+			dtn::data::Block *block = factory.create();
+			assert(block != NULL);
+			_blocks.push_back(block);
+			return (*block);
+		}
 
 		string Bundle::toString() const
 		{
 			return PrimaryBlock::toString();
 		}
-
-//		std::ostream &operator<<(std::ostream &stream, const dtn::data::Bundle &b)
-//		{
-//			DefaultSerializer(stream) << b;
-//			return stream;
-//		}
-//
-//		std::istream &operator>>(std::istream &stream, dtn::data::Bundle &b)
-//		{
-//			DefaultDeserializer(stream) >> b;
-//			return stream;
-//		}
 	}
 }
 

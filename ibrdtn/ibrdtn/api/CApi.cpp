@@ -49,7 +49,7 @@ class CAPIGateway : public dtn::api::Client
 		void send(char *dst_uri, char *data, uint32_t length) {
 			dtn::data::Bundle b;
 			b._destination = dtn::data::EID(dst_uri);
-			dtn::data::PayloadBlock &payload = b.appendBlock<dtn::data::PayloadBlock>();
+			dtn::data::PayloadBlock &payload = b.push_back<dtn::data::PayloadBlock>();
 
 			// add the data
 			(*payload.getBLOB()).write(data, length);
@@ -96,7 +96,7 @@ class CAPIGateway : public dtn::api::Client
 				return;
 			dtn::data::Bundle b;
 			b._destination = dtn::data::EID(this->dst_eid);
-			dtn::data::PayloadBlock &payload = b.appendBlock<dtn::data::PayloadBlock>();
+			dtn::data::PayloadBlock &payload = b.push_back<dtn::data::PayloadBlock>();
 
 			// add the data
 			(*payload.getBLOB()).write(tx_buffer, tx_buffer_position); //+1 is wrong =?!?

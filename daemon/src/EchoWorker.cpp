@@ -24,7 +24,7 @@ namespace dtn
 
 				// make a copy of the payload block
 				ibrcommon::BLOB::Reference ref = payload.getBLOB();
-				PayloadBlock &payload_copy = echo.appendPayloadBlock(ref);
+				PayloadBlock &payload_copy = echo.push_back(ref);
 
 				// set destination and source
 				echo._destination = b._source;

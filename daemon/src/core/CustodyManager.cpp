@@ -80,7 +80,7 @@ namespace dtn
 				Bundle b;
 
 				// send a custody signal with accept flag
-				CustodySignalBlock &signal = b.appendBlock<CustodySignalBlock>();
+				CustodySignalBlock &signal = b.push_back<CustodySignalBlock>();
 
 				// set the bundle to match
 				signal.setMatch(bundle);
@@ -106,7 +106,7 @@ namespace dtn
 				Bundle b;
 
 				// send a custody signal with reject flag
-				CustodySignalBlock &signal = b.appendBlock<CustodySignalBlock>();
+				CustodySignalBlock &signal = b.push_back<CustodySignalBlock>();
 
 				// set the bundle to match
 				signal.setMatch(bundle);

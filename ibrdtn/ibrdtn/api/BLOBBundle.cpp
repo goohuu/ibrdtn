@@ -14,7 +14,7 @@ namespace dtn
 	{
 		BLOBBundle::BLOBBundle(dtn::data::EID destination, ibrcommon::BLOB::Reference &ref) : Bundle(destination)
 		{
-			dtn::data::PayloadBlock &payload = _b.appendPayloadBlock(ref);
+			dtn::data::PayloadBlock &payload = _b.push_back(ref);
 		}
 
 		BLOBBundle::~BLOBBundle()

@@ -322,7 +322,7 @@ namespace dtn
 						if (obj._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
 						{
 							// create a temporary block
-							dtn::data::ExtensionBlock &block = obj.appendBlock<dtn::data::ExtensionBlock>();
+							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
 
 							// read the block data
 							(*this) >> block;
@@ -339,13 +339,13 @@ namespace dtn
 							serializer << block;
 
 							// remove the temporary block
-							obj.removeBlock(block);
+							obj.remove(block);
 
 							switch (admfield >> 4)
 							{
 								case 1:
 								{
-									dtn::data::StatusReportBlock &block = obj.appendBlock<dtn::data::StatusReportBlock>();
+									dtn::data::StatusReportBlock &block = obj.push_back<dtn::data::StatusReportBlock>();
 									deserializer >> block;
 									lastblock = block.get(Block::LAST_BLOCK);
 									break;
@@ -353,7 +353,7 @@ namespace dtn
 
 								case 2:
 								{
-									dtn::data::CustodySignalBlock &block = obj.appendBlock<dtn::data::CustodySignalBlock>();
+									dtn::data::CustodySignalBlock &block = obj.push_back<dtn::data::CustodySignalBlock>();
 									deserializer >> block;
 									lastblock = block.get(Block::LAST_BLOCK);
 									break;
@@ -369,7 +369,7 @@ namespace dtn
 						}
 						else
 						{
-							dtn::data::PayloadBlock &block = obj.appendBlock<dtn::data::PayloadBlock>();
+							dtn::data::PayloadBlock &block = obj.push_back<dtn::data::PayloadBlock>();
 							(*this) >> block;
 
 							lastblock = block.get(Block::LAST_BLOCK);
@@ -386,13 +386,13 @@ namespace dtn
 						if (iter != factories.end())
 						{
 							ExtensionBlockFactory &f = (*iter->second);
-							dtn::data::Block &block = obj.appendBlock(f);
+							dtn::data::Block &block = obj.push_back(f);
 							(*this) >> block;
 							lastblock = block.get(Block::LAST_BLOCK);
 						}
 						else
 						{
-							dtn::data::ExtensionBlock &block = obj.appendBlock<dtn::data::ExtensionBlock>();
+							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
 							(*this) >> block;
 							lastblock = block.get(Block::LAST_BLOCK);
 						}

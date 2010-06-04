@@ -319,7 +319,7 @@ namespace dtn
 				{
 					// lock the lists
 					ibrcommon::MutexLock l(_list_mutex);
-					EpidemicExtensionBlock &eblock = routingbundle.appendBlock<EpidemicExtensionBlock>();
+					EpidemicExtensionBlock &eblock = routingbundle.push_back<EpidemicExtensionBlock>();
 					eblock.setSummaryVector(_bundle_vector);
 				}
 
