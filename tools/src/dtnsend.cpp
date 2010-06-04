@@ -67,44 +67,49 @@ int main(int argc, char *argv[])
 	// the last parameter is always the filename
 	string filename = argv[argc -1];
 
-	// Create a stream to the server using TCP.
-	ibrcommon::tcpclient conn("127.0.0.1", 4550);
-
-	// Initiate a client for synchronous receiving
-	dtn::api::Client client(dtn::api::Client::MODE_SENDONLY, file_source, conn);
-
-	// Connect to the server. Actually, this function initiate the
-	// stream protocol by starting the thread and sending the contact header.
-	client.connect();
-
-	// target address
-	EID addr = EID(file_destination);
-
-	cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
-
 	try {
-		// create a bundle from the file
-		dtn::api::FileBundle b(file_destination, filename);
+		// Create a stream to the server using TCP.
+		ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
-			// set the lifetime
-			b.setLifetime(lifetime);
+		try {
+			// Initiate a client for synchronous receiving
+			dtn::api::Client client(dtn::api::Client::MODE_SENDONLY, file_source, conn);
 
-		// send the bundle
-		client << b;
+			// Connect to the server. Actually, this function initiate the
+			// stream protocol by starting the thread and sending the contact header.
+			client.connect();
 
-		// flush the buffers
-		client.flush();
-	} catch (ibrcommon::IOException ex) {
-		std::cerr << "Error while sending bundle." << std::endl;
-		std::cerr << "\t" << ex.what() << std::endl;
-	}
+			// target address
+			EID addr = EID(file_destination);
 
-	// Shutdown the client connection.
-	client.close();
+			cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
 
-	try {
+			try {
+				// create a bundle from the file
+				dtn::api::FileBundle b(file_destination, filename);
+
+					// set the lifetime
+					b.setLifetime(lifetime);
+
+				// send the bundle
+				client << b;
+
+				// flush the buffers
+				client.flush();
+			} catch (ibrcommon::IOException ex) {
+				std::cerr << "Error while sending bundle." << std::endl;
+				std::cerr << "\t" << ex.what() << std::endl;
+			}
+
+			// Shutdown the client connection.
+			client.close();
+		} catch (ibrcommon::IOException ex) {
+			cout << "Error: " << ex.what() << endl;
+		}
+
+		// close the tcpstream
 		conn.close();
-	} catch (ibrcommon::ConnectionClosedException ex) {
+	} catch (...) {
 
 	}
 

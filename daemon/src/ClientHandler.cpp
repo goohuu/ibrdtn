@@ -106,7 +106,7 @@ namespace dtn
 				{
 					try {
 						dtn::data::Bundle b = storage.get( getPeer() );
-						dtn::data::DefaultSerializer( (std::ostream&)(*this) ) << b;
+						dtn::data::DefaultSerializer(_connection) << b; _connection << std::flush;
 						storage.remove(b);
 					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 						break;

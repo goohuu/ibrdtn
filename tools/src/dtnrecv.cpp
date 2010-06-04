@@ -124,27 +124,21 @@ int main(int argc, char *argv[])
 		// write the bundle to stdout/file
 		writeBundle(stdout, filename, b);
 
-		try {
-			// Shutdown the client connection.
-			client.close();
+		// Shutdown the client connection.
+		client.close();
 
-			// close the tcp connection
-			conn.close();
+		// close the tcp connection
+		conn.close();
 
-			// write all following bundles
-			while (!client.eof())
-			{
-				client >> b;
+		// write all following bundles
+		while (!client.eof())
+		{
+			client >> b;
 
-				// write the bundle to stdout/file
-				writeBundle(stdout, filename, b);
-			}
-		} catch (ibrcommon::ConnectionClosedException ex) {
-			ret = EXIT_FAILURE;
-		} catch (ibrcommon::IOException ex) {
-			ret = EXIT_FAILURE;
+			// write the bundle to stdout/file
+			writeBundle(stdout, filename, b);
 		}
-	} catch (ibrcommon::ConnectionClosedException ex) {
+	} catch (...) {
 		ret = EXIT_FAILURE;
 	}
 
