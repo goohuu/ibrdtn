@@ -1,6 +1,6 @@
 ## sub directory
 
-h_sources = Serializer.h Block.h Bundle.h BundleID.h BundleMerger.h BundleString.h CustodySignalBlock.h Dictionary.h DTNTime.h EID.h Exceptions.h ExtensionBlock.h PayloadBlock.h PrimaryBlock.h SDNV.h SecurityBlock.h StatusReportBlock.h
+h_sources = Serializer.h Block.h Bundle.h BundleID.h BundleMerger.h BundleString.h CustodySignalBlock.h Dictionary.h DTNTime.h EID.h Exceptions.h ExtensionBlockFactory.h ExtensionBlock.h PayloadBlock.h PrimaryBlock.h SDNV.h SecurityBlock.h StatusReportBlock.h
 cc_sources = Serializer.cpp Block.cpp Bundle.cpp BundleID.cpp BundleMerger.cpp BundleString.cpp CustodySignalBlock.cpp Dictionary.cpp DTNTime.cpp EID.cpp ExtensionBlock.cpp PayloadBlock.cpp PrimaryBlock.cpp SDNV.cpp SecurityBlock.cpp StatusReportBlock.cpp
 
 #Install the headers in a versioned directory
