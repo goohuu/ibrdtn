@@ -15,9 +15,6 @@ namespace dtn
 			: _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]),
 			  _stream(stream), _start_of_bundle(true), _in_state(INITIAL), _out_state(INITIAL), _timer(), _ack_support(false)
 		{
-			// enable exceptions on the stream
-			stream.exceptions(std::ios::badbit | std::ios::eofbit);
-
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
 			setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
@@ -43,6 +40,9 @@ namespace dtn
 		 */
 		const StreamContactHeader StreamConnection::StreamBuffer::handshake(const StreamContactHeader &header)
 		{
+			// enable exceptions on the stream
+			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
+
 			try {
 				// transfer the local header
 				_stream << header << std::flush;
