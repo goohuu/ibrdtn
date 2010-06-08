@@ -11,7 +11,7 @@
 #include "core/EventSwitch.h"
 #include "core/BundleStorage.h"
 #include "core/SimpleBundleStorage.h"
-#include "core/SQLiteBundleStorage.h"
+//#include "core/SQLiteBundleStorage.h"
 #include "core/Node.h"
 #include "core/EventSwitch.h"
 #include "core/GlobalEvent.h"
