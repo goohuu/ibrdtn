@@ -11,7 +11,8 @@
 
 #include <iostream>
 #include "ibrdtn/data/Dictionary.h"
-#include "PrimaryBlock.h"
+#include "ibrdtn/data/PrimaryBlock.h"
+#include "ibrdtn/data/Exceptions.h"
 
 namespace dtn
 {
@@ -24,6 +25,8 @@ namespace dtn
         class Serializer
         {
         public:
+        	virtual ~Serializer() {};
+
             virtual Serializer &operator<<(const dtn::data::Bundle &obj) = 0;
             virtual Serializer &operator<<(const dtn::data::PrimaryBlock &obj) = 0;
             virtual Serializer &operator<<(const dtn::data::Block &obj) = 0;
@@ -36,6 +39,8 @@ namespace dtn
         class Deserializer
         {
         public:
+        	virtual ~Deserializer() {};
+
             virtual Deserializer &operator>>(dtn::data::Bundle &obj) = 0;
             virtual Deserializer &operator>>(dtn::data::PrimaryBlock &obj) = 0;
             virtual Deserializer &operator>>(dtn::data::Block &obj) = 0;
@@ -46,6 +51,7 @@ namespace dtn
         public:
             DefaultSerializer(std::ostream &stream);
             DefaultSerializer(std::ostream &stream, const Dictionary &d);
+            virtual ~DefaultSerializer() {};
 
             virtual Serializer &operator<<(const dtn::data::Bundle &obj);
             virtual Serializer &operator<<(const dtn::data::PrimaryBlock &obj);
@@ -66,12 +72,26 @@ namespace dtn
         class DefaultDeserializer : public Deserializer
         {
         public:
+        	class RejectedException : public dtn::SerializationFailedException
+        	{
+    		public:
+        		RejectedException(string what = "A validate method has the bundle rejected.") throw() : dtn::SerializationFailedException(what)
+    			{
+    			};
+        	};
+
             DefaultDeserializer(std::istream &stream);
             DefaultDeserializer(std::istream &stream, const Dictionary &d);
+            virtual ~DefaultDeserializer() {};
             
             virtual Deserializer &operator>>(dtn::data::Bundle &obj);
             virtual Deserializer &operator>>(dtn::data::PrimaryBlock &obj);
             virtual Deserializer &operator>>(dtn::data::Block &obj);
+
+        protected:
+            virtual void validate(const dtn::data::PrimaryBlock &obj) const throw (RejectedException) { };
+            virtual void validate(const dtn::data::Block &obj, const size_t length) const throw (RejectedException) { };
+            virtual void validate(const dtn::data::Bundle &obj) const throw (RejectedException) { };
 
         private:
             std::istream &_stream;
