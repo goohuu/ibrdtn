@@ -17,6 +17,8 @@
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 
+#include <ibrcommon/Logger.h>
+
 using namespace dtn::data;
 using namespace dtn::streams;
 
@@ -46,16 +48,18 @@ namespace dtn
 					yield();
 				}
 			} catch (dtn::api::ConnectionException ex) {
+				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: ConnectionException" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (ibrcommon::IOException ex) {
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-				cout << ex.what() << endl;
-#endif
+				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (dtn::InvalidDataException ex) {
+				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
+				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (...) {
+				IBRCOMMON_LOGGER(error) << "unknown error" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
-
 		}
 
 		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
@@ -102,6 +106,9 @@ namespace dtn
 		void Client::close()
 		{
 			StreamConnection::shutdown();
+
+			ibrcommon::MutexLock l(_inqueue);
+			_inqueue.signal(true);
 		}
 
 		void Client::received(const StreamContactHeader &h)
@@ -113,12 +120,18 @@ namespace dtn
 		{
 			_stream.done();
 			_stream.close();
+
+			ibrcommon::MutexLock l(_inqueue);
+			_inqueue.signal(true);
 		}
 
 		void Client::eventShutdown()
 		{
 			_stream.done();
 			_stream.close();
+
+			ibrcommon::MutexLock l(_inqueue);
+			_inqueue.signal(true);
 		}
 
 		void Client::eventConnectionUp(const StreamContactHeader &header)
@@ -128,45 +141,42 @@ namespace dtn
 
 			// set connected to true
 			_connected = true;
+
+			ibrcommon::MutexLock l(_inqueue);
+			_inqueue.signal(true);
 		}
 
 		void Client::eventError()
 		{
 			_stream.close();
+
+			ibrcommon::MutexLock l(_inqueue);
+			_inqueue.signal(true);
 		}
 
 		void Client::eventConnectionDown()
 		{
 			_connected = false;
+
+			ibrcommon::MutexLock l(_inqueue);
+			_inqueue.signal(true);
 		}
 
 		void Client::received(const dtn::api::Bundle &b)
 		{
 			if (_mode != dtn::api::Client::MODE_SENDONLY)
 			{
-				ibrcommon::MutexLock l(_queuelock);
 				_inqueue.push(b);
-				_queuelock.signal();
 			}
 		}
 
 		dtn::api::Bundle Client::getBundle()
 		{
-			ibrcommon::MutexLock l(_queuelock);
-			while (isConnected() && _inqueue.empty())
-			{
-				_queuelock.wait(100);
-			}
-
-			if (_inqueue.empty())
-			{
+			try {
+				return _inqueue.blockingpop();
+			} catch (ibrcommon::Exception ex) {
 				throw ibrcommon::ConnectionClosedException();
 			}
-
-			dtn::api::Bundle b = _inqueue.front();
-			_inqueue.pop();
-
-			return b;
 		}
 	}
 }

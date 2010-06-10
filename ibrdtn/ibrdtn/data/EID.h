@@ -5,12 +5,11 @@
  *      Author: morgenro
  */
 
-#include "ibrdtn/default.h"
-
 #ifndef EID_H_
 #define EID_H_
 
 #include <string>
+#include "ibrcommon/Exceptions.h"
 
 using namespace std;
 
@@ -21,8 +20,8 @@ namespace data
 	{
 	public:
 		EID();
-		EID(string scheme, string ssp);
-		EID(string value);
+		EID(std::string scheme, std::string ssp);
+		EID(std::string value);
 		virtual ~EID();
 
 		EID(const EID &other);
@@ -44,8 +43,8 @@ namespace data
 		bool operator>(const EID& other) const;
 
 		string getString() const;
-		string getApplication() const;
-		string getNode() const;
+		string getApplication() const throw (ibrcommon::Exception);
+		string getNode() const throw (ibrcommon::Exception);
 		string getScheme() const;
 
 		string getNodeEID() const;
@@ -53,10 +52,8 @@ namespace data
 		bool hasApplication() const;
 
 	private:
-		string m_value;
-		string m_scheme;
-		string m_node;
-		string m_application;
+		std::string _scheme;
+		std::string _ssp;
 	};
 }
 }

@@ -10,6 +10,8 @@
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/data/Exceptions.h"
+#include <ibrcommon/TimeMeasurement.h>
+#include <ibrcommon/Logger.h>
 
 using namespace dtn::data;
 
@@ -53,6 +55,11 @@ namespace dtn
 
 			// signal the complete handshake
 			_callback.eventConnectionUp(_peer);
+		}
+
+		void StreamConnection::reject()
+		{
+			_buf.reject();
 		}
 
 		void StreamConnection::close()
@@ -116,7 +123,6 @@ namespace dtn
 
 		void StreamConnection::eventAck(size_t ack, size_t sent)
 		{
-			// NOTE: no lock here because it is already set in underflow()
 			_ack_size = ack;
 			_sent_size = sent;
 			_in_state.signal(true);
@@ -133,30 +139,46 @@ namespace dtn
 			return false;
 		}
 
-		void StreamConnection::wait()
+		void StreamConnection::wait(const size_t timeout)
 		{
 			ibrcommon::MutexLock l(_in_state);
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
+			ibrcommon::TimeMeasurement tm;
+
 			if (_sent_size != _ack_size)
-					cout << "StreamConnection::wait(): wait for completion of transmission, current size: " << _ack_size << " of " << _sent_size << endl;
-#endif
-			while ((_sent_size != _ack_size) && (_in_state.getState() == CONNECTION_CONNECTED))
 			{
-				_in_state.wait();
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-				cout << "StreamConnection::wait(): current size: " << _ack_size << " of " << _sent_size << endl;
-#endif
+				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): wait for completion of transmission, current size: " << _ack_size << " of " << _sent_size << IBRCOMMON_LOGGER_ENDL;
 			}
 
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			std::cout << "StreamConnection::wait(): transfer completed" << std::endl;
-#endif
-		}
+			if (timeout == 0) tm.start();
 
-		void StreamConnection::reset()
-		{
-			ibrcommon::MutexLock l(_in_state);
-			_ack_size = 0;
+			while (!_buf.isCompleted() && (_in_state.getState() == CONNECTION_CONNECTED))
+			{
+				if (timeout == 0)
+				{
+					_in_state.wait();
+				}
+				else
+				{
+					_in_state.wait(timeout);
+					tm.stop();
+					if (tm.getMilliseconds() >= timeout)
+					{
+						IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer aborted (timeout): " << _ack_size << " of " << _sent_size << IBRCOMMON_LOGGER_ENDL;
+						return;
+					}
+				}
+				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): current size: " << _ack_size << " of " << _sent_size << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			if (_buf.isCompleted())
+			{
+				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer completed" << IBRCOMMON_LOGGER_ENDL;
+			}
+			else
+			{
+				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer aborted" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::ConnectionInterruptedException(_ack_size);
+			}
 		}
 
 		void StreamConnection::connectionTimeout()

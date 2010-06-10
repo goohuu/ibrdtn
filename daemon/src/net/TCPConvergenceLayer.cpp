@@ -7,12 +7,12 @@
 
 #include "net/TCPConvergenceLayer.h"
 #include "core/BundleCore.h"
-#include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "ibrcommon/net/NetInterface.h"
 #include "net/ConnectionEvent.h"
 #include <ibrcommon/thread/MutexLock.h>
 #include "routing/RequeueBundleEvent.h"
+#include <ibrcommon/Logger.h>
 
 #include <sys/socket.h>
 #include <streambuf>
@@ -78,16 +78,22 @@ namespace dtn
 			{
 				// search for an existing connection
 				ibrcommon::MutexLock l(_connection_lock);
-				for (std::list<TCPConvergenceLayer::TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+
+				for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 				{
-					TCPConvergenceLayer::TCPConnection *conn = (*iter);
+					TCPConvergenceLayer::Server::Connection &conn = (*iter);
 
 					// do not use the connection if it is marked as "free"
-					if (conn->free()) continue;
+					if ((*conn).free()) continue;
 
-					if (EID(conn->getNode().getURI()) == job._destination)
+					if (conn.match(job._destination))
 					{
-						conn->queue(job._bundle);
+						if (!conn._active)
+						{
+							IBRCOMMON_LOGGER(warning) << "putting bundle on pending connection" << IBRCOMMON_LOGGER_ENDL;
+						}
+
+						(*conn).queue(job._bundle);
 						return;
 					}
 				}
@@ -95,10 +101,11 @@ namespace dtn
 
 			try {
 				TCPConvergenceLayer::TCPConnection *conn = getConnection(n);
-				conn->queue(job._bundle);
 
 				// add the connection to the connection list
 				add(conn);
+
+				conn->queue(job._bundle);
 			} catch (ibrcommon::tcpserver::SocketException ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
@@ -128,6 +135,9 @@ namespace dtn
 
 			// create a connection
 			TCPConnection *conn = new TCPConnection(new ibrcommon::tcpstream(sock));
+
+			// add connection as pending
+			_connections.push_back( Connection( conn, n ) );
 
 			// raise setup event
 			EID eid(n.getURI());
@@ -160,17 +170,16 @@ namespace dtn
 				{
 					// search for an existing connection
 					ibrcommon::MutexLock l(_connection_lock);
-					for (std::list<TCPConvergenceLayer::TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+					for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 					{
-						TCPConvergenceLayer::TCPConnection *conn = (*iter);
+						TCPConvergenceLayer::Server::Connection &conn = (*iter);
 
 						// do not use the connection if it is marked as "free"
-						if (conn->free()) continue;
+						if ( (*conn).free()) continue;
 
-						if (conn->getNode() == node->getNode())
+						if (conn.match(*node))
 						{
-							conn->shutdown();
-							return;
+							(*conn).shutdown();
 						}
 					}
 				}
@@ -180,15 +189,30 @@ namespace dtn
 		void TCPConvergenceLayer::Server::connectionUp(TCPConvergenceLayer::TCPConnection *conn)
 		{
 			ibrcommon::MutexLock l(_connection_lock);
-			_connections.push_back(conn);
+
+			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			{
+				TCPConvergenceLayer::Server::Connection &item = (*iter);
+
+				if (conn == item._connection)
+				{
+					// put pending connection to the active connections
+					item._active = true;
+					return;
+				}
+			}
+
+			_connections.push_back( Connection( conn, conn->getNode(), true ) );
 		}
 
 		void TCPConvergenceLayer::Server::connectionDown(TCPConvergenceLayer::TCPConnection *conn)
 		{
 			ibrcommon::MutexLock l(_connection_lock);
-			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
-				if (conn == (*iter))
+				TCPConvergenceLayer::Server::Connection &item = (*iter);
+
+				if (conn == item._connection)
 				{
 					_connections.erase(iter);
 					return;
@@ -201,6 +225,14 @@ namespace dtn
 			try {
 				// wait for incoming connections
 				TCPConnection *conn = new TCPConnection(_tcpsrv.accept());
+
+				{
+					ibrcommon::MutexLock l(_connection_lock);
+
+					// add connection as pending
+					_connections.push_back( Connection( conn, conn->getNode() ) );
+				}
+
 				conn->initialize(dtn::core::BundleCore::local, 10);
 				return conn;
 			} catch (ibrcommon::tcpserver::SocketException ex) {
@@ -217,6 +249,40 @@ namespace dtn
 		void TCPConvergenceLayer::Server::shutdown()
 		{
 			shutdownAll();
+		}
+
+		TCPConvergenceLayer::Server::Connection::Connection(TCPConvergenceLayer::TCPConnection *conn, const dtn::core::Node &node, const bool &active)
+		 : _connection(conn), _peer(node), _active(active)
+		{
+
+		}
+
+		TCPConvergenceLayer::Server::Connection::~Connection()
+		{
+
+		}
+
+		TCPConvergenceLayer::TCPConnection& TCPConvergenceLayer::Server::Connection::operator*()
+		{
+			return *_connection;
+		}
+
+		const bool TCPConvergenceLayer::Server::Connection::match(const dtn::data::EID &destination) const
+		{
+			if (_peer.getURI() == destination.getNodeEID()) return true;
+			if (_connection->getNode().getURI() == destination.getNodeEID()) return true;
+
+			return false;
+		}
+
+		const bool TCPConvergenceLayer::Server::Connection::match(const NodeEvent &evt) const
+		{
+			const dtn::core::Node &n = evt.getNode();
+
+			if (_peer.getURI() == n.getURI()) return true;
+			if (_connection->getNode().getURI() == n.getURI()) return true;
+
+			return false;
 		}
 	}
 }

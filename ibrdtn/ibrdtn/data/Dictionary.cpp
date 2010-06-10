@@ -119,7 +119,7 @@ namespace data
 		dtn::data::SDNV length;
 		stream >> length;
 
-		obj._bytestream.clear();
+		obj._bytestream.str("");
 		char data[length.getValue()];
 		stream.read(data, length.getValue());
 		obj._bytestream.write(data, length.getValue());

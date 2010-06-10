@@ -7,82 +7,47 @@
 
 #include "ibrdtn/data/EID.h"
 
-namespace dtn {
+namespace dtn
+{
 namespace data
 {
 	EID::EID()
-	: m_value("dtn:none"), m_scheme("dtn"), m_node("none"), m_application("")
+	: _scheme("dtn"), _ssp("none")
 	{
 	}
 
 	EID::EID(const EID &other)
-	 : m_value(other.m_value), m_scheme(other.m_scheme), m_node(other.m_node), m_application(other.m_application)
+	 : _scheme(other._scheme), _ssp(other._ssp)
 	{
 	}
 
-	EID::EID(string scheme, string ssp)
-	 : m_value(scheme + ":" + ssp), m_scheme(scheme), m_node(""), m_application("")
+	EID::EID(std::string scheme, std::string ssp)
+	 : _scheme(scheme), _ssp(ssp)
 	{
-		try {
-			// first char not "/", e.g. "//node1" -> 2
-			size_t first_char = ssp.find_first_not_of("/");
-
-			// start of application part
-			size_t application_start = ssp.find_first_of("/", first_char);
-
-			if (application_start == string::npos)
-			{
-				m_application = "";
-				m_node = ssp;
-			}
-			else
-			{
-				// extract application
-				m_application = ssp.substr(application_start, ssp.length() - application_start);
-
-				// extract node
-				m_node = ssp.substr(0, application_start);
-			}
-		} catch (std::out_of_range ex) {
-			m_value = "dtn:none";
-			m_scheme = "dtn";
-			m_node = "none";
-			m_application = "";
-		}
+		// TODO: checks for illegal characters
 	}
 
-	EID::EID(string value)
-	: m_value(value)
+	EID::EID(std::string value)
 	{
 		try {
-			m_scheme = m_value.substr(0, m_value.find_first_of(":"));
+			// search for the delimiter
+			size_t delimiter = value.find_first_of(":");
 
-			string ssp = m_value.substr(m_scheme.length() + 1, m_value.length() - m_scheme.length() - 1);
+			// jump to default eid if the format is wrong
+			if (delimiter == std::string::npos)
+				throw ibrcommon::Exception("wrong eid format");
 
-			// first char not "/", e.g. "//node1" -> 2
-			size_t first_char = ssp.find_first_not_of("/");
+			// the scheme is everything before the delimiter
+			_scheme = value.substr(0, delimiter);
 
-			// start of application part
-			size_t application_start = ssp.find_first_of("/", first_char);
+			// the ssp is everything else
+			size_t startofssp = delimiter + 1;
+			_ssp = value.substr(startofssp, value.length() - startofssp);
 
-			if (application_start == string::npos)
-			{
-				m_application = "";
-				m_node = ssp;
-			}
-			else
-			{
-				// extract application
-				m_application = ssp.substr(application_start, ssp.length() - application_start);
-
-				// extract node
-				m_node = ssp.substr(0, application_start);
-			}
-		} catch (std::out_of_range ex) {
-			m_value = "dtn:none";
-			m_scheme = "dtn";
-			m_node = "none";
-			m_application = "";
+			// TODO: do syntax check
+		} catch (...) {
+			_scheme = "dtn";
+			_ssp = "none";
 		}
 	}
 
@@ -92,22 +57,21 @@ namespace data
 
 	EID& EID::operator=(const EID &other)
 	{
-		m_value = other.m_value;
-		m_scheme = other.m_scheme;
-		m_node = other.m_node;
-		m_application = other.m_application;
-
+		_ssp = other._ssp;
+		_scheme = other._scheme;
 		return *this;
 	}
 
 	bool EID::operator==(EID const& other) const
 	{
-		return (m_value == other.m_value);
+		if (_ssp != other._ssp) return false;
+		if (_scheme != other._scheme) return false;
+		return true;
 	}
 
 	bool EID::operator==(string const& other) const
 	{
-		return (m_value == other);
+		return ((*this) == EID(other));
 	}
 
 	bool EID::operator!=(EID const& other) const
@@ -117,7 +81,7 @@ namespace data
 
 	EID EID::operator+(string suffix)
 	{
-		return EID(m_value + suffix);
+		return EID(getString() + suffix);
 	}
 
 	bool EID::sameHost(string const& other) const
@@ -134,42 +98,87 @@ namespace data
 
 	bool EID::operator<(EID const& other) const
 	{
-		return m_value < other.m_value;
+		return getString() < other.getString();
 	}
 
 	bool EID::operator>(EID const& other) const
 	{
-		return m_value > other.m_value;
+		return getString() > other.getString();
 	}
 
-	string EID::getString() const
+	std::string EID::getString() const
 	{
-		return m_value;
+		return _scheme + ":" + _ssp;
 	}
 
-	string EID::getApplication() const
+	std::string EID::getApplication() const throw (ibrcommon::Exception)
 	{
-		return m_application;
+		// first char not "/", e.g. "//node1" -> 2
+		size_t first_char = _ssp.find_first_not_of("/");
+
+		// only "/" ? thats bad!
+		if (first_char == std::string::npos)
+			throw ibrcommon::Exception("wrong eid format");
+
+		// start of application part
+		size_t application_start = _ssp.find_first_of("/", first_char);
+
+		// no application part available
+		if (application_start == std::string::npos)
+			return "";
+
+		// return the application part
+		return _ssp.substr(application_start, _ssp.length() - application_start);
 	}
 
-	string EID::getNode() const
+	std::string EID::getNode() const throw (ibrcommon::Exception)
 	{
-		return m_node;
+		// first char not "/", e.g. "//node1" -> 2
+		size_t first_char = _ssp.find_first_not_of("/");
+
+		// only "/" ? thats bad!
+		if (first_char == std::string::npos)
+			throw ibrcommon::Exception("wrong eid format");
+
+		// start of application part
+		size_t application_start = _ssp.find_first_of("/", first_char);
+
+		// no application part available
+		if (application_start == std::string::npos)
+			return _ssp;
+
+		// return the node part
+		return _ssp.substr(0, application_start);
 	}
 
-	string EID::getScheme() const
+	std::string EID::getScheme() const
 	{
-		return m_scheme;
+		return _scheme;
 	}
 
-	string EID::getNodeEID() const
+	std::string EID::getNodeEID() const
 	{
-		return m_scheme + ":" + m_node;
+		return _scheme + ":" + getNode();
 	}
 
 	bool EID::hasApplication() const
 	{
-		return (m_application != "");
+		// first char not "/", e.g. "//node1" -> 2
+		size_t first_char = _ssp.find_first_not_of("/");
+
+		// only "/" ? thats bad!
+		if (first_char == std::string::npos)
+			throw ibrcommon::Exception("wrong eid format");
+
+		// start of application part
+		size_t application_start = _ssp.find_first_of("/", first_char);
+
+		// no application part available
+		if (application_start == std::string::npos)
+			return false;
+
+		// return the application part
+		return true;
 	}
 }
 }

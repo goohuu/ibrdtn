@@ -11,6 +11,7 @@
 #include "Component.h"
 
 #include "core/EventReceiver.h"
+#include "core/NodeEvent.h"
 #include "core/Node.h"
 
 #include "net/GenericServer.h"
@@ -19,6 +20,7 @@
 #include "net/DiscoveryServiceProvider.h"
 
 #include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/streams/StreamConnection.h>
 #include <ibrdtn/streams/StreamContactHeader.h>
 
@@ -27,7 +29,7 @@
 #include <ibrcommon/net/NetInterface.h>
 
 #include <memory>
-#include <queue>
+#include <ibrcommon/thread/ThreadSafeQueue.h>
 
 using namespace dtn::streams;
 
@@ -42,7 +44,7 @@ namespace dtn
 		class TCPConvergenceLayer : public dtn::daemon::Component, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
-			class TCPConnection : public GenericConnection, public StreamConnection::Callback
+			class TCPConnection : public GenericConnection, public StreamConnection::Callback, protected dtn::data::DefaultDeserializer
 			{
 			public:
 				TCPConnection(ibrcommon::tcpstream *stream);
@@ -100,10 +102,13 @@ namespace dtn
 				friend TCPConvergenceLayer::TCPConnection& operator<<(TCPConvergenceLayer::TCPConnection &conn, const dtn::data::Bundle &bundle);
 
 			protected:
-				void handshake(const dtn::data::EID &name, const size_t timeout);
+				void handshake();
 
-				ibrcommon::Conditional _queue_lock;
-				std::queue<dtn::data::Bundle> _bundles;
+				virtual void validate(const dtn::data::PrimaryBlock &obj) const throw (RejectedException);
+				virtual void validate(const dtn::data::Block &obj, const size_t length) const throw (RejectedException);
+				virtual void validate(const dtn::data::Bundle &obj) const throw (RejectedException);
+
+				void rejectTransmission();
 
 			private:
 				/**
@@ -125,7 +130,7 @@ namespace dtn
 					TCPConnection &_connection;
 				};
 
-				class Sender : public ibrcommon::JoinableThread
+				class Sender : public ibrcommon::JoinableThread, public ibrcommon::ThreadSafeQueue<dtn::data::Bundle>
 				{
 				public:
 					Sender(TCPConnection &connection);
@@ -133,14 +138,7 @@ namespace dtn
 					void run();
 					void shutdown();
 
-					dtn::data::EID _name;
-					size_t _timeout;
-
 				private:
-					// This thread receives incoming bundles and forward them
-					// to the storage.
-					TCPConnection::Receiver _receiver;
-
 					bool _running;
 					TCPConnection &_connection;
 				};
@@ -157,6 +155,13 @@ namespace dtn
 				// This thread gets awaiting bundles of the queue
 				// and transmit them to the peer.
 				Sender _sender;
+
+				// This thread receive all bundles
+				Receiver _receiver;
+
+				// handshake variables
+				dtn::data::EID _name;
+				size_t _timeout;
 			};
 
 			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver
@@ -185,10 +190,26 @@ namespace dtn
 				void connectionDown(TCPConvergenceLayer::TCPConnection *conn);
 
 			private:
+				class Connection
+				{
+				public:
+					Connection(TCPConvergenceLayer::TCPConnection *conn, const dtn::core::Node &node, const bool &active = false);
+					~Connection();
+
+					const bool match(const dtn::data::EID &destination) const;
+					const bool match(const dtn::core::NodeEvent &evt) const;
+
+					TCPConvergenceLayer::TCPConnection& operator*();
+
+					TCPConvergenceLayer::TCPConnection *_connection;
+					dtn::core::Node _peer;
+					bool _active;
+				};
+
 				TCPConnection* getConnection(const dtn::core::Node &n);
 				ibrcommon::tcpserver _tcpsrv;
-				std::list<TCPConnection*> _connections;
 				ibrcommon::Conditional _connection_lock;
+				std::list<Connection> _connections;
 			};
 
 			/**

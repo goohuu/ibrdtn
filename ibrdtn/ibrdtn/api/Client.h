@@ -17,8 +17,7 @@
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Exceptions.h"
-
-#include <queue>
+#include "ibrcommon/thread/ThreadSafeQueue.h"
 
 using namespace dtn::data;
 using namespace dtn::streams;
@@ -123,8 +122,7 @@ namespace dtn
 			dtn::streams::StreamContactHeader _header;
 			Client::AsyncReceiver _receiver;
 
-			ibrcommon::Conditional _queuelock;
-			std::queue<dtn::api::Bundle> _inqueue;
+			ibrcommon::ThreadSafeQueue<dtn::api::Bundle> _inqueue;
 		};
 	}
 }

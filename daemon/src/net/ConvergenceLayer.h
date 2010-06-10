@@ -12,21 +12,6 @@ namespace dtn
 	{
 		class BundleReceiver;
 
-		class ConnectionInterruptedException : public ibrcommon::IOException
-		{
-		public:
-			ConnectionInterruptedException(size_t last_ack = 0) : ibrcommon::IOException("The connection has been interrupted."), _last_ack(last_ack)
-			{
-			}
-
-			size_t getLastAck()
-			{
-				return _last_ack;
-			}
-		private:
-			size_t _last_ack;
-		};
-
 		/**
 		 * Ist für die Zustellung von Bundles verantwortlich.
 		 */

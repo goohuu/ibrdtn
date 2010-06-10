@@ -13,13 +13,13 @@
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrdtn/streams/StreamDataSegment.h"
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
-#include "ibrcommon/thread/Timer.h"
-#include "ibrcommon/Exceptions.h"
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/thread/Timer.h>
+#include <ibrcommon/Exceptions.h>
+#include <ibrcommon/thread/ThreadSafeQueue.h>
 #include <iostream>
 #include <streambuf>
-#include <queue>
 
 namespace dtn
 {
@@ -140,12 +140,7 @@ namespace dtn
 			 * wait until all data has been acknowledged
 			 * or the connection has been closed
 			 */
-			void wait();
-
-			/**
-			 * reset the value for the ACK'd bytes
-			 */
-			void reset();
+			void wait(const size_t timeout = 0);
 
 			/**
 			 * This method shutdown the whole connection handling process. To differ between the
@@ -169,6 +164,11 @@ namespace dtn
 			 * @param csc The case of the requested shutdown.
 			 */
 			void shutdown(ConnectionShutdownCases csc = CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
+
+			/**
+			 * This method rejects the currently transmitted bundle
+			 */
+			void reject();
 
 		private:
 			/**
@@ -220,6 +220,16 @@ namespace dtn
 				//bool timeout(ibrcommon::Timer *timer);
 				size_t timeout(size_t identifier);
 
+				/**
+				 * This method rejects the currently transmitted bundle
+				 */
+				void reject();
+
+				/**
+				 * This method checks if all transmitted segments are acknowledged
+				 */
+				bool isCompleted();
+
 			protected:
 				virtual int sync();
 				virtual int overflow(int = std::char_traits<char>::eof());
@@ -228,25 +238,45 @@ namespace dtn
 			private:
 				enum timerNames
 				{
-					//TIMER_SHUTDOWN = 0,
 					TIMER_IN = 1,
 					TIMER_OUT = 2
 				};
 
-				ibrcommon::StatefulConditional<StreamBuffer::State, StreamBuffer::SHUTDOWN> _in_state;
-				ibrcommon::StatefulConditional<StreamBuffer::State, StreamBuffer::SHUTDOWN> _out_state;
+				enum StateBits
+				{
+					STREAM_FAILED = 1 << 0,
+					STREAM_BAD = 1 << 1,
+					STREAM_EOF = 1 << 2,
+					STREAM_HANDSHAKE = 1 << 3,
+					STREAM_SHUTDOWN = 1 << 4,
+					STREAM_CLOSED = 1 << 5,
+					STREAM_REJECT = 1 << 6,
+					STREAM_SKIP = 1 << 7,
+					STREAM_ACK_SUPPORT = 1 << 8,
+					STREAM_NACK_SUPPORT = 1 << 9,
+					STREAM_SOB = 1 << 10			// start of bundle
+				};
+
+				void skipData(size_t &size);
+
+				const bool get(const StateBits bit) const;
+				void set(const StateBits bit);
+				void unset(const StateBits bit);
+				const bool good() const;
+
+				ibrcommon::Mutex _statelock;
+				int _statebits;
 
 				StreamConnection &_conn;
 
 				// Input buffer
 				char *in_buf_;
+
 				// Output buffer
 				char *out_buf_;
+				ibrcommon::Mutex _sendlock;
 
 				std::iostream &_stream;
-
-				size_t in_data_remain_;
-				bool _start_of_bundle;
 
 				size_t _sent_size;
 				size_t _recv_size;
@@ -254,9 +284,20 @@ namespace dtn
 				size_t _in_timeout;
 				size_t _out_timeout;
 
-				ibrcommon::MultiTimer _timer;
+				ibrcommon::Mutex _timer_lock;
+				size_t _in_timeout_value;
+				size_t _out_timeout_value;
+				ibrcommon::SimpleTimer _timer;
 
-				bool _ack_support;
+				// this queue contains all sent data segments
+				// they are removed if an ack or nack is received
+				ibrcommon::ThreadSafeQueue<StreamDataSegment> _segments;
+
+				ibrcommon::Mutex _underflow_mutex;
+				size_t _underflow_data_remain;
+				State _underflow_state;
+
+				ibrcommon::Mutex _overflow_mutex;
 			};
 
 			/**

@@ -148,6 +148,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	size_t bundlecounter = 0;
+
 	// the last parameter is always the destination
 	ping_destination = argv[argc - 1];
 
@@ -188,6 +190,8 @@ int main(int argc, char *argv[])
 
 					// print out measurement result
 					cout << tm << endl;
+
+					bundlecounter++;
 				}
 				else
 					cout << endl;
@@ -207,6 +211,11 @@ int main(int argc, char *argv[])
 		return -1;
 	} catch (...) {
 
+	}
+
+	if (bundlecounter > 1)
+	{
+		std::cout << bundlecounter << " bundles received" << std::endl;
 	}
 
 	return 0;

@@ -13,6 +13,7 @@
 #include "ibrdtn/data/EID.h"
 #include "net/DiscoveryService.h"
 #include <string>
+#include <list>
 
 namespace dtn
 {
@@ -39,7 +40,7 @@ namespace dtn
 
 			dtn::data::EID getEID() const;
 
-			const list<DiscoveryService> getServices() const;
+			const std::list<DiscoveryService> getServices() const;
 			void clearServices();
 			void addService(DiscoveryService service);
 			const DiscoveryService& getService(string name) const;

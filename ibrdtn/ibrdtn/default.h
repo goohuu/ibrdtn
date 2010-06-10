@@ -11,7 +11,6 @@
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/thread/Conditional.h"
 #include "ibrcommon/thread/WaitForConditional.h"
-#include "ibrcommon/SyslogStream.h"
 
 #include <iostream>
 #include <sstream>
