@@ -87,7 +87,7 @@ namespace dtn
 		{
 			try {
 				// wait until all segments are ACK'd with 10 seconds timeout
-				_connection.wait(10000);
+				_connection.wait();
 			} catch (...) {
 
 			}
@@ -166,7 +166,7 @@ namespace dtn
 			conn._connection << std::flush;
 
 			// wait until all segments are ACK'd with 10 seconds timeout
-			conn._connection.wait(10000);
+			conn._connection.wait();
 		}
 	}
 }
