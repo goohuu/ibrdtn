@@ -27,6 +27,12 @@ namespace dtn
 				MSG_SHUTDOWN = 0x5
 			};
 
+			enum SegmentMark
+			{
+				MSG_MARK_BEGINN = 0x02,
+				MSG_MARK_END = 0x01
+			};
+
 			enum ShutdownReason
 			{
 				MSG_SHUTDOWN_NONE = 0xff,
@@ -36,7 +42,7 @@ namespace dtn
 			};
 
 			StreamDataSegment(SegmentType type, size_t size); // creates a ACK or DATA segment
-			StreamDataSegment(); // Creates a Keep-Alive Message
+			StreamDataSegment(SegmentType type = MSG_KEEPALIVE); // Creates a Keep-Alive Message
 			StreamDataSegment(ShutdownReason reason, size_t reconnect = 0);  // Creates a Shutdown Message
 
 			virtual ~StreamDataSegment();

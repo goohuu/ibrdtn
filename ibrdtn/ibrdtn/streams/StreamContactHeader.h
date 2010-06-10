@@ -30,7 +30,8 @@ namespace dtn
 			enum HEADER_BITS
 			{
 				REQUEST_ACKNOWLEDGMENTS = 1 << 0,
-				REQUEST_FRAGMENTATION = 1 << 1
+				REQUEST_FRAGMENTATION = 1 << 1,
+				REQUEST_NEGATIVE_ACKNOWLEDGMENTS = 1 << 2
 			};
 
 			StreamContactHeader();
