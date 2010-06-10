@@ -69,7 +69,6 @@ namespace dtn
 
 		void ClientHandler::eventError()
 		{
-			(*_stream).done();
 			(*_stream).close();
 		}
 
@@ -86,77 +85,88 @@ namespace dtn
 
 		void ClientHandler::shutdown()
 		{
+			try {
+				// wait until all segments are ACK'd with 10 seconds timeout
+				_connection.wait(10000);
+			} catch (...) {
+
+			}
+
+			// shutdown the connection
 			_connection.shutdown();
 		}
 
 		void ClientHandler::run()
 		{
 			try {
-				char flags = 0;
+				try {
+					char flags = 0;
 
-				// request acknowledgements
-				flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+					// request acknowledgements
+					flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 
-				// do the handshake
-				_connection.handshake(dtn::core::BundleCore::local, 10, flags);
+					// do the handshake
+					_connection.handshake(dtn::core::BundleCore::local, 10, flags);
 
-				BundleStorage &storage = BundleCore::getInstance().getStorage();
+					BundleStorage &storage = BundleCore::getInstance().getStorage();
 
-				while (_running)
-				{
-					try {
-						dtn::data::Bundle b = storage.get( getPeer() );
-						dtn::data::DefaultSerializer(_connection) << b; _connection << std::flush;
-						storage.remove(b);
-					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-						break;
+					while (_running)
+					{
+						try {
+							dtn::data::Bundle b = storage.get( getPeer() );
+							dtn::data::DefaultSerializer(_connection) << b; _connection << std::flush;
+							storage.remove(b);
+						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+							break;
+						}
 					}
+
+					while (_running)
+					{
+						dtn::data::Bundle bundle;
+						dtn::data::DefaultDeserializer(_connection) >> bundle;
+
+						// create a new sequence number
+						bundle.relabel();
+
+						// set the source
+						bundle._source = _eid;
+
+						// raise default bundle received event
+						dtn::net::BundleReceivedEvent::raise(EID(), bundle);
+
+						yield();
+					}
+
+					_connection.shutdown();
+				} catch (ibrcommon::IOException ex) {
+					_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+					_running = false;
+				} catch (dtn::InvalidDataException ex) {
+					_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+					_running = false;
 				}
+			} catch (...) {
 
-				while (_running)
-				{
-					dtn::data::Bundle bundle;
-					dtn::data::DefaultDeserializer(_connection) >> bundle;
-
-					// create a new sequence number
-					bundle.relabel();
-
-					// set the source
-					bundle._source = _eid;
-
-					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(EID(), bundle);
-
-					yield();
-				}
-
-				_connection.shutdown();
-			} catch (ibrcommon::IOException ex) {
-				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-				_running = false;
-			} catch (dtn::InvalidDataException ex) {
-				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-				_running = false;
 			}
 		}
 
 		ClientHandler& operator>>(ClientHandler &conn, dtn::data::Bundle &bundle)
 		{
+			// get a bundle
 			dtn::data::DefaultDeserializer(conn._connection) >> bundle;
 		}
 
 		ClientHandler& operator<<(ClientHandler &conn, const dtn::data::Bundle &bundle)
 		{
-			// reset the ACK value
-			conn._connection.reset();
-
 			// transmit the bundle
 			dtn::data::DefaultSerializer(conn._connection) << bundle;
 
+			// mark the end of the bundle
 			conn._connection << std::flush;
 
-			// wait until all segments are acknowledged.
-			conn._connection.wait();
+			// wait until all segments are ACK'd with 10 seconds timeout
+			conn._connection.wait(10000);
 		}
 	}
 }

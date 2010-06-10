@@ -97,49 +97,48 @@ namespace dtn
 		 */
 		void ApiServer::Distributor::run()
 		{
-			ibrcommon::MutexLock l(_received_cond);
-
-			while (_running)
+			try
 			{
-				// wait for the next signal
-				_received_cond.wait();
-
-				// stop the thread on shutdown
-				if (!_running) return;
-
-				// no bundles available
-				if (_received.empty()) continue;
-
-				// get the next element in the queue
-				dtn::routing::MetaBundle &mb = _received.front();
-
-				// search for the receiver of this bundle
+				while (_running)
 				{
-					ibrcommon::MutexLock l(_lock);
+					// get the next element in the queue
+					dtn::routing::MetaBundle mb = _received.blockingpop();
 
-					for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+					// search for the receiver of this bundle
 					{
-						ClientHandler *handler = (*iter);
-						if (handler->getPeer() == mb.destination)
-						{
-							try {
-								BundleStorage &storage = BundleCore::getInstance().getStorage();
-								dtn::data::Bundle bundle = storage.get( mb );
-								(*handler) << bundle;
-								storage.remove(bundle);
-							} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+						ibrcommon::MutexLock l(_lock);
 
-							} catch (ibrcommon::IOException ex) {
-								handler->shutdown();
-							} catch (dtn::InvalidDataException ex) {
-								handler->shutdown();
+						for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+						{
+							ClientHandler *handler = (*iter);
+							if (handler->getPeer() == mb.destination)
+							{
+								try {
+									BundleStorage &storage = BundleCore::getInstance().getStorage();
+									dtn::data::Bundle bundle = storage.get( mb );
+
+									// send the bundle
+									(*handler) << bundle;
+
+									storage.remove(bundle);
+								} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+									std::cerr << "API: NoBundleFoundException" << std::endl;
+								} catch (ibrcommon::IOException ex) {
+									std::cerr << "API: IOException" << std::endl;
+									handler->shutdown();
+								} catch (dtn::InvalidDataException ex) {
+									std::cerr << "API: InvalidDataException" << std::endl;
+									handler->shutdown();
+								} catch (...) {
+									std::cerr << "unexpected API error!" << std::endl;
+									handler->shutdown();
+								}
 							}
 						}
 					}
 				}
-
-				// delete the element
-				_received.pop();
+			} catch (...) {
+				std::cerr << "unexpected error or shutdown" << std::endl;
 			}
 		}
 
@@ -149,9 +148,9 @@ namespace dtn
 		void ApiServer::Distributor::shutdown()
 		{
 			{
-				ibrcommon::MutexLock l(_received_cond);
+				ibrcommon::MutexLock l(_received);
 				_running = false;
-				_received_cond.signal(true);
+				_received.signal(true);
 			}
 			join();
 		}
@@ -163,9 +162,7 @@ namespace dtn
 		{
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
-				ibrcommon::MutexLock l(_received_cond);
 				_received.push(received.getBundle());
-				_received_cond.signal();
 			} catch (std::bad_cast ex) {
 
 			}

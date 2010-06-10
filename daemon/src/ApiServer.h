@@ -14,6 +14,7 @@
 #include "ibrcommon/net/NetInterface.h"
 #include "net/GenericServer.h"
 #include "routing/MetaBundle.h"
+#include <ibrcommon/thread/ThreadSafeQueue.h>
 
 #include <queue>
 #include <list>
@@ -60,10 +61,10 @@ namespace dtn
 
 			private:
 				bool _running;
-				std::list<ClientHandler*> &_connections;
+
 				ibrcommon::Mutex &_lock;
-				std::queue<dtn::routing::MetaBundle> _received;
-				ibrcommon::Conditional _received_cond;
+				std::list<ClientHandler*> &_connections;
+				ibrcommon::ThreadSafeQueue<dtn::routing::MetaBundle> _received;
 			};
 
 			std::list<ClientHandler*> _connections;
