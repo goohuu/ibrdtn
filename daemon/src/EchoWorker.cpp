@@ -1,6 +1,7 @@
 #include "EchoWorker.h"
 #include "net/ConvergenceLayer.h"
 #include "ibrdtn/utils/Utils.h"
+#include <ibrcommon/Logger.h>
 
 using namespace dtn::core;
 using namespace dtn::data;
@@ -31,7 +32,7 @@ namespace dtn
 				echo._source = getWorkerURI();
 
 #ifdef DO_DEBUG_OUTPUT
-				cout << "echo request received, replying!" << endl;
+				IBRCOMMON_LOGGER_DEBUG(5) << "echo request received, replying!" << IBRCOMMON_LOGGER_ENDL;
 #endif
 
 				// send it

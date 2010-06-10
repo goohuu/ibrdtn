@@ -2,6 +2,7 @@
 #include "ibrdtn/utils/Utils.h"
 #include "core/Node.h"
 #include "ibrcommon/net/NetInterface.h"
+#include <ibrcommon/Logger.h>
 
 using namespace dtn::net;
 using namespace dtn::core;
@@ -12,16 +13,19 @@ namespace dtn
 {
 	namespace daemon
 	{
-		void Configuration::version(std::ostream &stream)
+		std::string Configuration::version()
 		{
-				stream << PACKAGE_VERSION;
+			std::stringstream ss;
+			ss << PACKAGE_VERSION;
 		#ifdef SVN_REV
-				stream << "-r" << SVN_REV;
+			ss << "-r" << SVN_REV;
 		#endif
+
+			return ss.str();
 		}
 
 		Configuration::Configuration()
-		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true)
+		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true), _debug(false), _debuglevel(0), _quiet(false)
 		{}
 
 		Configuration::~Configuration()
@@ -33,7 +37,7 @@ namespace dtn
 			return conf;
 		}
 
-		void Configuration::load(int argc, char *argv[])
+		void Configuration::params(int argc, char *argv[])
 		{
 			for (int i = 0; i < argc; i++)
 			{
@@ -52,24 +56,35 @@ namespace dtn
 
 					if (arg == "--noapi")
 					{
-							cout << "API disabled" << endl;
 							_doapi = false;
 					}
 
 					if ((arg == "--version") || (arg == "-v"))
 					{
-							cout << "IBR-DTN version: "; version(cout); cout << endl;
+							std::cout << "IBR-DTN version: " << version() << std::endl;
 							exit(0);
 					}
 
 					if (arg == "--nodiscovery")
 					{
-							cout << "Discovery disabled" << endl;
 							_dodiscovery = false;
 					}
-			}
 
-			// load the configuration
+					if (arg == "-d")
+					{
+							_debuglevel = atoi(argv[i + 1]);
+							_debug = true;
+					}
+
+					if (arg == "-q")
+					{
+						_quiet = true;
+					}
+			}
+		}
+
+		void Configuration::load()
+		{
 			load(_filename);
 		}
 
@@ -77,11 +92,26 @@ namespace dtn
 		{
 			try {
 					_conf = ibrcommon::ConfigFile(filename);;
-					cout << "Configuration: " << filename << endl;
+					IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::ConfigFile::file_not_found ex) {
-					cout << "Using defaults. To use custom config file use parameter -c configfile." << endl;
+					IBRCOMMON_LOGGER(info) << "Using defaults. To use custom config file use parameter -c configfile." << IBRCOMMON_LOGGER_ENDL;
 					_conf = ConfigFile();
 			}
+		}
+
+		const bool Configuration::beQuiet() const
+		{
+			return _quiet;
+		}
+
+		const bool Configuration::doDebug() const
+		{
+			return _debug;
+		}
+
+		const int Configuration::getDebugLevel() const
+		{
+			return _debuglevel;
 		}
 
 		string Configuration::getNodename()

@@ -38,9 +38,10 @@ namespace dtn
 			/**
 			 * load the configuration from a file
 			 */
+			void load();
 			void load(string filename);
 
-			void load(int argc, char *argv[]);
+			void params(int argc, char *argv[]);
 
 			/**
 			 * Returns the name of the node
@@ -80,7 +81,7 @@ namespace dtn
 			bool doDiscovery();
 			bool doAPI();
 
-			void version(std::ostream &stream);
+			std::string version();
 
 			string getNotifyCommand();
 
@@ -97,6 +98,11 @@ namespace dtn
 			std::string getStatLogType();
 			unsigned int getStatLogInterval();
 
+			const int getDebugLevel() const;
+			const bool doDebug() const;
+
+			const bool beQuiet() const;
+
 		private:
 			ibrcommon::ConfigFile _conf;
 
@@ -105,6 +111,9 @@ namespace dtn
 			bool _use_default_net;
 			bool _doapi;
 			bool _dodiscovery;
+			int _debuglevel;
+			bool _debug;
+			bool _quiet;
 		};
 	}
 }

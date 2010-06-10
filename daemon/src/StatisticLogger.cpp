@@ -9,6 +9,7 @@
 #include "net/BundleReceivedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include <ibrdtn/utils/Utils.h>
+#include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <ctime>
 
@@ -20,7 +21,7 @@ namespace dtn
 		 : _timer(*this, 0), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
 		   _core(dtn::core::BundleCore::getInstance())
 		{
-			std::cout << "Logging module initialized. mode = " << _type << ", interval = " << interval << std::endl;
+			IBRCOMMON_LOGGER(info) << "Logging module initialized. mode = " << _type << ", interval = " << interval << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval, std::string filename)

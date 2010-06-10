@@ -1,6 +1,6 @@
 #include "Debugger.h"
 #include "ibrdtn/utils/Utils.h"
-#include <iostream>
+#include <ibrcommon/Logger.h>
 
 using namespace dtn::data;
 using namespace dtn::core;
@@ -12,7 +12,7 @@ namespace dtn
 	{
 		void Debugger::callbackBundleReceived(const Bundle &b)
 		{
-			cout << "Bundle received " << b.toString() << endl;
+			IBRCOMMON_LOGGER_DEBUG(5) << "Bundle received " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 }

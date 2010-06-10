@@ -14,6 +14,7 @@
 #include "core/CustodyEvent.h"
 #include "core/BundleEvent.h"
 #include "core/TimeEvent.h"
+#include <ibrcommon/Logger.h>
 #include <iostream>
 
 using namespace std;
@@ -45,14 +46,14 @@ namespace dtn
 					case CUSTODY_ACCEPT:
 						if (custody->getBundle()._procflags & Bundle::CUSTODY_REQUESTED)
 						{
-							ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": custody acceptance" << endl;
+							IBRCOMMON_LOGGER(notice) << evt->getName() << ": custody acceptance" << IBRCOMMON_LOGGER_ENDL;
 						}
 						break;
 
 					case CUSTODY_REJECT:
 						if (custody->getBundle()._procflags & Bundle::CUSTODY_REQUESTED)
 						{
-							ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": custody reject" << endl;
+							IBRCOMMON_LOGGER(notice) << evt->getName() << ": custody reject" << IBRCOMMON_LOGGER_ENDL;
 						}
 						break;
 				};
@@ -62,22 +63,22 @@ namespace dtn
 				switch (bundle->getAction())
 				{
 				case BUNDLE_DELETED:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": bundle " << bundle->getBundle().toString() << " deleted" << endl;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": bundle " << bundle->getBundle().toString() << " deleted" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				case BUNDLE_CUSTODY_ACCEPTED:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": custody accepted for " << bundle->getBundle().toString() << endl;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": custody accepted for " << bundle->getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
 					break;
 				case BUNDLE_FORWARDED:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": bundle " << bundle->getBundle().toString() << " forwarded" << endl;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": bundle " << bundle->getBundle().toString() << " forwarded" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				case BUNDLE_DELIVERED:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": bundle " << bundle->getBundle().toString() << " delivered" << endl;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": bundle " << bundle->getBundle().toString() << " delivered" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				case BUNDLE_RECEIVED:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": bundle " << bundle->getBundle().toString() << " received" << endl;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": bundle " << bundle->getBundle().toString() << " received" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				default:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": unknown" << endl;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": unknown" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				}
 			}
@@ -86,30 +87,29 @@ namespace dtn
 				switch (node->getAction())
 				{
 				case NODE_INFO_UPDATED:
-					//ibrcommon::slog << evt->getName() << ": Info updated for " << node->getNode().getURI() << endl;
+					IBRCOMMON_LOGGER_DEBUG(10) << evt->getName() << ": Info updated for " << node->getNode().getURI() << IBRCOMMON_LOGGER_ENDL;
 					break;
 				case NODE_AVAILABLE:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": Node " << node->getNode().getURI() << " available over ";
+				{
+					std::string proto = "a unsupported connection";
 
 					if (node->getNode().getProtocol() == dtn::core::UDP_CONNECTION)
 					{
-						ibrcommon::slog << "UDP";
+						proto = "UDP";
 					}
 					else if (node->getNode().getProtocol() == dtn::core::TCP_CONNECTION)
 					{
-						ibrcommon::slog << "TCP";
+						proto = "TCP";
 					}
-					else
-					{
-						ibrcommon::slog << "a unsupported connection";
-					}
-					ibrcommon::slog << endl;
+
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().getURI() << " available over " << proto << IBRCOMMON_LOGGER_ENDL;
 					break;
+				}
 				case NODE_UNAVAILABLE:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": Node " << node->getNode().getURI() << " unavailable" << endl;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().getURI() << " unavailable" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				default:
-					ibrcommon::slog << SYSLOG_INFO << evt->getName() << ": unknown" << endl;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": unknown" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				}
 			}
@@ -120,7 +120,7 @@ namespace dtn
 			else
 			{
 				// unknown event
-				ibrcommon::slog << SYSLOG_INFO << evt->toString() << endl;
+				IBRCOMMON_LOGGER(notice) << evt->toString() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 	}

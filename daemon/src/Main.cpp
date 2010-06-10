@@ -4,6 +4,7 @@
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/AutoDelete.h>
 #include <ibrcommon/net/NetInterface.h>
+#include "ibrcommon/Logger.h"
 #include <ibrdtn/utils/Utils.h>
 #include <list>
 
@@ -35,6 +36,8 @@
 #include "DevNull.h"
 #include "StatisticLogger.h"
 #include "Component.h"
+
+#include <syslog.h>
 
 using namespace dtn::core;
 using namespace dtn::daemon;
@@ -68,14 +71,14 @@ void switchUser(Configuration &config)
 {
     try {
         setuid( config.getUID() );
-        cout << "Switching UID to " << config.getUID() << endl;
+        IBRCOMMON_LOGGER(info) << "Switching UID to " << config.getUID() << IBRCOMMON_LOGGER_ENDL;
     } catch (Configuration::ParameterNotSetException ex) {
 
     }
 
     try {
         setuid( config.getGID() );
-        cout << "Switching GID to " << config.getGID() << endl;
+        IBRCOMMON_LOGGER(info) << "Switching GID to " << config.getGID() << IBRCOMMON_LOGGER_ENDL;
     } catch (Configuration::ParameterNotSetException ex) {
 
     }
@@ -90,7 +93,7 @@ void setGlobalVars(Configuration &config)
 
     // set local eid
     dtn::core::BundleCore::local = config.getNodename();
-    cout << "Local node name: " << config.getNodename() << endl;
+    IBRCOMMON_LOGGER(info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
 
     try {
     	// new methods for blobs
@@ -150,7 +153,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 					stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
 					if (ipnd != NULL) ipnd->addService("udpcl", service.str());
 
-					cout << "UDP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
+					IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
 
 					break;
 				}
@@ -164,14 +167,15 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 					stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
 					if (ipnd != NULL) ipnd->addService("tcpcl", service.str());
 
-					cout << "TCP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << endl;
+					IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
 
 					break;
 				}
 			}
 		} catch (ibrcommon::tcpserver::SocketException ex) {
-			cout << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << endl;
-			cout << "      Error: " << ex.what() << endl;
+			IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			throw ex;
 		}
 	}
 }
@@ -183,20 +187,40 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, term);
 	signal(SIGHUP, reload);
 
-	// init syslog
-	ibrcommon::SyslogStream::open("ibrdtn-daemon", LOG_PID, LOG_DAEMON);
-
 	// create a configuration
 	Configuration &conf = Configuration::getInstance();
 
 	// load parameter into the configuration
-	conf.load(argc, argv);
+	conf.params(argc, argv);
 
-	// greeting to the console
-	cout << "IBR-DTN daemon "; conf.version(cout); cout << endl;
+	// init syslog
+	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE | ibrcommon::Logger::LOGGER_DEBUG);
 
-	// greeting to the sydtn::utils::slog
-	ibrcommon::slog << ibrcommon::SYSLOG_INFO << "IBR-DTN daemon "; conf.version(ibrcommon::slog); ibrcommon::slog << ", EID: " << conf.getNodename() << endl;
+	if (!conf.beQuiet())
+	{
+		// add logging to the cout, everything but debug, err and crit
+		ibrcommon::Logger::addStream(std::cout, ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT));
+
+		// add logging to the cerr
+		ibrcommon::Logger::addStream(std::cerr, ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
+	}
+
+	// greeting
+	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
+
+	// activate debugging
+	if (conf.doDebug() && !conf.beQuiet())
+	{
+		// init logger
+		ibrcommon::Logger::setVerbosity(conf.getDebugLevel());
+
+		IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebugLevel() << IBRCOMMON_LOGGER_ENDL;
+
+		ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_DEBUG);
+	}
+
+	// load the configuration file
+	conf.load();
 
 	// switch the user is requested
 	switchUser(conf);
@@ -235,6 +259,10 @@ int main(int argc, char *argv[])
 		}
 		components.push_back(ipnd);
 	}
+	else
+	{
+		IBRCOMMON_LOGGER(info) << "Discovery disabled" << IBRCOMMON_LOGGER_ENDL;
+	}
 
 	// create the base router
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
@@ -244,7 +272,7 @@ int main(int argc, char *argv[])
 	{
 	case Configuration::EPIDEMIC_ROUTING:
 	{
-		cout << "Using epidemic routing extensions" << endl;
+		IBRCOMMON_LOGGER(info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		dtn::routing::EpidemicRoutingExtension *epidemic = new dtn::routing::EpidemicRoutingExtension();
 		router->addExtension( epidemic );
 		router->addExtension( new dtn::routing::RetransmissionExtension() );
@@ -253,7 +281,7 @@ int main(int argc, char *argv[])
 	}
 
 	default:
-		cout << "Using default routing extensions" << endl;
+		IBRCOMMON_LOGGER(info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getStaticRoutes() ) );
 		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
 		break;
@@ -275,6 +303,10 @@ int main(int argc, char *argv[])
 			cerr << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << endl;
 			exit(-1);
 		}
+	}
+	else
+	{
+		IBRCOMMON_LOGGER(info) << "API disabled" << IBRCOMMON_LOGGER_ENDL;
 	}
 
 	// create a statistic logger if configured
@@ -302,7 +334,7 @@ int main(int argc, char *argv[])
 				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_STAT, conf.getStatLogInterval(), conf.getStatLogfile() ) );
 			}
 		} catch (Configuration::ParameterNotSetException ex) {
-			std::cout << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << std::endl;
+			IBRCOMMON_LOGGER(error) << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << IBRCOMMON_LOGGER_ENDL;
 			components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatLogInterval() ) );
 		}
 	}
@@ -359,7 +391,7 @@ int main(int argc, char *argv[])
 		usleep(10000);
 	}
 
-	ibrcommon::slog << ibrcommon::SYSLOG_INFO << "shutdown dtn node" << endl;
+	IBRCOMMON_LOGGER(info) << "shutdown dtn node" << IBRCOMMON_LOGGER_ENDL;
 
 	// send shutdown signal to unbound threads
 	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);

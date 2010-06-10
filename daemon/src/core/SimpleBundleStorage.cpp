@@ -5,6 +5,7 @@
 
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/Logger.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -80,19 +81,12 @@ namespace dtn
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
 			_store.store(bundle);
-
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			ibrcommon::slog << ibrcommon::SYSLOG_INFO << "Storage: stored bundle " << bundle.toString() << endl;
-#endif
-
+			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: stored bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)
 		{
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
-			cout << "Storage: get bundle for " << eid.getString() << endl;
-#endif
-
+			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: get bundle for " << eid.getString() << IBRCOMMON_LOGGER_ENDL;
 			return _store.get(eid);
 		}
 
@@ -148,7 +142,7 @@ namespace dtn
 			}
 
 			// some output
-			cout << bundles.size() << " Bundles restored." << endl;
+			IBRCOMMON_LOGGER(info) << bundles.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		SimpleBundleStorage::BundleStore::~BundleStore()
@@ -229,7 +223,7 @@ namespace dtn
 #ifdef DO_EXTENDED_DEBUG_OUTPUT
 			else
 			{
-				ibrcommon::slog << ibrcommon::SYSLOG_INFO << "Storage: got bundle duplicate " << bundle.toString() << std::endl;
+				IBRCOMMON_LOGGER_DEBUG(5) << "Storage: got bundle duplicate " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			}
 #endif
 		}

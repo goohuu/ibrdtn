@@ -15,7 +15,7 @@
 #include "core/Node.h"
 #include "net/ConnectionManager.h"
 #include "ibrcommon/thread/MutexLock.h"
-#include "ibrcommon/SyslogStream.h"
+#include "ibrcommon/Logger.h"
 #include "Configuration.h"
 #include "core/BundleCore.h"
 #include "core/SimpleBundleStorage.h"
@@ -48,7 +48,7 @@ namespace dtn
 			dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
 
 			// write something to the syslog
-			ibrcommon::slog << "Initializing epidemic routing module for node " << conf.getNodename() << endl;
+			IBRCOMMON_LOGGER(info) << "Initializing epidemic routing module for node " << conf.getNodename() << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// scan for bundles in the storage
