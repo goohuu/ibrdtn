@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 	conf.params(argc, argv);
 
 	// init syslog
-	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE | ibrcommon::Logger::LOGGER_DEBUG);
+	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
 
 	if (!conf.beQuiet())
 	{
