@@ -30,11 +30,6 @@ namespace dtn
 			Dictionary();
 
 			/**
-			 * create a dictionary with a given bytearray
-			 */
-			Dictionary(const char *data, size_t size);
-
-			/**
 			 * copy constructor
 			 */
 			Dictionary(const Dictionary &d);

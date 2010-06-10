@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/Dictionary.h"
+#include "ibrdtn/data/SDNV.h"
 #include <map>
 #include <stdexcept>
 #include <string.h>
@@ -19,11 +20,6 @@ namespace data
 {
 	Dictionary::Dictionary()
 	{
-	}
-
-	Dictionary::Dictionary(const char *data, size_t size)
-	{
-		_bytestream.write(data, size);
 	}
 
 	Dictionary::Dictionary(const Dictionary &d)
@@ -113,13 +109,20 @@ namespace data
 
 	std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj)
 	{
+		dtn::data::SDNV length(obj.getSize());
+		stream << length;
 		stream << obj._bytestream.rdbuf();
 	}
 
 	std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj)
 	{
+		dtn::data::SDNV length;
+		stream >> length;
+
 		obj._bytestream.clear();
-		stream >> obj._bytestream.rdbuf();
+		char data[length.getValue()];
+		stream.read(data, length.getValue());
+		obj._bytestream.write(data, length.getValue());
 	}
 }
 }

@@ -129,12 +129,13 @@ namespace dtn
 			 * write the ref block of the dictionary
 			 * this includes scheme and ssp for destination, source, reportto and custodian.
 			 */
-			for (int i = 0; i < 12; i++)
+			for (int i = 0; i < 11; i++)
 			{
 				_stream << primaryheader[i];
 			}
 
-			_stream << _dictionary; // DICTIONARY_BYTEARRAY
+			// write size of dictionary + bytearray
+			_stream << _dictionary;
 
 			if (obj._procflags & dtn::data::Bundle::FRAGMENT)
 			{
@@ -401,6 +402,9 @@ namespace dtn
 				}
 			}
 
+			// validate this bundle
+			validate(obj);
+
 			return (*this);
 		}
 
@@ -441,13 +445,8 @@ namespace dtn
 			_stream >> tmpsdnv;
 			obj._lifetime = tmpsdnv.getValue();
 
-			// dictionary size
-			_stream >> tmpsdnv;
-
 			// dictionary
-			char *data = (char*)calloc(tmpsdnv.getValue(), sizeof(char));
-			_stream.read(data, tmpsdnv.getValue());
-			_dictionary = Dictionary(data, tmpsdnv.getValue());
+			_stream >> _dictionary;
 
 			// decode EIDs
 			obj._destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
@@ -465,6 +464,9 @@ namespace dtn
 				obj._appdatalength = tmpsdnv.getValue();
 			}
 			
+			// validate this primary block
+			validate(obj);
+
 			return (*this);
 		}
 
@@ -475,12 +477,31 @@ namespace dtn
 			_stream >> procflags_sdnv;
 			obj._procflags = procflags_sdnv.getValue();
 
-			// TODO: read EIDs!
+			// read EIDs
+			if ( obj._procflags & dtn::data::Block::BLOCK_CONTAINS_EIDS)
+			{
+				SDNV eidcount;
+				_stream >> eidcount;
+
+				for (int i = 0; i < eidcount.getValue(); i++)
+				{
+					SDNV scheme, ssp;
+					_stream >> scheme;
+					_stream >> ssp;
+
+					EID eid = _dictionary.get(scheme.getValue(), ssp.getValue());
+
+					obj.addEID(eid);
+				}
+			}
 
 			// read the size of the payload in the block
 			SDNV block_size;
 			_stream >> block_size;
 			obj._blocksize = block_size.getValue();
+
+			// validate this block
+			validate(obj, block_size.getValue());
 
 			// read the payload of the block
 			obj.deserialize(_stream);
