@@ -9,6 +9,7 @@
 #include "ibrdtn/data/Exceptions.h"
 #include <sstream>
 #include <string.h>
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
@@ -17,13 +18,13 @@ namespace dtn
 		IPNDAgent::IPNDAgent(std::string address, int port)
 		 : _socket(address, port)
 		{
-			cout << "DiscoveryAgent listen to " << address << ":" << port << endl;
+			IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		IPNDAgent::IPNDAgent(ibrcommon::NetInterface net)
 		 : _socket(net, true)
 		{
-			cout << "DiscoveryAgent listen to port " << net.getPort() << endl;
+			IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to port " << net.getPort() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		IPNDAgent::~IPNDAgent()

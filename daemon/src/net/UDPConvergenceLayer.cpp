@@ -2,6 +2,7 @@
 #include "net/BundleReceivedEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
+#include <ibrcommon/Logger.h>
 
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/Serializer.h>
@@ -157,8 +158,8 @@ namespace dtn
 				// bind to interface and port
 				_socket.bind();
 			} catch (ibrcommon::udpsocket::SocketException ex) {
-				cout << "Failed to add UDP ConvergenceLayer on " << _net.getAddress() << ":" << _net.getPort() << endl;
-				cout << "      Error: " << ex.what() << endl;
+				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.getAddress() << ":" << _net.getPort() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

@@ -7,6 +7,7 @@
 
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleCore.h"
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
@@ -32,7 +33,7 @@ namespace dtn
 				// raise the new event
 				dtn::core::Event::raiseEvent( new BundleReceivedEvent(peer, bundle) );
 			} catch (ibrcommon::IOException ex) {
-				ibrcommon::slog << ibrcommon::SYSLOG_ERR << "Unable to store bundle " << bundle.toString() << std::endl;
+				IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

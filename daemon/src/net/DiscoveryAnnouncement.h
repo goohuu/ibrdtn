@@ -20,10 +20,17 @@ namespace dtn
 	{
 		class DiscoveryAnnouncement
 		{
-			enum BEACON_FLAGS
+			enum BEACON_FLAGS_V1
 			{
-				NO_FLAGS = 0x00,
-				SHORT_BEACON = 0x01
+				BEACON_NO_FLAGS = 0x00,
+				BEACON_SHORT = 0x01
+			};
+
+			enum BEACON_FLAGS_V2
+			{
+				BEACON_CONTAINS_EID = 0x01,
+				BEACON_SERVICE_BLOCK = 0x02,
+				BEACON_BLOOMFILTER = 0x04
 			};
 
 		public:
@@ -39,13 +46,17 @@ namespace dtn
 
 			string toString() const;
 
-                        /**
-                         * update all service blocks
-                         */
-                        virtual void updateServices();
+			/**
+			 * update all service blocks
+			 */
+			virtual void updateServices();
 
 		private:
-			static const unsigned char VERSION = 0x01;
+			enum DiscoveryVersion
+			{
+				DISCO_VERSION_00 = 0x01,
+				DISCO_VERSION_01 = 0x02
+			};
 
 			friend std::ostream &operator<<(std::ostream &stream, const DiscoveryAnnouncement &announcement);
 			friend std::istream &operator>>(std::istream &stream, DiscoveryAnnouncement &announcement);
