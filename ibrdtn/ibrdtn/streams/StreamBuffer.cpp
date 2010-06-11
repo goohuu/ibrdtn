@@ -272,19 +272,19 @@ namespace dtn
 				// set failed bit
 				set(STREAM_FAILED);
 
-				std::cerr << "StreamClosedException in overflow()" << std::endl;
+				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in overflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (StreamErrorException ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
-				std::cerr << "StreamErrorException in overflow()" << std::endl;
+				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in overflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (ios_base::failure ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
-				std::cerr << "ios_base::failure in overflow()" << std::endl;
+				IBRCOMMON_LOGGER_DEBUG(10) << "ios_base::failure in overflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 
@@ -466,7 +466,7 @@ namespace dtn
 //							}
 
 							// we received a NACK
-							std::cerr << "NACK received!" << std::flush;
+							IBRCOMMON_LOGGER_DEBUG(20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;
 							break;
 						}
 
@@ -502,19 +502,19 @@ namespace dtn
 				// set failed bit
 				set(STREAM_FAILED);
 
-				std::cerr << "StreamClosedException in underflow()" << std::endl;
+				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in underflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (StreamErrorException ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
-				std::cerr << "StreamErrorException in underflow()" << std::endl;
+				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in underflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (StreamShutdownException ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
-				std::cerr << "StreamShutdownException in underflow()" << std::endl;
+				IBRCOMMON_LOGGER_DEBUG(10) << "StreamShutdownException in underflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_PEER_SHUTDOWN);
 			}
 

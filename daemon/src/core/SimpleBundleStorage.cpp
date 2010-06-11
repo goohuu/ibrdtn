@@ -127,13 +127,13 @@ namespace dtn
 						load(file);
 					} catch (ibrcommon::IOException ex) {
 						// report this error to the console
-						std::cerr << "Error: Unable to restore bundle in file " << file.getPath() << std::endl;
+						IBRCOMMON_LOGGER(error) << "Error: Unable to restore bundle in file " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 						// error while reading file
 						file.remove();
 					} catch (dtn::InvalidDataException ex) {
 						// report this error to the console
-						std::cerr << "Error: Unable to restore bundle in file " << file.getPath() << std::endl;
+						IBRCOMMON_LOGGER(error) << "Error: Unable to restore bundle in file " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 						// error while reading file
 						file.remove();

@@ -187,7 +187,7 @@ namespace dtn
 					dtn::net::BundleReceivedEvent::raise(sender, bundle);
 
 				} catch (dtn::InvalidDataException ex) {
-					cerr << "Received a invalid bundle: " << ex.what() << endl;
+					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				} catch (ibrcommon::IOException ex) {
 
 				}

@@ -10,6 +10,7 @@
 #include "core/EventSwitch.h"
 #include "net/BundleReceivedEvent.h"
 #include "ClientHandler.h"
+#include <ibrcommon/Logger.h>
 #include <typeinfo>
 
 using namespace dtn::data;
@@ -122,15 +123,15 @@ namespace dtn
 
 									storage.remove(bundle);
 								} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-									std::cerr << "API: NoBundleFoundException" << std::endl;
+									IBRCOMMON_LOGGER_DEBUG(10) << "API: NoBundleFoundException" << IBRCOMMON_LOGGER_ENDL;
 								} catch (ibrcommon::IOException ex) {
-									std::cerr << "API: IOException" << std::endl;
+									IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException" << IBRCOMMON_LOGGER_ENDL;
 									handler->shutdown();
 								} catch (dtn::InvalidDataException ex) {
-									std::cerr << "API: InvalidDataException" << std::endl;
+									IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
 									handler->shutdown();
 								} catch (...) {
-									std::cerr << "unexpected API error!" << std::endl;
+									IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
 									handler->shutdown();
 								}
 							}
@@ -138,7 +139,7 @@ namespace dtn
 					}
 				}
 			} catch (...) {
-				std::cerr << "unexpected error or shutdown" << std::endl;
+				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected error or shutdown" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

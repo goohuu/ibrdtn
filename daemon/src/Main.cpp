@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
 			// instance a API server, first create a socket
 			components.push_back( new ApiServer(lo) );
 		} catch (ibrcommon::tcpserver::SocketException ex) {
-			cerr << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << endl;
+			IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 			exit(-1);
 		}
 	}
