@@ -15,6 +15,12 @@ namespace dtn
 {
 	namespace net
 	{
+		IPNDAgent::IPNDAgent(ibrcommon::NetInterface net, std::string address, int port)
+		 : _socket(net, address, port)
+		{
+			IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to " << address << ":" << port << " on interface " << net.getSystemName() << IBRCOMMON_LOGGER_ENDL;
+		}
+
 		IPNDAgent::IPNDAgent(std::string address, int port)
 		 : _socket(address, port)
 		{

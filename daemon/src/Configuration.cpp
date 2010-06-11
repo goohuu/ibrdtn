@@ -213,13 +213,11 @@ namespace dtn
 			}
 
 			try {
-					string interface = _conf.read<string>("discovery_interface");
-					return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, getDiscoveryPort());
+				string interface = _conf.read<string>("discovery_interface");
+				return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, getDiscoveryPort());
 			} catch (ConfigFile::key_not_found ex) {
-			} catch (ParameterNotFoundException ex) {
+				throw ParameterNotFoundException();
 			}
-
-			return NetInterface(NetInterface::NETWORK_UDP, "disco", "255.255.255.255", "255.255.255.255", 4551);
 		}
 
 		NetInterface Configuration::getAPIInterface()
