@@ -55,11 +55,20 @@ fi
 LOGGING=""
 if [ -n "$LOG_FILE" ]; then
 	LOGGING="$LOGGING > $LOG_FILE"
+else
+	LOGGING="$LOGGING > /dev/null"
 fi
 
 if [ -n "$ERR_FILE" ]; then
 	LOGGING="$LOGGING 2> $ERR_FILE"
+else
+	LOGGING="$LOGGING 2> /dev/null"
 fi
+
+if [ -z "$LOG_FILE" ] && [ -z "$ERR_FILE" ]; then
+	LOGGING="-q"
+fi
+	
 
 # set the crash counter to zero
 CRASH=0
