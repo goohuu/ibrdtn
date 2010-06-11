@@ -193,30 +193,42 @@ int main(int argc, char *argv[])
 	// load parameter into the configuration
 	conf.params(argc, argv);
 
-	// init syslog
-	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
-
-	if (!conf.beQuiet())
+	// setup logging capabilities
 	{
-		// add logging to the cout, everything but debug, err and crit
-		ibrcommon::Logger::addStream(std::cout, ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT));
+		// logging options
+		unsigned char logopts = ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_LEVEL;
 
-		// add logging to the cerr
-		ibrcommon::Logger::addStream(std::cerr, ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
-	}
+		// error filter
+		unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
 
-	// greeting
-	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
+		// logging filter, everything but debug, err and crit
+		unsigned char logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
 
-	// activate debugging
-	if (conf.doDebug() && !conf.beQuiet())
-	{
-		// init logger
-		ibrcommon::Logger::setVerbosity(conf.getDebugLevel());
+		// init syslog
+		ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
 
-		IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebugLevel() << IBRCOMMON_LOGGER_ENDL;
+		if (!conf.beQuiet())
+		{
+			// add logging to the cout
+			ibrcommon::Logger::addStream(std::cout, logstd, logopts);
 
-		ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_DEBUG);
+			// add logging to the cerr
+			ibrcommon::Logger::addStream(std::cerr, logerr, logopts);
+		}
+
+		// greeting
+		IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
+
+		// activate debugging
+		if (conf.doDebug() && !conf.beQuiet())
+		{
+			// init logger
+			ibrcommon::Logger::setVerbosity(conf.getDebugLevel());
+
+			IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebugLevel() << IBRCOMMON_LOGGER_ENDL;
+
+			ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_DEBUG, logopts);
+		}
 	}
 
 	// load the configuration file
