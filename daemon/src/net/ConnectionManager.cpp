@@ -175,6 +175,9 @@ namespace dtn
 				if (node.getProtocol() == cl->getDiscoveryProtocol())
 				{
 					cl->queue(node, job);
+
+					// stop here, we queued the bundle already
+					return;
 				}
 			}
 		}
