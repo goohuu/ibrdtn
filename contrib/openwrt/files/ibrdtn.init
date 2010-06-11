@@ -34,7 +34,9 @@ stop() {
 	/sbin/uci -P/var/state -q set ibrdtn.state=None
 	
 	# stop the safety-wrapper
-	kill `/sbin/uci -P/var/state -q get ibrdtn.safetypid`
+	if [ -n "`/sbin/uci -P/var/state -q get ibrdtn.safetypid`" ]; then
+		kill `/sbin/uci -P/var/state -q get ibrdtn.safetypid` 2> /dev/null >/dev/null
+	fi
 	
 	# send a kill signal to the daemon
 	killall dtnd 2> /dev/null >/dev/null
