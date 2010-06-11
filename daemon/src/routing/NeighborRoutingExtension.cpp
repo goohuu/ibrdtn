@@ -181,6 +181,8 @@ namespace dtn
 			} catch (dtn::net::ConnectionNotAvailableException ex) {
 				// the connection to the node is not possible
 
+			} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+				// bundle may expired, ignore it.
 			}
 		}
 

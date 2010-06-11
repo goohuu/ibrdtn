@@ -73,18 +73,22 @@ namespace dtn
 
 		void StaticRoutingExtension::route(const dtn::routing::MetaBundle &meta)
 		{
-			// check all routes
-			for (std::list<StaticRoute>::const_iterator iter = _routes.begin(); iter != _routes.end(); iter++)
-			{
-				StaticRoute route = (*iter);
-				if ( route.match(meta.destination) )
+			try {
+				// check all routes
+				for (std::list<StaticRoute>::const_iterator iter = _routes.begin(); iter != _routes.end(); iter++)
 				{
-					dtn::data::EID target = dtn::data::EID(route.getDestination());
+					StaticRoute route = (*iter);
+					if ( route.match(meta.destination) )
+					{
+						dtn::data::EID target = dtn::data::EID(route.getDestination());
 
-					// Yes, make transmit it now!
-					getRouter()->transferTo( target, meta);
-					return;
+						// Yes, make transmit it now!
+						getRouter()->transferTo( target, meta);
+						return;
+					}
 				}
+			} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+				// bundle may expired, ignore it.
 			}
 		}
 
