@@ -40,7 +40,7 @@ namespace dtn
 
 		};
 
-		class EventSwitch : public dtn::daemon::IndependentComponent
+		class EventSwitch : public dtn::daemon::IntegratedComponent
 		{
 		private:
 			EventSwitch();
@@ -58,7 +58,6 @@ namespace dtn
 
 		protected:
 			virtual void componentUp();
-			virtual void componentRun();
 			virtual void componentDown();
 
 			friend class Event;
@@ -70,6 +69,7 @@ namespace dtn
 
 		public:
 			static EventSwitch& getInstance();
+			void loop();
 		};
 	}
 }

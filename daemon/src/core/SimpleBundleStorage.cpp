@@ -220,12 +220,10 @@ namespace dtn
 			{
 				dtn::routing::BundleList::add(dtn::routing::MetaBundle(bundle));
 			}
-#ifdef DO_EXTENDED_DEBUG_OUTPUT
 			else
 			{
 				IBRCOMMON_LOGGER_DEBUG(5) << "Storage: got bundle duplicate " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 			}
-#endif
 		}
 
 		void SimpleBundleStorage::BundleStore::remove(const dtn::data::BundleID &id)
@@ -239,11 +237,11 @@ namespace dtn
 					// remove item in the bundlelist
 					BundleContainer container = (*iter);
 
-					// mark for deletion
-					container.remove();
-
 					// remove it from the bundle list
 					dtn::routing::BundleList::remove(dtn::routing::MetaBundle(*container));
+
+					// mark for deletion
+					container.remove();
 
 					// remove the container
 					bundles.erase(iter);

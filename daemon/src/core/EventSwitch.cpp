@@ -23,10 +23,7 @@ namespace dtn
 
 		EventSwitch::~EventSwitch()
 		{
-			if (isRunning())
-			{
-				componentDown();
-			}
+			componentDown();
 		}
 
 		void EventSwitch::componentUp()
@@ -46,10 +43,9 @@ namespace dtn
 
 			_running = false;
 			_queue.unblock();
-			join();
 		}
 
-		void EventSwitch::componentRun()
+		void EventSwitch::loop()
 		{
 			_running = true;
 
@@ -82,9 +78,6 @@ namespace dtn
 					}
 
 					delete evt;
-
-					// spend some extra time
-					yield();
 				}
 			} catch (ibrcommon::Exception) {
 				_running = false;

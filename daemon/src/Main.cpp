@@ -48,14 +48,12 @@ using namespace dtn::net;
 
 #define UNIT_MB * 1048576
 
-// global variable. true if running
-bool m_running = true;
-
+// on interruption do this!
 void term(int signal)
 {
 	if (signal >= 1)
 	{
-		m_running = false;
+		dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
 	}
 }
 
@@ -384,9 +382,6 @@ int main(int argc, char *argv[])
 		(*iter)->initialize();
 	}
 
-	// run the event switch
-	esw.startup();
-
 	// run core component
 	core.startup();
 
@@ -415,10 +410,8 @@ int main(int argc, char *argv[])
 		core.addConnection(*iter);
 	}
 
-	while (m_running)
-	{
-		usleep(10000);
-	}
+	// run the event switch loop forever
+	esw.loop();
 
 	IBRCOMMON_LOGGER(info) << "shutdown dtn node" << IBRCOMMON_LOGGER_ENDL;
 

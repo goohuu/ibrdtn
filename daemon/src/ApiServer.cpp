@@ -12,6 +12,7 @@
 #include "ClientHandler.h"
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
+#include <algorithm>
 
 using namespace dtn::data;
 using namespace dtn::core;
@@ -71,14 +72,7 @@ namespace dtn
 		void ApiServer::connectionDown(ClientHandler *conn)
 		{
 			ibrcommon::MutexLock l(_connection_lock);
-			for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
-			{
-				if (conn == (*iter))
-				{
-					_connections.erase(iter);
-					return;
-				}
-			}
+			_connections.erase( std::remove(_connections.begin(), _connections.end(), conn) );
 		}
 
 		ApiServer::Distributor::Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &lock)
@@ -108,32 +102,48 @@ namespace dtn
 					// search for the receiver of this bundle
 					{
 						ibrcommon::MutexLock l(_lock);
+						std::queue<ClientHandler*> receivers;
 
 						for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 						{
 							ClientHandler *handler = (*iter);
 							if (handler->getPeer() == mb.destination)
 							{
-								try {
-									BundleStorage &storage = BundleCore::getInstance().getStorage();
-									dtn::data::Bundle bundle = storage.get( mb );
+								receivers.push(handler);
+							}
+						}
 
-									// send the bundle
-									(*handler) << bundle;
+						if (!receivers.empty())
+						{
+							try {
+								BundleStorage &storage = BundleCore::getInstance().getStorage();
+								dtn::data::Bundle bundle = storage.get( mb );
 
-									storage.remove(bundle);
-								} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-									IBRCOMMON_LOGGER_DEBUG(10) << "API: NoBundleFoundException" << IBRCOMMON_LOGGER_ENDL;
-								} catch (ibrcommon::IOException ex) {
-									IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException" << IBRCOMMON_LOGGER_ENDL;
-									handler->shutdown();
-								} catch (dtn::InvalidDataException ex) {
-									IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
-									handler->shutdown();
-								} catch (...) {
-									IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
-									handler->shutdown();
+								while (!receivers.empty())
+								{
+									ClientHandler *handler = receivers.front();
+
+									try {
+										// send the bundle
+										(*handler) << bundle;
+									} catch (ibrcommon::IOException ex) {
+										IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException" << IBRCOMMON_LOGGER_ENDL;
+										handler->shutdown();
+									} catch (dtn::InvalidDataException ex) {
+										IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
+										handler->shutdown();
+									} catch (...) {
+										IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
+										handler->shutdown();
+									}
+
+									receivers.pop();
 								}
+
+								// bundle has been delivered, delete it
+								storage.remove( mb );
+							} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+								IBRCOMMON_LOGGER_DEBUG(10) << "API: NoBundleFoundException; BundleID: " << mb.toString() << IBRCOMMON_LOGGER_ENDL;
 							}
 						}
 					}
