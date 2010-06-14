@@ -232,21 +232,25 @@ namespace dtn
 			}
 			else if (completed != NULL)
 			{
-				dtn::data::EID eid = completed->getPeer();
-				dtn::routing::MetaBundle meta = completed->getBundle();
+				try {
+					dtn::data::EID eid = completed->getPeer();
+					dtn::routing::MetaBundle meta = completed->getBundle();
 
-				// delete the bundle in the storage if
-				if ( EID(eid.getNodeEID()) == EID(meta.destination) )
-				{
-					// bundle has been delivered to its destination
-					// TODO: generate a "delete" message for routing algorithm
+					// delete the bundle in the storage if
+					if ( EID(eid.getNodeEID()) == EID(meta.destination) )
+					{
+						// bundle has been delivered to its destination
+						// TODO: generate a "delete" message for routing algorithm
 
 
-					// remove the bundle in all lists
-					remove(meta);
+						// remove the bundle in all lists
+						remove(meta);
 
-					// delete it from our database
-					getRouter()->getStorage().remove(meta);
+						// delete it from our database
+						getRouter()->getStorage().remove(meta);
+					}
+				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+
 				}
 			}
 		}

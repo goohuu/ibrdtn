@@ -60,10 +60,14 @@ namespace dtn
 			}
 			else if (completed != NULL)
 			{
-				// delete bundle in storage
-				dtn::core::BundleStorage &storage = getRouter()->getStorage();
+				try {
+					// delete bundle in storage
+					dtn::core::BundleStorage &storage = getRouter()->getStorage();
 
-				storage.remove(completed->getBundle());
+					storage.remove(completed->getBundle());
+				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+
+				}
 			}
 			else if (aborted != NULL)
 			{

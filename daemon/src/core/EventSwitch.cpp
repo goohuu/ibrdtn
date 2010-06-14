@@ -90,7 +90,11 @@ namespace dtn
 
 						for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
 						{
-							(*iter)->raiseEvent(evt);
+							try {
+								(*iter)->raiseEvent(evt);
+							} catch (...) {
+								// An error occurred during event raising
+							}
 						}
 					} catch (NoReceiverFoundException ex) {
 						// No receiver available!
