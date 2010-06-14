@@ -213,6 +213,9 @@ namespace dtn
 						_filterlist.erase(eid);
 					}
 					break;
+
+					default:
+						break;
 				}
 			}
 			else if (expired != NULL)
@@ -416,7 +419,7 @@ namespace dtn
 			return _counter;
 		}
 
-		const size_t EpidemicRoutingExtension::EpidemicExtensionBlock::getLength() const
+		size_t EpidemicRoutingExtension::EpidemicExtensionBlock::getLength() const
 		{
 			return _counter.getLength() + _data.getLength() + _vector.getLength();
 		}

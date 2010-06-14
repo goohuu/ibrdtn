@@ -33,9 +33,7 @@ namespace dtn
 			const Node& getNode() const;
 			const std::string getName() const;
 
-#ifdef DO_DEBUG_OUTPUT
 			std::string toString() const;
-#endif
 
 			static void raise(const Node &n, const EventNodeAction action);
 

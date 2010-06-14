@@ -28,7 +28,7 @@ namespace dtn
 		}
 
 		StreamDataSegment::StreamDataSegment(ShutdownReason reason, size_t reconnect)
-		: _value(reconnect), _type(MSG_SHUTDOWN), _reason(MSG_SHUTDOWN_IDLE_TIMEOUT), _flags(3)
+		: _value(reconnect), _type(MSG_SHUTDOWN), _reason(reason), _flags(3)
 		{
 		}
 

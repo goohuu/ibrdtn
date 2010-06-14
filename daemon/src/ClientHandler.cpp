@@ -155,6 +155,8 @@ namespace dtn
 		{
 			// get a bundle
 			dtn::data::DefaultDeserializer(conn._connection) >> bundle;
+
+			return conn;
 		}
 
 		ClientHandler& operator<<(ClientHandler &conn, const dtn::data::Bundle &bundle)
@@ -167,6 +169,8 @@ namespace dtn
 
 			// wait until all segments are ACK'd with 10 seconds timeout
 			conn._connection.wait(10000);
+
+			return conn;
 		}
 	}
 }

@@ -174,7 +174,7 @@ namespace dtn
 			return (*this);
 		}
 
-		const size_t DefaultSerializer::getLength(const dtn::data::Bundle &obj) const
+		size_t DefaultSerializer::getLength(const dtn::data::Bundle &obj) const
 		{
 			// check if the dictionary is empty
 			assert(_dictionary.getSize() > 0);
@@ -194,7 +194,7 @@ namespace dtn
 			return len;
 		}
 
-		const size_t DefaultSerializer::getLength(const dtn::data::PrimaryBlock& obj) const
+		size_t DefaultSerializer::getLength(const dtn::data::PrimaryBlock& obj) const
 		{
 			size_t len = 0;
 
@@ -256,7 +256,7 @@ namespace dtn
 			return len;
 		}
 
-		const size_t DefaultSerializer::getLength(const dtn::data::Block &obj) const
+		size_t DefaultSerializer::getLength(const dtn::data::Block &obj) const
 		{
 			size_t len = 0;
 
@@ -304,8 +304,6 @@ namespace dtn
 			while (!_stream.eof() && !lastblock)
 			{
 				char block_type;
-				size_t block_flags = 0;
-				size_t block_length = 0;
 
 				// BLOCK_TYPE
 				block_type = _stream.peek();
@@ -483,7 +481,7 @@ namespace dtn
 				SDNV eidcount;
 				_stream >> eidcount;
 
-				for (int i = 0; i < eidcount.getValue(); i++)
+				for (unsigned int i = 0; i < eidcount.getValue(); i++)
 				{
 					SDNV scheme, ssp;
 					_stream >> scheme;

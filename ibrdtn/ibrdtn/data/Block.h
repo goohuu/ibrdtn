@@ -26,9 +26,9 @@ namespace dtn
 
 		class Block
 		{
-                    friend class Bundle;
-                    friend class DefaultSerializer;
-                    friend class DefaultDeserializer;
+			friend class Bundle;
+			friend class DefaultSerializer;
+			friend class DefaultDeserializer;
 
 		public:
 			enum ProcFlags
@@ -50,7 +50,7 @@ namespace dtn
 			char getType() { return _blocktype; }
 
 			void set(ProcFlags flag, bool value);
-			const bool get(ProcFlags flag) const;
+			bool get(ProcFlags flag) const;
 
 		protected:
 			/**
@@ -61,10 +61,10 @@ namespace dtn
 			 */
 			Block(char blocktype);
 			char _blocktype;
-                        ssize_t _blocksize;
+			ssize_t _blocksize;
 			std::list<dtn::data::EID> _eids;
 
-                        virtual const size_t getLength() const = 0;
+			virtual size_t getLength() const = 0;
 			virtual std::ostream &serialize(std::ostream &stream) const = 0;
 			virtual std::istream &deserialize(std::istream &stream) = 0;
 

@@ -66,7 +66,7 @@ namespace dtn
 
 			virtual void update(std::string &name, std::string &data);
 
-			const dtn::core::NodeProtocol getDiscoveryProtocol() const;
+			dtn::core::NodeProtocol getDiscoveryProtocol() const;
 
 			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
 

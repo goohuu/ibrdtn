@@ -111,7 +111,7 @@ namespace dtn
 		}
 
 		SimpleBundleStorage::BundleStore::BundleStore(ibrcommon::File workdir)
-		 : _mode(MODE_PERSISTENT), _workdir(workdir)
+		 : _workdir(workdir), _mode(MODE_PERSISTENT)
 		{
 			// load persistent bundles
 			std::list<ibrcommon::File> files;
@@ -361,7 +361,7 @@ namespace dtn
 		}
 
 		SimpleBundleStorage::BundleContainer::BundleContainer(const SimpleBundleStorage::BundleContainer& right)
-		 : _holder(right._holder)
+		 : BundleID(right), _holder(right._holder)
 		{
 			++_holder->_count;
 		}

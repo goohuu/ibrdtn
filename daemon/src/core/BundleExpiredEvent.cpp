@@ -46,12 +46,10 @@ namespace dtn
 			return BundleExpiredEvent::className;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string BundleExpiredEvent::toString() const
 		{
 			return className + ": Bundle has been expired " + _bundle.toString();
 		}
-#endif
 
 		const string BundleExpiredEvent::className = "BundleExpiredEvent";
 	}

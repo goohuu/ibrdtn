@@ -57,7 +57,7 @@ namespace dtn
 			return _bf;
 		}
 
-		const std::list<dtn::data::BundleID> SummaryVector::getNotIn(ibrcommon::BloomFilter &filter) const
+		std::list<dtn::data::BundleID> SummaryVector::getNotIn(ibrcommon::BloomFilter &filter) const
 		{
 			std::list<dtn::data::BundleID> ret;
 
@@ -67,7 +67,7 @@ namespace dtn
 			// iterate through all items to find the differences
 			for (std::list<dtn::data::BundleID>::const_iterator iter = _ids.begin(); iter != _ids.end(); iter++)
 			{
-				if (_bf.contains( (*iter).toString() ) )
+				if (!filter.contains( (*iter).toString() ) )
 				{
 					ret.push_back( (*iter) );
 				}
@@ -76,7 +76,7 @@ namespace dtn
 			return ret;
 		}
 
-		const size_t SummaryVector::getLength() const
+		size_t SummaryVector::getLength() const
 		{
 			return dtn::data::SDNV(_bf.size()).getLength() + _bf.size();
 		}
@@ -88,6 +88,8 @@ namespace dtn
 
 			const char *data = reinterpret_cast<const char*>(obj._bf.table());
 			stream.write(data, size.getValue());
+
+			return stream;
 		}
 
 		std::istream &operator>>(std::istream &stream, SummaryVector &obj)
@@ -101,6 +103,8 @@ namespace dtn
 
 			obj.clear();
 			obj._bf.load((unsigned char*)buffer, count.getValue());
+
+			return stream;
 		}
 	}
 }

@@ -142,6 +142,9 @@ namespace dtn
 						}
 					}
 					break;
+
+					default:
+						break;
 				}
 			}
 			else if (expired != NULL)

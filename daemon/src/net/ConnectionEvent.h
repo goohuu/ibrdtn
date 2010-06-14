@@ -30,9 +30,7 @@ namespace dtn
 
 			const string getName() const;
 
-#ifdef DO_DEBUG_OUTPUT
-			string toString() const;
-#endif
+			std::string toString() const;
 
 			static const string className;
 

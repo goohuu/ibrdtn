@@ -98,10 +98,10 @@ namespace dtn
 			std::string getStatLogType();
 			unsigned int getStatLogInterval();
 
-			const int getDebugLevel() const;
-			const bool doDebug() const;
+			int getDebugLevel() const;
+			bool doDebug() const;
 
-			const bool beQuiet() const;
+			bool beQuiet() const;
 
 		private:
 			ibrcommon::ConfigFile _conf;

@@ -28,7 +28,7 @@ namespace dtn
 {
 	namespace net
 	{
-		ConnectionManager::ConnectionManager(int concurrent_transmitter)
+		ConnectionManager::ConnectionManager()
 		 : _shutdown(false)
 		{
 		}

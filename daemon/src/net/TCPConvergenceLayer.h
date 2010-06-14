@@ -90,7 +90,7 @@ namespace dtn
 
 				bool free();
 
-				const dtn::core::NodeProtocol getDiscoveryProtocol() const;
+				dtn::core::NodeProtocol getDiscoveryProtocol() const;
 
 				/**
 				 * queue a bundle for this connection
@@ -196,8 +196,8 @@ namespace dtn
 					Connection(TCPConvergenceLayer::TCPConnection *conn, const dtn::core::Node &node, const bool &active = false);
 					~Connection();
 
-					const bool match(const dtn::data::EID &destination) const;
-					const bool match(const dtn::core::NodeEvent &evt) const;
+					bool match(const dtn::data::EID &destination) const;
+					bool match(const dtn::core::NodeEvent &evt) const;
 
 					TCPConvergenceLayer::TCPConnection& operator*();
 
@@ -224,7 +224,7 @@ namespace dtn
 			 */
 			virtual ~TCPConvergenceLayer();
 
-			const dtn::core::NodeProtocol getDiscoveryProtocol() const;
+			dtn::core::NodeProtocol getDiscoveryProtocol() const;
 
 			void initialize();
 			void startup();

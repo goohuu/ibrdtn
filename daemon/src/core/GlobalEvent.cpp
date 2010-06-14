@@ -21,7 +21,7 @@ namespace dtn
 		{
 		}
 
-		const GlobalEvent::Action GlobalEvent::getAction() const
+		GlobalEvent::Action GlobalEvent::getAction() const
 		{
 			return _action;
 		}
@@ -37,12 +37,10 @@ namespace dtn
 			raiseEvent( new GlobalEvent(a) );
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string GlobalEvent::toString() const
 		{
 			return className;
 		}
-#endif
 
 		const string GlobalEvent::className = "GlobalEvent";
 	}

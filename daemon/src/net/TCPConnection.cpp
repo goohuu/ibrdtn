@@ -159,12 +159,12 @@ namespace dtn
 			return _node;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::PrimaryBlock &obj) const throw (dtn::data::DefaultDeserializer::RejectedException)
+		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::PrimaryBlock&) const throw (dtn::data::DefaultDeserializer::RejectedException)
 		{
 			//throw dtn::data::DefaultDeserializer::RejectedException();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::Block &obj, const size_t length) const throw (dtn::data::DefaultDeserializer::RejectedException)
+		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::Block&, const size_t) const throw (dtn::data::DefaultDeserializer::RejectedException)
 		{
 //			if (length > 256)
 //			{
@@ -172,7 +172,7 @@ namespace dtn
 //			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::Bundle &obj) const throw (dtn::data::DefaultDeserializer::RejectedException)
+		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::Bundle&) const throw (dtn::data::DefaultDeserializer::RejectedException)
 		{
 		}
 
@@ -189,6 +189,8 @@ namespace dtn
 				// bundle rejected
 				conn.rejectTransmission();
 			}
+
+			return conn;
 		}
 
 		TCPConvergenceLayer::TCPConnection& operator<<(TCPConvergenceLayer::TCPConnection &conn, const dtn::data::Bundle &bundle)
@@ -245,10 +247,9 @@ namespace dtn
 				throw ex;
 			} catch (ConnectionNotAvailableException ex) {
 				// the connection not available
-#ifdef DO_DEBUG_OUTPUT
 				IBRCOMMON_LOGGER_DEBUG(15) << "connection error => requeue the bundle" << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER_DEBUG(15) << "Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-#endif
+
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
 
@@ -259,11 +260,9 @@ namespace dtn
 				m.stop();
 
 				// the connection has been terminated and fragmentation is not possible => requeue the bundle
-
-#ifdef DO_DEBUG_OUTPUT
 				IBRCOMMON_LOGGER_DEBUG(15) << "fragmentation is not possible => requeue the bundle" << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER_DEBUG(15) << "Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-#endif
+
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
 
@@ -271,6 +270,7 @@ namespace dtn
 				throw ex;
 			}
 
+			return conn;
 		}
 
 		TCPConvergenceLayer::TCPConnection::Receiver::Receiver(TCPConnection &connection)

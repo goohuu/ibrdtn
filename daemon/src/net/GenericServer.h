@@ -175,8 +175,8 @@ namespace dtn
 			}
 
 			std::list<GenericConnection*> _clients;
-			ClientCleaner _cleaner;
 			bool _running;
+			ClientCleaner _cleaner;
 		};
 	}
 }

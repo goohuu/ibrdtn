@@ -34,7 +34,7 @@ namespace dtn
 			return _blobref;
 		}
 
-		const size_t PayloadBlock::getLength() const
+		size_t PayloadBlock::getLength() const
 		{
 			return _blobref.getSize();
 		}
@@ -67,7 +67,6 @@ namespace dtn
 				// read payload
 				const int buffer_size = 0x1000;
 				char buffer[buffer_size];
-				size_t ret = 1;
 				ssize_t remain = _blocksize;
 
 				while (remain > 0 && stream.good())

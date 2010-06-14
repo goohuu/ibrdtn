@@ -39,7 +39,7 @@ namespace dtn
 			}
 		}
 
-		const bool PrimaryBlock::get(FLAGS flag) const
+		bool PrimaryBlock::get(FLAGS flag) const
 		{
 			return (_procflags & flag);
 		}

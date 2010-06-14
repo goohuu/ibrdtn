@@ -66,7 +66,7 @@ namespace dtn
 			notifycmd << _cmd;
 			notifycmd << " \"" << title << "\" \"" << msg << "\"";
 
-			int ret = system(notifycmd.str().c_str());
+			system(notifycmd.str().c_str());
 		}
 	}
 }

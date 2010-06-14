@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
 		EID addr = EID(ping_destination);
 
 		try {
-			for (int i = 0; i < count; i++)
+			for (unsigned int i = 0; i < count; i++)
 			{
 				cout << "ECHO: " << addr.getNodeEID() << " ..."; cout.flush();
 

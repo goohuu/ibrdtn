@@ -36,8 +36,8 @@ namespace dtn
 
 				const dtn::data::EID destination;
 
-				const size_t getTimestamp() const;
-				const size_t getCount() const;
+				size_t getTimestamp() const;
+				size_t getCount() const;
 
 				RetransmissionData& operator++();
 				RetransmissionData& operator++(int);

@@ -135,7 +135,7 @@ class TUN2BundleGateway : public dtn::api::Client
 {
 	public:
 		TUN2BundleGateway(int fd, string app, string address = "127.0.0.1", int port = 4550)
-		: _tcpclient(address, port), dtn::api::Client(app, _tcpclient), _fd(fd)
+		: dtn::api::Client(app, _tcpclient), _fd(fd), _tcpclient(address, port)
 		{ };
 
 		/**

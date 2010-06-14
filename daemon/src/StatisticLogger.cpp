@@ -25,7 +25,7 @@ namespace dtn
 		}
 
 		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval, std::string filename)
-		 : _timer(*this, 0), _type(type), _interval(interval), _file(filename), _sentbundles(0), _recvbundles(0),
+		 : _timer(*this, 0), _file(filename), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
 		   _core(dtn::core::BundleCore::getInstance())
 		{
 		}
@@ -59,7 +59,7 @@ namespace dtn
 			bindEvent(dtn::net::TransferCompletedEvent::className);
 		}
 
-		size_t StatisticLogger::timeout(size_t identifier)
+		size_t StatisticLogger::timeout(size_t)
 		{
 			switch (_type)
 			{
@@ -104,13 +104,13 @@ namespace dtn
 		void StatisticLogger::raiseEvent(const dtn::core::Event *evt)
 		{
 			try {
-				const dtn::net::BundleReceivedEvent &recvd = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+				dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
 				_recvbundles++;
 			} catch (std::bad_cast& bc) {
 			}
 
 			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+				dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 				_sentbundles++;
 			} catch (std::bad_cast& bc) {
 			}
@@ -119,7 +119,6 @@ namespace dtn
 		void StatisticLogger::writeSyslog(std::ostream &stream)
 		{
 			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
-			size_t timestamp = dtn::utils::Utils::get_current_dtn_time();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
 			stream	<< "DTN-Stats: CurNeighbors " << neighbors.size()

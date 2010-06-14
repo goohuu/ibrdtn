@@ -43,12 +43,10 @@ namespace dtn
 			raiseEvent( new TimeEvent(timestamp, action) );
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		std::string TimeEvent::toString() const
 		{
 
 		}
-#endif
 
 		const std::string TimeEvent::className = "TimeEvent";
 	}

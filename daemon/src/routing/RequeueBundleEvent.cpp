@@ -40,12 +40,10 @@ namespace dtn
 			return RequeueBundleEvent::className;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string RequeueBundleEvent::toString() const
 		{
 			return className + ": Bundle requeued " + _bundle.toString();
 		}
-#endif
 
 		const string RequeueBundleEvent::className = "RequeueBundleEvent";
 	}

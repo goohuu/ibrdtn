@@ -6,9 +6,9 @@
  */
 
 #include "net/DiscoveryAnnouncement.h"
-#include "ibrdtn/data/Exceptions.h"
-#include "ibrdtn/data/SDNV.h"
-#include "ibrdtn/data/BundleString.h"
+#include <ibrdtn/data/Exceptions.h>
+#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/BundleString.h>
 #include <ibrcommon/Logger.h>
 #include <netinet/in.h>
 #include <typeinfo>
@@ -49,12 +49,15 @@ namespace dtn
 
 		const DiscoveryService& DiscoveryAnnouncement::getService(string name) const
 		{
-			list<DiscoveryService>::const_iterator iter = _services.begin();
-
-			while (iter != _services.end())
+			for (std::list<DiscoveryService>::const_iterator iter = _services.begin(); iter != _services.end(); iter++)
 			{
-				iter++;
+				if ((*iter).getName() == name)
+				{
+					return (*iter);
+				}
 			}
+
+			throw dtn::MissingObjectException("No service found with tag " + name);
 		}
 
 		void DiscoveryAnnouncement::addService(DiscoveryService service)
@@ -190,7 +193,7 @@ namespace dtn
 					// clear the services
 					services.clear();
 
-					for (int i = 0; i < num_services.getValue(); i++)
+					for (unsigned int i = 0; i < num_services.getValue(); i++)
 					{
 						// decode the service blocks
 						DiscoveryService service;

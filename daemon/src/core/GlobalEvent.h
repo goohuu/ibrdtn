@@ -28,13 +28,11 @@ namespace dtn
 
 			const std::string getName() const;
 
-			const Action getAction() const;
+			Action getAction() const;
 
 			static void raise(const Action a);
 
-#ifdef DO_DEBUG_OUTPUT
 			std::string toString() const;
-#endif
 
 			static const std::string className;
 

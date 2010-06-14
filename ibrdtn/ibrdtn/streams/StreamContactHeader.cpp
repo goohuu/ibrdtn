@@ -62,7 +62,6 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, StreamContactHeader &h)
 		{
-			char buffer[512];
 			char magic[5];
 
 			// wait for magic

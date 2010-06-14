@@ -37,12 +37,10 @@ namespace dtn
 			return QueueBundleEvent::className;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string QueueBundleEvent::toString() const
 		{
 			return className + ": New bundle queued " + _bundle.toString();
 		}
-#endif
 
 		const string QueueBundleEvent::className = "QueueBundleEvent";
 	}

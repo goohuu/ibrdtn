@@ -20,9 +20,8 @@ namespace dtn
 	namespace streams
 	{
 		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream)
-		 : _callback(cb), _ack_size(0), _sent_size(0), _in_state(CONNECTION_INITIAL),
-		   _out_state(CONNECTION_INITIAL), _buf(*this, stream), std::iostream(&_buf),
-		   _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
+		 : std::iostream(&_buf), _ack_size(0), _sent_size(0), _callback(cb), _in_state(CONNECTION_INITIAL),
+		   _out_state(CONNECTION_INITIAL), _buf(*this, stream), _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
 		{
 		}
 
@@ -103,6 +102,9 @@ namespace dtn
 						_callback.eventTimeout();
 						break;
 					case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
+						_callback.eventShutdown();
+						break;
+					case CONNECTION_SHUTDOWN_NOTSET:
 						_callback.eventShutdown();
 						break;
 				}

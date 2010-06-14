@@ -23,9 +23,7 @@ namespace dtn
 
 			const string getName() const;
 
-#ifdef DO_DEBUG_OUTPUT
 			string toString() const;
-#endif
 
 			static const string className;
 

@@ -42,7 +42,7 @@ namespace dtn
 		class ConnectionManager : public dtn::net::BundleReceiver, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
 		{
 		public:
-			ConnectionManager(int concurrent_transmitter = 1);
+			ConnectionManager();
 			virtual ~ConnectionManager();
 
 			void addConnection(const dtn::core::Node &n);

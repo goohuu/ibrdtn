@@ -30,7 +30,7 @@ namespace dtn
 			_bundle._procflags &= ~(dtn::data::Bundle::FRAGMENT);
 
 			// add a new payloadblock
-			dtn::data::PayloadBlock &payload = _bundle.push_back(_blob);
+			_bundle.push_back(_blob);
 		}
 
 		BundleMerger::Container::~Container()

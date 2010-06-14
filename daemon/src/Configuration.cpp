@@ -25,7 +25,7 @@ namespace dtn
 		}
 
 		Configuration::Configuration()
-		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true), _debug(false), _debuglevel(0), _quiet(false)
+		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true), _debuglevel(0), _debug(false), _quiet(false)
 		{}
 
 		Configuration::~Configuration()
@@ -99,17 +99,17 @@ namespace dtn
 			}
 		}
 
-		const bool Configuration::beQuiet() const
+		bool Configuration::beQuiet() const
 		{
 			return _quiet;
 		}
 
-		const bool Configuration::doDebug() const
+		bool Configuration::doDebug() const
 		{
 			return _debug;
 		}
 
-		const int Configuration::getDebugLevel() const
+		int Configuration::getDebugLevel() const
 		{
 			return _debuglevel;
 		}

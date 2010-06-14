@@ -16,7 +16,7 @@ namespace dtn
 	namespace data
 	{
 		Block::Block(char blocktype)
-		 : _procflags(0), _blocktype(blocktype)
+		 : _blocktype(blocktype), _procflags(0)
 		{
 		}
 
@@ -49,7 +49,7 @@ namespace dtn
 			}
 		}
 
-		const bool Block::get(ProcFlags flag) const
+		bool Block::get(ProcFlags flag) const
 		{
 			return (_procflags & flag);
 		}

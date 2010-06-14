@@ -18,7 +18,7 @@ namespace dtn
 
 		}
 
-		SecurityBlock::SecurityBlock(SecurityBlock::BLOCK_TYPES type, ibrcommon::BLOB::Reference ref)
+		SecurityBlock::SecurityBlock(SecurityBlock::BLOCK_TYPES type, ibrcommon::BLOB::Reference)
 		 : Block(type)
 		{
 

@@ -53,12 +53,10 @@ namespace dtn
 			return _bundle;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string TransferAbortedEvent::toString() const
 		{
 			return className + ": transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " aborted.";
 		}
-#endif
 
 		const std::string TransferAbortedEvent::className = "TransferAbortedEvent";
 	}

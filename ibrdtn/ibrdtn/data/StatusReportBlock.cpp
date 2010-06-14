@@ -28,7 +28,7 @@ namespace dtn
 		{
 		}
 
-		const size_t StatusReportBlock::getLength() const
+		size_t StatusReportBlock::getLength() const
 		{
 			// determine the block size
 			size_t len = 0;

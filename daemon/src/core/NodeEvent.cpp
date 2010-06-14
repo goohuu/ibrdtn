@@ -41,12 +41,10 @@ namespace dtn
 			return NodeEvent::className;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string NodeEvent::toString() const
 		{
 			return className;
 		}
-#endif
 
 		const string NodeEvent::className = "NodeEvent";
 	}

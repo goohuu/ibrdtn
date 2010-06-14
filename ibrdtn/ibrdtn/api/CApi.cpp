@@ -14,7 +14,7 @@ class CAPIGateway : public dtn::api::Client
 {
 	public:
 		CAPIGateway(string app, void (*process_bundle)(const void * data, uint32_t size), void (*status_callback)(struct dtn_notification info) = NULL , string address = "127.0.0.1", int port = 4550)
-		: _tcpclient(address, port), dtn::api::Client(app, _tcpclient)
+		: dtn::api::Client(app, _tcpclient), _tcpclient(address, port)
 		{
 			cout << "Connecting daemon...";
 			this->connect(); //Rückgabewerte?!!?
@@ -194,8 +194,8 @@ class CAPIGateway : public dtn::api::Client
 		void receive_sync(dtn::api::Bundle &b) {
 			uint32_t chunksize=KBYTE(64);
 			char *buffer=(char *)malloc(chunksize);
-			int32_t len=b.getData().getSize();
-			int32_t offset=0;
+			uint32_t len=b.getData().getSize();
+			uint32_t offset=0;
 			if (buffer == NULL) {
 				cout << "C_API: receive_sync(): Can't allocate buffer " << endl;
 				return;

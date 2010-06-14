@@ -22,9 +22,9 @@ namespace dtn
 
 		class PrimaryBlock
 		{
-                        friend class DefaultSerializer;
-                        friend class DefaultDeserializer;
-                        
+			friend class DefaultSerializer;
+			friend class DefaultDeserializer;
+
 		public:
 			enum FLAGS
 			{
@@ -58,7 +58,7 @@ namespace dtn
 			std::string toString() const;
 
 			void set(FLAGS flag, bool value);
-			const bool get(FLAGS flag) const;
+			bool get(FLAGS flag) const;
 
 			/**
 			 * relabel the primary block with a new sequence number and a timestamp

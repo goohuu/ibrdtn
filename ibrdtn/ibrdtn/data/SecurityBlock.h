@@ -66,7 +66,7 @@ namespace dtn
 			/**
 			 * Add EID is not allowed on SecurityBlocks
 			 */
-			virtual void addEID(dtn::data::EID eid) {};
+			virtual void addEID(dtn::data::EID) {};
 		};
 
 		class BundleAuthenticationBlock : public SecurityBlock

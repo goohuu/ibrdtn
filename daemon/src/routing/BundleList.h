@@ -43,7 +43,7 @@ namespace dtn
 				const size_t expiretime;
 			};
 
-			virtual void eventBundleExpired(const ExpiringBundle &b) {};
+			virtual void eventBundleExpired(const ExpiringBundle&) {};
 
 			std::multiset<ExpiringBundle> _bundles;
 		};

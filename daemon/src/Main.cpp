@@ -44,9 +44,7 @@ using namespace dtn::daemon;
 using namespace dtn::utils;
 using namespace dtn::net;
 
-#ifdef DO_DEBUG_OUTPUT
 #include "Debugger.h"
-#endif
 
 #define UNIT_MB * 1048576
 
@@ -61,7 +59,7 @@ void term(int signal)
 	}
 }
 
-void reload(int signal)
+void reload(int)
 {
 	// send shutdown signal to unbound threads
 	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
@@ -171,6 +169,9 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 
 					break;
 				}
+
+				default:
+					break;
 			}
 		} catch (ibrcommon::tcpserver::SocketException ex) {
 			IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
@@ -199,10 +200,10 @@ int main(int argc, char *argv[])
 		unsigned char logopts = ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_LEVEL;
 
 		// error filter
-		unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
+		unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
 
 		// logging filter, everything but debug, err and crit
-		unsigned char logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
+		unsigned int logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
 
 		// init syslog
 		ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
@@ -397,10 +398,8 @@ int main(int argc, char *argv[])
 		(*iter)->startup();
 	}
 
-#ifdef DO_DEBUG_OUTPUT
 	// Debugger
 	Debugger debugger;
-#endif
 
 	// add echo module
 	EchoWorker echo;

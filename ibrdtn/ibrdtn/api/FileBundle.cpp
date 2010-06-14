@@ -21,7 +21,7 @@ namespace dtn
 			ibrcommon::BLOB::Reference ref = ibrcommon::FileBLOB::create(_filename);
 
 			// create a memory based payload block.
-			dtn::data::PayloadBlock &payload = _b.push_back(ref);
+			_b.push_back(ref);
 		}
 
 		FileBundle::~FileBundle()

@@ -55,7 +55,7 @@ namespace dtn
 				void setSummaryVector(const SummaryVector &vector);
 				const SummaryVector& getSummaryVector() const;
 
-                                virtual const size_t getLength() const;
+				virtual size_t getLength() const;
 				virtual std::ostream &serialize(std::ostream &stream) const;
 				virtual std::istream &deserialize(std::istream &stream);
 

@@ -111,7 +111,7 @@ namespace dtn
 			_inqueue.signal(true);
 		}
 
-		void Client::received(const StreamContactHeader &h)
+		void Client::received(const StreamContactHeader&)
 		{
 			_connected = true;
 		}

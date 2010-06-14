@@ -93,9 +93,7 @@ namespace dtn
 
 		void AbstractWorker::initialize(const string uri, bool async)
 		{
-			BundleCore &core = BundleCore::getInstance();
 			_eid = BundleCore::local + uri;
-
 			if (async) _thread.start();
 		}
 

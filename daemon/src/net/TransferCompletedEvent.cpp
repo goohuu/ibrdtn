@@ -44,12 +44,10 @@ namespace dtn
 			return _bundle;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string TransferCompletedEvent::toString() const
 		{
 			return className + ": transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " completed";
 		}
-#endif
 
 		const string TransferCompletedEvent::className = "TransferCompletedEvent";
 	}

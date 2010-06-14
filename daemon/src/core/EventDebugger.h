@@ -5,8 +5,6 @@
  *      Author: morgenro
  */
 
-#ifdef DO_DEBUG_OUTPUT
-
 #ifndef EVENTDEBUGGER_H_
 #define EVENTDEBUGGER_H_
 
@@ -28,5 +26,3 @@ namespace dtn
 }
 
 #endif /* EVENTDEBUGGER_H_ */
-
-#endif

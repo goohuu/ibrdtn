@@ -14,10 +14,8 @@
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
-
-#ifdef DO_DEBUG_OUTPUT
+#include <ibrcommon/thread/ThreadSafeQueue.h>
 #include "core/EventDebugger.h"
-#endif
 
 #include <list>
 #include <map>
@@ -50,14 +48,11 @@ namespace dtn
 
 			ibrcommon::Mutex _receiverlock;
 			std::map<std::string,std::list<EventReceiver*> > _list;
-			std::queue<Event*> _queue;
-			ibrcommon::Conditional _cond_queue;
+			ibrcommon::ThreadSafeQueue<dtn::core::Event*> _queue;
 			bool _running;
 
-#ifdef DO_DEBUG_OUTPUT
 			// create event debugger
 			EventDebugger _debugger;
-#endif
 
 			const std::list<EventReceiver*>& getReceivers(std::string eventName) const;
 

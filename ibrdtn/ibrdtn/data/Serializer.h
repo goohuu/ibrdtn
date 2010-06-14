@@ -31,9 +31,9 @@ namespace dtn
             virtual Serializer &operator<<(const dtn::data::PrimaryBlock &obj) = 0;
             virtual Serializer &operator<<(const dtn::data::Block &obj) = 0;
 
-            virtual const size_t getLength(const dtn::data::Bundle &obj) const = 0;
-            virtual const size_t getLength(const dtn::data::PrimaryBlock &obj) const = 0;
-            virtual const size_t getLength(const dtn::data::Block &obj) const = 0;
+            virtual size_t getLength(const dtn::data::Bundle &obj) const = 0;
+            virtual size_t getLength(const dtn::data::PrimaryBlock &obj) const = 0;
+            virtual size_t getLength(const dtn::data::Block &obj) const = 0;
         };
 
         class Deserializer
@@ -57,9 +57,9 @@ namespace dtn
             virtual Serializer &operator<<(const dtn::data::PrimaryBlock &obj);
             virtual Serializer &operator<<(const dtn::data::Block &obj);
 
-            virtual const size_t getLength(const dtn::data::Bundle &obj) const;
-            virtual const size_t getLength(const dtn::data::PrimaryBlock &obj) const;
-            virtual const size_t getLength(const dtn::data::Block &obj) const;
+            virtual size_t getLength(const dtn::data::Bundle &obj) const;
+            virtual size_t getLength(const dtn::data::PrimaryBlock &obj) const;
+            virtual size_t getLength(const dtn::data::Block &obj) const;
 
         protected:
             void rebuildDictionary(const dtn::data::Bundle &obj);
@@ -89,9 +89,9 @@ namespace dtn
             virtual Deserializer &operator>>(dtn::data::Block &obj);
 
         protected:
-            virtual void validate(const dtn::data::PrimaryBlock &obj) const throw (RejectedException) { };
-            virtual void validate(const dtn::data::Block &obj, const size_t length) const throw (RejectedException) { };
-            virtual void validate(const dtn::data::Bundle &obj) const throw (RejectedException) { };
+            virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException) { };
+            virtual void validate(const dtn::data::Block&, const size_t) const throw (RejectedException) { };
+            virtual void validate(const dtn::data::Bundle&) const throw (RejectedException) { };
 
         private:
             std::istream &_stream;

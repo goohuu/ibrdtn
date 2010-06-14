@@ -25,7 +25,7 @@ namespace dtn
 		{
 		}
 
-		const size_t CustodySignalBlock::getLength() const
+		size_t CustodySignalBlock::getLength() const
 		{
 			// determine the block size
 			size_t len = 0;
@@ -91,6 +91,8 @@ namespace dtn
 			   << _bundle_timestamp
 			   << _bundle_sequence
 			   << sourceid;
+
+			return stream;
 		}
 
 		void CustodySignalBlock::setMatch(const Bundle& other)

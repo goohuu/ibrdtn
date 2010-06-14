@@ -49,9 +49,17 @@ namespace dtn
 			class TransmissionInterruptedException : public ibrcommon::IOException
 			{
 				public:
-					TransmissionInterruptedException(dtn::data::Bundle &bundle, size_t position) : ibrcommon::IOException("Transmission was interrupted.")
+					TransmissionInterruptedException(const dtn::data::Bundle &bundle, const size_t position) throw()
+					 : ibrcommon::IOException("Transmission was interrupted."), _bundle(bundle), _position(position)
 					{
 					};
+
+					virtual ~TransmissionInterruptedException() throw ()
+					{
+					};
+
+					const dtn::data::Bundle _bundle;
+					const size_t _position;
 			};
 
 			class StreamClosedException : public ibrcommon::IOException
@@ -259,10 +267,10 @@ namespace dtn
 
 				void skipData(size_t &size);
 
-				const bool get(const StateBits bit) const;
+				bool get(const StateBits bit) const;
 				void set(const StateBits bit);
 				void unset(const StateBits bit);
-				const bool good() const;
+				bool good() const;
 
 				ibrcommon::Mutex _statelock;
 				int _statebits;

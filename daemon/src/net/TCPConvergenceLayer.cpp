@@ -43,7 +43,7 @@ namespace dtn
 		{
 		}
 
-		const dtn::core::NodeProtocol TCPConvergenceLayer::getDiscoveryProtocol() const
+		dtn::core::NodeProtocol TCPConvergenceLayer::getDiscoveryProtocol() const
 		{
 			return dtn::core::TCP_CONNECTION;
 		}
@@ -63,7 +63,7 @@ namespace dtn
 			_server.terminate();
 		}
 
-		void TCPConvergenceLayer::update(std::string& name, std::string& data)
+		void TCPConvergenceLayer::update(std::string&, std::string&)
 		{
 			// TODO: update address and port
 		}
@@ -267,7 +267,7 @@ namespace dtn
 			return *_connection;
 		}
 
-		const bool TCPConvergenceLayer::Server::Connection::match(const dtn::data::EID &destination) const
+		bool TCPConvergenceLayer::Server::Connection::match(const dtn::data::EID &destination) const
 		{
 			if (_peer.getURI() == destination.getNodeEID()) return true;
 			if (_connection->getNode().getURI() == destination.getNodeEID()) return true;
@@ -275,7 +275,7 @@ namespace dtn
 			return false;
 		}
 
-		const bool TCPConvergenceLayer::Server::Connection::match(const NodeEvent &evt) const
+		bool TCPConvergenceLayer::Server::Connection::match(const NodeEvent &evt) const
 		{
 			const dtn::core::Node &n = evt.getNode();
 

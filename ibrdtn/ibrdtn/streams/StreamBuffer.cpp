@@ -13,8 +13,8 @@ namespace dtn
 	namespace streams
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream)
-			: _statebits(STREAM_SOB), _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]), _stream(stream), _timer(*this, 0),
-			  _sent_size(0), _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE)
+			: _statebits(STREAM_SOB), _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]), _stream(stream),
+			  _sent_size(0), _recv_size(0), _timer(*this, 0), _underflow_data_remain(0), _underflow_state(IDLE)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -31,7 +31,7 @@ namespace dtn
 			delete [] out_buf_;
 		}
 
-		const bool StreamConnection::StreamBuffer::get(const StateBits bit) const
+		bool StreamConnection::StreamBuffer::get(const StateBits bit) const
 		{
 			return (_statebits & bit);
 		}
@@ -48,7 +48,7 @@ namespace dtn
 			_statebits &= ~(bit);
 		}
 
-		const bool StreamConnection::StreamBuffer::good() const
+		bool StreamConnection::StreamBuffer::good() const
 		{
 			int badbits = STREAM_FAILED + STREAM_BAD + STREAM_EOF + STREAM_SHUTDOWN + STREAM_CLOSED;
 			return !(badbits & _statebits) && _stream.good();
@@ -145,7 +145,7 @@ namespace dtn
 		 * @param identifier Identifier for the timer.
 		 * @return The new value for this timer.
 		 */
-		size_t StreamConnection::StreamBuffer::timeout(size_t identifier)
+		size_t StreamConnection::StreamBuffer::timeout(size_t)
 		{
 			ibrcommon::MutexLock timerl(_timer_lock);
 

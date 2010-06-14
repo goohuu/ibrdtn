@@ -47,7 +47,7 @@ namespace dtn
 
 			string data = ss.str();
 
-			int ret = _socket.send(data.c_str(), data.length());
+			_socket.send(data.c_str(), data.length());
 		}
 
 		void IPNDAgent::componentUp()

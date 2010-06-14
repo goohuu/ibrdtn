@@ -30,9 +30,7 @@ namespace dtn
 
 			static void raise(const size_t timestamp, const TimeEventAction action);
 
-#ifdef DO_DEBUG_OUTPUT
 			std::string toString() const;
-#endif
 
 			static const std::string className;
 

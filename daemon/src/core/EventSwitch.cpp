@@ -35,77 +35,59 @@ namespace dtn
 
 		void EventSwitch::componentDown()
 		{
-			EventSwitch &s = EventSwitch::getInstance();
-			{
-				ibrcommon::MutexLock l(s._cond_queue);
-				s._running = false;
-				s._cond_queue.signal(true);
-			}
-			s.join();
+			try {
+				while (!_queue.empty())
+				{
+					delete _queue.frontpop();
+				}
+			} catch (ibrcommon::Exception) {
 
-			{
-				ibrcommon::MutexLock l(_cond_queue);
-				_running = false;
-				_cond_queue.signal(true);
 			}
+
+			_running = false;
+			_queue.unblock();
 			join();
-
-			// cleanup queue
-			while (!_queue.empty())
-			{
-				Event *evt = _queue.front();
-				_queue.pop();
-				delete evt;
-			}
 		}
 
 		void EventSwitch::componentRun()
 		{
 			_running = true;
 
-			while (_running)
-			{
-				Event *evt = NULL;
-
+			try {
+				while (_running)
 				{
-					ibrcommon::MutexLock l(_cond_queue);
-					if (_queue.empty() && _running) _cond_queue.wait();
-					if (!_running) return;
+					Event *evt = _queue.blockingpop();
 
-					// get item out of the queue
-					evt = _queue.front();
-					_queue.pop();
-				}
+					{
+						ibrcommon::MutexLock reglock(_receiverlock);
 
-				{
-					ibrcommon::MutexLock reglock(_receiverlock);
-#ifdef DO_DEBUG_OUTPUT
-					// forward to debugger
-					_debugger.raiseEvent(evt);
-#endif
+						// forward to debugger
+						_debugger.raiseEvent(evt);
 
-					try {
-						// get the list for this event
-						const list<EventReceiver*> receivers = getReceivers(evt->getName());
+						try {
+							// get the list for this event
+							const list<EventReceiver*> receivers = getReceivers(evt->getName());
 
-						for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
-						{
-							try {
-								(*iter)->raiseEvent(evt);
-							} catch (...) {
-								// An error occurred during event raising
+							for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
+							{
+								try {
+									(*iter)->raiseEvent(evt);
+								} catch (...) {
+									// An error occurred during event raising
+								}
 							}
+						} catch (NoReceiverFoundException ex) {
+							// No receiver available!
 						}
-					} catch (NoReceiverFoundException ex) {
-						// No receiver available!
 					}
+
+					delete evt;
+
+					// spend some extra time
+					yield();
 				}
-
-				// delete the event
-				delete evt;
-
-				// spend some extra time
-				yield();
+			} catch (ibrcommon::Exception) {
+				_running = false;
 			}
 		}
 
@@ -140,11 +122,7 @@ namespace dtn
 		void EventSwitch::raiseEvent(Event *evt)
 		{
 			EventSwitch &s = EventSwitch::getInstance();
-
-			ibrcommon::MutexLock l(s._cond_queue);
-
 			s._queue.push(evt);
-			s._cond_queue.signal(true);
 		}
 
 		EventSwitch& EventSwitch::getInstance()

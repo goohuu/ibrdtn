@@ -82,7 +82,7 @@ namespace dtn
 		}
 
 		ApiServer::Distributor::Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &lock)
-		 : _running(true), _connections(connections), _lock(lock)
+		 : _running(true), _lock(lock), _connections(connections)
 		{
 			bindEvent(dtn::net::BundleReceivedEvent::className);
 		}

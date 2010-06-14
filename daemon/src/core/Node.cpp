@@ -15,8 +15,8 @@ namespace dtn
 		}
 
 		Node::Node(const Node &k)
-		: m_address(k.m_address), m_timeout(k.m_timeout), m_type(k.m_type), m_port(k.m_port),
-		m_description(k.m_description), m_uri(k.m_uri), _protocol(k._protocol)
+		: m_address(k.m_address), m_description(k.m_description), m_uri(k.m_uri), m_timeout(k.m_timeout),
+		  m_rtt(k.m_rtt), m_type(k.m_type),  m_port(k.m_port), _protocol(k._protocol)
 		{
 
 		}

@@ -116,21 +116,23 @@ namespace dtn
 			return true;
 		}
 
-		const size_t RetransmissionExtension::RetransmissionData::getCount() const
+		size_t RetransmissionExtension::RetransmissionData::getCount() const
 		{
 			return _count;
 		}
 
-		const size_t RetransmissionExtension::RetransmissionData::getTimestamp() const
+		size_t RetransmissionExtension::RetransmissionData::getTimestamp() const
 		{
 			return _timestamp;
 		}
 
-		RetransmissionExtension::RetransmissionData& RetransmissionExtension::RetransmissionData::operator++(int value)
+		RetransmissionExtension::RetransmissionData& RetransmissionExtension::RetransmissionData::operator++(int)
 		{
 			_count++;
 			_timestamp = dtn::utils::Utils::get_current_dtn_time();
 			_timestamp += retry;
+
+			return (*this);
 		}
 
 		RetransmissionExtension::RetransmissionData& RetransmissionExtension::RetransmissionData::operator++()
@@ -138,6 +140,8 @@ namespace dtn
 			_count++;
 			_timestamp = dtn::utils::Utils::get_current_dtn_time();
 			_timestamp += retry;
+
+			return (*this);
 		}
 
 		RetransmissionExtension::RetransmissionData::RetransmissionData(const dtn::data::BundleID &id, dtn::data::EID d, size_t r)

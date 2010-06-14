@@ -49,7 +49,7 @@ namespace dtn
 			/**
 			 * no copy
 			 */
-			SecurityManager(SecurityManager &cpy) {};
+			SecurityManager(SecurityManager&) {};
 
 			static Bundle::BUNDLE_SECURITY _default;
 

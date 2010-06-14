@@ -34,8 +34,7 @@ namespace dtn
 		}
 
 
-#ifdef DO_DEBUG_OUTPUT
-		string ConnectionEvent::toString() const
+		std::string ConnectionEvent::toString() const
 		{
 			switch (state)
 			{
@@ -50,7 +49,6 @@ namespace dtn
 			}
 
 		}
-#endif
 
 		const string ConnectionEvent::className = "ConnectionEvent";
 	}

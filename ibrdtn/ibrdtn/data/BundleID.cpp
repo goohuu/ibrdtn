@@ -108,6 +108,8 @@ namespace dtn
 			dtn::data::BundleString source(obj._source.getString());
 
 			stream << timestamp << sequencenumber << offset << source;
+
+			return stream;
 		}
 
 		std::istream &operator>>(std::istream &stream, BundleID &obj)
@@ -123,6 +125,8 @@ namespace dtn
 			obj._sequencenumber = sequencenumber.getValue();
 			obj._offset = offset.getValue();
 			obj._source = dtn::data::EID(source);
+
+			return stream;
 		}
 	}
 }

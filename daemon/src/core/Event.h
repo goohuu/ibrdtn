@@ -21,9 +21,7 @@ namespace dtn
 			virtual ~Event() = 0;
 			virtual const std::string getName() const = 0;
 
-#ifdef DO_DEBUG_OUTPUT
 			virtual std::string toString() const = 0;
-#endif
 
 		protected:
 			static void raiseEvent(Event *evt);

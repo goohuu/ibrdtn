@@ -31,11 +31,11 @@ namespace dtn
 			virtual void clear();
 			virtual void add(const std::set<dtn::routing::MetaBundle> &list);
 
-			const size_t getLength() const;
+			size_t getLength() const;
 
 			const ibrcommon::BloomFilter& getBloomFilter() const;
 
-			const std::list<dtn::data::BundleID> getNotIn(ibrcommon::BloomFilter &filter) const;
+			std::list<dtn::data::BundleID> getNotIn(ibrcommon::BloomFilter &filter) const;
 
 			friend std::ostream &operator<<(std::ostream &stream, const SummaryVector &obj);
 			friend std::istream &operator>>(std::istream &stream, SummaryVector &obj);

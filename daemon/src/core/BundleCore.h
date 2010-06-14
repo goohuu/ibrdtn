@@ -72,7 +72,7 @@ namespace dtn
 			/**
 			 * Forbidden copy constructor
 			 */
-			BundleCore operator=(const BundleCore &k) {};
+			BundleCore operator=(const BundleCore &k) { return k; };
 
 			/**
 			 * A custody manager takes care about a transmission of custody to another node.

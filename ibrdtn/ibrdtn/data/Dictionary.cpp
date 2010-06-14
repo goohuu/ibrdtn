@@ -112,6 +112,8 @@ namespace data
 		dtn::data::SDNV length(obj.getSize());
 		stream << length;
 		stream << obj._bytestream.rdbuf();
+
+		return stream;
 	}
 
 	std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj)
@@ -123,6 +125,8 @@ namespace data
 		char data[length.getValue()];
 		stream.read(data, length.getValue());
 		obj._bytestream.write(data, length.getValue());
+
+		return stream;
 	}
 }
 }

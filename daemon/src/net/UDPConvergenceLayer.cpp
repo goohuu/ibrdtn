@@ -45,12 +45,12 @@ namespace dtn
 			}
 		}
 
-		const dtn::core::NodeProtocol UDPConvergenceLayer::getDiscoveryProtocol() const
+		dtn::core::NodeProtocol UDPConvergenceLayer::getDiscoveryProtocol() const
 		{
 			return dtn::core::UDP_CONNECTION;
 		}
 
-		void UDPConvergenceLayer::update(std::string &name, std::string &data)
+		void UDPConvergenceLayer::update(std::string&, std::string&)
 		{
 			// TODO: update the values
 		}
@@ -195,9 +195,9 @@ namespace dtn
 			}
 		}
 
-		void UDPConvergenceLayer::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
+		void UDPConvergenceLayer::queue(const dtn::core::Node&, const ConvergenceLayer::Job&)
 		{
-
+			// TODO: implement queue method.
 		}
 
 		UDPConvergenceLayer::UDPConnection::UDPConnection(UDPConvergenceLayer &cl, const dtn::core::Node &node)

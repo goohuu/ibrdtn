@@ -40,12 +40,10 @@ namespace dtn
 			return BundleEvent::className;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string BundleEvent::toString() const
 		{
 			return className;
 		}
-#endif
 
 		const string BundleEvent::className = "BundleEvent";
 	}

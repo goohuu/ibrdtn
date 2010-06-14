@@ -24,7 +24,7 @@ namespace dtn
 		}
 
 
-		void SecurityManager::initialize(string privKey, string pubKey, string ca)
+		void SecurityManager::initialize(std::string, std::string, std::string)
 		{
 
 		}
@@ -39,9 +39,9 @@ namespace dtn
 			return SecurityManager::_default;
 		}
 
-		bool SecurityManager::validate(dtn::api::Bundle b)
+		bool SecurityManager::validate(dtn::api::Bundle)
 		{
-
+			return false;
 		}
 
 	}

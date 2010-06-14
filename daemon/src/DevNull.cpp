@@ -6,17 +6,15 @@
  */
 
 #include "DevNull.h"
-
-using namespace dtn::data;
-using namespace dtn::core;
-using namespace std;
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
 	namespace daemon
 	{
-		void DevNull::callbackBundleReceived(const Bundle &b)
+		void DevNull::callbackBundleReceived(const dtn::data::Bundle &b)
 		{
+			IBRCOMMON_LOGGER(info) << "Bundle " << b.toString() << " went to /null" << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 }

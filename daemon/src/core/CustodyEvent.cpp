@@ -41,12 +41,10 @@ namespace dtn
 			return CustodyEvent::className;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string CustodyEvent::toString() const
 		{
 			return className;
 		}
-#endif
 
 		const string CustodyEvent::className = "CustodyEvent";
 	}

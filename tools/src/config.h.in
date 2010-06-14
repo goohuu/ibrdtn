@@ -1,11 +1,5 @@
 /* src/config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define to enable extra debugging output. */
-#undef DO_DEBUG_OUTPUT
-
-/* Define to enable extended debugging output. */
-#undef DO_EXTENDED_DEBUG_OUTPUT
-
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 

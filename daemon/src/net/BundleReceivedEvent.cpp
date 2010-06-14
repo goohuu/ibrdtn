@@ -52,12 +52,10 @@ namespace dtn
 			return _bundle;
 		}
 
-#ifdef DO_DEBUG_OUTPUT
 		string BundleReceivedEvent::toString() const
 		{
 			return className + ": Bundle received " + _bundle.toString();
 		}
-#endif
 
 		const string BundleReceivedEvent::className = "BundleReceivedEvent";
 	}
