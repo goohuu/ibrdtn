@@ -1,2 +1,2 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = src doc man etc
+SUBDIRS = src testsuite doc man etc

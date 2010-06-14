@@ -117,27 +117,8 @@ AC_CHECK_LIB($THREADLIB,pthread_setschedprio,[
 	AC_DEFINE(HAVE_PTHREAD_SETSCHEDPRIO, [1], ["pthread scheduling"])
 ])
 
-dnl -----------------------------------------------
-dnl debugging switches
-dnl -----------------------------------------------
-
-AC_ARG_ENABLE([debug],
-	[AC_HELP_STRING([--enable-debug], [enable extra debugging output [default=no]])],
-	[
-		AC_DEFINE([DO_DEBUG_OUTPUT], [], [Define to enable extra debugging output.])
-		DEBUG_CFLAGS="-ggdb"
-	], [
-		DEBUG_CFLAGS="-O3"
-	])
-	
-AC_SUBST(DEBUG_CFLAGS)
-
-dnl -----------------------------------------------
-dnl put all flags together
-dnl -----------------------------------------------
-
-CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
-LDFLAGS="$LDFLAGS $PTHREAD_LIBS"
+AC_SUBST(PTHREAD_CFLAGS)
+AC_SUBST(PTHREAD_LIBS)
 
 dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts

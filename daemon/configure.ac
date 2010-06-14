@@ -33,9 +33,10 @@ dnl Checks for programs.
 dnl -----------------------------------------------
 
 AC_PROG_CXX
-AC_PROG_AWK
 AC_PROG_CC
 AC_PROG_CPP
+
+AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
@@ -119,27 +120,8 @@ AC_CHECK_LIB($THREADLIB,pthread_setschedprio,[
 	AC_DEFINE(HAVE_PTHREAD_SETSCHEDPRIO, [1], ["pthread scheduling"])
 ])
 
-dnl -----------------------------------------------
-dnl debugging switches
-dnl -----------------------------------------------
-
-AC_ARG_ENABLE([debug],
-	[AC_HELP_STRING([--enable-debug], [enable extra debugging output [default=no]])],
-	[
-		AC_DEFINE([DO_DEBUG_OUTPUT], [], [Define to enable extra debugging output.])
-		DEBUG_CFLAGS="-ggdb"
-	], [
-		DEBUG_CFLAGS="-O3"
-	])
-	
-AC_SUBST(DEBUG_CFLAGS)
-	
-dnl -----------------------------------------------
-dnl put all flags together
-dnl -----------------------------------------------
-
-CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
-LDFLAGS="$LDFLAGS $PTHREAD_LIBS"
+AC_SUBST(PTHREAD_CFLAGS)
+AC_SUBST(PTHREAD_LIBS)
 
 dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
@@ -147,7 +129,6 @@ dnl -----------------------------------------------
 
 AC_CONFIG_FILES([Makefile \
 	src/Makefile \
-	testsuite/Makefile \
 	doc/Makefile \
 	man/Makefile \
 	etc/Makefile])

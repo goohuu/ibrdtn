@@ -7,8 +7,8 @@ cc_sources = Serializer.cpp Block.cpp Bundle.cpp BundleID.cpp BundleMerger.cpp B
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/data
 library_include_HEADERS = $(h_sources)
 
-AM_CPPFLAGS = -I$(top_srcdir) $(DEBUG_CFLAGS) $(ibrcommon_CFLAGS)
-AM_LDFLAGS = $(ibrcommon_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS)
+AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS)
 
 noinst_LTLIBRARIES= libdata.la
 libdata_la_SOURCES= $(h_sources) $(cc_sources)

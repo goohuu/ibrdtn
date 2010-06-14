@@ -1,8 +1,8 @@
 AUTOMAKE_OPTIONS = foreign
 
 # what flags you want to pass to the C compiler & linker
-AM_CPPFLAGS = $(DEBUG_CFLAGS) $(ibrcommon_CFLAGS) $(ibrdtn_CFLAGS)
-AM_LDFLAGS = $(ibrcommon_LIBS) $(ibrdtn_LIBS)
+AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS) $(ibrdtn_CFLAGS)
+AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) $(ibrdtn_LIBS)
 
 INCLUDES = -I@top_srcdir@/src
 

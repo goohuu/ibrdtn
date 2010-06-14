@@ -7,8 +7,8 @@ cc_sources = BLOBBundle.cpp CApi.cpp FileBundle.cpp StringBundle.cpp Bundle.cpp 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/api
 library_include_HEADERS = $(h_sources)
 
-AM_CPPFLAGS = -I$(top_srcdir) $(DEBUG_CFLAGS) $(ibrcommon_CFLAGS)
-AM_LDFLAGS = $(ibrcommon_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS)
+AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS)
 
 noinst_LTLIBRARIES= libapi.la
 libapi_la_SOURCES= $(h_sources) $(cc_sources)

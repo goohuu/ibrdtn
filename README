@@ -1,0 +1,7 @@
+### Compilation with debugging symbols ###
+
+The old "--enable-debug" option has been removed. To compile the whole
+code with debugging symbols use the additional CXXFLAGS with configure.
+
+./configure CXXFLAGS="-ggdb"
+make
