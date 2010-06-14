@@ -131,11 +131,6 @@ AC_ARG_ENABLE([debug],
 	])
 	
 AC_SUBST(DEBUG_CFLAGS)
-	
-AC_ARG_ENABLE([extended-debug],
-	[AC_HELP_STRING([--enable-extended-debug], [enable extended debugging output [default=no]])],
-	[AC_DEFINE([DO_EXTENDED_DEBUG_OUTPUT], [], [Define to enable extended debugging output.])],
-	[])
 
 dnl -----------------------------------------------
 dnl put all flags together

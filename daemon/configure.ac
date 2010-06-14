@@ -26,6 +26,7 @@ AC_SUBST(GENERIC_VERSION)
 
 VERSION=$GENERIC_VERSION
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, morgenro@ibr.cs.tu-bs.de)
+AM_PATH_CPPUNIT(1.9.6)
 
 dnl -----------------------------------------------
 dnl Checks for programs.
@@ -133,11 +134,6 @@ AC_ARG_ENABLE([debug],
 	
 AC_SUBST(DEBUG_CFLAGS)
 	
-AC_ARG_ENABLE([extended-debug],
-	[AC_HELP_STRING([--enable-extended-debug], [enable extended debugging output [default=no]])],
-	[AC_DEFINE([DO_EXTENDED_DEBUG_OUTPUT], [], [Define to enable extended debugging output.])],
-	[])
-
 dnl -----------------------------------------------
 dnl put all flags together
 dnl -----------------------------------------------
@@ -151,6 +147,7 @@ dnl -----------------------------------------------
 
 AC_CONFIG_FILES([Makefile \
 	src/Makefile \
+	testsuite/Makefile \
 	doc/Makefile \
 	man/Makefile \
 	etc/Makefile])
