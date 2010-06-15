@@ -65,7 +65,7 @@ namespace dtn
 		const StreamContactHeader StreamConnection::StreamBuffer::handshake(const StreamContactHeader &header)
 		{
 			// activate exceptions for this method
-			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
+			_stream.exceptions(std::ios::badbit | std::ios::eofbit | std::ios::failbit);
 
 			try {
 				// transfer the local header
@@ -316,17 +316,22 @@ namespace dtn
 			// a temporary buffer
 			char tmpbuf[BUFF_SIZE];
 
-			//  and read until the next segment
-			while (size > 0 && _stream.good())
-			{
-				size_t readsize = BUFF_SIZE;
-				if (size < BUFF_SIZE) readsize = size;
+			try {
+				//  and read until the next segment
+				while (size > 0 && _stream.good())
+				{
+					size_t readsize = BUFF_SIZE;
+					if (size < BUFF_SIZE) readsize = size;
 
-				// to reject a bundle read all remaining data of this segment
-				_stream.read(tmpbuf, readsize);
+					// to reject a bundle read all remaining data of this segment
+					_stream.read(tmpbuf, readsize);
 
-				// adjust the remain counter
-				size -= readsize;
+					// adjust the remain counter
+					size -= readsize;
+				}
+			} catch (ios_base::failure ex) {
+				_underflow_state = IDLE;
+				throw StreamErrorException("read error");
 			}
 		}
 
@@ -380,8 +385,12 @@ namespace dtn
 					// container for segment data
 					dtn::streams::StreamDataSegment seg;
 
-					// read the segment
-					_stream >> seg;
+					try {
+						// read the segment
+						_stream >> seg;
+					} catch (ios_base::failure ex) {
+						throw StreamErrorException("read error");
+					}
 
 					// reset the incoming timer
 					{

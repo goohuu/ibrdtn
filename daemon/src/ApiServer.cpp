@@ -67,12 +67,14 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_connection_lock);
 			_connections.push_back(conn);
+			IBRCOMMON_LOGGER_DEBUG(5) << "Client connection up" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void ApiServer::connectionDown(ClientHandler *conn)
 		{
 			ibrcommon::MutexLock l(_connection_lock);
 			_connections.erase( std::remove(_connections.begin(), _connections.end(), conn) );
+			IBRCOMMON_LOGGER_DEBUG(5) << "Client connection down" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		ApiServer::Distributor::Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &lock)
@@ -122,6 +124,7 @@ namespace dtn
 								while (!receivers.empty())
 								{
 									ClientHandler *handler = receivers.front();
+									IBRCOMMON_LOGGER_DEBUG(5) << "Transfer bundle " << mb.toString() << " to client " << handler->getPeer().getString() << IBRCOMMON_LOGGER_ENDL;
 
 									try {
 										// send the bundle
