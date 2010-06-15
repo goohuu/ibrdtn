@@ -4,6 +4,7 @@
 #
 #
 
+LOCALDIR=`pwd`
 SUBDIRS="./ ibrcommon ibrdtn daemon tools"
 
 for DIR in $SUBDIRS; do
@@ -11,7 +12,7 @@ for DIR in $SUBDIRS; do
 	libtoolize
 	aclocal
 	automake --add-missing
-	cd ..
+	cd $LOCALDIR
 done
 
 autoreconf -i
