@@ -8,6 +8,7 @@
 #include "core/EventSwitch.h"
 
 #include <ibrcommon/thread/MutexLock.h>
+#include "core/GlobalEvent.h"
 #include <stdexcept>
 #include <iostream>
 using namespace std;
@@ -53,6 +54,7 @@ namespace dtn
 				while (_running)
 				{
 					Event *evt = _queue.blockingpop();
+					dtn::core::GlobalEvent *global = dynamic_cast<dtn::core::GlobalEvent*>(evt);
 
 					{
 						ibrcommon::MutexLock reglock(_receiverlock);
@@ -74,6 +76,14 @@ namespace dtn
 							}
 						} catch (NoReceiverFoundException ex) {
 							// No receiver available!
+						}
+					}
+
+					if (global != NULL)
+					{
+						if (global->getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
+						{
+							_running = false;
 						}
 					}
 
