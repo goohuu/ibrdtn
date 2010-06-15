@@ -8,14 +8,5 @@ export ibrcommon_LIBS="-L$(pwd)/ibrcommon/ibrcommon/.libs -librcommon"
 export ibrdtn_CFLAGS="-I$(pwd)/ibrdtn"
 export ibrdtn_LIBS="-L$(pwd)/ibrdtn/ibrdtn/.libs -librdtn"
 
-AC_ARG_ENABLE([debug],
-	[AC_HELP_STRING([--enable-debug], [enable extra debugging output [default=no]])],
-	[
-		AC_DEFINE([DO_DEBUG_OUTPUT], [], [Define to enable extra debugging output.])
-		DEBUG_CFLAGS="-ggdb"
-	],[])
-	
-AC_SUBST(DEBUG_CFLAGS)
-	
 AC_CONFIG_SUBDIRS(ibrcommon ibrdtn daemon tools)
 AC_OUTPUT(Makefile)
