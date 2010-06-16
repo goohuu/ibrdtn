@@ -150,6 +150,20 @@ AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 
 dnl -----------------------------------------------
+dnl Enable testsuite
+dnl -----------------------------------------------
+
+AC_ARG_ENABLE(testsuite,
+	[AC_HELP_STRING([--enable-testsuite], [enable testsuite [default=no]]) ],
+	[
+		AC_CONFIG_FILES([tests/Makefile])
+		TESTSUITE_DIR="tests"
+		AC_SUBST(TESTSUITE_DIR)
+	], [
+
+	])
+
+dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------
 

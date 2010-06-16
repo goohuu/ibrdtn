@@ -1,12 +1,12 @@
 ## top directory
 
 #Build in these directories:
-SUBDIRS = ibrdtn
+SUBDIRS = $(GENERIC_LIBRARY_NAME) $(TESTSUITE_DIR)
 
 #Distribute these directories:
-DIST_SUBDIRS = ibrdtn
+DIST_SUBDIRS = $(GENERIC_LIBRARY_NAME) $(TESTSUITE_DIR)
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = ibrdtn.pc
+pkgconfig_DATA = $(GENERIC_LIBRARY_NAME).pc
 
 ACLOCAL_AMFLAGS = -I m4
