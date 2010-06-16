@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "ibrdtn/default.h"
+
 
 #ifndef STATUSREPORTBLOCK_H_
 #define STATUSREPORTBLOCK_H_

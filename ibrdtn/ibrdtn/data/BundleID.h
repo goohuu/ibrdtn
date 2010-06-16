@@ -8,7 +8,6 @@
 #ifndef BUNDLEID_H_
 #define BUNDLEID_H_
 
-#include "ibrdtn/config.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Bundle.h"
 

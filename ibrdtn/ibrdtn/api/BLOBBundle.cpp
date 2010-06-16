@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-
+#include "ibrdtn/config.h"
 #include "ibrdtn/api/BLOBBundle.h"
 
 namespace dtn

@@ -8,7 +8,6 @@
 #ifndef SECURITYMANAGER_H_
 #define SECURITYMANAGER_H_
 
-#include "ibrdtn/config.h"
 #include "ibrdtn/api/Bundle.h"
 
 namespace dtn

@@ -8,7 +8,6 @@
 #ifndef STRINGBUNDLE_H_
 #define STRINGBUNDLE_H_
 
-#include "ibrdtn/config.h"
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include <iostream>

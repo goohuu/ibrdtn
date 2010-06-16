@@ -8,7 +8,6 @@
 #ifndef BUNDLEMERGER_H_
 #define BUNDLEMERGER_H_
 
-#include "ibrdtn/config.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/Bundle.h"
 

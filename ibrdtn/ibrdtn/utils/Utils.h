@@ -1,7 +1,7 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include "ibrdtn/default.h"
+
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/StatusReportBlock.h"

@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "ibrdtn/config.h"
 #include "ibrdtn/api/SecurityManager.h"
 #include "ibrdtn/api/Bundle.h"
 

@@ -8,7 +8,7 @@
 #ifndef STREAMCONNECTION_H_
 #define STREAMCONNECTION_H_
 
-#include "ibrdtn/default.h"
+
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/streams/StreamContactHeader.h"

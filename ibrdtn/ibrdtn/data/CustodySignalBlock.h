@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "ibrdtn/default.h"
+
 
 #ifndef CUSTODYSIGNALBLOCK_H_
 #define CUSTODYSIGNALBLOCK_H_

@@ -8,7 +8,6 @@
 #ifndef FILEBUNDLE_H_
 #define FILEBUNDLE_H_
 
-#include "ibrdtn/config.h"
 #include "ibrdtn/api/Bundle.h"
 #include <iostream>
 

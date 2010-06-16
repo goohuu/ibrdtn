@@ -9,7 +9,8 @@
 #ifndef STREAMDATASEGMENT_H_
 #define STREAMDATASEGMENT_H_
 
-#include "ibrdtn/default.h"
+#include <stdlib.h>
+#include <iostream>
 
 namespace dtn
 {

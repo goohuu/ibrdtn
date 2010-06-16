@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "ibrdtn/config.h"
 #include "ibrdtn/api/FileBundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrcommon/data/BLOB.h"

@@ -8,7 +8,7 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
-#include "ibrdtn/default.h"
+
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/PrimaryBlock.h"
 #include "ibrdtn/data/Block.h"

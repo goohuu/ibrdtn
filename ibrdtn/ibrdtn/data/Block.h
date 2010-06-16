@@ -8,7 +8,7 @@
 #ifndef BLOCK_H_
 #define BLOCK_H_
 
-#include "ibrdtn/default.h"
+
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/SDNV.h"

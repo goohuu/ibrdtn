@@ -8,7 +8,6 @@
 #ifndef BUNDLESTRING_H_
 #define BUNDLESTRING_H_
 
-#include "ibrdtn/config.h"
 #include <string>
 
 namespace dtn

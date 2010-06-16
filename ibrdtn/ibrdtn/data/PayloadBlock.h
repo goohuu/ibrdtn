@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "ibrdtn/default.h"
+
 
 #ifndef PAYLOADBLOCK_H_
 #define PAYLOADBLOCK_H_

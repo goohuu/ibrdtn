@@ -5,10 +5,12 @@
  *      Author: morgenro
  */
 
+#include "ibrdtn/config.h"
 #include "ibrdtn/data/BundleMerger.h"
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/Exceptions.h"
+#include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {

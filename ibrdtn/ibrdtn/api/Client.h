@@ -9,7 +9,6 @@
 #ifndef CLIENT_H_
 #define CLIENT_H_
 
-#include "ibrdtn/default.h"
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/streams/StreamConnection.h"

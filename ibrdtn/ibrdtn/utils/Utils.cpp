@@ -1,6 +1,7 @@
 #include "ibrdtn/utils/Utils.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/Exceptions.h"
+#include <math.h>
 
 namespace dtn
 {

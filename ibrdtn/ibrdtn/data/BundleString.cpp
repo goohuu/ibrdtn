@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "ibrdtn/config.h"
 #include "ibrdtn/data/BundleString.h"
 #include "ibrdtn/data/SDNV.h"
 

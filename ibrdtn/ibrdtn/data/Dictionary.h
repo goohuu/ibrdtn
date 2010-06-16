@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "ibrdtn/default.h"
+
 
 #ifndef DICTIONARY_H_
 #define DICTIONARY_H_

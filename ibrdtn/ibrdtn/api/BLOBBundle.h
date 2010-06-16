@@ -8,7 +8,6 @@
 #ifndef BLOBBUNDLE_H_
 #define BLOBBUNDLE_H_
 
-#include "ibrdtn/config.h"
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrcommon/data/BLOB.h"

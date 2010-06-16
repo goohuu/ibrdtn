@@ -8,7 +8,6 @@
 #ifndef API_BUNDLE_H_
 #define API_BUNDLE_H_
 
-#include "ibrdtn/default.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrcommon/data/BLOB.h"

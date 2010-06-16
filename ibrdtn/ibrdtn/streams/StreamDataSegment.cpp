@@ -8,8 +8,6 @@
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/data/SDNV.h"
 #include <ibrcommon/Logger.h>
-#include <stdlib.h>
-#include <typeinfo>
 
 using namespace std;
 

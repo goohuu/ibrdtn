@@ -2,7 +2,7 @@
 
 SUBDIRS = api data streams utils
 
-h_sources = ibrdtn.h default.h config.h
+h_sources = ibrdtn.h
 cc_sources = 
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)
