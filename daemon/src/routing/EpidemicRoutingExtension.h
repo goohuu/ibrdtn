@@ -18,6 +18,7 @@
 #include "routing/SummaryVector.h"
 #include "ibrdtn/data/ExtensionBlockFactory.h"
 #include <list>
+#include <queue>
 
 namespace dtn
 {
