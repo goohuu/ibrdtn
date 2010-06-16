@@ -46,6 +46,7 @@ namespace dtn
 		private:
 			DiscoveryAnnouncement _self_announce;
 			list<Neighbor> _neighbors;
+			u_int16_t _sn;
 		};
 	}
 }

@@ -10,6 +10,7 @@
 
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/EID.h>
+#include <ibrdtn/data/BundleString.h>
 #include "net/DiscoveryService.h"
 #include <string>
 #include <list>
@@ -34,7 +35,14 @@ namespace dtn
 			};
 
 		public:
-			DiscoveryAnnouncement(bool short_beacon = false, dtn::data::EID eid = dtn::data::EID());
+			enum DiscoveryVersion
+			{
+				DISCO_VERSION_00 = 0x01,
+				DISCO_VERSION_01 = 0x02
+			};
+
+			DiscoveryAnnouncement(const DiscoveryVersion version = DISCO_VERSION_00, dtn::data::EID eid = dtn::data::EID());
+
 			virtual ~DiscoveryAnnouncement();
 
 			dtn::data::EID getEID() const;
@@ -46,24 +54,22 @@ namespace dtn
 
 			string toString() const;
 
+			void setSequencenumber(u_int16_t sequence);
+
 			/**
 			 * update all service blocks
 			 */
 			virtual void updateServices();
 
 		private:
-			enum DiscoveryVersion
-			{
-				DISCO_VERSION_00 = 0x01,
-				DISCO_VERSION_01 = 0x02
-			};
-
 			friend std::ostream &operator<<(std::ostream &stream, const DiscoveryAnnouncement &announcement);
 			friend std::istream &operator>>(std::istream &stream, DiscoveryAnnouncement &announcement);
 
-			bool _short_beacon;
+			unsigned int _version;
 			unsigned char _flags;
 			dtn::data::EID _canonical_eid;
+			u_int16_t _sn;
+			dtn::data::BundleString _bloomfilter;
 
 			list<DiscoveryService> _services;
 		};

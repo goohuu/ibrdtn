@@ -7,6 +7,7 @@
 
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryService.h"
+#include "net/DiscoveryAnnouncement.h"
 #include "core/TimeEvent.h"
 #include "core/BundleCore.h"
 #include "core/NodeEvent.h"
@@ -21,7 +22,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryAgent::DiscoveryAgent()
-		 : _running(false), _self_announce(false, dtn::core::BundleCore::local)
+		 : _running(false), _self_announce(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local), _sn(0)
 		{
 		}
 
@@ -121,6 +122,10 @@ namespace dtn
 
 			const dtn::core::TimeEvent *time = dynamic_cast<const dtn::core::TimeEvent*>(evt);
 			if (time == NULL) return;
+
+			// increment sequencenumber
+			_self_announce.setSequencenumber(_sn);
+			_sn++;
 
 			this->send(_self_announce);
 		}

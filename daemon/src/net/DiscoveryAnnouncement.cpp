@@ -8,7 +8,6 @@
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrdtn/data/Exceptions.h>
 #include <ibrdtn/data/SDNV.h>
-#include <ibrdtn/data/BundleString.h>
 #include <ibrcommon/Logger.h>
 #include <netinet/in.h>
 #include <typeinfo>
@@ -19,13 +18,9 @@ namespace dtn
 {
 	namespace net
 	{
-		DiscoveryAnnouncement::DiscoveryAnnouncement(bool short_beacon, dtn::data::EID eid)
-		 : _short_beacon(short_beacon), _flags(BEACON_NO_FLAGS), _canonical_eid(eid)
+		DiscoveryAnnouncement::DiscoveryAnnouncement(const DiscoveryVersion version, dtn::data::EID eid)
+		 : _version(version), _flags(BEACON_NO_FLAGS), _canonical_eid(eid)
 		{
-			if (_short_beacon)
-			{
-				_flags = DiscoveryAnnouncement::BEACON_SHORT;
-			}
 		}
 
 		DiscoveryAnnouncement::~DiscoveryAnnouncement()
@@ -73,36 +68,84 @@ namespace dtn
 			}
 		}
 
+		void DiscoveryAnnouncement::setSequencenumber(u_int16_t sequence)
+		{
+			_sn = sequence;
+		}
+
 		std::ostream &operator<<(std::ostream &stream, const DiscoveryAnnouncement &announcement)
 		{
-			if (DiscoveryAnnouncement::BEACON_SHORT == announcement._flags)
-			{
-				stream << (unsigned char)DiscoveryAnnouncement::DISCO_VERSION_00 << announcement._flags;
-				return stream;
-			}
-
-			dtn::data::BundleString eid(announcement._canonical_eid.getString());
-			dtn::data::SDNV beacon_len;
-
-			// determine the beacon length
-			beacon_len += eid.getLength();
-
-			// add service block length
 			const list<DiscoveryService> &services = announcement._services;
-			list<DiscoveryService>::const_iterator iter = services.begin();
-			while (iter != services.end())
-			{
-				beacon_len += (*iter).getLength();
-				iter++;
-			}
 
-			stream << (unsigned char)DiscoveryAnnouncement::DISCO_VERSION_00 << announcement._flags << beacon_len << eid;
-
-			iter = services.begin();
-			while (iter != services.end())
+			switch (announcement._version)
 			{
-				stream << (*iter);
-				iter++;
+				case DiscoveryAnnouncement::DISCO_VERSION_00:
+				{
+					if (services.empty())
+					{
+						unsigned char flags = DiscoveryAnnouncement::BEACON_SHORT | announcement._flags;
+						stream << (unsigned char)DiscoveryAnnouncement::DISCO_VERSION_00 << flags;
+						return stream;
+					}
+
+					dtn::data::BundleString eid(announcement._canonical_eid.getString());
+					dtn::data::SDNV beacon_len;
+
+					// determine the beacon length
+					beacon_len += eid.getLength();
+
+					// add service block length
+					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+					{
+						beacon_len += (*iter).getLength();
+					}
+
+					stream << (unsigned char)DiscoveryAnnouncement::DISCO_VERSION_00 << announcement._flags << beacon_len << eid;
+
+					for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+					{
+						stream << (*iter);
+					}
+				}
+
+				case DiscoveryAnnouncement::DISCO_VERSION_01:
+				{
+					unsigned char flags = 0;
+
+					stream << (unsigned char)DiscoveryAnnouncement::DISCO_VERSION_01;
+
+					if (announcement._canonical_eid != EID())
+					{
+						flags |= DiscoveryAnnouncement::BEACON_CONTAINS_EID;
+					}
+
+					if (!services.empty())
+					{
+						flags |= DiscoveryAnnouncement::BEACON_SERVICE_BLOCK;
+					}
+
+					stream << flags;
+
+					// sequencenumber
+					u_int16_t sn = htons(announcement._sn);
+					stream.write( (char*)&sn, 2 );
+
+					if ( flags && DiscoveryAnnouncement::BEACON_CONTAINS_EID )
+					{
+						dtn::data::BundleString eid(announcement._canonical_eid.getString());
+						stream << eid;
+					}
+
+					if ( flags && DiscoveryAnnouncement::BEACON_SERVICE_BLOCK )
+					{
+						stream << dtn::data::SDNV(services.size());
+
+						for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+						{
+							stream << (*iter);
+						}
+					}
+				}
 			}
 
 			return stream;
