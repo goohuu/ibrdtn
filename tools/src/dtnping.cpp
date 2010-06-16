@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/StringBundle.h"
 #include "ibrcommon/net/tcpclient.h"

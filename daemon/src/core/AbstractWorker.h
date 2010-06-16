@@ -7,6 +7,7 @@
 #include "core/EventReceiver.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/Conditional.h"
+#include "ibrcommon/thread/Thread.h"
 #include "net/ConvergenceLayer.h"
 
 #include <queue>

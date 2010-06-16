@@ -5,12 +5,15 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/FileBundle.h"
 #include "ibrcommon/net/tcpclient.h"
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 
+#include <csignal>
+#include <sys/types.h>
 #include <iostream>
 
 void print_help()

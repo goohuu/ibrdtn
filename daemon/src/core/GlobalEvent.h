@@ -8,7 +8,6 @@
 #ifndef GLOBALEVENT_H_
 #define GLOBALEVENT_H_
 
-#include "config.h"
 #include "core/Event.h"
 
 namespace dtn

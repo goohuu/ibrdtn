@@ -8,9 +8,8 @@
 #ifndef DISCOVERYANNOUNCEMENT_H_
 #define DISCOVERYANNOUNCEMENT_H_
 
-#include "ibrdtn/config.h"
-#include "ibrdtn/data/SDNV.h"
-#include "ibrdtn/data/EID.h"
+#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/EID.h>
 #include "net/DiscoveryService.h"
 #include <string>
 #include <list>

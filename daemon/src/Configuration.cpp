@@ -1,3 +1,4 @@
+#include "config.h"
 #include "Configuration.h"
 #include "ibrdtn/utils/Utils.h"
 #include "core/Node.h"
@@ -17,8 +18,8 @@ namespace dtn
 		{
 			std::stringstream ss;
 			ss << PACKAGE_VERSION;
-		#ifdef SVN_REV
-			ss << "-r" << SVN_REV;
+		#ifdef SVN_REVISION
+			ss << " (build " << SVN_REVISION << ")";
 		#endif
 
 			return ss.str();

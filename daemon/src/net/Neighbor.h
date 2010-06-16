@@ -8,9 +8,6 @@
 #ifndef NEIGHBOR_H_
 #define NEIGHBOR_H_
 
-#include "ibrdtn/config.h"
-
-
 namespace dtn
 {
 	namespace net

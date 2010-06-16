@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "ibrdtn/default.h"
+#include "config.h"
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/FileBundle.h"
 #include "ibrcommon/net/tcpclient.h"
@@ -21,6 +21,8 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <csignal>
+#include <sys/types.h>
 
 using namespace ibrcommon;
 

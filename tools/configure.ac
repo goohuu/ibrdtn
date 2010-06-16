@@ -2,30 +2,16 @@ dnl --------------------------------
 dnl Initialization macros.
 dnl --------------------------------
 
-AC_INIT(src/dtnping.cpp)
-AC_CONFIG_HEADER([src/config.h])
 
+AC_INIT(ibrdtn-tools, m4_normalize(m4_include([version.inc])), morgenro@ibr.cs.tu-bs.de)
+AC_CONFIG_SRCDIR(src/dtnping.cpp)
+AM_INIT_AUTOMAKE
+LT_INIT
+AM_PATH_CPPUNIT(1.9.6)
+
+AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE
-
-dnl --------------------------------
-dnl ibrdtn package configuration
-dnl --------------------------------
-
-PACKAGE=ibrdtn-tools
-
-#release versioning
-GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=3
-GENERIC_MICRO_VERSION=0
-
-GENERIC_VERSION=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION.$GENERIC_MICRO_VERSION
-GENERIC_RELEASE=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION
-AC_SUBST(GENERIC_RELEASE)
-AC_SUBST(GENERIC_VERSION)
-
-VERSION=$GENERIC_VERSION
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, morgenro@ibr.cs.tu-bs.de)
 
 dnl -----------------------------------------------
 dnl Checks for programs.

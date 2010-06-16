@@ -6,6 +6,8 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
+#include "config.h"
+
 #include <iostream>
 #include <stdlib.h>
 

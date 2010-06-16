@@ -8,14 +8,13 @@
 #ifndef CONNECTIONMANAGER_H_
 #define CONNECTIONMANAGER_H_
 
-#include "ibrdtn/config.h"
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
 #include "net/BundleReceiver.h"
 #include "core/EventReceiver.h"
-#include "ibrdtn/data/EID.h"
+#include <ibrdtn/data/EID.h>
 #include "core/Node.h"
-#include "ibrcommon/Exceptions.h"
+#include <ibrcommon/Exceptions.h>
 
 #include <set>
 

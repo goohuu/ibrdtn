@@ -3,6 +3,7 @@
 
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/Serializer.h>

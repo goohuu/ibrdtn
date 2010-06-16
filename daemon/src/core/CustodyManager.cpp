@@ -5,10 +5,12 @@
  *      Author: morgenro
  */
 
-#include "ibrcommon/data/BLOB.h"
+#include <ibrcommon/data/BLOB.h>
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/utils/Utils.h>
+
 #include "core/CustodyManager.h"
-#include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/utils/Utils.h"
 #include "core/CustodyTimer.h"
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"

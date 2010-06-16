@@ -16,11 +16,10 @@
 #ifndef IPNDAGENT_H_
 #define IPNDAGENT_H_
 
-#include "ibrdtn/config.h"
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryAnnouncement.h"
-#include "ibrcommon/net/NetInterface.h"
-#include "ibrcommon/net/udpsocket.h"
+#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/net/udpsocket.h>
 
 using namespace dtn::data;
 

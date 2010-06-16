@@ -1,10 +1,12 @@
 #ifndef CUSTODYMANAGER_H_
 #define CUSTODYMANAGER_H_
 
-#include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/CustodySignalBlock.h"
 #include "core/CustodyTimer.h"
 #include "core/EventReceiver.h"
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/CustodySignalBlock.h>
+#include <ibrcommon/thread/Thread.h>
+#include <ibrcommon/thread/Conditional.h>
 
 #include <list>
 

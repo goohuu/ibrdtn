@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "core/Event.h"
 #include "core/EventSwitch.h"
 

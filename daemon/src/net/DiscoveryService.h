@@ -8,8 +8,7 @@
 #ifndef DISCOVERYSERVICE_H_
 #define DISCOVERYSERVICE_H_
 
-#include "ibrdtn/config.h"
-#include "net/DiscoveryServiceProvider.h"
+#include <net/DiscoveryServiceProvider.h>
 #include <stdlib.h>
 #include <iostream>
 

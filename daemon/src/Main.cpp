@@ -37,6 +37,8 @@
 #include "StatisticLogger.h"
 #include "Component.h"
 
+#include <csignal>
+#include <sys/types.h>
 #include <syslog.h>
 
 using namespace dtn::core;

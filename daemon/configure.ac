@@ -1,32 +1,22 @@
 dnl --------------------------------
-dnl Initialization macros.
-dnl --------------------------------
-
-AC_INIT(src/Main.cpp)
-AC_CONFIG_HEADER([src/config.h])
-
-AC_CONFIG_MACRO_DIR([m4])
-AM_MAINTAINER_MODE
-
-dnl --------------------------------
 dnl ibrdtn package configuration
 dnl --------------------------------
 
-PACKAGE=ibrdtnd
-
-#release versioning
-GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=3
-GENERIC_MICRO_VERSION=0
-
-GENERIC_VERSION=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION.$GENERIC_MICRO_VERSION
-GENERIC_RELEASE=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION
-AC_SUBST(GENERIC_RELEASE)
-AC_SUBST(GENERIC_VERSION)
-
-VERSION=$GENERIC_VERSION
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, morgenro@ibr.cs.tu-bs.de)
+AC_INIT(ibrdtnd, m4_normalize(m4_include([version.inc])), morgenro@ibr.cs.tu-bs.de)
+AC_CONFIG_SRCDIR(src/Main.cpp)
+AM_INIT_AUTOMAKE
+LT_INIT
 AM_PATH_CPPUNIT(1.9.6)
+
+AC_CONFIG_HEADER([src/config.h])
+AC_CONFIG_MACRO_DIR([m4])
+AM_MAINTAINER_MODE
+
+dnl -----------------------------------------------
+dnl define SVN revision
+dnl -----------------------------------------------
+define([svnversion], esyscmd([sh -c "svnversion|tr -d '\n'"]))dnl
+AC_DEFINE(SVN_REVISION, "svnversion", [SVN Revision])
 
 dnl -----------------------------------------------
 dnl Checks for programs.
@@ -40,7 +30,6 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_RANLIB
 
 AC_LANG_CPLUSPLUS
 

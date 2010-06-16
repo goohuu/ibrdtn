@@ -11,7 +11,8 @@
 #include "core/BundleCore.h"
 #include "core/NodeEvent.h"
 #include "core/Node.h"
-#include "ibrdtn/utils/Utils.h"
+#include <ibrdtn/utils/Utils.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 using namespace dtn::core;
 

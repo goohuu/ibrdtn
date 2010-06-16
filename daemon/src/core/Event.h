@@ -8,7 +8,6 @@
 #ifndef EVENT_H_
 #define EVENT_H_
 
-#include "config.h"
 #include "core/EventReceiver.h"
 
 namespace dtn
