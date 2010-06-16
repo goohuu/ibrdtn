@@ -5,7 +5,7 @@
 #include "ibrdtn/api/Client.h"
 #include "ibrdtn/api/StringBundle.h"
 #include <string.h>
-#include <stdarg.h>
+#include <cstdarg>
 #include <unistd.h>
 
 
@@ -205,14 +205,20 @@ class CAPIGateway : public dtn::api::Client
 				if (len <= chunksize) {
 					//cout << "Write " << len << endl;
 					(*b.getData()).read(buffer, len);
-					::write(sync_pipe[1],buffer,len);
+					if ( ::write(sync_pipe[1],buffer,len) < 0 )
+					{
+						std::cerr << "error while writing" << std::endl;
+					}
 					break;
 				}
 				else {
 					//cout << "Write " << chunksize << endl;
 					(*b.getData()).read(buffer, chunksize);
 					offset+=chunksize; len-=chunksize;
-					::write(sync_pipe[1],buffer,chunksize);
+					if ( ::write(sync_pipe[1],buffer,chunksize) < 0 )
+					{
+						std::cerr << "error while writing" << std::endl;
+					}
 				}
 			}
 		}

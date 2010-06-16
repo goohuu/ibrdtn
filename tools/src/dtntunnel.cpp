@@ -167,7 +167,10 @@ class TUN2BundleGateway : public dtn::api::Client
 			ibrcommon::BLOB::Reference ref = b.getData();
 			char data[65536];
 			size_t ret = (*ref).readsome(data, sizeof(data));
-			::write(_fd, data, ret);
+			if (::write(_fd, data, ret) < 0)
+			{
+				std::cerr << "error while writing" << std::endl;
+			}
 		}
 
 		ibrcommon::tcpclient _tcpclient;
@@ -217,7 +220,10 @@ int main(int argc, char *argv[])
 	// set the interface addresses
 	stringstream ifconfig;
 	ifconfig << "ifconfig " << argv[1] << " -pointopoint " << argv[2] << " dstaddr " << argv[3];
-	system(ifconfig.str().c_str());
+	if ( system(ifconfig.str().c_str()) > 0 )
+	{
+		std::cerr << "can not the interface address" << std::endl;
+	}
 
 	gateway.connect();
 
