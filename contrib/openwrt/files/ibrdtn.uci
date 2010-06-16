@@ -12,21 +12,24 @@ config 'daemon' 'main'
 	option logfile		/tmp/ibrdtn.log
 	option errfile		/tmp/ibrdtn.err
 	
+	# debug level
+#	option debug		20
+	
 #
 # storage specific settings
 #
-#config 'daemon' 'storage'
-#	option blobs		/tmp/ibrdtn/blobs
-#	option bundles		/tmp/ibrdtn/bundles
+config 'daemon' 'storage'
+	option blobs		/tmp/ibrdtn/blobs
+	option bundles		/tmp/ibrdtn/bundles
 
 #
 # statistic logging
 #
-#config 'daemon' 'statistic'
-#	# types: stdout | syslog | plain | csv | stat
-#	option type			stdout
-#	option interval		2
-#	option file			/tmp/ibrdtn.stats
+config 'daemon' 'statistic'
+	# types: stdout | syslog | plain | csv | stat
+	option type			stdout
+	option interval		2
+	option file			/tmp/ibrdtn.stats
 
 #
 # routing mode
@@ -37,8 +40,8 @@ config 'daemon' 'main'
 # available nodes. The alternative module "epidemic" spread all bundles to
 # all available neighbors.
 #
-#config 'daemon' 'main'
-#	option	routing		default
+config 'daemon' 'main'
+	option	routing		default
 
 #
 # static routing rules
@@ -74,8 +77,8 @@ config 'daemon' 'main'
 # address is used.
 #
 config 'daemon' 'discovery'
-	option interface	eth0
-#	option address		224.0.0.1
+#	option interface	eth0
+	option address		224.0.0.1
 
 config 'network'
 	option type			tcp

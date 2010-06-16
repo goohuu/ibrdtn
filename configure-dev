@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+
+# configures the project to be verbose and pedantic to coding errors and mistakes. Additionally, debugging symbols are enabled.
+./configure CXXFLAGS="-ggdb -Wall -Wextra"
+

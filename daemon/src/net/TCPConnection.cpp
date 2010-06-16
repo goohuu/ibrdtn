@@ -218,7 +218,7 @@ namespace dtn
 				double kbytes_per_second = (serializer.getLength(bundle) / m.getSeconds()) / 1024;
 
 				// print out throughput
-				IBRCOMMON_LOGGER_DEBUG(15) << "transfer completed after " << m << " with "
+				IBRCOMMON_LOGGER_DEBUG(5) << "transfer completed after " << m << " with "
 						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
 
 				// wait until all segments are acknowledged.
@@ -235,7 +235,7 @@ namespace dtn
 				double kbytes_per_second = (ex.getLastAck() / m.getSeconds()) / 1024;
 
 				// print out throughput
-				IBRCOMMON_LOGGER_DEBUG(15) << "transfer interrupted after " << m << " with "
+				IBRCOMMON_LOGGER_DEBUG(5) << "transfer interrupted after " << m << " with "
 						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
 
 				// TODO: the connection has been interrupted => create a fragment
@@ -247,7 +247,7 @@ namespace dtn
 				throw ex;
 			} catch (ConnectionNotAvailableException ex) {
 				// the connection not available
-				IBRCOMMON_LOGGER_DEBUG(15) << "connection error => requeue the bundle" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(5) << "connection error => requeue the bundle" << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER_DEBUG(15) << "Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				// signal interruption of the transfer
@@ -260,7 +260,7 @@ namespace dtn
 				m.stop();
 
 				// the connection has been terminated and fragmentation is not possible => requeue the bundle
-				IBRCOMMON_LOGGER_DEBUG(15) << "fragmentation is not possible => requeue the bundle" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(5) << "fragmentation is not possible => requeue the bundle" << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER_DEBUG(15) << "Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				// signal interruption of the transfer

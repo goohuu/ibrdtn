@@ -39,6 +39,7 @@ BLOB_PATH=`getconfig storage.blobs`
 BUNDLE_PATH=`getconfig storage.bundles`
 LOG_FILE=`getconfig main.logfile`
 ERR_FILE=`getconfig main.errfile`
+DEBUG_LEVEL=`getconfig main.debug`
 
 # create blob & bundle path
 if [ -n "$BLOB_PATH" ]; then
@@ -68,7 +69,14 @@ fi
 if [ -z "$LOG_FILE" ] && [ -z "$ERR_FILE" ]; then
 	LOGGING="-q"
 fi
-	
+
+# check for debugging option
+if [ -n "$DEBUG_LEVEL" ]; then
+	DEBUG_ARGS="-d ${DEBUG_LEVEL}"
+else
+	DEBUG_ARGS=""
+fi
+
 
 # set the crash counter to zero
 CRASH=0
@@ -81,7 +89,7 @@ while [ "`getstate state`" == "running" ]; do
 	TIMESTART=`/bin/date +%s`
 	
 	# run the daemon
-	echo "${DTND} -c ${TMPCONF} ${LOGGING}" | /bin/sh
+	echo "${DTND} ${DEBUG_ARGS} -c ${TMPCONF} ${LOGGING}" | /bin/sh
 	
 	# measure the stopping time
 	TIMESTOP=`/bin/date +%s`
