@@ -2,6 +2,8 @@
 
 SUBDIRS = api data streams utils
 
+noinst_HEADERS = config.h
+
 h_sources = ibrdtn.h
 cc_sources = 
 
