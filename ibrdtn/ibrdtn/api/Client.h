@@ -101,7 +101,7 @@ namespace dtn
 			virtual void eventConnectionUp(const StreamContactHeader &header);
 			virtual void eventConnectionDown();
 
-			dtn::api::Bundle getBundle();
+			dtn::api::Bundle getBundle(size_t timeout = 0);
 
 		protected:
 			/**

@@ -170,10 +170,10 @@ namespace dtn
 			}
 		}
 
-		dtn::api::Bundle Client::getBundle()
+		dtn::api::Bundle Client::getBundle(size_t timeout)
 		{
 			try {
-				return _inqueue.blockingpop();
+				return _inqueue.blockingpop(timeout * 1000);
 			} catch (ibrcommon::Exception ex) {
 				throw ibrcommon::ConnectionClosedException();
 			}

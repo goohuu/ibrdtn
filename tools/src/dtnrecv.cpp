@@ -22,9 +22,10 @@ void print_help()
 	cout << "Syntax: dtnrecv [options]"  << endl;
 	cout << " <filename>    the file to transfer" << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h|--help          display this text" << endl;
-	cout << " --file <filename>  write the incoming data to the a file instead of the standard output" << endl;
-	cout << " --name <name>      set the application name (e.g. filetransfer)" << endl;
+	cout << " -h|--help            display this text" << endl;
+	cout << " --file <filename>    write the incoming data to the a file instead of the standard output" << endl;
+	cout << " --name <name>        set the application name (e.g. filetransfer)" << endl;
+	cout << " --timeout <seconds>  receive timeout in seconds" << endl;
 
 }
 
@@ -80,6 +81,7 @@ int main(int argc, char *argv[])
 	string filename = "";
 	string name = "filetransfer";
 	bool stdout = true;
+	int timeout = 0;
 
 	for (int i = 0; i < argc; i++)
 	{
@@ -102,6 +104,11 @@ int main(int argc, char *argv[])
 			filename = argv[i + 1];
 			stdout = false;
 		}
+
+		if (arg == "--timeout" && argc > i)
+		{
+			timeout = atoi(argv[i + 1]);
+		}
 	}
 
 	try {
@@ -122,7 +129,7 @@ int main(int argc, char *argv[])
 		if (!stdout) std::cout << "Wait for incoming bundle... " << std::flush;
 
 		// receive the bundle
-		dtn::api::Bundle b = client.getBundle();
+		dtn::api::Bundle b = client.getBundle(timeout);
 
 		// write the bundle to stdout/file
 		writeBundle(stdout, filename, b);
