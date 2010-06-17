@@ -160,7 +160,7 @@ AC_ARG_ENABLE(testsuite,
 		TESTSUITE_DIR="tests"
 		AC_SUBST(TESTSUITE_DIR)
 	], [
-
+		TESTSUITE_DIR=""
 	])
 
 dnl -----------------------------------------------
