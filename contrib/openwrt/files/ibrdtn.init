@@ -10,7 +10,7 @@ start() {
 		return
 	fi
 	
-	echo -n "running dtnd ..."
+	/bin/echo -n "running dtnd ..."
 	
 	# startup the safety-wrapper for the daemon
 	/usr/sbin/dtnd-safety-wrapper.sh &
@@ -18,7 +18,7 @@ start() {
 	# store the pid of the process in uci states
 	/sbin/uci -P/var/state -q set ibrdtn.safetypid=`echo $!`
 	
-	echo " done"
+	/bin/echo " done"
 }
 
 stop() { 
@@ -28,18 +28,22 @@ stop() {
 		return
 	fi
 	
-	echo -n "stopping dtnd ..."
+	/bin/echo -n "stopping dtnd ..."
 	
 	# set state to None, this indicates a clear shutdown to the safety-wrapper.
 	/sbin/uci -P/var/state -q set ibrdtn.state=None
 	
 	# stop the safety-wrapper
 	if [ -n "`/sbin/uci -P/var/state -q get ibrdtn.safetypid`" ]; then
-		kill `/sbin/uci -P/var/state -q get ibrdtn.safetypid` 2> /dev/null >/dev/null
+		/usr/bin/kill `/sbin/uci -P/var/state -q get ibrdtn.safetypid` 2> /dev/null >/dev/null
 	fi
 	
+	# finally kill really all safety-wrapper!
+	/bin/sleep 2
+	/usr/bin/killall -9 dtnd-safety-wrapper.sh
+	
 	# send a kill signal to the daemon
-	killall dtnd 2> /dev/null >/dev/null
+	/usr/bin/killall dtnd 2> /dev/null >/dev/null
 	
 	# wait for some time
 	TIMEOUT=0;
@@ -48,9 +52,9 @@ stop() {
 	while [ -n "`ps ax | grep dtnd | grep -v grep`" ]; do
 		# check if the daemon is still running
 		if [ $TIMEOUT -ge 10 ]; then
-			echo " killing"
+			/bin/echo " killing"
 			# kill all processes of dtnd
-			killall -9 dtnd 2> /dev/null >/dev/null
+			/usr/bin/killall -9 dtnd 2> /dev/null >/dev/null
 			return
 		fi
 		
