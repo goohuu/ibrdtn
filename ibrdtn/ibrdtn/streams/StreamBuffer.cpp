@@ -457,25 +457,60 @@ namespace dtn
 
 						case StreamDataSegment::MSG_REFUSE_BUNDLE:
 						{
+							// we received a NACK
+							IBRCOMMON_LOGGER_DEBUG(20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;
+
 							// remove the segment in the queue
 							if (get(STREAM_ACK_SUPPORT))
 							{
-								try {
-									_segments.frontpop();
-								} catch (ibrcommon::Exception ex) {
-									IBRCOMMON_LOGGER(error) << "got an unexpected NACK with size of " << seg._value << IBRCOMMON_LOGGER_ENDL;
+								if (!_rejected_segments.empty())
+								{
+									_rejected_segments.pop();
+
+									// we received a NACK
+									IBRCOMMON_LOGGER_DEBUG(30) << "still " << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
 								}
-								_conn.eventAck(_sent_size, _sent_size);
+								else
+								{
+									try {
+										_segments.frontpop();
+									} catch (ibrcommon::Exception ex) {
+										IBRCOMMON_LOGGER(error) << "got an unexpected NACK with size of " << seg._value << IBRCOMMON_LOGGER_ENDL;
+									}
+									_conn.eventAck(_sent_size, _sent_size);
+
+									if (get(STREAM_NACK_SUPPORT))
+									{
+										ibrcommon::LockedQueue<StreamDataSegment> q = _segments.LockedAccess();
+
+										// get all segment ACKs in the queue for this transmission
+										while (!(*q).empty())
+										{
+											if ((*q).front()._flags & StreamDataSegment::MSG_MARK_BEGINN)
+											{
+												break;
+											}
+
+											// move the segments to another queue
+											_rejected_segments.push((*q).front());
+											(*q).pop();
+										}
+
+										// we received a NACK
+										IBRCOMMON_LOGGER_DEBUG(30) << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
+
+										// the queue is empty, then skip the current transfer
+										if ((*q).empty())
+										{
+											set(STREAM_SKIP);
+
+											// we received a NACK
+											IBRCOMMON_LOGGER_DEBUG(25) << "skip the current transfer" << IBRCOMMON_LOGGER_ENDL;
+										}
+									}
+								}
 							}
 
-//							if (_nack_support)
-//							{
-//								ibrcommon::MutexLock l(_out_state);
-//								_skip = true;
-//							}
-
-							// we received a NACK
-							IBRCOMMON_LOGGER_DEBUG(20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;
 							break;
 						}
 

@@ -300,6 +300,7 @@ namespace dtn
 				// this queue contains all sent data segments
 				// they are removed if an ack or nack is received
 				ibrcommon::ThreadSafeQueue<StreamDataSegment> _segments;
+				std::queue<StreamDataSegment> _rejected_segments;
 
 				ibrcommon::Mutex _underflow_mutex;
 				size_t _underflow_data_remain;
