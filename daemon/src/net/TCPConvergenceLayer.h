@@ -88,6 +88,10 @@ namespace dtn
 				virtual void eventConnectionUp(const StreamContactHeader &header);
 				virtual void eventConnectionDown();
 
+				virtual void eventBundleRefused();
+				virtual void eventBundleForwarded();
+				virtual void eventBundleAck(size_t ack);
+
 				bool free();
 
 				dtn::core::NodeProtocol getDiscoveryProtocol() const;
@@ -162,6 +166,9 @@ namespace dtn
 				// handshake variables
 				dtn::data::EID _name;
 				size_t _timeout;
+
+				ibrcommon::ThreadSafeQueue<dtn::data::Bundle> _sentqueue;
+				size_t _lastack;
 			};
 
 			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver

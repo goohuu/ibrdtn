@@ -105,6 +105,9 @@ namespace dtn
 
 		void Client::close()
 		{
+			// wait for the last ACKs
+			wait(30000);
+
 			StreamConnection::shutdown();
 
 			ibrcommon::MutexLock l(_inqueue);
@@ -160,6 +163,20 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_inqueue);
 			_inqueue.signal(true);
+		}
+
+		void Client::eventBundleRefused()
+		{
+
+		}
+
+		void Client::eventBundleForwarded()
+		{
+
+		}
+
+		void Client::eventBundleAck(size_t)
+		{
 		}
 
 		void Client::received(const dtn::api::Bundle &b)

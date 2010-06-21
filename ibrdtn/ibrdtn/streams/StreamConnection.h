@@ -107,6 +107,19 @@ namespace dtn
 				virtual void eventError() = 0;
 
 				/**
+				 * This method is called if a bundle is refused by the peer.
+				 */
+				virtual void eventBundleRefused() = 0;
+				/**
+				 * This method is called if a bundle is refused by the peer.
+				 */
+				virtual void eventBundleForwarded() = 0;
+				/**
+				 * This method is called if a ACK is received.
+				 */
+				virtual void eventBundleAck(size_t ack) = 0;
+
+				/**
 				 * This method is called if a handshake was successful.
 				 * @param header
 				 */
@@ -286,7 +299,6 @@ namespace dtn
 
 				std::iostream &_stream;
 
-				size_t _sent_size;
 				size_t _recv_size;
 
 				size_t _in_timeout;
@@ -317,10 +329,10 @@ namespace dtn
 			void connectionTimeout();
 
 			void eventShutdown();
-			void eventAck(size_t ack, size_t sent);
 
-			size_t _ack_size;
-			size_t _sent_size;
+			void eventBundleAck(size_t ack);
+			void eventBundleRefused();
+			void eventBundleForwarded();
 
 			StreamConnection::Callback &_callback;
 

@@ -20,7 +20,7 @@ namespace dtn
 	namespace streams
 	{
 		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream)
-		 : std::iostream(&_buf), _ack_size(0), _sent_size(0), _callback(cb), _in_state(CONNECTION_INITIAL),
+		 : std::iostream(&_buf), _callback(cb), _in_state(CONNECTION_INITIAL),
 		   _out_state(CONNECTION_INITIAL), _buf(*this, stream), _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
 		{
 		}
@@ -94,7 +94,6 @@ namespace dtn
 						_callback.eventError();
 						break;
 					case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
-						wait();
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
 						_callback.eventShutdown();
 						break;
@@ -123,11 +122,22 @@ namespace dtn
 			_callback.eventShutdown();
 		}
 
-		void StreamConnection::eventAck(size_t ack, size_t sent)
+		void StreamConnection::eventBundleAck(size_t ack)
 		{
-			_ack_size = ack;
-			_sent_size = sent;
+			_callback.eventBundleAck(ack);
 			_in_state.signal(true);
+		}
+
+		void StreamConnection::eventBundleRefused()
+		{
+			IBRCOMMON_LOGGER_DEBUG(20) << "bundle has been refused" << IBRCOMMON_LOGGER_ENDL;
+			_callback.eventBundleRefused();
+		}
+
+		void StreamConnection::eventBundleForwarded()
+		{
+			IBRCOMMON_LOGGER_DEBUG(20) << "bundle has been forwarded" << IBRCOMMON_LOGGER_ENDL;
+			_callback.eventBundleForwarded();
 		}
 
 		bool StreamConnection::isConnected()
@@ -146,15 +156,12 @@ namespace dtn
 			ibrcommon::MutexLock l(_in_state);
 			ibrcommon::TimeMeasurement tm;
 
-			if (_sent_size != _ack_size)
-			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): wait for completion of transmission, current size: " << _ack_size << " of " << _sent_size << IBRCOMMON_LOGGER_ENDL;
-			}
-
 			if (timeout == 0) tm.start();
 
 			while (!_buf.isCompleted() && (_in_state.getState() == CONNECTION_CONNECTED))
 			{
+				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): wait for completion of transmission" << IBRCOMMON_LOGGER_ENDL;
+
 				if (timeout == 0)
 				{
 					_in_state.wait();
@@ -165,11 +172,10 @@ namespace dtn
 					tm.stop();
 					if (tm.getMilliseconds() >= timeout)
 					{
-						IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer aborted (timeout): " << _ack_size << " of " << _sent_size << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer aborted (timeout)" << IBRCOMMON_LOGGER_ENDL;
 						return;
 					}
 				}
-				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): current size: " << _ack_size << " of " << _sent_size << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			if (_buf.isCompleted())
@@ -179,7 +185,6 @@ namespace dtn
 			else
 			{
 				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer aborted" << IBRCOMMON_LOGGER_ENDL;
-				throw dtn::ConnectionInterruptedException(_ack_size);
 			}
 		}
 

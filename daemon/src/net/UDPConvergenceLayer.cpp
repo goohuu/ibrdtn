@@ -102,7 +102,7 @@ namespace dtn
 
 				// TODO: transfer the fragment
 
-				throw ConnectionInterruptedException(0);
+				throw ConnectionInterruptedException();
 			}
 
 			serializer << b;

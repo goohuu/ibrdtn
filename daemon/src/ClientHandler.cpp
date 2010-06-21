@@ -74,8 +74,63 @@ namespace dtn
 
 		void ClientHandler::eventConnectionDown()
 		{
+			try {
+				while (true)
+				{
+					const dtn::data::Bundle bundle = _sentqueue.frontpop();
+
+//					if (_lastack > 0)
+//					{
+//						// some data are already acknowledged, make a fragment?
+//						//TODO: make a fragment
+//						TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
+//					}
+//					else
+//					{
+//						// raise transfer abort event for all bundles without an ACK
+//						TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
+//					}
+
+					// set last ack to zero
+					_lastack = 0;
+				}
+			} catch (ibrcommon::Exception ex) {
+				// queue emtpy
+			}
+
 			ibrcommon::MutexLock l(_freemutex);
 			iamfree();
+		}
+
+		void ClientHandler::eventBundleRefused()
+		{
+			try {
+				const dtn::data::Bundle bundle = _sentqueue.frontpop();
+
+				// set ACK to zero
+				_lastack = 0;
+
+			} catch (ibrcommon::Exception ex) {
+				// pop on empty queue!
+			}
+		}
+
+		void ClientHandler::eventBundleForwarded()
+		{
+			try {
+				const dtn::data::Bundle bundle = _sentqueue.frontpop();
+
+				// set ACK to zero
+				_lastack = 0;
+
+			} catch (ibrcommon::Exception ex) {
+				// pop on empty queue!
+			}
+		}
+
+		void ClientHandler::eventBundleAck(size_t ack)
+		{
+			_lastack = ack;
 		}
 
 		bool ClientHandler::isConnected()
@@ -87,7 +142,7 @@ namespace dtn
 		{
 			try {
 				// wait until all segments are ACK'd with 10 seconds timeout
-				_connection.wait(10000);
+				_connection.wait(500);
 			} catch (...) {
 
 			}
@@ -161,14 +216,14 @@ namespace dtn
 
 		ClientHandler& operator<<(ClientHandler &conn, const dtn::data::Bundle &bundle)
 		{
+			// add bundle to the queue
+			conn._sentqueue.push(bundle);
+
 			// transmit the bundle
 			dtn::data::DefaultSerializer(conn._connection) << bundle;
 
 			// mark the end of the bundle
 			conn._connection << std::flush;
-
-			// wait until all segments are ACK'd with 10 seconds timeout
-			conn._connection.wait(10000);
 
 			return conn;
 		}

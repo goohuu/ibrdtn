@@ -14,7 +14,7 @@ namespace dtn
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream)
 			: _statebits(STREAM_SOB), _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]), _stream(stream),
-			  _sent_size(0), _recv_size(0), _timer(*this, 0), _underflow_data_remain(0), _underflow_state(IDLE)
+			  _recv_size(0), _timer(*this, 0), _underflow_data_remain(0), _underflow_state(IDLE)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -68,6 +68,8 @@ namespace dtn
 			_stream.exceptions(std::ios::badbit | std::ios::eofbit | std::ios::failbit);
 
 			try {
+				ibrcommon::MutexLock l(_sendlock);
+
 				// transfer the local header
 				_stream << header << std::flush;
 
@@ -237,7 +239,6 @@ namespace dtn
 				if (get(STREAM_SOB))
 				{
 					seg._flags |= StreamDataSegment::MSG_MARK_BEGINN;
-					_sent_size = 0;
 					unset(STREAM_SKIP);
 					unset(STREAM_SOB);
 				}
@@ -258,13 +259,16 @@ namespace dtn
 					{
 						_segments.push(seg);
 					}
+					else if (seg._flags & StreamDataSegment::MSG_MARK_END)
+					{
+						// without ACK support we have to assume that a bundle is forwarded
+						// when the last segment is sent.
+						_conn.eventBundleForwarded();
+					}
 
 					// write the segment to the stream
 					_stream << seg;
 					_stream.write(out_buf_, seg._value);
-
-					// add size to outgoing size
-					_sent_size += seg._value;
 				}
 
 				return traits_type::not_eof(c);
@@ -299,6 +303,8 @@ namespace dtn
 											traits_type::eof()) ? -1 : 0;
 
 			try {
+				ibrcommon::MutexLock l(_sendlock);
+
 				// ... and flush.
 				_stream.flush();
 			} catch (ios_base::failure ex) {
@@ -422,7 +428,7 @@ namespace dtn
 									// lock for sending
 									ibrcommon::MutexLock l(_sendlock);
 
-									// send a SHUTDOWN message
+									// send a NACK message
 									_stream << StreamDataSegment(StreamDataSegment::MSG_REFUSE_BUNDLE, 0) << std::flush;
 								}
 
@@ -442,12 +448,25 @@ namespace dtn
 							// remove the segment in the queue
 							if (get(STREAM_ACK_SUPPORT))
 							{
-								try {
-									_segments.frontpop();
-								} catch (ibrcommon::Exception ex) {
+								ibrcommon::LockedQueue<StreamDataSegment> q = _segments.LockedAccess();
+
+								if ((*q).empty())
+								{
 									IBRCOMMON_LOGGER(error) << "got an unexpected ACK with size of " << seg._value << IBRCOMMON_LOGGER_ENDL;
 								}
-								_conn.eventAck(seg._value, _sent_size);
+								else
+								{
+									StreamDataSegment &qs = (*q).front();
+
+									if (qs._flags & StreamDataSegment::MSG_MARK_END)
+									{
+										_conn.eventBundleForwarded();
+									}
+
+									(*q).pop();
+
+									_conn.eventBundleAck(seg._value);
+								}
 							}
 							break;
 						}
@@ -457,58 +476,63 @@ namespace dtn
 
 						case StreamDataSegment::MSG_REFUSE_BUNDLE:
 						{
-							// we received a NACK
-							IBRCOMMON_LOGGER_DEBUG(20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;
-
 							// remove the segment in the queue
-							if (get(STREAM_ACK_SUPPORT))
+							if (get(STREAM_ACK_SUPPORT) && get(STREAM_NACK_SUPPORT))
 							{
+								ibrcommon::LockedQueue<StreamDataSegment> q = _segments.LockedAccess();
+
+								// skip segments
 								if (!_rejected_segments.empty())
 								{
 									_rejected_segments.pop();
 
 									// we received a NACK
-									IBRCOMMON_LOGGER_DEBUG(30) << "still " << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_DEBUG(30) << "NACK received, still " << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
+								}
+								else if ((*q).empty())
+								{
+									IBRCOMMON_LOGGER(error) << "got an unexpected NACK" << IBRCOMMON_LOGGER_ENDL;
 								}
 								else
 								{
-									try {
-										_segments.frontpop();
-									} catch (ibrcommon::Exception ex) {
-										IBRCOMMON_LOGGER(error) << "got an unexpected NACK with size of " << seg._value << IBRCOMMON_LOGGER_ENDL;
-									}
-									_conn.eventAck(_sent_size, _sent_size);
+									// we received a NACK
+									IBRCOMMON_LOGGER_DEBUG(20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;
 
-									if (get(STREAM_NACK_SUPPORT))
+									// remove the next segment
+									(*q).pop();
+
+									// get all segment ACKs in the queue for this transmission
+									while (!(*q).empty())
 									{
-										ibrcommon::LockedQueue<StreamDataSegment> q = _segments.LockedAccess();
-
-										// get all segment ACKs in the queue for this transmission
-										while (!(*q).empty())
+										if ((*q).front()._flags & StreamDataSegment::MSG_MARK_BEGINN)
 										{
-											if ((*q).front()._flags & StreamDataSegment::MSG_MARK_BEGINN)
-											{
-												break;
-											}
-
-											// move the segments to another queue
-											_rejected_segments.push((*q).front());
-											(*q).pop();
+											break;
 										}
+
+										// move the segments to another queue
+										_rejected_segments.push((*q).front());
+										(*q).pop();
+									}
+
+									// call event reject
+									_conn.eventBundleRefused();
+
+									// we received a NACK
+									IBRCOMMON_LOGGER_DEBUG(30) << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
+
+									// the queue is empty, then skip the current transfer
+									if ((*q).empty())
+									{
+										set(STREAM_SKIP);
 
 										// we received a NACK
-										IBRCOMMON_LOGGER_DEBUG(30) << _rejected_segments.size() << " segments to NACK" << IBRCOMMON_LOGGER_ENDL;
-
-										// the queue is empty, then skip the current transfer
-										if ((*q).empty())
-										{
-											set(STREAM_SKIP);
-
-											// we received a NACK
-											IBRCOMMON_LOGGER_DEBUG(25) << "skip the current transfer" << IBRCOMMON_LOGGER_ENDL;
-										}
+										IBRCOMMON_LOGGER_DEBUG(25) << "skip the current transfer" << IBRCOMMON_LOGGER_ENDL;
 									}
 								}
+							}
+							else
+							{
+								IBRCOMMON_LOGGER(error) << "got an unexpected NACK" << IBRCOMMON_LOGGER_ENDL;
 							}
 
 							break;
@@ -552,7 +576,7 @@ namespace dtn
 				// set failed bit
 				set(STREAM_FAILED);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in underflow()" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in underflow(): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (StreamShutdownException ex) {
 				// set failed bit

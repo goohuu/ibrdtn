@@ -100,6 +100,9 @@ namespace dtn
 			virtual void eventError();
 			virtual void eventConnectionUp(const StreamContactHeader &header);
 			virtual void eventConnectionDown();
+			virtual void eventBundleRefused();
+			virtual void eventBundleForwarded();
+			virtual void eventBundleAck(size_t ack);
 
 			dtn::api::Bundle getBundle(size_t timeout = 0);
 

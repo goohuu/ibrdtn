@@ -157,7 +157,7 @@ namespace dtn
 						}
 
 						ibrcommon::Thread::yield();
-						(*this).wait(5000); // wait max. 5 seconds
+						(*this).wait(500); // wait max. 0.5 seconds
 					}
 				}
 

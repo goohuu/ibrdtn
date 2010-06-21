@@ -40,6 +40,10 @@ namespace dtn
 			virtual void eventConnectionDown();
 			virtual void eventConnectionUp(const StreamContactHeader &header);
 
+			virtual void eventBundleRefused();
+			virtual void eventBundleForwarded();
+			virtual void eventBundleAck(size_t ack);
+
 			friend ClientHandler& operator>>(ClientHandler &conn, dtn::data::Bundle &bundle);
 			friend ClientHandler& operator<<(ClientHandler &conn, const dtn::data::Bundle &bundle);
 
@@ -58,6 +62,9 @@ namespace dtn
 			auto_ptr<ibrcommon::tcpstream> _stream;
 			dtn::streams::StreamConnection _connection;
 			StreamContactHeader _contact;
+
+			ibrcommon::ThreadSafeQueue<dtn::data::Bundle> _sentqueue;
+			size_t _lastack;
 		};
 	}
 }

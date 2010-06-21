@@ -15,6 +15,7 @@
 
 #include "routing/RequeueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
 
 #include <ibrcommon/net/NetInterface.h>
 #include <ibrcommon/Logger.h>
@@ -30,7 +31,7 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : dtn::data::DefaultDeserializer(_stream), _free(false), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0)
+		 : dtn::data::DefaultDeserializer(_stream), _free(false), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
 		{
 		}
 
@@ -98,8 +99,68 @@ namespace dtn
 			// event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _peer._localeid);
 
+			try {
+				while (true)
+				{
+					const dtn::data::Bundle bundle = _sentqueue.frontpop();
+
+					if (_lastack > 0)
+					{
+						// some data are already acknowledged, make a fragment?
+						//TODO: make a fragment
+						TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
+					}
+					else
+					{
+						// raise transfer abort event for all bundles without an ACK
+						TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
+					}
+
+					// set last ack to zero
+					_lastack = 0;
+				}
+			} catch (ibrcommon::Exception ex) {
+				// queue emtpy
+			}
+
 			ibrcommon::MutexLock l(_freemutex);
 			iamfree();
+		}
+
+		void TCPConvergenceLayer::TCPConnection::eventBundleRefused()
+		{
+			try {
+				const dtn::data::Bundle bundle = _sentqueue.frontpop();
+
+				// requeue the bundle
+				TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
+
+				// set ACK to zero
+				_lastack = 0;
+
+			} catch (ibrcommon::Exception ex) {
+				// pop on empty queue!
+			}
+		}
+
+		void TCPConvergenceLayer::TCPConnection::eventBundleForwarded()
+		{
+			try {
+				const dtn::data::Bundle bundle = _sentqueue.frontpop();
+
+				// signal completion of the transfer
+				TransferCompletedEvent::raise(EID(_node.getURI()), bundle);
+
+				// set ACK to zero
+				_lastack = 0;
+			} catch (ibrcommon::Exception ex) {
+				// pop on empty queue!
+			}
+		}
+
+		void TCPConvergenceLayer::TCPConnection::eventBundleAck(size_t ack)
+		{
+			_lastack = ack;
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
@@ -198,13 +259,16 @@ namespace dtn
 			// prepare a measurement
 			ibrcommon::TimeMeasurement m;
 
+			// create a serializer
+			dtn::data::DefaultSerializer serializer(conn._stream);
+
+			// put the bundle into the sentqueue
+			conn._sentqueue.push(bundle);
+
+			// start the measurement
+			m.start();
+
 			try {
-				// start the measurement
-				m.start();
-
-				// create a serializer
-				dtn::data::DefaultSerializer serializer(conn._stream);
-
 				// transmit the bundle
 				serializer << bundle;
 
@@ -218,53 +282,12 @@ namespace dtn
 				double kbytes_per_second = (serializer.getLength(bundle) / m.getSeconds()) / 1024;
 
 				// print out throughput
-				IBRCOMMON_LOGGER_DEBUG(5) << "transfer completed after " << m << " with "
+				IBRCOMMON_LOGGER_DEBUG(5) << "transfer finished after " << m << " with "
 						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
 
-				// wait until all segments are acknowledged.
-				conn._stream.wait();
-
-				// signal completion of the transfer
-				TransferCompletedEvent::raise(EID(conn._node.getURI()), bundle);
-
-			} catch (ConnectionInterruptedException ex) {
-				// stop the time measurement
-				m.stop();
-
-				// get throughput
-				double kbytes_per_second = (ex.getLastAck() / m.getSeconds()) / 1024;
-
-				// print out throughput
-				IBRCOMMON_LOGGER_DEBUG(5) << "transfer interrupted after " << m << " with "
-						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
-
-				// TODO: the connection has been interrupted => create a fragment
-
-				// signal interruption of the transfer
-				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
-
-				// forward exception
-				throw ex;
-			} catch (ConnectionNotAvailableException ex) {
+			} catch (ibrcommon::Exception ex) {
 				// the connection not available
-				IBRCOMMON_LOGGER_DEBUG(5) << "connection error => requeue the bundle" << IBRCOMMON_LOGGER_ENDL;
-				IBRCOMMON_LOGGER_DEBUG(15) << "Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-
-				// signal interruption of the transfer
-				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
-
-				// forward exception
-				throw ex;
-			} catch (ibrcommon::IOException ex) {
-				// stop the time measurement
-				m.stop();
-
-				// the connection has been terminated and fragmentation is not possible => requeue the bundle
-				IBRCOMMON_LOGGER_DEBUG(5) << "fragmentation is not possible => requeue the bundle" << IBRCOMMON_LOGGER_ENDL;
-				IBRCOMMON_LOGGER_DEBUG(15) << "Exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-
-				// signal interruption of the transfer
-				dtn::routing::RequeueBundleEvent::raise(EID(conn._node.getURI()), bundle);
+				IBRCOMMON_LOGGER_DEBUG(10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				// forward exception
 				throw ex;
