@@ -51,12 +51,8 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				
 routing_SOURCES = routing/BaseRouter.cpp \
 				routing/BaseRouter.h \
-				routing/BundleList.cpp \
-				routing/BundleList.h \
 				routing/EpidemicRoutingExtension.cpp \
 				routing/EpidemicRoutingExtension.h \
-				routing/MetaBundle.cpp \
-				routing/MetaBundle.h \
 				routing/NeighborRoutingExtension.cpp \
 				routing/NeighborRoutingExtension.h \
 				routing/QueueBundleEvent.cpp \

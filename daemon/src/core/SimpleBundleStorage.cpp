@@ -2,6 +2,7 @@
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleExpiredEvent.h"
+#include "core/BundleEvent.h"
 
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -183,7 +184,7 @@ namespace dtn
 		void SimpleBundleStorage::BundleStore::expire(const size_t timestamp)
 		{
 			ibrcommon::MutexLock l(bundleslock);
-			dtn::routing::BundleList::expire(timestamp);
+			dtn::data::BundleList::expire(timestamp);
 		}
 
 		void SimpleBundleStorage::BundleStore::load(const ibrcommon::File &file)
@@ -194,7 +195,7 @@ namespace dtn
 			bundles.insert( container );
 
 			// add it to the bundle list
-			dtn::routing::BundleList::add(dtn::routing::MetaBundle(*container));
+			dtn::data::BundleList::add(dtn::data::MetaBundle(*container));
 		}
 
 		void SimpleBundleStorage::BundleStore::store(const dtn::data::Bundle &bundle)
@@ -218,7 +219,7 @@ namespace dtn
 
 			if (ret.second)
 			{
-				dtn::routing::BundleList::add(dtn::routing::MetaBundle(bundle));
+				dtn::data::BundleList::add(dtn::data::MetaBundle(bundle));
 			}
 			else
 			{
@@ -238,7 +239,7 @@ namespace dtn
 					BundleContainer container = (*iter);
 
 					// remove it from the bundle list
-					dtn::routing::BundleList::remove(dtn::routing::MetaBundle(*container));
+					dtn::data::BundleList::remove(dtn::data::MetaBundle(*container));
 
 					// mark for deletion
 					container.remove();
@@ -267,7 +268,7 @@ namespace dtn
 			}
 
 			bundles.clear();
-			dtn::routing::BundleList::clear();
+			dtn::data::BundleList::clear();
 		}
 
 		void SimpleBundleStorage::BundleStore::eventBundleExpired(const ExpiringBundle &b)
@@ -283,6 +284,9 @@ namespace dtn
 					break;
 				}
 			}
+
+			// raise bundle event
+			dtn::core::BundleEvent::raise( b.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
 
 			// raise an event
 			dtn::core::BundleExpiredEvent::raise( b.bundle );

@@ -8,21 +8,21 @@
 #ifndef BUNDLELIST_H_
 #define BUNDLELIST_H_
 
-#include "routing/MetaBundle.h"
+#include <ibrdtn/data/MetaBundle.h>
 #include <set>
 
 namespace dtn
 {
-	namespace routing
+	namespace data
 	{
-		class BundleList : public std::set<dtn::routing::MetaBundle>
+		class BundleList : public std::set<dtn::data::MetaBundle>
 		{
 		public:
 			BundleList();
 			~BundleList();
 
-			void add(const dtn::routing::MetaBundle bundle);
-			void remove(const dtn::routing::MetaBundle bundle);
+			void add(const dtn::data::MetaBundle bundle);
+			void remove(const dtn::data::MetaBundle bundle);
 			void clear();
 
 			void expire(const size_t timestamp);

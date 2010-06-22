@@ -13,7 +13,7 @@
 #include "ibrcommon/net/tcpserver.h"
 #include "ibrcommon/net/NetInterface.h"
 #include "net/GenericServer.h"
-#include "routing/MetaBundle.h"
+#include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/ThreadSafeQueue.h>
 
 #include <queue>
@@ -64,7 +64,7 @@ namespace dtn
 
 				ibrcommon::Mutex &_lock;
 				std::list<ClientHandler*> &_connections;
-				ibrcommon::ThreadSafeQueue<dtn::routing::MetaBundle> _received;
+				ibrcommon::ThreadSafeQueue<dtn::data::MetaBundle> _received;
 			};
 
 			std::list<ClientHandler*> _connections;

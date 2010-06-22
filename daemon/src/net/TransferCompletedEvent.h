@@ -9,7 +9,7 @@
 #define TRANSFERCOMPLETEDEVENT_H_
 
 #include "core/Event.h"
-#include "routing/MetaBundle.h"
+#include <ibrdtn/data/MetaBundle.h>
 #include "ibrdtn/data/EID.h"
 
 namespace dtn
@@ -30,11 +30,11 @@ namespace dtn
 			static void raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
 
 			dtn::data::EID getPeer() const;
-			dtn::routing::MetaBundle getBundle() const;
+			dtn::data::MetaBundle getBundle() const;
 
 		private:
 			dtn::data::EID _peer;
-			dtn::routing::MetaBundle _bundle;
+			dtn::data::MetaBundle _bundle;
 			TransferCompletedEvent(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
 		};
 	}

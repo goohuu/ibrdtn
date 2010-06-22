@@ -9,6 +9,7 @@
 #include "core/BundleEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleCore.h"
+#include <ibrdtn/data/MetaBundle.h>
 
 namespace dtn
 {
@@ -26,7 +27,7 @@ namespace dtn
 			unbindEvent(BundleEvent::className);
 		}
 
-		Bundle StatusReportGenerator::createStatusReport(const Bundle &b, StatusReportBlock::TYPE type, StatusReportBlock::REASON_CODE reason)
+		Bundle StatusReportGenerator::createStatusReport(const dtn::data::MetaBundle &b, StatusReportBlock::TYPE type, StatusReportBlock::REASON_CODE reason)
 		{
 			// create a new bundle
 			Bundle bundle;
@@ -69,20 +70,20 @@ namespace dtn
 
 			// set source and destination
 			bundle._source = dtn::core::BundleCore::local;
-			bundle._destination = b._reportto;
+			bundle._destination = b.reportto;
 
 			// set bundle parameter
-			if (b._procflags & Bundle::FRAGMENT)
+			if (b.procflags & Bundle::FRAGMENT)
 			{
-				report._fragment_offset = b._fragmentoffset;
-				report._fragment_length = b._appdatalength;
+				report._fragment_offset = b.offset;
+				report._fragment_length = b.appdatalength;
 
 				if (!(report._admfield & 1)) report._admfield += 1;
 			}
 
-			report._bundle_timestamp = b._timestamp;
-			report._bundle_sequence = b._sequencenumber;
-			report._source = b._source;
+			report._bundle_timestamp = b.timestamp;
+			report._bundle_sequence = b.sequencenumber;
+			report._source = b.source;
 
 			return bundle;
 		}
@@ -93,19 +94,19 @@ namespace dtn
 
 			if (bundleevent != NULL)
 			{
-				const Bundle &b = bundleevent->getBundle();
+				const dtn::data::MetaBundle &b = bundleevent->getBundle();
 
 				switch (bundleevent->getAction())
 				{
 				case BUNDLE_RECEIVED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION )
+					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent->getReason());
 						dtn::routing::QueueBundleEvent::raise(bundle);
 					}
 					break;
 				case BUNDLE_DELETED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION )
+					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent->getReason());
 						dtn::routing::QueueBundleEvent::raise(bundle);
@@ -113,7 +114,7 @@ namespace dtn
 					break;
 
 				case BUNDLE_FORWARDED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING )
+					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent->getReason());
 						dtn::routing::QueueBundleEvent::raise(bundle);
@@ -121,7 +122,7 @@ namespace dtn
 					break;
 
 				case BUNDLE_DELIVERED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY )
+					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent->getReason());
 						dtn::routing::QueueBundleEvent::raise(bundle);
@@ -129,7 +130,7 @@ namespace dtn
 					break;
 
 				case BUNDLE_CUSTODY_ACCEPTED:
-					if ( b._procflags & Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE )
+					if ( b.procflags & Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE )
 					{
 						Bundle bundle = createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
 						dtn::routing::QueueBundleEvent::raise(bundle);

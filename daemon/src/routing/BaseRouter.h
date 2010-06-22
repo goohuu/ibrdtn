@@ -15,7 +15,7 @@
 #include "core/BundleStorage.h"
 #include "ibrcommon/thread/Thread.h"
 #include "ibrcommon/thread/Conditional.h"
-#include "routing/MetaBundle.h"
+#include <ibrdtn/data/MetaBundle.h>
 
 namespace dtn
 {

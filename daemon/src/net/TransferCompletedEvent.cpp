@@ -39,7 +39,7 @@ namespace dtn
 			return _peer;
 		}
 
-		dtn::routing::MetaBundle TransferCompletedEvent::getBundle() const
+		dtn::data::MetaBundle TransferCompletedEvent::getBundle() const
 		{
 			return _bundle;
 		}

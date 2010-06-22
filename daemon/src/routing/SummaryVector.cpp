@@ -11,7 +11,7 @@ namespace dtn
 {
 	namespace routing
 	{
-		SummaryVector::SummaryVector(const std::set<dtn::routing::MetaBundle> &list)
+		SummaryVector::SummaryVector(const std::set<dtn::data::MetaBundle> &list)
 		 : _bf(4096, 4)
 		{
 			add(list);
@@ -26,9 +26,9 @@ namespace dtn
 		{
 		}
 
-		void SummaryVector::add(const std::set<dtn::routing::MetaBundle> &list)
+		void SummaryVector::add(const std::set<dtn::data::MetaBundle> &list)
 		{
-			for (std::set<dtn::routing::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 			{
 				_bf.insert( (*iter).toString() );
 				_ids.push_back( (*iter) );

@@ -9,7 +9,7 @@
 #define SUMMARYVECTOR_H_
 
 #include "ibrdtn/data/BundleID.h"
-#include "routing/MetaBundle.h"
+#include <ibrdtn/data/MetaBundle.h>
 #include "ibrdtn/data/BundleString.h"
 #include "ibrcommon/data/BloomFilter.h"
 #include <iostream>
@@ -22,14 +22,14 @@ namespace dtn
 		class SummaryVector
 		{
 		public:
-			SummaryVector(const std::set<dtn::routing::MetaBundle> &list);
+			SummaryVector(const std::set<dtn::data::MetaBundle> &list);
 			SummaryVector();
 			virtual ~SummaryVector();
 
 			virtual bool contains(const dtn::data::BundleID &id) const;
 			virtual void add(const dtn::data::BundleID &id);
 			virtual void clear();
-			virtual void add(const std::set<dtn::routing::MetaBundle> &list);
+			virtual void add(const std::set<dtn::data::MetaBundle> &list);
 
 			size_t getLength() const;
 

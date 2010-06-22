@@ -5,11 +5,11 @@
  *      Author: morgenro
  */
 
-#include "routing/BundleList.h"
+#include "ibrdtn/data/BundleList.h"
 
 namespace dtn
 {
-	namespace routing
+	namespace data
 	{
 		BundleList::BundleList()
 		{ }
@@ -17,7 +17,7 @@ namespace dtn
 		BundleList::~BundleList()
 		{ }
 
-		void BundleList::add(const dtn::routing::MetaBundle bundle)
+		void BundleList::add(const dtn::data::MetaBundle bundle)
 		{
 			// insert bundle id to the private list
 			_bundles.insert(bundle);
@@ -26,7 +26,7 @@ namespace dtn
 			this->insert(bundle);
 		}
 
-		void BundleList::remove(const dtn::routing::MetaBundle bundle)
+		void BundleList::remove(const dtn::data::MetaBundle bundle)
 		{
 			// delete bundle id in the private list
 			_bundles.erase(bundle);
@@ -38,7 +38,7 @@ namespace dtn
 		void BundleList::clear()
 		{
 			_bundles.clear();
-			std::set<dtn::routing::MetaBundle>::clear();
+			std::set<dtn::data::MetaBundle>::clear();
 		}
 
 		void BundleList::expire(const size_t timestamp)

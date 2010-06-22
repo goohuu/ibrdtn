@@ -6,7 +6,7 @@
  */
 
 #include "routing/EpidemicRoutingExtension.h"
-#include "routing/MetaBundle.h"
+#include <ibrdtn/data/MetaBundle.h>
 #include "net/BundleReceivedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "core/BundleExpiredEvent.h"
@@ -59,7 +59,7 @@ namespace dtn
 				for (std::list<dtn::data::BundleID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 				{
 					try {
-						dtn::routing::MetaBundle meta( storage.get(*iter) );
+						dtn::data::MetaBundle meta( storage.get(*iter) );
 
 						// push the bundle into the queue
 						_bundle_queue.push( meta );
@@ -130,7 +130,7 @@ namespace dtn
 				if (_filterlist.find(bundle._source) == _filterlist.end())
 				{
 					// check for all bundles in the bloomfilter
-					for (std::set<dtn::routing::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+					for (std::set<dtn::data::MetaBundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 					{
 						std::string bundleid = (*iter).toString();
 
@@ -151,7 +151,7 @@ namespace dtn
 			}
 		}
 
-		void EpidemicRoutingExtension::remove(const dtn::routing::MetaBundle &meta)
+		void EpidemicRoutingExtension::remove(const dtn::data::MetaBundle &meta)
 		{
 			// lock the lists
 			ibrcommon::MutexLock l(_list_mutex);
@@ -237,7 +237,7 @@ namespace dtn
 			{
 				try {
 					dtn::data::EID eid = completed->getPeer();
-					dtn::routing::MetaBundle meta = completed->getBundle();
+					dtn::data::MetaBundle meta = completed->getBundle();
 
 					// delete the bundle in the storage if
 					if ( EID(eid.getNodeEID()) == EID(meta.destination) )
@@ -264,7 +264,7 @@ namespace dtn
 
 			while (_running)
 			{
-				std::queue<dtn::routing::MetaBundle> routingdata;
+				std::queue<dtn::data::MetaBundle> routingdata;
 				bool _bundlelist_changed = false;
 
 				// check for expired bundles
@@ -280,7 +280,7 @@ namespace dtn
 				while (!_bundle_queue.empty())
 				{
 					// get the next bundle
-					const dtn::routing::MetaBundle &bundle = _bundle_queue.front();
+					const dtn::data::MetaBundle &bundle = _bundle_queue.front();
 
 					// read routing information
 					if (bundle.destination == EID("dtn:epidemic-routing"))
@@ -359,7 +359,7 @@ namespace dtn
 				while (!routingdata.empty())
 				{
 					// get the next bundle
-					const dtn::routing::MetaBundle &bundle = routingdata.front();
+					const dtn::data::MetaBundle &bundle = routingdata.front();
 
 					// read epidemic extension block
 					readExtensionBlock(bundle);

@@ -15,18 +15,18 @@ namespace dtn
 	namespace data
 	{
 		BundleID::BundleID()
-		: _source(), _timestamp(0), _sequencenumber(0), _fragment(false), _offset(0)
+		: source(), timestamp(0), sequencenumber(0), fragment(false), offset(0)
 		{
 		}
 
-		BundleID::BundleID(EID source, size_t timestamp, size_t sequencenumber, bool fragment, size_t offset)
-		: _source(source), _timestamp(timestamp), _sequencenumber(sequencenumber), _fragment(fragment), _offset(offset)
+		BundleID::BundleID(EID s, size_t t, size_t sq, bool f, size_t o)
+		: source(s), timestamp(t), sequencenumber(sq), fragment(f), offset(o)
 		{
 		}
 
 		BundleID::BundleID(const dtn::data::Bundle &b)
-		: _source(b._source), _timestamp(b._timestamp), _sequencenumber(b._sequencenumber),
-		_fragment(b._procflags & dtn::data::Bundle::FRAGMENT), _offset(b._fragmentoffset)
+		: source(b._source), timestamp(b._timestamp), sequencenumber(b._sequencenumber),
+		fragment(b._procflags & dtn::data::Bundle::FRAGMENT), offset(b._fragmentoffset)
 		{
 		}
 
@@ -36,13 +36,13 @@ namespace dtn
 
 		bool BundleID::operator<(const BundleID& other) const
 		{
-			if (_source < other._source) return true;
-			if (_timestamp < other._timestamp) return true;
-			if (_sequencenumber < other._sequencenumber) return true;
+			if (source < other.source) return true;
+			if (timestamp < other.timestamp) return true;
+			if (sequencenumber < other.sequencenumber) return true;
 
-			if (_fragment)
+			if (fragment)
 			{
-				if (_offset < other._offset) return true;
+				if (offset < other.offset) return true;
 			}
 
 			return false;
@@ -50,13 +50,13 @@ namespace dtn
 
 		bool BundleID::operator>(const BundleID& other) const
 		{
-			if (_source > other._source) return true;
-			if (_timestamp > other._timestamp) return true;
-			if (_sequencenumber > other._sequencenumber) return true;
+			if (source > other.source) return true;
+			if (timestamp > other.timestamp) return true;
+			if (sequencenumber > other.sequencenumber) return true;
 
-			if (_fragment)
+			if (fragment)
 			{
-				if (_offset > other._offset) return true;
+				if (offset > other.offset) return true;
 			}
 
 			return false;
@@ -69,13 +69,13 @@ namespace dtn
 
 		bool BundleID::operator==(const BundleID& other) const
 		{
-			if (other._timestamp != _timestamp) return false;
-			if (other._sequencenumber != _sequencenumber) return false;
-			if (other._source != _source) return false;
+			if (other.timestamp != timestamp) return false;
+			if (other.sequencenumber != sequencenumber) return false;
+			if (other.source != source) return false;
 
-			if (_fragment)
+			if (fragment)
 			{
-				if (other._offset != _offset) return false;
+				if (other.offset != offset) return false;
 			}
 
 			return true;
@@ -83,30 +83,30 @@ namespace dtn
 
 		size_t BundleID::getTimestamp() const
 		{
-			return _timestamp;
+			return timestamp;
 		}
 
 		string BundleID::toString() const
 		{
 			stringstream ss;
-			ss << "[" << _timestamp << "." << _sequencenumber;
+			ss << "[" << timestamp << "." << sequencenumber;
 
-			if (_fragment)
+			if (fragment)
 			{
-				ss << "." << _offset;
+				ss << "." << offset;
 			}
 
-			ss << "] " << _source.getString();
+			ss << "] " << source.getString();
 
 			return ss.str();
 		}
 
 		std::ostream &operator<<(std::ostream &stream, const BundleID &obj)
 		{
-			dtn::data::SDNV timestamp(obj._timestamp);
-			dtn::data::SDNV sequencenumber(obj._sequencenumber);
-			dtn::data::SDNV offset(obj._offset);
-			dtn::data::BundleString source(obj._source.getString());
+			dtn::data::SDNV timestamp(obj.timestamp);
+			dtn::data::SDNV sequencenumber(obj.sequencenumber);
+			dtn::data::SDNV offset(obj.offset);
+			dtn::data::BundleString source(obj.source.getString());
 
 			stream << timestamp << sequencenumber << offset << source;
 
@@ -122,10 +122,10 @@ namespace dtn
 
 			stream >> timestamp >> sequencenumber >> offset >> source;
 
-			obj._timestamp = timestamp.getValue();
-			obj._sequencenumber = sequencenumber.getValue();
-			obj._offset = offset.getValue();
-			obj._source = dtn::data::EID(source);
+			obj.timestamp = timestamp.getValue();
+			obj.sequencenumber = sequencenumber.getValue();
+			obj.offset = offset.getValue();
+			obj.source = dtn::data::EID(source);
 
 			return stream;
 		}

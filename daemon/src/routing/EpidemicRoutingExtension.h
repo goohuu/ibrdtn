@@ -8,15 +8,18 @@
 #ifndef EPIDEMICROUTINGEXTENSION_H_
 #define EPIDEMICROUTINGEXTENSION_H_
 
-#include "routing/BaseRouter.h"
-#include "routing/BundleList.h"
 #include "core/Node.h"
-#include "ibrdtn/data/Block.h"
-#include "ibrdtn/data/SDNV.h"
-#include "ibrdtn/data/BundleString.h"
+
 #include "net/DiscoveryServiceProvider.h"
 #include "routing/SummaryVector.h"
-#include "ibrdtn/data/ExtensionBlockFactory.h"
+#include "routing/BaseRouter.h"
+
+#include <ibrdtn/data/Block.h>
+#include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/BundleString.h>
+#include <ibrdtn/data/BundleList.h>
+#include <ibrdtn/data/ExtensionBlockFactory.h>
+
 #include <list>
 #include <queue>
 
@@ -93,7 +96,7 @@ namespace dtn
 			 * remove a bundle out of all local bundle lists
 			 * @param id The ID of the Bundle.
 			 */
-			void remove(const dtn::routing::MetaBundle &meta);
+			void remove(const dtn::data::MetaBundle &meta);
 
 			/**
 			 * contains a lock for bundles lists (_bundles, _seenlist)
@@ -113,7 +116,7 @@ namespace dtn
 			/**
 			 * contains a list of bundle references which has been seen previously
 			 */
-			dtn::routing::BundleList _seenlist;
+			dtn::data::BundleList _seenlist;
 
 			/**
 			 * contains a map of bloomfilters of other nodes
@@ -123,7 +126,7 @@ namespace dtn
 			/**
 			 * contains references of bundles to process
 			 */
-			std::queue<dtn::routing::MetaBundle> _bundle_queue;
+			std::queue<dtn::data::MetaBundle> _bundle_queue;
 
 			/**
 			 * contains the current timestamp or is set to zero
@@ -138,7 +141,7 @@ namespace dtn
 			/**
 			 * contains references to all stored bundles
 			 */
-			dtn::routing::BundleList _bundles;
+			dtn::data::BundleList _bundles;
 		};
 
 		/**

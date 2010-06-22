@@ -11,6 +11,7 @@
 #include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "net/ConnectionEvent.h"
+#include "core/BundleEvent.h"
 #include "ibrcommon/TimeMeasurement.h"
 
 #include "routing/RequeueBundleEvent.h"
@@ -151,6 +152,9 @@ namespace dtn
 				// signal completion of the transfer
 				TransferCompletedEvent::raise(EID(_node.getURI()), bundle);
 
+				// raise bundle event
+				dtn::core::BundleEvent::raise(bundle, BUNDLE_FORWARDED);
+
 				// set ACK to zero
 				_lastack = 0;
 			} catch (ibrcommon::Exception ex) {
@@ -222,19 +226,42 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::PrimaryBlock&) const throw (dtn::data::DefaultDeserializer::RejectedException)
 		{
-			//throw dtn::data::DefaultDeserializer::RejectedException();
+			/*
+			 *
+			 * TODO: reject a bundle if...
+			 * ... the bundle version is not supported
+			 * ... it is expired
+			 * ... already in the storage
+			 * ... a fragment of an already received bundle in the storage
+			 *
+			 * throw dtn::data::DefaultDeserializer::RejectedException();
+			 *
+			 */
 		}
 
 		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::Block&, const size_t) const throw (dtn::data::DefaultDeserializer::RejectedException)
 		{
-//			if (length > 256)
-//			{
-//				throw dtn::data::DefaultDeserializer::RejectedException();
-//			}
+			/*
+			 *
+			 * TODO: reject a block if
+			 * ... it exceeds the payload limit
+			 *
+			 * throw dtn::data::DefaultDeserializer::RejectedException();
+			 *
+			 */
 		}
 
 		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::Bundle&) const throw (dtn::data::DefaultDeserializer::RejectedException)
 		{
+			/*
+			 *
+			 * TODO: reject a bundle if
+			 * ... the security checks (DTNSEC) failed
+			 * ... a checksum mismatch is detected (CRC)
+			 *
+			 * throw dtn::data::DefaultDeserializer::RejectedException();
+			 *
+			 */
 		}
 
 		void TCPConvergenceLayer::TCPConnection::rejectTransmission()
@@ -322,6 +349,9 @@ namespace dtn
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(EID(), bundle);
+
+						// raise bundle event
+						dtn::core::BundleEvent::raise(bundle, BUNDLE_RECEIVED);
 
 					} catch (dtn::data::DefaultDeserializer::RejectedException ex) {
 						// bundle rejected

@@ -10,11 +10,9 @@
 
 #include <string>
 #include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/MetaBundle.h"
 #include "core/Event.h"
 #include "ibrdtn/data/StatusReportBlock.h"
-
-using namespace dtn::data;
-using namespace dtn::core;
 
 namespace dtn
 {
@@ -32,23 +30,24 @@ namespace dtn
 		class BundleEvent : public Event
 		{
 		public:
-			BundleEvent(const Bundle &bundle, EventBundleAction action, StatusReportBlock::REASON_CODE reason = StatusReportBlock::NO_ADDITIONAL_INFORMATION);
-
 			virtual ~BundleEvent();
 
-			StatusReportBlock::REASON_CODE getReason() const;
+			dtn::data::StatusReportBlock::REASON_CODE getReason() const;
 			EventBundleAction getAction() const;
-			const Bundle& getBundle() const;
-			const string getName() const;
+			const dtn::data::MetaBundle& getBundle() const;
+			const std::string getName() const;
+			
+			std::string toString() const;
 
-			string toString() const;
+			static void raise(const dtn::data::MetaBundle &bundle, EventBundleAction action, dtn::data::StatusReportBlock::REASON_CODE reason = dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 
-			static const string className;
+			static const std::string className;
 
 		private:
-			const Bundle m_bundle;
+			BundleEvent(const dtn::data::MetaBundle &bundle, EventBundleAction action, dtn::data::StatusReportBlock::REASON_CODE reason = dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
+			const dtn::data::MetaBundle m_bundle;
 			EventBundleAction m_action;
-			StatusReportBlock::REASON_CODE m_reason;
+			dtn::data::StatusReportBlock::REASON_CODE m_reason;
 		};
 	}
 }

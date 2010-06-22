@@ -34,13 +34,12 @@ namespace dtn
 			friend std::ostream &operator<<(std::ostream &stream, const BundleID &obj);
 			friend std::istream &operator>>(std::istream &stream, BundleID &obj);
 
-		private:
-			dtn::data::EID _source;
-			size_t _timestamp;
-			size_t _sequencenumber;
+			dtn::data::EID source;
+			size_t timestamp;
+			size_t sequencenumber;
 
-			bool _fragment;
-			size_t _offset;
+			bool fragment;
+			size_t offset;
 		};
 	}
 }

@@ -15,7 +15,7 @@
 
 namespace dtn
 {
-	namespace routing
+	namespace data
 	{
 		class MetaBundle : public dtn::data::BundleID
 		{
@@ -26,6 +26,10 @@ namespace dtn
 			const dtn::data::DTNTime received;
 			const size_t lifetime;
 			const dtn::data::EID destination;
+			const dtn::data::EID reportto;
+			const dtn::data::EID custodian;
+			const size_t appdatalength;
+			const size_t procflags;
 		};
 	}
 }

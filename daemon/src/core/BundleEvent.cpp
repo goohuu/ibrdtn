@@ -8,20 +8,17 @@
 #include "config.h"
 #include "core/BundleEvent.h"
 
-using namespace dtn::core;
-using namespace std;
-
 namespace dtn
 {
 	namespace core
 	{
-		BundleEvent::BundleEvent(const Bundle &b, const EventBundleAction action, StatusReportBlock::REASON_CODE reason) : m_bundle(b), m_action(action), m_reason(reason)
+		BundleEvent::BundleEvent(const dtn::data::MetaBundle &b, const EventBundleAction action, dtn::data::StatusReportBlock::REASON_CODE reason) : m_bundle(b), m_action(action), m_reason(reason)
 		{}
 
 		BundleEvent::~BundleEvent()
 		{}
 
-		const Bundle& BundleEvent::getBundle() const
+		const dtn::data::MetaBundle& BundleEvent::getBundle() const
 		{
 			return m_bundle;
 		}
@@ -31,19 +28,25 @@ namespace dtn
 			return m_action;
 		}
 
-		StatusReportBlock::REASON_CODE BundleEvent::getReason() const
+		dtn::data::StatusReportBlock::REASON_CODE BundleEvent::getReason() const
 		{
 			return m_reason;
 		}
 
-		const string BundleEvent::getName() const
+		const std::string BundleEvent::getName() const
 		{
 			return BundleEvent::className;
 		}
 
-		string BundleEvent::toString() const
+		std::string BundleEvent::toString() const
 		{
 			return className;
+		}
+
+		void BundleEvent::raise(const dtn::data::MetaBundle &bundle, EventBundleAction action, dtn::data::StatusReportBlock::REASON_CODE reason)
+		{
+			// raise the new event
+			raiseEvent( new BundleEvent(bundle, action, reason) );
 		}
 
 		const string BundleEvent::className = "BundleEvent";

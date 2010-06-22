@@ -6,7 +6,6 @@
 #include "core/BundleStorage.h"
 #include "core/Node.h"
 #include "core/EventReceiver.h"
-#include "routing/BundleList.h"
 
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/thread/AtomicCounter.h>
@@ -14,6 +13,7 @@
 
 #include <ibrcommon/data/File.h>
 #include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/BundleList.h>
 
 #include <set>
 
@@ -144,7 +144,7 @@ namespace dtn
 				Holder *_holder;
 			};
 
-			class BundleStore : private dtn::routing::BundleList
+			class BundleStore : private dtn::data::BundleList
 			{
 			public:
 				BundleStore();

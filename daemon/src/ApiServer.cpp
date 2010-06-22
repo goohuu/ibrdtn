@@ -99,7 +99,7 @@ namespace dtn
 				while (_running)
 				{
 					// get the next element in the queue
-					dtn::routing::MetaBundle mb = _received.blockingpop();
+					dtn::data::MetaBundle mb = _received.blockingpop();
 
 					// search for the receiver of this bundle
 					{

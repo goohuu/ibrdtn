@@ -9,7 +9,7 @@
 #define STATICROUTINGEXTENSION_H_
 
 #include "routing/BaseRouter.h"
-#include "routing/MetaBundle.h"
+#include <ibrdtn/data/MetaBundle.h>
 
 namespace dtn
 {
@@ -42,7 +42,7 @@ namespace dtn
 			void notify(const dtn::core::Event *evt);
 
 		private:
-			void route(const dtn::routing::MetaBundle &meta);
+			void route(const dtn::data::MetaBundle &meta);
 
 			list<StaticRoutingExtension::StaticRoute> _routes;
 		};

@@ -8,14 +8,15 @@
 #ifndef METABUNDLE_CPP_
 #define METABUNDLE_CPP_
 
-#include "routing/MetaBundle.h"
+#include "ibrdtn/data/MetaBundle.h"
 
 namespace dtn
 {
-	namespace routing
+	namespace data
 	{
 		MetaBundle::MetaBundle(const dtn::data::Bundle &b)
-		 : BundleID(b), lifetime(b._lifetime), destination(b._destination)
+		 : BundleID(b), lifetime(b._lifetime), destination(b._destination), reportto(b._reportto),
+		   custodian(b._custodian), appdatalength(b._appdatalength), procflags(b._procflags)
 		{
 		}
 

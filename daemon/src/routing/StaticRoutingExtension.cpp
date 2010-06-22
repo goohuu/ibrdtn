@@ -29,7 +29,7 @@ namespace dtn
 				for (std::list<dtn::data::BundleID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 				{
 					try {
-						dtn::routing::MetaBundle meta( storage.get(*iter) );
+						dtn::data::MetaBundle meta( storage.get(*iter) );
 
 						// push the bundle into the queue
 						route( meta );
@@ -75,7 +75,7 @@ namespace dtn
 			}
 		}
 
-		void StaticRoutingExtension::route(const dtn::routing::MetaBundle &meta)
+		void StaticRoutingExtension::route(const dtn::data::MetaBundle &meta)
 		{
 			try {
 				// check all routes

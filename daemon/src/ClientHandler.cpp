@@ -9,6 +9,7 @@
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
 #include "net/BundleReceivedEvent.h"
+#include "core/BundleEvent.h"
 #include <ibrdtn/streams/StreamContactHeader.h>
 #include <ibrdtn/data/Serializer.h>
 #include <iostream>
@@ -119,6 +120,9 @@ namespace dtn
 		{
 			try {
 				const dtn::data::Bundle bundle = _sentqueue.frontpop();
+
+				// raise bundle event
+				dtn::core::BundleEvent::raise(bundle, BUNDLE_DELIVERED);
 
 				// set ACK to zero
 				_lastack = 0;

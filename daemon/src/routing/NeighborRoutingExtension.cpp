@@ -41,7 +41,7 @@ namespace dtn
 				for (std::list<dtn::data::BundleID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 				{
 					try {
-						dtn::routing::MetaBundle meta( storage.get(*iter) );
+						dtn::data::MetaBundle meta( storage.get(*iter) );
 
 						// push the bundle into the queue
 						route( meta );
@@ -163,7 +163,7 @@ namespace dtn
 			}
 		}
 
-		void NeighborRoutingExtension::route(const dtn::routing::MetaBundle &meta)
+		void NeighborRoutingExtension::route(const dtn::data::MetaBundle &meta)
 		{
 			try {
 				// get the destination node
