@@ -8,16 +8,11 @@
 #include "core/CustodyEvent.h"
 #include "ibrdtn/data/Exceptions.h"
 
-
-using namespace dtn::data;
-using namespace dtn::core;
-using namespace std;
-
 namespace dtn
 {
 	namespace core
 	{
-		CustodyEvent::CustodyEvent(const Bundle &bundle, const EventCustodyAction action)
+		CustodyEvent::CustodyEvent(const dtn::data::MetaBundle &bundle, const EventCustodyAction action)
 		: m_bundle(bundle), m_action(action)
 		{
 		}
@@ -26,7 +21,7 @@ namespace dtn
 		{
 		}
 
-		const Bundle& CustodyEvent::getBundle() const
+		const dtn::data::MetaBundle& CustodyEvent::getBundle() const
 		{
 			return m_bundle;
 		}
@@ -36,16 +31,21 @@ namespace dtn
 			return m_action;
 		}
 
-		const string CustodyEvent::getName() const
+		const std::string CustodyEvent::getName() const
 		{
 			return CustodyEvent::className;
 		}
 
-		string CustodyEvent::toString() const
+		std::string CustodyEvent::toString() const
 		{
 			return className;
 		}
 
-		const string CustodyEvent::className = "CustodyEvent";
+		void CustodyEvent::raise(const dtn::data::MetaBundle &bundle, const EventCustodyAction action)
+		{
+			raiseEvent( new CustodyEvent(bundle, action) );
+		}
+
+		const std::string CustodyEvent::className = "CustodyEvent";
 	}
 }

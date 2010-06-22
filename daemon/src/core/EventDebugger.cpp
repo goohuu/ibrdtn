@@ -40,14 +40,14 @@ namespace dtn
 				switch (custody->getAction())
 				{
 					case CUSTODY_ACCEPT:
-						if (custody->getBundle()._procflags & Bundle::CUSTODY_REQUESTED)
+						if (custody->getBundle().procflags & dtn::data::Bundle::CUSTODY_REQUESTED)
 						{
 							IBRCOMMON_LOGGER(notice) << evt->getName() << ": custody acceptance" << IBRCOMMON_LOGGER_ENDL;
 						}
 						break;
 
 					case CUSTODY_REJECT:
-						if (custody->getBundle()._procflags & Bundle::CUSTODY_REQUESTED)
+						if (custody->getBundle().procflags & dtn::data::Bundle::CUSTODY_REQUESTED)
 						{
 							IBRCOMMON_LOGGER(notice) << evt->getName() << ": custody reject" << IBRCOMMON_LOGGER_ENDL;
 						}

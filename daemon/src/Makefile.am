@@ -24,10 +24,6 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				core/Clock.h \
 				core/CustodyEvent.cpp \
 				core/CustodyEvent.h \
-				core/CustodyManager.cpp \
-				core/CustodyManager.h \
-				core/CustodyTimer.cpp \
-				core/CustodyTimer.h \
 				core/Event.cpp \
 				core/EventDebugger.cpp \
 				core/EventDebugger.h \

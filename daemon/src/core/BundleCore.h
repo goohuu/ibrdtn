@@ -3,18 +3,16 @@
 
 #include "Component.h"
 
+#include "core/EventReceiver.h"
+#include "core/StatusReportGenerator.h"
 #include "core/BundleStorage.h"
-#include "core/CustodyTimer.h"
-#include "core/CustodyManager.h"
 #include "core/Clock.h"
 
 #include "net/ConnectionManager.h"
 #include "net/ConvergenceLayer.h"
 
-#include "ibrdtn/data/EID.h"
-#include "ibrdtn/data/CustodySignalBlock.h"
-
-#include "core/StatusReportGenerator.h"
+#include <ibrdtn/data/EID.h>
+#include <ibrdtn/data/CustodySignalBlock.h>
 
 #include <vector>
 #include <list>
@@ -29,7 +27,7 @@ namespace dtn
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
-		class BundleCore : public dtn::daemon::IntegratedComponent
+		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver
 		{
 		public:
 			static dtn::data::EID local;
@@ -41,11 +39,6 @@ namespace dtn
 			void setStorage(dtn::core::BundleStorage *storage);
 			dtn::core::BundleStorage& getStorage();
 
-			/**
-			 * get the current custody manager
-			 */
-			CustodyManager& getCustodyManager();
-
 			void transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle);
 
 			void addConvergenceLayer(dtn::net::ConvergenceLayer *cl);
@@ -53,6 +46,8 @@ namespace dtn
 			void addConnection(const dtn::core::Node &n);
 
 			const std::list<dtn::core::Node> getNeighbors();
+
+			void raiseEvent(const dtn::core::Event *evt);
 
 		protected:
 			virtual void componentUp();
@@ -73,11 +68,6 @@ namespace dtn
 			 * Forbidden copy constructor
 			 */
 			BundleCore operator=(const BundleCore &k) { return k; };
-
-			/**
-			 * A custody manager takes care about a transmission of custody to another node.
-			 */
-			CustodyManager _cm;
 
 			/**
 			 * This is a clock object. It can be used to synchronize methods to the local clock.

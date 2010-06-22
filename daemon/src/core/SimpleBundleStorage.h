@@ -85,6 +85,11 @@ namespace dtn
 			unsigned int count();
 
 			/**
+			 * @sa BundleStorage::releaseCustody();
+			 */
+			void releaseCustody(dtn::data::BundleID &bundle);
+
+			/**
 			 * This method is used to receive events.
 			 * @param evt
 			 */

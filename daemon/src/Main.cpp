@@ -17,7 +17,6 @@
 #include "core/EventSwitch.h"
 #include "core/GlobalEvent.h"
 #include "core/NodeEvent.h"
-#include "core/CustodyManager.h"
 
 #include "routing/BaseRouter.h"
 #include "routing/StaticRoutingExtension.h"

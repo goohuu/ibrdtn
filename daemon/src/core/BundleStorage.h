@@ -84,6 +84,28 @@ namespace dtn
 			 */
 			virtual unsigned int count() { return 0; };
 
+			/**
+			 * This method is called if another node accepts custody for a
+			 * bundle of us.
+			 * @param bundle
+			 */
+			virtual void releaseCustody(dtn::data::BundleID &bundle) = 0;
+
+			/**
+			 * Accept custody for a given bundle. The bundle is modified by this method
+			 * and contains us as future custodian. The previous custodian gets notified
+			 * with a custody accept message.
+			 * @param bundle
+			 */
+			void acceptCustody(dtn::data::Bundle &bundle);
+
+			/**
+			 * Reject custody for a given bundle. The custodian of this bundle gets notified
+			 * with a custody reject message.
+			 * @param bundle
+			 */
+			void rejectCustody(const dtn::data::Bundle &bundle);
+
 		protected:
 			/**
 			 * constructor

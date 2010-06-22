@@ -14,11 +14,14 @@
 #include "ibrdtn/data/Block.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/EID.h"
+#include "ibrdtn/data/CustodySignalBlock.h"
+#include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrcommon/refcnt_ptr.h"
 #include <ostream>
 #include <cassert>
 #include <set>
 #include <map>
+#include <typeinfo>
 
 namespace dtn
 {
@@ -59,10 +62,10 @@ namespace dtn
 
 				const std::set<dtn::data::EID> getEIDs() const;
 
-				template<typename T> T& get();
-				template<typename T> const T& get() const;
+				template<class T> T& get();
+				template<class T> const T& get() const;
 
-				template<typename T>
+				template<class T>
 				const std::list<const T*> getList() const;
 
 				const std::list<const Block*> getList() const;
@@ -81,22 +84,22 @@ namespace dtn
 
 			const std::list<const dtn::data::Block*> getBlocks() const;
 
-			template<typename T>
+			template<class T>
 			T& getBlock();
 
-			template<typename T>
+			template<class T>
 			const T& getBlock() const;
 
-			template<typename T>
+			template<class T>
 			const std::list<const T*> getBlocks() const;
 
-			template<typename T>
+			template<class T>
 			T& push_front();
 
-			template<typename T>
+			template<class T>
 			T& push_back();
 
-			template<typename T>
+			template<class T>
 			T& insert(const dtn::data::Block &before);
 
 			dtn::data::PayloadBlock& push_front(ibrcommon::BLOB::Reference &ref);
@@ -114,60 +117,145 @@ namespace dtn
 			BlockList _blocks;
 		};
 
-		template<typename T>
+		template<class T>
 		const std::list<const T*> Bundle::getBlocks() const
 		{
 			return _blocks.getList<T>();
 		}
 
-		template<typename T>
+		template<class T>
 		T& Bundle::getBlock()
 		{
 			return _blocks.get<T>();
 		}
 
-		template<typename T>
+		template<class T>
 		const T& Bundle::getBlock() const
 		{
 			return _blocks.get<T>();
 		}
 
-		template<typename T>
-		const T& Bundle::BlockList::get() const
+		template<>
+		inline CustodySignalBlock& Bundle::BlockList::get<CustodySignalBlock>()
 		{
-			// copy all blocks to the list
-			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-			{
-				if ((*iter)->_blocktype == T::BLOCK_TYPE)
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
-					const Block *b = (*iter).getPointer();
-					return static_cast<const T&>(*b);
-				}
-			}
-
-			throw NoSuchBlockFoundException();
-		}
-
-		template<typename T>
-		T& Bundle::BlockList::get()
-		{
-			// copy all blocks to the list
-			for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
-			{
-				if ((*iter)->_blocktype == T::BLOCK_TYPE)
-				{
-					T *b = dynamic_cast<T*>((*iter).getPointer());
-					if (b != NULL)
+					if ((*iter)->_blocktype == PayloadBlock::BLOCK_TYPE)
 					{
-						return (*b);
+						Block *b = (*iter).getPointer();
+						return dynamic_cast<CustodySignalBlock&>(*b);
 					}
 				}
+			} catch (std::bad_cast) {
+
 			}
 
 			throw NoSuchBlockFoundException();
 		}
 
-		template<typename T>
+		template<>
+		inline const CustodySignalBlock& Bundle::BlockList::get<const CustodySignalBlock>() const
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->_blocktype == PayloadBlock::BLOCK_TYPE)
+					{
+						const Block *b = (*iter).getPointer();
+						return dynamic_cast<const CustodySignalBlock&>(*b);
+					}
+				}
+			} catch (std::bad_cast) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<>
+		inline StatusReportBlock& Bundle::BlockList::get<StatusReportBlock> ()
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->_blocktype == PayloadBlock::BLOCK_TYPE)
+					{
+						Block *b = (*iter).getPointer();
+						return dynamic_cast<StatusReportBlock&>(*b);
+					}
+				}
+			} catch (std::bad_cast) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<>
+		inline const StatusReportBlock& Bundle::BlockList::get<const StatusReportBlock>() const
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->_blocktype == PayloadBlock::BLOCK_TYPE)
+					{
+						const Block *b = (*iter).getPointer();
+						return dynamic_cast<const StatusReportBlock&>(*b);
+					}
+				}
+			} catch (std::bad_cast) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<class T>
+		const T& Bundle::BlockList::get() const
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->_blocktype == T::BLOCK_TYPE)
+					{
+						const Block *b = (*iter).getPointer();
+						return dynamic_cast<const T&>(*b);
+					}
+				}
+			} catch (std::bad_cast) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<class T>
+		T& Bundle::BlockList::get()
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->_blocktype == T::BLOCK_TYPE)
+					{
+						Block *b = (*iter).getPointer();
+						return dynamic_cast<T&>(*b);
+					}
+				}
+			} catch (std::bad_cast) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<class T>
 		const std::list<const T*> Bundle::BlockList::getList() const
 		{
 			// create a list of blocks
@@ -190,7 +278,7 @@ namespace dtn
 			return ret;
 		}
 
-		template<typename T>
+		template<class T>
 		T& Bundle::push_front()
 		{
 			T *tmpblock = new T();
@@ -200,7 +288,7 @@ namespace dtn
 			return (*tmpblock);
 		}
 
-		template<typename T>
+		template<class T>
 		T& Bundle::push_back()
 		{
 			T *tmpblock = new T();
@@ -210,7 +298,7 @@ namespace dtn
 			return (*tmpblock);
 		}
 
-		template<typename T>
+		template<class T>
 		T& Bundle::insert(const dtn::data::Block &before)
 		{
 			T *tmpblock = new T(*this);

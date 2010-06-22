@@ -5,8 +5,11 @@
  *      Author: morgenro
  */
 
+#include "core/BundleCore.h"
 #include "core/BundleStorage.h"
-#include "ibrdtn/data/BundleID.h"
+#include "core/CustodyEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include <ibrdtn/data/BundleID.h>
 
 namespace dtn
 {
@@ -24,5 +27,63 @@ namespace dtn
 		{
 			remove(dtn::data::BundleID(b));
 		};
+
+		void BundleStorage::acceptCustody(dtn::data::Bundle &bundle)
+		{
+			if (bundle._custodian == EID()) return;
+
+			if (bundle._procflags & Bundle::CUSTODY_REQUESTED)
+			{
+				// we are the new custodian for this bundle
+				bundle._custodian = dtn::core::BundleCore::local;
+
+				// create a new bundle
+				Bundle b;
+
+				// send a custody signal with accept flag
+				CustodySignalBlock &signal = b.push_back<CustodySignalBlock>();
+
+				// set the bundle to match
+				signal.setMatch(bundle);
+
+				// set accepted
+				signal._status |= 1;
+
+				b._destination = bundle._custodian;
+				b._source = dtn::core::BundleCore::local;
+
+				// send the custody accepted bundle
+				dtn::routing::QueueBundleEvent::raise(b);
+
+				// raise the custody accepted event
+				dtn::core::CustodyEvent::raise(b, CUSTODY_ACCEPT);
+			}
+		}
+
+		void BundleStorage::rejectCustody(const dtn::data::Bundle &bundle)
+		{
+			if (bundle._custodian == EID()) return;
+
+			if (bundle._procflags & Bundle::CUSTODY_REQUESTED)
+			{
+				// create a new bundle
+				Bundle b;
+
+				// send a custody signal with reject flag
+				CustodySignalBlock &signal = b.push_back<CustodySignalBlock>();
+
+				// set the bundle to match
+				signal.setMatch(bundle);
+
+				b._destination = bundle._custodian;
+				b._source = BundleCore::local;
+
+				// send the custody rejected bundle
+				dtn::routing::QueueBundleEvent::raise(b);
+
+				// raise the custody rejected event
+				dtn::core::CustodyEvent::raise(b, CUSTODY_REJECT);
+			}
+		}
 	}
 }

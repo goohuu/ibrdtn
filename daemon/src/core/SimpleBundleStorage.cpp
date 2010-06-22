@@ -73,6 +73,12 @@ namespace dtn
 			return _store.count();
 		}
 
+		void SimpleBundleStorage::releaseCustody(dtn::data::BundleID&)
+		{
+			// custody is successful transferred to another node.
+			// it is safe to delete this bundle now. (depending on the routing algorithm.)
+		}
+
 		unsigned int SimpleBundleStorage::BundleStore::count()
 		{
 			ibrcommon::MutexLock l(bundleslock);

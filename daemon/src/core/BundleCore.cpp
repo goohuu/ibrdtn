@@ -1,16 +1,19 @@
 #include "core/BundleCore.h"
-#include "core/CustodyManager.h"
-#include "core/CustodyEvent.h"
 #include "core/GlobalEvent.h"
-
-#include "ibrcommon/data/BLOB.h"
-#include "ibrdtn/data/Exceptions.h"
-#include "ibrdtn/data/EID.h"
 #include "routing/RequeueBundleEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "core/BundleEvent.h"
 
-#include "ibrdtn/utils/Utils.h"
+#include <ibrcommon/data/BLOB.h>
+#include <ibrdtn/data/MetaBundle.h>
+#include <ibrdtn/data/Exceptions.h>
+#include <ibrdtn/data/EID.h>
+#include <ibrdtn/utils/Utils.h>
+#include <ibrcommon/Logger.h>
+
 #include "limits.h"
 #include <iostream>
+#include <typeinfo>
 
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -31,19 +34,18 @@ namespace dtn
 		BundleCore::BundleCore()
 		 : _clock(1), _storage(NULL)
 		{
+			bindEvent(dtn::net::BundleReceivedEvent::className);
 		}
 
 		BundleCore::~BundleCore()
 		{
+			unbindEvent(dtn::net::BundleReceivedEvent::className);
 		}
 
 		void BundleCore::componentUp()
 		{
 			_connectionmanager.initialize();
 			_clock.initialize();
-
-			// start the custody manager
-			_cm.start();
 
 			// start a clock
 			_clock.startup();
@@ -68,11 +70,6 @@ namespace dtn
 		Clock& BundleCore::getClock()
 		{
 			return _clock;
-		}
-
-		CustodyManager& BundleCore::getCustodyManager()
-		{
-			return _cm;
 		}
 
 		void BundleCore::transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle)
@@ -101,6 +98,53 @@ namespace dtn
 		const std::list<dtn::core::Node> BundleCore::getNeighbors()
 		{
 			return _connectionmanager.getNeighbors();
+		}
+
+		void BundleCore::raiseEvent(const dtn::core::Event *evt)
+		{
+			try {
+				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+				const dtn::data::MetaBundle &meta = received.getBundle();
+
+				if (meta.destination == local)
+				{
+					// if the delivered variable is still false at the end of this block.
+					// we send a not delivered report.
+					bool delivered = false;
+
+					// process this bundle locally
+					dtn::data::Bundle bundle = getStorage().get(meta);
+
+					try {
+						// check for a custody signal
+						dtn::data::CustodySignalBlock custody = bundle.getBlock<dtn::data::CustodySignalBlock>();
+						dtn::data::BundleID id(custody._source, custody._bundle_timestamp.getValue(), custody._bundle_sequence.getValue(), (custody._fragment_length.getValue() > 0), custody._fragment_offset.getValue());
+						getStorage().releaseCustody(id);
+
+						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+						delivered = true;
+					} catch (dtn::data::Bundle::NoSuchBlockFoundException) {
+						// no custody signal available
+					}
+
+					if (delivered)
+					{
+						// gen a report
+						dtn::core::BundleEvent::raise(meta, BUNDLE_DELIVERED);
+					}
+					else
+					{
+						// gen a report
+						dtn::core::BundleEvent::raise(meta, BUNDLE_DELETED, StatusReportBlock::DESTINATION_ENDPOINT_ID_UNINTELLIGIBLE);
+					}
+
+					// delete the bundle
+					getStorage().remove(meta);
+				}
+			} catch (std::bad_cast ex) {
+
+			}
 		}
 	}
 }

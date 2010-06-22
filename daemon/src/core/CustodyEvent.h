@@ -9,13 +9,10 @@
 #define CUSTODYEVENT_H_
 
 #include <string>
-#include "ibrdtn/data/Bundle.h"
 #include "core/Event.h"
-#include "ibrdtn/data/CustodySignalBlock.h"
-#include "core/CustodyTimer.h"
 
-using namespace dtn::data;
-using namespace dtn::core;
+#include <ibrdtn/data/MetaBundle.h>
+#include <ibrdtn/data/CustodySignalBlock.h>
 
 namespace dtn
 {
@@ -30,19 +27,22 @@ namespace dtn
 		class CustodyEvent : public Event
 		{
 		public:
-			CustodyEvent(const Bundle &bundle, const EventCustodyAction action);
 			virtual ~CustodyEvent();
 
 			EventCustodyAction getAction() const;
-			const Bundle& getBundle() const;
-			const string getName() const;
+			const dtn::data::MetaBundle& getBundle() const;
+			const std::string getName() const;
 
-			string toString() const;
+			std::string toString() const;
 
-			static const string className;
+			static void raise(const dtn::data::MetaBundle &bundle, const EventCustodyAction action);
+
+			static const std::string className;
 
 		private:
-			const Bundle m_bundle;
+			CustodyEvent(const dtn::data::MetaBundle &bundle, const EventCustodyAction action);
+
+			const dtn::data::MetaBundle m_bundle;
 			const EventCustodyAction m_action;
 		};
 	}
