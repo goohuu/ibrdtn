@@ -12,8 +12,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		QueueBundleEvent::QueueBundleEvent(const dtn::data::Bundle &bundle)
-		 : _bundle(bundle)
+		QueueBundleEvent::QueueBundleEvent(const dtn::data::Bundle &b)
+		 : bundle(b)
 		{
 
 		}
@@ -39,7 +39,7 @@ namespace dtn
 
 		string QueueBundleEvent::toString() const
 		{
-			return className + ": New bundle queued " + _bundle.toString();
+			return className + ": New bundle queued " + bundle.toString();
 		}
 
 		const string QueueBundleEvent::className = "QueueBundleEvent";

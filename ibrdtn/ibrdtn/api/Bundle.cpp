@@ -19,6 +19,8 @@ namespace dtn
 		{
 			_security = SecurityManager::getDefault();
 			setPriority(PRIO_MEDIUM);
+
+			_b._source = dtn::data::EID("dtn:client");
 		}
 
 		Bundle::Bundle(dtn::data::Bundle &b)
@@ -61,6 +63,26 @@ namespace dtn
 			return _lifetime;
 		}
 
+		void Bundle::requestDeliveredReport()
+		{
+			_b._procflags |= dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELIVERY;
+		}
+
+		void Bundle::requestForwardedReport()
+		{
+			_b._procflags |= dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_FORWARDING;
+		}
+
+		void Bundle::requestDeletedReport()
+		{
+			_b._procflags |= dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELETION;
+		}
+
+		void Bundle::requestReceptionReport()
+		{
+			_b._procflags |= dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION;
+		}
+
 		Bundle::BUNDLE_PRIORITY Bundle::getPriority()
 		{
 			return _priority;
@@ -96,6 +118,11 @@ namespace dtn
 			return _b._destination;
 		}
 
+		void Bundle::setReportTo(const dtn::data::EID &eid)
+		{
+			_b._reportto = eid;
+		}
+
 		dtn::data::EID Bundle::getSource()
 		{
 			return _b._source;
@@ -109,6 +136,16 @@ namespace dtn
 			} catch(dtn::data::Bundle::NoSuchBlockFoundException ex) {
 				throw dtn::MissingObjectException("No payload block exists!");
 			}
+		}
+
+		bool Bundle::operator<(const Bundle& other) const
+		{
+			return (_b < other._b);
+		}
+
+		bool Bundle::operator>(const Bundle& other) const
+		{
+			return (_b > other._b);
 		}
 	}
 }

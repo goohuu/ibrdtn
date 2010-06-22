@@ -96,6 +96,11 @@ namespace dtn
 			 */
 			unsigned int getLifetime();
 
+			void requestDeliveredReport();
+			void requestForwardedReport();
+			void requestDeletedReport();
+			void requestReceptionReport();
+
 			/**
 			 * Set the priority for this bundle.
 			 */
@@ -147,6 +152,10 @@ namespace dtn
 
 			dtn::data::EID getDestination();
 			dtn::data::EID getSource();
+			void setReportTo(const dtn::data::EID &eid);
+
+			bool operator<(const Bundle& other) const;
+			bool operator>(const Bundle& other) const;
 
 		protected:
 			/**

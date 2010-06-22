@@ -83,7 +83,6 @@ namespace dtn
 
 			report._bundle_timestamp = b.timestamp;
 			report._bundle_sequence = b.sequencenumber;
-			report._source = b.source;
 
 			return bundle;
 		}

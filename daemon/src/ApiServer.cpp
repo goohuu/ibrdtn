@@ -9,6 +9,7 @@
 #include "core/BundleCore.h"
 #include "core/EventSwitch.h"
 #include "net/BundleReceivedEvent.h"
+#include "routing/QueueBundleEvent.h"
 #include "ClientHandler.h"
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
@@ -80,11 +81,13 @@ namespace dtn
 		ApiServer::Distributor::Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &lock)
 		 : _running(true), _lock(lock), _connections(connections)
 		{
+			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::net::BundleReceivedEvent::className);
 		}
 
 		ApiServer::Distributor::~Distributor()
 		{
+			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			unbindEvent(dtn::net::BundleReceivedEvent::className);
 			shutdown();
 		}
@@ -177,6 +180,13 @@ namespace dtn
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
 				_received.push(received.getBundle());
+			} catch (std::bad_cast ex) {
+
+			}
+
+			try {
+				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+				_received.push(queued.bundle);
 			} catch (std::bad_cast ex) {
 
 			}

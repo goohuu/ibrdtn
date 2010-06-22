@@ -10,7 +10,7 @@
 
 #include "core/Event.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/BundleID.h"
+#include "ibrdtn/data/MetaBundle.h"
 #include "ibrdtn/data/EID.h"
 
 namespace dtn
@@ -29,7 +29,7 @@ namespace dtn
 			static const string className;
 
 			static void raise(const dtn::data::Bundle &bundle);
-			dtn::data::BundleID _bundle;
+			dtn::data::MetaBundle bundle;
 
 		private:
 			QueueBundleEvent(const dtn::data::Bundle &bundle);

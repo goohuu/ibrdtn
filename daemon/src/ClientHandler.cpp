@@ -188,8 +188,15 @@ namespace dtn
 						// create a new sequence number
 						bundle.relabel();
 
-						// set the source
+						// check address fields for "dtn:client", this has to be replaced
+						dtn::data::EID clienteid("dtn:client");
+
+						//if (bundle._source == clienteid) bundle._source = _eid;
+
 						bundle._source = _eid;
+						if (bundle._destination == clienteid) bundle._destination = _eid;
+						if (bundle._reportto == clienteid) bundle._reportto = _eid;
+						if (bundle._custodian == clienteid) bundle._custodian = _eid;
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(EID(), bundle);
