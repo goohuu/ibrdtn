@@ -29,25 +29,13 @@ namespace dtn
 			};
 
 			/**
-			 * Konstruktor
-			 */
-			ConvergenceLayer() : m_receiver(NULL)
-			{};
-
-			/**
 			 * destructor
 			 */
 			virtual ~ConvergenceLayer() {};
 
-			void setBundleReceiver(BundleReceiver *receiver);
-			void eventBundleReceived(const Bundle &bundle);
-
 			virtual dtn::core::NodeProtocol getDiscoveryProtocol() const = 0;
 
 			virtual void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job) = 0;
-
-		private:
-			BundleReceiver *m_receiver;
 		};
 	}
 }

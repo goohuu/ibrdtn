@@ -6,7 +6,7 @@
  */
 
 #include "routing/NeighborRoutingExtension.h"
-#include "net/BundleReceivedEvent.h"
+#include "routing/QueueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "core/NodeEvent.h"
@@ -102,15 +102,15 @@ namespace dtn
 
 		void NeighborRoutingExtension::notify(const dtn::core::Event *evt)
 		{
-			const dtn::net::BundleReceivedEvent *received = dynamic_cast<const dtn::net::BundleReceivedEvent*>(evt);
+			const QueueBundleEvent *queued = dynamic_cast<const QueueBundleEvent*>(evt);
 			const dtn::core::NodeEvent *nodeevent = dynamic_cast<const dtn::core::NodeEvent*>(evt);
 			const dtn::net::TransferCompletedEvent *completed = dynamic_cast<const dtn::net::TransferCompletedEvent*>(evt);
 			const dtn::core::BundleExpiredEvent *expired = dynamic_cast<const dtn::core::BundleExpiredEvent*>(evt);
 
-			if (received != NULL)
+			if (queued != NULL)
 			{
 				// try to route this bundle
-				route(received->getBundle());
+				route(queued->bundle);
 			}
 			else if (nodeevent != NULL)
 			{

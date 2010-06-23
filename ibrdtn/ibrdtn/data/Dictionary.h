@@ -78,6 +78,10 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, dtn::data::Dictionary &obj);
 
 		private:
+			bool exists(const std::string) const;
+			void add(const std::string);
+			size_t get(const std::string) const;
+
 			stringstream _bytestream;
 		};
 	}

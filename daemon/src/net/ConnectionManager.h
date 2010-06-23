@@ -38,7 +38,7 @@ namespace dtn
 			};
 		};
 
-		class ConnectionManager : public dtn::net::BundleReceiver, public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
+		class ConnectionManager : public dtn::core::EventReceiver, public dtn::daemon::IntegratedComponent
 		{
 		public:
 			ConnectionManager();
@@ -46,8 +46,6 @@ namespace dtn
 
 			void addConnection(const dtn::core::Node &n);
 			void addConvergenceLayer(ConvergenceLayer *cl);
-
-			void received(const dtn::data::EID &eid, const dtn::data::Bundle &b);
 
 			void queue(const dtn::data::EID &eid, const dtn::data::Bundle &b);
 

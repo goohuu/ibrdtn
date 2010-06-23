@@ -34,6 +34,7 @@ namespace dtn
 			size_t len = 0;
 			len += sizeof(_admfield);
 			len += sizeof(_status);
+			len += sizeof(_reasoncode);
 
 			if ( _admfield & 0x01 )
 			{
@@ -41,12 +42,21 @@ namespace dtn
 				len += _fragment_length.getLength();
 			}
 
-			len += _timeof_receipt.getLength();
-			len += _timeof_custodyaccept.getLength();
-			len += _timeof_forwarding.getLength();
+			if (_status & RECEIPT_OF_BUNDLE)
+				len += _timeof_receipt.getLength();
 
-			len += _timeof_delivery.getLength();
-			len += _timeof_deletion.getLength();
+			if (_status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
+				len += _timeof_custodyaccept.getLength();
+
+			if (_status & FORWARDING_OF_BUNDLE)
+				len += _timeof_forwarding.getLength();
+
+			if (_status & DELIVERY_OF_BUNDLE)
+				len += _timeof_delivery.getLength();
+
+			if (_status & DELETION_OF_BUNDLE)
+				len += _timeof_deletion.getLength();
+
 			len += _bundle_timestamp.getLength();
 			len += _bundle_sequence.getLength();
 
@@ -60,6 +70,7 @@ namespace dtn
 		{
 			stream << _admfield;
 			stream << _status;
+			stream << _reasoncode;
 
 			if ( _admfield & 0x01 )
 			{
@@ -67,11 +78,21 @@ namespace dtn
 				stream << _fragment_length;
 			}
 
-			stream << _timeof_receipt;
-			stream << _timeof_custodyaccept;
-			stream << _timeof_forwarding;
-			stream << _timeof_delivery;
-			stream << _timeof_deletion;
+			if (_status & RECEIPT_OF_BUNDLE)
+				stream << _timeof_receipt;
+
+			if (_status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
+				stream << _timeof_custodyaccept;
+
+			if (_status & FORWARDING_OF_BUNDLE)
+				stream << _timeof_forwarding;
+
+			if (_status & DELIVERY_OF_BUNDLE)
+				stream << _timeof_delivery;
+
+			if (_status & DELETION_OF_BUNDLE)
+				stream << _timeof_deletion;
+
 			stream << _bundle_timestamp;
 			stream << _bundle_sequence;
 			stream << BundleString(_source.getString());
@@ -83,6 +104,7 @@ namespace dtn
 		{
 			stream >> _admfield;
 			stream >> _status;
+			stream >> _reasoncode;
 
 			if ( _admfield & 0x01 )
 			{
@@ -90,11 +112,21 @@ namespace dtn
 				stream >> _fragment_length;
 			}
 
-			stream >> _timeof_receipt;
-			stream >> _timeof_custodyaccept;
-			stream >> _timeof_forwarding;
-			stream >> _timeof_delivery;
-			stream >> _timeof_deletion;
+			if (_status & RECEIPT_OF_BUNDLE)
+				stream >> _timeof_receipt;
+
+			if (_status & CUSTODY_ACCEPTANCE_OF_BUNDLE)
+				stream >> _timeof_custodyaccept;
+
+			if (_status & FORWARDING_OF_BUNDLE)
+				stream >> _timeof_forwarding;
+
+			if (_status & DELIVERY_OF_BUNDLE)
+				stream >> _timeof_delivery;
+
+			if (_status & DELETION_OF_BUNDLE)
+				stream >> _timeof_deletion;
+
 			stream >> _bundle_timestamp;
 			stream >> _bundle_sequence;
 

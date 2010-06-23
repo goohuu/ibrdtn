@@ -10,9 +10,7 @@
 
 #include "core/Event.h"
 #include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/EID.h"
-#include "ibrdtn/data/MetaBundle.h"
 
 namespace dtn
 {
@@ -29,15 +27,13 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
+			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle);
 
-			dtn::data::EID getPeer() const;
-			dtn::data::MetaBundle getBundle() const;
+			const dtn::data::EID peer;
+			const dtn::data::Bundle bundle;
 
 		private:
-			dtn::data::EID _peer;
-			dtn::data::MetaBundle _bundle;
-			BundleReceivedEvent(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
+			BundleReceivedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle);
 		};
 	}
 }

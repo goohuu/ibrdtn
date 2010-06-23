@@ -54,16 +54,6 @@ namespace dtn
 			return _seconds;
 		}
 
-		size_t DTNTime::decode(const char *data, const size_t len)
-		{
-			size_t ret = 0;
-
-			ret += _seconds.decode(data, (len - ret));
-			ret += _nanoseconds.decode(data, (len - ret));
-
-			return ret;
-		}
-
 		void DTNTime::operator+=(const size_t value)
 		{
 			_seconds += value;

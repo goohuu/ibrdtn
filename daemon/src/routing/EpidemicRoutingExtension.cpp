@@ -7,7 +7,7 @@
 
 #include "routing/EpidemicRoutingExtension.h"
 #include <ibrdtn/data/MetaBundle.h>
-#include "net/BundleReceivedEvent.h"
+#include "routing/QueueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "core/NodeEvent.h"
@@ -165,7 +165,7 @@ namespace dtn
 
 		void EpidemicRoutingExtension::notify(const dtn::core::Event *evt)
 		{
-			const dtn::net::BundleReceivedEvent *received = dynamic_cast<const dtn::net::BundleReceivedEvent*>(evt);
+			const QueueBundleEvent *queued = dynamic_cast<const QueueBundleEvent*>(evt);
 			const dtn::core::NodeEvent *nodeevent = dynamic_cast<const dtn::core::NodeEvent*>(evt);
 			const dtn::net::TransferCompletedEvent *completed = dynamic_cast<const dtn::net::TransferCompletedEvent*>(evt);
 			const dtn::core::BundleExpiredEvent *expired = dynamic_cast<const dtn::core::BundleExpiredEvent*>(evt);
@@ -181,12 +181,12 @@ namespace dtn
 					_wait.signal(true);
 				}
 			}
-			else if (received != NULL)
+			else if (queued != NULL)
 			{
 				// forward a new bundle to all current neighbors
 				// and all neighbors in future
 				ibrcommon::MutexLock l(_wait);
-				_bundle_queue.push(received->getBundle());
+				_bundle_queue.push(queued->bundle);
 				_wait.signal(true);
 			}
 			else if (nodeevent != NULL)

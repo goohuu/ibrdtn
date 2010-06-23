@@ -1,7 +1,7 @@
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "routing/RequeueBundleEvent.h"
-#include "net/BundleReceivedEvent.h"
+#include "routing/QueueBundleEvent.h"
 #include "core/BundleEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
@@ -34,12 +34,12 @@ namespace dtn
 		BundleCore::BundleCore()
 		 : _clock(1), _storage(NULL)
 		{
-			bindEvent(dtn::net::BundleReceivedEvent::className);
+			bindEvent(dtn::routing::QueueBundleEvent::className);
 		}
 
 		BundleCore::~BundleCore()
 		{
-			unbindEvent(dtn::net::BundleReceivedEvent::className);
+			unbindEvent(dtn::routing::QueueBundleEvent::className);
 		}
 
 		void BundleCore::componentUp()
@@ -103,8 +103,8 @@ namespace dtn
 		void BundleCore::raiseEvent(const dtn::core::Event *evt)
 		{
 			try {
-				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
-				const dtn::data::MetaBundle &meta = received.getBundle();
+				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
+				const dtn::data::MetaBundle &meta = queued.bundle;
 
 				if (meta.destination == local)
 				{

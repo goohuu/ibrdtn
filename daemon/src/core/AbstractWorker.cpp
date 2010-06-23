@@ -7,7 +7,8 @@
 
 #include "core/AbstractWorker.h"
 #include "core/BundleCore.h"
-#include "net/BundleReceivedEvent.h"
+#include "routing/QueueBundleEvent.h"
+#include "core/BundleGeneratedEvent.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include <typeinfo>
 
@@ -18,24 +19,24 @@ namespace dtn
 		AbstractWorker::AbstractWorkerAsync::AbstractWorkerAsync(AbstractWorker &worker)
 		 : _worker(worker), _running(true)
 		{
-			bindEvent(dtn::net::BundleReceivedEvent::className);
+			bindEvent(dtn::routing::QueueBundleEvent::className);
 		}
 
 		AbstractWorker::AbstractWorkerAsync::~AbstractWorkerAsync()
 		{
-			unbindEvent(dtn::net::BundleReceivedEvent::className);
+			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			shutdown();
 		}
 
 		void AbstractWorker::AbstractWorkerAsync::raiseEvent(const dtn::core::Event *evt)
 		{
 			try {
-				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 
-				if (received.getBundle().destination == _worker._eid)
+				if (queued.bundle.destination == _worker._eid)
 				{
 					ibrcommon::MutexLock l(_receive_cond);
-					_receive_bundles.push(received.getBundle());
+					_receive_bundles.push(queued.bundle);
 					_receive_cond.signal(true);
 				}
 			} catch (std::bad_cast ex) {
@@ -115,15 +116,7 @@ namespace dtn
 
 		void AbstractWorker::transmit(const Bundle &bundle)
 		{
-			dtn::net::BundleReceivedEvent::raise(_eid, bundle);
+			dtn::core::BundleGeneratedEvent::raise(bundle);
 		}
-
-//		dtn::data::Bundle AbstractWorker::receive()
-//		{
-//			BundleStorage &storage = BundleCore::getInstance().getStorage();
-//			dtn::data::Bundle b = storage.get( _eid );
-//			storage.remove(b);
-//			return b;
-//		}
 	}
 }

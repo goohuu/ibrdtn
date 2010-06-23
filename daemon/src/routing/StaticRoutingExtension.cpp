@@ -6,7 +6,7 @@
  */
 
 #include "routing/StaticRoutingExtension.h"
-#include "net/BundleReceivedEvent.h"
+#include "routing/QueueBundleEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "routing/RequeueBundleEvent.h"
@@ -49,14 +49,14 @@ namespace dtn
 
 		void StaticRoutingExtension::notify(const dtn::core::Event *evt)
 		{
-			const dtn::net::BundleReceivedEvent *received = dynamic_cast<const dtn::net::BundleReceivedEvent*>(evt);
+			const QueueBundleEvent *queued = dynamic_cast<const QueueBundleEvent*>(evt);
 			const dtn::net::TransferCompletedEvent *completed = dynamic_cast<const dtn::net::TransferCompletedEvent*>(evt);
 			const dtn::net::TransferAbortedEvent *aborted = dynamic_cast<const dtn::net::TransferAbortedEvent*>(evt);
 
-			if (received != NULL)
+			if (queued != NULL)
 			{
 				// try to route this bundle
-				route(received->getBundle());
+				route(queued->bundle);
 			}
 			else if (completed != NULL)
 			{

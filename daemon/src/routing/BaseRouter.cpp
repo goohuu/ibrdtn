@@ -13,11 +13,14 @@
 #include "net/BundleReceivedEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "routing/RequeueBundleEvent.h"
+#include "core/BundleGeneratedEvent.h"
 #include "core/BundleExpiredEvent.h"
+#include "core/BundleEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 
-#include "ibrcommon/thread/MutexLock.h"
+#include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {
@@ -110,6 +113,7 @@ namespace dtn
 			bindEvent(dtn::core::NodeEvent::className);
 			bindEvent(dtn::core::BundleExpiredEvent::className);
 			bindEvent(dtn::core::TimeEvent::className);
+			bindEvent(dtn::core::BundleGeneratedEvent::className);
 
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
@@ -132,7 +136,7 @@ namespace dtn
 			unbindEvent(dtn::routing::RequeueBundleEvent::className);
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::BundleExpiredEvent::className);
-			unbindEvent(dtn::core::TimeEvent::className);
+			unbindEvent(dtn::core::BundleGeneratedEvent::className);
 
 			// delete all extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
@@ -167,17 +171,58 @@ namespace dtn
 		 */
 		void BaseRouter::raiseEvent(const dtn::core::Event *evt)
 		{
-			const dtn::net::BundleReceivedEvent *received = dynamic_cast<const dtn::net::BundleReceivedEvent*>(evt);
+			try {
+				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
 
-			if (received != NULL)
-			{
-				const dtn::data::EID &dest = received->getBundle().destination;
+				// Store incoming bundles into the storage
+				try {
+					// store the bundle into a storage module
+					dtn::core::BundleCore::getInstance().getStorage().store(received.bundle);
+
+					// raise the queued event to notify all receivers about the new bundle
+					QueueBundleEvent::raise(received.bundle);
+
+					// finally create a bundle received event
+					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
+
+				} catch (ibrcommon::IOException ex) {
+					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				return;
+			} catch (std::bad_cast) {
+			}
+
+			try {
+				const dtn::core::BundleGeneratedEvent &generated = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
+
+				// Store incoming bundles into the storage
+				try {
+					// store the bundle into a storage module
+					dtn::core::BundleCore::getInstance().getStorage().store(generated.bundle);
+
+					// raise the queued event to notify all receivers about the new bundle
+					QueueBundleEvent::raise(generated.bundle);
+
+				} catch (ibrcommon::IOException ex) {
+					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				return;
+			} catch (std::bad_cast) {
+			}
+
+			try {
+				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
+
+				const dtn::data::EID &dest = queued.bundle.destination;
 
 				if ( (dest.getNodeEID() == BundleCore::local.getNodeEID()) && dest.hasApplication() )
 				{
 					// if the bundle is for a local application, do not forward it to routing modules
 					return;
 				}
+			} catch (std::bad_cast) {
 			}
 
 			// notify all underlying extensions

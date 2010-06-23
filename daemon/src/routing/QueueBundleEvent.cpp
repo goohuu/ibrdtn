@@ -25,9 +25,6 @@ namespace dtn
 
 		void QueueBundleEvent::raise(const dtn::data::Bundle &bundle)
 		{
-			// store the bundle into a storage module
-			dtn::core::BundleCore::getInstance().getStorage().store(bundle);
-
 			// raise the new event
 			raiseEvent( new QueueBundleEvent(bundle) );
 		}

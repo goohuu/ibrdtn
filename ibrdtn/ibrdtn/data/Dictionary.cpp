@@ -41,22 +41,65 @@ namespace data
 	{
 	}
 
+	size_t Dictionary::get(const std::string value) const
+	{
+		std::string bytes = _bytestream.str();
+		const char *bytebegin = bytes.c_str();
+		const char *bytepos = bytebegin;
+		const char *byteend = bytebegin + bytes.length() + 1;
+
+		if (bytes.length() <= 0) return std::string::npos;
+
+		while (bytepos < byteend)
+		{
+			std::string dictstr(bytepos);
+
+			if (dictstr == value)
+			{
+				return bytepos - bytebegin;
+			}
+
+			bytepos += dictstr.length() + 1;
+		}
+
+		return std::string::npos;
+	}
+
+	bool Dictionary::exists(const std::string value) const
+	{
+		std::string bytes = _bytestream.str();
+		const char *bytepos = bytes.c_str();
+		const char *byteend = bytepos + bytes.length();
+
+		if (bytes.length() <= 0) return false;
+
+		while (bytepos < byteend)
+		{
+			std::string dictstr(bytepos);
+
+			if (dictstr == value)
+			{
+				return true;
+			}
+
+			bytepos += dictstr.length() + 1;
+		}
+
+		return false;
+	}
+
+	void Dictionary::add(const std::string value)
+	{
+		if (!exists(value))
+		{
+			_bytestream << value << '\0';
+		}
+	}
+
 	void Dictionary::add(const EID &eid)
 	{
-		string scheme = eid.getScheme();
-		string ssp = eid.getNode() + eid.getApplication();
-
-		string bytearray = _bytestream.str();
-
-		if ( bytearray.find(scheme) == string::npos )
-		{
-			_bytestream << scheme << '\0';
-		}
-
-		if ( bytearray.find(ssp) == string::npos )
-		{
-			_bytestream << ssp << '\0';
-		}
+		add(eid.getScheme());
+		add(eid.getNode() + eid.getApplication());
 	}
 
 	void Dictionary::add(const list<EID> &eids)
@@ -97,14 +140,9 @@ namespace data
 
 	pair<size_t, size_t> Dictionary::getRef(const EID &eid) const
 	{
-		string scheme = eid.getScheme();
-		string ssp = eid.getNode() + eid.getApplication();
-
-		string bytearray = _bytestream.str();
-		size_t scheme_pos = bytearray.find(scheme);
-		size_t ssp_pos = bytearray.find(ssp);
-
-		return make_pair(scheme_pos, ssp_pos);
+		const string scheme = eid.getScheme();
+		const string ssp = eid.getNode() + eid.getApplication();
+		return make_pair(get(scheme), get(ssp));
 	}
 
 	std::ostream &operator<<(std::ostream &stream, const dtn::data::Dictionary &obj)

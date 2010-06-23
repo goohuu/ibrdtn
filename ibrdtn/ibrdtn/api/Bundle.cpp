@@ -96,18 +96,18 @@ namespace dtn
 			switch (_priority)
 			{
 			case PRIO_LOW:
-				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT1) _b._procflags -= dtn::data::Bundle::PRIORITY_BIT1;
-				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2) _b._procflags -= dtn::data::Bundle::PRIORITY_BIT2;
+				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT1);
+				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT2);
 				break;
 
 			case PRIO_HIGH:
-				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT1) _b._procflags -= dtn::data::Bundle::PRIORITY_BIT1;
-				if (!(_b._procflags & dtn::data::Bundle::PRIORITY_BIT2)) _b._procflags += dtn::data::Bundle::PRIORITY_BIT2;
+				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT1);
+				_b._procflags |= dtn::data::Bundle::PRIORITY_BIT2;
 				break;
 
 			case PRIO_MEDIUM:
-				if (!(_b._procflags & dtn::data::Bundle::PRIORITY_BIT1)) _b._procflags += dtn::data::Bundle::PRIORITY_BIT1;
-				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2) _b._procflags -= dtn::data::Bundle::PRIORITY_BIT2;
+				_b._procflags |= dtn::data::Bundle::PRIORITY_BIT1;
+				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT2);
 				break;
 			}
 		}

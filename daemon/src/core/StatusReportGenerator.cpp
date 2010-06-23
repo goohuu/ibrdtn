@@ -7,7 +7,7 @@
 
 #include "core/StatusReportGenerator.h"
 #include "core/BundleEvent.h"
-#include "routing/QueueBundleEvent.h"
+#include "core/BundleGeneratedEvent.h"
 #include "core/BundleCore.h"
 #include <ibrdtn/data/MetaBundle.h>
 
@@ -27,13 +27,15 @@ namespace dtn
 			unbindEvent(BundleEvent::className);
 		}
 
-		Bundle StatusReportGenerator::createStatusReport(const dtn::data::MetaBundle &b, StatusReportBlock::TYPE type, StatusReportBlock::REASON_CODE reason)
+		void StatusReportGenerator::createStatusReport(const dtn::data::MetaBundle &b, StatusReportBlock::TYPE type, StatusReportBlock::REASON_CODE reason)
 		{
 			// create a new bundle
 			Bundle bundle;
 
 			// create a new statusreport block
 			StatusReportBlock &report = bundle.push_back<StatusReportBlock>();
+
+			bundle._procflags |= dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD;
 
 			// get the flags and set the status flag
 			report._status |= type;
@@ -77,14 +79,14 @@ namespace dtn
 			{
 				report._fragment_offset = b.offset;
 				report._fragment_length = b.appdatalength;
-
-				if (!(report._admfield & 1)) report._admfield += 1;
+				report._admfield |= 1;
 			}
 
 			report._bundle_timestamp = b.timestamp;
 			report._bundle_sequence = b.sequencenumber;
+			report._source = b.source;
 
-			return bundle;
+			dtn::core::BundleGeneratedEvent::raise(bundle);
 		}
 
 		void StatusReportGenerator::raiseEvent(const Event *evt)
@@ -100,39 +102,35 @@ namespace dtn
 				case BUNDLE_RECEIVED:
 					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION )
 					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
+						createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent->getReason());
+
 					}
 					break;
 				case BUNDLE_DELETED:
 					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION )
 					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
+						createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent->getReason());
 					}
 					break;
 
 				case BUNDLE_FORWARDED:
 					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING )
 					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
+						createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent->getReason());
 					}
 					break;
 
 				case BUNDLE_DELIVERED:
 					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY )
 					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
+						createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent->getReason());
 					}
 					break;
 
 				case BUNDLE_CUSTODY_ACCEPTED:
 					if ( b.procflags & Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE )
 					{
-						Bundle bundle = createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
-						dtn::routing::QueueBundleEvent::raise(bundle);
+						createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
 					}
 					break;
 				}

@@ -18,6 +18,8 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				core/BundleEvent.h \
 				core/BundleExpiredEvent.cpp \
 				core/BundleExpiredEvent.h \
+				core/BundleGeneratedEvent.cpp \
+				core/BundleGeneratedEvent.h \
 				core/BundleStorage.cpp \
 				core/BundleStorage.h \
 				core/Clock.cpp \

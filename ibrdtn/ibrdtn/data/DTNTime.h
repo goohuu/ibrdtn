@@ -24,8 +24,6 @@ namespace dtn
 
 			SDNV getTimestamp();
 
-			size_t decode(const char *data, const size_t len);
-
 			/**
 			 * set the DTNTime to the current time
 			 */

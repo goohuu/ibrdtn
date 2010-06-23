@@ -90,7 +90,8 @@ namespace dtn
 					_blocks.erase(iter++);
 
 					// set the last block bit
-					(*_blocks.back()).set(dtn::data::Block::LAST_BLOCK, true);
+					if (!_blocks.empty())
+						(*_blocks.back()).set(dtn::data::Block::LAST_BLOCK, true);
 
 					return;
 				}

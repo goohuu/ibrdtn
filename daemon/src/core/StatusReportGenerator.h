@@ -32,7 +32,7 @@ namespace dtn
 			 * @param reason Give a additional reason.
 			 * @return A bundle with a status report block.
 			 */
-			dtn::data::Bundle createStatusReport(const dtn::data::MetaBundle &b, dtn::data::StatusReportBlock::TYPE type, dtn::data::StatusReportBlock::REASON_CODE reason = dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
+			void createStatusReport(const dtn::data::MetaBundle &b, dtn::data::StatusReportBlock::TYPE type, dtn::data::StatusReportBlock::REASON_CODE reason = dtn::data::StatusReportBlock::NO_ADDITIONAL_INFORMATION);
 		};
 	}
 }

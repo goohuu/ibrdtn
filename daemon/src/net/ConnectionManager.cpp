@@ -91,7 +91,6 @@ namespace dtn
 		void ConnectionManager::addConvergenceLayer(ConvergenceLayer *cl)
 		{
 			ibrcommon::MutexLock l(_cl_lock);
-			cl->setBundleReceiver(this);
 			_cl.insert( cl );
 		}
 
@@ -153,12 +152,6 @@ namespace dtn
 				// announce the node unavailable event
 				dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
 			}
-		}
-
-		void ConnectionManager::received(const dtn::data::EID &eid, const Bundle &b)
-		{
-			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(eid, b);
 		}
 
 		void ConnectionManager::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
