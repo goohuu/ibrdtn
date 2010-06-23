@@ -1,5 +1,8 @@
 #include "net/UDPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
+#include "core/BundleEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "routing/RequeueBundleEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/Logger.h>
@@ -56,12 +59,12 @@ namespace dtn
 			// TODO: update the values
 		}
 
-		void UDPConvergenceLayer::transmit(const dtn::data::Bundle &b, const dtn::core::Node &node)
+		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
 			std::stringstream ss;
 			dtn::data::DefaultSerializer serializer(ss);
 
-			unsigned int size = serializer.getLength(b);
+			unsigned int size = serializer.getLength(job._bundle);
 
 			if (size > m_maxmsgsize)
 			{
@@ -105,7 +108,7 @@ namespace dtn
 				throw ConnectionInterruptedException();
 			}
 
-			serializer << b;
+			serializer << job._bundle;
 			string data = ss.str();
 
 			// get a udp peer
@@ -117,13 +120,20 @@ namespace dtn
 			// send converted line back to client.
 			int ret = p.send(data.c_str(), data.length());
 
-			if (ret < 0)
+			if (ret == -1)
 			{
-				// TODO: CL is busy, throw exception
+				// CL is busy, requeue bundle
+				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+
+				return;
 			}
+
+			// raise bundle event
+			dtn::net::TransferCompletedEvent::raise(job._destination, job._bundle);
+			dtn::core::BundleEvent::raise(job._bundle, dtn::core::BUNDLE_FORWARDED);
 		}
 
-		void UDPConvergenceLayer::receive(dtn::data::Bundle &bundle)
+		UDPConvergenceLayer& UDPConvergenceLayer::operator>>(dtn::data::Bundle &bundle)
 		{
 			ibrcommon::MutexLock l(m_readlock);
 
@@ -132,25 +142,17 @@ namespace dtn
 			// data waiting
 			int len = _socket.receive(data, m_maxmsgsize);
 
-			if (len < 0)
+			if (len > 0)
 			{
-				// no data received
-				return;
+				// read all data into a stream
+				stringstream ss;
+				ss.write(data, len);
+
+				// get the bundle
+				dtn::data::DefaultDeserializer(ss) >> bundle;
 			}
 
-			// read all data into a stream
-			stringstream ss;
-			ss.write(data, len);
-
-			// get the bundle
-			dtn::data::DefaultDeserializer(ss) >> bundle;
-		}
-
-		UDPConvergenceLayer::UDPConnection* UDPConvergenceLayer::getConnection(const dtn::core::Node &n)
-		{
-			if (n.getProtocol() != dtn::core::UDP_CONNECTION) return NULL;
-
-			return new dtn::net::UDPConvergenceLayer::UDPConnection(*this, n);
+			return (*this);
 		}
 
 		void UDPConvergenceLayer::componentUp()
@@ -179,7 +181,7 @@ namespace dtn
 			{
 				try {
 					dtn::data::Bundle bundle;
-					receive(bundle);
+					(*this) >> bundle;
 
 					// determine sender
 					EID sender;
@@ -194,40 +196,6 @@ namespace dtn
 				}
 				yield();
 			}
-		}
-
-		void UDPConvergenceLayer::queue(const dtn::core::Node&, const ConvergenceLayer::Job&)
-		{
-			// TODO: implement queue method.
-		}
-
-		UDPConvergenceLayer::UDPConnection::UDPConnection(UDPConvergenceLayer &cl, const dtn::core::Node &node)
-		 : _cl(cl), _node(node)
-		{
-		}
-
-		UDPConvergenceLayer::UDPConnection::~UDPConnection()
-		{
-		}
-
-		void UDPConvergenceLayer::UDPConnection::shutdown()
-		{
-
-		}
-
-		dtn::data::EID UDPConvergenceLayer::UDPConnection::getPeer() const
-		{
-			return EID(_node.getURI());
-		}
-
-		void UDPConvergenceLayer::UDPConnection::write(const dtn::data::Bundle &bundle)
-		{
-			_cl.transmit(bundle, _node);
-		}
-
-		void UDPConvergenceLayer::UDPConnection::read(dtn::data::Bundle &bundle)
-		{
-			_cl.receive(bundle);
 		}
 	}
 }

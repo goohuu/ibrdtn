@@ -176,9 +176,6 @@ namespace dtn
 
 		size_t DefaultSerializer::getLength(const dtn::data::Bundle &obj) const
 		{
-			// check if the dictionary is empty
-			assert(_dictionary.getSize() > 0);
-
 			size_t len = 0;
 			len += getLength( (PrimaryBlock&)obj );
 			

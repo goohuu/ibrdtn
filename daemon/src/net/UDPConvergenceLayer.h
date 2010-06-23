@@ -23,27 +23,6 @@ namespace dtn
 		{
 		public:
 			/**
-			 * UDP connection class
-			 */
-			class UDPConnection
-			{
-			public:
-				UDPConnection(UDPConvergenceLayer &cl, const dtn::core::Node &node);
-				virtual ~UDPConnection();
-
-				void write(const dtn::data::Bundle &bundle);
-				void read(dtn::data::Bundle &bundle);
-
-				void shutdown();
-
-				dtn::data::EID getPeer() const;
-
-			private:
-				UDPConvergenceLayer &_cl;
-				dtn::core::Node _node;
-			};
-
-			/**
 			 * Constructor
 			 * @param[in] bind_addr The address to bind.
 			 * @param[in] port The udp port to use.
@@ -57,18 +36,13 @@ namespace dtn
 			 */
 			virtual ~UDPConvergenceLayer();
 
-			/**
-			 * @sa protocol::ConvergenceLayer::transmit(Bundle *b, Node &node)
-			 */
-			virtual void transmit(const dtn::data::Bundle &b, const dtn::core::Node &node);
-
-			void receive(dtn::data::Bundle &bundle);
-
 			virtual void update(std::string &name, std::string &data);
 
 			dtn::core::NodeProtocol getDiscoveryProtocol() const;
 
 			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+
+			UDPConvergenceLayer& operator>>(dtn::data::Bundle&);
 
 		protected:
 			virtual void componentUp();
@@ -76,8 +50,6 @@ namespace dtn
 			virtual void componentDown();
 
 		private:
-			UDPConnection* getConnection(const dtn::core::Node &n);
-
 			ibrcommon::udpsocket _socket;
 
 			ibrcommon::NetInterface _net;

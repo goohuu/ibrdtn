@@ -14,7 +14,6 @@
 #include "core/BundleEvent.h"
 #include "ibrcommon/TimeMeasurement.h"
 
-#include "routing/RequeueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 
