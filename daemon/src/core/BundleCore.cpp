@@ -14,6 +14,7 @@
 #include "limits.h"
 #include <iostream>
 #include <typeinfo>
+#include <stdint.h>
 
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -24,6 +25,7 @@ namespace dtn
 	namespace core
 	{
 		dtn::data::EID BundleCore::local;
+		size_t BundleCore::blocksizelimit = 0;
 
 		BundleCore& BundleCore::getInstance()
 		{
@@ -145,6 +147,57 @@ namespace dtn
 			} catch (std::bad_cast ex) {
 
 			}
+		}
+
+		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)
+		{
+			/*
+			 *
+			 * TODO: reject a bundle if...
+			 * ... it is expired
+			 * ... already in the storage
+			 * ... a fragment of an already received bundle in the storage
+			 *
+			 * throw dtn::data::DefaultDeserializer::RejectedException();
+			 *
+			 */
+
+			// check if the bundle is expired
+			if (p.isExpired())
+			{
+				throw dtn::data::Validator::RejectedException("bundle is expired");
+			}
+		}
+
+		void BundleCore::validate(const dtn::data::Block&, const size_t size) const throw (dtn::data::Validator::RejectedException)
+		{
+			/*
+			 *
+			 * TODO: reject a block if
+			 * ... it exceeds the payload limit
+			 *
+			 * throw dtn::data::DefaultDeserializer::RejectedException();
+			 *
+			 */
+
+			// check for the size of the block
+			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
+			{
+				throw dtn::data::Validator::RejectedException("bundle is expired");
+			}
+		}
+
+		void BundleCore::validate(const dtn::data::Bundle&) const throw (dtn::data::Validator::RejectedException)
+		{
+			/*
+			 *
+			 * TODO: reject a bundle if
+			 * ... the security checks (DTNSEC) failed
+			 * ... a checksum mismatch is detected (CRC)
+			 *
+			 * throw dtn::data::DefaultDeserializer::RejectedException();
+			 *
+			 */
 		}
 	}
 }

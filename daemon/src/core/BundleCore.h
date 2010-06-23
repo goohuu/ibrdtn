@@ -11,6 +11,7 @@
 #include "net/ConnectionManager.h"
 #include "net/ConvergenceLayer.h"
 
+#include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/CustodySignalBlock.h>
 
@@ -27,7 +28,7 @@ namespace dtn
 		/**
 		 * The BundleCore manage the Bundle Protocol basics
 		 */
-		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver
+		class BundleCore : public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver, public dtn::data::Validator
 		{
 		public:
 			static dtn::data::EID local;
@@ -48,6 +49,12 @@ namespace dtn
 			const std::list<dtn::core::Node> getNeighbors();
 
 			void raiseEvent(const dtn::core::Event *evt);
+
+			virtual void validate(const dtn::data::PrimaryBlock &obj) const throw (RejectedException);
+			virtual void validate(const dtn::data::Block &obj, const size_t length) const throw (RejectedException);
+			virtual void validate(const dtn::data::Bundle &obj) const throw (RejectedException);
+
+			static size_t blocksizelimit;
 
 		protected:
 			virtual void componentUp();

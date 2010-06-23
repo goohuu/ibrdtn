@@ -281,12 +281,17 @@ namespace dtn
 		}
 
 		DefaultDeserializer::DefaultDeserializer(std::istream& stream)
-		 : _stream(stream)
+		 : _stream(stream), _validator(_default_validator)
+		{
+		}
+
+		DefaultDeserializer::DefaultDeserializer(std::istream &stream, Validator &v)
+		 : _stream(stream), _validator(v)
 		{
 		}
 
 		DefaultDeserializer::DefaultDeserializer(std::istream &stream, const Dictionary &d)
-		 : _stream(stream), _dictionary(d)
+		 : _stream(stream), _dictionary(d), _validator(_default_validator)
 		{
 		}
 
@@ -398,7 +403,7 @@ namespace dtn
 			}
 
 			// validate this bundle
-			validate(obj);
+			_validator.validate(obj);
 
 			return (*this);
 		}
@@ -460,7 +465,7 @@ namespace dtn
 			}
 			
 			// validate this primary block
-			validate(obj);
+			_validator.validate(obj);
 
 			return (*this);
 		}
@@ -496,12 +501,34 @@ namespace dtn
 			obj._blocksize = block_size.getValue();
 
 			// validate this block
-			validate(obj, block_size.getValue());
+			_validator.validate(obj, block_size.getValue());
 
 			// read the payload of the block
 			obj.deserialize(_stream);
 			
 			return (*this);
+		}
+
+		AcceptValidator::AcceptValidator()
+		{
+		}
+
+		AcceptValidator::~AcceptValidator()
+		{
+		}
+
+		void AcceptValidator::validate(const dtn::data::PrimaryBlock&) const throw (RejectedException)
+		{
+		}
+
+		void AcceptValidator::validate(const dtn::data::Block&, const size_t) const throw (RejectedException)
+		{
+
+		}
+
+		void AcceptValidator::validate(const dtn::data::Bundle&) const throw (RejectedException)
+		{
+
 		}
 	}
 }

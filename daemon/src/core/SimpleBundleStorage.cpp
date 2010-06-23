@@ -401,7 +401,7 @@ namespace dtn
 
 			try {
 				fs.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
-				dtn::data::DefaultDeserializer(fs) >> _bundle;
+				dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> _bundle;
 			} catch (ios_base::failure ex) {
 				throw dtn::SerializationFailedException("can not load bundle data" + std::string(ex.what()));
 			}

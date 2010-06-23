@@ -108,10 +108,6 @@ namespace dtn
 			protected:
 				void handshake();
 
-				virtual void validate(const dtn::data::PrimaryBlock &obj) const throw (RejectedException);
-				virtual void validate(const dtn::data::Block &obj, const size_t length) const throw (RejectedException);
-				virtual void validate(const dtn::data::Bundle &obj) const throw (RejectedException);
-
 				void rejectTransmission();
 
 			private:

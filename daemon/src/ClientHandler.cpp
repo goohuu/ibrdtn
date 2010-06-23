@@ -183,7 +183,7 @@ namespace dtn
 					while (_running)
 					{
 						dtn::data::Bundle bundle;
-						dtn::data::DefaultDeserializer(_connection) >> bundle;
+						dtn::data::DefaultDeserializer(_connection, dtn::core::BundleCore::getInstance()) >> bundle;
 
 						// create a new sequence number
 						bundle.relabel();
@@ -220,7 +220,7 @@ namespace dtn
 		ClientHandler& operator>>(ClientHandler &conn, dtn::data::Bundle &bundle)
 		{
 			// get a bundle
-			dtn::data::DefaultDeserializer(conn._connection) >> bundle;
+			dtn::data::DefaultDeserializer(conn._connection, dtn::core::BundleCore::getInstance()) >> bundle;
 
 			return conn;
 		}

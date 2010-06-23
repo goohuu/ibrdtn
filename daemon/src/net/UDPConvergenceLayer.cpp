@@ -3,6 +3,7 @@
 #include "core/BundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "routing/RequeueBundleEvent.h"
+#include "core/BundleCore.h"
 
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/Logger.h>
@@ -149,7 +150,7 @@ namespace dtn
 				ss.write(data, len);
 
 				// get the bundle
-				dtn::data::DefaultDeserializer(ss) >> bundle;
+				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 			}
 
 			return (*this);

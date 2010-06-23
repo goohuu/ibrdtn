@@ -46,6 +46,33 @@ namespace dtn
             virtual Deserializer &operator>>(dtn::data::Block &obj) = 0;
         };
 
+        class Validator
+        {
+        public:
+        	class RejectedException : public dtn::SerializationFailedException
+        	{
+    		public:
+        		RejectedException(string what = "A validate method has the bundle rejected.") throw() : dtn::SerializationFailedException(what)
+    			{
+    			};
+        	};
+
+            virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException) = 0;
+            virtual void validate(const dtn::data::Block&, const size_t) const throw (RejectedException) = 0;
+            virtual void validate(const dtn::data::Bundle&) const throw (RejectedException) = 0;
+        };
+
+        class AcceptValidator : public Validator
+        {
+        public:
+        	AcceptValidator();
+        	~AcceptValidator();
+
+            virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException);
+            virtual void validate(const dtn::data::Block&, const size_t) const throw (RejectedException);
+            virtual void validate(const dtn::data::Bundle&) const throw (RejectedException);
+        };
+
         class DefaultSerializer : public Serializer
         {
         public:
@@ -72,15 +99,8 @@ namespace dtn
         class DefaultDeserializer : public Deserializer
         {
         public:
-        	class RejectedException : public dtn::SerializationFailedException
-        	{
-    		public:
-        		RejectedException(string what = "A validate method has the bundle rejected.") throw() : dtn::SerializationFailedException(what)
-    			{
-    			};
-        	};
-
-            DefaultDeserializer(std::istream &stream);
+        	DefaultDeserializer(std::istream &stream);
+            DefaultDeserializer(std::istream &stream, Validator &v);
             DefaultDeserializer(std::istream &stream, const Dictionary &d);
             virtual ~DefaultDeserializer() {};
             
@@ -88,14 +108,11 @@ namespace dtn
             virtual Deserializer &operator>>(dtn::data::PrimaryBlock &obj);
             virtual Deserializer &operator>>(dtn::data::Block &obj);
 
-        protected:
-            virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException) { };
-            virtual void validate(const dtn::data::Block&, const size_t) const throw (RejectedException) { };
-            virtual void validate(const dtn::data::Bundle&) const throw (RejectedException) { };
-
         private:
             std::istream &_stream;
             Dictionary _dictionary;
+            Validator &_validator;
+            AcceptValidator _default_validator;
         };
     }
 }

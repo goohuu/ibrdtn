@@ -31,7 +31,7 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : dtn::data::DefaultDeserializer(_stream), _free(false), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
+		 : dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()), _free(false), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
 		{
 		}
 
@@ -223,46 +223,6 @@ namespace dtn
 			return _node;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::PrimaryBlock&) const throw (dtn::data::DefaultDeserializer::RejectedException)
-		{
-			/*
-			 *
-			 * TODO: reject a bundle if...
-			 * ... the bundle version is not supported
-			 * ... it is expired
-			 * ... already in the storage
-			 * ... a fragment of an already received bundle in the storage
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
-		}
-
-		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::Block&, const size_t) const throw (dtn::data::DefaultDeserializer::RejectedException)
-		{
-			/*
-			 *
-			 * TODO: reject a block if
-			 * ... it exceeds the payload limit
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
-		}
-
-		void TCPConvergenceLayer::TCPConnection::validate(const dtn::data::Bundle&) const throw (dtn::data::DefaultDeserializer::RejectedException)
-		{
-			/*
-			 *
-			 * TODO: reject a bundle if
-			 * ... the security checks (DTNSEC) failed
-			 * ... a checksum mismatch is detected (CRC)
-			 *
-			 * throw dtn::data::DefaultDeserializer::RejectedException();
-			 *
-			 */
-		}
-
 		void TCPConvergenceLayer::TCPConnection::rejectTransmission()
 		{
 			_stream.reject();
@@ -272,7 +232,7 @@ namespace dtn
 		{
 			try {
 				((dtn::data::DefaultDeserializer&)conn) >> bundle;
-			} catch (dtn::data::DefaultDeserializer::RejectedException ex) {
+			} catch (dtn::data::Validator::RejectedException ex) {
 				// bundle rejected
 				conn.rejectTransmission();
 			}
@@ -352,7 +312,7 @@ namespace dtn
 						// raise bundle event
 						dtn::core::BundleEvent::raise(bundle, BUNDLE_RECEIVED);
 
-					} catch (dtn::data::DefaultDeserializer::RejectedException ex) {
+					} catch (dtn::data::Validator::RejectedException ex) {
 						// bundle rejected
 						_connection.rejectTransmission();
 					}

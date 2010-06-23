@@ -14,6 +14,9 @@ config 'daemon' 'main'
 	
 	# debug level
 #	option debug		20
+
+	# block size limit
+#	option blocksize	512M
 	
 #
 # storage specific settings

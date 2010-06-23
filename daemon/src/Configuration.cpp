@@ -368,5 +368,36 @@ namespace dtn
 		{
 			return _conf.read<unsigned int>("statistic_interval", 300);
 		}
+
+		size_t Configuration::getLimit(std::string suffix)
+		{
+			std::string unparsed = _conf.read<std::string>("limit_" + suffix, "0");
+
+			std::stringstream ss(unparsed);
+
+			float value; ss >> value;
+			char multiplier; ss >> multiplier;
+
+			switch (multiplier)
+			{
+			default:
+				return (size_t)value;
+				break;
+
+			case 'G':
+				return (size_t)(value * 1000000000);
+				break;
+
+			case 'M':
+				return (size_t)(value * 1000000);
+				break;
+
+			case 'K':
+				return (size_t)(value * 1000);
+				break;
+			}
+
+			return 0;
+		}
 	}
 }

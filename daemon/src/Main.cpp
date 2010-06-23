@@ -98,6 +98,13 @@ void setGlobalVars(Configuration &config)
     } catch (Configuration::ParameterNotSetException ex) {
 
     }
+
+    // set block size limit
+    dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
+    if (dtn::core::BundleCore::blocksizelimit > 0)
+    {
+    	IBRCOMMON_LOGGER(info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
+    }
 }
 
 void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::daemon::Component* > &components)

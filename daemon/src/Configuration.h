@@ -103,6 +103,8 @@ namespace dtn
 
 			bool beQuiet() const;
 
+			size_t getLimit(std::string);
+
 		private:
 			ibrcommon::ConfigFile _conf;
 
