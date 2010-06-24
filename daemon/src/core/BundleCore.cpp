@@ -3,6 +3,7 @@
 #include "routing/RequeueBundleEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleEvent.h"
+#include "core/TimeEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
 #include <ibrdtn/data/MetaBundle.h>
@@ -26,7 +27,6 @@ namespace dtn
 	{
 		dtn::data::EID BundleCore::local;
 		size_t BundleCore::blocksizelimit = 0;
-		float BundleCore::qot = 0;
 
 		BundleCore& BundleCore::getInstance()
 		{
@@ -41,14 +41,22 @@ namespace dtn
 			 * evaluate the current local time
 			 */
 			if (dtn::utils::Clock::getTime() > 0)
-
+			{
+				dtn::utils::Clock::quality = 1;
+			}
+			else
+			{
+				IBRCOMMON_LOGGER(warning) << "The local clock seems to be wrong. Expiration disabled." << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			bindEvent(dtn::routing::QueueBundleEvent::className);
+			bindEvent(dtn::core::TimeEvent::className);
 		}
 
 		BundleCore::~BundleCore()
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
+			unbindEvent(dtn::core::TimeEvent::className);
 		}
 
 		void BundleCore::componentUp()
@@ -111,6 +119,25 @@ namespace dtn
 
 		void BundleCore::raiseEvent(const dtn::core::Event *evt)
 		{
+			try {
+				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+
+				/**
+				 * evaluate the current local time
+				 */
+				if (dtn::utils::Clock::quality == 0)
+				{
+					if (dtn::utils::Clock::getTime() > 0)
+					{
+						dtn::utils::Clock::quality = 1;
+						IBRCOMMON_LOGGER(warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
+					}
+				}
+
+			} catch (std::bad_cast ex) {
+
+			}
+
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 				const dtn::data::MetaBundle &meta = queued.bundle;

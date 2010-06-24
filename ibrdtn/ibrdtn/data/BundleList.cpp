@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/BundleList.h"
+#include "ibrdtn/utils/Clock.h"
 
 namespace dtn
 {
@@ -43,16 +44,16 @@ namespace dtn
 
 		void BundleList::expire(const size_t timestamp)
 		{
+			// we can not expire bundles if we have no idea of time
+			if (dtn::utils::Clock::quality == 0) return;
+
 			std::multiset<ExpiringBundle>::iterator iter = _bundles.begin();
 
 			while (iter != _bundles.end())
 			{
 				const ExpiringBundle &b = (*iter);
 
-				if ( b.expiretime >= timestamp )
-				{
-					break;
-				}
+				if ( b.expiretime >= timestamp ) break;
 
 				// raise expired event
 				eventBundleExpired( b );
@@ -66,7 +67,7 @@ namespace dtn
 		}
 
 		BundleList::ExpiringBundle::ExpiringBundle(const MetaBundle b)
-		 : bundle(b), expiretime(b.getTimestamp() + b.lifetime)
+		 : bundle(b), expiretime(dtn::utils::Clock::getExpireTime(b.getTimestamp(), b.lifetime))
 		{ }
 
 		BundleList::ExpiringBundle::~ExpiringBundle()
@@ -80,7 +81,6 @@ namespace dtn
 		bool BundleList::ExpiringBundle::operator==(const ExpiringBundle& other) const
 		{
 			return (other.bundle == this->bundle);
-//			return (expiretime == other.expiretime);
 		}
 
 		bool BundleList::ExpiringBundle::operator<(const ExpiringBundle& other) const

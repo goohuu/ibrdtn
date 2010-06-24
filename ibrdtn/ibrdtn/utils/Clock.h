@@ -22,7 +22,17 @@ namespace dtn
 
 			static size_t getTime();
 
+			static bool isExpired(size_t timestamp, size_t lifetime = 0);
+
+			static size_t getExpireTime(size_t timestamp, size_t lifetime);
+
 			static int timezone;
+
+			/**
+			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
+			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
+			 * an abstract knowledge about the quality of time.
+			 */
 			static float quality;
 		};
 	}

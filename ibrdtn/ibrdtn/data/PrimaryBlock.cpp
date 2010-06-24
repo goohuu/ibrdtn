@@ -96,8 +96,7 @@ namespace dtn
 
 		bool PrimaryBlock::isExpired() const
 		{
-			if (dtn::utils::Clock::getTime() > (_lifetime + _timestamp)) return true;
-			return false;
+			return dtn::utils::Clock::isExpired(_lifetime + _timestamp, _lifetime);
 		}
 
 		std::string PrimaryBlock::toString() const

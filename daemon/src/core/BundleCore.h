@@ -59,13 +59,6 @@ namespace dtn
 			 */
 			static size_t blocksizelimit;
 
-			/**
-			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
-			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
-			 * an abstract knowledge about the quality of time.
-			 */
-			static float qot;
-
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();
