@@ -5,7 +5,7 @@
 #include <ibrcommon/AutoDelete.h>
 #include <ibrcommon/net/NetInterface.h>
 #include "ibrcommon/Logger.h"
-#include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/utils/Clock.h>
 #include <list>
 
 #include "core/BundleCore.h"
@@ -86,7 +86,7 @@ void setGlobalVars(Configuration &config)
     //ConfigFile &conf = config.getConfigFile();
 
     // set the timezone
-    dtn::utils::Utils::timezone = config.getTimezone();
+    dtn::utils::Clock::timezone = config.getTimezone();
 
     // set local eid
     dtn::core::BundleCore::local = config.getNodename();

@@ -11,7 +11,7 @@
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "core/BundleExpiredEvent.h"
-#include "ibrdtn/utils/Utils.h"
+#include "ibrdtn/utils/Clock.h"
 #include "ibrdtn/data/Exceptions.h"
 
 namespace dtn
@@ -129,7 +129,7 @@ namespace dtn
 		RetransmissionExtension::RetransmissionData& RetransmissionExtension::RetransmissionData::operator++(int)
 		{
 			_count++;
-			_timestamp = dtn::utils::Utils::get_current_dtn_time();
+			_timestamp = dtn::utils::Clock::getTime();
 			_timestamp += retry;
 
 			return (*this);
@@ -138,7 +138,7 @@ namespace dtn
 		RetransmissionExtension::RetransmissionData& RetransmissionExtension::RetransmissionData::operator++()
 		{
 			_count++;
-			_timestamp = dtn::utils::Utils::get_current_dtn_time();
+			_timestamp = dtn::utils::Clock::getTime();
 			_timestamp += retry;
 
 			return (*this);

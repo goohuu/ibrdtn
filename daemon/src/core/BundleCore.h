@@ -6,7 +6,7 @@
 #include "core/EventReceiver.h"
 #include "core/StatusReportGenerator.h"
 #include "core/BundleStorage.h"
-#include "core/Clock.h"
+#include "core/WallClock.h"
 
 #include "net/ConnectionManager.h"
 #include "net/ConvergenceLayer.h"
@@ -35,7 +35,7 @@ namespace dtn
 
 			static BundleCore& getInstance();
 
-			Clock& getClock();
+			WallClock& getClock();
 
 			void setStorage(dtn::core::BundleStorage *storage);
 			dtn::core::BundleStorage& getStorage();
@@ -54,7 +54,17 @@ namespace dtn
 			virtual void validate(const dtn::data::Block &obj, const size_t length) const throw (RejectedException);
 			virtual void validate(const dtn::data::Bundle &obj) const throw (RejectedException);
 
+			/**
+			 * Define a global block size limit. This is used in the validator to reject bundles while receiving.
+			 */
 			static size_t blocksizelimit;
+
+			/**
+			 * Defines an estimation about the precision of the local time. If the clock is definitely wrong
+			 * the value is zero and one when we have a perfect time sync. Everything between one and zero gives
+			 * an abstract knowledge about the quality of time.
+			 */
+			static float qot;
 
 		protected:
 			virtual void componentUp();
@@ -79,7 +89,7 @@ namespace dtn
 			/**
 			 * This is a clock object. It can be used to synchronize methods to the local clock.
 			 */
-			Clock _clock;
+			WallClock _clock;
 
 			dtn::core::BundleStorage *_storage;
 

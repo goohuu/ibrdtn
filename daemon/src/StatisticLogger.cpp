@@ -8,7 +8,7 @@
 #include "StatisticLogger.h"
 #include "net/BundleReceivedEvent.h"
 #include "net/TransferCompletedEvent.h"
-#include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <ctime>
@@ -131,7 +131,7 @@ namespace dtn
 		void StatisticLogger::writeStdLog(std::ostream &stream)
 		{
 			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
-			size_t timestamp = dtn::utils::Utils::get_current_dtn_time();
+			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
 			stream	<< "Timestamp " << timestamp
@@ -145,7 +145,7 @@ namespace dtn
 		void StatisticLogger::writePlainLog(std::ostream &stream)
 		{
 			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
-			size_t timestamp = dtn::utils::Utils::get_current_dtn_time();
+			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
 			stream 	<< timestamp << " "
@@ -158,7 +158,7 @@ namespace dtn
 		void StatisticLogger::writeCsvLog(std::ostream &stream)
 		{
 			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
-			size_t timestamp = dtn::utils::Utils::get_current_dtn_time();
+			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
 			stream 	<< timestamp << ","
@@ -174,7 +174,7 @@ namespace dtn
 			_fileout.open(_file.getPath().c_str(), ios_base::trunc);
 
 			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
-			size_t timestamp = dtn::utils::Utils::get_current_dtn_time();
+			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
 			time_t time_now = time(NULL);

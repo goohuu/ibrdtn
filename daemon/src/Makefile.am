@@ -22,8 +22,8 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				core/BundleGeneratedEvent.h \
 				core/BundleStorage.cpp \
 				core/BundleStorage.h \
-				core/Clock.cpp \
-				core/Clock.h \
+				core/WallClock.cpp \
+				core/WallClock.h \
 				core/CustodyEvent.cpp \
 				core/CustodyEvent.h \
 				core/Event.cpp \

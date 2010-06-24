@@ -7,7 +7,7 @@
 
 #include "ibrdtn/data/PrimaryBlock.h"
 #include "ibrdtn/data/Exceptions.h"
-#include "ibrdtn/utils/Utils.h"
+#include "ibrdtn/utils/Clock.h"
 
 namespace dtn
 {
@@ -18,7 +18,7 @@ namespace dtn
 		PrimaryBlock::PrimaryBlock()
 		 : _procflags(0), _timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
-			_timestamp = utils::Utils::get_current_dtn_time();
+			_timestamp = dtn::utils::Clock::getTime();
 			_sequencenumber = __sequencenumber;
 			__sequencenumber++;
 		}
@@ -96,7 +96,7 @@ namespace dtn
 
 		bool PrimaryBlock::isExpired() const
 		{
-			if (utils::Utils::get_current_dtn_time() > (_lifetime + _timestamp)) return true;
+			if (dtn::utils::Clock::getTime() > (_lifetime + _timestamp)) return true;
 			return false;
 		}
 
@@ -109,7 +109,7 @@ namespace dtn
 
 		void PrimaryBlock::relabel()
 		{
-			_timestamp = utils::Utils::get_current_dtn_time();
+			_timestamp = dtn::utils::Clock::getTime();
 			_sequencenumber = __sequencenumber;
 			__sequencenumber++;
 		}

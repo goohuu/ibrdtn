@@ -6,7 +6,7 @@
  */
 
 #include "ibrdtn/data/DTNTime.h"
-#include "ibrdtn/utils/Utils.h"
+#include "ibrdtn/utils/Clock.h"
 #include <sys/time.h>
 
 namespace dtn
@@ -35,7 +35,7 @@ namespace dtn
 
 		void DTNTime::set()
 		{
-			_seconds = dtn::utils::Utils::get_current_dtn_time();
+			_seconds = dtn::utils::Clock::getTime();
 			timeval tv;
 
 			if ( gettimeofday(&tv, NULL) )

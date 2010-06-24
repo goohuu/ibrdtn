@@ -5,8 +5,8 @@
  *      Author: morgenro
  */
 
-#ifndef CLOCK_H_
-#define CLOCK_H_
+#ifndef WALLCLOCK_H_
+#define WALLCLOCK_H_
 
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/WaitForConditional.h>
@@ -16,25 +16,20 @@ namespace dtn
 {
 	namespace core
 	{
-		class Clock : public ibrcommon::WaitForConditional, public dtn::daemon::IndependentComponent
+		class WallClock : public ibrcommon::WaitForConditional, public dtn::daemon::IndependentComponent
 		{
 		public:
 			/**
 			 * Constructor for the global Clock
 			 * @param frequency Specify the frequency for the clock tick in seconds.
 			 */
-			Clock(size_t frequency);
-			virtual ~Clock();
+			WallClock(size_t frequency);
+			virtual ~WallClock();
 
 			/**
 			 * Blocks until the next clock tick happens.
 			 */
 			void sync();
-
-			/**
-			 * @return the DTN time in seconds since year 2000
-			 */
-			static size_t getTime();
 
 		protected:
 			virtual void componentUp();
@@ -50,4 +45,4 @@ namespace dtn
 	}
 }
 
-#endif /* CLOCK_H_ */
+#endif /* WALLCLOCK_H_ */

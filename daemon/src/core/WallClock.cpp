@@ -5,19 +5,19 @@
  *      Author: morgenro
  */
 
-#include "core/Clock.h"
+#include "core/WallClock.h"
 #include "core/TimeEvent.h"
-#include "ibrdtn/utils/Utils.h"
+#include <ibrdtn/utils/Clock.h>
 
 namespace dtn
 {
 	namespace core
 	{
-		Clock::Clock(size_t frequency) : _frequency(frequency), _next(0), _running(false)
+		WallClock::WallClock(size_t frequency) : _frequency(frequency), _next(0), _running(false)
 		{
 		}
 
-		Clock::~Clock()
+		WallClock::~WallClock()
 		{
 			if (isRunning())
 			{
@@ -25,33 +25,28 @@ namespace dtn
 			}
 		}
 
-		void Clock::sync()
+		void WallClock::sync()
 		{
 			wait();
 		}
 
-		size_t Clock::getTime()
-		{
-			return dtn::utils::Utils::get_current_dtn_time();
-		}
-
-		void Clock::componentUp()
+		void WallClock::componentUp()
 		{
 		}
 
-		void Clock::componentDown()
+		void WallClock::componentDown()
 		{
 			_running = false;
 			join();
 		}
 
-		void Clock::componentRun()
+		void WallClock::componentRun()
 		{
 			_running = true;
 
 			while (_running)
 			{
-				size_t dtntime = getTime();
+				size_t dtntime = dtn::utils::Clock::getTime();
 				if (_next <= dtntime)
 				{
 					TimeEvent::raise(dtntime, TIME_SECOND_TICK);

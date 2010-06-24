@@ -1,7 +1,7 @@
 ## sub directory
 
-h_sources = Utils.h
-cc_sources = Utils.cpp
+h_sources = Utils.h Clock.h
+cc_sources = Utils.cpp Clock.cpp
 
 #Install the headers in a versioned directory
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/utils

@@ -8,7 +8,7 @@
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/Exceptions.h>
 #include <ibrdtn/data/EID.h>
-#include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
 
 #include "limits.h"
@@ -26,6 +26,7 @@ namespace dtn
 	{
 		dtn::data::EID BundleCore::local;
 		size_t BundleCore::blocksizelimit = 0;
+		float BundleCore::qot = 0;
 
 		BundleCore& BundleCore::getInstance()
 		{
@@ -36,6 +37,12 @@ namespace dtn
 		BundleCore::BundleCore()
 		 : _clock(1), _storage(NULL)
 		{
+			/**
+			 * evaluate the current local time
+			 */
+			if (dtn::utils::Clock::getTime() > 0)
+
+
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 		}
 
@@ -69,7 +76,7 @@ namespace dtn
 			return *_storage;
 		}
 
-		Clock& BundleCore::getClock()
+		WallClock& BundleCore::getClock()
 		{
 			return _clock;
 		}
@@ -165,6 +172,7 @@ namespace dtn
 			// check if the bundle is expired
 			if (p.isExpired())
 			{
+				IBRCOMMON_LOGGER(warning) << "bundle rejected: bundle has expired (" << p.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 		}
@@ -183,7 +191,8 @@ namespace dtn
 			// check for the size of the block
 			if ((BundleCore::blocksizelimit > 0) && (size > BundleCore::blocksizelimit))
 			{
-				throw dtn::data::Validator::RejectedException("bundle is expired");
+				IBRCOMMON_LOGGER(warning) << "bundle rejected: block size of " << size << " is too big" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("block size is too big");
 			}
 		}
 

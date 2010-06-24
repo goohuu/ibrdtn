@@ -7,21 +7,6 @@ namespace dtn
 {
 	namespace utils
 	{
-		int Utils::timezone = 0;
-
-		size_t Utils::get_current_dtn_time()
-		{
-			time_t rawtime = time(NULL);
-			tm * ptm;
-
-			ptm = gmtime ( &rawtime );
-
-			// timezone
-			int offset = Utils::timezone * 3600;
-
-			return (mktime(ptm) - 946681200) + offset;
-		}
-
 		vector<string> Utils::tokenize(string token, string data)
 		{
 			vector<string> l;
