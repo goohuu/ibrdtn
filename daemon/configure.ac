@@ -2,7 +2,9 @@ dnl --------------------------------
 dnl ibrdtn package configuration
 dnl --------------------------------
 
-AC_INIT(ibrdtnd, m4_normalize(m4_include([version.inc])), morgenro@ibr.cs.tu-bs.de)
+define([PKG_VERSION], m4_normalize(m4_include([version.inc])))
+
+AC_INIT(ibrdtnd, [PKG_VERSION], morgenro@ibr.cs.tu-bs.de)
 AC_CONFIG_SRCDIR(src/Main.cpp)
 AM_INIT_AUTOMAKE
 LT_INIT
@@ -44,7 +46,7 @@ AC_SUBST(ibrdtn_CFLAGS)
 AC_SUBST(ibrdtn_LIBS)
 
 # check for ibrcommon library
-PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.1])
+PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.3])
 AC_SUBST(ibrcommon_CFLAGS)
 AC_SUBST(ibrcommon_LIBS)
 
@@ -113,7 +115,7 @@ AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 
 dnl -----------------------------------------------
-dnl Generates Makefile's, configuration files and scripts
+dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 
 AC_CONFIG_FILES([Makefile \

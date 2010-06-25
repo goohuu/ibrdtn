@@ -1,5 +1,6 @@
-AC_INIT(daemon/src/Main.cpp)
-AM_INIT_AUTOMAKE(ibrdtnsuite,0.1)
+AC_INIT(ibrdtnsuite, m4_normalize(m4_include([version.inc])))
+AC_CONFIG_SRCDIR(daemon/src/Main.cpp)
+AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])
 LT_INIT
 
@@ -9,4 +10,5 @@ export ibrdtn_CFLAGS="-I$(pwd)/ibrdtn"
 export ibrdtn_LIBS="-L$(pwd)/ibrdtn/ibrdtn/.libs -librdtn"
 
 AC_CONFIG_SUBDIRS(ibrcommon ibrdtn daemon tools)
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT

@@ -1,32 +1,31 @@
+dnl --------------------------------
+dnl Package name and version number
+dnl --------------------------------
+
+# include version information
+m4_include([version.m4])
 
 dnl --------------------------------
 dnl Initialization macros.
 dnl --------------------------------
 
-AC_INIT(ibrdtn/ibrdtn.h)
-AC_CONFIG_HEADER(ibrdtn/config.h)
-
+AC_INIT([ibrdtn], PKG_FULL_VERSION, morgenro@ibr.cs.tu-bs.de)
 AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_SRCDIR(ibrdtn/ibrdtn.h)
+AC_CONFIG_HEADER(ibrdtn/config.h)
 LT_INIT
+AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
-dnl -----------------------------------------------
-dnl Package name and version number (user defined)
-dnl -----------------------------------------------
+dnl --------------------------------
+dnl library version number
+dnl --------------------------------
 
-GENERIC_LIBRARY_NAME=ibrdtn
-
-#release versioning
-GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=3
-GENERIC_MICRO_VERSION=0
-
-#API version (often = GENERIC_MAJOR_VERSION.GENERIC_MINOR_VERSION)
-GENERIC_API_VERSION=0.3
-AC_SUBST(GENERIC_API_VERSION)
+#API version
+GENERIC_API_VERSION=PKG_MAJOR_VERSION.PKG_MINOR_VERSION
 
 #shared library versioning
-GENERIC_LIBRARY_VERSION=1:1:0
+GENERIC_LIBRARY_VERSION=PKG_LIB_VERSION
 #                       | | |
 #                +------+ | +---+
 #                |        |     |
@@ -39,23 +38,16 @@ GENERIC_LIBRARY_VERSION=1:1:0
 #                |           set to zero if current is incremented
 #                +- increment if interfaces have been added, removed or changed
 
-dnl --------------------------------
-dnl Package name and version number
-dnl --------------------------------
+# define the library name
+GENERIC_LIBRARY_NAME=$PACKAGE_NAME
+GENERIC_VERSION=$PACKAGE_VERSION
+GENERIC_RELEASE=PKG_MAJOR_VERSION.PKG_MINOR_VERSION
 
+AC_SUBST(GENERIC_API_VERSION)
 AC_SUBST(GENERIC_LIBRARY_VERSION)
-
-PACKAGE=$GENERIC_LIBRARY_NAME
 AC_SUBST(GENERIC_LIBRARY_NAME)
-
-GENERIC_VERSION=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION.$GENERIC_MICRO_VERSION
-GENERIC_RELEASE=$GENERIC_MAJOR_VERSION.$GENERIC_MINOR_VERSION
 AC_SUBST(GENERIC_RELEASE)
 AC_SUBST(GENERIC_VERSION)
-
-VERSION=$GENERIC_VERSION
-
-AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
 dnl -----------------------------------------------
 dnl Checks for programs.
@@ -74,7 +66,7 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrcommon library
-PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.1])
+PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.3])
 AC_SUBST(ibrcommon_CFLAGS)
 AC_SUBST(ibrcommon_LIBS)
 
@@ -164,7 +156,7 @@ AC_ARG_ENABLE(testsuite,
 	])
 
 dnl -----------------------------------------------
-dnl Generates Makefile's, configuration files and scripts
+dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 
 AC_CONFIG_FILES([Makefile \

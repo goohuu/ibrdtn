@@ -32,7 +32,7 @@ AC_SUBST(ibrdtn_CFLAGS)
 AC_SUBST(ibrdtn_LIBS)
 
 # check for ibrcommon library
-PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.1])
+PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.3])
 AC_SUBST(ibrcommon_CFLAGS)
 AC_SUBST(ibrcommon_LIBS)
 
@@ -107,7 +107,7 @@ AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 
 dnl -----------------------------------------------
-dnl Generates Makefile's, configuration files and scripts
+dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 
 AC_CONFIG_FILES([Makefile \
