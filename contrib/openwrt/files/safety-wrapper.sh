@@ -32,19 +32,24 @@ getconfig() {
 # remove the old state file
 /bin/rm /var/state/ibrdtn
 
-. /usr/sbin/dtnd-build-config.sh $TMPCONF
-
 # read uci configuration
 BLOB_PATH=`getconfig storage.blobs`
 BUNDLE_PATH=`getconfig storage.bundles`
+CONTAINER_PATH=`getconfig storage.path`
+CONTAINER_FILE=`getconfig storage.container`
 LOG_FILE=`getconfig main.logfile`
 ERR_FILE=`getconfig main.errfile`
 DEBUG_LEVEL=`getconfig main.debug`
 
+# mount container if specified
+if [ -n "$CONTAINER_FILE" ] && [ -n "$CONTAINER_PATH" ]; then
+	. /usr/share/ibrdtn/mountcontainer.sh
+fi
+
 # create blob & bundle path
 if [ -n "$BLOB_PATH" ]; then
 	/bin/mkdir -p $BLOB_PATH
-	
+
 	# clean the blob directory on startup
 	/bin/rm -f $BLOB_PATH/file*
 fi
@@ -77,6 +82,8 @@ else
 	DEBUG_ARGS=""
 fi
 
+# create configuration
+. /usr/share/ibrdtn/build-config.sh $TMPCONF
 
 # set the crash counter to zero
 CRASH=0
