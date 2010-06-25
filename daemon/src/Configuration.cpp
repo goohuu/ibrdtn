@@ -376,7 +376,7 @@ namespace dtn
 			std::stringstream ss(unparsed);
 
 			float value; ss >> value;
-			char multiplier; ss >> multiplier;
+			char multiplier = 0; ss >> multiplier;
 
 			switch (multiplier)
 			{
