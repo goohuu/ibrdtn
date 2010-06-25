@@ -25,6 +25,7 @@ config 'daemon' 'storage'
 	option blobs		/tmp/ibrdtn/blobs
 	option bundles		/tmp/ibrdtn/bundles
 #	option container	/tmp/ibrdtn/container.img
+#	option path			/tmp/ibrdtn/container
 
 #
 # statistic logging
