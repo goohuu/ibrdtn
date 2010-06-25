@@ -43,7 +43,7 @@ DEBUG_LEVEL=`getconfig main.debug`
 
 # mount container if specified
 if [ -n "$CONTAINER_FILE" ] && [ -n "$CONTAINER_PATH" ]; then
-	. /usr/share/ibrdtn/mountcontainer.sh
+	/bin/sh /usr/share/ibrdtn/mountcontainer.sh
 fi
 
 # create blob & bundle path
@@ -83,7 +83,7 @@ else
 fi
 
 # create configuration
-. /usr/share/ibrdtn/build-config.sh $TMPCONF
+/bin/sh /usr/share/ibrdtn/build-config.sh $TMPCONF
 
 # set the crash counter to zero
 CRASH=0
