@@ -19,6 +19,11 @@ add_param() {
 	fi
 }
 
+getconfig() {
+	$UCI -q get ibrdtn.$1
+	return $?
+}
+
 if [ "$1" == "--safe-mode" ]; then
 	SAFEMODE=yes
 	CONFFILE=$2
@@ -35,13 +40,26 @@ add_param $CONFFILE "ibrdtn.main.timezone" "timezone"
 add_param $CONFFILE "ibrdtn.main.routing" "routing"
 
 if [ "$SAFEMODE" == "yes" ]; then
-	add_param $CONFFILE "ibrdtn.safemode.forwarding" "routing_forwarding"
-	add_param $CONFFILE "ibrdtn.safemode.maxblock" "limit_blocksize"
-	add_param $CONFFILE "ibrdtn.safemode.storage" "limit_storage"
+	if [ -n "`getconfig safemode.forwarding`" ]; then
+		add_param $CONFFILE "ibrdtn.safemode.forwarding" "routing_forwarding"
+	else
+		add_param $CONFFILE "ibrdtn.main.forwarding" "routing_forwarding"
+	fi
+
+	if [ -n "`getconfig safemode.maxblock`" ]; then
+		add_param $CONFFILE "ibrdtn.safemode.maxblock" "limit_blocksize"
+	else
+		add_param $CONFFILE "ibrdtn.main.blocksize" "limit_blocksize"
+	fi
+
+	if [ -n "`getconfig safemode.storage`" ]; then
+		add_param $CONFFILE "ibrdtn.safemode.storage" "limit_storage"
+	else
+		add_param $CONFFILE "ibrdtn.storage.limit" "limit_storage"
+	fi
 else
 	add_param $CONFFILE "ibrdtn.main.forwarding" "routing_forwarding"
 	add_param $CONFFILE "ibrdtn.main.blocksize" "limit_blocksize"
-
 	add_param $CONFFILE "ibrdtn.storage.limit" "limit_storage"
 	add_param $CONFFILE "ibrdtn.storage.blobs" "blob_path"
 	add_param $CONFFILE "ibrdtn.storage.bundles" "storage_path"
