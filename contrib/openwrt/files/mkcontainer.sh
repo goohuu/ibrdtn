@@ -38,3 +38,6 @@ echo " done"
 # final hint
 echo "The container is now ready. To use it with IBR-DTN set the container with:"
 echo "# uci set ibrdtn.storage.container=$CONTAINER"
+echo "# uci set ibrdtn.storage.container_size=$SIZE"
+
+exit 0

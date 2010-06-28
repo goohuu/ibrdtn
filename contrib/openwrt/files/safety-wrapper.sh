@@ -29,6 +29,11 @@ getconfig() {
 	return $?
 }
 
+setconfig() {
+	$UCI -q set ibrdtn.$1=$2
+	return $?
+}
+
 # remove the old state file
 /bin/rm /var/state/ibrdtn
 
@@ -40,10 +45,15 @@ CONTAINER_FILE=`getconfig storage.container`
 LOG_FILE=`getconfig main.logfile`
 ERR_FILE=`getconfig main.errfile`
 DEBUG_LEVEL=`getconfig main.debug`
+SAFEMODE=no
 
 # mount container if specified
 if [ -n "$CONTAINER_FILE" ] && [ -n "$CONTAINER_PATH" ]; then
 	/bin/sh /usr/share/ibrdtn/mountcontainer.sh
+
+	# if the mount of the container failed
+	# switch to safe mode!
+	SAFEMODE=yes
 fi
 
 # create blob & bundle path
@@ -83,7 +93,11 @@ else
 fi
 
 # create configuration
-/bin/sh /usr/share/ibrdtn/build-config.sh $TMPCONF
+if [ "$SAFEMODE" == "yes" ]; then
+	/bin/sh /usr/share/ibrdtn/build-config.sh --safe-mode $TMPCONF
+else
+	/bin/sh /usr/share/ibrdtn/build-config.sh $TMPCONF
+fi
 
 # set the crash counter to zero
 CRASH=0

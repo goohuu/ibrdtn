@@ -4,17 +4,59 @@
 CONTAINER=`/sbin/uci get ibrdtn.storage.container`
 CPATH=`/sbin/uci get ibrdtn.storage.path`
 
-if [ -z "$CONTAINER" ]; then
-	echo "Storage container not set in uci."
-	echo "use: uci set ibrdtn.storage.container=<container-file>"
-	exit 1
-fi
+check_var() {
+	if [ -z "$1" ]; then
+		echo "$2"
+		exit 1
+	fi
+}
 
-if [ -z "$CPATH" ]; then
-	echo "Storage container mount path not set in uci."
-	echo "use: uci set ibrdtn.storage.path=<mount-path>"
-	exit 1
-fi
+check_path() {
+	if [ ! -d "$1" ]; then
+		echo "$2"
+		exit 1
+	fi
+}
+
+check_file() {
+	if [ ! -f "$1" ]; then
+		echo "$2"
+		exit 1
+	fi
+}
+
+container_mount() {
+	CONTAINER=`/sbin/uci get ibrdtn.storage.container`
+	CPATH=`/sbin/uci get ibrdtn.storage.path`
+
+	# try to mount the container
+	/bin/mount -o loop $CONTAINER $CPATH
+
+	return $?
+}
+
+container_reinitialize() {
+	SIZE=`/sbin/uci get ibrdtn.storage.container_size`
+	CONTAINER=`/sbin/uci get ibrdtn.storage.container`
+
+	# try to rebuild the container
+	if [ -n "$SIZE" ]; then
+		/bin/rm -f $CONTAINER
+		/usr/share/ibrdtn/mkcontainer.sh $CONTAINER $SIZE
+
+		if [ $? -eq 0 ]; then
+			container_mount	
+		fi
+
+		return $?
+	fi
+
+	return 1
+}
+
+check_var $CONTAINER "Storage container not set in uci.\nuse: uci set ibrdtn.storage.container=<container-file>"
+check_var $CPATH "Storage container mount path not set in uci.\nuse: uci set ibrdtn.storage.path=<mount-path>"
+check_path $CPATH "Storage container mount path does not exist."
 
 if [ "$1" == "-u" ]; then
 	/bin/umount $CPATH
@@ -26,40 +68,34 @@ if [ -n "`/bin/mount | grep $CPATH`" ]; then
 	exit 1
 fi
 
-if [ ! -d "$CPATH" ]; then
-	echo "Storage container mount path does not exist."
-	exit 1
-fi
-
 if [ ! -f "$CONTAINER" ]; then
-	echo "Storage container file does not exist."
-	exit 1
+	echo "Storage container file $CONTAINER does not exist."
+	container_reinitialize
+	exit $?
 fi
 
 # try to mount the container
-/bin/mount -o loop $CONTAINER $CPATH
+container_mount
 
 if [ $? -gt 0 ]; then
 	echo -n "can not mount container file. checking... "
 	/usr/sbin/e2fsck -p $CONTAINER
 
 	if [ $? -gt 0 ]; then
-		echo " error!"
-		exit 1
+		echo " error"
+		echo "Container file $CONTAINER broken. Try to reinitialize the container."
+		container_reinitialize
+
+		if [ $? -eq 0 ]; then
+			echo "container ready!"
+			exit 0
+		else
+			exit 1
+		fi
 	fi
 	echo "done"
-else
-	exit 0
 fi
 
-# try to mount the container
-/bin/mount -o loop $CONTAINER $CPATH
-
-if [ $? -gt 0 ]; then
-	echo "repair of container file failed."
-	exit 1
-fi
-
-echo "repair successful. container ready!"
+echo "container ready!"
 exit 0
 

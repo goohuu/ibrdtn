@@ -17,6 +17,16 @@ config 'daemon' 'main'
 
 	# block size limit
 #	option blocksize	512M
+
+
+#
+# If something bad happened, the safe mode will be activated.
+# These are the restrictions for safe mode only.
+#
+config 'daemon' 'safemode'
+	option forwarding	no
+	option storage		64M
+	option maxblock		16M
 	
 #
 # storage specific settings
