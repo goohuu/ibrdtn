@@ -65,7 +65,7 @@ fi
 
 if [ -n "`/bin/mount | grep $CPATH`" ]; then
 	echo "Container already mounted"
-	exit 1
+	exit 0
 fi
 
 if [ ! -f "$CONTAINER" ]; then
