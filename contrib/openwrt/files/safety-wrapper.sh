@@ -106,6 +106,16 @@ CRASH=0
 setstate state running
 
 while [ "`getstate state`" == "running" ]; do
+	# run a system check
+	/bin/sh /usr/share/ibrdtn/systemcheck.sh
+
+	# run in safe mode if the system check has failed
+	if [ $? -gt 0 ] && [ "$SAFEMODE" == "no" ]; then
+		SAFEMODE=yes
+		/usr/bin/logger -t "ibrdtn-safe-wrapper" -p 2 "system check failed! Switch to safe-mode settings."
+		/bin/sh /usr/share/ibrdtn/build-config.sh --safe-mode $TMPCONF
+	fi
+
 	# measure the running time
 	TIMESTART=`/bin/date +%s`
 	
@@ -126,11 +136,11 @@ while [ "`getstate state`" == "running" ]; do
 	# check if the daemon is crashed
 	if [ "`getstate state`" == "running" ]; then
 		# if the crash counter is higher than 20 switch to safe-mode settings
-		if [ $CRASH -eq 20 ]; then
+		if [ $CRASH -eq 20 ] && [ "$SAFEMODE" == "no" ]; then
 			SAFEMODE=yes
 			/usr/bin/logger -t "ibrdtn-safe-wrapper" -p 2 "IBR-DTN daemon crashed 20 times! Switch to safe-mode settings."
 			/bin/sh /usr/share/ibrdtn/build-config.sh --safe-mode $TMPCONF
-		if
+		fi
 
 		# increment the crash counter
 		let CRASH=$CRASH+1
