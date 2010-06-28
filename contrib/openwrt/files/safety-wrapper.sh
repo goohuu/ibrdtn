@@ -125,6 +125,13 @@ while [ "`getstate state`" == "running" ]; do
 	
 	# check if the daemon is crashed
 	if [ "`getstate state`" == "running" ]; then
+		# if the crash counter is higher than 20 switch to safe-mode settings
+		if [ $CRASH -eq 20 ]; then
+			SAFEMODE=yes
+			/usr/bin/logger -t "ibrdtn-safe-wrapper" -p 2 "IBR-DTN daemon crashed 20 times! Switch to safe-mode settings."
+			/bin/sh /usr/share/ibrdtn/build-config.sh --safe-mode $TMPCONF
+		if
+
 		# increment the crash counter
 		let CRASH=$CRASH+1
 		
