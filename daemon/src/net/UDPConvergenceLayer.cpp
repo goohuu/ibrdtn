@@ -3,6 +3,8 @@
 #include "core/BundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "routing/RequeueBundleEvent.h"
+#include <ibrcommon/net/UnicastSocket.h>
+#include <ibrcommon/net/BroadcastSocket.h>
 #include "core/BundleCore.h"
 
 #include <ibrcommon/data/BLOB.h>
@@ -38,8 +40,16 @@ namespace dtn
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
 		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::NetInterface net, bool broadcast, unsigned int mtu)
-			: _socket(net, broadcast), _net(net), m_maxmsgsize(mtu), _running(false)
+			: _socket(NULL), _net(net), m_maxmsgsize(mtu), _running(false)
 		{
+			if (broadcast)
+			{
+				_socket = new ibrcommon::BroadcastSocket();
+			}
+			else
+			{
+				_socket = new ibrcommon::UnicastSocket();
+			}
 		}
 
 		UDPConvergenceLayer::~UDPConvergenceLayer()
@@ -48,6 +58,8 @@ namespace dtn
 			{
 				componentDown();
 			}
+
+			delete _socket;
 		}
 
 		dtn::core::NodeProtocol UDPConvergenceLayer::getDiscoveryProtocol() const
@@ -113,7 +125,7 @@ namespace dtn
 			string data = ss.str();
 
 			// get a udp peer
-			ibrcommon::udpsocket::peer p = _socket.getPeer(node.getAddress(), node.getPort());
+			ibrcommon::udpsocket::peer p = _socket->getPeer(node.getAddress(), node.getPort());
 
 			// set write lock
 			ibrcommon::MutexLock l(m_writelock);
@@ -141,7 +153,7 @@ namespace dtn
 			char data[m_maxmsgsize];
 
 			// data waiting
-			int len = _socket.receive(data, m_maxmsgsize);
+			int len = _socket->receive(data, m_maxmsgsize);
 
 			if (len > 0)
 			{
@@ -159,8 +171,20 @@ namespace dtn
 		void UDPConvergenceLayer::componentUp()
 		{
 			try {
-				// bind to interface and port
-				_socket.bind();
+				try {
+					ibrcommon::UnicastSocket &sock = dynamic_cast<ibrcommon::UnicastSocket&>(*_socket);
+					sock.bind(_net);
+				} catch (std::bad_cast) {
+
+				}
+
+				try {
+					ibrcommon::BroadcastSocket &sock = dynamic_cast<ibrcommon::BroadcastSocket&>(*_socket);
+					sock.bind(_net);
+				} catch (std::bad_cast) {
+
+				}
+
 			} catch (ibrcommon::udpsocket::SocketException ex) {
 				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.getAddress() << ":" << _net.getPort() << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -170,7 +194,7 @@ namespace dtn
 		void UDPConvergenceLayer::componentDown()
 		{
 			_running = false;
-			_socket.shutdown();
+			_socket->shutdown();
 			join();
 		}
 

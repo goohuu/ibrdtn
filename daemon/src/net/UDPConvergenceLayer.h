@@ -50,7 +50,7 @@ namespace dtn
 			virtual void componentDown();
 
 		private:
-			ibrcommon::udpsocket _socket;
+			ibrcommon::udpsocket *_socket;
 
 			ibrcommon::NetInterface _net;
 			int m_socket;

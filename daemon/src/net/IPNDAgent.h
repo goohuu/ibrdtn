@@ -42,7 +42,9 @@ namespace dtn
 			virtual void componentDown();
 
 		private:
-			ibrcommon::udpsocket _socket;
+			ibrcommon::udpsocket *_socket;
+			std::string _destination;
+			int _port;
 		};
 	}
 }
