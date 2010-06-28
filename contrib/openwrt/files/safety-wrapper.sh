@@ -53,7 +53,9 @@ if [ -n "$CONTAINER_FILE" ] && [ -n "$CONTAINER_PATH" ]; then
 
 	# if the mount of the container failed
 	# switch to safe mode!
-	SAFEMODE=yes
+	if [ $? -gt 0 ]; then
+		SAFEMODE=yes
+	fi
 fi
 
 # create blob & bundle path
