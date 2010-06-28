@@ -29,6 +29,14 @@ namespace dtn
 				};
 			};
 
+			class StorageSizeExeededException : public ibrcommon::Exception
+			{
+			public:
+				StorageSizeExeededException(string what = "No space left in the storage.") throw() : ibrcommon::Exception(what)
+				{
+				};
+			};
+
 			/**
 			 * destructor
 			 */

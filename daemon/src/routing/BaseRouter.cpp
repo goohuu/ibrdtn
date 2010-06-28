@@ -13,6 +13,7 @@
 #include "net/BundleReceivedEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "routing/RequeueBundleEvent.h"
+#include "core/BundleStorage.h"
 #include "core/BundleGeneratedEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "core/BundleEvent.h"
@@ -187,6 +188,8 @@ namespace dtn
 
 				} catch (ibrcommon::IOException ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				} catch (dtn::core::BundleStorage::StorageSizeExeededException ex) {
+					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				return;
@@ -206,6 +209,8 @@ namespace dtn
 
 				} catch (ibrcommon::IOException ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				} catch (dtn::core::BundleStorage::StorageSizeExeededException ex) {
+					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				return;

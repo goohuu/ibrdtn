@@ -27,6 +27,7 @@ namespace dtn
 	{
 		dtn::data::EID BundleCore::local;
 		size_t BundleCore::blocksizelimit = 0;
+		bool BundleCore::forwarding = true;
 
 		BundleCore& BundleCore::getInstance()
 		{
@@ -195,6 +196,17 @@ namespace dtn
 			 * throw dtn::data::DefaultDeserializer::RejectedException();
 			 *
 			 */
+
+			// if we do not forward bundles
+			if (!BundleCore::forwarding)
+			{
+				if (!p._destination.sameHost(BundleCore::local))
+				{
+					// ... we reject all non-local bundles.
+					IBRCOMMON_LOGGER(warning) << "non-local bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+					throw dtn::data::Validator::RejectedException("bundle is not local");
+				}
+			}
 
 			// check if the bundle is expired
 			if (p.isExpired())

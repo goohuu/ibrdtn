@@ -24,8 +24,8 @@ namespace dtn
 			IBRCOMMON_LOGGER(info) << "Logging module initialized. mode = " << _type << ", interval = " << interval << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval, std::string filename)
-		 : _timer(*this, 0), _file(filename), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
+		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval, ibrcommon::File file)
+		 : _timer(*this, 0), _file(file), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
 		   _core(dtn::core::BundleCore::getInstance())
 		{
 		}

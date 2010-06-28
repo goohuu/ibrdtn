@@ -26,6 +26,7 @@ config 'daemon' 'storage'
 	option bundles		/tmp/ibrdtn/bundles
 #	option container	/tmp/ibrdtn/container.img
 #	option path			/tmp/ibrdtn/container
+#	option limit		1G
 
 #
 # statistic logging
@@ -47,6 +48,7 @@ config 'daemon' 'statistic'
 #
 config 'daemon' 'main'
 	option	routing		default
+#	option	forwarding	no
 
 #
 # static routing rules

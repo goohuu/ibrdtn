@@ -32,12 +32,12 @@ namespace dtn
 			/**
 			 * Constructor
 			 */
-			SimpleBundleStorage();
+			SimpleBundleStorage(size_t maxsize = 0);
 
 			/**
 			 * Constructor
 			 */
-			SimpleBundleStorage(const ibrcommon::File &workdir);
+			SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize = 0);
 
 			/**
 			 * Destructor
@@ -85,6 +85,11 @@ namespace dtn
 			unsigned int count();
 
 			/**
+			 * Get the current size
+			 */
+			size_t size() const;
+
+			/**
 			 * @sa BundleStorage::releaseCustody();
 			 */
 			void releaseCustody(dtn::data::BundleID &bundle);
@@ -119,6 +124,8 @@ namespace dtn
 				bool operator<(const BundleContainer& other) const;
 				bool operator>(const BundleContainer& other) const;
 
+				size_t size() const;
+
 				dtn::data::Bundle& operator*();
 				const dtn::data::Bundle& operator*() const;
 
@@ -137,12 +144,16 @@ namespace dtn
 					Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir );
 					~Holder();
 
+					size_t size() const;
+
 					dtn::data::Bundle _bundle;
 					ibrcommon::File _container;
 					RunMode _mode;
 					unsigned _count;
 
 					bool deletion;
+
+					size_t _size;
 				};
 
 			private:
@@ -152,8 +163,8 @@ namespace dtn
 			class BundleStore : private dtn::data::BundleList
 			{
 			public:
-				BundleStore();
-				BundleStore(ibrcommon::File workdir);
+				BundleStore(size_t maxsize = 0);
+				BundleStore(ibrcommon::File workdir, size_t maxsize = 0);
 				~BundleStore();
 
 				void load(const ibrcommon::File &file);
@@ -162,6 +173,7 @@ namespace dtn
 				void clear();
 
 				unsigned int count();
+				size_t size() const;
 
 				dtn::data::Bundle get(const dtn::data::EID &eid);
 				dtn::data::Bundle get(const dtn::data::BundleID &id);
@@ -179,6 +191,9 @@ namespace dtn
 			private:
 				ibrcommon::File _workdir;
 				RunMode _mode;
+
+				size_t _maxsize;
+				size_t _currentsize;
 			};
 
 			BundleStore _store;

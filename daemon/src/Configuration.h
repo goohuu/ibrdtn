@@ -91,18 +91,58 @@ namespace dtn
 				EPIDEMIC_ROUTING = 1
 			};
 
+			/**
+			 * @return the routing extension to use.
+			 */
 			RoutingExtension getRoutingExtension();
 
+			/**
+			 * Define if forwarding is enabled. If not, only local bundles will be accepted.
+			 * @return True, if forwarding is enabled.
+			 */
+			bool doForwarding();
+
+			/**
+			 * @return True, if the statistic logger is activated.
+			 */
 			bool useStatLogger();
-			std::string getStatLogfile();
+
+			/**
+			 * @return The file for statistic log output.
+			 */
+			ibrcommon::File getStatLogfile();
+
+			/**
+			 * @return The type of the statistic logger.
+			 */
 			std::string getStatLogType();
+
+			/**
+			 * @return The interval for statistic log refresh.
+			 */
 			unsigned int getStatLogInterval();
 
+			/**
+			 * @return The debug level as integer value.
+			 */
 			int getDebugLevel() const;
+
+			/**
+			 * @return True, if the daemon should work in debug mode.
+			 */
 			bool doDebug() const;
 
+			/**
+			 * Returns true if the daemon should work in quiet mode.
+			 * @return True, if the daemon should be quiet.
+			 */
 			bool beQuiet() const;
 
+			/**
+			 * Returns a limit defined in the configuration file. The given string specify with limit is to return.
+			 * If the string is "block", then the value of "limit_block" is returned.
+			 * @return A limit in bytes.
+			 */
 			size_t getLimit(std::string);
 
 		private:

@@ -47,7 +47,7 @@ namespace dtn
 			};
 
 			StatisticLogger(LoggerType type, unsigned int interval);
-			StatisticLogger(LoggerType type, unsigned int interval, std::string filename);
+			StatisticLogger(LoggerType type, unsigned int interval, ibrcommon::File file);
 			virtual ~StatisticLogger();
 
 			void componentUp();

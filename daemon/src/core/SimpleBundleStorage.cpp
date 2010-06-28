@@ -17,15 +17,15 @@ namespace dtn
 {
 	namespace core
 	{
-		SimpleBundleStorage::SimpleBundleStorage()
-		 : _store(), _running(true)
+		SimpleBundleStorage::SimpleBundleStorage(size_t maxsize)
+		 : _store(maxsize), _running(true)
 		{
 			bindEvent(TimeEvent::className);
 			bindEvent(GlobalEvent::className);
 		}
 
-		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir)
-		 : _store(workdir), _running(true)
+		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize)
+		 : _store(workdir, maxsize), _running(true)
 		{
 		}
 
@@ -73,6 +73,11 @@ namespace dtn
 			return _store.count();
 		}
 
+		size_t SimpleBundleStorage::size() const
+		{
+			return _store.size();
+		}
+
 		void SimpleBundleStorage::releaseCustody(dtn::data::BundleID&)
 		{
 			// custody is successful transferred to another node.
@@ -87,6 +92,7 @@ namespace dtn
 
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
+
 			_store.store(bundle);
 			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: stored bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -112,13 +118,13 @@ namespace dtn
 			_store.remove(id);
 		}
 
-		SimpleBundleStorage::BundleStore::BundleStore()
-		 : _mode(MODE_NONPERSISTENT)
+		SimpleBundleStorage::BundleStore::BundleStore(size_t maxsize)
+		 : _mode(MODE_NONPERSISTENT), _maxsize(maxsize), _currentsize(0)
 		{
 		}
 
-		SimpleBundleStorage::BundleStore::BundleStore(ibrcommon::File workdir)
-		 : _workdir(workdir), _mode(MODE_PERSISTENT)
+		SimpleBundleStorage::BundleStore::BundleStore(ibrcommon::File workdir, size_t maxsize)
+		 : _workdir(workdir), _mode(MODE_PERSISTENT), _maxsize(maxsize), _currentsize(0)
 		{
 			// load persistent bundles
 			std::list<ibrcommon::File> files;
@@ -200,6 +206,9 @@ namespace dtn
 			BundleContainer container(file);
 			bundles.insert( container );
 
+			// increment the storage size
+			_currentsize += container.size();
+
 			// add it to the bundle list
 			dtn::data::BundleList::add(dtn::data::MetaBundle(*container));
 		}
@@ -210,18 +219,26 @@ namespace dtn
 
 			pair<set<BundleContainer>::iterator,bool> ret;
 
+			// create a bundle container in the memory
+			BundleContainer container(bundle);
+
+			// check if this container is too big for us.
+			if ((_maxsize > 0) && (_currentsize + container.size() > _maxsize))
+			{
+				throw StorageSizeExeededException();
+			}
+
+			// if we are persistent, make a persistent container
 			if (_mode == MODE_PERSISTENT)
 			{
-				try {
-					ret = bundles.insert( BundleContainer(bundle, _workdir) );
-				} catch (ibrcommon::IOException ex) {
-					throw ex;
-				}
+				container = BundleContainer(bundle, _workdir);
 			}
-			else
-			{
-				ret = bundles.insert( BundleContainer(bundle) );
-			}
+
+			// insert Container
+			ret = bundles.insert( container );
+
+			// increment the storage size
+			_currentsize += container.size();
 
 			if (ret.second)
 			{
@@ -247,6 +264,9 @@ namespace dtn
 					// remove it from the bundle list
 					dtn::data::BundleList::remove(dtn::data::MetaBundle(*container));
 
+					// decrement the storage size
+					_currentsize -= container.size();
+
 					// mark for deletion
 					container.remove();
 
@@ -258,6 +278,11 @@ namespace dtn
 			}
 
 			throw BundleStorage::NoBundleFoundException();
+		}
+
+		size_t SimpleBundleStorage::BundleStore::size() const
+		{
+			return _currentsize;
 		}
 
 		void SimpleBundleStorage::BundleStore::clear()
@@ -275,6 +300,9 @@ namespace dtn
 
 			bundles.clear();
 			dtn::data::BundleList::clear();
+
+			// set the storage size to zero
+			_currentsize = 0;
 		}
 
 		void SimpleBundleStorage::BundleStore::eventBundleExpired(const ExpiringBundle &b)
@@ -284,6 +312,9 @@ namespace dtn
 				if ( b.bundle == (*(*iter)) )
 				{
 					BundleContainer container = (*iter);
+
+					// decrement the storage size
+					_currentsize -= container.size();
 
 					container.remove();
 					bundles.erase(iter);
@@ -330,6 +361,11 @@ namespace dtn
 		SimpleBundleStorage::BundleContainer::~BundleContainer()
 		{
 			if (--_holder->_count == 0) delete _holder;
+		}
+
+		size_t SimpleBundleStorage::BundleContainer::size() const
+		{
+			return _holder->size();
 		}
 
 		bool SimpleBundleStorage::BundleContainer::operator<(const SimpleBundleStorage::BundleContainer& other) const
@@ -392,12 +428,15 @@ namespace dtn
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b )
 		 : _bundle(b), _mode(MODE_NONPERSISTENT), _count(1), deletion(false)
 		{
+			dtn::data::DefaultSerializer s(std::cout);
+			_size = s.getLength(_bundle);
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const ibrcommon::File &file )
 		 : _bundle(), _container(file), _mode(MODE_PERSISTENT), _count(1), deletion(false)
 		{
 			std::fstream fs(file.getPath().c_str(), ios::in|ios::binary);
+			_size = file.size();
 
 			try {
 				fs.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
@@ -427,6 +466,7 @@ namespace dtn
 				out.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 				dtn::data::DefaultSerializer(out) << b; out << std::flush;
 				out.close();
+				_size = _container.size();
 			} catch (ios_base::failure ex) {
 				throw dtn::SerializationFailedException("can not write data to the storage; " + std::string(ex.what()));
 			}
@@ -438,6 +478,11 @@ namespace dtn
 			{
 				_container.remove();
 			}
+		}
+
+		size_t SimpleBundleStorage::BundleContainer::Holder::size() const
+		{
+			return _size;
 		}
 	}
 }

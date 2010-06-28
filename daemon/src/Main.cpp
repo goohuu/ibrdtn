@@ -122,11 +122,11 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 			ibrcommon::File::createDirectory(path);
 		}
 
-		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path);
+		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path, conf.getLimit("storage"));
 		components.push_back(sbs);
 		storage = sbs;
 	} catch (Configuration::ParameterNotSetException ex) {
-		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage();
+		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(conf.getLimit("storage"));
 		components.push_back(sbs);
 		storage = sbs;
 	}
@@ -325,6 +325,18 @@ int main(int argc, char *argv[])
 	}
 
 	components.push_back(router);
+
+	// enable or disable forwarding of bundles
+	if (conf.doForwarding())
+	{
+		IBRCOMMON_LOGGER(info) << "Forwarding of bundles enabled." << IBRCOMMON_LOGGER_ENDL;
+		BundleCore::forwarding = true;
+	}
+	else
+	{
+		IBRCOMMON_LOGGER(info) << "Forwarding of bundles disabled." << IBRCOMMON_LOGGER_ENDL;
+		BundleCore::forwarding = false;
+	}
 
 	// initialize all convergence layers
 	createConvergenceLayers(core, conf, components, ipnd);

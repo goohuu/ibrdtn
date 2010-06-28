@@ -345,15 +345,32 @@ namespace dtn
 			}
 		}
 
+
+		bool Configuration::doForwarding()
+		{
+			try {
+				if (_conf.read<std::string>("routing_forwarding") == "yes")
+				{
+					return true;
+				}
+				else
+				{
+					return false;
+				}
+			} catch (ConfigFile::key_not_found ex) {
+				return true;
+			}
+		}
+
 		bool Configuration::useStatLogger()
 		{
 			return _conf.keyExists("statistic_type");
 		}
 
-		std::string Configuration::getStatLogfile()
+		ibrcommon::File Configuration::getStatLogfile()
 		{
 			try {
-				return _conf.read<std::string>("statistic_file");
+				return ibrcommon::File(_conf.read<std::string>("statistic_file"));
 			} catch (ConfigFile::key_not_found ex) {
 				throw ParameterNotSetException();
 			}

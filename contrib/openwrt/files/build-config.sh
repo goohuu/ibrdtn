@@ -25,10 +25,12 @@ create_file $1
 add_param $1 "ibrdtn.main.uri" "local_uri"
 add_param $1 "ibrdtn.main.timezone" "timezone"
 add_param $1 "ibrdtn.main.routing" "routing"
+add_param $1 "ibrdtn.main.forwarding" "routing_forwarding"
 add_param $1 "ibrdtn.main.blocksize" "limit_blocksize"
 
 add_param $1 "ibrdtn.storage.blobs" "blob_path"
 add_param $1 "ibrdtn.storage.bundles" "storage_path"
+add_param $1 "ibrdtn.storage.limit" "limit_storage"
 
 add_param $1 "ibrdtn.statistic.type" "statistic_type"
 add_param $1 "ibrdtn.statistic.interval" "statistic_interval"
