@@ -64,14 +64,17 @@ namespace dtn
 
 			try {
 				ibrcommon::MulticastSocket &sock = dynamic_cast<ibrcommon::MulticastSocket&>(*_socket);
-				sock.bind(_port);
 
 				if (_interfaces.empty())
 				{
+					sock.bind(_port);
 					sock.joinGroup(_destination);
 				}
 				else
 				{
+					ibrcommon::NetInterface &net = _interfaces.front();
+					sock.bind(net);
+
 					for (std::list<ibrcommon::NetInterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 					{
 						sock.joinGroup(_destination, (*iter));

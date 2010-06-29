@@ -277,7 +277,12 @@ int main(int argc, char *argv[])
 		try {
 			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscoveryAddress() );
 		} catch (Configuration::ParameterNotFoundException ex) {
-			ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
+			try {
+				ibrcommon::NetInterface disco_if = conf.getDiscoveryInterface();
+				ipnd = new dtn::net::IPNDAgent( disco_port, disco_if.getBroadcastAddress() );
+			} catch (Configuration::ParameterNotFoundException ex) {
+				ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
+			}
 		}
 
 		try {
