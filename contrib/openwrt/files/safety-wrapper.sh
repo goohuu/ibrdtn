@@ -47,15 +47,22 @@ ERR_FILE=`getconfig main.errfile`
 DEBUG_LEVEL=`getconfig main.debug`
 SAFEMODE=no
 
-# mount container if specified
-if [ -n "$CONTAINER_FILE" ] && [ -n "$CONTAINER_PATH" ]; then
-	/bin/sh /usr/share/ibrdtn/mountcontainer.sh
+# run a system check
+/bin/sh /usr/share/ibrdtn/systemcheck.sh
 
-	# if the mount of the container failed
-	# switch to safe mode!
-	if [ $? -gt 0 ]; then
-		SAFEMODE=yes
+if [ $? -eq 0 ]; then
+	# mount container if specified
+	if [ -n "$CONTAINER_FILE" ] && [ -n "$CONTAINER_PATH" ]; then
+		/bin/sh /usr/share/ibrdtn/mountcontainer.sh
+
+		# if the mount of the container failed
+		# switch to safe mode!
+		if [ $? -gt 0 ]; then
+			SAFEMODE=yes
+		fi
 	fi
+else
+	SAFEMODE=yes
 fi
 
 # create blob & bundle path
