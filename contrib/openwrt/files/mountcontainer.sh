@@ -1,8 +1,8 @@
 #!/bin/sh
 #
 
-CONTAINER=`/sbin/uci get ibrdtn.storage.container`
-CPATH=`/sbin/uci get ibrdtn.storage.path`
+CONTAINER=`/sbin/uci -q get ibrdtn.storage.container`
+CPATH=`/sbin/uci -q get ibrdtn.storage.path`
 
 check_var() {
 	if [ -z "$1" ]; then
@@ -14,7 +14,7 @@ check_var() {
 check_path() {
 	if [ ! -d "$1" ]; then
 		echo "$2"
-		exit 1
+		return 1
 	fi
 }
 
@@ -26,8 +26,8 @@ check_file() {
 }
 
 container_mount() {
-	CONTAINER=`/sbin/uci get ibrdtn.storage.container`
-	CPATH=`/sbin/uci get ibrdtn.storage.path`
+	CONTAINER=`/sbin/uci -q get ibrdtn.storage.container`
+	CPATH=`/sbin/uci -q get ibrdtn.storage.path`
 
 	# try to mount the container
 	/bin/mount -o loop $CONTAINER $CPATH
@@ -36,8 +36,8 @@ container_mount() {
 }
 
 container_reinitialize() {
-	SIZE=`/sbin/uci get ibrdtn.storage.container_size`
-	CONTAINER=`/sbin/uci get ibrdtn.storage.container`
+	SIZE=`/sbin/uci get -q ibrdtn.storage.container_size`
+	CONTAINER=`/sbin/uci -q get ibrdtn.storage.container`
 
 	# try to rebuild the container
 	if [ -n "$SIZE" ]; then
@@ -56,7 +56,16 @@ container_reinitialize() {
 
 check_var $CONTAINER "Storage container not set in uci.\nuse: uci set ibrdtn.storage.container=<container-file>"
 check_var $CPATH "Storage container mount path not set in uci.\nuse: uci set ibrdtn.storage.path=<mount-path>"
+
 check_path $CPATH "Storage container mount path does not exist."
+if [ $? -gt 0 ]; then
+	/bin/mkdir -p $CPATH
+
+	if [ $? -gt 0 ]; then
+		echo "can not create container mount path."
+		exit 1
+	fi
+fi
 
 if [ "$1" == "-u" ]; then
 	/bin/umount $CPATH
