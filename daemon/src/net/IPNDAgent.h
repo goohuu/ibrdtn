@@ -30,10 +30,10 @@ namespace dtn
 		class IPNDAgent : public DiscoveryAgent
 		{
 		public:
-			IPNDAgent(ibrcommon::NetInterface net, std::string address, int port);
-			IPNDAgent(std::string address, int port);
-			IPNDAgent(ibrcommon::NetInterface net);
+			IPNDAgent(int port, std::string address);
 			virtual ~IPNDAgent();
+
+			void bind(const ibrcommon::NetInterface &net);
 
 		protected:
 			void send(DiscoveryAnnouncement &announcement);
@@ -44,6 +44,7 @@ namespace dtn
 		private:
 			ibrcommon::udpsocket *_socket;
 			std::string _destination;
+			std::list<ibrcommon::NetInterface> _interfaces;
 			int _port;
 		};
 	}

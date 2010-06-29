@@ -274,24 +274,16 @@ int main(int argc, char *argv[])
 		// get the discovery port
 		int disco_port = conf.getDiscoveryPort();
 
-		// default interface with broadcast address
-		ibrcommon::NetInterface disco_if = ibrcommon::NetInterface(ibrcommon::NetInterface::NETWORK_UDP, "disco", "255.255.255.255", "255.255.255.255", disco_port);
-
 		try {
-			disco_if = conf.getDiscoveryInterface();
+			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscoveryAddress() );
 		} catch (Configuration::ParameterNotFoundException ex) {
-
+			ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
 		}
 
 		try {
-			std::string disco_addr = conf.getDiscoveryAddress();
-
-			ipnd = new dtn::net::IPNDAgent( disco_if, disco_addr, disco_port );
-
+			ibrcommon::NetInterface disco_if = conf.getDiscoveryInterface();
+			ipnd->bind(disco_if);
 		} catch (Configuration::ParameterNotFoundException ex) {
-
-			ipnd = new dtn::net::IPNDAgent( disco_if );
-
 		}
 
 		components.push_back(ipnd);

@@ -18,54 +18,30 @@ namespace dtn
 {
 	namespace net
 	{
-		IPNDAgent::IPNDAgent(ibrcommon::NetInterface net, std::string address, int port)
+		IPNDAgent::IPNDAgent(int port, std::string address)
 		 : _socket(NULL), _destination(address), _port(port)
 		{
-			if (ibrcommon::MulticastSocket::isMulticast(address))
+			if (ibrcommon::MulticastSocket::isMulticast(_destination))
 			{
+				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: multicast mode " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
 				_socket = new ibrcommon::MulticastSocket();
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to " << address << ":" << port << " (multicast)" << IBRCOMMON_LOGGER_ENDL;
 			}
 			else
 			{
+				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: broadcast mode " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
 				_socket = new ibrcommon::BroadcastSocket();
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to " << address << ":" << port << " on interface " << net.getSystemName() << IBRCOMMON_LOGGER_ENDL;
-			}
-		}
-
-		IPNDAgent::IPNDAgent(std::string address, int port)
-		 : _socket(NULL), _destination(address), _port(port)
-		{
-			if (ibrcommon::MulticastSocket::isMulticast(address))
-			{
-				_socket = new ibrcommon::MulticastSocket();
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to " << address << ":" << port << " (multicast)" << IBRCOMMON_LOGGER_ENDL;
-			}
-			else
-			{
-				_socket = new ibrcommon::BroadcastSocket();
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
-			}
-		}
-
-		IPNDAgent::IPNDAgent(ibrcommon::NetInterface net)
-		 : _socket(NULL), _destination(net.getAddress()), _port(net.getPort())
-		{
-			if (ibrcommon::MulticastSocket::isMulticast(net.getAddress()))
-			{
-				_socket = new ibrcommon::MulticastSocket();
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to port " << net.getPort() << " (multicast)" << IBRCOMMON_LOGGER_ENDL;
-			}
-			else
-			{
-				_socket = new ibrcommon::BroadcastSocket();
-				IBRCOMMON_LOGGER(info) << "DiscoveryAgent listen to port " << net.getPort() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		IPNDAgent::~IPNDAgent()
 		{
 			delete _socket;
+		}
+
+		void IPNDAgent::bind(const ibrcommon::NetInterface &net)
+		{
+			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: bind to interface " << net.getSystemName() << IBRCOMMON_LOGGER_ENDL;
+			_interfaces.push_back(net);
 		}
 
 		void IPNDAgent::send(DiscoveryAnnouncement &announcement)
@@ -89,14 +65,34 @@ namespace dtn
 			try {
 				ibrcommon::MulticastSocket &sock = dynamic_cast<ibrcommon::MulticastSocket&>(*_socket);
 				sock.bind(_port);
-				sock.joinGroup(_destination);
+
+				if (_interfaces.empty())
+				{
+					sock.joinGroup(_destination);
+				}
+				else
+				{
+					for (std::list<ibrcommon::NetInterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
+					{
+						sock.joinGroup(_destination, (*iter));
+					}
+				}
 			} catch (std::bad_cast) {
 
 			}
 
 			try {
 				ibrcommon::BroadcastSocket &sock = dynamic_cast<ibrcommon::BroadcastSocket&>(*_socket);
-				sock.bind(_port, _destination);
+
+				if (_interfaces.empty())
+				{
+					sock.bind(_port);
+				}
+				else
+				{
+					ibrcommon::NetInterface &net = _interfaces.front();
+					sock.bind(net);
+				}
 			} catch (std::bad_cast) {
 
 			}
