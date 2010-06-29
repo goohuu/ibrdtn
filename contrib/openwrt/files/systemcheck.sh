@@ -37,6 +37,11 @@ check_writable() {
 
 # get the path for the container
 CONTAINER=`uci get ibrdtn.storage.container`
+
+if [ -z "$CONTAINER" ]; then
+	exit 0
+fi
+
 CONTAINER_PATH=`dirname $CONTAINER`
 
 if [ -n "$CONTAINER_PATH" ]; then
