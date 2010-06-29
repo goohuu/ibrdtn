@@ -45,10 +45,11 @@ container_reinitialize() {
 		/usr/share/ibrdtn/mkcontainer.sh $CONTAINER $SIZE
 
 		if [ $? -eq 0 ]; then
-			container_mount	
+			container_mount
+			return $?
 		fi
 
-		return $?
+		return 1
 	fi
 
 	return 1
@@ -103,6 +104,13 @@ if [ $? -gt 0 ]; then
 		fi
 	fi
 	echo "done"
+
+	container_mount
+
+	if [ $? -gt 0 ]; then
+		echo "mount failed!"
+		exit 1
+	fi
 fi
 
 echo "container ready!"
