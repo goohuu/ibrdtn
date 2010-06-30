@@ -23,8 +23,8 @@ namespace dtn
 {
 	namespace daemon
 	{
-		ApiServer::ApiServer(ibrcommon::NetInterface net)
-		 : dtn::net::GenericServer<ClientHandler>(), _tcpsrv(net), _dist(_connections, _connection_lock)
+		ApiServer::ApiServer(ibrcommon::NetInterface net, int port)
+		 : dtn::net::GenericServer<ClientHandler>(), _tcpsrv(net, port), _dist(_connections, _connection_lock)
 		{
 			_dist.start();
 		}

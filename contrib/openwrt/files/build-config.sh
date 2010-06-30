@@ -69,7 +69,6 @@ add_param $CONFFILE "ibrdtn.statistic.type" "statistic_type"
 add_param $CONFFILE "ibrdtn.statistic.interval" "statistic_interval"
 add_param $CONFFILE "ibrdtn.statistic.file" "statistic_file"
 
-add_param $CONFFILE "ibrdtn.discovery.interface" "discovery_interface"
 add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
 
 # iterate through all network interfaces
@@ -82,6 +81,7 @@ while [ 1 == 1 ]; do
 		add_param $CONFFILE "ibrdtn.@network[$iter].type" "net_lan${iter}_type"
 		add_param $CONFFILE "ibrdtn.@network[$iter].interface" "net_lan${iter}_interface"
 		add_param $CONFFILE "ibrdtn.@network[$iter].port" "net_lan${iter}_port"
+		add_param $CONFFILE "ibrdtn.@network[$iter].discovery" "net_lan${iter}_discovery"
 	else
 		break
 	fi

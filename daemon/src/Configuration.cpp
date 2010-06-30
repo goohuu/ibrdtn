@@ -14,6 +14,15 @@ namespace dtn
 {
 	namespace daemon
 	{
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, const ibrcommon::NetInterface &i, int p, bool d)
+		 : name(n), type(t), interface(i), port(p), discovery(d)
+		{
+		}
+
+		Configuration::NetConfig::~NetConfig()
+		{
+		}
+
 		std::string Configuration::version()
 		{
 			std::stringstream ss;
@@ -27,7 +36,8 @@ namespace dtn
 
 		Configuration::Configuration()
 		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true), _debuglevel(0), _debug(false), _quiet(false)
-		{}
+		{
+		}
 
 		Configuration::~Configuration()
 		{}
@@ -51,7 +61,7 @@ namespace dtn
 
 					if (arg == "-i" && argc > i)
 					{
-							_default_net = argv[i + 1];
+							_default_net = ibrcommon::NetInterface(argv[i + 1]);
 							_use_default_net = true;
 					}
 
@@ -139,28 +149,28 @@ namespace dtn
 			}
 		}
 
-		NetInterface Configuration::getNetInterface(string name)
+//		NetInterface Configuration::getNetInterface(string name)
+//		{
+//			list<NetInterface> nets = getNetInterfaces();
+//
+//			for (list<NetInterface>::iterator iter = nets.begin(); iter != nets.end(); iter++)
+//			{
+//				if ((*iter).getName() == name)
+//				{
+//					return (*iter);
+//				}
+//			}
+//
+//			throw ParameterNotFoundException();
+//		}
+
+		std::list<Configuration::NetConfig> Configuration::getInterfaces()
 		{
-			list<NetInterface> nets = getNetInterfaces();
-
-			for (list<NetInterface>::iterator iter = nets.begin(); iter != nets.end(); iter++)
-			{
-				if ((*iter).getName() == name)
-				{
-					return (*iter);
-				}
-			}
-
-			throw ParameterNotFoundException();
-		}
-
-		list<NetInterface> Configuration::getNetInterfaces()
-		{
-			list<NetInterface> ret;
+			std::list<NetConfig> ret;
 
 			if (_use_default_net)
 			{
-				ret.push_back( NetInterface(NetInterface::NETWORK_TCP, "default", _default_net, 4556) );
+				ret.push_back( Configuration::NetConfig("default", Configuration::NetConfig::NETWORK_TCP, _default_net, 4556) );
 				return ret;
 			}
 
@@ -168,22 +178,25 @@ namespace dtn
 				vector<string> nets = dtn::utils::Utils::tokenize(" ", _conf.read<string>("net_interfaces") );
 				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 				{
-					string key_type = "net_"; key_type.append(*iter); key_type.append("_type");
-					string key_port = "net_"; key_port.append(*iter); key_port.append("_port");
-					string key_interface = "net_"; key_interface.append(*iter); key_interface.append("_interface");
+					std::string netname = (*iter);
 
-					string type_name = _conf.read<string>(key_type, "tcp");
-					NetInterface::NetworkType type = NetInterface::NETWORK_UNKNOWN;
+					std::string key_type = "net_" + netname + "_type";
+					std::string key_port = "net_" + netname + "_port";
+					std::string key_interface = "net_" + netname + "_interface";
+					std::string key_discovery = "net_" + netname + "_discovery";
 
-					if (type_name == "tcp") type = NetInterface::NETWORK_TCP;
-					if (type_name == "udp") type = NetInterface::NETWORK_UDP;
+					std::string type_name = _conf.read<string>(key_type, "tcp");
+					Configuration::NetConfig::NetType type = Configuration::NetConfig::NETWORK_UNKNOWN;
 
-					string systemname = _conf.read<string>(key_interface, "lo");
-					unsigned int port = _conf.read<unsigned int>(key_port, 4556);
+					if (type_name == "tcp") type = Configuration::NetConfig::NETWORK_TCP;
+					if (type_name == "udp") type = Configuration::NetConfig::NETWORK_UDP;
 
-					NetInterface net(type, (*iter), systemname, port);
+					Configuration::NetConfig::NetConfig nc(netname, type,
+							ibrcommon::NetInterface(_conf.read<std::string>(key_interface, "lo")),
+							_conf.read<unsigned int>(key_port, 4556),
+							_conf.read<std::string>(key_discovery, "yes") == "yes");
 
-					ret.push_back(net);
+					ret.push_back(nc);
 				}
 			} catch (ConfigFile::key_not_found ex) {
 				return ret;
@@ -192,24 +205,24 @@ namespace dtn
 			return ret;
 		}
 
-		std::list<ibrcommon::NetInterface> Configuration::getDiscoveryInterfaces()
-		{
-			std::list<ibrcommon::NetInterface> nets = getNetInterfaces();
-			std::list<ibrcommon::NetInterface> ret;
-
-			for (std::list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
-			{
-				const ibrcommon::NetInterface &net = (*iter);
-
-				std::string key = "net_" + net.getName() + "_discovery";
-				if (_conf.read<string>(key, "yes") == "yes")
-				{
-					ret.push_back(net);
-				}
-			}
-
-			return ret;
-		}
+//		std::list<ibrcommon::NetInterface> Configuration::getDiscoveryInterfaces()
+//		{
+//			std::list<ibrcommon::NetInterface> nets = getNetInterfaces();
+//			std::list<ibrcommon::NetInterface> ret;
+//
+//			for (std::list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+//			{
+//				const ibrcommon::NetInterface &net = (*iter);
+//
+//				std::string key = "net_" + net.getName() + "_discovery";
+//				if (_conf.read<string>(key, "yes") == "yes")
+//				{
+//					ret.push_back(net);
+//				}
+//			}
+//
+//			return ret;
+//		}
 
 		std::string Configuration::getDiscoveryAddress()
 		{
@@ -240,9 +253,9 @@ namespace dtn
 //			}
 //		}
 
-		NetInterface Configuration::getAPIInterface()
+		Configuration::NetConfig Configuration::getAPIInterface()
 		{
-			return NetInterface(NetInterface::NETWORK_UDP, "local", 4550);
+			return Configuration::NetConfig("local", Configuration::NetConfig::NETWORK_TCP, ibrcommon::NetInterface("lo"), 4550);
 		}
 
 		list<dtn::routing::StaticRoutingExtension::StaticRoute> Configuration::getStaticRoutes()

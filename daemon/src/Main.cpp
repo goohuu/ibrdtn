@@ -39,6 +39,7 @@
 #include <csignal>
 #include <sys/types.h>
 #include <syslog.h>
+#include <set>
 
 using namespace dtn::core;
 using namespace dtn::daemon;
@@ -138,36 +139,36 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< dtn::daemon::Component* > &components, dtn::net::IPNDAgent *ipnd)
 {
 	// get the configuration of the convergence layers
-	list<ibrcommon::NetInterface> nets = conf.getNetInterfaces();
+	std::list<Configuration::NetConfig> nets = conf.getInterfaces();
 
 	// create the convergence layers
- 	for (list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+ 	for (std::list<Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 	{
-		const ibrcommon::NetInterface &net = (*iter);
+		const Configuration::NetConfig &net = (*iter);
 
 		try {
-			switch (net.getType())
+			switch (net.type)
 			{
-				case ibrcommon::NetInterface::NETWORK_UDP:
+				case Configuration::NetConfig::NETWORK_UDP:
 				{
-					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net );
+					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net.interface, net.port );
 					core.addConvergenceLayer(udpcl);
 					components.push_back(udpcl);
 					if (ipnd != NULL) ipnd->addService(udpcl);
 
-					IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 
 					break;
 				}
 
-				case ibrcommon::NetInterface::NETWORK_TCP:
+				case Configuration::NetConfig::NETWORK_TCP:
 				{
-					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net );
+					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net.interface, net.port );
 					core.addConvergenceLayer(tcpcl);
 					components.push_back(tcpcl);
 					if (ipnd != NULL) ipnd->addService(tcpcl);
 
-					IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 
 					break;
 				}
@@ -176,7 +177,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 					break;
 			}
 		} catch (ibrcommon::tcpserver::SocketException ex) {
-			IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			throw ex;
 		}
@@ -276,30 +277,21 @@ int main(int argc, char *argv[])
 			ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
 		}
 
-		// add interfaces to discovery
-		std::list<ibrcommon::NetInterface> disco_ifs = conf.getDiscoveryInterfaces();
+		// collect all interfaces of convergence layer instances
+		std::set<ibrcommon::NetInterface> interfaces;
 
-		for (std::list<ibrcommon::NetInterface>::const_iterator iter = disco_ifs.begin(); iter != disco_ifs.end(); iter++)
+		std::list<Configuration::NetConfig> nets = conf.getInterfaces();
+		for (std::list<Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 		{
-			ipnd->bind(*iter);
+			const Configuration::NetConfig &net = (*iter);
+			interfaces.insert(net.interface);
 		}
 
-//		try {
-//			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscoveryAddress() );
-//		} catch (Configuration::ParameterNotFoundException ex) {
-//			try {
-//				ibrcommon::NetInterface disco_if = conf.getDiscoveryInterface();
-//				ipnd = new dtn::net::IPNDAgent( disco_port, disco_if.getBroadcastAddress() );
-//			} catch (Configuration::ParameterNotFoundException ex) {
-//				ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
-//			}
-//		}
-//
-//		try {
-//			ibrcommon::NetInterface disco_if = conf.getDiscoveryInterface();
-//			ipnd->bind(disco_if);
-//		} catch (Configuration::ParameterNotFoundException ex) {
-//		}
+		for (std::set<ibrcommon::NetInterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
+		{
+			// add interfaces to discovery
+			ipnd->bind(*iter);
+		}
 
 		components.push_back(ipnd);
 	}
@@ -350,13 +342,13 @@ int main(int argc, char *argv[])
 
 	if (conf.doAPI())
 	{
-		ibrcommon::NetInterface lo = conf.getAPIInterface();
+		Configuration::NetConfig lo = conf.getAPIInterface();
 
 		try {
 			// instance a API server, first create a socket
-			components.push_back( new ApiServer(lo) );
+			components.push_back( new ApiServer(lo.interface, lo.port) );
 		} catch (ibrcommon::tcpserver::SocketException ex) {
-			IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.getAddress() << ":" << lo.getPort() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.getAddress() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 			exit(-1);
 		}
 	}

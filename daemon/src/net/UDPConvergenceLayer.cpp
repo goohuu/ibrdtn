@@ -39,8 +39,8 @@ namespace dtn
 	{
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::NetInterface net, bool broadcast, unsigned int mtu)
-			: _socket(NULL), _net(net), m_maxmsgsize(mtu), _running(false)
+		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::NetInterface net, int port, bool broadcast, unsigned int mtu)
+			: _socket(NULL), _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
 			if (broadcast)
 			{
@@ -71,13 +71,13 @@ namespace dtn
 		{
 			name = "udpcl";
 
-			stringstream service; service << "ip=" << _net.getAddress() << ";port=" << _net.getPort() << ";";
+			stringstream service; service << "ip=" << _net.getAddress() << ";port=" << _port << ";";
 			params = service.str();
 		}
 
 		bool UDPConvergenceLayer::onInterface(const ibrcommon::NetInterface &net) const
 		{
-			if (_net.getSystemName() == net.getSystemName()) return true;
+			if (_net.getInterface() == net.getInterface()) return true;
 			return false;
 		}
 
@@ -182,20 +182,20 @@ namespace dtn
 			try {
 				try {
 					ibrcommon::UnicastSocket &sock = dynamic_cast<ibrcommon::UnicastSocket&>(*_socket);
-					sock.bind(_net);
+					sock.bind(_port, _net);
 				} catch (std::bad_cast) {
 
 				}
 
 				try {
 					ibrcommon::BroadcastSocket &sock = dynamic_cast<ibrcommon::BroadcastSocket&>(*_socket);
-					sock.bind(_net);
+					sock.bind(_port, _net);
 				} catch (std::bad_cast) {
 
 				}
 
 			} catch (ibrcommon::udpsocket::SocketException ex) {
-				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.getAddress() << ":" << _net.getPort() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.getAddress() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}

@@ -25,6 +25,26 @@ namespace dtn
 			virtual ~Configuration();
 
 		public:
+			class NetConfig
+			{
+			public:
+				enum NetType
+				{
+					NETWORK_UNKNOWN = 0,
+					NETWORK_TCP = 1,
+					NETWORK_UDP = 2
+				};
+
+				NetConfig(std::string name, NetType type, const ibrcommon::NetInterface &iface, int port, bool discovery = true);
+				~NetConfig();
+
+				std::string name;
+				NetType type;
+				ibrcommon::NetInterface interface;
+				int port;
+				bool discovery;
+			};
+
 			class ParameterNotSetException : ibrcommon::Exception
 			{
 			};
@@ -51,15 +71,16 @@ namespace dtn
 			/**
 			 * Returns all configured network interfaces
 			 */
-			list<ibrcommon::NetInterface> getNetInterfaces();
+			std::list<NetConfig> getInterfaces();
 
-			ibrcommon::NetInterface getNetInterface(string name);
+//			ibrcommon::NetInterface getNetInterface(string name);
 
-			std::list<ibrcommon::NetInterface> getDiscoveryInterfaces();
+//			std::list<ibrcommon::NetInterface> getDiscoveryInterfaces();
+
 			std::string getDiscoveryAddress();
 			int getDiscoveryPort();
 
-			ibrcommon::NetInterface getAPIInterface();
+			Configuration::NetConfig getAPIInterface();
 
 			/**
 			 * Returns all static neighboring nodes
@@ -149,7 +170,7 @@ namespace dtn
 			ibrcommon::ConfigFile _conf;
 
 			string _filename;
-			string _default_net;
+			ibrcommon::NetInterface _default_net;
 			bool _use_default_net;
 			bool _doapi;
 			bool _dodiscovery;

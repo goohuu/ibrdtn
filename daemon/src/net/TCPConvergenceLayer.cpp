@@ -34,8 +34,8 @@ namespace dtn
 		 */
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		TCPConvergenceLayer::TCPConvergenceLayer(ibrcommon::NetInterface net)
-		 : _net(net), _server(net)
+		TCPConvergenceLayer::TCPConvergenceLayer(ibrcommon::NetInterface net, int port)
+		 : _net(net), _port(port), _server(net, port)
 		{
 		}
 
@@ -67,13 +67,13 @@ namespace dtn
 		{
 			name = "tcpcl";
 
-			stringstream service; service << "ip=" << _net.getAddress() << ";port=" << _net.getPort() << ";";
+			stringstream service; service << "ip=" << _net.getAddress() << ";port=" << _port << ";";
 			params = service.str();
 		}
 
 		bool TCPConvergenceLayer::onInterface(const ibrcommon::NetInterface &net) const
 		{
-			if (_net.getSystemName() == net.getSystemName()) return true;
+			if (_net.getInterface() == net.getInterface()) return true;
 			return false;
 		}
 
@@ -158,8 +158,8 @@ namespace dtn
 			return conn;
 		}
 
-		TCPConvergenceLayer::Server::Server(ibrcommon::NetInterface net)
-		 : dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>(), _tcpsrv(net)
+		TCPConvergenceLayer::Server::Server(ibrcommon::NetInterface net, int port)
+		 : dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>(), _tcpsrv(net, port)
 		{
 			bindEvent(NodeEvent::className);
 		}

@@ -170,7 +170,7 @@ namespace dtn
 			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver
 			{
 			public:
-				Server(ibrcommon::NetInterface net);
+				Server(ibrcommon::NetInterface net, int port);
 				virtual ~Server();
 
 				/**
@@ -220,7 +220,7 @@ namespace dtn
 			 * @param[in] bind_addr The address to bind.
 			 * @param[in] port The port to use.
 			 */
-			TCPConvergenceLayer(ibrcommon::NetInterface net);
+			TCPConvergenceLayer(ibrcommon::NetInterface net, int port);
 
 			/**
 			 * Destructor
@@ -250,6 +250,7 @@ namespace dtn
 			bool _running;
 
 			ibrcommon::NetInterface _net;
+			int _port;
 			TCPConvergenceLayer::Server _server;
 		};
 	}
