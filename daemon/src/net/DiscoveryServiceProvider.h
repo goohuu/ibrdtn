@@ -8,18 +8,29 @@
 #ifndef _DISCOVERYSERVICEPROVIDER_H
 #define	_DISCOVERYSERVICEPROVIDER_H
 
+#include <ibrcommon/net/NetInterface.h>
 #include <string>
 
 namespace dtn
 {
-    namespace net
-    {
-        class DiscoveryServiceProvider
-        {
-        public:
-            virtual void update(std::string &name, std::string &data) = 0;
-        };
-    }
+	namespace net
+	{
+		class DiscoveryServiceProvider
+		{
+		public:
+			/**
+			 * Updates an discovery service block with current values
+			 * @param name
+			 * @param data
+			 */
+			virtual void update(std::string &name, std::string &data) = 0;
+
+			virtual bool onInterface(const ibrcommon::NetInterface&) const
+			{
+				return true;
+			}
+		};
+	}
 }
 
 #endif	/* _DISCOVERYSERVICEPROVIDER_H */

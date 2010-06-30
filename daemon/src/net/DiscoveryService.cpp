@@ -17,7 +17,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryService::DiscoveryService()
-                 : _provider(NULL)
+		 : _provider(NULL)
 		{
 		}
 
@@ -53,10 +53,19 @@ namespace dtn
 			return _service_parameters;
 		}
 
-                void DiscoveryService::update()
-                {
-                    if (_provider != NULL) _provider->update(_service_name, _service_parameters);
-                }
+		void DiscoveryService::update()
+		{
+			if (_provider != NULL) _provider->update(_service_name, _service_parameters);
+		}
+
+		bool DiscoveryService::onInterface(const ibrcommon::NetInterface &net) const
+		{
+			if (_provider != NULL)
+			{
+				return _provider->onInterface(net);
+			}
+			return true;
+		}
 
 		std::ostream &operator<<(std::ostream &stream, const DiscoveryService &service)
 		{

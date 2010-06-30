@@ -63,9 +63,18 @@ namespace dtn
 			_server.terminate();
 		}
 
-		void TCPConvergenceLayer::update(std::string&, std::string&)
+		void TCPConvergenceLayer::update(std::string &name, std::string &params)
 		{
-			// TODO: update address and port
+			name = "tcpcl";
+
+			stringstream service; service << "ip=" << _net.getAddress() << ";port=" << _net.getPort() << ";";
+			params = service.str();
+		}
+
+		bool TCPConvergenceLayer::onInterface(const ibrcommon::NetInterface &net) const
+		{
+			if (_net.getSystemName() == net.getSystemName()) return true;
+			return false;
 		}
 
 		void TCPConvergenceLayer::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)

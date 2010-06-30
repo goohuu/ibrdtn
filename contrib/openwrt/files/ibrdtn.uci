@@ -88,22 +88,22 @@ config 'daemon' 'main'
 #
 # discovery over UDP/IP
 #
-# You can specify a network interface (such as eth0, wlan0, etc.)
-# or an address to listen to. Multicast addresses are supported with
-# the second option. If no option is specified the default broadcast
-# address is used.
+# You can specify an address to listen to for discovery announcements.
+# Multicast addresses are supported. If no address is specified the default
+# broadcast address is used.
 #
 config 'daemon' 'discovery'
-#	option interface	eth0
-	option address		224.0.0.1
+	option address		225.0.12.5
 
 config 'network'
 	option type			tcp
 	option interface	eth0
 	option port			4556
+#	option discovery	yes
 	
 #config 'network'
 #	option type			tcp
 #	option interface	wlan0
 #	option port			4556
+#	option discovery	no
 	

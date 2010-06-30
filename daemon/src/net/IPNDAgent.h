@@ -20,6 +20,8 @@
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrcommon/net/NetInterface.h>
 #include <ibrcommon/net/udpsocket.h>
+#include <list>
+#include <map>
 
 using namespace dtn::data;
 
@@ -36,15 +38,19 @@ namespace dtn
 			void bind(const ibrcommon::NetInterface &net);
 
 		protected:
-			void send(DiscoveryAnnouncement &announcement);
+			void sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services);
 			virtual void componentRun();
 			virtual void componentUp();
 			virtual void componentDown();
 
 		private:
+			void send(ibrcommon::udpsocket::peer &p, const DiscoveryAnnouncement &announcement);
+
 			ibrcommon::udpsocket *_socket;
 			std::string _destination;
 			std::list<ibrcommon::NetInterface> _interfaces;
+
+			std::map<std::string, ibrcommon::udpsocket* > _sockets;
 			int _port;
 		};
 	}

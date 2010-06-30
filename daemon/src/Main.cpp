@@ -153,9 +153,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net );
 					core.addConvergenceLayer(udpcl);
 					components.push_back(udpcl);
-
-					stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
-					if (ipnd != NULL) ipnd->addService("udpcl", service.str());
+					if (ipnd != NULL) ipnd->addService(udpcl);
 
 					IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
 
@@ -167,9 +165,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net );
 					core.addConvergenceLayer(tcpcl);
 					components.push_back(tcpcl);
-
-					stringstream service; service << "ip=" << net.getAddress() << ";port=" << net.getPort() << ";";
-					if (ipnd != NULL) ipnd->addService("tcpcl", service.str());
+					if (ipnd != NULL) ipnd->addService(tcpcl);
 
 					IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.getAddress() << ":" << net.getPort() << IBRCOMMON_LOGGER_ENDL;
 
@@ -277,19 +273,33 @@ int main(int argc, char *argv[])
 		try {
 			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscoveryAddress() );
 		} catch (Configuration::ParameterNotFoundException ex) {
-			try {
-				ibrcommon::NetInterface disco_if = conf.getDiscoveryInterface();
-				ipnd = new dtn::net::IPNDAgent( disco_port, disco_if.getBroadcastAddress() );
-			} catch (Configuration::ParameterNotFoundException ex) {
-				ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
-			}
+			ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
 		}
 
-		try {
-			ibrcommon::NetInterface disco_if = conf.getDiscoveryInterface();
-			ipnd->bind(disco_if);
-		} catch (Configuration::ParameterNotFoundException ex) {
+		// add interfaces to discovery
+		std::list<ibrcommon::NetInterface> disco_ifs = conf.getDiscoveryInterfaces();
+
+		for (std::list<ibrcommon::NetInterface>::const_iterator iter = disco_ifs.begin(); iter != disco_ifs.end(); iter++)
+		{
+			ipnd->bind(*iter);
 		}
+
+//		try {
+//			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscoveryAddress() );
+//		} catch (Configuration::ParameterNotFoundException ex) {
+//			try {
+//				ibrcommon::NetInterface disco_if = conf.getDiscoveryInterface();
+//				ipnd = new dtn::net::IPNDAgent( disco_port, disco_if.getBroadcastAddress() );
+//			} catch (Configuration::ParameterNotFoundException ex) {
+//				ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
+//			}
+//		}
+//
+//		try {
+//			ibrcommon::NetInterface disco_if = conf.getDiscoveryInterface();
+//			ipnd->bind(disco_if);
+//		} catch (Configuration::ParameterNotFoundException ex) {
+//		}
 
 		components.push_back(ipnd);
 	}

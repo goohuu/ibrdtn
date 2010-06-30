@@ -37,6 +37,7 @@ namespace dtn
 			virtual ~UDPConvergenceLayer();
 
 			virtual void update(std::string &name, std::string &data);
+			virtual bool onInterface(const ibrcommon::NetInterface &net) const;
 
 			dtn::core::NodeProtocol getDiscoveryProtocol() const;
 

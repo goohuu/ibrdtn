@@ -237,6 +237,7 @@ namespace dtn
 			 * this method updates the given values
 			 */
 			void update(std::string &name, std::string &data);
+			bool onInterface(const ibrcommon::NetInterface &net) const;
 
 			/**
 			 * Queue a new transmission job for this convergence layer.

@@ -192,6 +192,25 @@ namespace dtn
 			return ret;
 		}
 
+		std::list<ibrcommon::NetInterface> Configuration::getDiscoveryInterfaces()
+		{
+			std::list<ibrcommon::NetInterface> nets = getNetInterfaces();
+			std::list<ibrcommon::NetInterface> ret;
+
+			for (std::list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+			{
+				const ibrcommon::NetInterface &net = (*iter);
+
+				std::string key = "net_" + net.getName() + "_discovery";
+				if (_conf.read<string>(key, "yes") == "yes")
+				{
+					ret.push_back(net);
+				}
+			}
+
+			return ret;
+		}
+
 		std::string Configuration::getDiscoveryAddress()
 		{
 			try {
@@ -206,20 +225,20 @@ namespace dtn
 			return _conf.read<int>("discovery_port", 4551);
 		}
 
-		NetInterface Configuration::getDiscoveryInterface()
-		{
-			if (_use_default_net)
-			{
-				return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, getDiscoveryPort());
-			}
-
-			try {
-				string interface = _conf.read<string>("discovery_interface");
-				return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, getDiscoveryPort());
-			} catch (ConfigFile::key_not_found ex) {
-				throw ParameterNotFoundException();
-			}
-		}
+//		NetInterface Configuration::getDiscoveryInterface()
+//		{
+//			if (_use_default_net)
+//			{
+//				return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, getDiscoveryPort());
+//			}
+//
+//			try {
+//				string interface = _conf.read<string>("discovery_interface");
+//				return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, getDiscoveryPort());
+//			} catch (ConfigFile::key_not_found ex) {
+//				throw ParameterNotFoundException();
+//			}
+//		}
 
 		NetInterface Configuration::getAPIInterface()
 		{

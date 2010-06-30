@@ -60,14 +60,6 @@ namespace dtn
 			_services.push_back(service);
 		}
 
-		void DiscoveryAnnouncement::updateServices()
-		{
-			for (list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
-			{
-				(*iter).update();
-			}
-		}
-
 		void DiscoveryAnnouncement::setSequencenumber(u_int16_t sequence)
 		{
 			_sn = sequence;

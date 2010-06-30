@@ -9,7 +9,6 @@
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryAnnouncement.h"
 #include "core/TimeEvent.h"
-#include "core/BundleCore.h"
 #include "core/NodeEvent.h"
 #include "core/Node.h"
 #include <ibrdtn/utils/Utils.h>
@@ -22,7 +21,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryAgent::DiscoveryAgent()
-		 : _running(false), _self_announce(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local), _sn(0)
+		 : _running(false), _sn(0)
 		{
 		}
 
@@ -46,13 +45,13 @@ namespace dtn
 		void DiscoveryAgent::addService(string name, string parameters)
 		{
 			DiscoveryService service(name, parameters);
-			_self_announce.addService(service);
+			_services.push_back(service);
 		}
 
 		void DiscoveryAgent::addService(DiscoveryServiceProvider *provider)
 		{
-				DiscoveryService service(provider);
-				_self_announce.addService(service);
+			DiscoveryService service(provider);
+			_services.push_back(service);
 		}
 
 		void DiscoveryAgent::received(const DiscoveryAnnouncement &announcement)
@@ -123,11 +122,17 @@ namespace dtn
 			const dtn::core::TimeEvent *time = dynamic_cast<const dtn::core::TimeEvent*>(evt);
 			if (time == NULL) return;
 
+			// update all services
+			for (std::list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
+			{
+				(*iter).update();
+			}
+
+			sendAnnoucement(_sn, _services);
+
 			// increment sequencenumber
-			_self_announce.setSequencenumber(_sn);
 			_sn++;
 
-			this->send(_self_announce);
 		}
 	}
 }

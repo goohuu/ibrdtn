@@ -67,9 +67,18 @@ namespace dtn
 			return dtn::core::UDP_CONNECTION;
 		}
 
-		void UDPConvergenceLayer::update(std::string&, std::string&)
+		void UDPConvergenceLayer::update(std::string &name, std::string &params)
 		{
-			// TODO: update the values
+			name = "udpcl";
+
+			stringstream service; service << "ip=" << _net.getAddress() << ";port=" << _net.getPort() << ";";
+			params = service.str();
+		}
+
+		bool UDPConvergenceLayer::onInterface(const ibrcommon::NetInterface &net) const
+		{
+			if (_net.getSystemName() == net.getSystemName()) return true;
+			return false;
 		}
 
 		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)

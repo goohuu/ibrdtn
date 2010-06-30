@@ -55,7 +55,7 @@ namespace dtn
 
 			ibrcommon::NetInterface getNetInterface(string name);
 
-			ibrcommon::NetInterface getDiscoveryInterface();
+			std::list<ibrcommon::NetInterface> getDiscoveryInterfaces();
 			std::string getDiscoveryAddress();
 			int getDiscoveryPort();
 

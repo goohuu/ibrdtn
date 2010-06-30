@@ -6,7 +6,8 @@
  */
 
 #include "net/IPNDAgent.h"
-#include "ibrdtn/data/Exceptions.h"
+#include "core/BundleCore.h"
+#include <ibrdtn/data/Exceptions.h>
 #include <sstream>
 #include <string.h>
 #include <ibrcommon/Logger.h>
@@ -44,18 +45,68 @@ namespace dtn
 			_interfaces.push_back(net);
 		}
 
-		void IPNDAgent::send(DiscoveryAnnouncement &announcement)
+		void IPNDAgent::send(ibrcommon::udpsocket::peer &p, const DiscoveryAnnouncement &announcement)
 		{
-			// update service blocks
-			announcement.updateServices();
-
 			stringstream ss;
 			ss << announcement;
 
 			string data = ss.str();
-
-			ibrcommon::udpsocket::peer p = _socket->getPeer(_destination, _port);
 			p.send(data.c_str(), data.length());
+		}
+
+		void IPNDAgent::sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services)
+		{
+			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
+
+			// set sequencenumber
+			announcement.setSequencenumber(sn);
+
+			if (_sockets.empty())
+			{
+				// add services
+				for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+				{
+					const DiscoveryService &service = (*iter);
+					announcement.addService(service);
+				}
+
+				ibrcommon::udpsocket::peer p = _socket->getPeer(_destination, _port);
+
+				// send announcement
+				send(p, announcement);
+
+				return;
+			}
+
+			for (std::list<ibrcommon::NetInterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
+			{
+				const ibrcommon::NetInterface &iface = (*it_iface);
+
+				// clear all services
+				announcement.clearServices();
+
+				// add services
+				for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+				{
+					const DiscoveryService &service = (*iter);
+					if (service.onInterface(iface))
+					{
+						announcement.addService(service);
+					}
+				}
+
+				ibrcommon::udpsocket *sock = _sockets[iface.getSystemName()];
+
+				if (sock == NULL)
+				{
+					sock = _socket;
+				}
+
+				ibrcommon::udpsocket::peer p = sock->getPeer(_destination, _port);
+
+				// send announcement
+				send(p, announcement);
+			}
 		}
 
 		void IPNDAgent::componentUp()
@@ -72,11 +123,22 @@ namespace dtn
 				}
 				else
 				{
-					ibrcommon::NetInterface &net = _interfaces.front();
-					sock.setInterface(net);
-
 					for (std::list<ibrcommon::NetInterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 					{
+						const ibrcommon::NetInterface &net = (*iter);
+
+						if (_sockets.empty())
+						{
+							_sockets[net.getSystemName()] = _socket;
+							sock.setInterface(net);
+						}
+						else
+						{
+							ibrcommon::MulticastSocket *newsock = new ibrcommon::MulticastSocket();
+							newsock->setInterface(net);
+							_sockets[net.getSystemName()] = newsock;
+						}
+
 						sock.joinGroup(_destination, (*iter));
 					}
 				}
@@ -86,16 +148,7 @@ namespace dtn
 
 			try {
 				ibrcommon::BroadcastSocket &sock = dynamic_cast<ibrcommon::BroadcastSocket&>(*_socket);
-
-				if (_interfaces.empty())
-				{
-					sock.bind(_port);
-				}
-				else
-				{
-					ibrcommon::NetInterface &net = _interfaces.front();
-					sock.bind(net);
-				}
+				sock.bind(_port);
 			} catch (std::bad_cast) {
 
 			}

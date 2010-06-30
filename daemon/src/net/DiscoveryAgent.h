@@ -15,6 +15,7 @@
 
 #include "net/Neighbor.h"
 #include "net/DiscoveryAnnouncement.h"
+#include "net/DiscoveryService.h"
 
 using namespace dtn::data;
 
@@ -40,13 +41,13 @@ namespace dtn
 			virtual void componentUp();
 			virtual void componentDown();
 			virtual void componentRun() = 0;
-			virtual void send(DiscoveryAnnouncement &announcement) = 0;
+			virtual void sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services) = 0;
 			bool _running;
 
 		private:
-			DiscoveryAnnouncement _self_announce;
 			list<Neighbor> _neighbors;
 			u_int16_t _sn;
+			std::list<DiscoveryService> _services;
 		};
 	}
 }

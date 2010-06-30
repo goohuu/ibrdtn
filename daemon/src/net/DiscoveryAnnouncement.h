@@ -56,11 +56,6 @@ namespace dtn
 
 			void setSequencenumber(u_int16_t sequence);
 
-			/**
-			 * update all service blocks
-			 */
-			virtual void updateServices();
-
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const DiscoveryAnnouncement &announcement);
 			friend std::istream &operator>>(std::istream &stream, DiscoveryAnnouncement &announcement);
@@ -71,7 +66,7 @@ namespace dtn
 			u_int16_t _sn;
 			dtn::data::BundleString _bloomfilter;
 
-			list<DiscoveryService> _services;
+			std::list<DiscoveryService> _services;
 		};
 	}
 }
