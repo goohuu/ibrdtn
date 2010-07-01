@@ -149,8 +149,7 @@ namespace dtn
 			_connections.push_back( Connection( conn, n ) );
 
 			// raise setup event
-			EID eid(n.getURI());
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, eid);
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
 
 			// start the ClientHandler (service)
 			conn->initialize(dtn::core::BundleCore::local, 10);

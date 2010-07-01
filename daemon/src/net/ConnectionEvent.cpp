@@ -11,8 +11,8 @@ namespace dtn
 {
 	namespace net
 	{
-		ConnectionEvent::ConnectionEvent(State s, const dtn::data::EID &p)
-		 : state(s), peer(p)
+		ConnectionEvent::ConnectionEvent(State s, const dtn::core::Node &n)
+		 : state(s), peer(n.getURI()), node(n)
 		{
 
 		}
@@ -22,10 +22,10 @@ namespace dtn
 
 		}
 
-		void ConnectionEvent::raise(State s, const dtn::data::EID &p)
+		void ConnectionEvent::raise(State s, const dtn::core::Node &n)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new ConnectionEvent(s, p) );
+			dtn::core::Event::raiseEvent( new ConnectionEvent(s, n) );
 		}
 
 		const string ConnectionEvent::getName() const

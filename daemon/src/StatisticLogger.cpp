@@ -118,7 +118,7 @@ namespace dtn
 
 		void StatisticLogger::writeSyslog(std::ostream &stream)
 		{
-			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
 			stream	<< "DTN-Stats: CurNeighbors " << neighbors.size()
@@ -130,7 +130,7 @@ namespace dtn
 
 		void StatisticLogger::writeStdLog(std::ostream &stream)
 		{
-			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
 			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
@@ -144,7 +144,7 @@ namespace dtn
 
 		void StatisticLogger::writePlainLog(std::ostream &stream)
 		{
-			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
 			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
@@ -157,7 +157,7 @@ namespace dtn
 
 		void StatisticLogger::writeCsvLog(std::ostream &stream)
 		{
-			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
 			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
@@ -173,7 +173,7 @@ namespace dtn
 			// open statistic file
 			_fileout.open(_file.getPath().c_str(), ios_base::trunc);
 
-			const std::list<dtn::core::Node> neighbors = _core.getNeighbors();
+			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
 			size_t timestamp = dtn::utils::Clock::getTime();
 			dtn::core::BundleStorage &storage = _core.getStorage();
 
@@ -193,7 +193,7 @@ namespace dtn
 			_fileout << std::endl;
 			_fileout << "neighbors (" << neighbors.size() << "):" << std::endl;
 
-			for (std::list<dtn::core::Node>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++)
+			for (std::set<dtn::core::Node>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++)
 			{
 				_fileout << "\t" << (*iter).getURI() << std::endl;
 			}

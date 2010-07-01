@@ -9,7 +9,8 @@
 #define CONNECTIONEVENT_H_
 
 #include "core/Event.h"
-#include "ibrdtn/data/EID.h"
+#include "core/Node.h"
+#include <ibrdtn/data/EID.h>
 
 namespace dtn
 {
@@ -34,13 +35,14 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(State state, const dtn::data::EID &peer);
+			static void raise(State, const dtn::core::Node&);
 
 			const State state;
 			const dtn::data::EID peer;
+			const dtn::core::Node node;
 
 		private:
-			ConnectionEvent(State state, const dtn::data::EID &peer);
+			ConnectionEvent(State, const dtn::core::Node&);
 		};
 	}
 }

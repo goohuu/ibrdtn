@@ -64,25 +64,60 @@ namespace dtn
 
 			void queue(const ConvergenceLayer::Job &job);
 
-			const std::list<dtn::core::Node> getNeighbors();
+			/**
+			 * get a set with all neighbors
+			 * @return
+			 */
+			const std::set<dtn::core::Node> getNeighbors();
+
+			/**
+			 * Checks if a node is already known as neighbor.
+			 * @param
+			 * @return
+			 */
+			bool isNeighbor(const dtn::core::Node&);
 
 		protected:
+			/**
+			 * trigger for periodical discovery of nodes
+			 * @param node
+			 */
 			void discovered(dtn::core::Node &node);
+
+			/**
+			 * checks for timed out nodes
+			 */
 			void check_discovered();
 
 			virtual void componentUp();
 			virtual void componentDown();
 
 		private:
+			/**
+			 *  queue a bundle for delivery
+			 */
 			void queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job);
 
+			// if set to true, this module will shutdown
 			bool _shutdown;
 
-			ibrcommon::Mutex _node_lock;
+			// mutex for the list of convergence layers
 			ibrcommon::Mutex _cl_lock;
+
+			// contains all configured convergence layers
 			std::set<ConvergenceLayer*> _cl;
-			std::set<dtn::core::Node> _static_connections;
-			std::list<dtn::core::Node> _discovered_nodes;
+
+			// mutex for the lists of nodes
+			ibrcommon::Mutex _node_lock;
+
+			// contains all static configured nodes
+			std::set<dtn::core::Node> _static_nodes;
+
+			// contains all dynamic discovered nodes
+			std::set<dtn::core::Node> _discovered_nodes;
+
+			// contains all connected nodes
+			std::set<dtn::core::Node> _connected_nodes;
 		};
 	}
 }

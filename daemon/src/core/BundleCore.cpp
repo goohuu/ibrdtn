@@ -113,7 +113,7 @@ namespace dtn
 			_connectionmanager.addConnection(n);
 		}
 
-		const std::list<dtn::core::Node> BundleCore::getNeighbors()
+		const std::set<dtn::core::Node> BundleCore::getNeighbors()
 		{
 			return _connectionmanager.getNeighbors();
 		}

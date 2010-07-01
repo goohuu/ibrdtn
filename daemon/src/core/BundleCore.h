@@ -16,7 +16,7 @@
 #include <ibrdtn/data/CustodySignalBlock.h>
 
 #include <vector>
-#include <list>
+#include <set>
 #include <map>
 
 using namespace dtn::data;
@@ -46,7 +46,7 @@ namespace dtn
 
 			void addConnection(const dtn::core::Node &n);
 
-			const std::list<dtn::core::Node> getNeighbors();
+			const std::set<dtn::core::Node> getNeighbors();
 
 			void raiseEvent(const dtn::core::Event *evt);
 

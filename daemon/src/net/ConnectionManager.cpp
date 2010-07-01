@@ -15,12 +15,16 @@
 #include "core/BundleCore.h"
 #include "routing/RequeueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
+#include "net/ConnectionEvent.h"
 
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
+#include <functional>
+#include <typeinfo>
 
 using namespace dtn::core;
 
@@ -28,6 +32,13 @@ namespace dtn
 {
 	namespace net
 	{
+		struct CompareNodeDestination:
+		public std::binary_function< dtn::core::Node, dtn::data::EID, bool > {
+			bool operator() ( const dtn::core::Node &node, const dtn::data::EID &destination ) const {
+				return dtn::data::EID(node.getURI()) == destination;
+			}
+		};
+
 		ConnectionManager::ConnectionManager()
 		 : _shutdown(false)
 		{
@@ -41,6 +52,7 @@ namespace dtn
 		{
 			bindEvent(TimeEvent::className);
 			bindEvent(NodeEvent::className);
+			bindEvent(ConnectionEvent::className);
 		}
 
 		void ConnectionManager::componentDown()
@@ -53,6 +65,7 @@ namespace dtn
 
 			unbindEvent(NodeEvent::className);
 			unbindEvent(TimeEvent::className);
+			unbindEvent(ConnectionEvent::className);
 		}
 
 		void ConnectionManager::raiseEvent(const dtn::core::Event *evt)
@@ -76,13 +89,56 @@ namespace dtn
 					discovered(n);
 				}
 			}
+
+			try {
+				const ConnectionEvent &connection = dynamic_cast<const ConnectionEvent&>(*evt);
+
+				switch (connection.state)
+				{
+					case ConnectionEvent::CONNECTION_UP:
+					{
+						// if this node was unknown before...
+						if (!isNeighbor(connection.node))
+						{
+							// announce the new node
+							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_AVAILABLE);
+						}
+
+						ibrcommon::MutexLock l(_node_lock);
+						_connected_nodes.insert(connection.node);
+						break;
+					}
+
+					case ConnectionEvent::CONNECTION_DOWN:
+					{
+						{
+							ibrcommon::MutexLock l(_node_lock);
+							_connected_nodes.erase(connection.node);
+						}
+
+						// if this node is gone...
+						if (!isNeighbor(connection.node))
+						{
+							// announce the unavailable event
+							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_UNAVAILABLE);
+						}
+						break;
+					}
+
+					default:
+						break;
+				}
+
+			} catch (std::bad_cast) {
+
+			}
 		}
 
 		void ConnectionManager::addConnection(const dtn::core::Node &n)
 		{
 			{
 				ibrcommon::MutexLock l(_node_lock);
-				_static_connections.insert(n);
+				_static_nodes.insert(n);
 			}
 
 			dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
@@ -96,61 +152,57 @@ namespace dtn
 
 		void ConnectionManager::discovered(dtn::core::Node &node)
 		{
+			// ignore messages of ourself
+			if (EID(node.getURI()) == dtn::core::BundleCore::local) return;
+
+			// if this node was unknown before...
+			if (!isNeighbor(node))
 			{
-				ibrcommon::MutexLock l(_node_lock);
-
-				// ignore messages of ourself
-				if (EID(node.getURI()) == dtn::core::BundleCore::local) return;
-
-				std::list<dtn::core::Node>::iterator iter = _discovered_nodes.begin();
-				while (iter != _discovered_nodes.end())
-				{
-					if ((*iter) == node)
-					{
-						(*iter) = node;
-						return;
-					}
-					iter++;
-				}
-
-				_discovered_nodes.push_back(node);
+				// announce the new node
+				dtn::core::NodeEvent::raise(node, dtn::core::NODE_AVAILABLE);
 			}
 
-			// announce the new node
-			dtn::core::NodeEvent::raise(node, dtn::core::NODE_AVAILABLE);
+			ibrcommon::MutexLock l(_node_lock);
+			_discovered_nodes.erase(node);
+			_discovered_nodes.insert(node);
 		}
 
 		void ConnectionManager::check_discovered()
 		{
-			Node n;
+			std::list<dtn::core::Node> unavailables;
 
 			{
 				ibrcommon::MutexLock l(_node_lock);
 
 				// search for outdated nodes
-				std::list<Node>::iterator iter = _discovered_nodes.begin();
+				std::set<dtn::core::Node>::iterator iter = _discovered_nodes.begin();
 
 				while (iter != _discovered_nodes.end())
 				{
-					if ( !(*iter).decrementTimeout(1) )
-					{
-						n = (*iter);
+					dtn::core::Node n = (*iter);
 
-						// node is outdated -> remove it
-						_discovered_nodes.erase( iter++ );
-						break;
+					// node is outdated -> remove it
+					_discovered_nodes.erase( iter++ );
+
+					if ( !n.decrementTimeout(1) )
+					{
+						unavailables.push_back(n);
 					}
 					else
 					{
-						iter++;
+						_discovered_nodes.insert(n);
 					}
 				}
 			}
 
-			if (n.getAddress() != "dtn:unknown")
+			for(std::list<dtn::core::Node>::const_iterator iter = unavailables.begin(); iter != unavailables.end(); iter++)
 			{
-				// announce the node unavailable event
-				dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
+				// if this node is gone...
+				if (!isNeighbor(*iter))
+				{
+					// announce the unavailable event
+					dtn::core::NodeEvent::raise(*iter, dtn::core::NODE_UNAVAILABLE);
+				}
 			}
 		}
 
@@ -179,26 +231,44 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
-			// seek for a connection in the static list
-			for (std::set<dtn::core::Node>::const_iterator iter = _static_connections.begin(); iter != _static_connections.end(); iter++)
+			// queue to a static node
 			{
-				const dtn::core::Node &n = (*iter);
-				if (EID(n.getURI()) == job._destination)
+				std::set<dtn::core::Node>::const_iterator iter =
+						std::find_if(_static_nodes.begin(), _static_nodes.end(),
+								std::bind2nd( CompareNodeDestination(), job._destination )
+						);
+
+				if (iter != _static_nodes.end())
 				{
-					// queue at the convergence layer
-					queue(n, job);
+					queue(*iter, job);
 					return;
 				}
 			}
 
-			// seek for a connection in the discovery list
-			for (std::list<dtn::core::Node>::iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
+			// queue to a dynamic discovered node
 			{
-				const dtn::core::Node &n = (*iter);
-				if (EID(n.getURI()) == job._destination)
+				std::set<dtn::core::Node>::const_iterator iter =
+						std::find_if(_discovered_nodes.begin(), _discovered_nodes.end(),
+								std::bind2nd( CompareNodeDestination(), job._destination )
+						);
+
+				if (iter != _discovered_nodes.end())
 				{
-					// queue at the convergence layer
-					queue(n, job);
+					queue(*iter, job);
+					return;
+				}
+			}
+
+			// queue to a connected node
+			{
+				std::set<dtn::core::Node>::const_iterator iter =
+						std::find_if(_connected_nodes.begin(), _connected_nodes.end(),
+								std::bind2nd( CompareNodeDestination(), job._destination )
+						);
+
+				if (iter != _connected_nodes.end())
+				{
+					queue(*iter, job);
 					return;
 				}
 			}
@@ -211,22 +281,52 @@ namespace dtn
 			queue( ConvergenceLayer::Job(eid, b) );
 		}
 
-		const std::list<dtn::core::Node> ConnectionManager::getNeighbors()
+		const std::set<dtn::core::Node> ConnectionManager::getNeighbors()
 		{
 			ibrcommon::MutexLock l(_node_lock);
-			std::list<dtn::core::Node> _nodes;
 
-			for (std::set<dtn::core::Node>::const_iterator iter = _static_connections.begin(); iter != _static_connections.end(); iter++)
+			std::set<dtn::core::Node> _nodes;
+
+			for (std::set<dtn::core::Node>::const_iterator iter = _static_nodes.begin(); iter != _static_nodes.end(); iter++)
 			{
-				_nodes.push_back( *iter );
+				_nodes.insert( *iter );
 			}
 
-			for (std::list<dtn::core::Node>::const_iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
+			for (std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
 			{
-				_nodes.push_back( *iter );
+				_nodes.insert( *iter );
+			}
+
+			for (std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.begin(); iter != _connected_nodes.end(); iter++)
+			{
+				_nodes.insert( *iter );
 			}
 
 			return _nodes;
+		}
+
+
+		bool ConnectionManager::isNeighbor(const dtn::core::Node &node)
+		{
+			ibrcommon::MutexLock l(_node_lock);
+
+			// search for the node in all sets
+			if (_static_nodes.find(node) != _static_nodes.end())
+			{
+				return true;
+			}
+
+			if (_discovered_nodes.find(node) != _discovered_nodes.end())
+			{
+				return true;
+			}
+
+			if (_connected_nodes.find(node) != _connected_nodes.end())
+			{
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

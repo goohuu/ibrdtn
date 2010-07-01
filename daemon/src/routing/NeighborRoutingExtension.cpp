@@ -26,7 +26,7 @@ namespace dtn
 	{
 		struct FindNode: public std::binary_function< dtn::core::Node, dtn::core::Node, bool > {
 			bool operator () ( const dtn::core::Node &n1, const dtn::core::Node &n2 ) const {
-				return n1.equals(n2);
+				return n1 == n2;
 			}
 		};
 

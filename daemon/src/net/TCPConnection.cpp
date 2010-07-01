@@ -31,8 +31,9 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()), _free(false), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
+		 : dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()), _free(false), _peer(), _node(dtn::core::FLOATING), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
 		{
+			_node.setProtocol(dtn::core::TCP_CONNECTION);
 		}
 
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()
@@ -91,13 +92,13 @@ namespace dtn
 			_node.setURI(header._localeid.getString());
 
 			// raise up event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, header.getEID());
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionDown()
 		{
 			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _peer._localeid);
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _node);
 
 			try {
 				while (true)
@@ -189,7 +190,7 @@ namespace dtn
 			_sender.shutdown();
 
 			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _peer._localeid);
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _node);
 
 			// close the tcpstream
 			try {

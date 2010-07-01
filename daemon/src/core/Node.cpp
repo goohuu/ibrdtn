@@ -10,7 +10,7 @@ namespace dtn
 	namespace core
 	{
 		Node::Node(NodeType type, unsigned int rtt)
-		: m_address("dtn:unknown"), m_timeout(5), m_rtt(rtt), m_type(type), m_port(4556), _protocol(UNDEFINED)
+		: m_address(), m_description(), m_uri("dtn:none"), m_timeout(5), m_rtt(rtt), m_type(type), m_port(4556), _protocol(UNDEFINED)
 		{
 		}
 
@@ -106,15 +106,6 @@ namespace dtn
 			return true;
 		}
 
-		bool Node::equals(const Node &node) const
-		{
-			if (node.getURI() != getURI()) return false;
-			if (node.getProtocol() != getProtocol()) return false;
-			// TODO: enable after testing
-			//if (node.getAddress() != getAddress()) return false;
-			return true;
-		}
-
 		bool Node::operator==(const Node &other) const
 		{
 			if (other.getURI() != getURI()) return false;
@@ -126,11 +117,11 @@ namespace dtn
 
 		int Node::operator<(const Node &other) const
 		{
-			if (other.getURI() >= getURI()) return false;
-			if (other.getProtocol() >= getProtocol()) return false;
+			if (getURI() < other.getURI()) return true;
+			if (getProtocol() < other.getProtocol()) return true;
 			// TODO: enable after testing
 			//if (other.getAddress() >= getAddress()) return false;
-			return true;
+			return false;
 		}
 	}
 }
