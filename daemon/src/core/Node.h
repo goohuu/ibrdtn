@@ -1,7 +1,9 @@
-#include <string>
 
 #ifndef IBRDTN_DAEMON_NODE_H_
 #define IBRDTN_DAEMON_NODE_H_
+
+#include <string>
+#include <ibrdtn/data/EID.h>
 
 namespace dtn
 {
@@ -44,10 +46,7 @@ namespace dtn
 			 */
 			Node(NodeType type = PERMANENT, unsigned int rtt = 2700);
 
-			/**
-			 * copy the object
-			 */
-			Node(const Node &k);
+			Node(dtn::data::EID id, NodeProtocol proto = UNDEFINED, NodeType type = PERMANENT, unsigned int rtt = 2700);
 
 			/**
 			 * destructor
@@ -138,13 +137,13 @@ namespace dtn
 			 int operator<(const Node &other) const;
 
 		private:
-			std::string m_address;
-			std::string m_description;
-			std::string m_uri;
-			int m_timeout;
-			unsigned int m_rtt;
-			NodeType m_type;
-			unsigned int m_port;
+			std::string _address;
+			std::string _description;
+			dtn::data::EID _id;
+			int _timeout;
+			unsigned int _rtt;
+			NodeType _type;
+			unsigned int _port;
 			NodeProtocol _protocol;
 		};
 	}

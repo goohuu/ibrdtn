@@ -231,45 +231,65 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
-			// queue to a static node
-			{
-				std::set<dtn::core::Node>::const_iterator iter =
-						std::find_if(_static_nodes.begin(), _static_nodes.end(),
-								std::bind2nd( CompareNodeDestination(), job._destination )
-						);
+			// create a match rank list
+			std::list<dtn::core::Node> match_rank;
 
-				if (iter != _static_nodes.end())
-				{
-					queue(*iter, job);
-					return;
+			// we prefer TCP as primary connection type
+			match_rank.push_back(dtn::core::Node(job._destination, dtn::core::TCP_CONNECTION));
+
+			// use UDP as seconds connection type
+			match_rank.push_back(dtn::core::Node(job._destination, dtn::core::UDP_CONNECTION));
+
+			std::cout << "Search List: " << match_rank.size() << std::endl;
+
+			// iterate through all matches in the rank list
+			for (std::list<dtn::core::Node>::const_iterator imatch = match_rank.begin(); imatch != match_rank.end(); imatch++)
+			{
+				const dtn::core::Node &match = (*imatch);
+
+				try {
+					// queue to a static node
+					{
+						std::set<dtn::core::Node>::const_iterator iter = _static_nodes.find(match);
+
+						if (iter != _static_nodes.end())
+						{
+							queue(*iter, job);
+							return;
+						}
+					}
+				} catch (...) {
+
 				}
-			}
 
-			// queue to a dynamic discovered node
-			{
-				std::set<dtn::core::Node>::const_iterator iter =
-						std::find_if(_discovered_nodes.begin(), _discovered_nodes.end(),
-								std::bind2nd( CompareNodeDestination(), job._destination )
-						);
+				try {
+					// queue to a dynamic discovered node
+					{
+						std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.find(match);
 
-				if (iter != _discovered_nodes.end())
-				{
-					queue(*iter, job);
-					return;
+						if (iter != _discovered_nodes.end())
+						{
+							queue(*iter, job);
+							return;
+						}
+					}
+				} catch (...) {
+
 				}
-			}
 
-			// queue to a connected node
-			{
-				std::set<dtn::core::Node>::const_iterator iter =
-						std::find_if(_connected_nodes.begin(), _connected_nodes.end(),
-								std::bind2nd( CompareNodeDestination(), job._destination )
-						);
+				try {
+					// queue to a connected node
+					{
+						std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.find(match);
 
-				if (iter != _connected_nodes.end())
-				{
-					queue(*iter, job);
-					return;
+						if (iter != _connected_nodes.end())
+						{
+							queue(*iter, job);
+							return;
+						}
+					}
+				} catch (...) {
+
 				}
 			}
 
