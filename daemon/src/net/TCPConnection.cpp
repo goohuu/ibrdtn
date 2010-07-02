@@ -310,11 +310,11 @@ namespace dtn
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(EID(), bundle);
 
-						// raise bundle event
-						dtn::core::BundleEvent::raise(bundle, BUNDLE_RECEIVED);
-
 					} catch (dtn::data::Validator::RejectedException ex) {
 						// bundle rejected
+						_connection.rejectTransmission();
+					} catch (dtn::InvalidDataException ex) {
+						// cannot decode the bundle data, reject bundle
 						_connection.rejectTransmission();
 					}
 

@@ -240,8 +240,6 @@ namespace dtn
 			// use UDP as seconds connection type
 			match_rank.push_back(dtn::core::Node(job._destination, dtn::core::UDP_CONNECTION));
 
-			std::cout << "Search List: " << match_rank.size() << std::endl;
-
 			// iterate through all matches in the rank list
 			for (std::list<dtn::core::Node>::const_iterator imatch = match_rank.begin(); imatch != match_rank.end(); imatch++)
 			{

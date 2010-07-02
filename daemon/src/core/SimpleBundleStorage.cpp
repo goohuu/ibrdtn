@@ -7,6 +7,7 @@
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/AutoDelete.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -41,6 +42,27 @@ namespace dtn
 		void SimpleBundleStorage::componentDown()
 		{
 			unbindEvent(TimeEvent::className);
+
+			_tasks.unblock();
+		}
+
+		void SimpleBundleStorage::componentRun()
+		{
+			try {
+				while (isRunning())
+				{
+					Task *t = _tasks.blockingpop();
+					ibrcommon::AutoDelete<Task> ad(t);
+
+					try {
+						t->run();
+					} catch (...) {
+
+					}
+				}
+			} catch (ibrcommon::Exception) {
+
+			}
 		}
 
 		void SimpleBundleStorage::raiseEvent(const Event *evt)
@@ -92,8 +114,7 @@ namespace dtn
 
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
-
-			_store.store(bundle);
+			_store.store(bundle, *this);
 			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: stored bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
@@ -213,7 +234,7 @@ namespace dtn
 			dtn::data::BundleList::add(dtn::data::MetaBundle(*container));
 		}
 
-		void SimpleBundleStorage::BundleStore::store(const dtn::data::Bundle &bundle)
+		void SimpleBundleStorage::BundleStore::store(const dtn::data::Bundle &bundle, SimpleBundleStorage &storage)
 		{
 			ibrcommon::MutexLock l(bundleslock);
 
@@ -228,17 +249,20 @@ namespace dtn
 				throw StorageSizeExeededException();
 			}
 
+			// increment the storage size
+			_currentsize += container.size();
+
 			// if we are persistent, make a persistent container
 			if (_mode == MODE_PERSISTENT)
 			{
-				container = BundleContainer(bundle, _workdir);
+				container = BundleContainer(bundle, _workdir, container.size());
+
+				// create a background task for storing the bundle
+				storage._tasks.push( new SimpleBundleStorage::TaskStoreBundle(container) );
 			}
 
 			// insert Container
 			ret = bundles.insert( container );
-
-			// increment the storage size
-			_currentsize += container.size();
 
 			if (ret.second)
 			{
@@ -353,8 +377,8 @@ namespace dtn
 		{
 		}
 
-		SimpleBundleStorage::BundleContainer::BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir)
-		 : _holder( new SimpleBundleStorage::BundleContainer::Holder(b, workdir) )
+		SimpleBundleStorage::BundleContainer::BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size)
+		 : _holder( new SimpleBundleStorage::BundleContainer::Holder(b, workdir, size) )
 		{
 		}
 
@@ -425,6 +449,11 @@ namespace dtn
 			_holder->deletion = true;
 		}
 
+		void SimpleBundleStorage::BundleContainer::invokeStore()
+		{
+			_holder->invokeStore();
+		}
+
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b )
 		 : _bundle(b), _mode(MODE_NONPERSISTENT), _count(1), deletion(false)
 		{
@@ -448,8 +477,8 @@ namespace dtn
 			fs.close();
 		}
 
-		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir )
-		 : _bundle(b), _mode(MODE_PERSISTENT), _count(1), deletion(false)
+		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size )
+		 : _bundle(b), _mode(MODE_PERSISTENT), _count(1), deletion(false), _size(size)
 		{
 			std::string namestr = workdir.getPath() + "/bundle-XXXXXXXX";
 			char name[namestr.length()];
@@ -460,16 +489,6 @@ namespace dtn
 			::close(fd);
 
 			_container = ibrcommon::File(name);
-
-			try {
-				std::fstream out(_container.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
-				out.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
-				dtn::data::DefaultSerializer(out) << b; out << std::flush;
-				out.close();
-				_size = _container.size();
-			} catch (ios_base::failure ex) {
-				throw dtn::SerializationFailedException("can not write data to the storage; " + std::string(ex.what()));
-			}
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::~Holder()
@@ -483,6 +502,34 @@ namespace dtn
 		size_t SimpleBundleStorage::BundleContainer::Holder::size() const
 		{
 			return _size;
+		}
+
+		void SimpleBundleStorage::BundleContainer::Holder::invokeStore()
+		{
+			try {
+				std::fstream out(_container.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
+				out.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+				dtn::data::DefaultSerializer(out) << _bundle; out << std::flush;
+				out.close();
+				_size = _container.size();
+			} catch (ios_base::failure ex) {
+				throw dtn::SerializationFailedException("can not write data to the storage; " + std::string(ex.what()));
+			}
+		}
+
+		SimpleBundleStorage::TaskStoreBundle::TaskStoreBundle(const SimpleBundleStorage::BundleContainer &container)
+		 : _container(container)
+		{
+		}
+
+		SimpleBundleStorage::TaskStoreBundle::~TaskStoreBundle()
+		{
+
+		}
+
+		void SimpleBundleStorage::TaskStoreBundle::run()
+		{
+			_container.invokeStore();
 		}
 	}
 }

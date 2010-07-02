@@ -14,6 +14,7 @@
 #include <ibrcommon/data/File.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleList.h>
+#include <ibrcommon/thread/ThreadSafeQueue.h>
 
 #include <set>
 
@@ -26,8 +27,15 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public BundleStorage, public EventReceiver, public dtn::daemon::IntegratedComponent
+		class SimpleBundleStorage : public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent
 		{
+			class Task
+			{
+			public:
+				virtual ~Task() {};
+				virtual void run() = 0;
+			};
+
 		public:
 			/**
 			 * Constructor
@@ -102,6 +110,7 @@ namespace dtn
 
 		protected:
 			virtual void componentUp();
+			virtual void componentRun();
 			virtual void componentDown();
 
 		private:
@@ -116,7 +125,7 @@ namespace dtn
 			public:
 				BundleContainer(const dtn::data::Bundle &b);
 				BundleContainer(const ibrcommon::File &file);
-				BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir);
+				BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size);
 				~BundleContainer();
 
 				bool operator!=(const BundleContainer& other) const;
@@ -133,6 +142,8 @@ namespace dtn
 				BundleContainer& operator= (BundleContainer &right);
 				BundleContainer(const BundleContainer& right);
 
+				void invokeStore();
+
 				void remove();
 
 			protected:
@@ -141,10 +152,12 @@ namespace dtn
 				public:
 					Holder( const dtn::data::Bundle &b );
 					Holder( const ibrcommon::File &file );
-					Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir );
+					Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size );
 					~Holder();
 
 					size_t size() const;
+
+					void invokeStore();
 
 					dtn::data::Bundle _bundle;
 					ibrcommon::File _container;
@@ -160,6 +173,17 @@ namespace dtn
 				Holder *_holder;
 			};
 
+			class TaskStoreBundle : public Task
+			{
+			public:
+				TaskStoreBundle(const SimpleBundleStorage::BundleContainer&);
+				~TaskStoreBundle();
+				virtual void run();
+
+			private:
+				SimpleBundleStorage::BundleContainer _container;
+			};
+
 			class BundleStore : private dtn::data::BundleList
 			{
 			public:
@@ -168,7 +192,7 @@ namespace dtn
 				~BundleStore();
 
 				void load(const ibrcommon::File &file);
-				void store(const dtn::data::Bundle &bundle);
+				void store(const dtn::data::Bundle &bundle, SimpleBundleStorage &storage);
 				void remove(const dtn::data::BundleID &id);
 				void clear();
 
@@ -198,6 +222,8 @@ namespace dtn
 
 			BundleStore _store;
 			bool _running;
+
+			ibrcommon::ThreadSafeQueue<Task*> _tasks;
 		};
 	}
 }

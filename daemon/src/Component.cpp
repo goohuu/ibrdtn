@@ -40,12 +40,18 @@ namespace dtn
 		void IndependentComponent::startup()
 		{
 			ibrcommon::MutexLock l(_running_lock);
-			this->start();
 			_running = true;
+
+			this->start();
 		}
 
 		void IndependentComponent::terminate()
 		{
+			{
+				ibrcommon::MutexLock l(_running_lock);
+				_running = false;
+			}
+
 			componentDown();
 		}
 
