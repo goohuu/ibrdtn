@@ -275,7 +275,8 @@ namespace dtn
 					STREAM_SKIP = 1 << 7,
 					STREAM_ACK_SUPPORT = 1 << 8,
 					STREAM_NACK_SUPPORT = 1 << 9,
-					STREAM_SOB = 1 << 10			// start of bundle
+					STREAM_SOB = 1 << 10,			// start of bundle
+					STREAM_TIMER_SUPPORT = 1 << 11
 				};
 
 				void skipData(size_t &size);

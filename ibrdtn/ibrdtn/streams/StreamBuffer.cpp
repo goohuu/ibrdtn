@@ -81,20 +81,24 @@ namespace dtn
 				if (peer._flags & StreamContactHeader::REQUEST_ACKNOWLEDGMENTS) set(STREAM_ACK_SUPPORT);
 				if (peer._flags & StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS) set(STREAM_NACK_SUPPORT);
 
-				// read the timer values
-				_in_timeout = header._keepalive * 2;
-				_out_timeout = peer._keepalive - 2;
-
-				// activate timer
+				// set the incoming timer if set (> 0)
+				if (peer._keepalive > 0)
 				{
+					set(STREAM_TIMER_SUPPORT);
+
+					// read the timer values
+					_in_timeout = header._keepalive * 2;
+					_out_timeout = peer._keepalive - 2;
+
+					// activate timer
 					ibrcommon::MutexLock timerl(_timer_lock);
 					_in_timeout_value = _in_timeout;
 					_out_timeout_value = _out_timeout;
 					_timer.set(1);
-				}
 
-				// start the timer
-				_timer.start();
+					// start the timer
+					_timer.start();
+				}
 
 				// set handshake completed bit
 				set(STREAM_HANDSHAKE);
@@ -151,8 +155,8 @@ namespace dtn
 		{
 			ibrcommon::MutexLock timerl(_timer_lock);
 
-			_in_timeout_value--;
 			_out_timeout_value--;
+			_in_timeout_value--;
 
 			if (_out_timeout_value <= 0)
 			{
