@@ -138,8 +138,10 @@ namespace dtn
 			 * @param node A other node to compare.
 			 * @return true, if the given node is equal to this node.
 			 */
-			 bool operator==(const Node &other) const;
-			 int operator<(const Node &other) const;
+			bool operator==(const Node &other) const;
+			bool operator<(const Node &other) const;
+
+			std::string toString() const;
 
 		private:
 			std::string _address;

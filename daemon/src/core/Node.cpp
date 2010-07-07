@@ -1,5 +1,6 @@
 #include "core/Node.h"
 #include "net/ConvergenceLayer.h"
+#include <ibrcommon/Logger.h>
 
 #include <iostream>
 
@@ -150,11 +151,24 @@ namespace dtn
 			return (other._id == _id) && (other._protocol == _protocol);
 		}
 
-		int Node::operator<(const Node &other) const
+		bool Node::operator<(const Node &other) const
 		{
-			if (_id < other._id) return true;
+//			if (IBRCOMMON_LOGGER_LEVEL >= 50)
+//			{
+//				IBRCOMMON_LOGGER_DEBUG(50) << "compare " << this->toString() << " with " << other.toString() << IBRCOMMON_LOGGER_ENDL;
+//			}
+
 			if (_protocol < other._protocol) return true;
+			if (_protocol != other._protocol) return false;
+			if (_id < other._id ) return true;
+
 			return false;
+		}
+
+		std::string Node::toString() const
+		{
+			std::stringstream ss; ss << getURI() << " (" << Node::getTypeName(getType()) << ", " << Node::getProtocolName(getProtocol()) << ", " << getAddress() << ", " << getPort() << ")";
+			return ss.str();
 		}
 	}
 }

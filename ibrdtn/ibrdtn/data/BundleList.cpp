@@ -85,12 +85,17 @@ namespace dtn
 
 		bool BundleList::ExpiringBundle::operator<(const ExpiringBundle& other) const
 		{
-			return (expiretime < other.expiretime);
+			if (expiretime < other.expiretime) return true;
+			if (expiretime != other.expiretime) return false;
+
+			if (bundle < other.bundle) return true;
+
+			return false;
 		}
 
 		bool BundleList::ExpiringBundle::operator>(const ExpiringBundle& other) const
 		{
-			return (expiretime > other.expiretime);
+			return !(((*this) < other) || ((*this) == other));
 		}
 	}
 }

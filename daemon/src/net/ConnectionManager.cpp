@@ -247,10 +247,41 @@ namespace dtn
 			// use ZigBee as third connection type
 			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_ZIGBEE));
 
+			if (IBRCOMMON_LOGGER_LEVEL >= 50)
+			{
+				IBRCOMMON_LOGGER_DEBUG(50) << "## static node list ##" << IBRCOMMON_LOGGER_ENDL;
+				for (std::set<dtn::core::Node>::const_iterator iter = _static_nodes.begin(); iter != _static_nodes.end(); iter++)
+				{
+					const dtn::core::Node &n = (*iter);
+					IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+
+			if (IBRCOMMON_LOGGER_LEVEL >= 50)
+			{
+				IBRCOMMON_LOGGER_DEBUG(50) << "## dynamic node list ##" << IBRCOMMON_LOGGER_ENDL;
+				for (std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
+				{
+					const dtn::core::Node &n = (*iter);
+					IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+
+			if (IBRCOMMON_LOGGER_LEVEL >= 50)
+			{
+				IBRCOMMON_LOGGER_DEBUG(50) << "## connected node list ##" << IBRCOMMON_LOGGER_ENDL;
+				for (std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.begin(); iter != _connected_nodes.end(); iter++)
+				{
+					const dtn::core::Node &n = (*iter);
+					IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+
 			// iterate through all matches in the rank list
 			for (std::list<dtn::core::Node>::const_iterator imatch = match_rank.begin(); imatch != match_rank.end(); imatch++)
 			{
 				const dtn::core::Node &match = (*imatch);
+				IBRCOMMON_LOGGER_DEBUG(50) << "match for " << match.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				try {
 					// queue to a static node
@@ -259,6 +290,7 @@ namespace dtn
 					if (iter != _static_nodes.end())
 					{
 						const dtn::core::Node &next = (*iter);
+						IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						queue(next, job);
 						return;
@@ -273,7 +305,10 @@ namespace dtn
 
 					if (iter != _discovered_nodes.end())
 					{
-						queue(*iter, job);
+						const dtn::core::Node &next = (*iter);
+						IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;
+
+						queue(next, job);
 						return;
 					}
 				} catch (...) {
@@ -286,7 +321,10 @@ namespace dtn
 
 					if (iter != _connected_nodes.end())
 					{
-						queue(*iter, job);
+						const dtn::core::Node &next = (*iter);
+						IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;
+
+						queue(next, job);
 						return;
 					}
 				} catch (...) {

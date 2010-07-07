@@ -99,7 +99,7 @@ namespace data
 
 	bool EID::operator>(EID const& other) const
 	{
-		return getString() > other.getString();
+		return other < (*this);
 	}
 
 	std::string EID::getString() const

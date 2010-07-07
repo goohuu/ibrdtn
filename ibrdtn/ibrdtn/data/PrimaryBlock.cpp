@@ -69,29 +69,22 @@ namespace dtn
 		bool PrimaryBlock::operator<(const PrimaryBlock& other) const
 		{
 			if (_source < other._source) return true;
-			if (_timestamp < other._timestamp) return true;
-			if (_sequencenumber < other._sequencenumber) return true;
+			if (_source != other._source) return false;
 
-			if (other.get(PrimaryBlock::FRAGMENT))
-			{
-				if (_fragmentoffset < other._fragmentoffset) return true;
-			}
+			if (_timestamp < other._timestamp) return true;
+			if (_timestamp != other._timestamp) return false;
+
+			if (_sequencenumber < other._sequencenumber) return true;
+			if (_sequencenumber != other._sequencenumber) return false;
+
+			if (other.get(PrimaryBlock::FRAGMENT) && (_fragmentoffset < other._fragmentoffset)) return true;
 
 			return false;
 		}
 
 		bool PrimaryBlock::operator>(const PrimaryBlock& other) const
 		{
-			if (_source > other._source) return true;
-			if (_timestamp > other._timestamp) return true;
-			if (_sequencenumber > other._sequencenumber) return true;
-
-			if (other.get(PrimaryBlock::FRAGMENT))
-			{
-				if (_fragmentoffset > other._fragmentoffset) return true;
-			}
-
-			return false;
+			return !(((*this) < other) || ((*this) == other));
 		}
 
 		bool PrimaryBlock::isExpired() const

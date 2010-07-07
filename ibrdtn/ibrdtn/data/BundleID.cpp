@@ -37,29 +37,22 @@ namespace dtn
 		bool BundleID::operator<(const BundleID& other) const
 		{
 			if (source < other.source) return true;
-			if (timestamp < other.timestamp) return true;
-			if (sequencenumber < other.sequencenumber) return true;
+			if (source != other.source) return false;
 
-			if (fragment)
-			{
-				if (offset < other.offset) return true;
-			}
+			if (timestamp < other.timestamp) return true;
+			if (timestamp != other.timestamp) return false;
+
+			if (sequencenumber < other.sequencenumber) return true;
+			if (sequencenumber != other.sequencenumber) return false;
+
+			if (fragment && (offset < other.offset)) return true;
 
 			return false;
 		}
 
 		bool BundleID::operator>(const BundleID& other) const
 		{
-			if (source > other.source) return true;
-			if (timestamp > other.timestamp) return true;
-			if (sequencenumber > other.sequencenumber) return true;
-
-			if (fragment)
-			{
-				if (offset > other.offset) return true;
-			}
-
-			return false;
+			return !(((*this) < other) || ((*this) == other));
 		}
 
 		bool BundleID::operator!=(const BundleID& other) const
