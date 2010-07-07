@@ -60,7 +60,7 @@ namespace dtn
 			size_t rtt = 2700;
 
 			// convert the announcement into NodeEvents
-			Node n(FLOATING, rtt);
+			Node n(Node::NODE_FLOATING, rtt);
 
 			// set the EID and some parameters of this Node
 			n.setURI(announcement.getEID().getString());
@@ -73,11 +73,11 @@ namespace dtn
 
 				if (s.getName() == "tcpcl")
 				{
-					n.setProtocol(TCP_CONNECTION);
+					n.setProtocol(Node::CONN_TCPIP);
 				}
 				else if (s.getName() == "udpcl")
 				{
-					n.setProtocol(UDP_CONNECTION);
+					n.setProtocol(Node::CONN_UDPIP);
 				}
 				else
 				{

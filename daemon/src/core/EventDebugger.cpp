@@ -86,21 +86,8 @@ namespace dtn
 					IBRCOMMON_LOGGER_DEBUG(10) << evt->getName() << ": Info updated for " << node->getNode().getURI() << IBRCOMMON_LOGGER_ENDL;
 					break;
 				case NODE_AVAILABLE:
-				{
-					std::string proto = "a unsupported connection";
-
-					if (node->getNode().getProtocol() == dtn::core::UDP_CONNECTION)
-					{
-						proto = "UDP";
-					}
-					else if (node->getNode().getProtocol() == dtn::core::TCP_CONNECTION)
-					{
-						proto = "TCP";
-					}
-
-					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().getURI() << " available over " << proto << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().getURI() << " available over " << Node::getProtocolName(node->getNode().getProtocol()) << IBRCOMMON_LOGGER_ENDL;
 					break;
-				}
 				case NODE_UNAVAILABLE:
 					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().getURI() << " unavailable" << IBRCOMMON_LOGGER_ENDL;
 					break;

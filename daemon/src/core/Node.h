@@ -15,38 +15,43 @@ namespace dtn
 	namespace core
 	{
 		/**
-		 * Specify a node type.
-		 * FLOATING is a node, if it's not statically reachable.
-		 * PERMANENT is used for static nodes with are permanently reachable.
-		 */
-		enum NodeType
-		{
-			FLOATING = 0,
-			PERMANENT = 1
-		};
-
-		enum NodeProtocol
-		{
-			UNSUPPORTED = -1,
-			UNDEFINED = 0,
-			UDP_CONNECTION = 1,
-			TCP_CONNECTION = 2
-		};
-
-		/**
 		 * A Node instance holds all informations of a neighboring node.
 		 */
 		class Node
 		{
 		public:
 			/**
+			 * Specify a node type.
+			 * FLOATING is a node, if it's not statically reachable.
+			 * PERMANENT is used for static nodes with are permanently reachable.
+			 */
+			enum Type
+			{
+				NODE_FLOATING = 0,
+				NODE_PERMANENT = 1
+			};
+
+			enum Protocol
+			{
+				CONN_UNSUPPORTED = -1,
+				CONN_UNDEFINED = 0,
+				CONN_UDPIP = 1,
+				CONN_TCPIP = 2,
+				CONN_ZIGBEE = 3,
+				CONN_BLUETOOTH = 4
+			};
+
+			static std::string getTypeName(Node::Type type);
+			static std::string getProtocolName(Node::Protocol proto);
+
+			/**
 			 * constructor
 			 * @param type set the node type
 			 * @sa NoteType
 			 */
-			Node(NodeType type = PERMANENT, unsigned int rtt = 2700);
+			Node(Node::Type type = NODE_PERMANENT, unsigned int rtt = 2700);
 
-			Node(dtn::data::EID id, NodeProtocol proto = UNDEFINED, NodeType type = PERMANENT, unsigned int rtt = 2700);
+			Node(dtn::data::EID id, Node::Protocol proto = CONN_UNDEFINED, Node::Type type = NODE_PERMANENT, unsigned int rtt = 2700);
 
 			/**
 			 * destructor
@@ -58,10 +63,10 @@ namespace dtn
 			 * @return The type of the node.
 			 * @sa NoteType
 			 */
-			NodeType getType() const;
+			Node::Type getType() const;
 
-			void setProtocol(NodeProtocol protocol);
-			NodeProtocol getProtocol() const;
+			void setProtocol(Node::Protocol protocol);
+			Node::Protocol getProtocol() const;
 
 			/**
 			 * Set the address of the node.
@@ -142,9 +147,9 @@ namespace dtn
 			dtn::data::EID _id;
 			int _timeout;
 			unsigned int _rtt;
-			NodeType _type;
+			Node::Type _type;
 			unsigned int _port;
-			NodeProtocol _protocol;
+			Node::Protocol _protocol;
 		};
 	}
 }

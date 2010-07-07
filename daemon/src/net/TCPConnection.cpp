@@ -31,9 +31,9 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()), _free(false), _peer(), _node(dtn::core::FLOATING), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
+		 : dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()), _free(false), _peer(), _node(Node::NODE_FLOATING), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
 		{
-			_node.setProtocol(dtn::core::TCP_CONNECTION);
+			_node.setProtocol(Node::CONN_TCPIP);
 		}
 
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()

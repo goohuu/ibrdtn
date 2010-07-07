@@ -62,9 +62,9 @@ namespace dtn
 			delete _socket;
 		}
 
-		dtn::core::NodeProtocol UDPConvergenceLayer::getDiscoveryProtocol() const
+		dtn::core::Node::Protocol UDPConvergenceLayer::getDiscoveryProtocol() const
 		{
-			return dtn::core::UDP_CONNECTION;
+			return dtn::core::Node::CONN_UDPIP;
 		}
 
 		void UDPConvergenceLayer::update(std::string &name, std::string &params)

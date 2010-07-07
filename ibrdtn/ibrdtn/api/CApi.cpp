@@ -258,7 +258,7 @@ extern "C" void dtn_close_endpoint(DTN_EP ep) {
 		return;
 	}
 	dtn_fds[ep].gate->close();
-	dtn_fds[ep].gate==NULL;
+	dtn_fds[ep].gate = NULL;
 
 }
 

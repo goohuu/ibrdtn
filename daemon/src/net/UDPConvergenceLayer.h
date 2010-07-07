@@ -39,7 +39,7 @@ namespace dtn
 			virtual void update(std::string &name, std::string &data);
 			virtual bool onInterface(const ibrcommon::NetInterface &net) const;
 
-			dtn::core::NodeProtocol getDiscoveryProtocol() const;
+			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
 			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
 

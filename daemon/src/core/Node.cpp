@@ -9,12 +9,12 @@ namespace dtn
 {
 	namespace core
 	{
-		Node::Node(NodeType type, unsigned int rtt)
-		: _address(), _description(), _id("dtn:none"), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(UNDEFINED)
+		Node::Node(Node::Type type, unsigned int rtt)
+		: _address(), _description(), _id("dtn:none"), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(CONN_UNDEFINED)
 		{
 		}
 
-		Node::Node(dtn::data::EID id, NodeProtocol proto, NodeType type, unsigned int rtt)
+		Node::Node(dtn::data::EID id, Node::Protocol proto, Node::Type type, unsigned int rtt)
 		: _address(), _description(), _id(id), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(proto)
 		{
 
@@ -24,17 +24,57 @@ namespace dtn
 		{
 		}
 
-		NodeType Node::getType() const
+		std::string Node::getTypeName(Node::Type type)
+		{
+			switch (type)
+			{
+			case Node::NODE_FLOATING:
+				return "floating";
+
+			case Node::NODE_PERMANENT:
+				return "permanent";
+			}
+
+			return "unknown";
+		}
+
+		std::string Node::getProtocolName(Node::Protocol proto)
+		{
+			switch (proto)
+			{
+			case Node::CONN_UNSUPPORTED:
+				return "unsupported";
+
+			case Node::CONN_UNDEFINED:
+				return "undefined";
+
+			case Node::CONN_UDPIP:
+				return "UDP";
+
+			case Node::CONN_TCPIP:
+				return "TCP";
+
+			case Node::CONN_ZIGBEE:
+				return "ZigBee";
+
+			case Node::CONN_BLUETOOTH:
+				return "Bluetooth";
+			}
+
+			return "unknown";
+		}
+
+		Node::Type Node::getType() const
 		{
 			return _type;
 		}
 
-		void Node::setProtocol(NodeProtocol protocol)
+		void Node::setProtocol(Node::Protocol protocol)
 		{
 			_protocol = protocol;
 		}
 
-		NodeProtocol Node::getProtocol() const
+		Node::Protocol Node::getProtocol() const
 		{
 			return _protocol;
 		}
@@ -98,7 +138,7 @@ namespace dtn
 
 		bool Node::decrementTimeout(int step)
 		{
-			if (_type == PERMANENT) return true;
+			if (_type == NODE_PERMANENT) return true;
 
 			if (_timeout <= 0) return false;
 			_timeout -= step;
@@ -107,24 +147,13 @@ namespace dtn
 
 		bool Node::operator==(const Node &other) const
 		{
-			if (other.getURI() != getURI()) return false;
-
-			if (other.getProtocol() != UNDEFINED)
-			{
-				if (other.getProtocol() != getProtocol()) return false;
-			}
-
-			// TODO: enable after testing
-			//if (other.getAddress() != getAddress()) return false;
-			return true;
+			return (other._id == _id) && (other._protocol == _protocol);
 		}
 
 		int Node::operator<(const Node &other) const
 		{
-			if (getURI() < other.getURI()) return true;
-			if (getProtocol() < other.getProtocol()) return true;
-			// TODO: enable after testing
-			//if (other.getAddress() >= getAddress()) return false;
+			if (_id < other._id) return true;
+			if (_protocol < other._protocol) return true;
 			return false;
 		}
 	}

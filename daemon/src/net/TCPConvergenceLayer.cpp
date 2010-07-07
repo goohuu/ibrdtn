@@ -43,9 +43,9 @@ namespace dtn
 		{
 		}
 
-		dtn::core::NodeProtocol TCPConvergenceLayer::getDiscoveryProtocol() const
+		dtn::core::Node::Protocol TCPConvergenceLayer::getDiscoveryProtocol() const
 		{
-			return dtn::core::TCP_CONNECTION;
+			return Node::CONN_TCPIP;
 		}
 
 		void TCPConvergenceLayer::initialize()

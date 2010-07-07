@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <functional>
 #include <typeinfo>
+#include <ibrcommon/Logger.h>
 
 using namespace dtn::core;
 
@@ -208,7 +209,7 @@ namespace dtn
 
 		void ConnectionManager::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
-			if ((node.getProtocol() == UNDEFINED) || (node.getProtocol() == UNSUPPORTED))
+			if ((node.getProtocol() == Node::CONN_UNDEFINED) || (node.getProtocol() == Node::CONN_UNSUPPORTED))
 				throw ConnectionNotAvailableException();
 
 			ibrcommon::MutexLock l(_cl_lock);
@@ -235,10 +236,16 @@ namespace dtn
 			std::list<dtn::core::Node> match_rank;
 
 			// we prefer TCP as primary connection type
-			match_rank.push_back(dtn::core::Node(job._destination, dtn::core::TCP_CONNECTION));
+			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_TCPIP));
 
 			// use UDP as seconds connection type
-			match_rank.push_back(dtn::core::Node(job._destination, dtn::core::UDP_CONNECTION));
+			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_UDPIP));
+
+			// use Bluetooth as fourth connection type
+			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_BLUETOOTH));
+
+			// use ZigBee as third connection type
+			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_ZIGBEE));
 
 			// iterate through all matches in the rank list
 			for (std::list<dtn::core::Node>::const_iterator imatch = match_rank.begin(); imatch != match_rank.end(); imatch++)
@@ -247,14 +254,14 @@ namespace dtn
 
 				try {
 					// queue to a static node
-					{
-						std::set<dtn::core::Node>::const_iterator iter = _static_nodes.find(match);
+					std::set<dtn::core::Node>::const_iterator iter = _static_nodes.find(match);
 
-						if (iter != _static_nodes.end())
-						{
-							queue(*iter, job);
-							return;
-						}
+					if (iter != _static_nodes.end())
+					{
+						const dtn::core::Node &next = (*iter);
+
+						queue(next, job);
+						return;
 					}
 				} catch (...) {
 
@@ -262,14 +269,12 @@ namespace dtn
 
 				try {
 					// queue to a dynamic discovered node
-					{
-						std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.find(match);
+					std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.find(match);
 
-						if (iter != _discovered_nodes.end())
-						{
-							queue(*iter, job);
-							return;
-						}
+					if (iter != _discovered_nodes.end())
+					{
+						queue(*iter, job);
+						return;
 					}
 				} catch (...) {
 
@@ -277,14 +282,12 @@ namespace dtn
 
 				try {
 					// queue to a connected node
-					{
-						std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.find(match);
+					std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.find(match);
 
-						if (iter != _connected_nodes.end())
-						{
-							queue(*iter, job);
-							return;
-						}
+					if (iter != _connected_nodes.end())
+					{
+						queue(*iter, job);
+						return;
 					}
 				} catch (...) {
 

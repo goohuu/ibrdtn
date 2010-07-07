@@ -73,10 +73,6 @@ namespace dtn
 			 */
 			std::list<NetConfig> getInterfaces();
 
-//			ibrcommon::NetInterface getNetInterface(string name);
-
-//			std::list<ibrcommon::NetInterface> getDiscoveryInterfaces();
-
 			std::string getDiscoveryAddress();
 			int getDiscoveryPort();
 

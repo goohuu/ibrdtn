@@ -52,45 +52,45 @@ namespace dtn
 		{
 			for (int i = 0; i < argc; i++)
 			{
-					string arg = argv[i];
+				std::string arg = argv[i];
 
-					if (arg == "-c" && argc > i)
-					{
-							_filename = argv[i + 1];
-					}
+				if (arg == "-c" && argc > i)
+				{
+						_filename = argv[i + 1];
+				}
 
-					if (arg == "-i" && argc > i)
-					{
-							_default_net = ibrcommon::NetInterface(argv[i + 1]);
-							_use_default_net = true;
-					}
+				if (arg == "-i" && argc > i)
+				{
+						_default_net = ibrcommon::NetInterface(argv[i + 1]);
+						_use_default_net = true;
+				}
 
-					if (arg == "--noapi")
-					{
-							_doapi = false;
-					}
+				if (arg == "--noapi")
+				{
+						_doapi = false;
+				}
 
-					if ((arg == "--version") || (arg == "-v"))
-					{
-							std::cout << "IBR-DTN version: " << version() << std::endl;
-							exit(0);
-					}
+				if ((arg == "--version") || (arg == "-v"))
+				{
+						std::cout << "IBR-DTN version: " << version() << std::endl;
+						exit(0);
+				}
 
-					if (arg == "--nodiscovery")
-					{
-							_dodiscovery = false;
-					}
+				if (arg == "--nodiscovery")
+				{
+						_dodiscovery = false;
+				}
 
-					if (arg == "-d")
-					{
-							_debuglevel = atoi(argv[i + 1]);
-							_debug = true;
-					}
+				if (arg == "-d")
+				{
+						_debuglevel = atoi(argv[i + 1]);
+						_debug = true;
+				}
 
-					if (arg == "-q")
-					{
-						_quiet = true;
-					}
+				if (arg == "-q")
+				{
+					_quiet = true;
+				}
 			}
 		}
 
@@ -149,21 +149,6 @@ namespace dtn
 			}
 		}
 
-//		NetInterface Configuration::getNetInterface(string name)
-//		{
-//			list<NetInterface> nets = getNetInterfaces();
-//
-//			for (list<NetInterface>::iterator iter = nets.begin(); iter != nets.end(); iter++)
-//			{
-//				if ((*iter).getName() == name)
-//				{
-//					return (*iter);
-//				}
-//			}
-//
-//			throw ParameterNotFoundException();
-//		}
-
 		std::list<Configuration::NetConfig> Configuration::getInterfaces()
 		{
 			std::list<NetConfig> ret;
@@ -205,25 +190,6 @@ namespace dtn
 			return ret;
 		}
 
-//		std::list<ibrcommon::NetInterface> Configuration::getDiscoveryInterfaces()
-//		{
-//			std::list<ibrcommon::NetInterface> nets = getNetInterfaces();
-//			std::list<ibrcommon::NetInterface> ret;
-//
-//			for (std::list<ibrcommon::NetInterface>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
-//			{
-//				const ibrcommon::NetInterface &net = (*iter);
-//
-//				std::string key = "net_" + net.getName() + "_discovery";
-//				if (_conf.read<string>(key, "yes") == "yes")
-//				{
-//					ret.push_back(net);
-//				}
-//			}
-//
-//			return ret;
-//		}
-
 		std::string Configuration::getDiscoveryAddress()
 		{
 			try {
@@ -237,21 +203,6 @@ namespace dtn
 		{
 			return _conf.read<int>("discovery_port", 4551);
 		}
-
-//		NetInterface Configuration::getDiscoveryInterface()
-//		{
-//			if (_use_default_net)
-//			{
-//				return NetInterface(NetInterface::NETWORK_UDP, "disco", _default_net, getDiscoveryPort());
-//			}
-//
-//			try {
-//				string interface = _conf.read<string>("discovery_interface");
-//				return NetInterface(NetInterface::NETWORK_UDP, "disco", interface, getDiscoveryPort());
-//			} catch (ConfigFile::key_not_found ex) {
-//				throw ParameterNotFoundException();
-//			}
-//		}
 
 		Configuration::NetConfig Configuration::getAPIInterface()
 		{
@@ -278,31 +229,33 @@ namespace dtn
 
 		list<Node> Configuration::getStaticNodes()
 		{
-			list<Node> nodes;
+			std::list<Node> nodes;
 
 			// read the node count
 			int count = 1;
 
 			// initial prefix
-			string prefix = "static1_";
+			std::string prefix = "static1_";
 
 			while ( _conf.keyExists(prefix + "uri") )
 			{
-				Node n(PERMANENT);
+				Node n(Node::NODE_PERMANENT);
 
-				n.setAddress( _conf.read<string>(prefix + "address", "127.0.0.1") );
+				n.setAddress( _conf.read<std::string>(prefix + "address", "127.0.0.1") );
 				n.setPort( _conf.read<unsigned int>(prefix + "port", 4556) );
-				n.setURI( _conf.read<string>(prefix + "uri", "dtn:none") );
+				n.setURI( _conf.read<std::string>(prefix + "uri", "dtn:none") );
 
-				string protocol = _conf.read<string>(prefix + "proto", "tcp");
-				if (protocol == "tcp") n.setProtocol(TCP_CONNECTION);
-				if (protocol == "udp") n.setProtocol(UDP_CONNECTION);
+				std::string protocol = _conf.read<std::string>(prefix + "proto", "tcp");
+				if (protocol == "tcp") n.setProtocol(Node::CONN_TCPIP);
+				if (protocol == "udp") n.setProtocol(Node::CONN_UDPIP);
+				if (protocol == "zigbee") n.setProtocol(Node::CONN_ZIGBEE);
+				if (protocol == "bluetooth") n.setProtocol(Node::CONN_BLUETOOTH);
 
 				count++;
 
-				stringstream prefix_stream;
+				std::stringstream prefix_stream;
 				prefix_stream << "static" << count << "_";
-				prefix_stream >> prefix;
+				prefix = prefix_stream.str();
 
 				nodes.push_back(n);
 			}

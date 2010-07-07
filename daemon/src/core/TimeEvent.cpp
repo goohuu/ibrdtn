@@ -45,7 +45,7 @@ namespace dtn
 
 		std::string TimeEvent::toString() const
 		{
-
+			return TimeEvent::className;
 		}
 
 		const std::string TimeEvent::className = "TimeEvent";

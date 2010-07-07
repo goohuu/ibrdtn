@@ -94,7 +94,7 @@ namespace dtn
 
 				bool free();
 
-				dtn::core::NodeProtocol getDiscoveryProtocol() const;
+				dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
 				/**
 				 * queue a bundle for this connection
@@ -227,7 +227,7 @@ namespace dtn
 			 */
 			virtual ~TCPConvergenceLayer();
 
-			dtn::core::NodeProtocol getDiscoveryProtocol() const;
+			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
 			void initialize();
 			void startup();

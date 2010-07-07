@@ -64,9 +64,7 @@ namespace data
 
 	bool EID::operator==(EID const& other) const
 	{
-		if (_ssp != other._ssp) return false;
-		if (_scheme != other._scheme) return false;
-		return true;
+		return (_ssp == other._ssp) && (_scheme == other._scheme);
 	}
 
 	bool EID::operator==(string const& other) const
@@ -86,14 +84,12 @@ namespace data
 
 	bool EID::sameHost(string const& other) const
 	{
-		if ( other == getNodeEID() ) return true;
-		return false;
+		return ( other == getNodeEID() );
 	}
 
 	bool EID::sameHost(EID const& other) const
 	{
-		if ( other.getNodeEID() == getNodeEID() ) return true;
-		return false;
+		return ( other.getNodeEID() == getNodeEID() );
 	}
 
 	bool EID::operator<(EID const& other) const

@@ -33,7 +33,7 @@ namespace dtn
 			 */
 			virtual ~ConvergenceLayer() {};
 
-			virtual dtn::core::NodeProtocol getDiscoveryProtocol() const = 0;
+			virtual dtn::core::Node::Protocol getDiscoveryProtocol() const = 0;
 
 			virtual void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job) = 0;
 		};
