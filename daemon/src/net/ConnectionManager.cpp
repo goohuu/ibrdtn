@@ -226,6 +226,8 @@ namespace dtn
 					return;
 				}
 			}
+
+			throw ConnectionNotAvailableException();
 		}
 
 		void ConnectionManager::queue(const ConvergenceLayer::Job &job)

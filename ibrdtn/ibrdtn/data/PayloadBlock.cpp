@@ -16,13 +16,13 @@ namespace dtn
 		PayloadBlock::PayloadBlock()
 		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ibrcommon::TmpFileBLOB::create())
 		{
-			(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+			//(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 		}
 
 		PayloadBlock::PayloadBlock(ibrcommon::BLOB::Reference ref)
 		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ref)
 		{
-			(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+			//(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 		}
 
 		PayloadBlock::~PayloadBlock()

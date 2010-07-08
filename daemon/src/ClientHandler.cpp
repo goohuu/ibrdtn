@@ -183,7 +183,7 @@ namespace dtn
 					while (_running)
 					{
 						dtn::data::Bundle bundle;
-						dtn::data::DefaultDeserializer(_connection, dtn::core::BundleCore::getInstance()) >> bundle;
+						dtn::data::DefaultDeserializer(_connection) >> bundle;
 
 						// create a new sequence number
 						bundle.relabel();

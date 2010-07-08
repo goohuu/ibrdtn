@@ -71,6 +71,9 @@ namespace dtn
 					RetransmissionData data2 = (*iter);
 					data2++;
 
+					// remove the item
+					_set.erase(data);
+
 					if (data2.getCount() <= 10)
 					{
 						// requeue the bundle
@@ -79,9 +82,6 @@ namespace dtn
 					}
 					else
 					{
-						// remove the item
-						_set.erase(data);
-
 						dtn::net::TransferAbortedEvent::raise(requeue->_peer, requeue->_bundle);
 					}
 				}
