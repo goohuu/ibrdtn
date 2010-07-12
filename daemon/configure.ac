@@ -114,6 +114,9 @@ AC_CHECK_LIB($THREADLIB,pthread_setschedprio,[
 AC_SUBST(PTHREAD_CFLAGS)
 AC_SUBST(PTHREAD_LIBS)
 
+# check for openssl
+PKG_CHECK_MODULES(OPENSSL, openssl)
+
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
