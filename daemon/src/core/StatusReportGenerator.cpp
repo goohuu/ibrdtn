@@ -133,6 +133,9 @@ namespace dtn
 						createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
 					}
 					break;
+
+				default:
+					break;
 				}
 			}
 		}

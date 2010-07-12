@@ -140,6 +140,16 @@ namespace dtn
 			unsigned int getStatLogInterval();
 
 			/**
+			 * @return The address for UDP statistics
+			 */
+			std::string getStatAddress();
+
+			/**
+			 * @return The port for UDP statistics
+			 */
+			unsigned int getStatPort();
+
+			/**
 			 * @return The debug level as integer value.
 			 */
 			int getDebugLevel() const;

@@ -116,6 +116,7 @@ namespace dtn
 		{
 			_store.store(bundle, *this);
 			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: stored bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_STORED);
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)

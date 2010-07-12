@@ -24,7 +24,8 @@ namespace dtn
 			BUNDLE_CUSTODY_ACCEPTED = 1,
 			BUNDLE_FORWARDED = 2,
 			BUNDLE_DELIVERED = 3,
-			BUNDLE_RECEIVED = 4
+			BUNDLE_RECEIVED = 4,
+			BUNDLE_STORED = 5
 		};
 
 		class BundleEvent : public Event

@@ -381,6 +381,10 @@ int main(int argc, char *argv[])
 			{
 				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_STAT, conf.getStatLogInterval(), conf.getStatLogfile() ) );
 			}
+			else if (conf.getStatLogType() == "udp")
+			{
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_UDP, conf.getStatLogInterval(), conf.getStatAddress(), conf.getStatPort() ) );
+			}
 		} catch (Configuration::ParameterNotSetException ex) {
 			IBRCOMMON_LOGGER(error) << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << IBRCOMMON_LOGGER_ENDL;
 			components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatLogInterval() ) );

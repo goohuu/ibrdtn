@@ -6,10 +6,11 @@
  */
 
 #include "StatisticLogger.h"
-#include "net/BundleReceivedEvent.h"
-#include "net/TransferCompletedEvent.h"
+#include "core/NodeEvent.h"
+#include "core/BundleEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
+#include <sstream>
 #include <typeinfo>
 #include <ctime>
 
@@ -17,16 +18,16 @@ namespace dtn
 {
 	namespace daemon
 	{
-		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval)
+		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval, std::string address, unsigned int port)
 		 : _timer(*this, 0), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
-		   _core(dtn::core::BundleCore::getInstance())
+		   _core(dtn::core::BundleCore::getInstance()), _sock(NULL), _address(address), _port(port)
 		{
 			IBRCOMMON_LOGGER(info) << "Logging module initialized. mode = " << _type << ", interval = " << interval << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval, ibrcommon::File file)
 		 : _timer(*this, 0), _file(file), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
-		   _core(dtn::core::BundleCore::getInstance())
+		   _core(dtn::core::BundleCore::getInstance()), _sock(NULL), _address("127.0.0.1"), _port(1234)
 		{
 		}
 
@@ -55,8 +56,13 @@ namespace dtn
 			_timer.start();
 
 			// register at the events
-			bindEvent(dtn::net::BundleReceivedEvent::className);
-			bindEvent(dtn::net::TransferCompletedEvent::className);
+			bindEvent(dtn::core::NodeEvent::className);
+			bindEvent(dtn::core::BundleEvent::className);
+
+			if (_type == LOGGER_UDP)
+			{
+				_sock = new ibrcommon::UnicastSocket();
+			}
 		}
 
 		size_t StatisticLogger::timeout(size_t)
@@ -82,6 +88,10 @@ namespace dtn
 			case LOGGER_FILE_STAT:
 				writeStatLog();
 				break;
+
+			case LOGGER_UDP:
+				writeUDPLog(*_sock);
+				break;
 			}
 
 			return _interval;
@@ -89,8 +99,8 @@ namespace dtn
 
 		void StatisticLogger::componentDown()
 		{
-			unbindEvent(dtn::net::BundleReceivedEvent::className);
-			unbindEvent(dtn::net::TransferCompletedEvent::className);
+			unbindEvent(dtn::core::NodeEvent::className);
+			unbindEvent(dtn::core::BundleEvent::className);
 
 			_timer.remove();
 
@@ -99,20 +109,50 @@ namespace dtn
 				// close the statistic file
 				_fileout.close();
 			}
+
+			if (_type == LOGGER_UDP)
+			{
+				delete _sock;
+			}
 		}
 
 		void StatisticLogger::raiseEvent(const dtn::core::Event *evt)
 		{
 			try {
-				dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
-				_recvbundles++;
+				const dtn::core::NodeEvent &node = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+
+				// do not announce on node info updated
+				if (node.getAction() == dtn::core::NODE_INFO_UPDATED) return;
 			} catch (std::bad_cast& bc) {
 			}
 
 			try {
-				dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				_sentbundles++;
+				const dtn::core::BundleEvent &bundle = dynamic_cast<const dtn::core::BundleEvent&>(*evt);
+
+				switch (bundle.getAction())
+				{
+					case dtn::core::BUNDLE_RECEIVED:
+						_recvbundles++;
+						break;
+
+					case dtn::core::BUNDLE_FORWARDED:
+						_sentbundles++;
+						break;
+
+					case dtn::core::BUNDLE_DELIVERED:
+						_sentbundles++;
+						break;
+
+					default:
+						return;
+						break;
+				}
 			} catch (std::bad_cast& bc) {
+			}
+
+			if ((_type == LOGGER_UDP) && (_sock != NULL))
+			{
+				writeUDPLog(*_sock);
 			}
 		}
 
@@ -202,6 +242,25 @@ namespace dtn
 
 			// close the file
 			_fileout.close();
+		}
+
+		void StatisticLogger::writeUDPLog(ibrcommon::UnicastSocket &socket)
+		{
+			std::stringstream ss;
+
+			writeCsvLog(ss);
+
+			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
+			for (std::set<dtn::core::Node>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++)
+			{
+				ss << (*iter).getURI() << "\n";
+			}
+
+			ss << std::flush;
+
+			std::string data = ss.str();
+			ibrcommon::udpsocket::peer p = socket.getPeer(_address, _port);
+			p.send(data.c_str(), data.length());
 		}
 	}
 }

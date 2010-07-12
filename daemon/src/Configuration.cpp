@@ -371,6 +371,16 @@ namespace dtn
 			return _conf.read<unsigned int>("statistic_interval", 300);
 		}
 
+		std::string Configuration::getStatAddress()
+		{
+			return _conf.read<std::string>("statistic_address", "127.0.0.1");
+		}
+
+		unsigned int Configuration::getStatPort()
+		{
+			return _conf.read<unsigned int>("statistic_port", 1234);
+		}
+
 		size_t Configuration::getLimit(std::string suffix)
 		{
 			std::string unparsed = _conf.read<std::string>("limit_" + suffix, "0");
