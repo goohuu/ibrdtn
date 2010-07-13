@@ -248,6 +248,8 @@ namespace dtn
 		{
 			std::stringstream ss;
 
+			ss << dtn::core::BundleCore::local.getString() << "\n";
+
 			writeCsvLog(ss);
 
 			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
