@@ -73,6 +73,9 @@ namespace dtn
 				case BUNDLE_RECEIVED:
 					IBRCOMMON_LOGGER(notice) << evt->getName() << ": bundle " << bundle->getBundle().toString() << " received" << IBRCOMMON_LOGGER_ENDL;
 					break;
+				case BUNDLE_STORED:
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": bundle " << bundle->getBundle().toString() << " stored" << IBRCOMMON_LOGGER_ENDL;
+					break;
 				default:
 					IBRCOMMON_LOGGER(notice) << evt->getName() << ": unknown" << IBRCOMMON_LOGGER_ENDL;
 					break;
