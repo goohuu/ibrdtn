@@ -46,10 +46,9 @@ namespace dtn
 			stream >> length;
 			size_t data_len = length.getValue();
 
-			char data[data_len+1];
-			data[data_len] = '\0';
+			char data[data_len];
 			stream.read(data, data_len);
-			bstring.assign(data);
+			bstring.assign(data, data_len);
 
 			return stream;
 		}
