@@ -6,7 +6,7 @@
  */
 
 #include "ibrdtn/utils/Clock.h"
-#include <time.h>
+#include <sys/time.h>
 
 namespace dtn
 {
@@ -14,6 +14,11 @@ namespace dtn
 	{
 		int Clock::timezone = 0;
 		float Clock::quality = 0;
+
+		/**
+		 * The number of seconds between 1/1/1970 and 1/1/2000.
+		 */
+		u_int32_t Clock::TIMEVAL_CONVERSION = 946684800;
 
 		Clock::Clock()
 		{
@@ -59,24 +64,19 @@ namespace dtn
 
 		size_t Clock::getTime()
 		{
-			time_t rawtime = time(NULL);
-			tm * ptm;
-
-			ptm = gmtime ( &rawtime );
+			struct timeval now;
+			::gettimeofday(&now, 0);
 
 			// timezone
 			int offset = Clock::timezone * 3600;
 
-			// current local UNIX timestamp
-			time_t utime = mktime(ptm);
-
 			// do we believe we are before the year 2000?
-			if (utime < 946681200)
+			if ((u_int)now.tv_sec < TIMEVAL_CONVERSION)
 			{
 				return 0;
 			}
 
-			return (utime - 946681200) + offset;
+			return (now.tv_sec - TIMEVAL_CONVERSION) + offset;
 		}
 	}
 }
