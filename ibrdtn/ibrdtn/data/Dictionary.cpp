@@ -32,7 +32,7 @@ namespace data
 	 */
 	Dictionary Dictionary::operator=(const Dictionary &d)
 	{
-		_bytestream.clear();
+		_bytestream.str("");
 		_bytestream << d._bytestream.rdbuf();
 		return (*this);
 	}
@@ -130,7 +130,7 @@ namespace data
 
 	void Dictionary::clear()
 	{
-		_bytestream.clear();
+		_bytestream.str("");
 	}
 
 	size_t Dictionary::getSize() const
