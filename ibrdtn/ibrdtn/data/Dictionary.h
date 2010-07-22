@@ -37,7 +37,7 @@ namespace dtn
 			/**
 			 * assign operator
 			 */
-			Dictionary operator=(const Dictionary &d);
+			Dictionary& operator=(const Dictionary &d);
 
 			/**
 			 * destructor

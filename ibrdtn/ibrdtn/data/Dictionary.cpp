@@ -30,7 +30,7 @@ namespace data
 	/**
 	 * assign operator
 	 */
-	Dictionary Dictionary::operator=(const Dictionary &d)
+	Dictionary& Dictionary::operator=(const Dictionary &d)
 	{
 		_bytestream.str("");
 		_bytestream << d._bytestream.rdbuf();
