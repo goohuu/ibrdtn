@@ -33,19 +33,11 @@ namespace dtn
 		 * base implementation of the ThreadedExtension class
 		 */
 		BaseRouter::ThreadedExtension::ThreadedExtension()
-		 : _running(true)
 		{ }
 
 		BaseRouter::ThreadedExtension::~ThreadedExtension()
 		{
 			join();
-		}
-
-		void BaseRouter::ThreadedExtension::stopExtension()
-		{
-			ibrcommon::MutexLock l(_wait);
-			_running = false;
-			_wait.signal(true);
 		}
 
 		/**

@@ -28,6 +28,8 @@ namespace dtn
 
 			void notify(const dtn::core::Event *evt);
 
+			virtual void stopExtension();
+
 		protected:
 			void run();
 
@@ -53,6 +55,9 @@ namespace dtn
 			std::list<dtn::core::Node> _neighbors;
 			std::map<dtn::data::EID, std::queue<dtn::data::BundleID> > _stored_bundles;
 			std::queue<dtn::data::EID> _available;
+
+			bool _running;
+			ibrcommon::Conditional _wait;
 		};
 	}
 }

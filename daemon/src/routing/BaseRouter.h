@@ -79,9 +79,7 @@ namespace dtn
 				virtual void notify(const dtn::core::Event *evt) = 0;
 
 			protected:
-				void stopExtension();
-				bool _running;
-				ibrcommon::Conditional _wait;
+				virtual void stopExtension() = 0;
 			};
 
 			class Endpoint

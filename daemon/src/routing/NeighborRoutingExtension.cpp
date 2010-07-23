@@ -31,6 +31,7 @@ namespace dtn
 		};
 
 		NeighborRoutingExtension::NeighborRoutingExtension()
+		 : _running(true)
 		{
 			try {
 				// scan for bundles in the storage
@@ -58,6 +59,13 @@ namespace dtn
 		{
 			stopExtension();
 			join();
+		}
+
+		void NeighborRoutingExtension::stopExtension()
+		{
+			ibrcommon::MutexLock l(_wait);
+			_running = false;
+			_wait.signal(true);
 		}
 
 		void NeighborRoutingExtension::run()

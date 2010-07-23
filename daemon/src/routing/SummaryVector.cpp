@@ -26,12 +26,20 @@ namespace dtn
 		{
 		}
 
+		void SummaryVector::rebuild()
+		{
+			for (std::set<dtn::data::BundleID>::const_iterator iter = _ids.begin(); iter != _ids.end(); iter++)
+			{
+				_bf.insert( (*iter).toString() );
+			}
+		}
+
 		void SummaryVector::add(const std::set<dtn::data::MetaBundle> &list)
 		{
 			for (std::set<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 			{
 				_bf.insert( (*iter).toString() );
-				_ids.push_back( (*iter) );
+				_ids.insert( (*iter) );
 			}
 		}
 
@@ -43,7 +51,13 @@ namespace dtn
 		void SummaryVector::add(const dtn::data::BundleID &id)
 		{
 			_bf.insert(id.toString());
-			_ids.push_back( id );
+			_ids.insert( id );
+		}
+
+		void SummaryVector::remove(const dtn::data::BundleID &id)
+		{
+			_ids.erase( id );
+			rebuild();
 		}
 
 		void SummaryVector::clear()
@@ -57,19 +71,19 @@ namespace dtn
 			return _bf;
 		}
 
-		std::list<dtn::data::BundleID> SummaryVector::getNotIn(ibrcommon::BloomFilter &filter) const
+		std::set<dtn::data::BundleID> SummaryVector::getNotIn(ibrcommon::BloomFilter &filter) const
 		{
-			std::list<dtn::data::BundleID> ret;
+			std::set<dtn::data::BundleID> ret;
 
 //			// if the lists are equal return an empty list
 //			if (filter == _bf) return ret;
 
 			// iterate through all items to find the differences
-			for (std::list<dtn::data::BundleID>::const_iterator iter = _ids.begin(); iter != _ids.end(); iter++)
+			for (std::set<dtn::data::BundleID>::const_iterator iter = _ids.begin(); iter != _ids.end(); iter++)
 			{
 				if (!filter.contains( (*iter).toString() ) )
 				{
-					ret.push_back( (*iter) );
+					ret.insert( (*iter) );
 				}
 			}
 
@@ -87,7 +101,7 @@ namespace dtn
 			stream << size;
 
 			const char *data = reinterpret_cast<const char*>(obj._bf.table());
-			stream.write(data, size.getValue());
+			stream.write(data, obj._bf.size());
 
 			return stream;
 		}

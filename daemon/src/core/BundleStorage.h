@@ -8,8 +8,9 @@
 #ifndef BUNDLESTORAGE_H_
 #define BUNDLESTORAGE_H_
 
-#include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/BundleID.h"
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/BundleID.h>
+#include <ibrcommon/data/BloomFilter.h>
 
 #include <stdexcept>
 #include <iterator>
@@ -47,6 +48,13 @@ namespace dtn
 			 * @param bundle The bundle to store.
 			 */
 			virtual void store(const dtn::data::Bundle &bundle) = 0;
+
+			/**
+			 * Returns one bundle which is not in the bloomfilter
+			 * @param filter
+			 * @return
+			 */
+			virtual dtn::data::Bundle get(const ibrcommon::BloomFilter &filter) = 0;
 
 			/**
 			 * This method returns a specific bundle which is identified by

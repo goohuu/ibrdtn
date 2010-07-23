@@ -130,6 +130,11 @@ namespace dtn
 			return _store.get(id);
 		}
 
+		dtn::data::Bundle SimpleBundleStorage::get(const ibrcommon::BloomFilter &filter)
+		{
+			return _store.get(filter);
+		}
+
 		const std::list<dtn::data::BundleID> SimpleBundleStorage::getList()
 		{
 			return _store.getList();
@@ -182,6 +187,37 @@ namespace dtn
 
 		SimpleBundleStorage::BundleStore::~BundleStore()
 		{
+		}
+
+		dtn::data::Bundle SimpleBundleStorage::BundleStore::get(const ibrcommon::BloomFilter &filter)
+		{
+//			// print summary vector
+//			const char *data = reinterpret_cast<const char*>(filter.table());
+//
+//			for (size_t i = 0; i < filter.size(); i++)
+//			{
+//				printf("%02x:", *data);
+//				data++;
+//			}
+//
+//			printf("\n");
+
+			// search for one bundle which is not contained in the filter
+			// until we have a better strategy, we have to iterate through all bundles
+			ibrcommon::MutexLock l(bundleslock);
+			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				const BundleContainer &bundle = (*iter);
+				const BundleID id(*bundle);
+
+				if (!filter.contains(id.toString()))
+				{
+					IBRCOMMON_LOGGER_DEBUG(10) << id.toString() << " is not in the bloomfilter" << IBRCOMMON_LOGGER_ENDL;
+					return (*bundle);
+				}
+			}
+
+			throw BundleStorage::NoBundleFoundException();
 		}
 
 		dtn::data::Bundle SimpleBundleStorage::BundleStore::get(const dtn::data::EID &eid)

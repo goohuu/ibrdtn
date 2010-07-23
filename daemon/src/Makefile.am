@@ -51,6 +51,8 @@ routing_SOURCES = routing/BaseRouter.cpp \
 				routing/BaseRouter.h \
 				routing/EpidemicRoutingExtension.cpp \
 				routing/EpidemicRoutingExtension.h \
+				routing/NeighborDatabase.cpp \
+				routing/NeighborDatabase.h \
 				routing/NeighborRoutingExtension.cpp \
 				routing/NeighborRoutingExtension.h \
 				routing/QueueBundleEvent.cpp \

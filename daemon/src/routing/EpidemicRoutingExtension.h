@@ -13,12 +13,15 @@
 #include "net/DiscoveryServiceProvider.h"
 #include "routing/SummaryVector.h"
 #include "routing/BaseRouter.h"
+#include "routing/NeighborDatabase.h"
 
 #include <ibrdtn/data/Block.h>
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/BundleString.h>
 #include <ibrdtn/data/BundleList.h>
 #include <ibrdtn/data/ExtensionBlockFactory.h>
+
+#include <ibrcommon/thread/ThreadSafeQueue.h>
 
 #include <list>
 #include <queue>
@@ -36,6 +39,8 @@ namespace dtn
 			void notify(const dtn::core::Event *evt);
 
 			void update(std::string &name, std::string &data);
+
+			virtual void stopExtension();
 
 			class EpidemicExtensionBlock : public dtn::data::Block
 			{
@@ -80,23 +85,73 @@ namespace dtn
 			bool wasSeenBefore(const dtn::data::BundleID &id) const;
 
 			/**
-			 * transmit a bundle to all neighbors
-			 * @param id
-			 * @param filter
-			 */
-			void broadcast(const dtn::data::BundleID &id, bool filter = false);
-
-			/**
-			 * extract the bloomfilter of an epidemic routing extension block
-			 * @param id
-			 */
-			void readExtensionBlock(const dtn::data::BundleID &id);
-
-			/**
 			 * remove a bundle out of all local bundle lists
 			 * @param id The ID of the Bundle.
 			 */
 			void remove(const dtn::data::MetaBundle &meta);
+
+		private:
+			class Task
+			{
+			public:
+				virtual ~Task() {};
+				virtual std::string toString() = 0;
+			};
+
+			class ExpireTask : public Task
+			{
+			public:
+				ExpireTask(const size_t timestamp);
+				virtual ~ExpireTask();
+
+				virtual std::string toString();
+
+				const size_t timestamp;
+			};
+
+			class SearchNextBundleTask : public Task
+			{
+			public:
+				SearchNextBundleTask(const dtn::data::EID &eid);
+				virtual ~SearchNextBundleTask();
+
+				virtual std::string toString();
+
+				const dtn::data::EID eid;
+			};
+
+			class BroadcastSummaryVectorTask : public Task
+			{
+			public:
+				BroadcastSummaryVectorTask();
+				virtual ~BroadcastSummaryVectorTask();
+
+				virtual std::string toString();
+			};
+
+			class UpdateSummaryVectorTask : public Task
+			{
+			public:
+				UpdateSummaryVectorTask(const dtn::data::EID &eid);
+				virtual ~UpdateSummaryVectorTask();
+
+				virtual std::string toString();
+
+				const dtn::data::EID eid;
+			};
+
+			class ProcessBundleTask : public Task
+			{
+			public:
+				ProcessBundleTask(const dtn::data::MetaBundle &meta);
+				virtual ~ProcessBundleTask();
+
+				virtual std::string toString();
+
+				const dtn::data::MetaBundle bundle;
+			};
+
+			void transferEpidemicInformation(const dtn::data::EID &eid);
 
 			/**
 			 * contains a lock for bundles lists (_bundles, _seenlist)
@@ -104,34 +159,9 @@ namespace dtn
 			ibrcommon::Mutex _list_mutex;
 
 			/**
-			 * contains all available neighbors
-			 */
-			std::set<dtn::data::EID> _neighbors;
-
-			/**
-			 * contains a list of all new neighbors
-			 */
-			std::queue<dtn::data::EID> _new_neighbors;
-
-			/**
 			 * contains a list of bundle references which has been seen previously
 			 */
 			dtn::data::BundleList _seenlist;
-
-			/**
-			 * contains a map of bloomfilters of other nodes
-			 */
-			std::map<dtn::data::EID, ibrcommon::BloomFilter> _filterlist;
-
-			/**
-			 * contains references of bundles to process
-			 */
-			std::queue<dtn::data::MetaBundle> _bundle_queue;
-
-			/**
-			 * contains the current timestamp or is set to zero
-			 */
-			size_t _timestamp;
 
 			/**
 			 * contains the own summary vector for all stored bundles
@@ -139,9 +169,14 @@ namespace dtn
 			SummaryVector _bundle_vector;
 
 			/**
-			 * contains references to all stored bundles
+			 * stores information about neighbors
 			 */
-			dtn::data::BundleList _bundles;
+			dtn::routing::NeighborDatabase _neighbors;
+
+			/**
+			 * hold queued tasks for later processing
+			 */
+			ibrcommon::ThreadSafeQueue<EpidemicRoutingExtension::Task* > _taskqueue;
 		};
 
 		/**

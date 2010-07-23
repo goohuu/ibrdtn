@@ -67,6 +67,13 @@ namespace dtn
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
 			virtual dtn::data::Bundle get(const dtn::data::EID &eid);
 
+			/**
+			 * Returns one bundle which is not in the bloomfilter
+			 * @param filter
+			 * @return
+			 */
+			virtual dtn::data::Bundle get(const ibrcommon::BloomFilter &filter);
+
 
 			const std::list<dtn::data::BundleID> getList();
 
@@ -199,6 +206,7 @@ namespace dtn
 				unsigned int count();
 				size_t size() const;
 
+				dtn::data::Bundle get(const ibrcommon::BloomFilter &filter);
 				dtn::data::Bundle get(const dtn::data::EID &eid);
 				dtn::data::Bundle get(const dtn::data::BundleID &id);
 
