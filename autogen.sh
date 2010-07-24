@@ -10,13 +10,17 @@ SUBDIRS="./ ibrcommon ibrdtn daemon tools"
 for DIR in $SUBDIRS; do
 	echo "## enter directory $DIR ##"
 	cd $DIR
+
+	# create m4 directory
+	mkdir -p m4
+
 	if [ -e "mkversion.sh" ]; then
 		echo "## run mkversion.sh script ##"
 		. mkversion.sh $@
 	fi 
-	
+
 	echo "## run libtoolize ##"
-	libtoolize
+	libtoolize --force
 
 	echo "## run aclocal ##"
 	aclocal
