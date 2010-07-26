@@ -44,7 +44,7 @@ namespace dtn
 		class TCPConvergenceLayer : public dtn::daemon::Component, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
-			class TCPConnection : public GenericConnection, public StreamConnection::Callback, protected dtn::data::DefaultDeserializer
+			class TCPConnection : public GenericConnection, public StreamConnection::Callback
 			{
 			public:
 				TCPConnection(ibrcommon::tcpstream *stream);

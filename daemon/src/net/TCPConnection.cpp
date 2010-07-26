@@ -31,7 +31,7 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : dtn::data::DefaultDeserializer(_stream, dtn::core::BundleCore::getInstance()), _free(false), _peer(), _node(Node::NODE_FLOATING), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
+		 : _free(false), _peer(), _node(Node::NODE_FLOATING), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
 		{
 			stream->enableKeepalive();
 			_node.setProtocol(Node::CONN_TCPIP);
@@ -233,7 +233,7 @@ namespace dtn
 		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
 			try {
-				((dtn::data::DefaultDeserializer&)conn) >> bundle;
+				dtn::data::DefaultDeserializer(conn._stream, dtn::core::BundleCore::getInstance()) >> bundle;
 			} catch (dtn::data::Validator::RejectedException ex) {
 				// bundle rejected
 				conn.rejectTransmission();
@@ -306,10 +306,18 @@ namespace dtn
 					dtn::data::Bundle bundle;
 
 					try {
-						((dtn::data::DefaultDeserializer&)_connection) >> bundle;
+						_connection >> bundle;
 
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(EID(), bundle);
+						// check the bundle
+						if ( ( bundle._destination == EID() ) || ( bundle._source == EID() ) )
+						{
+							// invalid bundle!
+						}
+						else
+						{
+							// raise default bundle received event
+							dtn::net::BundleReceivedEvent::raise(EID(), bundle);
+						}
 
 					} catch (dtn::data::Validator::RejectedException ex) {
 						// bundle rejected
