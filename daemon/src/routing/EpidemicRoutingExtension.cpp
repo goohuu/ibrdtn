@@ -172,6 +172,8 @@ namespace dtn
 
 		void EpidemicRoutingExtension::run()
 		{
+			bool sendVectorUpdate = false;
+
 			while (true)
 			{
 				try {
@@ -179,6 +181,14 @@ namespace dtn
 
 					try {
 						ExpireTask &task = dynamic_cast<ExpireTask&>(*t);
+
+						// should i send a vector update?
+						if (sendVectorUpdate)
+						{
+							sendVectorUpdate = false;
+							_taskqueue.push( new BroadcastSummaryVectorTask() );
+						}
+
 						ibrcommon::MutexLock l(_list_mutex);
 						_seenlist.expire(task.timestamp);
 					} catch (std::bad_cast) { };
@@ -243,7 +253,7 @@ namespace dtn
 						}
 						else
 						{
-							_taskqueue.push( new BroadcastSummaryVectorTask() );
+							sendVectorUpdate = true;
 						}
 					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
 						// if the bundle is not in the storage we have nothing to do
