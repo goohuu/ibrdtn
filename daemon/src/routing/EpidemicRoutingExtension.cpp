@@ -254,6 +254,9 @@ namespace dtn
 							// get the bundle out of the storage
 							dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);
 
+							// remove the bundle
+							getRouter()->getStorage().remove(task.bundle);
+
 							try {
 								// get all epidemic extension blocks of this bundle
 								const EpidemicExtensionBlock &ext = bundle.getBlock<EpidemicExtensionBlock>();
