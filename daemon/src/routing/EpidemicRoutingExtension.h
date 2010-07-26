@@ -84,11 +84,11 @@ namespace dtn
 			 */
 			bool wasSeenBefore(const dtn::data::BundleID &id) const;
 
-			/**
-			 * remove a bundle out of all local bundle lists
-			 * @param id The ID of the Bundle.
-			 */
-			void remove(const dtn::data::MetaBundle &meta);
+//			/**
+//			 * remove a bundle out of all local bundle lists
+//			 * @param id The ID of the Bundle.
+//			 */
+//			void remove(const dtn::data::MetaBundle &meta);
 
 		private:
 			class Task
@@ -163,10 +163,10 @@ namespace dtn
 			 */
 			dtn::data::BundleList _seenlist;
 
-			/**
-			 * contains the own summary vector for all stored bundles
-			 */
-			SummaryVector _bundle_vector;
+//			/**
+//			 * contains the own summary vector for all stored bundles
+//			 */
+//			SummaryVector _bundle_vector;
 
 			/**
 			 * stores information about neighbors

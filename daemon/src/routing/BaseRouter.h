@@ -16,6 +16,7 @@
 #include "ibrcommon/thread/Thread.h"
 #include "ibrcommon/thread/Conditional.h"
 #include <ibrdtn/data/MetaBundle.h>
+#include "routing/BundleSummary.h"
 
 namespace dtn
 {
@@ -137,11 +138,18 @@ namespace dtn
 
 			dtn::core::BundleStorage &getStorage();
 
+			bool isKnown(const dtn::data::BundleID &id);
+
+			const SummaryVector getSummaryVector();
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();
 
 		private:
+			ibrcommon::Mutex _known_bundles_lock;
+			BundleSummary _known_bundles;
+
 			dtn::core::BundleStorage &_storage;
 			std::list<BaseRouter::Extension*> _extensions;
 		};

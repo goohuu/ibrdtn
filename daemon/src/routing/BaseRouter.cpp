@@ -165,7 +165,21 @@ namespace dtn
 		void BaseRouter::raiseEvent(const dtn::core::Event *evt)
 		{
 			try {
+				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+				ibrcommon::MutexLock l(_known_bundles_lock);
+				_known_bundles.expire(time.getTimestamp());
+
+			} catch (std::bad_cast) {
+			}
+
+			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
+
+				// set the bundle as known
+				{
+					ibrcommon::MutexLock l(_known_bundles_lock);
+					_known_bundles.add(received.bundle);
+				}
 
 				// Store incoming bundles into the storage
 				try {
@@ -190,6 +204,12 @@ namespace dtn
 
 			try {
 				const dtn::core::BundleGeneratedEvent &generated = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
+
+				// set the bundle as known
+				{
+					ibrcommon::MutexLock l(_known_bundles_lock);
+					_known_bundles.add(generated.bundle);
+				}
 
 				// Store incoming bundles into the storage
 				try {
@@ -242,6 +262,19 @@ namespace dtn
 		dtn::core::BundleStorage& BaseRouter::getStorage()
 		{
 			return _storage;
+		}
+
+		// set the bundle as known
+		bool BaseRouter::isKnown(const dtn::data::BundleID &id)
+		{
+			ibrcommon::MutexLock l(_known_bundles_lock);
+			return _known_bundles.contains(id);
+		}
+
+		const SummaryVector BaseRouter::getSummaryVector()
+		{
+			ibrcommon::MutexLock l(_known_bundles_lock);
+			return _known_bundles.getSummaryVector();
 		}
 	}
 }

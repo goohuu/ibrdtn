@@ -68,14 +68,14 @@ namespace dtn
 			data = "version=1";
 		}
 
-		void EpidemicRoutingExtension::remove(const dtn::data::MetaBundle &meta)
-		{
-			// lock the lists
-			ibrcommon::MutexLock l(_list_mutex);
-
-			// delete it from out list
-			_bundle_vector.remove(meta);
-		}
+//		void EpidemicRoutingExtension::remove(const dtn::data::MetaBundle &meta)
+//		{
+//			// lock the lists
+//			ibrcommon::MutexLock l(_list_mutex);
+//
+//			// delete it from out list
+//			_bundle_vector.remove(meta);
+//		}
 
 		void EpidemicRoutingExtension::notify(const dtn::core::Event *evt)
 		{
@@ -131,11 +131,11 @@ namespace dtn
 				// remove this bundle from forward-to list
 				// BundleList will do this!
 
-				// lock the lists
-				ibrcommon::MutexLock l(_list_mutex);
-
-				// remove it from the summary vector
-				_bundle_vector.remove(expired._bundle);
+//				// lock the lists
+//				ibrcommon::MutexLock l(_list_mutex);
+//
+//				// remove it from the summary vector
+//				_bundle_vector.remove(expired._bundle);
 
 			} catch (std::bad_cast ex) { };
 
@@ -154,10 +154,10 @@ namespace dtn
 						// TODO: generate a "delete" message for routing algorithm
 
 
-						// remove the bundle in all lists
-						remove(meta);
+//						// remove the bundle in all lists
+//						remove(meta);
 
-						// delete it from our database
+						// delete it from our storage
 						getRouter()->getStorage().remove(meta);
 					}
 				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
@@ -193,7 +193,8 @@ namespace dtn
 				// lock the lists
 				ibrcommon::MutexLock l(_list_mutex);
 				EpidemicExtensionBlock &eblock = routingbundle.push_back<EpidemicExtensionBlock>();
-				eblock.setSummaryVector(_bundle_vector);
+				const SummaryVector vec = getRouter()->getSummaryVector();
+				eblock.setSummaryVector(vec);
 			}
 
 			getRouter()->transferTo(eid, routingbundle);
@@ -272,7 +273,7 @@ namespace dtn
 						}
 						else
 						{
-							_bundle_vector.add(task.bundle);
+//							_bundle_vector.add(task.bundle);
 							_taskqueue.push( new BroadcastSummaryVectorTask() );
 						}
 					} catch (dtn::core::BundleStorage::NoBundleFoundException) {

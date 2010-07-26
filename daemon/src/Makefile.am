@@ -49,6 +49,8 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				
 routing_SOURCES = routing/BaseRouter.cpp \
 				routing/BaseRouter.h \
+				routing/BundleSummary.cpp \
+				routing/BundleSummary.h \
 				routing/EpidemicRoutingExtension.cpp \
 				routing/EpidemicRoutingExtension.h \
 				routing/NeighborDatabase.cpp \
