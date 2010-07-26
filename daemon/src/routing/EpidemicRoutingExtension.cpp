@@ -269,8 +269,6 @@ namespace dtn
 						}
 						else
 						{
-							// lock the lists
-							ibrcommon::MutexLock l(_list_mutex);
 							_bundle_vector.add(task.bundle);
 							_taskqueue.push( new BroadcastSummaryVectorTask() );
 						}
