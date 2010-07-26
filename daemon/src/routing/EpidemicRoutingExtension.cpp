@@ -68,15 +68,6 @@ namespace dtn
 			data = "version=1";
 		}
 
-//		void EpidemicRoutingExtension::remove(const dtn::data::MetaBundle &meta)
-//		{
-//			// lock the lists
-//			ibrcommon::MutexLock l(_list_mutex);
-//
-//			// delete it from out list
-//			_bundle_vector.remove(meta);
-//		}
-
 		void EpidemicRoutingExtension::notify(const dtn::core::Event *evt)
 		{
 			try {
@@ -124,23 +115,6 @@ namespace dtn
 			} catch (std::bad_cast ex) { };
 
 			try {
-				const dtn::core::BundleExpiredEvent &expired = dynamic_cast<const dtn::core::BundleExpiredEvent&>(*evt);
-
-				// bundle is expired
-				// remove this bundle from seen list
-				// remove this bundle from forward-to list
-				// BundleList will do this!
-
-//				// lock the lists
-//				ibrcommon::MutexLock l(_list_mutex);
-//
-//				// remove it from the summary vector
-//				_bundle_vector.remove(expired._bundle);
-
-			} catch (std::bad_cast ex) { };
-
-
-			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 
 				dtn::data::EID eid = completed.getPeer();
@@ -152,10 +126,6 @@ namespace dtn
 					{
 						// bundle has been delivered to its destination
 						// TODO: generate a "delete" message for routing algorithm
-
-
-//						// remove the bundle in all lists
-//						remove(meta);
 
 						// delete it from our storage
 						getRouter()->getStorage().remove(meta);
@@ -256,7 +226,7 @@ namespace dtn
 							dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);
 
 							// remove the bundle
-							getRouter()->getStorage().remove(task.bundle);
+							getRouter()->getStorage().remove(bundle);
 
 							try {
 								// get all epidemic extension blocks of this bundle
@@ -273,7 +243,6 @@ namespace dtn
 						}
 						else
 						{
-//							_bundle_vector.add(task.bundle);
 							_taskqueue.push( new BroadcastSummaryVectorTask() );
 						}
 					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
