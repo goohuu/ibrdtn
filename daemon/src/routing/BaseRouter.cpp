@@ -175,19 +175,20 @@ namespace dtn
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
 
-				// set the bundle as known
-				{
-					ibrcommon::MutexLock l(_known_bundles_lock);
-					_known_bundles.add(received.bundle);
-				}
-
 				// Store incoming bundles into the storage
 				try {
 					// store the bundle into a storage module
 					dtn::core::BundleCore::getInstance().getStorage().store(received.bundle);
 
-					// raise the queued event to notify all receivers about the new bundle
-					QueueBundleEvent::raise(received.bundle);
+					// set the bundle as known
+					if (!isKnown(received.bundle))
+					{
+						ibrcommon::MutexLock l(_known_bundles_lock);
+						_known_bundles.add(received.bundle);
+
+						// raise the queued event to notify all receivers about the new bundle
+						QueueBundleEvent::raise(received.bundle);
+					}
 
 					// finally create a bundle received event
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
