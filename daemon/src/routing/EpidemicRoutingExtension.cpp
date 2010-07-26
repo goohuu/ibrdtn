@@ -249,7 +249,7 @@ namespace dtn
 						ibrcommon::MutexLock l(_list_mutex);
 
 						// check for special addresses
-						if (task.bundle.source == EID("dtn:epidemic-routing"))
+						if (task.bundle.destination == EID("dtn:epidemic-routing"))
 						{
 							// get the bundle out of the storage
 							dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);
