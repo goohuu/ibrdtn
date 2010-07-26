@@ -82,8 +82,6 @@ namespace dtn
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 				_taskqueue.push( new ProcessBundleTask(queued.bundle) );
-				_taskqueue.push( new BroadcastSummaryVectorTask() );
-
 			} catch (std::bad_cast ex) { };
 
 			try {
@@ -249,23 +247,35 @@ namespace dtn
 					try {
 						ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
 						ibrcommon::MutexLock l(_list_mutex);
-						_bundle_vector.add(task.bundle);
 
-						try {
+						// check for special addresses
+						if (task.bundle.source == EID("dtn:epidemic-routing"))
+						{
 							// get the bundle out of the storage
 							dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);
 
-							// get all epidemic extension blocks of this bundle
-							const EpidemicExtensionBlock &ext = bundle.getBlock<EpidemicExtensionBlock>();
+							try {
+								// get all epidemic extension blocks of this bundle
+								const EpidemicExtensionBlock &ext = bundle.getBlock<EpidemicExtensionBlock>();
 
-							const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
+								// get the bloomfilter of this bundle
+								const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
 
-							// update the neighbor database with this filter
-							_neighbors.updateBundles(bundle._source, filter);
-						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-						} catch (dtn::data::Bundle::NoSuchBlockFoundException ex) {
+								// update the neighbor database with this filter
+								_neighbors.updateBundles(bundle._source, filter);
+							} catch (dtn::data::Bundle::NoSuchBlockFoundException) {
+
+							}
 						}
-
+						else
+						{
+							// lock the lists
+							ibrcommon::MutexLock l(_list_mutex);
+							_bundle_vector.add(task.bundle);
+							_taskqueue.push( new BroadcastSummaryVectorTask() );
+						}
+					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
+						// if the bundle is not in the storage we have nothing to do
 					} catch (std::bad_cast) { };
 
 					delete t;
