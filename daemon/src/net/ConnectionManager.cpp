@@ -136,11 +136,8 @@ namespace dtn
 
 		void ConnectionManager::addConnection(const dtn::core::Node &n)
 		{
-			{
-				ibrcommon::MutexLock l(_node_lock);
-				_static_nodes.insert(n);
-			}
-
+			ibrcommon::MutexLock l(_node_lock);
+			_static_nodes.insert(n);
 			dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
 		}
 

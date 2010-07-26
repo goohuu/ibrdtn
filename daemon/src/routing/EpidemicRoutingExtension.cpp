@@ -261,7 +261,6 @@ namespace dtn
 							const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
 
 							// update the neighbor database with this filter
-							ibrcommon::MutexLock l(_list_mutex);
 							_neighbors.updateBundles(bundle._source, filter);
 						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 						} catch (dtn::data::Bundle::NoSuchBlockFoundException ex) {
