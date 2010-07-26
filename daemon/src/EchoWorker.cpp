@@ -30,6 +30,7 @@ namespace dtn
 				// set destination and source
 				echo._destination = b._source;
 				echo._source = getWorkerURI();
+				echo._lifetime = b._lifetime;
 
 				IBRCOMMON_LOGGER_DEBUG(5) << "echo request received, replying!" << IBRCOMMON_LOGGER_ENDL;
 
