@@ -176,7 +176,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 				default:
 					break;
 			}
-		} catch (ibrcommon::tcpserver::SocketException ex) {
+		} catch (ibrcommon::SocketException ex) {
 			IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			throw ex;
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 		try {
 			// instance a API server, first create a socket
 			components.push_back( new ApiServer(lo.interface, lo.port) );
-		} catch (ibrcommon::tcpserver::SocketException ex) {
+		} catch (ibrcommon::SocketException ex) {
 			IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.getAddress() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 			exit(-1);
 		}

@@ -115,7 +115,7 @@ namespace dtn
 				add(conn);
 
 				conn->queue(job._bundle);
-			} catch (ibrcommon::tcpserver::SocketException ex) {
+			} catch (ibrcommon::SocketException ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 			}
@@ -129,7 +129,7 @@ namespace dtn
 			if (sock <= 0)
 			{
 				// error
-				throw ibrcommon::tcpserver::SocketException("Could not create a socket.");
+				throw ibrcommon::SocketException("Could not create a socket.");
 			}
 
 			sock_address.sin_family = AF_INET;
@@ -139,7 +139,7 @@ namespace dtn
 			if (connect ( sock, (struct sockaddr *) &sock_address, sizeof (sock_address)) != 0)
 			{
 				// error
-				throw ibrcommon::tcpserver::SocketException("Could not connect to the server.");
+				throw ibrcommon::SocketException("Could not connect to the server.");
 			}
 
 			// create a connection
@@ -243,7 +243,7 @@ namespace dtn
 
 				conn->initialize(dtn::core::BundleCore::local, 10);
 				return conn;
-			} catch (ibrcommon::tcpserver::SocketException ex) {
+			} catch (ibrcommon::SocketException ex) {
 				// socket is closed
 				return NULL;
 			}

@@ -47,7 +47,7 @@ namespace dtn
 				handler->start();
 
 				return handler;
-			} catch (ibrcommon::tcpserver::SocketException ex) {
+			} catch (ibrcommon::SocketException ex) {
 				// socket is closed
 				return NULL;
 			}

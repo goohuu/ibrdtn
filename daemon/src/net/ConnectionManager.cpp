@@ -98,6 +98,8 @@ namespace dtn
 				{
 					case ConnectionEvent::CONNECTION_UP:
 					{
+						ibrcommon::MutexLock l(_node_lock);
+
 						// if this node was unknown before...
 						if (!isNeighbor(connection.node))
 						{
@@ -105,17 +107,14 @@ namespace dtn
 							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_AVAILABLE);
 						}
 
-						ibrcommon::MutexLock l(_node_lock);
 						_connected_nodes.insert(connection.node);
 						break;
 					}
 
 					case ConnectionEvent::CONNECTION_DOWN:
 					{
-						{
-							ibrcommon::MutexLock l(_node_lock);
-							_connected_nodes.erase(connection.node);
-						}
+						ibrcommon::MutexLock l(_node_lock);
+						_connected_nodes.erase(connection.node);
 
 						// if this node is gone...
 						if (!isNeighbor(connection.node))
@@ -156,6 +155,8 @@ namespace dtn
 			// ignore messages of ourself
 			if (EID(node.getURI()) == dtn::core::BundleCore::local) return;
 
+			ibrcommon::MutexLock l(_node_lock);
+
 			// if this node was unknown before...
 			if (!isNeighbor(node))
 			{
@@ -163,7 +164,6 @@ namespace dtn
 				dtn::core::NodeEvent::raise(node, dtn::core::NODE_AVAILABLE);
 			}
 
-			ibrcommon::MutexLock l(_node_lock);
 			_discovered_nodes.erase(node);
 			_discovered_nodes.insert(node);
 		}
@@ -172,27 +172,25 @@ namespace dtn
 		{
 			std::list<dtn::core::Node> unavailables;
 
+			ibrcommon::MutexLock l(_node_lock);
+
+			// search for outdated nodes
+			std::set<dtn::core::Node>::iterator iter = _discovered_nodes.begin();
+
+			while (iter != _discovered_nodes.end())
 			{
-				ibrcommon::MutexLock l(_node_lock);
+				dtn::core::Node n = (*iter);
 
-				// search for outdated nodes
-				std::set<dtn::core::Node>::iterator iter = _discovered_nodes.begin();
+				// node is outdated -> remove it
+				_discovered_nodes.erase( iter++ );
 
-				while (iter != _discovered_nodes.end())
+				if ( !n.decrementTimeout(1) )
 				{
-					dtn::core::Node n = (*iter);
-
-					// node is outdated -> remove it
-					_discovered_nodes.erase( iter++ );
-
-					if ( !n.decrementTimeout(1) )
-					{
-						unavailables.push_back(n);
-					}
-					else
-					{
-						_discovered_nodes.insert(n);
-					}
+					unavailables.push_back(n);
+				}
+				else
+				{
+					_discovered_nodes.insert(n);
 				}
 			}
 
@@ -369,8 +367,6 @@ namespace dtn
 
 		bool ConnectionManager::isNeighbor(const dtn::core::Node &node)
 		{
-			ibrcommon::MutexLock l(_node_lock);
-
 			// search for the node in all sets
 			if (_static_nodes.find(node) != _static_nodes.end())
 			{
