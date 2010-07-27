@@ -129,6 +129,7 @@ namespace dtn
 			unbindEvent(dtn::routing::RequeueBundleEvent::className);
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::BundleExpiredEvent::className);
+			unbindEvent(dtn::core::TimeEvent::className);
 			unbindEvent(dtn::core::BundleGeneratedEvent::className);
 
 			// delete all extensions

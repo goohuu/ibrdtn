@@ -6,6 +6,12 @@ AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) $(ibrdtn_LIBS) $(OPENSSL_LIBS)
 
 INCLUDES = -I@top_srcdir@/src
 
+TESTS = testsuite
+check_PROGRAMS = $(TESTS)
+
+testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I../../src -Wall
+testsuite_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS}
+
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
 # the previous manual Makefile
 sbin_PROGRAMS = dtnd
@@ -99,7 +105,7 @@ net_SOURCES = 	net/BundleReceivedEvent.cpp \
 				net/UDPConvergenceLayer.cpp \
 				net/UDPConvergenceLayer.h
 
-dtnd_SOURCES =  $(core_SOURCES) $(net_SOURCES) $(routing_SOURCES) \
+base_SOURCES =  $(core_SOURCES) $(net_SOURCES) $(routing_SOURCES) \
 				ApiServer.cpp \
 				ApiServer.h \
 				ClientHandler.cpp \
@@ -115,8 +121,16 @@ dtnd_SOURCES =  $(core_SOURCES) $(net_SOURCES) $(routing_SOURCES) \
 				DevNull.h \
 				EchoWorker.cpp \
 				EchoWorker.h \
-				Main.cpp \
 				Notifier.cpp \
 				Notifier.h \
 				StatisticLogger.h \
 				StatisticLogger.cpp
+				
+dtnd_SOURCES =  $(base_SOURCES) Main.cpp
+
+testsuite_SOURCES = $(base_SOURCES) \
+				tests/TestBundleList.cpp \
+				tests/TestBundleList.h \
+				tests/TestBundleSummary.cpp \
+				tests/TestBundleSummary.h \
+				tests/testsuite.cpp

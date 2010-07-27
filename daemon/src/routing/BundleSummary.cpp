@@ -33,6 +33,7 @@ namespace dtn
 
 		void BundleSummary::clear()
 		{
+			_vector.clear();
 			dtn::data::BundleList::clear();
 		}
 

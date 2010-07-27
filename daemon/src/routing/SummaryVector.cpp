@@ -12,13 +12,13 @@ namespace dtn
 	namespace routing
 	{
 		SummaryVector::SummaryVector(const std::set<dtn::data::MetaBundle> &list)
-		 : _bf(4096, 4)
+		 : _bf(8192, 2)
 		{
 			add(list);
 		}
 
 		SummaryVector::SummaryVector()
-		 : _bf(4096, 4)
+		 : _bf(8192, 2)
 		{
 		}
 
