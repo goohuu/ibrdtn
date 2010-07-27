@@ -24,7 +24,7 @@ namespace dtn
 			_bundles.insert(bundle);
 
 			// insert the bundle to the public list
-			this->insert(bundle);
+			std::set<dtn::data::MetaBundle>::insert(bundle);
 		}
 
 		void BundleList::remove(const dtn::data::MetaBundle bundle)
@@ -33,7 +33,7 @@ namespace dtn
 			_bundles.erase(bundle);
 
 			// delete bundle id in the public list
-			this->erase(bundle);
+			std::set<dtn::data::MetaBundle>::erase(bundle);
 		}
 
 		void BundleList::clear()
@@ -47,7 +47,7 @@ namespace dtn
 			// we can not expire bundles if we have no idea of time
 			if (dtn::utils::Clock::quality == 0) return;
 
-			std::multiset<ExpiringBundle>::iterator iter = _bundles.begin();
+			std::set<ExpiringBundle>::iterator iter = _bundles.begin();
 
 			while (iter != _bundles.end())
 			{
@@ -59,7 +59,7 @@ namespace dtn
 				eventBundleExpired( b );
 
 				// remove this item in public list
-				(*this).erase( b.bundle );
+				std::set<dtn::data::MetaBundle>::erase( b.bundle );
 
 				// remove this item in private list
 				_bundles.erase( iter++ );

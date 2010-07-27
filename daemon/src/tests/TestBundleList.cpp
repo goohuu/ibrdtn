@@ -8,6 +8,7 @@
 #include "tests/TestBundleList.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
+#include <ibrdtn/utils/Clock.h>
 #include <iostream>
 #include <cstdlib>
 
@@ -15,6 +16,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION (TestBundleList);
 
 void TestBundleList::setUp()
 {
+	dtn::utils::Clock::quality = 1;
 	list = new TestBundleList::DerivedBundleList();
 }
 

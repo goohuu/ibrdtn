@@ -28,6 +28,8 @@ namespace dtn
 
 		void SummaryVector::rebuild()
 		{
+			_bf.clear();
+
 			for (std::set<dtn::data::BundleID>::const_iterator iter = _ids.begin(); iter != _ids.end(); iter++)
 			{
 				_bf.insert( (*iter).toString() );
@@ -38,8 +40,7 @@ namespace dtn
 		{
 			for (std::set<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 			{
-				_bf.insert( (*iter).toString() );
-				_ids.insert( (*iter) );
+				add( *iter );
 			}
 		}
 

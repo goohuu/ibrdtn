@@ -45,7 +45,7 @@ namespace dtn
 
 			virtual void eventBundleExpired(const ExpiringBundle&) {};
 
-			std::multiset<ExpiringBundle> _bundles;
+			std::set<ExpiringBundle> _bundles;
 		};
 
 	}

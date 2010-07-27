@@ -7,6 +7,8 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include "routing/BundleSummary.h"
+#include <iostream>
 
 #ifndef TESTBUNDLESUMMARY_H_
 #define TESTBUNDLESUMMARY_H_
@@ -23,6 +25,10 @@ public:
 
 protected:
 	void expireTest(void);
+
+private:
+	void genbundles(dtn::routing::BundleSummary &l, int number, int offset, int max);
+	std::string getHex(std::istream &stream);
 };
 
 #endif /* TESTBUNDLESUMMARY_H_ */
