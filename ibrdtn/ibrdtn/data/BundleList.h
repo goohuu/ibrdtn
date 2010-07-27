@@ -21,9 +21,9 @@ namespace dtn
 			BundleList();
 			~BundleList();
 
-			void add(const dtn::data::MetaBundle bundle);
-			void remove(const dtn::data::MetaBundle bundle);
-			void clear();
+			virtual void add(const dtn::data::MetaBundle bundle);
+			virtual void remove(const dtn::data::MetaBundle bundle);
+			virtual void clear();
 
 			void expire(const size_t timestamp);
 
