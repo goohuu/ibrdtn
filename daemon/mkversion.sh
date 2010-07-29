@@ -3,7 +3,7 @@
 
 # define default version
 MAJOR=0
-MINOR=3
+MINOR=4
 MICRO=svn
 
 # create a version.inc file
