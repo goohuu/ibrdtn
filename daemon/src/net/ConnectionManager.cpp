@@ -241,8 +241,11 @@ namespace dtn
 			// use Bluetooth as fourth connection type
 			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_BLUETOOTH));
 
-			// use ZigBee as third connection type
+			// use ZigBee as fifth connection type
 			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_ZIGBEE));
+
+			// use HTTP as sixth connection type
+			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_HTTP));
 
 			if (IBRCOMMON_LOGGER_LEVEL >= 50)
 			{

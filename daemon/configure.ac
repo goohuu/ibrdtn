@@ -117,6 +117,22 @@ AC_SUBST(PTHREAD_LIBS)
 # check for openssl
 PKG_CHECK_MODULES(OPENSSL, openssl)
 
+AC_ARG_WITH(curl,
+	AS_HELP_STRING([--with-curl], [Build with libcurl
+		@<:@default=no@:>@]),
+	[
+	if test "x$with_curl" = "xyes"; then
+		PKG_CHECK_MODULES(CURL, libcurl >= 7.16.4, use_curl="yes", use_curl="no")
+		AC_DEFINE(HAVE_LIBCURL, [1], ["curl library is available"])
+	else
+		use_curl="no"
+	fi
+	],[
+	use_curl="no"
+])
+
+AM_CONDITIONAL(CURL, test x$use_curl = xyes)
+
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------

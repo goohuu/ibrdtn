@@ -26,6 +26,11 @@
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
+
+#ifdef HAVE_LIBCURL
+#include "net/HTTPConvergenceLayer.h"
+#endif
+
 #include "net/IPNDAgent.h"
 
 #include "ApiServer.h"
@@ -172,6 +177,18 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 
 					break;
 				}
+
+#ifdef HAVE_LIBCURL
+				case Configuration::NetConfig::NETWORK_HTTP:
+				{
+					HTTPConvergenceLayer *httpcl = new HTTPConvergenceLayer( net.address );
+					core.addConvergenceLayer(httpcl);
+					components.push_back(httpcl);
+
+					IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.address << IBRCOMMON_LOGGER_ENDL;
+					break;
+				}
+#endif
 
 				default:
 					break;

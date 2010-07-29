@@ -19,6 +19,11 @@ namespace dtn
 		{
 		}
 
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &a, int p, bool d)
+		 : name(n), type(t), interface("lo"), address(a), port(p), discovery(d)
+		{
+		}
+
 		Configuration::NetConfig::~NetConfig()
 		{
 		}
@@ -168,6 +173,7 @@ namespace dtn
 					std::string key_type = "net_" + netname + "_type";
 					std::string key_port = "net_" + netname + "_port";
 					std::string key_interface = "net_" + netname + "_interface";
+					std::string key_address = "net_" + netname + "_address";
 					std::string key_discovery = "net_" + netname + "_discovery";
 
 					std::string type_name = _conf.read<string>(key_type, "tcp");
@@ -175,13 +181,31 @@ namespace dtn
 
 					if (type_name == "tcp") type = Configuration::NetConfig::NETWORK_TCP;
 					if (type_name == "udp") type = Configuration::NetConfig::NETWORK_UDP;
+					if (type_name == "http") type = Configuration::NetConfig::NETWORK_HTTP;
 
-					Configuration::NetConfig::NetConfig nc(netname, type,
-							ibrcommon::NetInterface(_conf.read<std::string>(key_interface, "lo")),
-							_conf.read<unsigned int>(key_port, 4556),
-							_conf.read<std::string>(key_discovery, "yes") == "yes");
+					switch (type)
+					{
+						case Configuration::NetConfig::NETWORK_HTTP:
+						{
+							Configuration::NetConfig::NetConfig nc(netname, type,
+									_conf.read<std::string>(key_address, "http://localhost/"), 0,
+									_conf.read<std::string>(key_discovery, "yes") == "no");
 
-					ret.push_back(nc);
+							ret.push_back(nc);
+							break;
+						}
+
+						default:
+						{
+							Configuration::NetConfig::NetConfig nc(netname, type,
+									ibrcommon::NetInterface(_conf.read<std::string>(key_interface, "lo")),
+									_conf.read<unsigned int>(key_port, 4556),
+									_conf.read<std::string>(key_discovery, "yes") == "yes");
+
+							ret.push_back(nc);
+							break;
+						}
+					}
 				}
 			} catch (ConfigFile::key_not_found ex) {
 				return ret;
@@ -250,6 +274,7 @@ namespace dtn
 				if (protocol == "udp") n.setProtocol(Node::CONN_UDPIP);
 				if (protocol == "zigbee") n.setProtocol(Node::CONN_ZIGBEE);
 				if (protocol == "bluetooth") n.setProtocol(Node::CONN_BLUETOOTH);
+				if (protocol == "http") n.setProtocol(Node::CONN_HTTP);
 
 				count++;
 

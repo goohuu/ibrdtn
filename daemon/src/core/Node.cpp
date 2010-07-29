@@ -60,6 +60,9 @@ namespace dtn
 
 			case Node::CONN_BLUETOOTH:
 				return "Bluetooth";
+
+			case Node::CONN_HTTP:
+				return "HTTP";
 			}
 
 			return "unknown";

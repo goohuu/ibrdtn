@@ -32,15 +32,18 @@ namespace dtn
 				{
 					NETWORK_UNKNOWN = 0,
 					NETWORK_TCP = 1,
-					NETWORK_UDP = 2
+					NETWORK_UDP = 2,
+					NETWORK_HTTP = 3
 				};
 
+				NetConfig(std::string name, NetType type, const std::string &address, int port, bool discovery = true);
 				NetConfig(std::string name, NetType type, const ibrcommon::NetInterface &iface, int port, bool discovery = true);
 				~NetConfig();
 
 				std::string name;
 				NetType type;
 				ibrcommon::NetInterface interface;
+				std::string address;
 				int port;
 				bool discovery;
 			};

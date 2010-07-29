@@ -4,6 +4,11 @@ AUTOMAKE_OPTIONS = foreign
 AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS) $(ibrdtn_CFLAGS) $(OPENSSL_CFLAGS)
 AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) $(ibrdtn_LIBS) $(OPENSSL_LIBS)
 
+if CURL
+AM_CPPFLAGS += @CURL_CFLAGS@
+AM_LDFLAGS += @CURL_LIBS@
+endif
+
 INCLUDES = -I@top_srcdir@/src
 
 TESTS = testsuite
@@ -104,6 +109,10 @@ net_SOURCES = 	net/BundleReceivedEvent.cpp \
 				net/TransferCompletedEvent.h \
 				net/UDPConvergenceLayer.cpp \
 				net/UDPConvergenceLayer.h
+				
+if CURL
+net_SOURCES += net/HTTPConvergenceLayer.cpp Net/HTTPConvergenceLayer.h
+endif
 
 base_SOURCES =  $(core_SOURCES) $(net_SOURCES) $(routing_SOURCES) \
 				ApiServer.cpp \
