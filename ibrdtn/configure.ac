@@ -14,6 +14,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_SRCDIR(ibrdtn/ibrdtn.h)
 AC_CONFIG_HEADER(ibrdtn/config.h)
 LT_INIT
+AM_PATH_CPPUNIT(1.9.6)
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
@@ -145,20 +146,6 @@ AC_SUBST(PTHREAD_LIBS)
 PKG_CHECK_MODULES(OPENSSL, openssl)
 
 dnl -----------------------------------------------
-dnl Enable testsuite
-dnl -----------------------------------------------
-
-AC_ARG_ENABLE(testsuite,
-	[AC_HELP_STRING([--enable-testsuite], [enable testsuite [default=no]]) ],
-	[
-		AC_CONFIG_FILES([tests/Makefile])
-		TESTSUITE_DIR="tests"
-		AC_SUBST(TESTSUITE_DIR)
-	], [
-		TESTSUITE_DIR=""
-	])
-
-dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 
@@ -168,6 +155,7 @@ AC_CONFIG_FILES([Makefile \
 	ibrdtn/api/Makefile \
 	ibrdtn/data/Makefile \
 	ibrdtn/streams/Makefile \
-	ibrdtn/utils/Makefile])
+	ibrdtn/utils/Makefile \
+	tests/Makefile])
 	
 AC_OUTPUT

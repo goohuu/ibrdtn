@@ -1,12 +1,14 @@
 ## Source directory
 
-h_sources = 
-cc_sources = Main.cpp 
+h_sources = data/TestBundleList.h data/TestDictionary.h
+cc_sources = data/TestBundleList.cpp data/TestDictionary.cpp Main.cpp 
 
-AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS) $(ibrdtn_CFLAGS)
-AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) $(ibrdtn_LIBS)
+AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS)
+AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) -L@top_srcdir@/ibrdtn/.libs -librcommon -librdtn
 
 INCLUDES = -I@top_srcdir@ -I@top_srcdir@/tests
 
-bin_PROGRAMS = ibrdtn-testsuite
-ibrdtn_testsuite_SOURCES = $(h_sources) $(cc_sources)
+check_PROGRAMS = testsuite
+testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I../../src -Wall
+testsuite_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS}
+testsuite_SOURCES = $(h_sources) $(cc_sources)

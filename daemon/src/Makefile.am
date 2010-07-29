@@ -138,8 +138,6 @@ base_SOURCES =  $(core_SOURCES) $(net_SOURCES) $(routing_SOURCES) \
 dtnd_SOURCES =  $(base_SOURCES) Main.cpp
 
 testsuite_SOURCES = $(base_SOURCES) \
-				tests/TestBundleList.cpp \
-				tests/TestBundleList.h \
 				tests/TestBundleSummary.cpp \
 				tests/TestBundleSummary.h \
 				tests/testsuite.cpp

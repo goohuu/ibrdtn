@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "tests/TestBundleList.h"
+#include "data/TestBundleList.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/utils/Clock.h>
