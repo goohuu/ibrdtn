@@ -67,7 +67,7 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrcommon library
-PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.3])
+PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.4])
 AC_SUBST(ibrcommon_CFLAGS)
 AC_SUBST(ibrcommon_LIBS)
 

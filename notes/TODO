@@ -9,13 +9,6 @@ TCPConvergenceLayer
    Auf Empfängerseite wird aus dem empfangenen Bündel ebenfalls ein Fragment erzeugt. Bedingung
    ist hierbei, dass mindestens der Header komplett übertragen wurde.
 
-Utils
-
- -- Fragmentierung --
-   Die Methoden zur Fragmentierung sind zur Zeit noch nicht vollständig. Andere Blöcke als ein
-   PayloadBlock werden nicht kopiert.
-
-
 SQLiteBundleStorage
 
  -- Redesign --
@@ -32,10 +25,6 @@ Routing
  -- Dynamisches Routing --
 
    Diplomarbeit von Tobias Pögel. Soll in Zukunft integriert werden.
-
- -- Flooding --
-
-   In Zukunft zu implementieren.
 
  -- PROPHET --
 
