@@ -1,6 +1,7 @@
 #include "ibrdtn/data/Serializer.h"
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/Block.h"
+#include "ibrdtn/data/BundleString.h"
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
@@ -291,7 +292,7 @@ namespace dtn
 		}
 
 		DefaultDeserializer::DefaultDeserializer(std::istream &stream, const Dictionary &d)
-		 : _stream(stream), _dictionary(d), _validator(_default_validator)
+		 : _stream(stream), _validator(_default_validator), _dictionary(d)
 		{
 		}
 
@@ -529,6 +530,205 @@ namespace dtn
 		void AcceptValidator::validate(const dtn::data::Bundle&) const throw (RejectedException)
 		{
 
+		}
+
+		SeparateSerializer::SeparateSerializer(std::ostream& stream)
+		 : DefaultSerializer(stream)
+		{
+		}
+
+		SeparateSerializer::~SeparateSerializer()
+		{
+		}
+
+		Serializer& SeparateSerializer::operator <<(const dtn::data::Block& obj)
+		{
+			_stream << obj._blocktype;
+			_stream << dtn::data::SDNV(obj._procflags);
+
+			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
+			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+
+			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
+			{
+				_stream << SDNV(obj._eids.size());
+				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				{
+					dtn::data::BundleString str((*it).getString());
+					_stream << str;
+				}
+			}
+
+			// write size of the payload in the block
+			_stream << SDNV(obj.getLength());
+
+			// write the payload of the block
+			obj.serialize(_stream);
+
+			return (*this);
+		}
+
+		size_t SeparateSerializer::getLength(const dtn::data::Block &obj) const
+		{
+			size_t len = 0;
+
+			len += sizeof(obj._blocktype);
+			len += dtn::data::SDNV(obj._procflags).getLength();
+
+			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
+			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+
+			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
+			{
+				len += dtn::data::SDNV(obj._eids.size()).getLength();
+				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				{
+					dtn::data::BundleString str((*it).getString());
+					len += str.getLength();
+				}
+			}
+
+			// size of the payload in the block
+			len += obj.getLength();
+
+			return len;
+		}
+
+		SeparateDeserializer::SeparateDeserializer(std::istream& stream, Bundle &b)
+		 : DefaultDeserializer(stream), _bundle(b)
+		{
+		}
+
+		SeparateDeserializer::~SeparateDeserializer()
+		{
+		}
+
+		void SeparateDeserializer::readBlock()
+		{
+			char block_type;
+
+			// BLOCK_TYPE
+			block_type = _stream.peek();
+
+			switch (block_type)
+			{
+				case 0:
+				{
+					throw dtn::InvalidDataException("block type is zero");
+					break;
+				}
+
+				case dtn::data::PayloadBlock::BLOCK_TYPE:
+				{
+					if (_bundle._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
+					{
+						// create a temporary block
+						dtn::data::ExtensionBlock &block = _bundle.push_back<dtn::data::ExtensionBlock>();
+
+						// remember the current read position
+						int blockbegin = _stream.tellg();
+
+						// read the block data
+						(*this) >> block;
+
+						// access the payload to get the first byte
+						ibrcommon::BLOB::Reference ref = block.getBLOB();
+						char admfield; (*ref) >> admfield;
+
+						// remove the temporary block
+						_bundle.remove(block);
+
+						// reset the read pointer
+						// BEWARE: this will not work on non-buffered streams like TCP!
+						_stream.seekg(blockbegin);
+
+						switch (admfield >> 4)
+						{
+							case 1:
+							{
+								dtn::data::StatusReportBlock &block = _bundle.push_back<dtn::data::StatusReportBlock>();
+								(*this) >> block;
+								break;
+							}
+
+							case 2:
+							{
+								dtn::data::CustodySignalBlock &block = _bundle.push_back<dtn::data::CustodySignalBlock>();
+								(*this) >> block;
+								break;
+							}
+
+							default:
+							{
+								// drop unknown administrative block
+								break;
+							}
+						}
+
+					}
+					else
+					{
+						dtn::data::PayloadBlock &block = _bundle.push_back<dtn::data::PayloadBlock>();
+						(*this) >> block;
+					}
+					break;
+				}
+
+				default:
+				{
+					// get a extension block factory
+					std::map<char, ExtensionBlockFactory*> &factories = dtn::data::Bundle::getExtensionBlockFactories();
+					std::map<char, ExtensionBlockFactory*>::iterator iter = factories.find(block_type);
+
+					if (iter != factories.end())
+					{
+						ExtensionBlockFactory &f = (*iter->second);
+						dtn::data::Block &block = _bundle.push_back(f);
+						(*this) >> block;
+					}
+					else
+					{
+						dtn::data::ExtensionBlock &block = _bundle.push_back<dtn::data::ExtensionBlock>();
+						(*this) >> block;
+					}
+					break;
+				}
+			}
+		}
+
+		Deserializer&  SeparateDeserializer::operator >>(dtn::data::Block& obj)
+		{
+			dtn::data::SDNV procflags_sdnv;
+			_stream >> obj._blocktype;
+			_stream >> procflags_sdnv;
+			obj._procflags = procflags_sdnv.getValue();
+
+			// read EIDs
+			if ( obj._procflags & dtn::data::Block::BLOCK_CONTAINS_EIDS)
+			{
+				SDNV eidcount;
+				_stream >> eidcount;
+
+				for (unsigned int i = 0; i < eidcount.getValue(); i++)
+				{
+					dtn::data::BundleString str;
+					_stream >> str;
+					obj.addEID(dtn::data::EID(str));
+				}
+			}
+
+			// read the size of the payload in the block
+			SDNV block_size;
+			_stream >> block_size;
+			obj._blocksize = block_size.getValue();
+
+			// validate this block
+			_validator.validate(obj, block_size.getValue());
+
+			// read the payload of the block
+			obj.deserialize(_stream);
+
+			return (*this);
 		}
 	}
 }

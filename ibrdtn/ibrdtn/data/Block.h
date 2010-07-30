@@ -29,6 +29,8 @@ namespace dtn
 			friend class Bundle;
 			friend class DefaultSerializer;
 			friend class DefaultDeserializer;
+			friend class SeparateSerializer;
+			friend class SeparateDeserializer;
 
 		public:
 			enum ProcFlags

@@ -90,9 +90,9 @@ namespace dtn
 
         protected:
             void rebuildDictionary(const dtn::data::Bundle &obj);
+            std::ostream &_stream;
 
         private:
-            std::ostream &_stream;
             Dictionary _dictionary;
         };
 
@@ -108,11 +108,37 @@ namespace dtn
             virtual Deserializer &operator>>(dtn::data::PrimaryBlock &obj);
             virtual Deserializer &operator>>(dtn::data::Block &obj);
 
-        private:
+        protected:
             std::istream &_stream;
-            Dictionary _dictionary;
             Validator &_validator;
             AcceptValidator _default_validator;
+
+        private:
+            Dictionary _dictionary;
+        };
+
+        class SeparateSerializer : public DefaultSerializer
+        {
+        public:
+        	SeparateSerializer(std::ostream &stream);
+            virtual ~SeparateSerializer();
+
+            virtual Serializer &operator<<(const dtn::data::Block &obj);
+            virtual size_t getLength(const dtn::data::Block &obj) const;
+        };
+
+        class SeparateDeserializer : public DefaultDeserializer
+        {
+        public:
+        	SeparateDeserializer(std::istream &stream, Bundle &b);
+            virtual ~SeparateDeserializer();
+
+            void readBlock();
+
+            virtual Deserializer &operator>>(dtn::data::Block &obj);
+
+        private:
+            Bundle &_bundle;
         };
     }
 }
