@@ -111,7 +111,7 @@ net_SOURCES = 	net/BundleReceivedEvent.cpp \
 				net/UDPConvergenceLayer.h
 				
 if CURL
-net_SOURCES += net/HTTPConvergenceLayer.cpp Net/HTTPConvergenceLayer.h
+net_SOURCES += net/HTTPConvergenceLayer.cpp net/HTTPConvergenceLayer.h
 endif
 
 base_SOURCES =  $(core_SOURCES) $(net_SOURCES) $(routing_SOURCES) \
