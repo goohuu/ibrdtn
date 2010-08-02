@@ -10,11 +10,14 @@
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
 
-#include <ibrcommon/thread/MutexLock.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/PayloadBlock.h>
+
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/Logger.h>
+#include <ibrcommon/AutoDelete.h>
 
 #include <iostream>
 #include <list>
@@ -25,13 +28,12 @@ namespace dtn {
 namespace core {
 
 	SQLiteBundleStorage::SQLiteBundleStorage(ibrcommon::File dbPath ,string dbFile , size_t size)
-	  : _BundleTable("Bundles"), _FragmentTable("Fragments"), global_shutdown(false), dbPath(dbPath), dbFile(dbFile), dbSize(size)
+	  : _BundleTable("Bundles"), _FragmentTable("Fragments"), dbPath(dbPath), dbFile(dbFile), dbSize(size)
 	{
 	}
 
 	SQLiteBundleStorage::~SQLiteBundleStorage()
 	{
-		join();
 	}
 
 	void SQLiteBundleStorage::componentUp()
@@ -143,15 +145,11 @@ namespace core {
 			sqlite3_close(database);
 		}
 
-		{
-			ibrcommon::MutexLock l(timeeventConditional);
-			global_shutdown = true;
-			timeeventConditional.signal(true);
-		}
-
 		//unregister Events
 		unbindEvent(TimeEvent::className);
 		unbindEvent(GlobalEvent::className);
+
+		_tasks.unblock();
 	}
 
 	void SQLiteBundleStorage::releaseCustody(dtn::data::BundleID&)
@@ -539,38 +537,38 @@ namespace core {
 //		}
 //	}
 
-	void SQLiteBundleStorage::raiseEvent(const Event *evt){
-		const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
-		const GlobalEvent *global = dynamic_cast<const GlobalEvent*>(evt);
+	void SQLiteBundleStorage::raiseEvent(const Event *evt)
+	{
+		try {
+			const TimeEvent &time = dynamic_cast<const TimeEvent&>(*evt);
 
-		if (global != NULL)
-		{
-			if (global->getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
+			if (time.getAction() == dtn::core::TIME_SECOND_TICK)
 			{
-				{
-				ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
-				global_shutdown = true;
-				}
-				timeeventConditional.signal();
-				dbMutex.signal(true);
+				// TODO: Reaktion auf Timeevents
+				// _tasks.push(new Task());
 			}
-		}
+		} catch (std::bad_cast) {
 
-		if (time != NULL)
-		{
-			//TODO Reaktion auf Timeevents
-			if (time->getAction() == dtn::core::TIME_SECOND_TICK)
-			{
-//				_timecond.go();
-			}
 		}
 	}
 
-	void SQLiteBundleStorage::componentRun(void){
-		ibrcommon::MutexLock l(timeeventConditional);
-		while(!global_shutdown){
-			deleteexpired();
-			timeeventConditional.wait();
+	void SQLiteBundleStorage::componentRun(void)
+	{
+		try {
+			while (isRunning())
+			{
+				Task *t = _tasks.blockingpop();
+				ibrcommon::AutoDelete<Task> ad(t);
+
+				try {
+					deleteexpired();
+					//t->run();
+				} catch (...) {
+
+				}
+			}
+		} catch (ibrcommon::Exception) {
+
 		}
 	}
 

@@ -19,6 +19,7 @@
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/data/File.h>
+#include <ibrcommon/thread/ThreadSafeQueue.h>
 
 #include <sqlite3.h>
 #include <string>
@@ -32,8 +33,15 @@ namespace dtn
 	{
 		class SQLiteBundleStorage : public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent
 		{
-		public:
+		private:
+			class Task
+			{
+			public:
+				virtual ~Task() {};
+				virtual void run() = 0;
+			};
 
+		public:
 			/**
 			 * Constructor
 			 * @param Pfad zum Ordner in denen die Datein gespeichert werden.
@@ -147,17 +155,12 @@ namespace dtn
 			const std::string _BundleTable;
 			const std::string _FragmentTable;
 
-			bool global_shutdown;
 			ibrcommon::File dbPath;
 			string dbFile;
 			size_t dbSize;
 			sqlite3 *database;
-			ibrcommon::Conditional dbMutex, timeeventConditional;
-
-			/*
-			 * This set contains unblock requests for threads blocked by get(EID)
-			 */
-			set<data::EID> unblockEID;
+			ibrcommon::Conditional dbMutex;
+			ibrcommon::ThreadSafeQueue<Task*> _tasks;
 
 			sqlite3_stmt *getTTL;
 			sqlite3_stmt *getBundleByDestination;
