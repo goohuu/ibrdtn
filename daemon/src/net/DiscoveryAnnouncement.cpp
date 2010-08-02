@@ -11,6 +11,7 @@
 #include <ibrcommon/Logger.h>
 #include <netinet/in.h>
 #include <typeinfo>
+#include <iostream>
 
 using namespace dtn::data;
 
@@ -156,7 +157,7 @@ namespace dtn
 				dtn::data::SDNV beacon_len;
 				dtn::data::SDNV eid_len;
 
-				stream >> announcement._flags;
+				stream.get((char&)announcement._flags);
 
 				// catch a short beacon
 				if (DiscoveryAnnouncement::BEACON_SHORT == announcement._flags)
@@ -192,7 +193,7 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER_DEBUG(15) << "beacon version 2 received" << IBRCOMMON_LOGGER_ENDL;
 
-				stream >> announcement._flags;
+				stream.get((char&)announcement._flags);
 
 				IBRCOMMON_LOGGER_DEBUG(25) << "beacon flags: " << hex << (int)announcement._flags << IBRCOMMON_LOGGER_ENDL;
 

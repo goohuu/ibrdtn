@@ -331,7 +331,7 @@ namespace dtn
 
 							// access the payload to get the first byte
 							ibrcommon::BLOB::Reference ref = block.getBLOB();
-							char admfield; (*ref) >> admfield;
+							char admfield; (*ref).get(admfield);
 
 							// write the block into a temporary stream
 							stringstream ss;
@@ -416,7 +416,7 @@ namespace dtn
 			SDNV blocklength;
 
 			// check for the right version
-			_stream >> version;
+			_stream.get(version);
 			if (version != dtn::data::BUNDLE_VERSION) throw dtn::InvalidProtocolException("Bundle version differ from ours.");
 
 			// PROCFLAGS
@@ -474,7 +474,7 @@ namespace dtn
 		Deserializer&  DefaultDeserializer::operator >>(dtn::data::Block& obj)
 		{
 			dtn::data::SDNV procflags_sdnv;
-			_stream >> obj._blocktype;
+			_stream.get(obj._blocktype);
 			_stream >> procflags_sdnv;
 			obj._procflags = procflags_sdnv.getValue();
 
@@ -633,7 +633,7 @@ namespace dtn
 
 						// access the payload to get the first byte
 						ibrcommon::BLOB::Reference ref = block.getBLOB();
-						char admfield; (*ref) >> admfield;
+						char admfield; (*ref).get(admfield);
 
 						// remove the temporary block
 						_bundle.remove(block);
@@ -699,7 +699,7 @@ namespace dtn
 		Deserializer&  SeparateDeserializer::operator >>(dtn::data::Block& obj)
 		{
 			dtn::data::SDNV procflags_sdnv;
-			_stream >> obj._blocktype;
+			_stream.get(obj._blocktype);
 			_stream >> procflags_sdnv;
 			obj._procflags = procflags_sdnv.getValue();
 
