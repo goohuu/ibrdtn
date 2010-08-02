@@ -7,8 +7,8 @@ cc_sources = Utils.cpp Clock.cpp
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/utils
 library_include_HEADERS = $(h_sources)
 
-AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS)
-AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) @ibrcommon_CFLAGS@
+AM_LDFLAGS = @ibrcommon_LIBS@
 
 noinst_LTLIBRARIES= libutils.la
 libutils_la_SOURCES= $(h_sources) $(cc_sources)

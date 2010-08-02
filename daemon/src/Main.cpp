@@ -12,7 +12,7 @@
 #include "core/EventSwitch.h"
 #include "core/BundleStorage.h"
 #include "core/SimpleBundleStorage.h"
-//#include "core/SQLiteBundleStorage.h"
+
 #include "core/Node.h"
 #include "core/EventSwitch.h"
 #include "core/GlobalEvent.h"
@@ -26,6 +26,10 @@
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
+
+#ifdef HAVE_SQLITE
+#include "core/SQLiteBundleStorage.h"
+#endif
 
 #ifdef HAVE_LIBCURL
 #include "net/HTTPConvergenceLayer.h"
@@ -119,9 +123,11 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 
 	try {
 		// new methods for blobs
-		//storage = new dtn::core::SQLiteBundleStorage(conf.getPath("storage"), "sqlite.db", 2 UNIT_MB);
 		ibrcommon::File path = conf.getPath("storage");
 
+#ifdef HAVE_SQLITE
+		dtn::core::SQLiteBundleStorage *sbs = new dtn::core::SQLiteBundleStorage(path, "sqlite.db", conf.getLimit("storage") );
+#else
 		// create workdir if needed
 		if (!path.exists())
 		{
@@ -129,6 +135,7 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 		}
 
 		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path, conf.getLimit("storage"));
+#endif
 		components.push_back(sbs);
 		storage = sbs;
 	} catch (Configuration::ParameterNotSetException ex) {

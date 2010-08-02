@@ -7,5 +7,5 @@ Name: @GENERIC_LIBRARY_NAME@
 Description: IBR-DTN Library
 Requires: ibrcommon
 Version: @VERSION@
-Libs: -L${libdir} -l@GENERIC_LIBRARY_NAME@
-Cflags: -I${includedir}/@GENERIC_LIBRARY_NAME@-@GENERIC_API_VERSION@ -I${libdir}/@GENERIC_LIBRARY_NAME@-@GENERIC_API_VERSION@/include
+Libs: -L${libdir} -l@GENERIC_LIBRARY_NAME@ @ibrcommon_LIBS@
+Cflags: -I${includedir}/@GENERIC_LIBRARY_NAME@-@GENERIC_API_VERSION@ -I${libdir}/@GENERIC_LIBRARY_NAME@-@GENERIC_API_VERSION@/include @ibrcommon_CFLAGS@

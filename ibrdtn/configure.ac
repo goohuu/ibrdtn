@@ -68,8 +68,6 @@ AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrcommon library
 PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.4])
-AC_SUBST(ibrcommon_CFLAGS)
-AC_SUBST(ibrcommon_LIBS)
 
 # Checks for header files.
 AC_CHECK_HEADERS([inttypes.h stddef.h stdint.h stdlib.h string.h sys/time.h unistd.h])
@@ -87,63 +85,6 @@ AC_TYPE_UINT8_T
 AC_FUNC_MALLOC
 AC_FUNC_MKTIME
 AC_CHECK_FUNCS([gettimeofday sqrt])
-
-dnl -----------------------------------------------
-dnl check for pthread library
-dnl -----------------------------------------------
-
-THREADLIB=error
-
-AC_CHECK_LIB(pthread, pthread_attr_init,
-	THREADLIB="pthread")
-
-if test "x$THREADLIB" = xerror; then
-	AC_CHECK_LIB(pthreads, pthread_attr_init,
-		THREADLIB="pthreads")
-fi
-
-if test "x$THREADLIB" = xerror; then
-	AC_CHECK_LIB(thread, pthread_attr_init,
-		THREADLIB="thread")
-fi
-
-PTHREAD_LIBS="-l$THREADLIB"
-PTHREAD_CFLAGS=""
-
-AC_CHECK_LIB($THREADLIB,pthread_create)
-AC_CHECK_LIB($THREADLIB,pthread_mutex_init)
-AC_CHECK_LIB($THREADLIB,pthread_cond_init)
-
-AC_CHECK_LIB($THREADLIB,pthread_condattr_setclock,[
-	AC_DEFINE(HAVE_PTHREAD_CONDATTR_SETCLOCK, [1], ["pthread clocking"])
-])
-AC_CHECK_LIB($THREADLIB,pthread_setconcurrency,[
-	AC_DEFINE(HAVE_PTHREAD_SETCONCURRENCY, [1], ["pthread concurrency"])
-])
-
-AC_CHECK_LIB($THREADLIB,pthread_yield,[
-	AC_DEFINE(HAVE_PTHREAD_YIELD, [1], ["pthread yield"],[
-		AC_CHECK_LIB($tlib,pthread_yield_np,[
-			AC_DEFINE(HAVE_PTHREAD_YIELD_NP, [1], ["pthread yield np"])
-		])
-	])
-])
-
-AC_CHECK_LIB($THREADLIB,pthread_delay,[
-	AC_DEFINE(HAVE_PTHREAD_DELAY, [1], ["pthread delay"])
-])
-AC_CHECK_LIB($THREADLIB,pthread_delay_np,[
-	AC_DEFINE(HAVE_PTHREAD_DELAY_NP, [1], ["pthread delay np"])
-])
-AC_CHECK_LIB($THREADLIB,pthread_setschedprio,[
-	AC_DEFINE(HAVE_PTHREAD_SETSCHEDPRIO, [1], ["pthread scheduling"])
-])
-
-AC_SUBST(PTHREAD_CFLAGS)
-AC_SUBST(PTHREAD_LIBS)
-
-# check for openssl
-PKG_CHECK_MODULES(OPENSSL, openssl)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts

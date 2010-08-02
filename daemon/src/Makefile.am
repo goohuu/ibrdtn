@@ -1,12 +1,17 @@
 AUTOMAKE_OPTIONS = foreign
 
 # what flags you want to pass to the C compiler & linker
-AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS) $(ibrdtn_CFLAGS) $(OPENSSL_CFLAGS)
-AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) $(ibrdtn_LIBS) $(OPENSSL_LIBS)
+AM_CPPFLAGS = @ibrdtn_CFLAGS@ 
+AM_LDFLAGS = @ibrdtn_LIBS@
 
 if CURL
 AM_CPPFLAGS += @CURL_CFLAGS@
 AM_LDFLAGS += @CURL_LIBS@
+endif
+
+if SQLITE
+AM_CPPFLAGS += @SQLITE_CFLAGS@
+AM_LDFLAGS += @SQLITE_LIBS@
 endif
 
 INCLUDES = -I@top_srcdir@/src
@@ -57,6 +62,10 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				core/StatusReportGenerator.h \
 				core/TimeEvent.cpp \
 				core/TimeEvent.h
+				
+if SQLITE
+core_SOURCES += core/SQLiteBundleStorage.h core/SQLiteBundleStorage.cpp
+endif
 				
 routing_SOURCES = routing/BaseRouter.cpp \
 				routing/BaseRouter.h \

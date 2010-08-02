@@ -10,8 +10,8 @@ cc_sources =
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
-AM_CPPFLAGS = -I$(top_srcdir) $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS) $(OPENSSL_CFLAGS)
-AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) $(OPENSSL_LIBS)
+AM_CPPFLAGS = -I$(top_srcdir) @ibrcommon_CFLAGS@
+AM_LDFLAGS = @ibrcommon_LIBS@
 
 lib_LTLIBRARIES= libibrdtn.la
 libibrdtn_la_SOURCES= $(h_sources) $(cc_sources)

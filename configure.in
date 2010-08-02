@@ -4,10 +4,7 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([m4])
 LT_INIT
 
-export ibrcommon_CFLAGS="-I$(pwd)/ibrcommon"
-export ibrcommon_LIBS="-L$(pwd)/ibrcommon/ibrcommon/.libs -librcommon"
-export ibrdtn_CFLAGS="-I$(pwd)/ibrdtn"
-export ibrdtn_LIBS="-L$(pwd)/ibrdtn/ibrdtn/.libs -librdtn"
+export PKG_CONFIG_PATH="../ibrcommon:../ibrdtn"
 
 AC_CONFIG_SUBDIRS(ibrcommon ibrdtn daemon tools)
 AC_CONFIG_FILES([Makefile])

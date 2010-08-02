@@ -36,19 +36,10 @@ AC_PROG_MAKE_SET
 AC_LANG_CPLUSPLUS
 
 # Checks for libraries.
-AC_CHECK_LIB([sqlite3], [sqlite3_open])
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrdtn library
-#AC_CHECK_LIB([ibrdtn], [main])
 PKG_CHECK_MODULES([ibrdtn], [ibrdtn >= 0.4])
-AC_SUBST(ibrdtn_CFLAGS)
-AC_SUBST(ibrdtn_LIBS)
-
-# check for ibrcommon library
-PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.4])
-AC_SUBST(ibrcommon_CFLAGS)
-AC_SUBST(ibrcommon_LIBS)
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netinet/in.h stdlib.h string.h sys/socket.h unistd.h])
@@ -59,63 +50,6 @@ AC_TYPE_SIZE_T
 
 # Checks for library functions.
 AC_CHECK_FUNCS([gethostname socket])
-
-dnl -----------------------------------------------
-dnl check for pthread library
-dnl -----------------------------------------------
-
-THREADLIB=error
-
-AC_CHECK_LIB(pthread, pthread_attr_init,
-	THREADLIB="pthread")
-
-if test "x$THREADLIB" = xerror; then
-	AC_CHECK_LIB(pthreads, pthread_attr_init,
-		THREADLIB="pthreads")
-fi
-
-if test "x$THREADLIB" = xerror; then
-	AC_CHECK_LIB(thread, pthread_attr_init,
-		THREADLIB="thread")
-fi
-
-PTHREAD_LIBS="-l$THREADLIB"
-PTHREAD_CFLAGS=""
-
-AC_CHECK_LIB($THREADLIB,pthread_create)
-AC_CHECK_LIB($THREADLIB,pthread_mutex_init)
-AC_CHECK_LIB($THREADLIB,pthread_cond_init)
-
-AC_CHECK_LIB($THREADLIB,pthread_condattr_setclock,[
-	AC_DEFINE(HAVE_PTHREAD_CONDATTR_SETCLOCK, [1], ["pthread clocking"])
-])
-AC_CHECK_LIB($THREADLIB,pthread_setconcurrency,[
-	AC_DEFINE(HAVE_PTHREAD_SETCONCURRENCY, [1], ["pthread concurrency"])
-])
-
-AC_CHECK_LIB($THREADLIB,pthread_yield,[
-	AC_DEFINE(HAVE_PTHREAD_YIELD, [1], ["pthread yield"],[
-		AC_CHECK_LIB($tlib,pthread_yield_np,[
-			AC_DEFINE(HAVE_PTHREAD_YIELD_NP, [1], ["pthread yield np"])
-		])
-	])
-])
-
-AC_CHECK_LIB($THREADLIB,pthread_delay,[
-	AC_DEFINE(HAVE_PTHREAD_DELAY, [1], ["pthread delay"])
-])
-AC_CHECK_LIB($THREADLIB,pthread_delay_np,[
-	AC_DEFINE(HAVE_PTHREAD_DELAY_NP, [1], ["pthread delay np"])
-])
-AC_CHECK_LIB($THREADLIB,pthread_setschedprio,[
-	AC_DEFINE(HAVE_PTHREAD_SETSCHEDPRIO, [1], ["pthread scheduling"])
-])
-
-AC_SUBST(PTHREAD_CFLAGS)
-AC_SUBST(PTHREAD_LIBS)
-
-# check for openssl
-PKG_CHECK_MODULES(OPENSSL, openssl)
 
 AC_ARG_WITH(curl,
 	AS_HELP_STRING([--with-curl], [Build with libcurl
@@ -131,7 +65,24 @@ AC_ARG_WITH(curl,
 	use_curl="no"
 ])
 
+AC_ARG_WITH(sqlite,
+	AS_HELP_STRING([--with-sqlite], [Build with sqlite support
+		@<:@default=no@:>@]),
+	[
+	if test "x$with_curl" = "xyes"; then
+		PKG_CHECK_MODULES(SQLITE, sqlite3, use_sqlite="yes", use_sqlite="no")
+#		AC_SUBST(SQLITE_CFLAGS)
+#		AC_SUBST(SQLITE_LIBS)
+		AC_DEFINE(HAVE_SQLITE, [1], ["sqlite library is available"])
+	else
+		use_sqlite="no"
+	fi
+	],[
+	use_sqlite="no"
+])
+
 AM_CONDITIONAL(CURL, test x$use_curl = xyes)
+AM_CONDITIONAL(SQLITE, test x$use_sqlite = xyes)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts

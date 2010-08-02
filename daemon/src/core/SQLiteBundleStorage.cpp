@@ -8,22 +8,35 @@
 #include "core/SQLiteBundleStorage.h"
 #include "core/TimeEvent.h"
 #include "core/GlobalEvent.h"
-#include "ibrcommon/thread/MutexLock.h"
-#include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/BundleID.h"
-#include <iostream>
 #include "core/BundleCore.h"
+
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/data/Serializer.h>
+#include <ibrdtn/data/PayloadBlock.h>
+
+#include <iostream>
 #include <list>
 #include <stdio.h>
-
 #include <vector>
 
 namespace dtn {
 namespace core {
 
-	SQLiteBundleStorage::SQLiteBundleStorage(ibrcommon::File dbPath ,string dbFile , int size):
-			dbPath(dbPath), dbFile(dbFile), dbSize(size), _BundleTable("Bundles"), global_shutdown(false), _FragmentTable("Fragments"){
-		int err,filename , err2;
+	SQLiteBundleStorage::SQLiteBundleStorage(ibrcommon::File dbPath ,string dbFile , size_t size)
+	  : _BundleTable("Bundles"), _FragmentTable("Fragments"), global_shutdown(false), dbPath(dbPath), dbFile(dbFile), dbSize(size)
+	{
+	}
+
+	SQLiteBundleStorage::~SQLiteBundleStorage()
+	{
+		join();
+	}
+
+	void SQLiteBundleStorage::componentUp()
+	{
+		int err,filename;
 		list<int> inconsistentList;
 		list<int>::iterator it;
 
@@ -110,7 +123,7 @@ namespace core {
 		bindEvent(GlobalEvent::className);
 	}
 
-	SQLiteBundleStorage::~SQLiteBundleStorage()
+	void SQLiteBundleStorage::componentDown()
 	{
 		{
 			ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
@@ -139,8 +152,12 @@ namespace core {
 		//unregister Events
 		unbindEvent(TimeEvent::className);
 		unbindEvent(GlobalEvent::className);
+	}
 
-		join();
+	void SQLiteBundleStorage::releaseCustody(dtn::data::BundleID&)
+	{
+		// custody is successful transferred to another node.
+		// it is safe to delete this bundle now. (depending on the routing algorithm.)
 	}
 
 	sqlite3_stmt* SQLiteBundleStorage::prepareStatement(string sqlquery){
@@ -152,6 +169,11 @@ namespace core {
 			std::cerr << "SQLiteBundlestorage: failure in prepareStatement: " << err << " with Query: " << sqlquery << std::endl;
 		}
 		return statement;
+	}
+
+	dtn::data::Bundle SQLiteBundleStorage::get(const ibrcommon::BloomFilter &filter)
+	{
+		throw BundleStorage::NoBundleFoundException();
 	}
 
 	dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::BundleID &id){
@@ -173,6 +195,7 @@ namespace core {
 			//If an error occurs
 			if(err != SQLITE_ROW){
 				std::cerr << "SQLiteBundleStorage: No Bundle found with BundleID: " << id.toString() <<endl;
+				throw BundleStorage::NoBundleFoundException();
 			}
 			filename = sqlite3_column_int(getBundleByID, 0);
 
@@ -184,7 +207,7 @@ namespace core {
 
 			completefilename << dbPath.getPath() << "/" << filename;
 			datei.open((completefilename.str()).c_str(), ios::in|ios::binary);
-			datei >> bundle;
+			dtn::data::DefaultDeserializer(datei) >> bundle;
 			datei.close();
 
 			//reset the statement
@@ -195,37 +218,8 @@ namespace core {
 	}
 
 	dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::EID &eid){
-		dtn::data::Bundle bundel;
-		set<dtn::data::EID>::iterator iter;
-		while(true){
-			ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
-			//checks if global shutdown is activated
-			if(!global_shutdown){
-				//checks if a unblock wish is occured
-				iter = unblockEID.find(eid);
-				if(iter == unblockEID.end()){
-					if(getBundle(eid,bundel)){
-						//ToDo: Nachricht an das Routing senden, dass das Bundle erfolgreich zugestellt wurde.
-						return bundel;
-					}
-					else{
-						//lock.~MutexLock();
-						dbMutex.wait();
-					}
-				}
-				else{
-					 unblockEID.erase(eid);
-					 break;
-				}
-			}
-			else {
-				break;
-			}
-		}
-		throw dtn::exceptions::NoBundleFoundException();
-	}
+		dtn::data::Bundle bundle;
 
-	bool SQLiteBundleStorage::getBundle(const dtn::data::EID &eid, dtn::data::Bundle &bundle){
 		int err,filename;
 		stringstream completefilename;
 		string ID = eid.getString();
@@ -241,20 +235,20 @@ namespace core {
 		//If an error occurs
 		if(err != SQLITE_ROW){
 				sqlite3_reset(getBundleByDestination);
-				return false;
+				throw BundleStorage::NoBundleFoundException();
 		}
 		filename = sqlite3_column_int(getBundleByDestination, 0);
 
 		fstream datei;
 		completefilename << dbPath.getPath() << "/" << filename;
 		datei.open((completefilename.str()).c_str(), ios::in|ios::binary);
-		datei >> bundle;
+		dtn::data::DefaultDeserializer(datei) >> bundle;
 		datei.close();
 
 		//reset the statement
 		sqlite3_reset(getBundleByID);
 
-		return true;
+		return bundle;
 	}
 
 	void SQLiteBundleStorage::store(const dtn::data::Bundle &bundle){
@@ -291,7 +285,7 @@ namespace core {
 			fstream datei;
 			completefilename << dbPath.getPath() << "/" << filename;
 			datei.open((completefilename.str()).c_str(), ios::out|ios::binary);
-			datei << bundle;
+			dtn::data::DefaultSerializer(datei) << bundle;
 			datei.close();
 		}
 		//wake up thread who are waiting to get a bundle with a specific destinationEID
@@ -338,23 +332,15 @@ namespace core {
 		}
 	}
 
-	void SQLiteBundleStorage::unblock(const dtn::data::EID &eid){
+	void SQLiteBundleStorage::clear()
+	{
 		ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
-		unblockEID.insert(eid);
-		dbMutex.signal(true);
-	}
-
-	void SQLiteBundleStorage::clear(){
-		char *err;
-		{
-			ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
-			sqlite3_step(clearStorage);
-			sqlite3_reset(clearStorage);
-			if(SQLITE_OK != sqlite3_step(vacuum)){
-				std::cerr << "SQLiteBundleStorage: failure while processing vacuum.";
-			}
-			sqlite3_reset(vacuum);
+		sqlite3_step(clearStorage);
+		sqlite3_reset(clearStorage);
+		if(SQLITE_OK != sqlite3_step(vacuum)){
+			std::cerr << "SQLiteBundleStorage: failure while processing vacuum.";
 		}
+		sqlite3_reset(vacuum);
 	}
 
 	bool SQLiteBundleStorage::empty(){
@@ -382,175 +368,176 @@ namespace core {
 //
 //	}
 
-	void SQLiteBundleStorage::storeFragment(const dtn::data::Bundle &bundle){
-		int payloadsize, TTL, priority, err, filename;
-		stringstream completefilename;
-		string destination, sourceEID;
-		list<dtn::data::Block*> blocklist;
-		list<dtn::data::Block*>::iterator it;
-
-		destination = bundle._destination.getString();
-		sourceEID = bundle._source.getString();
-		TTL = bundle._timestamp + bundle._lifetime;
-
-	//calculation of priority
-		priority = 2 * (bundle._procflags & dtn::data::Bundle::PRIORITY_BIT2) + (bundle._procflags & dtn::data::Bundle::PRIORITY_BIT1);
-
-	//calculation of the int header: count bytes till first payloadbyte
-//		int header;
-//		blocklist = bundle.getBlocks();
-//		it = blocklist.begin();
-//		while ((*it)->getType() != PayloadBlock::BLOCK_TYPE){
-//			header += (*it)->getSize();  //gibt getSize() die größe in Bit oder Byte wieder?
-//			it++;
+//	void SQLiteBundleStorage::storeFragment(const dtn::data::Bundle &bundle){
+//		int payloadsize, TTL, priority, err, filename;
+//		stringstream completefilename;
+//		string destination, sourceEID;
+//		list<dtn::data::Block*> blocklist;
+//		list<dtn::data::Block*>::iterator it;
+//
+//		destination = bundle._destination.getString();
+//		sourceEID = bundle._source.getString();
+//		TTL = bundle._timestamp + bundle._lifetime;
+//
+//	//calculation of priority
+//		priority = 2 * (bundle._procflags & dtn::data::Bundle::PRIORITY_BIT2) + (bundle._procflags & dtn::data::Bundle::PRIORITY_BIT1);
+//
+//	//calculation of the int header: count bytes till first payloadbyte
+////		int header;
+////		blocklist = bundle.getBlocks();
+////		it = blocklist.begin();
+////		while ((*it)->getType() != PayloadBlock::BLOCK_TYPE){
+////			header += (*it)->getSize();  //gibt getSize() die größe in Bit oder Byte wieder?
+////			it++;
+////		}
+//
+//	//the iterator now points to the payloadblock. Here we get the length of the payloaddata for later use.
+//		const dtn::data::PayloadBlock &payload = bundle.getBlock<dtn::data::PayloadBlock&>();
+//		const ibrcommon::BLOB::Reference payloadBlob = payload.getBLOB();
+//		payloadsize = payloadBlob.getSize();
+//
+//
+//		ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
+//	//guck ob schon andere Fragmente vorhanden sind
+//		sqlite3_bind_text(getFragements,1, sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
+//		sqlite3_bind_int(getFragements,2,bundle._timestamp);
+//		err = sqlite3_step(getFragements);
+//		if(err == SQLITE_ERROR){
+//			std::cerr << "SQLiteBundleStorage: storeFragment() failure: "<< err << " " << sqlite3_errmsg(database) << endl;
 //		}
-
-	//the iterator now points to the payloadblock. Here we get the length of the payloaddata for later use.
-		ibrcommon::BLOB::Reference payloadBlob = (*it)->getBLOB();
-		payloadsize = payloadBlob.getSize();
-
-
-		ibrcommon::MutexLock lock = ibrcommon::MutexLock(dbMutex);
-	//guck ob schon andere Fragmente vorhanden sind
-		sqlite3_bind_text(getFragements,1, sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
-		sqlite3_bind_int(getFragements,2,bundle._timestamp);
-		err = sqlite3_step(getFragements);
-		if(err == SQLITE_ERROR){
-			std::cerr << "SQLiteBundleStorage: storeFragment() failure: "<< err << " " << sqlite3_errmsg(database) << endl;
-		}
-		if(err != SQLITE_ROW){
-			//man selbst ist die ROWID welche den Dateinamen kennzeichnet
-			//1) Metadaten speicher
-			//2) Dateinmanen rausfindn
-			//3) checken ob man offset 0 ist
-			//		ja: bundle in datei speichern
-			//		nein: header weglassen beim dateispeichern
-			sqlite3_reset(getFragements);
-
-			//1) Metadateien speichern
-			sqlite3_bind_text(store_Fragment, 1, sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
-			sqlite3_bind_int(store_Fragment,2,bundle._timestamp);
-			sqlite3_bind_int(store_Fragment,3,bundle._sequencenumber);
-			sqlite3_bind_text(store_Fragment, 4,destination.c_str(), destination.length(),SQLITE_TRANSIENT);
-			sqlite3_bind_int(store_Fragment,5,TTL);
-			sqlite3_bind_int(store_Fragment,6,priority);
-			sqlite3_bind_int(store_Fragment,7,bundle._fragmentoffset);
-			sqlite3_bind_int(store_Fragment,8,payloadsize);
-			//bundle._fragmentoffset  == 0 ? 	sqlite3_bind_int(store_Fragment,9,1) : sqlite3_bind_int(store_Fragment,9,header);
-			err = sqlite3_step(store_Fragment);
-			if(err != SQLITE_OK){
-				std::cerr << "SQLiteBundleStorage: storeFragment() failure: "<< err << " " << sqlite3_errmsg(database) << endl;
-			}
-			sqlite3_reset(store_Fragment);
-
-			//2) Dateinamen rausfinden
-			int filename = sqlite3_last_insert_rowid(database);
-
-			if(bundle._fragmentoffset == 0){
-				fstream datei;
-				completefilename << dbPath.getPath() << "/Fragment/" << filename;
-				datei.open((completefilename.str()).c_str(), ios::binary);
-				datei << bundle;
-				datei.close();
-			}
-			else{
-
-			}
-		}
-
-		else{
-			//1)dateinamen bestimmen / check ob das Fragment vollständig ist
-			//2)check ob man offset 0 ist
-			//3)Bundle in datei speichern
-			//		offset = 0: bundle in datei speichern
-			//		offset != 0: header weglassen beim dateispeichern
-			//4)Metadaten speicher
-
-		//1)dateinamen bestimmen / check ob da Fragment vollständig ist
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			// Die Querry ist bereits ausgeführt und der Zeiger steht auf pos 0
-			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-			int fragmentoffset , bitcounter = 0;
-			while (err != SQLITE_DONE || err == SQLITE_ERROR){
-				fragmentoffset = sqlite3_column_int(getFragements,7);
-				//if file is set to 1, filename equals ROWID of this database entry
-				if(sqlite3_column_int(getFragements,9) == 1){
-					filename = sqlite3_column_int(getFragements,0);
-				}
-				//Now its getting boring. the following codepice summs the payloadfragmentbytes, to check if all fragments were received
-				//and the bundle is complete.
-				if(bitcounter >= fragmentoffset){
-					bitcounter = fragmentoffset - bitcounter + sqlite3_column_int(getFragements,8);
-				}
-				err = sqlite3_step(getFragements);
-			}
-			//bitcounter noch das aktuell verarbeitete Bündel erhöhen
-			fragmentoffset = bundle._fragmentoffset;
-			if(bitcounter >= fragmentoffset){
-				bitcounter = fragmentoffset - bitcounter + payloadsize;
-			}
-			sqlite3_reset(getFragements);
-
-			//2) Offset = 0
-			if(bundle._fragmentoffset == 0){
-			//3) Bundle in datei speichern
-					fstream datei;
-					completefilename << dbPath.getPath() << "/Fragment/" << filename;
-					datei.open((completefilename.str()).c_str(), ios::binary);
-					datei << bundle;
-					datei.close();
-				}
-			//2) Offset != 0
-			else{
-			//3) Bundle in Datei speichern
-				fstream datei, tmpdatei;
-				completefilename << dbPath.getPath() << "/Fragment/" << filename;
-				tmpdatei.open((completefilename.str()).c_str(), ios::binary);
-				tmpdatei << bundle;
-				//copy the tmpfile without the headers to the file which should contain the complete bundle
-			}
-
-		//4) Metadaten speichern
-			//if all fragments were received
-			if(bitcounter == bundle._appdatalength){
-//				//ToDo: Bits im Header ändern und fragmentfelder löschen
-//				sqlite3_bind_text(store_Bundle, 1, stream_bundleid.str().c_str(), stream_bundleid.str().length(),SQLITE_TRANSIENT);
-//				sqlite3_bind_text(store_Bundle, 2,destination.c_str(), destination.length(),SQLITE_TRANSIENT);
-//				sqlite3_bind_int(store_Bundle,3,TTL);
-//				sqlite3_bind_int(store_Bundle,4,priority);
-//				err = sqlite3_step(store_Bundle);
-//				if(err != SQLITE_OK){
-//					std::cerr << "SQLiteBundleStorage: store() failure: "<< err << " " << sqlite3_errmsg(database) <<endl;
+//		if(err != SQLITE_ROW){
+//			//man selbst ist die ROWID welche den Dateinamen kennzeichnet
+//			//1) Metadaten speicher
+//			//2) Dateinmanen rausfindn
+//			//3) checken ob man offset 0 ist
+//			//		ja: bundle in datei speichern
+//			//		nein: header weglassen beim dateispeichern
+//			sqlite3_reset(getFragements);
+//
+//			//1) Metadateien speichern
+//			sqlite3_bind_text(store_Fragment, 1, sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
+//			sqlite3_bind_int(store_Fragment,2,bundle._timestamp);
+//			sqlite3_bind_int(store_Fragment,3,bundle._sequencenumber);
+//			sqlite3_bind_text(store_Fragment, 4,destination.c_str(), destination.length(),SQLITE_TRANSIENT);
+//			sqlite3_bind_int(store_Fragment,5,TTL);
+//			sqlite3_bind_int(store_Fragment,6,priority);
+//			sqlite3_bind_int(store_Fragment,7,bundle._fragmentoffset);
+//			sqlite3_bind_int(store_Fragment,8,payloadsize);
+//			//bundle._fragmentoffset  == 0 ? 	sqlite3_bind_int(store_Fragment,9,1) : sqlite3_bind_int(store_Fragment,9,header);
+//			err = sqlite3_step(store_Fragment);
+//			if(err != SQLITE_OK){
+//				std::cerr << "SQLiteBundleStorage: storeFragment() failure: "<< err << " " << sqlite3_errmsg(database) << endl;
+//			}
+//			sqlite3_reset(store_Fragment);
+//
+//			//2) Dateinamen rausfinden
+//			int filename = sqlite3_last_insert_rowid(database);
+//
+//			if(bundle._fragmentoffset == 0){
+//				fstream datei;
+//				completefilename << dbPath.getPath() << "/Fragment/" << filename;
+//				datei.open((completefilename.str()).c_str(), ios::binary);
+//				dtn::data::DefaultSerializer(datei) << bundle;
+//				datei.close();
+//			}
+//			else{
+//
+//			}
+//		}
+//
+//		else{
+//			//1)dateinamen bestimmen / check ob das Fragment vollständig ist
+//			//2)check ob man offset 0 ist
+//			//3)Bundle in datei speichern
+//			//		offset = 0: bundle in datei speichern
+//			//		offset != 0: header weglassen beim dateispeichern
+//			//4)Metadaten speicher
+//
+//		//1)dateinamen bestimmen / check ob da Fragment vollständig ist
+//			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//			// Die Querry ist bereits ausgeführt und der Zeiger steht auf pos 0
+//			//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//			unsigned int fragmentoffset , bitcounter = 0;
+//			while (err != SQLITE_DONE || err == SQLITE_ERROR){
+//				fragmentoffset = sqlite3_column_int(getFragements,7);
+//				//if file is set to 1, filename equals ROWID of this database entry
+//				if(sqlite3_column_int(getFragements,9) == 1){
+//					filename = sqlite3_column_int(getFragements,0);
 //				}
-//				sqlite3_reset(store_Bundle);
-//				int filename = sqlite3_last_insert_rowid(database);
-//				//ToDo Kopieren der Datei
-//				sqlite3_bind_text(removeFragments,1, sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
-//				sqlite3_bind_int(removeFragments,bundle._timestamp);
-//				err = sqlite3_step(removeFragments);
-//				if(err != SQLITE_OK){
-//					std::cerr << "SQLiteBundleStorage: store() failure: "<< err << " " << sqlite3_errmsg(database) <<endl;
+//				//Now its getting boring. the following codepice summs the payloadfragmentbytes, to check if all fragments were received
+//				//and the bundle is complete.
+//				if(bitcounter >= fragmentoffset){
+//					bitcounter = fragmentoffset - bitcounter + sqlite3_column_int(getFragements,8);
 //				}
-//				sqlite3_reset(removeFragments);
-			}
-			else{
-				sqlite3_bind_text(store_Fragment, 1, sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
-				sqlite3_bind_int(store_Fragment,2,bundle._timestamp);
-				sqlite3_bind_int(store_Fragment,3,bundle._sequencenumber);
-				sqlite3_bind_text(store_Fragment, 4,destination.c_str(), destination.length(),SQLITE_TRANSIENT);
-				sqlite3_bind_int(store_Fragment,5,TTL);
-				sqlite3_bind_int(store_Fragment,6,priority);
-				sqlite3_bind_int(store_Fragment,7,bundle._fragmentoffset);
-				sqlite3_bind_int(store_Fragment,8,payloadsize);
-				sqlite3_bind_int(store_Fragment,9,0);
-				err = sqlite3_step(store_Fragment);
-				if(err != SQLITE_OK){
-					std::cerr << "SQLiteBundleStorage: storeFragment() failure: "<< err << " " << sqlite3_errmsg(database) << endl;
-				}
-				sqlite3_reset(store_Fragment);
-			}
-		}
-	}
+//				err = sqlite3_step(getFragements);
+//			}
+//			//bitcounter noch das aktuell verarbeitete Bündel erhöhen
+//			fragmentoffset = bundle._fragmentoffset;
+//			if(bitcounter >= fragmentoffset){
+//				bitcounter = fragmentoffset - bitcounter + payloadsize;
+//			}
+//			sqlite3_reset(getFragements);
+//
+//			//2) Offset = 0
+//			if(bundle._fragmentoffset == 0){
+//			//3) Bundle in datei speichern
+//					fstream datei;
+//					completefilename << dbPath.getPath() << "/Fragment/" << filename;
+//					datei.open((completefilename.str()).c_str(), ios::binary);
+//					dtn::data::DefaultSerializer(datei) << bundle;
+//					datei.close();
+//				}
+//			//2) Offset != 0
+//			else{
+//			//3) Bundle in Datei speichern
+//				fstream datei, tmpdatei;
+//				completefilename << dbPath.getPath() << "/Fragment/" << filename;
+//				tmpdatei.open((completefilename.str()).c_str(), ios::binary);
+//				dtn::data::DefaultSerializer(tmpdatei) << bundle;
+//				//copy the tmpfile without the headers to the file which should contain the complete bundle
+//			}
+//
+//		//4) Metadaten speichern
+//			//if all fragments were received
+//			if(bitcounter == bundle._appdatalength){
+////				//ToDo: Bits im Header ändern und fragmentfelder löschen
+////				sqlite3_bind_text(store_Bundle, 1, stream_bundleid.str().c_str(), stream_bundleid.str().length(),SQLITE_TRANSIENT);
+////				sqlite3_bind_text(store_Bundle, 2,destination.c_str(), destination.length(),SQLITE_TRANSIENT);
+////				sqlite3_bind_int(store_Bundle,3,TTL);
+////				sqlite3_bind_int(store_Bundle,4,priority);
+////				err = sqlite3_step(store_Bundle);
+////				if(err != SQLITE_OK){
+////					std::cerr << "SQLiteBundleStorage: store() failure: "<< err << " " << sqlite3_errmsg(database) <<endl;
+////				}
+////				sqlite3_reset(store_Bundle);
+////				int filename = sqlite3_last_insert_rowid(database);
+////				//ToDo Kopieren der Datei
+////				sqlite3_bind_text(removeFragments,1, sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
+////				sqlite3_bind_int(removeFragments,bundle._timestamp);
+////				err = sqlite3_step(removeFragments);
+////				if(err != SQLITE_OK){
+////					std::cerr << "SQLiteBundleStorage: store() failure: "<< err << " " << sqlite3_errmsg(database) <<endl;
+////				}
+////				sqlite3_reset(removeFragments);
+//			}
+//			else{
+//				sqlite3_bind_text(store_Fragment, 1, sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
+//				sqlite3_bind_int(store_Fragment,2,bundle._timestamp);
+//				sqlite3_bind_int(store_Fragment,3,bundle._sequencenumber);
+//				sqlite3_bind_text(store_Fragment, 4,destination.c_str(), destination.length(),SQLITE_TRANSIENT);
+//				sqlite3_bind_int(store_Fragment,5,TTL);
+//				sqlite3_bind_int(store_Fragment,6,priority);
+//				sqlite3_bind_int(store_Fragment,7,bundle._fragmentoffset);
+//				sqlite3_bind_int(store_Fragment,8,payloadsize);
+//				sqlite3_bind_int(store_Fragment,9,0);
+//				err = sqlite3_step(store_Fragment);
+//				if(err != SQLITE_OK){
+//					std::cerr << "SQLiteBundleStorage: storeFragment() failure: "<< err << " " << sqlite3_errmsg(database) << endl;
+//				}
+//				sqlite3_reset(store_Fragment);
+//			}
+//		}
+//	}
 
 	void SQLiteBundleStorage::raiseEvent(const Event *evt){
 		const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
@@ -579,7 +566,7 @@ namespace core {
 		}
 	}
 
-	void SQLiteBundleStorage::run(void){
+	void SQLiteBundleStorage::componentRun(void){
 		ibrcommon::MutexLock l(timeeventConditional);
 		while(!global_shutdown){
 			deleteexpired();
