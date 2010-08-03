@@ -1,0 +1,10 @@
+2010-08-03
+--------------------------------------------------------
+ * Bugfix: Reading block type fails with some values
+ * Autoconf build configuration improved
+ * OpenSSL library is now optional (use --with-openssl to enable it)
+ * SQLiteBundleStorage added (experimental, use --with-sqlite to enable it)
+ 
+2010-07-30
+--------------------------------------------------------
+ * Release 0.4.0
