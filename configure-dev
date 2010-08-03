@@ -1,6 +1,8 @@
 #!/bin/bash
 #
 
+CONF_PARAMS="--with-openssl --with-curl"
+
 # configures the project to be verbose and pedantic to coding errors and mistakes. Additionally, debugging symbols are enabled.
-./configure CXXFLAGS="-ggdb -Wall -Wextra" $@
+./configure CXXFLAGS="-ggdb -Wall -Wextra" $CONF_PARAMS $@
 

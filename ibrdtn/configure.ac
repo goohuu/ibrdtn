@@ -67,7 +67,36 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrcommon library
-PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.4])
+PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.4], :, [
+if test -d "$(pwd)/../ibrcommon"; then
+	m4_pattern_allow([^PKG_CONFIG_PATH$])
+	export PKG_CONFIG_PATH="$(pwd)/../ibrcommon"
+	ibrcommon_LIBS="$(pkg-config --define-variable=libdir=$(pwd)/../ibrcommon/ibrcommon/.libs --libs ibrcommon)"
+	ibrcommon_CFLAGS="$(pkg-config --cflags ibrcommon) -I$(pwd)/../ibrcommon"
+	AC_SUBST(ibrcommon_CFLAGS)
+	AC_SUBST(ibrcommon_LIBS)
+	echo "using relative ibrcommon library in $(pwd)/../ibrcommon"
+else
+	echo "ibrcommon library not found!"
+	exit 1
+fi
+])
+
+# check for ibrdtn library
+PKG_CHECK_MODULES([ibrdtn], [ibrdtn >= 0.4], :, [
+if test -d "$(pwd)/../ibrdtn"; then
+	m4_pattern_allow([^PKG_CONFIG_PATH$])
+	export PKG_CONFIG_PATH="$(pwd)/../ibrdtn:$(pwd)/../ibrcommon"
+	ibrdtn_LIBS="$(pkg-config --define-variable=libdir=$(pwd)/../ibrdtn/ibrdtn/.libs --libs ibrdtn)"
+	ibrdtn_CFLAGS="$(pkg-config --cflags ibrdtn) -I$(pwd)/../ibrdtn"
+	AC_SUBST(ibrdtn_CFLAGS)
+	AC_SUBST(ibrdtn_LIBS)
+	echo "using relative ibrdtn library in $(pwd)/../ibrdtn"
+else
+	echo "ibrdtn library not found!"
+	exit 1
+fi
+])
 
 # Checks for header files.
 AC_CHECK_HEADERS([inttypes.h stddef.h stdint.h stdlib.h string.h sys/time.h unistd.h])

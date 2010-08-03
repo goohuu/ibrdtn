@@ -26,7 +26,20 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrdtn library
-PKG_CHECK_MODULES([ibrdtn], [ibrdtn >= 0.4])
+PKG_CHECK_MODULES([ibrdtn], [ibrdtn >= 0.4], :, [
+if test -d "$(pwd)/../ibrdtn"; then
+	m4_pattern_allow([^PKG_CONFIG_PATH$])
+	export PKG_CONFIG_PATH="$(pwd)/../ibrdtn:$(pwd)/../ibrcommon"
+	ibrdtn_LIBS="$(pkg-config --define-variable=libdir=$(pwd)/../ibrdtn/ibrdtn/.libs --libs ibrdtn)"
+	ibrdtn_CFLAGS="$(pkg-config --cflags ibrdtn) -I$(pwd)/../ibrdtn"
+	AC_SUBST(ibrdtn_CFLAGS)
+	AC_SUBST(ibrdtn_LIBS)
+	echo "using relative ibrdtn library in $(pwd)/../ibrdtn"
+else
+	echo "ibrdtn library not found!"
+	exit 1
+fi
+])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h])
