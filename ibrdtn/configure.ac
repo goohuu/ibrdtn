@@ -67,20 +67,24 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrcommon library
-PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.4], :, [
+PKG_CHECK_MODULES([ibrcommon], [ibrcommon >= 0.4], [
+	echo "using ibrcommon with CFLAGS: $ibrcommon_CFLAGS"
+	echo "using ibrcommon with LIBS: $ibrcommon_LIBS"
+], [
 if test -d "$(pwd)/../ibrcommon"; then
 	m4_pattern_allow([^PKG_CONFIG_PATH$])
 	export PKG_CONFIG_PATH="$(pwd)/../ibrcommon"
 	ibrcommon_LIBS="$(pkg-config --define-variable=libdir=$(pwd)/../ibrcommon/ibrcommon/.libs --libs ibrcommon)"
 	ibrcommon_CFLAGS="$(pkg-config --cflags ibrcommon) -I$(pwd)/../ibrcommon"
-	AC_SUBST(ibrcommon_CFLAGS)
-	AC_SUBST(ibrcommon_LIBS)
 	echo "using relative ibrcommon library in $(pwd)/../ibrcommon"
 else
 	echo "ibrcommon library not found!"
 	exit 1
 fi
 ])
+
+AC_SUBST(ibrcommon_CFLAGS)
+AC_SUBST(ibrcommon_LIBS)
 
 # Checks for header files.
 AC_CHECK_HEADERS([inttypes.h stddef.h stdint.h stdlib.h string.h sys/time.h unistd.h])

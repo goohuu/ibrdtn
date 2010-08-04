@@ -39,14 +39,15 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrdtn library
-PKG_CHECK_MODULES([ibrdtn], [ibrdtn >= 0.4], :, [
+PKG_CHECK_MODULES([ibrdtn], [ibrdtn >= 0.4], [
+	echo "using ibrdtn with CFLAGS: $ibrdtn_CFLAGS"
+	echo "using ibrdtn with LIBS: $ibrdtn_LIBS"
+], [
 if test -d "$(pwd)/../ibrdtn"; then
 	m4_pattern_allow([^PKG_CONFIG_PATH$])
 	export PKG_CONFIG_PATH="$(pwd)/../ibrdtn:$(pwd)/../ibrcommon"
 	ibrdtn_LIBS="$(pkg-config --define-variable=libdir=$(pwd)/../ibrdtn/ibrdtn/.libs --libs ibrdtn)"
 	ibrdtn_CFLAGS="$(pkg-config --cflags ibrdtn) -I$(pwd)/../ibrdtn"
-	AC_SUBST(ibrdtn_CFLAGS)
-	AC_SUBST(ibrdtn_LIBS)
 	echo "using relative ibrdtn library in $(pwd)/../ibrdtn"
 else
 	echo "ibrdtn library not found!"
@@ -71,6 +72,8 @@ AC_ARG_WITH(curl,
 	if test "x$with_curl" = "xyes"; then
 		PKG_CHECK_MODULES(CURL, libcurl >= 7.16.4, use_curl="yes", use_curl="no")
 		AC_DEFINE(HAVE_LIBCURL, [1], ["curl library is available"])
+		AC_SUBST(CURL_CFLAGS)
+		AC_SUBST(CURL_LIBS)
 	else
 		use_curl="no"
 	fi
@@ -84,8 +87,8 @@ AC_ARG_WITH(sqlite,
 	[
 	if test "x$with_curl" = "xyes"; then
 		PKG_CHECK_MODULES(SQLITE, sqlite3, use_sqlite="yes", use_sqlite="no")
-#		AC_SUBST(SQLITE_CFLAGS)
-#		AC_SUBST(SQLITE_LIBS)
+		AC_SUBST(SQLITE_CFLAGS)
+		AC_SUBST(SQLITE_LIBS)
 		AC_DEFINE(HAVE_SQLITE, [1], ["sqlite library is available"])
 	else
 		use_sqlite="no"
