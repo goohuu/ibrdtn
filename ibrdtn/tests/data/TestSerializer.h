@@ -15,6 +15,7 @@ class TestSerializer : public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (TestSerializer);
 	CPPUNIT_TEST (serializer_separate01);
+	CPPUNIT_TEST (serializer_cbhe01);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -23,6 +24,7 @@ public:
 
 protected:
 	void serializer_separate01(void);
+	void serializer_cbhe01(void);
 };
 
 #endif /* TESTSERIALIZER_H_ */

@@ -15,12 +15,12 @@ namespace dtn
 	namespace data
 	{
 		DefaultSerializer::DefaultSerializer(std::ostream& stream)
-		 : _stream(stream)
+		 : _stream(stream), _compressable(false)
 		{
 		}
 
 		DefaultSerializer::DefaultSerializer(std::ostream& stream, const Dictionary &d)
-		 : _stream(stream), _dictionary(d)
+		 : _stream(stream), _dictionary(d), _compressable(false)
 		{
 		}
 
@@ -50,6 +50,9 @@ namespace dtn
 			// rebuild the dictionary
 			rebuildDictionary(obj);
 
+			// check if the bundle header could be compressed
+			_compressable = isCompressable(obj);
+
 			// serialize the primary block
 			(*this) << (PrimaryBlock&)obj;
 
@@ -65,6 +68,38 @@ namespace dtn
 			return (*this);
 		}
 
+		bool DefaultSerializer::isCompressable(const dtn::data::Bundle &obj) const
+		{
+			// check if all EID are compressable
+			bool compressable = ( obj._source.isCompressable() &&
+					obj._destination.isCompressable() &&
+					obj._reportto.isCompressable() &&
+					obj._custodian.isCompressable() );
+
+			if (compressable)
+			{
+				// add EID of all secondary blocks
+				std::list<refcnt_ptr<Block> > list = obj._blocks._blocks;
+
+				for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
+				{
+					const Block &b = (*(*iter));
+					const std::list<dtn::data::EID> eids = b.getEIDList();
+
+					for (std::list<dtn::data::EID>::const_iterator eit = eids.begin(); eit != eids.end(); eit++)
+					{
+						const dtn::data::EID &eid = (*eit);
+						if (!eid.isCompressable())
+						{
+							return false;
+						}
+					}
+				}
+			}
+
+			return compressable;
+		}
+
 		Serializer& DefaultSerializer::operator <<(const dtn::data::PrimaryBlock& obj)
 		{
 			_stream << dtn::data::BUNDLE_VERSION;		// bundle version
@@ -73,46 +108,69 @@ namespace dtn
 			// predict the block length
 			size_t len = 0;
 			dtn::data::SDNV primaryheader[14];
+
+			primaryheader[8] = SDNV(obj._timestamp);		// timestamp
+			primaryheader[9] = SDNV(obj._sequencenumber);	// sequence number
+			primaryheader[10] = SDNV(obj._lifetime);		// lifetime
+
 			pair<size_t, size_t> ref;
 
-			// destination reference
-			ref = _dictionary.getRef(obj._destination);
-			primaryheader[0] = SDNV(ref.first);
-			primaryheader[1] = SDNV(ref.second);
+			if (_compressable)
+			{
+				// destination reference
+				ref = obj._destination.getCompressed();
+				primaryheader[0] = SDNV(ref.first);
+				primaryheader[1] = SDNV(ref.second);
 
-			// source reference
-			ref = _dictionary.getRef(obj._source);
-			primaryheader[2] = SDNV(ref.first);
-			primaryheader[3] = SDNV(ref.second);
+				// source reference
+				ref = obj._source.getCompressed();
+				primaryheader[2] = SDNV(ref.first);
+				primaryheader[3] = SDNV(ref.second);
 
-			// reportto reference
-			ref = _dictionary.getRef(obj._reportto);
-			primaryheader[4] = SDNV(ref.first);
-			primaryheader[5] = SDNV(ref.second);
+				// reportto reference
+				ref = obj._reportto.getCompressed();
+				primaryheader[4] = SDNV(ref.first);
+				primaryheader[5] = SDNV(ref.second);
 
-			// custodian reference
-			ref = _dictionary.getRef(obj._custodian);
-			primaryheader[6] = SDNV(ref.first);
-			primaryheader[7] = SDNV(ref.second);
+				// custodian reference
+				ref = obj._custodian.getCompressed();
+				primaryheader[6] = SDNV(ref.first);
+				primaryheader[7] = SDNV(ref.second);
 
-			// timestamp
-			primaryheader[8] = SDNV(obj._timestamp);
+				// dictionary size is zero in a compressed bundle header
+				primaryheader[11] = SDNV(0);
+			}
+			else
+			{
+				// destination reference
+				ref = _dictionary.getRef(obj._destination);
+				primaryheader[0] = SDNV(ref.first);
+				primaryheader[1] = SDNV(ref.second);
 
-			// sequence number
-			primaryheader[9] = SDNV(obj._sequencenumber);
+				// source reference
+				ref = _dictionary.getRef(obj._source);
+				primaryheader[2] = SDNV(ref.first);
+				primaryheader[3] = SDNV(ref.second);
 
-			// lifetime
-			primaryheader[10] = SDNV(obj._lifetime);
+				// reportto reference
+				ref = _dictionary.getRef(obj._reportto);
+				primaryheader[4] = SDNV(ref.first);
+				primaryheader[5] = SDNV(ref.second);
 
-			// dictionary size
-			primaryheader[11] = SDNV(_dictionary.getSize());
+				// custodian reference
+				ref = _dictionary.getRef(obj._custodian);
+				primaryheader[6] = SDNV(ref.first);
+				primaryheader[7] = SDNV(ref.second);
+
+				// dictionary size
+				primaryheader[11] = SDNV(_dictionary.getSize());
+				len += _dictionary.getSize();
+			}
 
 			for (int i = 0; i < 12; i++)
 			{
 				len += primaryheader[i].getLength();
 			}
-
-			len += _dictionary.getSize();
 
 			if (obj._procflags & dtn::data::Bundle::FRAGMENT)
 			{
@@ -135,8 +193,16 @@ namespace dtn
 				_stream << primaryheader[i];
 			}
 
-			// write size of dictionary + bytearray
-			_stream << _dictionary;
+			if (_compressable)
+			{
+				// write the size of the dictionary (always zero here)
+				_stream << primaryheader[11];
+			}
+			else
+			{
+				// write size of dictionary + bytearray
+				_stream << _dictionary;
+			}
 
 			if (obj._procflags & dtn::data::Bundle::FRAGMENT)
 			{
@@ -160,7 +226,17 @@ namespace dtn
 				_stream << SDNV(obj._eids.size());
 				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
 				{
-					pair<size_t, size_t> offsets = _dictionary.getRef(*it);
+					pair<size_t, size_t> offsets;
+
+					if (_compressable)
+					{
+						offsets = _dictionary.getRef(*it);
+					}
+					else
+					{
+						offsets = (*it).getCompressed();
+					}
+
 					_stream << SDNV(offsets.first);
 					_stream << SDNV(offsets.second);
 				}
@@ -282,17 +358,17 @@ namespace dtn
 		}
 
 		DefaultDeserializer::DefaultDeserializer(std::istream& stream)
-		 : _stream(stream), _validator(_default_validator)
+		 : _stream(stream), _validator(_default_validator), _compressed(false)
 		{
 		}
 
 		DefaultDeserializer::DefaultDeserializer(std::istream &stream, Validator &v)
-		 : _stream(stream), _validator(v)
+		 : _stream(stream), _validator(v), _compressed(false)
 		{
 		}
 
 		DefaultDeserializer::DefaultDeserializer(std::istream &stream, const Dictionary &d)
-		 : _stream(stream), _validator(_default_validator), _dictionary(d)
+		 : _stream(stream), _validator(_default_validator), _dictionary(d), _compressed(false)
 		{
 		}
 
@@ -446,14 +522,24 @@ namespace dtn
 			_stream >> tmpsdnv;
 			obj._lifetime = tmpsdnv.getValue();
 
-			// dictionary
-			_stream >> _dictionary;
+			try {
+				// dictionary
+				_stream >> _dictionary;
 
-			// decode EIDs
-			obj._destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
-			obj._source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
-			obj._reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
-			obj._custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
+				// decode EIDs
+				obj._destination = _dictionary.get(ref[0].first.getValue(), ref[0].second.getValue());
+				obj._source = _dictionary.get(ref[1].first.getValue(), ref[1].second.getValue());
+				obj._reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
+				obj._custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
+				_compressed = false;
+			} catch (dtn::InvalidDataException ex) {
+				// error while reading the dictionary. We assume that this is a compressed bundle header.
+				obj._destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
+				obj._source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());
+				obj._reportto = dtn::data::EID(ref[2].first.getValue(), ref[2].second.getValue());
+				obj._custodian = dtn::data::EID(ref[3].first.getValue(), ref[3].second.getValue());
+				_compressed = true;
+			}
 
 			// fragmentation?
 			if (obj._procflags & dtn::data::Bundle::FRAGMENT)
@@ -490,9 +576,14 @@ namespace dtn
 					_stream >> scheme;
 					_stream >> ssp;
 
-					EID eid = _dictionary.get(scheme.getValue(), ssp.getValue());
-
-					obj.addEID(eid);
+					if (_compressed)
+					{
+						obj.addEID( dtn::data::EID(scheme.getValue(), ssp.getValue()) );
+					}
+					else
+					{
+						obj.addEID( _dictionary.get(scheme.getValue(), ssp.getValue()) );
+					}
 				}
 			}
 

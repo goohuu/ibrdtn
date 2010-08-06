@@ -32,7 +32,7 @@ namespace dtn
 			_procflags |= Block::BLOCK_CONTAINS_EIDS;
 		}
 
-		list<EID> Block::getEIDList() const
+		std::list<dtn::data::EID> Block::getEIDList() const
 		{
 			return _eids;
 		}

@@ -7,6 +7,7 @@
 
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/Exceptions.h"
 #include <map>
 #include <stdexcept>
 #include <string.h>
@@ -158,6 +159,10 @@ namespace data
 	{
 		dtn::data::SDNV length;
 		stream >> length;
+
+		// if the dictionary size if zero throw a exception
+		if (length.getValue() <= 0)
+			throw dtn::InvalidDataException("Dictionary size is zero!");
 
 		obj._bytestream.str("");
 		char data[length.getValue()];

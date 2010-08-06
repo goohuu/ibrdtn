@@ -49,7 +49,7 @@ namespace dtn
 			virtual void addEID(EID eid);
 			virtual std::list<EID> getEIDList() const;
 
-			char getType() { return _blocktype; }
+			char getType() const { return _blocktype; }
 
 			void set(ProcFlags flag, bool value);
 			bool get(ProcFlags flag) const;

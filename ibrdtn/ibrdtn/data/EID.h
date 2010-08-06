@@ -13,49 +13,74 @@
 
 using namespace std;
 
-namespace dtn {
-namespace data
+namespace dtn
 {
-	class EID
+	namespace data
 	{
-	public:
-		EID();
-		EID(std::string scheme, std::string ssp);
-		EID(std::string value);
-		virtual ~EID();
+		class EID
+		{
+			static const std::string DEFAULT_SCHEME;
+			static const std::string CBHE_SCHEME;
 
-		EID(const EID &other);
+		public:
+			EID();
+			EID(std::string scheme, std::string ssp);
+			EID(std::string value);
 
-		EID& operator=(const EID &other);
+			/**
+			 * Constructor for CBHE EIDs.
+			 * @param node Node number.
+			 * @param application Application number.
+			 */
+			EID(size_t node, size_t application);
 
-		bool operator==(EID const& other) const;
+			virtual ~EID();
 
-		bool operator==(string const& other) const;
+			EID(const EID &other);
 
-		bool operator!=(EID const& other) const;
+			EID& operator=(const EID &other);
 
-		EID operator+(string suffix);
+			bool operator==(EID const& other) const;
 
-		bool sameHost(string const& other) const;
-		bool sameHost(EID const& other) const;
+			bool operator==(string const& other) const;
 
-		bool operator<(EID const& other) const;
-		bool operator>(const EID& other) const;
+			bool operator!=(EID const& other) const;
 
-		string getString() const;
-		string getApplication() const throw (ibrcommon::Exception);
-		string getNode() const throw (ibrcommon::Exception);
-		string getScheme() const;
+			EID operator+(string suffix);
 
-		string getNodeEID() const;
+			bool sameHost(string const& other) const;
+			bool sameHost(EID const& other) const;
 
-		bool hasApplication() const;
+			bool operator<(EID const& other) const;
+			bool operator>(const EID& other) const;
 
-	private:
-		std::string _scheme;
-		std::string _ssp;
-	};
-}
+			string getString() const;
+			string getApplication() const throw (ibrcommon::Exception);
+			string getNode() const throw (ibrcommon::Exception);
+			string getScheme() const;
+
+			string getNodeEID() const;
+
+			bool hasApplication() const;
+
+			/**
+			 * check if a EID is compressable.
+			 * @return True, if the EID is compressable.
+			 */
+			bool isCompressable() const;
+
+			/**
+			 * Get the compressed EID as two numeric values. Both values
+			 * are set to zero if the EID is not compressable.
+			 * @return A pair of two numeric values.
+			 */
+			std::pair<size_t, size_t> getCompressed() const;
+
+		private:
+			std::string _scheme;
+			std::string _ssp;
+		};
+	}
 }
 
 #endif /* EID_H_ */

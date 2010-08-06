@@ -1,3 +1,9 @@
+2010-08-06
+--------------------------------------------------------
+ * Added CBHE capabilities. If the bundle match all requirements
+   (the scheme of all EIDs is 'ipn') then the bundle header will
+   be compressed.
+
 2010-08-04
 --------------------------------------------------------
  * Release 0.4.1
