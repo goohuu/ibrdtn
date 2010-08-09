@@ -44,7 +44,7 @@ class Tracer : public dtn::api::Client
 			b.requestForwardedReport();
 			b.requestDeletedReport();
 
-			b.setReportTo( EID("dtn:client") );
+			b.setReportTo( EID("api:me") );
 
 			ibrcommon::TimeMeasurement tm;
 

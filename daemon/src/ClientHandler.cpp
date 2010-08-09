@@ -64,8 +64,17 @@ namespace dtn
 
 		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
 		{
-			// contact received event
-			_eid = BundleCore::local + header._localeid.getApplication();
+			if (BundleCore::local.getScheme() == dtn::data::EID::CBHE_SCHEME)
+			{
+				// This node is working with compressed addresses
+				// generate a number
+				_eid = BundleCore::local + "." + header._localeid.getNode();
+			}
+			else
+			{
+				// contact received event
+				_eid = BundleCore::local + "/" + header._localeid.getNode();
+			}
 		}
 
 		void ClientHandler::eventError()
@@ -188,11 +197,11 @@ namespace dtn
 						// create a new sequence number
 						bundle.relabel();
 
-						// check address fields for "dtn:client", this has to be replaced
-						dtn::data::EID clienteid("dtn:client");
+						// check address fields for "api:me", this has to be replaced
+						dtn::data::EID clienteid("api:me");
 
-						if (bundle._source == EID()) bundle._source = _eid;
-						else if (bundle._source == clienteid) bundle._source = _eid;
+						// set the source address to the sending EID
+						bundle._source = _eid;
 
 						if (bundle._destination == clienteid) bundle._destination = _eid;
 						if (bundle._reportto == clienteid) bundle._reportto = _eid;

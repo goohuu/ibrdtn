@@ -56,6 +56,11 @@ namespace dtn
 				bool _shutdown;
 			};
 
+			enum HANDSHAKE_FLAGS
+			{
+				HANDSHAKE_SENDONLY = 0x80
+			};
+
 
 		public:
 			enum COMMUNICATION_MODE

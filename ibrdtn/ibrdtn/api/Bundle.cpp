@@ -20,7 +20,7 @@ namespace dtn
 			_security = SecurityManager::getDefault();
 			setPriority(PRIO_MEDIUM);
 
-			_b._source = dtn::data::EID("dtn:client");
+			_b._source = dtn::data::EID("api:me");
 		}
 
 		Bundle::Bundle(dtn::data::Bundle &b)

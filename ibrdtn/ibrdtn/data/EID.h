@@ -19,10 +19,10 @@ namespace dtn
 	{
 		class EID
 		{
+		public:
 			static const std::string DEFAULT_SCHEME;
 			static const std::string CBHE_SCHEME;
 
-		public:
 			EID();
 			EID(std::string scheme, std::string ssp);
 			EID(std::string value);

@@ -80,7 +80,7 @@ namespace dtn
 		void Client::connect()
 		{
 			// do a handshake
-			EID localeid(EID("dtn:local/" + _app));
+			EID localeid(EID("api:" + _app));
 
 			// connection flags
 			char flags = 0;
@@ -89,7 +89,7 @@ namespace dtn
 			flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 
 			// set comm. mode
-			if (_mode == MODE_SENDONLY) flags |= 0x80;
+			if (_mode == MODE_SENDONLY) flags |= HANDSHAKE_SENDONLY;
 
 			// do the handshake
 			handshake(localeid, 10, flags);
