@@ -6,11 +6,13 @@
  */
 
 #include "config.h"
-#include "ibrdtn/api/Client.h"
-#include "ibrdtn/api/FileBundle.h"
-#include "ibrcommon/net/tcpclient.h"
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
+#include <ibrdtn/api/Client.h>
+#include <ibrdtn/api/FileBundle.h>
+#include <ibrdtn/api/BLOBBundle.h>
+#include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/data/BLOB.h>
 
 #include <iostream>
 
@@ -31,12 +33,29 @@ int main(int argc, char *argv[])
 {
 	string file_destination = "dtn://local/filetransfer";
 	string file_source = "filetransfer";
-        unsigned int lifetime = 3600;
+	unsigned int lifetime = 3600;
+	bool use_stdin = false;
+	std::string filename;
 
 	if (argc == 1)
 	{
 		print_help();
 		return 0;
+	}
+	else if (argc == 2)
+	{
+		// the last - 1 parameter is always the destination
+		file_destination = argv[argc - 1];
+
+		use_stdin = true;
+	}
+	else
+	{
+		// the last - 1 parameter is always the destination
+		file_destination = argv[argc - 2];
+
+		// the last parameter is always the filename
+		filename = argv[argc -1];
 	}
 
 	for (int i = 0; i < argc; i++)
@@ -58,15 +77,9 @@ int main(int argc, char *argv[])
 		if (arg == "--lifetime" && argc > i)
 		{
 			stringstream data; data << argv[i + 1];
-                        data >> lifetime;
+				data >> lifetime;
 		}
 	}
-
-	// the last - 1 parameter is always the destination
-	file_destination = argv[argc - 2];
-
-	// the last parameter is always the filename
-	string filename = argv[argc -1];
 
 	try {
 		// Create a stream to the server using TCP.
@@ -83,17 +96,41 @@ int main(int argc, char *argv[])
 			// target address
 			EID addr = EID(file_destination);
 
-			cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
-
 			try {
-				// create a bundle from the file
-				dtn::api::FileBundle b(file_destination, filename);
+				if (use_stdin)
+				{
+					cout << "Transfer stdin to " << addr.getNodeEID() << endl;
+
+					// create an empty BLOB
+					ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+
+					// copy cin to a BLOB
+					{
+						ibrcommon::MutexLock l(ref);
+						(*ref) << cin.rdbuf();
+					}
+
+					dtn::api::BLOBBundle b(file_destination, ref);
 
 					// set the lifetime
 					b.setLifetime(lifetime);
 
-				// send the bundle
-				client << b;
+					// send the bundle
+					client << b;
+				}
+				else
+				{
+					cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
+
+					// create a bundle from the file
+					dtn::api::FileBundle b(file_destination, filename);
+
+					// set the lifetime
+					b.setLifetime(lifetime);
+
+					// send the bundle
+					client << b;
+				}
 
 				// flush the buffers
 				client.flush();
