@@ -8,7 +8,7 @@ if test -e "$(pwd)/../configure.in"; then
 		m4_pattern_allow([^PKG_CONFIG_PATH$])
 		
 		# export the relative path of ibrdtn
-		export PKG_CONFIG_PATH="$(pwd)/../ibrdtn"
+		export PKG_CONFIG_PATH="$(pwd)/../ibrcommon:$(pwd)/../ibrdtn"
 		
 		# check for the svn version of ibrdtn
 		if pkg-config --atleast-version=$LOCAL_IBRDTN_VERSION ibrdtn; then
