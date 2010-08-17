@@ -1,3 +1,11 @@
+2010-08-17
+--------------------------------------------------------
+ * Simple bundle storage now closes file handles to stored bundles.
+ * Added priorisation in bundle storage. Now bundles with high prio are delivered first.
+ * Improved command argument parsing in dtnsend + priority parameter.
+ * Fixed priority reading in API.
+ * Fixed memory leak in embedded applications.
+
 2010-08-09
 --------------------------------------------------------
  * dtnsend can read the bundle payload from stdin now
