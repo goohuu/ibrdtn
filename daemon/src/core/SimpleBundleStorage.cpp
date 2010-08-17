@@ -181,6 +181,14 @@ namespace dtn
 				}
 			}
 
+//			// debug output of storage content
+//			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+//			{
+//				const BundleContainer &container = (*iter);
+//
+//				std::cout << container.toString() << ", Priority: " << container.getPriority() << std::endl;
+//			}
+
 			// some output
 			IBRCOMMON_LOGGER(info) << bundles.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -191,17 +199,6 @@ namespace dtn
 
 		dtn::data::Bundle SimpleBundleStorage::BundleStore::get(const ibrcommon::BloomFilter &filter)
 		{
-//			// print summary vector
-//			const char *data = reinterpret_cast<const char*>(filter.table());
-//
-//			for (size_t i = 0; i < filter.size(); i++)
-//			{
-//				printf("%02x:", *data);
-//				data++;
-//			}
-//
-//			printf("\n");
-
 			// search for one bundle which is not contained in the filter
 			// until we have a better strategy, we have to iterate through all bundles
 			ibrcommon::MutexLock l(bundleslock);
@@ -445,12 +442,22 @@ namespace dtn
 
 		bool SimpleBundleStorage::BundleContainer::operator<(const SimpleBundleStorage::BundleContainer& other) const
 		{
-			return ((MetaBundle&)(*this) < (MetaBundle&)other);
+			MetaBundle &left = (MetaBundle&)*this;
+			MetaBundle &right = (MetaBundle&)other;
+
+			if (left.getPriority() > right.getPriority()) return true;
+			if (left.getPriority() != right.getPriority()) return false;
+			return (left < right);
 		}
 
 		bool SimpleBundleStorage::BundleContainer::operator>(const SimpleBundleStorage::BundleContainer& other) const
 		{
-			return ((MetaBundle&)(*this) > (MetaBundle&)other);
+			MetaBundle &left = (MetaBundle&)*this;
+			MetaBundle &right = (MetaBundle&)other;
+
+			if (left.getPriority() < right.getPriority()) return true;
+			if (left.getPriority() != right.getPriority()) return false;
+			return (left > right);
 		}
 
 		bool SimpleBundleStorage::BundleContainer::operator!=(const SimpleBundleStorage::BundleContainer& other) const
@@ -537,10 +544,9 @@ namespace dtn
 		SimpleBundleStorage::BundleContainer::Holder::~Holder()
 		{
 			ibrcommon::MutexLock l(_state_lock);
-			if ((_state == HOLDER_STORED) || (_state == HOLDER_DELETED))
+			if (_state == HOLDER_DELETED)
 			{
 				_container.remove();
-				_state = HOLDER_DELETED;
 			}
 		}
 

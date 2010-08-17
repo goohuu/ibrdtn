@@ -25,6 +25,7 @@ void print_help()
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help       display this text" << endl;
 	cout << " --src <name>    set the source application name (e.g. filetransfer)" << endl;
+	cout << " -p <0..2>       set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
         cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 3600" << endl;
 
 }
@@ -36,49 +37,85 @@ int main(int argc, char *argv[])
 	unsigned int lifetime = 3600;
 	bool use_stdin = false;
 	std::string filename;
+	int priority = 1;
 
-	if (argc == 1)
-	{
-		print_help();
-		return 0;
-	}
-	else if (argc == 2)
-	{
-		// the last - 1 parameter is always the destination
-		file_destination = argv[argc - 1];
-
-		use_stdin = true;
-	}
-	else
-	{
-		// the last - 1 parameter is always the destination
-		file_destination = argv[argc - 2];
-
-		// the last parameter is always the filename
-		filename = argv[argc -1];
-	}
+	std::list<std::string> arglist;
 
 	for (int i = 0; i < argc; i++)
 	{
-		string arg = argv[i];
-
-		// print help if requested
-		if (arg == "-h" || arg == "--help")
+		if (argv[i][0] == '-')
 		{
-			print_help();
-			return 0;
-		}
+			std::string arg = argv[i];
 
-		if (arg == "--src" && argc > i)
-		{
-			file_source = argv[i + 1];
-		}
+			// print help if requested
+			if (arg == "-h" || arg == "--help")
+			{
+				print_help();
+				return 0;
+			}
 
-		if (arg == "--lifetime" && argc > i)
-		{
-			stringstream data; data << argv[i + 1];
-				data >> lifetime;
+			if (arg == "--src" && argc > i)
+			{
+				if (++i > argc)
+				{
+					std::cout << "argument missing!" << std::endl;
+					return -1;
+				}
+
+				file_source = argv[i];
+			}
+
+			if (arg == "--lifetime" && argc > i)
+			{
+				if (++i > argc)
+				{
+					std::cout << "argument missing!" << std::endl;
+					return -1;
+				}
+
+				stringstream data; data << argv[i];
+					data >> lifetime;
+			}
+
+			if (arg == "-p" && argc > i)
+			{
+				if (++i > argc)
+				{
+					std::cout << "argument missing!" << std::endl;
+					return -1;
+				}
+				stringstream data; data << argv[i];
+					data >> priority;
+			}
 		}
+		else
+		{
+			arglist.push_back(argv[i]);
+		}
+	}
+
+	if (arglist.size() <= 1)
+	{
+		print_help();
+		return -1;
+	} else if (arglist.size() == 2)
+	{
+		std::list<std::string>::iterator iter = arglist.begin(); iter++;
+
+		// the first parameter is the destination
+		file_destination = (*iter);
+
+		use_stdin = true;
+	}
+	else if (arglist.size() > 2)
+	{
+		std::list<std::string>::iterator iter = arglist.begin(); iter++;
+
+		// the first parameter is the destination
+		file_destination = (*iter); iter++;
+
+		// the second parameter is the filename
+		filename = (*iter);
 	}
 
 	try {
@@ -115,6 +152,9 @@ int main(int argc, char *argv[])
 					// set the lifetime
 					b.setLifetime(lifetime);
 
+					// set the bundles priority
+					b.setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(priority));
+
 					// send the bundle
 					client << b;
 				}
@@ -127,6 +167,9 @@ int main(int argc, char *argv[])
 
 					// set the lifetime
 					b.setLifetime(lifetime);
+
+					// set the bundles priority
+					b.setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(priority));
 
 					// send the bundle
 					client << b;

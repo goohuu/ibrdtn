@@ -28,6 +28,20 @@ namespace dtn
 
 		MetaBundle::~MetaBundle()
 		{}
+
+		int MetaBundle::getPriority() const
+		{
+			// read priority
+			if (procflags & dtn::data::Bundle::PRIORITY_BIT1)
+			{
+				return 0;
+			}
+			else
+			{
+				if (procflags & dtn::data::Bundle::PRIORITY_BIT2) return 1;
+				else return -1;
+			}
+		}
 	}
 }
 

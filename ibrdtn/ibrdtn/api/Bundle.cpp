@@ -29,12 +29,12 @@ namespace dtn
 			// read priority
 			if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT1)
 			{
-				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2) _priority = PRIO_HIGH;
-				else _priority = PRIO_MEDIUM;
+				_priority = PRIO_MEDIUM;
 			}
 			else
 			{
-				_priority = PRIO_LOW;
+				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2) _priority = PRIO_HIGH;
+				else _priority = PRIO_LOW;
 			}
 		}
 

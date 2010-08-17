@@ -24,6 +24,8 @@ namespace dtn
 			MetaBundle(const dtn::data::Bundle &b);
 			~MetaBundle();
 
+			int getPriority() const;
+
 			dtn::data::DTNTime received;
 			size_t lifetime;
 			dtn::data::EID destination;
