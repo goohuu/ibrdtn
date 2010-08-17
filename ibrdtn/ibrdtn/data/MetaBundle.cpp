@@ -14,6 +14,12 @@ namespace dtn
 {
 	namespace data
 	{
+		MetaBundle::MetaBundle()
+		 : BundleID(), lifetime(), destination(), reportto(),
+		   custodian(), appdatalength(0), procflags(0)
+		{
+		}
+
 		MetaBundle::MetaBundle(const dtn::data::Bundle &b)
 		 : BundleID(b), lifetime(b._lifetime), destination(b._destination), reportto(b._reportto),
 		   custodian(b._custodian), appdatalength(b._appdatalength), procflags(b._procflags)

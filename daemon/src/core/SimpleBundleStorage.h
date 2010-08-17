@@ -127,7 +127,7 @@ namespace dtn
 				MODE_PERSISTENT = 1
 			};
 
-			class BundleContainer : public dtn::data::BundleID
+			class BundleContainer : public dtn::data::MetaBundle
 			{
 			public:
 				BundleContainer(const dtn::data::Bundle &b);
@@ -142,8 +142,7 @@ namespace dtn
 
 				size_t size() const;
 
-				dtn::data::Bundle& operator*();
-				const dtn::data::Bundle& operator*() const;
+				dtn::data::Bundle get() const;
 
 				BundleContainer& operator= (const BundleContainer &right);
 				BundleContainer& operator= (BundleContainer &right);
@@ -166,17 +165,34 @@ namespace dtn
 
 					void invokeStore();
 
-					dtn::data::Bundle _bundle;
-					ibrcommon::File _container;
-					RunMode _mode;
+					dtn::data::Bundle getBundle();
+
+					void remove();
+
 					unsigned _count;
 
-					bool deletion;
+					ibrcommon::Mutex lock;
+
+				private:
+					enum STATE
+					{
+						HOLDER_MEMORY = 0,
+						HOLDER_PENDING = 1,
+						HOLDER_STORED = 2,
+						HOLDER_DELETED = 3
+					};
+
+					ibrcommon::Mutex _state_lock;
+					STATE _state;
+
+					dtn::data::Bundle _bundle;
+					ibrcommon::File _container;
 
 					size_t _size;
 				};
 
 			private:
+				void down();
 				Holder *_holder;
 			};
 

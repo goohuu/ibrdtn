@@ -58,10 +58,11 @@ namespace dtn
 		void AbstractWorker::AbstractWorkerAsync::run()
 		{
 			BundleStorage &storage = BundleCore::getInstance().getStorage();
-			dtn::data::Bundle b;
 
 			while (_running)
 			{
+				dtn::data::Bundle b;
+
 				try {
 					b = storage.get( _worker._eid );
 					storage.remove(b);
