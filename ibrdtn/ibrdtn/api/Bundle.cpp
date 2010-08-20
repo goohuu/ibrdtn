@@ -65,22 +65,22 @@ namespace dtn
 
 		void Bundle::requestDeliveredReport()
 		{
-			_b._procflags |= dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELIVERY;
+			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
 		}
 
 		void Bundle::requestForwardedReport()
 		{
-			_b._procflags |= dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_FORWARDING;
+			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_FORWARDING, true);
 		}
 
 		void Bundle::requestDeletedReport()
 		{
-			_b._procflags |= dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELETION;
+			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELETION, true);
 		}
 
 		void Bundle::requestReceptionReport()
 		{
-			_b._procflags |= dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION;
+			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION, true);
 		}
 
 		Bundle::BUNDLE_PRIORITY Bundle::getPriority()

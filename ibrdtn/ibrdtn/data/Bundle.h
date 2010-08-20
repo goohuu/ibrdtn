@@ -142,7 +142,7 @@ namespace dtn
 				// copy all blocks to the list
 				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
-					if ((*iter)->_blocktype == PayloadBlock::BLOCK_TYPE)
+					if ((*iter)->getType() == PayloadBlock::BLOCK_TYPE)
 					{
 						Block *b = (*iter).getPointer();
 						return dynamic_cast<CustodySignalBlock&>(*b);
@@ -162,7 +162,7 @@ namespace dtn
 				// copy all blocks to the list
 				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
-					if ((*iter)->_blocktype == PayloadBlock::BLOCK_TYPE)
+					if ((*iter)->getType() == PayloadBlock::BLOCK_TYPE)
 					{
 						const Block *b = (*iter).getPointer();
 						return dynamic_cast<const CustodySignalBlock&>(*b);
@@ -182,7 +182,7 @@ namespace dtn
 				// copy all blocks to the list
 				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
-					if ((*iter)->_blocktype == PayloadBlock::BLOCK_TYPE)
+					if ((*iter)->getType() == PayloadBlock::BLOCK_TYPE)
 					{
 						Block *b = (*iter).getPointer();
 						return dynamic_cast<StatusReportBlock&>(*b);
@@ -202,7 +202,7 @@ namespace dtn
 				// copy all blocks to the list
 				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
-					if ((*iter)->_blocktype == PayloadBlock::BLOCK_TYPE)
+					if ((*iter)->getType() == PayloadBlock::BLOCK_TYPE)
 					{
 						const Block *b = (*iter).getPointer();
 						return dynamic_cast<const StatusReportBlock&>(*b);
@@ -222,7 +222,7 @@ namespace dtn
 				// copy all blocks to the list
 				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
-					if ((*iter)->_blocktype == T::BLOCK_TYPE)
+					if ((*iter)->getType() == T::BLOCK_TYPE)
 					{
 						const Block *b = (*iter).getPointer();
 						return dynamic_cast<const T&>(*b);
@@ -242,7 +242,7 @@ namespace dtn
 				// copy all blocks to the list
 				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 				{
-					if ((*iter)->_blocktype == T::BLOCK_TYPE)
+					if ((*iter)->getType() == T::BLOCK_TYPE)
 					{
 						Block *b = (*iter).getPointer();
 						return dynamic_cast<T&>(*b);
@@ -264,7 +264,7 @@ namespace dtn
 			// copy all blocks to the list
 			for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
 			{
-				if ((*(*iter))._blocktype == T::BLOCK_TYPE)
+				if ((*(*iter)).getType() == T::BLOCK_TYPE)
 				{
 					const T* obj = dynamic_cast<const T*>((*iter).getPointer());
 

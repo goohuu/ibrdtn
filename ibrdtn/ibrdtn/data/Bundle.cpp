@@ -44,7 +44,7 @@ namespace dtn
 			if (_blocks.empty())
 			{
 				// set the last block flag
-				block->_procflags |= dtn::data::Block::LAST_BLOCK;
+				block->set(dtn::data::Block::LAST_BLOCK, true);
 			}
 
 			_blocks.push_front(refcnt_ptr<Block>(block));
@@ -53,7 +53,7 @@ namespace dtn
 		void Bundle::BlockList::push_back(Block *block)
 		{
 			// set the last block flag
-			block->_procflags |= dtn::data::Block::LAST_BLOCK;
+			block->set(dtn::data::Block::LAST_BLOCK, true);
 
 			if (!_blocks.empty())
 			{

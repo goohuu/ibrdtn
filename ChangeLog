@@ -1,5 +1,6 @@
 2010-08-20
 --------------------------------------------------------
+ * Fixes for compiling with older/more strict compilers
  * Added IEEE 802.15.4 LoWPAN support in ibrcommon (Stefan Schmidt)
  * Added IEEE 802.15.4 LoWPAN convergence layer (Stefan Schmidt)
 

@@ -72,18 +72,24 @@ namespace dtn
 		class BundleAuthenticationBlock : public SecurityBlock
 		{
 		public:
+			BundleAuthenticationBlock() : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK) {};
+			virtual ~BundleAuthenticationBlock() {};
 			static const char BLOCK_TYPE = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK;
 		};
 
 		class PayloadIntegrityBlock : public SecurityBlock
 		{
 		public:
+			PayloadIntegrityBlock() : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK) {};
+			virtual ~PayloadIntegrityBlock() {};
 			static const char BLOCK_TYPE = SecurityBlock::PAYLOAD_INTEGRITY_BLOCK;
 		};
 
 		class PayloadConfidentialBlock : public SecurityBlock
 		{
 		public:
+			PayloadConfidentialBlock() : SecurityBlock(PAYLOAD_CONFIDENTIAL_BLOCK) {};
+			virtual ~PayloadConfidentialBlock() {};
 			static const char BLOCK_TYPE = SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK;
 		};
 	}
