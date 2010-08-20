@@ -86,8 +86,26 @@ AC_ARG_WITH(sqlite,
 	use_sqlite="no"
 ])
 
+# Checks for lowpan support (libnl)
+AC_ARG_WITH(lowpan,
+	AS_HELP_STRING([--with-lowpan], [Build with lowpan support (support in ibrcommon needed)
+		@<:@default=no@:>@]),
+	[
+	if test "x$with_lowpan" = "xyes"; then
+		PKG_CHECK_MODULES([NL], [libnl-1], use_lowpan="yes", use_lowpan="no")
+		AC_SUBST(NL_CFLAGS)
+		AC_SUBST(NL_LIBS)
+		AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
+	else
+		use_lowpan="no"
+	fi
+	],[
+	use_lowpan="no"
+])
+
 AM_CONDITIONAL(CURL, test x$use_curl = xyes)
 AM_CONDITIONAL(SQLITE, test x$use_sqlite = xyes)
+AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts

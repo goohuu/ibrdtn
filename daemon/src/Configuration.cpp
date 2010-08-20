@@ -182,6 +182,7 @@ namespace dtn
 					if (type_name == "tcp") type = Configuration::NetConfig::NETWORK_TCP;
 					if (type_name == "udp") type = Configuration::NetConfig::NETWORK_UDP;
 					if (type_name == "http") type = Configuration::NetConfig::NETWORK_HTTP;
+					if (type_name == "lowpan") type = Configuration::NetConfig::NETWORK_LOWPAN;
 
 					switch (type)
 					{

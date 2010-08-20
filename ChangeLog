@@ -1,3 +1,8 @@
+2010-08-20
+--------------------------------------------------------
+ * Added IEEE 802.15.4 LoWPAN support in ibrcommon (Stefan Schmidt)
+ * Added IEEE 802.15.4 LoWPAN convergence layer (Stefan Schmidt)
+
 2010-08-17
 --------------------------------------------------------
  * Simple bundle storage now closes file handles to stored bundles.

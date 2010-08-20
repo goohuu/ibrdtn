@@ -33,7 +33,8 @@ namespace dtn
 					NETWORK_UNKNOWN = 0,
 					NETWORK_TCP = 1,
 					NETWORK_UDP = 2,
-					NETWORK_HTTP = 3
+					NETWORK_HTTP = 3,
+					NETWORK_LOWPAN = 4
 				};
 
 				NetConfig(std::string name, NetType type, const std::string &address, int port, bool discovery = true);

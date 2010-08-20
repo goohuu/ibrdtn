@@ -114,6 +114,10 @@ namespace dtn
 				}
 			} catch (std::bad_cast ex) { };
 
+			// TODO: TransferAbortedEvent: send next bundle
+			// How to exclude several bundles? Combine two bloomfilters? Use a blocklist. Delay transfers to the node?
+			// BundleRejectedEvent needed to differ between rejected and failed transfers! Constrains?
+
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 

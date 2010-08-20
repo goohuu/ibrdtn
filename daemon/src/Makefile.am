@@ -118,6 +118,10 @@ net_SOURCES = 	net/BundleReceivedEvent.cpp \
 				net/TransferCompletedEvent.h \
 				net/UDPConvergenceLayer.cpp \
 				net/UDPConvergenceLayer.h
+
+if LOWPAN
+net_SOURCES += net/LOWPANConvergenceLayer.cpp net/LOWPANConvergenceLayer.h
+endif
 				
 if CURL
 net_SOURCES += net/HTTPConvergenceLayer.cpp net/HTTPConvergenceLayer.h

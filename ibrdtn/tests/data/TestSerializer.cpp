@@ -80,3 +80,23 @@ void TestSerializer::serializer_cbhe01(void)
 	assert( b._reportto == b2._reportto );
 	assert( b._custodian == b2._custodian );
 }
+
+void TestSerializer::serializer_cbhe02(void)
+{
+	dtn::data::Bundle b;
+
+	dtn::data::EID src("ipn:1.2");
+	dtn::data::EID dst("ipn:2.3");
+
+	b._source = src;
+	b._destination = dst;
+
+	ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+	(*ref) << "0123456789";
+	b.push_back(ref);
+
+	std::stringstream ss;
+	dtn::data::DefaultSerializer(ss) << b;
+
+	assert( ss.str().length() == 33);
+}

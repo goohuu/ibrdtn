@@ -35,6 +35,10 @@
 #include "net/HTTPConvergenceLayer.h"
 #endif
 
+#ifdef HAVE_LOWPAN_SUPPORT
+#include "net/LOWPANConvergenceLayer.h"
+#endif
+
 #include "net/IPNDAgent.h"
 
 #include "ApiServer.h"
@@ -193,6 +197,20 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 					components.push_back(httpcl);
 
 					IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.address << IBRCOMMON_LOGGER_ENDL;
+					break;
+				}
+#endif
+
+#ifdef HAVE_LOWPAN_SUPPORT
+				case Configuration::NetConfig::NETWORK_LOWPAN:
+				{
+					LOWPANConvergenceLayer *lowpancl = new LOWPANConvergenceLayer( net.interface, net.port );
+					core.addConvergenceLayer(lowpancl);
+					components.push_back(lowpancl);
+					if (ipnd != NULL) ipnd->addService(lowpancl);
+
+					IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+
 					break;
 				}
 #endif
