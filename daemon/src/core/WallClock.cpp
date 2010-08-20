@@ -47,7 +47,14 @@ namespace dtn
 			while (_running)
 			{
 				size_t dtntime = dtn::utils::Clock::getTime();
-				if (_next <= dtntime)
+
+				if (dtntime == 0)
+				{
+					TimeEvent::raise(dtntime, TIME_SECOND_TICK);
+					go();
+					this->sleep(500);
+				}
+				else if (_next <= dtntime)
 				{
 					TimeEvent::raise(dtntime, TIME_SECOND_TICK);
 					go();

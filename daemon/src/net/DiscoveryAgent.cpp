@@ -116,23 +116,25 @@ namespace dtn
 
 		void DiscoveryAgent::raiseEvent(const dtn::core::Event *evt)
 		{
-			static ibrcommon::Mutex mutex;
-			ibrcommon::MutexLock l(mutex);
+			try {
+				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 
-			const dtn::core::TimeEvent *time = dynamic_cast<const dtn::core::TimeEvent*>(evt);
-			if (time == NULL) return;
+				static ibrcommon::Mutex mutex;
+				ibrcommon::MutexLock l(mutex);
 
-			// update all services
-			for (std::list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
-			{
-				(*iter).update();
+				// update all services
+				for (std::list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
+				{
+					(*iter).update();
+				}
+
+				sendAnnoucement(_sn, _services);
+
+				// increment sequencenumber
+				_sn++;
+			} catch (std::bad_cast) {
+
 			}
-
-			sendAnnoucement(_sn, _services);
-
-			// increment sequencenumber
-			_sn++;
-
 		}
 	}
 }
