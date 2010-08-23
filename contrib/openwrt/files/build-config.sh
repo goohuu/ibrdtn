@@ -72,6 +72,7 @@ add_param $CONFFILE "ibrdtn.statistic.address" "statistic_address"
 add_param $CONFFILE "ibrdtn.statistic.port" "statistic_port"
 
 add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
+add_param $CONFFILE "ibrdtn.discovery.timeout" "discovery_timeout"
 
 # iterate through all network interfaces
 iter=0
