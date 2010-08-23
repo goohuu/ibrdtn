@@ -96,6 +96,7 @@ config 'daemon' 'main'
 #
 config 'daemon' 'discovery'
 	option address		225.0.12.5
+#	option timeout		5
 
 config 'network'
 	option type			tcp

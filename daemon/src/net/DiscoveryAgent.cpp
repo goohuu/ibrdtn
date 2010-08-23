@@ -13,6 +13,7 @@
 #include "core/Node.h"
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include "Configuration.h"
 
 using namespace dtn::core;
 
@@ -64,7 +65,9 @@ namespace dtn
 
 			// set the EID and some parameters of this Node
 			n.setURI(announcement.getEID().getString());
-			n.setTimeout(5);
+
+			// get configured timeout value
+			n.setTimeout( dtn::daemon::Configuration::getInstance().getDiscoveryTimeout() );
 
 			const list<DiscoveryService> services = announcement.getServices();
 			for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)

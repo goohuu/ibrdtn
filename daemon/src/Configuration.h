@@ -79,6 +79,7 @@ namespace dtn
 
 			std::string getDiscoveryAddress();
 			int getDiscoveryPort();
+			unsigned int getDiscoveryTimeout();
 
 			Configuration::NetConfig getAPIInterface();
 
@@ -187,6 +188,7 @@ namespace dtn
 			int _debuglevel;
 			bool _debug;
 			bool _quiet;
+			unsigned int _disco_timeout;
 		};
 	}
 }

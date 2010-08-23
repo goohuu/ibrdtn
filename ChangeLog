@@ -1,3 +1,7 @@
+2010-08-23
+--------------------------------------------------------
+ * Discovery timeout is configurable now. (discovery_timeout)
+
 2010-08-20
 --------------------------------------------------------
  * Fixes for compiling with older/more strict compilers

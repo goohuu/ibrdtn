@@ -40,7 +40,7 @@ namespace dtn
 		}
 
 		Configuration::Configuration()
-		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true), _debuglevel(0), _debug(false), _quiet(false)
+		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true), _debuglevel(0), _debug(false), _quiet(false), _disco_timeout(5)
 		{
 		}
 
@@ -107,7 +107,8 @@ namespace dtn
 		void Configuration::load(string filename)
 		{
 			try {
-					_conf = ibrcommon::ConfigFile(filename);;
+					_conf = ibrcommon::ConfigFile(filename);
+					_disco_timeout = _conf.read<unsigned int>("discovery_timeout", 5);
 					IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::ConfigFile::file_not_found ex) {
 					IBRCOMMON_LOGGER(info) << "Using defaults. To use custom config file use parameter -c configfile." << IBRCOMMON_LOGGER_ENDL;
@@ -227,6 +228,11 @@ namespace dtn
 		int Configuration::getDiscoveryPort()
 		{
 			return _conf.read<int>("discovery_port", 4551);
+		}
+
+		unsigned int Configuration::getDiscoveryTimeout()
+		{
+			return _disco_timeout;
 		}
 
 		Configuration::NetConfig Configuration::getAPIInterface()
