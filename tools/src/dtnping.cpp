@@ -15,66 +15,117 @@
 
 #include <iostream>
 
+
+
+
+
+#define CREATE_CHUNK_SIZE 2048
+
 class EchoClient : public dtn::api::Client
 {
 	public:
-		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
+		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app,  ibrcommon::tcpstream &stream)
 		 : dtn::api::Client(mode, app, stream), _stream(stream)
 		{
+			seq=0;
+			this->app="/"+app; //bug?
 		}
 
 		virtual ~EchoClient()
 		{
 		}
 
-		dtn::api::Bundle reply()
+		bool waitForReply(int timeout)
 		{
-			dtn::api::Bundle b = (*this).getBundle();
+			double wait=(timeout*1000);
+			ibrcommon::TimeMeasurement tm;
+			while ( wait > 0) {
+				try {
+					tm.start(); 
+					dtn::api::Bundle b = this->getBundle((int)(wait/1000));
+					tm.stop();
+					if (checkReply(&b))
+						return true;
+					wait=wait-tm.getMilliseconds();
+				}
+				catch (ibrcommon::Exception ex) {
+					cerr << "Timout." << endl;
+					return false;
+				} 
+			}
+			return false;
 
-			// return the bundle
-			return b;
 		}
 
 		void echo(EID destination, int size, int lifetime)
 		{
+			lastdestination=destination.getString();
+			seq++;
+			
 			// create a bundle
 			dtn::api::StringBundle b(destination);
 
 			// set lifetime
 			b.setLifetime(lifetime);
-
-			// create testing pattern
-			char pattern[2000];
-			for (int i = 0; i < 2000; i++)
+			
+			//Add magic seqnr. Hmm, how to to do this without string?
+			b.append(string((char *)(&seq),4));
+			size-=4;
+			
+			// create testing pattern, chunkwise to ocnserve memory
+			char pattern[CREATE_CHUNK_SIZE];
+			for (int i = 0; i < sizeof(pattern); i++)
 			{
 				pattern[i] = '0';
 				pattern[i] += i % 10;
 			}
+			string chunk=string(pattern,CREATE_CHUNK_SIZE);
 
-			// create data blob
-			for (int i = 0; i < size; i += 2000)
-			{
-				if (i < (size - 2000))
-				{
-					b.append(string(pattern, 2000));
-				}
-				else
-				{
-					b.append(string(pattern, size - i));
-				}
+			while (size > CREATE_CHUNK_SIZE) {
+				b.append(chunk);
+				size-=CREATE_CHUNK_SIZE;
 			}
+			b.append(chunk.substr(0,size));
+			
+			
 
 			// send the bundle
 			(*this) << b;
 
 			// ... flush out
 			flush();
+			
+		}
+		
+		bool checkReply(dtn::api::Bundle *bundle) {
+			int reply_seq;
+			ibrcommon::BLOB::Reference blob=bundle->getData();
+			(*blob).read((char *)(&reply_seq),4 );
+			//cout << "Reply seq is " << reply_seq << endl;
+			if (reply_seq != seq) {
+				cerr << "Seq-Nr mismatch, awaited  " << seq << ", got " << reply_seq << endl;
+				return false;
+			}
+			if (bundle->getDestination().getApplication() !=app) {
+				cerr << "Ignoring bundle for destination " << bundle->getDestination().getApplication() << " awaited " << app << endl;
+				return false;
+			}
+			if (bundle->getSource().getString() !=lastdestination) {
+				cerr << "Ignoring bundle from source " << bundle->getSource().getString() << " awaited " << lastdestination << endl;
+				return false;
+			}
+			return true;
 		}
 
 	private:
 		ibrcommon::tcpstream &_stream;
+		int seq;
+		string app;
+		string lastdestination;
 };
 
+
+	
 void print_help()
 {
 	cout << "-- dtnping (IBR-DTN) --" << endl;
@@ -90,6 +141,8 @@ void print_help()
 
 }
 
+EchoClient *client; //for signal cb
+
 int main(int argc, char *argv[])
 {
 	string ping_destination = "dtn://local/echo";
@@ -100,13 +153,15 @@ int main(int argc, char *argv[])
 	size_t count = 1;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
 
+	 //signal (SIGALRM, catch_alarm);
+
 	if (argc == 1)
 	{
 		print_help();
 		return 0;
 	}
 
-	for (int i = 0; i < argc; i++)
+	for (int i = 1; i < argc-1; i++)
 	{
 		string arg = argv[i];
 
@@ -117,36 +172,46 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 
-		if (arg == "--nowait")
+		else if (arg == "--nowait")
 		{
 			mode = dtn::api::Client::MODE_SENDONLY;
 			wait_for_reply = false;
 		}
 
-		if (arg == "--src" && argc > i)
+		else if (arg == "--src" && argc > i)
 		{
 			ping_source = argv[i + 1];
+			i++;
 		}
 
-		if (arg == "--size" && argc > i)
+		else if (arg == "--size" && argc > i)
 		{
 			stringstream str_size;
 			str_size.str( argv[i + 1] );
 			str_size >> ping_size;
+			i++;
 		}
 
-		if (arg == "--count" && argc > i)
+		else if (arg == "--count" && argc > i)
 		{
 			stringstream str_count;
 			str_count.str( argv[i + 1] );
 			str_count >> count;
+			i++;
 		}
 
-		if (arg == "--lifetime" && argc > i)
+		else if (arg == "--lifetime" && argc > i)
 		{
 			stringstream data; data << argv[i + 1];
 			data >> lifetime;
+			i++;
 		}
+		else {
+			cout << "Unknown argument " << arg << endl;
+			print_help();
+			return -1;
+		}
+		
 	}
 
 	size_t bundlecounter = 0;
@@ -155,17 +220,20 @@ int main(int argc, char *argv[])
 	ping_destination = argv[argc - 1];
 
 	ibrcommon::TimeMeasurement tm;
-
+	
+	
 	try {
 		// Create a stream to the server using TCP.
 		ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
 		// Initiate a derivated client
-		EchoClient client(mode, ping_source, conn);
+		client = new EchoClient(mode, ping_source,  conn);
+		
+
 
 		// Connect to the server. Actually, this function initiate the
 		// stream protocol by starting the thread and sending the contact header.
-		client.connect();
+		client->connect();
 
 		// target address
 		EID addr = EID(ping_destination);
@@ -179,20 +247,19 @@ int main(int argc, char *argv[])
 				tm.start();
 
 				// Call out a ECHO
-				client.echo( addr, ping_size, lifetime );
-
+				client->echo( addr, ping_size, lifetime );
+			
 				if (wait_for_reply)
 				{
-					// Get the echo reply. This method blocks
-					dtn::api::Bundle relpy = client.reply();
-
-					// set receiving time
-					tm.stop();
-
+					
+					if (client->waitForReply(2*lifetime)) {
 					// print out measurement result
-					cout << tm << endl;
+						tm.stop();
+						cout << tm << endl;
+						bundlecounter++;
+					}
 
-					bundlecounter++;
+					
 				}
 				else
 					cout << endl;
@@ -204,7 +271,7 @@ int main(int argc, char *argv[])
 		}
 
 		// Shutdown the client connection.
-		client.close();
+		client->close();
 		conn.close();
 
 	} catch (ibrcommon::tcpclient::SocketException ex) {
@@ -214,10 +281,8 @@ int main(int argc, char *argv[])
 
 	}
 
-	if (bundlecounter > 1)
-	{
-		std::cout << bundlecounter << " bundles received" << std::endl;
-	}
+	float loss = 100.0-(bundlecounter/count)*100.0;
+	std::cout << loss << "% loss. " << bundlecounter << " bundles received " << (count-bundlecounter) << " lost."  << std::endl;
 
 	return 0;
 }
