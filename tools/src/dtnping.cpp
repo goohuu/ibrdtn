@@ -15,9 +15,7 @@
 
 #include <iostream>
 
-
-
-
+#include <stdint.h>
 
 #define CREATE_CHUNK_SIZE 2048
 
@@ -106,10 +104,12 @@ class EchoClient : public dtn::api::Client
 				cerr << "Seq-Nr mismatch, awaited  " << seq << ", got " << reply_seq << endl;
 				return false;
 			}
+			/* Is checked by daemon
 			if (bundle->getDestination().getApplication() !=app) {
 				cerr << "Ignoring bundle for destination " << bundle->getDestination().getApplication() << " awaited " << app << endl;
 				return false;
 			}
+			*/
 			if (bundle->getSource().getString() !=lastdestination) {
 				cerr << "Ignoring bundle from source " << bundle->getSource().getString() << " awaited " << lastdestination << endl;
 				return false;
@@ -119,7 +119,7 @@ class EchoClient : public dtn::api::Client
 
 	private:
 		ibrcommon::tcpstream &_stream;
-		int seq;
+		uint32_t seq;
 		string app;
 		string lastdestination;
 };
