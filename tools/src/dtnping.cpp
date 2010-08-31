@@ -135,6 +135,7 @@ void print_help()
 	cout << " -h|--help       display this text" << endl;
 	cout << " --src <name>    set the source application name (e.g. echo-client)" << endl;
 	cout << " --nowait        do not wait for a reply" << endl;
+	cout << " --abortfail     Abort after first packetloss" << endl;
 	cout << " --size          the size of the payload" << endl;
 	cout << " --count X       send X echo in a row" << endl;
 	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 30" << endl;
@@ -150,6 +151,7 @@ int main(int argc, char *argv[])
 	int ping_size = 64;
 	unsigned int lifetime = 30;
 	bool wait_for_reply = true;
+	bool stop_after_first_fail = false;
 	size_t count = 1;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
 
@@ -176,6 +178,10 @@ int main(int argc, char *argv[])
 		{
 			mode = dtn::api::Client::MODE_SENDONLY;
 			wait_for_reply = false;
+		}
+		
+		else if ( arg == "--abortfail") {
+			stop_after_first_fail=true;
 		}
 
 		else if (arg == "--src" && argc > i)
@@ -257,6 +263,10 @@ int main(int argc, char *argv[])
 						tm.stop();
 						cout << tm << endl;
 						bundlecounter++;
+					}
+					else if (stop_after_first_fail) {
+						cout << "No response, aborting " << endl;
+						break;
 					}
 
 					
