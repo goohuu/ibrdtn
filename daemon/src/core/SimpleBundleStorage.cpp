@@ -544,7 +544,7 @@ namespace dtn
 		SimpleBundleStorage::BundleContainer::Holder::~Holder()
 		{
 			ibrcommon::MutexLock l(_state_lock);
-			if (_state == HOLDER_DELETED)
+			if ((_state == HOLDER_DELETED) && (_container.exists()))
 			{
 				_container.remove();
 			}

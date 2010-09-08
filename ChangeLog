@@ -1,3 +1,8 @@
+2010-09-08
+--------------------------------------------------------
+ * Fixed deletion of non-existing file in the storage caused a crash.
+ * dtnping improved with reply and timeout checking
+ 
 2010-08-23
 --------------------------------------------------------
  * Discovery timeout is configurable now. (discovery_timeout)
