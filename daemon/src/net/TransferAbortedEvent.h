@@ -20,6 +20,15 @@ namespace dtn
 		class TransferAbortedEvent : public dtn::core::Event
 		{
 		public:
+			enum AbortReason
+			{
+				REASON_UNDEFINED = 0,
+				REASON_CONNECTION_DOWN = 1,
+				REASON_REFUSED = 2,
+				REASON_RETRY_LIMIT_REACHED = 3,
+				REASON_BUNDLE_DELETED = 4
+			};
+
 			virtual ~TransferAbortedEvent();
 
 			const std::string getName() const;
@@ -28,17 +37,19 @@ namespace dtn
 
 			static const std::string className;
 
-			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle);
-			static void raise(const dtn::data::EID &peer, const dtn::data::BundleID &id);
+			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason reason = REASON_UNDEFINED);
+			static void raise(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason reason = REASON_UNDEFINED);
 
 			dtn::data::EID getPeer() const;
 			dtn::data::BundleID getBundleID() const;
 
+			const AbortReason reason;
+
 		private:
 			const dtn::data::EID _peer;
 			const dtn::data::BundleID _bundle;
-			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle);
-			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id);
+			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason reason);
+			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason reason);
 		};
 	}
 }

@@ -11,13 +11,13 @@ namespace dtn
 {
 	namespace net
 	{
-		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle)
-		 : _peer(peer), _bundle(bundle)
+		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason r)
+		 : _peer(peer), _bundle(bundle), reason(r)
 		{
 		}
 
-		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id)
-		 : _peer(peer), _bundle(id)
+		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason r)
+		 : _peer(peer), _bundle(id), reason(r)
 		{
 		}
 
@@ -26,16 +26,16 @@ namespace dtn
 
 		}
 
-		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle)
+		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason r)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new TransferAbortedEvent(peer, bundle) );
+			dtn::core::Event::raiseEvent( new TransferAbortedEvent(peer, bundle, r) );
 		}
 
-		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::BundleID &id)
+		void TransferAbortedEvent::raise(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason r)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new TransferAbortedEvent(peer, id) );
+			dtn::core::Event::raiseEvent( new TransferAbortedEvent(peer, id, r) );
 		}
 
 		const std::string TransferAbortedEvent::getName() const

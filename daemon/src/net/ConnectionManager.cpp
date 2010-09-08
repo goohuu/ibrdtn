@@ -14,7 +14,6 @@
 #include "ibrcommon/net/tcpserver.h"
 #include "core/BundleCore.h"
 #include "routing/RequeueBundleEvent.h"
-#include "net/TransferCompletedEvent.h"
 #include "net/ConnectionEvent.h"
 
 #include "core/NodeEvent.h"

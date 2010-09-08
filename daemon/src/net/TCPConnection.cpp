@@ -110,12 +110,12 @@ namespace dtn
 					{
 						// some data are already acknowledged, make a fragment?
 						//TODO: make a fragment
-						TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
+						TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 					}
 					else
 					{
 						// raise transfer abort event for all bundles without an ACK
-						TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
+						TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 					}
 
 					// set last ack to zero
@@ -135,7 +135,7 @@ namespace dtn
 				const dtn::data::Bundle bundle = _sentqueue.frontpop();
 
 				// requeue the bundle
-				TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
+				TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
 
 				// set ACK to zero
 				_lastack = 0;

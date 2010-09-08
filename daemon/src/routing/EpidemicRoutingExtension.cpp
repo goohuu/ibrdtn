@@ -8,6 +8,7 @@
 #include "routing/EpidemicRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
@@ -114,9 +115,54 @@ namespace dtn
 				}
 			} catch (std::bad_cast ex) { };
 
-			// TODO: TransferAbortedEvent: send next bundle
-			// How to exclude several bundles? Combine two bloomfilters? Use a blocklist. Delay transfers to the node?
-			// BundleRejectedEvent needed to differ between rejected and failed transfers! Constrains?
+			// TransferAbortedEvent: send next bundle
+			try {
+				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+				dtn::data::EID eid = aborted.getPeer();
+				dtn::data::BundleID id = aborted.getBundleID();
+
+				switch (aborted.reason)
+				{
+					case dtn::net::TransferAbortedEvent::REASON_UNDEFINED:
+					{
+						break;
+					}
+
+					case dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED:
+					{
+						// transfer the next bundle to this destination
+						_taskqueue.push( new SearchNextBundleTask( eid ) );
+						break;
+					}
+
+					case dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN:
+					{
+						break;
+					}
+
+					// How to exclude several bundles? Combine two bloomfilters? Use a blocklist. Delay transfers to the node?
+					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
+					{
+						// add the transferred bundle to the bloomfilter of the receiver
+						{
+							ibrcommon::MutexLock l(_list_mutex);
+							ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
+							bf.insert(id.toString());
+						}
+
+						// transfer the next bundle to this destination
+						_taskqueue.push( new SearchNextBundleTask( eid ) );
+						break;
+					}
+
+					case dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED:
+					{
+						// transfer the next bundle to this destination
+						_taskqueue.push( new SearchNextBundleTask( eid ) );
+						break;
+					}
+				}
+			} catch (std::bad_cast ex) { };
 
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);

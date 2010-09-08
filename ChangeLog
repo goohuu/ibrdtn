@@ -1,7 +1,8 @@
 2010-09-08
 --------------------------------------------------------
  * Fixed deletion of non-existing file in the storage caused a crash.
- * dtnping improved with reply and timeout checking
+ * Improved dtnping with reply and timeout checking.
+ * Improved flow control and error correction in epidemic routing.
  
 2010-08-23
 --------------------------------------------------------

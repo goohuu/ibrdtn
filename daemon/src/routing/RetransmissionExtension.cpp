@@ -46,7 +46,7 @@ namespace dtn
 							getRouter()->transferTo(data.destination, data);
 						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 							// bundle is not available, stop retransmission.
-							dtn::net::TransferAbortedEvent::raise(data.destination, data);
+							dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 						}
 
 						// remove the item off the queue
@@ -82,7 +82,7 @@ namespace dtn
 					}
 					else
 					{
-						dtn::net::TransferAbortedEvent::raise(requeue->_peer, requeue->_bundle);
+						dtn::net::TransferAbortedEvent::raise(requeue->_peer, requeue->_bundle, dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
 					}
 				}
 				else
