@@ -148,6 +148,11 @@ namespace dtn
 							ibrcommon::MutexLock l(_list_mutex);
 							ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
 							bf.insert(id.toString());
+
+							if (IBRCOMMON_LOGGER_LEVEL >= 40)
+							{
+								IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
+							}
 						}
 
 						// transfer the next bundle to this destination
@@ -170,25 +175,30 @@ namespace dtn
 				dtn::data::EID eid = completed.getPeer();
 				dtn::data::MetaBundle meta = completed.getBundle();
 
-				try {
-					// delete the bundle in the storage if
-					if ( EID(eid.getNodeEID()) == EID(meta.destination) )
-					{
+				// delete the bundle in the storage if
+				if ( EID(eid.getNodeEID()) == EID(meta.destination) )
+				{
+					try {
 						// bundle has been delivered to its destination
 						// TODO: generate a "delete" message for routing algorithm
 
 						// delete it from our storage
 						getRouter()->getStorage().remove(meta);
+					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+
 					}
-				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-
 				}
-
-				// add the transferred bundle to the bloomfilter of the receiver
+				else
 				{
+					// add the transferred bundle to the bloomfilter of the receiver
 					ibrcommon::MutexLock l(_list_mutex);
 					ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
 					bf.insert(meta.toString());
+
+					if (IBRCOMMON_LOGGER_LEVEL >= 40)
+					{
+						IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 
 				// transfer the next bundle to this destination
