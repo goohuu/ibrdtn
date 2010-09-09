@@ -143,15 +143,17 @@ namespace dtn
 					// How to exclude several bundles? Combine two bloomfilters? Use a blocklist. Delay transfers to the node?
 					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
 					{
+						dtn::data::Bundle b = getRouter()->getStorage().get(id);
+
 						// delete the bundle in the storage if
-						if ( EID(eid.getNodeEID()) == EID(meta.destination) )
+						if ( EID(eid.getNodeEID()) == EID(b._destination) )
 						{
 							try {
 								// bundle has been delivered to its destination
 								// TODO: generate a "delete" message for routing algorithm
 
 								// delete it from our storage
-								getRouter()->getStorage().remove(meta);
+								getRouter()->getStorage().remove(b);
 							} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 
 							}
