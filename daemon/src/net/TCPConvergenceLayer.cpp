@@ -13,11 +13,8 @@
 #include <ibrcommon/thread/MutexLock.h>
 #include "routing/RequeueBundleEvent.h"
 #include <ibrcommon/Logger.h>
-
-#include <sys/socket.h>
+#include <ibrcommon/net/tcpclient.h>
 #include <streambuf>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include <functional>
 #include <list>
@@ -123,27 +120,13 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::Server::getConnection(const dtn::core::Node &n)
 		{
-			struct sockaddr_in sock_address;
-			int sock = socket(AF_INET, SOCK_STREAM, 0);
-
-			if (sock <= 0)
-			{
-				// error
-				throw ibrcommon::SocketException("Could not create a socket.");
-			}
-
-			sock_address.sin_family = AF_INET;
-			sock_address.sin_addr.s_addr = inet_addr(n.getAddress().c_str());
-			sock_address.sin_port = htons(n.getPort());
-
-			if (connect ( sock, (struct sockaddr *) &sock_address, sizeof (sock_address)) != 0)
-			{
-				// error
-				throw ibrcommon::SocketException("Could not connect to the server.");
-			}
-
 			// create a connection
-			TCPConnection *conn = new TCPConnection(new ibrcommon::tcpstream(sock));
+			ibrcommon::tcpstream* stream = new ibrcommon::tcpclient(n.getAddress(), n.getPort());
+
+			// enable linger option
+			stream->enableLinger();
+
+			TCPConnection *conn = new TCPConnection(stream);
 
 			// add connection as pending
 			_connections.push_back( Connection( conn, n ) );
@@ -232,7 +215,13 @@ namespace dtn
 		{
 			try {
 				// wait for incoming connections
-				TCPConnection *conn = new TCPConnection(_tcpsrv.accept());
+				ibrcommon::tcpstream* stream = _tcpsrv.accept();
+
+				// enable linger option
+				stream->enableLinger();
+
+				// create new TCPConnection object
+				TCPConnection *conn = new TCPConnection(stream);
 
 				{
 					ibrcommon::MutexLock l(_connection_lock);

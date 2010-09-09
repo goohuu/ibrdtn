@@ -1,3 +1,8 @@
+2010-09-09
+--------------------------------------------------------
+ * DNS resolving for names of static tcp connections
+ * IPv6 support for outgoing TCP connections
+
 2010-09-08
 --------------------------------------------------------
  * Fixed deletion of non-existing file in the storage caused a crash.
