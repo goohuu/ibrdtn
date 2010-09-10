@@ -21,6 +21,7 @@
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/AutoDelete.h>
 
 #include <functional>
 #include <list>
@@ -242,76 +243,70 @@ namespace dtn
 			{
 				try {
 					Task *t = _taskqueue.blockingpop();
+					ibrcommon::AutoDelete<Task> killer(t);
 
 					IBRCOMMON_LOGGER_DEBUG(10) << "processing epidemic task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
-						ExpireTask &task = dynamic_cast<ExpireTask&>(*t);
+						try {
+							ExpireTask &task = dynamic_cast<ExpireTask&>(*t);
 
-						// should i send a vector update?
-						if (sendVectorUpdate)
-						{
-							sendVectorUpdate = false;
-							_taskqueue.push( new BroadcastSummaryVectorTask() );
-						}
-
-						ibrcommon::MutexLock l(_list_mutex);
-						_seenlist.expire(task.timestamp);
-						_purge_vector.expire(task.timestamp);
-					} catch (std::bad_cast) { };
-
-					try {
-						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
-
-						IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
-
-						ibrcommon::MutexLock l(_list_mutex);
-						ibrcommon::BloomFilter &bf = _neighbors.get(task.eid)._filter;
-						dtn::data::Bundle b = getRouter()->getStorage().get(bf);
-						getRouter()->transferTo(task.eid, b);
-
-					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
-					} catch (std::bad_cast) { };
-
-					try {
-						dynamic_cast<BroadcastSummaryVectorTask&>(*t);
-
-						std::set<dtn::data::EID> list;
-						{
-							ibrcommon::MutexLock l(_list_mutex);
-							list = _neighbors.getAvailable();
-						}
-
-						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-						{
-							transferEpidemicInformation(*iter);
-						}
-
-					} catch (std::bad_cast) { };
-
-					try {
-						UpdateSummaryVectorTask &task = dynamic_cast<UpdateSummaryVectorTask&>(*t);
-						transferEpidemicInformation(task.eid);
-					} catch (std::bad_cast) { };
-
-					try {
-						ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
-						ibrcommon::MutexLock l(_list_mutex);
-
-						// check for special addresses
-						if (task.bundle.destination == EID("dtn:epidemic-routing"))
-						{
-							// get the bundle out of the storage
-							dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);
-
-							try {
-								// remove the bundle
-								getRouter()->getStorage().remove(bundle);
-							} catch (BundleStorage::NoBundleFoundException) {
-
+							// should i send a vector update?
+							if (sendVectorUpdate)
+							{
+								sendVectorUpdate = false;
+								_taskqueue.push( new BroadcastSummaryVectorTask() );
 							}
 
-							try {
+							ibrcommon::MutexLock l(_list_mutex);
+							_seenlist.expire(task.timestamp);
+							_purge_vector.expire(task.timestamp);
+						} catch (std::bad_cast) { };
+
+						try {
+							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
+
+							IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+
+							ibrcommon::MutexLock l(_list_mutex);
+							ibrcommon::BloomFilter &bf = _neighbors.get(task.eid)._filter;
+							dtn::data::Bundle b = getRouter()->getStorage().get(bf);
+							getRouter()->transferTo(task.eid, b);
+
+						} catch (dtn::core::BundleStorage::NoBundleFoundException) {
+						} catch (std::bad_cast) { };
+
+						try {
+							dynamic_cast<BroadcastSummaryVectorTask&>(*t);
+
+							std::set<dtn::data::EID> list;
+							{
+								ibrcommon::MutexLock l(_list_mutex);
+								list = _neighbors.getAvailable();
+							}
+
+							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							{
+								transferEpidemicInformation(*iter);
+							}
+
+						} catch (std::bad_cast) { };
+
+						try {
+							UpdateSummaryVectorTask &task = dynamic_cast<UpdateSummaryVectorTask&>(*t);
+							transferEpidemicInformation(task.eid);
+						} catch (std::bad_cast) { };
+
+						try {
+							ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
+							ibrcommon::MutexLock l(_list_mutex);
+
+							// check for special addresses
+							if (task.bundle.destination == EID("dtn:epidemic-routing"))
+							{
+								// get the bundle out of the storage
+								dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);
+
 								// get all epidemic extension blocks of this bundle
 								const EpidemicExtensionBlock &ext = bundle.getBlock<EpidemicExtensionBlock>();
 
@@ -322,47 +317,45 @@ namespace dtn
 								// update the neighbor database with this filter
 								_neighbors.updateBundles(bundle._source, filter);
 
-								try {
-									while (true)
-									{
-										// delete bundles in the purge vector
-										dtn::data::MetaBundle meta = getRouter()->getStorage().remove(purge);
+								while (true)
+								{
+									// delete bundles in the purge vector
+									dtn::data::MetaBundle meta = getRouter()->getStorage().remove(purge);
 
-										IBRCOMMON_LOGGER_DEBUG(15) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+									IBRCOMMON_LOGGER_DEBUG(15) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-										// add this bundle to the own purge vector
-										_purge_vector.add(meta);
-									}
-								} catch (BundleStorage::NoBundleFoundException) {
-
+									// add this bundle to the own purge vector
+									_purge_vector.add(meta);
 								}
 
-							} catch (dtn::data::Bundle::NoSuchBlockFoundException) {
-
+								// remove the bundle
+								getRouter()->getStorage().remove(bundle);
 							}
-						}
-						else
-						{
-							// trigger new transmission of the summary vector
-							sendVectorUpdate = true;
-
-							// trigger transmission for all neighbors
-							std::set<dtn::data::EID> list;
+							else
 							{
-								list = _neighbors.getAvailable();
-							}
+								// trigger new transmission of the summary vector
+								sendVectorUpdate = true;
 
-							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-							{
-								// transfer the next bundle to this destination
-								_taskqueue.push( new SearchNextBundleTask( *iter ) );
-							}
-						}
-					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
-						// if the bundle is not in the storage we have nothing to do
-					} catch (std::bad_cast) { };
+								// trigger transmission for all neighbors
+								std::set<dtn::data::EID> list;
+								{
+									list = _neighbors.getAvailable();
+								}
 
-					delete t;
+								for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+								{
+									// transfer the next bundle to this destination
+									_taskqueue.push( new SearchNextBundleTask( *iter ) );
+								}
+							}
+						} catch (dtn::data::Bundle::NoSuchBlockFoundException) {
+							// if the bundle does not contains the expected block
+						} catch (dtn::core::BundleStorage::NoBundleFoundException) {
+							// if the bundle is not in the storage we have nothing to do
+						} catch (std::bad_cast) { };
+					} catch (ibrcommon::Exception ex) {
+						IBRCOMMON_LOGGER(error) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 				} catch (ibrcommon::Exception ex) {
 					return;
 				}
