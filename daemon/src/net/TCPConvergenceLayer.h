@@ -68,6 +68,11 @@ namespace dtn
 				void shutdown();
 
 				/**
+				 * Mark the connection for later shutdown
+				 */
+				void shutdownlater();
+
+				/**
 				 * Get the header of this connection
 				 * @return
 				 */
@@ -165,6 +170,8 @@ namespace dtn
 
 				ibrcommon::ThreadSafeQueue<dtn::data::Bundle> _sentqueue;
 				size_t _lastack;
+
+				bool _shutdown;
 			};
 
 			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver

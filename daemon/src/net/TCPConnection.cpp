@@ -31,7 +31,7 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : _free(false), _peer(), _node(Node::NODE_FLOATING), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0)
+		 : _free(false), _peer(), _node(Node::NODE_FLOATING), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0), _shutdown(false)
 		{
 			stream->enableKeepalive();
 			_node.setProtocol(Node::CONN_TCPIP);
@@ -45,6 +45,11 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::iamfree()
 		{
 			_free = true;
+		}
+
+		void TCPConvergenceLayer::TCPConnection::shutdownlater()
+		{
+			_shutdown = true;
 		}
 
 		bool TCPConvergenceLayer::TCPConnection::free()

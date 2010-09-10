@@ -610,6 +610,8 @@ namespace dtn
 					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
 				} catch (ios_base::failure ex) {
 					throw dtn::SerializationFailedException("can not load bundle data" + std::string(ex.what()));
+				} catch (...) {
+					throw dtn::SerializationFailedException("bundle get failed");
 				}
 
 				fs.close();

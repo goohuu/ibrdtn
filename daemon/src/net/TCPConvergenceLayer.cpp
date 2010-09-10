@@ -170,7 +170,8 @@ namespace dtn
 
 						if (conn.match(*node))
 						{
-							(*conn).shutdown();
+							// TODO: this method only marks the connection to be closed, but do not close it!
+							(*conn).shutdownlater();
 						}
 					}
 				}
