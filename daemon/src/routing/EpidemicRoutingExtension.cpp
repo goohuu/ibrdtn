@@ -174,17 +174,19 @@ namespace dtn
 				dtn::data::MetaBundle meta = completed.getBundle();
 
 				// delete the bundle in the storage if
-				if ( EID(eid.getNodeEID()) == EID(meta.destination) )
+				if ( EID(eid.getNodeEID()) == EID(meta.destination.getNodeEID()) )
 				{
 					try {
 						// bundle has been delivered to its destination
 						// TODO: generate a "delete" message for routing algorithm
 
-						// add it to the purge vector
-						_purge_vector.add(meta);
-
 						// delete it from our storage
 						getRouter()->getStorage().remove(meta);
+
+						IBRCOMMON_LOGGER_DEBUG(15) << "bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+
+						// add it to the purge vector
+						_purge_vector.add(meta);
 					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 
 					}
@@ -240,6 +242,8 @@ namespace dtn
 			{
 				try {
 					Task *t = _taskqueue.blockingpop();
+
+					IBRCOMMON_LOGGER_DEBUG(10) << "processing epidemic task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						ExpireTask &task = dynamic_cast<ExpireTask&>(*t);
@@ -323,6 +327,8 @@ namespace dtn
 									{
 										// delete bundles in the purge vector
 										dtn::data::MetaBundle meta = getRouter()->getStorage().remove(purge);
+
+										IBRCOMMON_LOGGER_DEBUG(15) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 										// add this bundle to the own purge vector
 										_purge_vector.add(meta);
