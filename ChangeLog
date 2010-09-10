@@ -1,3 +1,7 @@
+2010-09-10
+--------------------------------------------------------
+ * Purge vector exchange added to epidemic routing
+
 2010-09-09
 --------------------------------------------------------
  * DNS resolving for names of static tcp connections

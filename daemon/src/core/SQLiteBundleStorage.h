@@ -93,6 +93,12 @@ namespace dtn
 			void remove(const dtn::data::BundleID &id);
 
 			/**
+			 * Remove all bundles which match this filter
+			 * @param filter
+			 */
+			dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter) { return BundleID(); };
+
+			/**
 			 * Clears all bundles and fragments in the storage.
 			 */
 			void clear();

@@ -145,6 +145,11 @@ namespace dtn
 			_store.remove(id);
 		}
 
+		dtn::data::MetaBundle SimpleBundleStorage::remove(const ibrcommon::BloomFilter &filter)
+		{
+			return _store.remove(filter);
+		}
+
 		SimpleBundleStorage::BundleStore::BundleStore(size_t maxsize)
 		 : _mode(MODE_NONPERSISTENT), _maxsize(maxsize), _currentsize(0)
 		{
@@ -334,6 +339,38 @@ namespace dtn
 					bundles.erase(iter);
 
 					return;
+				}
+			}
+
+			throw BundleStorage::NoBundleFoundException();
+		}
+
+		dtn::data::MetaBundle SimpleBundleStorage::BundleStore::remove(const ibrcommon::BloomFilter &filter)
+		{
+			ibrcommon::MutexLock l(bundleslock);
+
+			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				const BundleContainer &container = (*iter);
+
+				if ( filter.contains(container.toString()) )
+				{
+					// remove item in the bundlelist
+					BundleContainer container = (*iter);
+
+					// remove it from the bundle list
+					dtn::data::BundleList::remove(container);
+
+					// decrement the storage size
+					_currentsize -= container.size();
+
+					// mark for deletion
+					container.remove();
+
+					// remove the container
+					bundles.erase(iter);
+
+					return (MetaBundle)container;
 				}
 			}
 

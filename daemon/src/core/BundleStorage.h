@@ -10,6 +10,7 @@
 
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/data/BloomFilter.h>
 
 #include <stdexcept>
@@ -84,6 +85,13 @@ namespace dtn
 			 * @param b The bundle to remove.
 			 */
 			void remove(const dtn::data::Bundle &b);
+
+			/**
+			 * Remove all bundles which match this filter
+			 * @param filter
+			 * @return The BundleID of the removed bundle.
+			 */
+			virtual dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter) = 0;
 
 			/**
 			 * Clears all bundles and fragments in the storage.

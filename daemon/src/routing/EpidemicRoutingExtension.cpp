@@ -143,32 +143,14 @@ namespace dtn
 					// How to exclude several bundles? Combine two bloomfilters? Use a blocklist. Delay transfers to the node?
 					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
 					{
-						dtn::data::Bundle b = getRouter()->getStorage().get(id);
+						// add the transferred bundle to the bloomfilter of the receiver
+						ibrcommon::MutexLock l(_list_mutex);
+						ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
+						bf.insert(id.toString());
 
-						// delete the bundle in the storage if
-						if ( EID(eid.getNodeEID()) == EID(b._destination) )
+						if (IBRCOMMON_LOGGER_LEVEL >= 40)
 						{
-							try {
-								// bundle has been delivered to its destination
-								// TODO: generate a "delete" message for routing algorithm
-
-								// delete it from our storage
-								getRouter()->getStorage().remove(b);
-							} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-
-							}
-						}
-						else
-						{
-							// add the transferred bundle to the bloomfilter of the receiver
-							ibrcommon::MutexLock l(_list_mutex);
-							ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
-							bf.insert(id.toString());
-
-							if (IBRCOMMON_LOGGER_LEVEL >= 40)
-							{
-								IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
-							}
+							IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
 						}
 
 						// transfer the next bundle to this destination
@@ -197,6 +179,9 @@ namespace dtn
 					try {
 						// bundle has been delivered to its destination
 						// TODO: generate a "delete" message for routing algorithm
+
+						// add it to the purge vector
+						_purge_vector.add(meta);
 
 						// delete it from our storage
 						getRouter()->getStorage().remove(meta);
@@ -241,6 +226,7 @@ namespace dtn
 				EpidemicExtensionBlock &eblock = routingbundle.push_back<EpidemicExtensionBlock>();
 				const SummaryVector vec = getRouter()->getSummaryVector();
 				eblock.setSummaryVector(vec);
+				eblock.setPurgeVector(_purge_vector);
 			}
 
 			getRouter()->transferTo(eid, routingbundle);
@@ -267,10 +253,13 @@ namespace dtn
 
 						ibrcommon::MutexLock l(_list_mutex);
 						_seenlist.expire(task.timestamp);
+						_purge_vector.expire(task.timestamp);
 					} catch (std::bad_cast) { };
 
 					try {
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
+
+						IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 						ibrcommon::MutexLock l(_list_mutex);
 						ibrcommon::BloomFilter &bf = _neighbors.get(task.eid)._filter;
@@ -311,8 +300,12 @@ namespace dtn
 							// get the bundle out of the storage
 							dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);
 
-							// remove the bundle
-							getRouter()->getStorage().remove(bundle);
+							try {
+								// remove the bundle
+								getRouter()->getStorage().remove(bundle);
+							} catch (BundleStorage::NoBundleFoundException) {
+
+							}
 
 							try {
 								// get all epidemic extension blocks of this bundle
@@ -320,16 +313,44 @@ namespace dtn
 
 								// get the bloomfilter of this bundle
 								const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
+								const ibrcommon::BloomFilter &purge = ext.getPurgeVector().getBloomFilter();
 
 								// update the neighbor database with this filter
 								_neighbors.updateBundles(bundle._source, filter);
+
+								try {
+									while (true)
+									{
+										// delete bundles in the purge vector
+										dtn::data::MetaBundle meta = getRouter()->getStorage().remove(purge);
+
+										// add this bundle to the own purge vector
+										_purge_vector.add(meta);
+									}
+								} catch (BundleStorage::NoBundleFoundException) {
+
+								}
+
 							} catch (dtn::data::Bundle::NoSuchBlockFoundException) {
 
 							}
 						}
 						else
 						{
+							// trigger new transmission of the summary vector
 							sendVectorUpdate = true;
+
+							// trigger transmission for all neighbors
+							std::set<dtn::data::EID> list;
+							{
+								list = _neighbors.getAvailable();
+							}
+
+							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							{
+								// transfer the next bundle to this destination
+								_taskqueue.push( new SearchNextBundleTask( *iter ) );
+							}
 						}
 					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
 						// if the bundle is not in the storage we have nothing to do
@@ -371,6 +392,16 @@ namespace dtn
 			return _vector;
 		}
 
+		void EpidemicRoutingExtension::EpidemicExtensionBlock::setPurgeVector(const SummaryVector &vector)
+		{
+			_purge = vector;
+		}
+
+		const SummaryVector& EpidemicRoutingExtension::EpidemicExtensionBlock::getPurgeVector() const
+		{
+			return _purge;
+		}
+
 		void EpidemicRoutingExtension::EpidemicExtensionBlock::set(dtn::data::SDNV value)
 		{
 			_counter = value;
@@ -391,6 +422,7 @@ namespace dtn
 			stream >> _counter;
 			stream >> _data;
 			stream >> _vector;
+			stream >> _purge;
 
 			// unset block not processed bit
 			dtn::data::Block::set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);
@@ -403,6 +435,7 @@ namespace dtn
 			stream << _counter;
 			stream << _data;
 			stream << _vector;
+			stream << _purge;
 
 			return stream;
 		}

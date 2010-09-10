@@ -85,6 +85,12 @@ namespace dtn
 			void remove(const dtn::data::BundleID &id);
 
 			/**
+			 * Remove all bundles which match this filter
+			 * @param filter
+			 */
+			dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter);
+
+			/**
 			 * @sa BundleStorage::clear()
 			 */
 			void clear();
@@ -217,6 +223,7 @@ namespace dtn
 				void load(const ibrcommon::File &file);
 				void store(const dtn::data::Bundle &bundle, SimpleBundleStorage &storage);
 				void remove(const dtn::data::BundleID &id);
+				dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter);
 				void clear();
 
 				unsigned int count();

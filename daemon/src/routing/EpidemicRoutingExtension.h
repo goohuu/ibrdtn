@@ -61,8 +61,10 @@ namespace dtn
 				void set(dtn::data::SDNV value);
 				dtn::data::SDNV get() const;
 
+				void setPurgeVector(const SummaryVector &vector);
 				void setSummaryVector(const SummaryVector &vector);
 				const SummaryVector& getSummaryVector() const;
+				const SummaryVector& getPurgeVector() const;
 
 				virtual size_t getLength() const;
 				virtual std::ostream &serialize(std::ostream &stream) const;
@@ -72,6 +74,7 @@ namespace dtn
 				dtn::data::SDNV _counter;
 				dtn::data::BundleString _data;
 				SummaryVector _vector;
+				SummaryVector _purge;
 			};
 
 		protected:
@@ -163,10 +166,10 @@ namespace dtn
 			 */
 			dtn::data::BundleList _seenlist;
 
-//			/**
-//			 * contains the own summary vector for all stored bundles
-//			 */
-//			SummaryVector _bundle_vector;
+			/**
+			 * contains the own summary vector for all stored bundles
+			 */
+			dtn::routing::BundleSummary _purge_vector;
 
 			/**
 			 * stores information about neighbors
