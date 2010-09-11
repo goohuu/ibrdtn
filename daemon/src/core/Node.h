@@ -28,7 +28,8 @@ namespace dtn
 			enum Type
 			{
 				NODE_FLOATING = 0,
-				NODE_PERMANENT = 1
+				NODE_PERMANENT = 1,
+				NODE_CONNECTED = 2
 			};
 
 			enum Protocol
@@ -65,6 +66,7 @@ namespace dtn
 			 * @sa NoteType
 			 */
 			Node::Type getType() const;
+			void setType(Node::Type type);
 
 			void setProtocol(Node::Protocol protocol);
 			Node::Protocol getProtocol() const;

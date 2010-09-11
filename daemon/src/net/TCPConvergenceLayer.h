@@ -68,11 +68,6 @@ namespace dtn
 				void shutdown();
 
 				/**
-				 * Mark the connection for later shutdown
-				 */
-				void shutdownlater();
-
-				/**
 				 * Get the header of this connection
 				 * @return
 				 */

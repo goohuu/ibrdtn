@@ -70,25 +70,25 @@ namespace dtn
 
 		void ConnectionManager::raiseEvent(const dtn::core::Event *evt)
 		{
-			const NodeEvent *nodeevent = dynamic_cast<const NodeEvent*>(evt);
-			const TimeEvent *timeevent = dynamic_cast<const TimeEvent*>(evt);
+			try {
+				const NodeEvent &nodeevent = dynamic_cast<const NodeEvent&>(*evt);
 
-			if (timeevent != NULL)
-			{
-				if (timeevent->getAction() == TIME_SECOND_TICK)
-				{
-					check_discovered();
-				}
-			}
-			else if (nodeevent != NULL)
-			{
-				Node n = nodeevent->getNode();
+				Node n = nodeevent.getNode();
 
-				if (nodeevent->getAction() == NODE_INFO_UPDATED)
+				if (nodeevent.getAction() == NODE_INFO_UPDATED)
 				{
 					discovered(n);
 				}
-			}
+			} catch (std::bad_cast) { }
+
+			try {
+				const TimeEvent &timeevent = dynamic_cast<const TimeEvent&>(*evt);
+
+				if (timeevent.getAction() == TIME_SECOND_TICK)
+				{
+					check_discovered();
+				}
+			} catch (std::bad_cast) { }
 
 			try {
 				const ConnectionEvent &connection = dynamic_cast<const ConnectionEvent&>(*evt);
@@ -115,8 +115,8 @@ namespace dtn
 						ibrcommon::MutexLock l(_node_lock);
 						_connected_nodes.erase(connection.node);
 
-						// if this node is gone...
-						if (!isNeighbor(connection.node))
+						// if this node is dynamically discovered
+						if (connection.node.getType() == Node::NODE_FLOATING)
 						{
 							// announce the unavailable event
 							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_UNAVAILABLE);

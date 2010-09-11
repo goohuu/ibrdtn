@@ -31,7 +31,7 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : _free(false), _peer(), _node(Node::NODE_FLOATING), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0), _shutdown(false)
+		 : _free(false), _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0), _shutdown(false)
 		{
 			stream->enableKeepalive();
 			_node.setProtocol(Node::CONN_TCPIP);
@@ -45,11 +45,6 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::iamfree()
 		{
 			_free = true;
-		}
-
-		void TCPConvergenceLayer::TCPConnection::shutdownlater()
-		{
-			_shutdown = true;
 		}
 
 		bool TCPConvergenceLayer::TCPConnection::free()
@@ -175,12 +170,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
 		{
-			// stop the sender
-			_sender.shutdown();
-
-			// stop the receiver
-			_receiver.shutdown();
-
 			// close the tcpstream
 			try {
 				_tcpstream->done();
@@ -192,9 +181,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventTimeout()
 		{
-			// stop the sender
-			_sender.shutdown();
-
 			// event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _node);
 
@@ -209,9 +195,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventError()
 		{
-			// stop the sender
-			_sender.shutdown();
-
 			// close the tcpstream
 			try {
 				_tcpstream->close();
@@ -223,6 +206,12 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
 			_stream.shutdown();
+
+			// stop the sender
+			_sender.shutdown();
+
+			// stop the receiver
+			_receiver.shutdown();
 		}
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
@@ -296,8 +285,7 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection::Receiver::~Receiver()
 		{
-			shutdown();
-			join();
+			JoinableThread::join();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::run()
@@ -334,7 +322,7 @@ namespace dtn
 
 					yield();
 				}
-			} catch (...) {
+			} catch (ibrcommon::Exception) {
 				_running = false;
 			}
 		}
@@ -342,6 +330,7 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
 		{
 			_running = false;
+			JoinableThread::stop();
 		}
 
 		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection)
@@ -351,8 +340,7 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection::Sender::~Sender()
 		{
-			shutdown();
-			join();
+			JoinableThread::join();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
@@ -368,18 +356,15 @@ namespace dtn
 					// idle a little bit
 					yield();
 				}
-			} catch (...) {
+			} catch (ibrcommon::Exception) {
 				_running = false;
 			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
 		{
-			{
-				ibrcommon::MutexLock l(*this);
-				_running = false;
-				signal();
-			}
+			_running = false;
+			JoinableThread::stop();
 		}
 	}
 }

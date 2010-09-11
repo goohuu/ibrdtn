@@ -34,6 +34,9 @@ namespace dtn
 
 			case Node::NODE_PERMANENT:
 				return "permanent";
+
+			case Node::NODE_CONNECTED:
+				return "connected";
 			}
 
 			return "unknown";
@@ -71,6 +74,11 @@ namespace dtn
 		Node::Type Node::getType() const
 		{
 			return _type;
+		}
+
+		void Node::setType(Node::Type type)
+		{
+			_type = type;
 		}
 
 		void Node::setProtocol(Node::Protocol protocol)
