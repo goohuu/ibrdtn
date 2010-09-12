@@ -44,7 +44,14 @@ namespace dtn
 
 		bool BundleSummary::contains(const dtn::data::BundleID &bundle) const
 		{
-			return _vector.contains(bundle);
+			// quick check
+			if (_vector.contains(bundle))
+			{
+				// do a deeper inspection
+				return dtn::data::BundleList::contains(bundle);
+			}
+
+			return false;
 		}
 
 		const SummaryVector& BundleSummary::getSummaryVector() const

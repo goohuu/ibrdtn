@@ -35,7 +35,7 @@ TestBundleList::DerivedBundleList::~DerivedBundleList()
 {
 }
 
-void TestBundleList::DerivedBundleList::eventBundleExpired(const ExpiringBundle &b)
+void TestBundleList::DerivedBundleList::eventBundleExpired(const ExpiringBundle&)
 {
 	//std::cout << "Bundle expired " << b.bundle.toString() << std::endl;
 	counter++;
@@ -60,6 +60,49 @@ void TestBundleList::genbundles(DerivedBundleList &l, int number, int offset, in
 
 		l.add(b);
 	}
+}
+
+void TestBundleList::containTest(void)
+{
+	DerivedBundleList &l = (*list);
+
+	dtn::data::Bundle b1;
+	b1._source = dtn::data::EID("dtn:test");
+	b1._timestamp = 1;
+	b1._sequencenumber = 1;
+
+	dtn::data::Bundle b2;
+	b2._source = dtn::data::EID("dtn:test");
+	b2._timestamp = 2;
+	b2._sequencenumber = 3;
+
+	CPPUNIT_ASSERT(l.contains(b1) == false);
+	CPPUNIT_ASSERT(l.contains(b2) == false);
+
+	l.add(b1);
+
+	CPPUNIT_ASSERT(l.contains(b1) == true);
+	CPPUNIT_ASSERT(l.contains(b2) == false);
+
+	l.add(b2);
+
+	CPPUNIT_ASSERT(l.contains(b1) == true);
+	CPPUNIT_ASSERT(l.contains(b2) == true);
+
+	l.remove(b1);
+
+	CPPUNIT_ASSERT(l.contains(b1) == false);
+	CPPUNIT_ASSERT(l.contains(b2) == true);
+
+	l.add(b1);
+
+	CPPUNIT_ASSERT(l.contains(b1) == true);
+	CPPUNIT_ASSERT(l.contains(b2) == true);
+
+	l.remove(b2);
+
+	CPPUNIT_ASSERT(l.contains(b1) == true);
+	CPPUNIT_ASSERT(l.contains(b2) == false);
 }
 
 void TestBundleList::orderTest(void)

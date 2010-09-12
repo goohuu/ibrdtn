@@ -42,6 +42,24 @@ namespace dtn
 			std::set<dtn::data::MetaBundle>::clear();
 		}
 
+		bool BundleList::contains(const dtn::data::BundleID bundle) const
+		{
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = begin(); iter != end(); iter++)
+			{
+				if ((*iter) == bundle)
+				{
+					return true;
+				}
+
+				if ((*iter) > bundle)
+				{
+					return false;
+				}
+			}
+
+			return false;
+		}
+
 		void BundleList::expire(const size_t timestamp)
 		{
 			// we can not expire bundles if we have no idea of time

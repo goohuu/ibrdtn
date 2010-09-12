@@ -153,15 +153,11 @@ namespace dtn
 
 		void ClientHandler::shutdown()
 		{
-			try {
-				// wait until all segments are ACK'd with 10 seconds timeout
-				_connection.wait(500);
-			} catch (...) {
-
-			}
-
 			// shutdown the connection
 			_connection.shutdown();
+
+			// close the reading thread
+			JoinableThread::stop();
 		}
 
 		void ClientHandler::run()
@@ -221,8 +217,8 @@ namespace dtn
 					_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 					_running = false;
 				}
-			} catch (...) {
-
+			} catch (ibrcommon::Exception) {
+			} catch (std::exception) {
 			}
 		}
 

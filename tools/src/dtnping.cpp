@@ -46,7 +46,7 @@ class EchoClient : public dtn::api::Client
 					wait=wait-tm.getMilliseconds();
 				}
 				catch (ibrcommon::Exception ex) {
-					cerr << "Timout." << endl;
+					cerr << "Timeout." << endl;
 					return false;
 				} 
 			}

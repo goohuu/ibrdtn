@@ -18,6 +18,7 @@ class TestBundleList: public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (TestBundleList);
 	CPPUNIT_TEST (orderTest);
+	CPPUNIT_TEST (containTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -26,6 +27,7 @@ public:
 
 protected:
 	void orderTest(void);
+	void containTest(void);
 
 private:
 	class DerivedBundleList : public dtn::data::BundleList

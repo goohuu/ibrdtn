@@ -56,7 +56,10 @@ namespace dtn
 			} catch (dtn::InvalidDataException ex) {
 				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
-			} catch (...) {
+			} catch (ibrcommon::Exception) {
+				IBRCOMMON_LOGGER(error) << "unknown error" << IBRCOMMON_LOGGER_ENDL;
+				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (std::exception) {
 				IBRCOMMON_LOGGER(error) << "unknown error" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
@@ -110,8 +113,13 @@ namespace dtn
 
 			StreamConnection::shutdown();
 
-			ibrcommon::MutexLock l(_inqueue);
-			_inqueue.signal(true);
+			{
+				ibrcommon::MutexLock l(_inqueue);
+				_inqueue.signal(true);
+			}
+
+			// stop the asynchronous receiver
+			_receiver.stop();
 		}
 
 		void Client::received(const StreamContactHeader&)
