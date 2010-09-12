@@ -113,11 +113,12 @@ namespace dtn
 					case ConnectionEvent::CONNECTION_DOWN:
 					{
 						ibrcommon::MutexLock l(_node_lock);
-						_connected_nodes.erase(connection.node);
 
 						// if this node is dynamically discovered
-						if (connection.node.getType() == Node::NODE_FLOATING)
+						if (isNeighbor(connection.node))
 						{
+							_connected_nodes.erase(connection.node);
+
 							// announce the unavailable event
 							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_UNAVAILABLE);
 						}
@@ -166,8 +167,6 @@ namespace dtn
 
 		void ConnectionManager::check_discovered()
 		{
-			std::list<dtn::core::Node> unavailables;
-
 			ibrcommon::MutexLock l(_node_lock);
 
 			// search for outdated nodes
@@ -182,21 +181,15 @@ namespace dtn
 
 				if ( !n.decrementTimeout(1) )
 				{
-					unavailables.push_back(n);
+					// remove the connected node
+					_connected_nodes.erase(n);
+
+					// announce the unavailable event
+					dtn::core::NodeEvent::raise(*iter, dtn::core::NODE_UNAVAILABLE);
 				}
 				else
 				{
 					_discovered_nodes.insert(n);
-				}
-			}
-
-			for(std::list<dtn::core::Node>::const_iterator iter = unavailables.begin(); iter != unavailables.end(); iter++)
-			{
-				// if this node is gone...
-				if (!isNeighbor(*iter))
-				{
-					// announce the unavailable event
-					dtn::core::NodeEvent::raise(*iter, dtn::core::NODE_UNAVAILABLE);
 				}
 			}
 		}
