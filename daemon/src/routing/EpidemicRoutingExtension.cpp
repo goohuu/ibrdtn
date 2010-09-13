@@ -358,7 +358,7 @@ namespace dtn
 					}
 				} catch (ibrcommon::Exception ex) {
 					return;
-				}
+				} catch (std::exception) { }
 			}
 		}
 

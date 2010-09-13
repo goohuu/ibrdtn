@@ -156,7 +156,7 @@ namespace dtn
 				}
 			} catch (ibrcommon::Exception) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected error or shutdown" << IBRCOMMON_LOGGER_ENDL;
-			}
+			} catch (std::exception) { }
 		}
 
 		/**

@@ -323,7 +323,7 @@ namespace dtn
 				}
 			} catch (ibrcommon::Exception) {
 				_running = false;
-			}
+			} catch (std::exception) { }
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
@@ -357,7 +357,7 @@ namespace dtn
 				}
 			} catch (ibrcommon::Exception) {
 				_running = false;
-			}
+			} catch (std::exception) { }
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
