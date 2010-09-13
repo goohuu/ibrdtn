@@ -47,7 +47,9 @@ namespace dtn
 			{
 				ibrcommon::MutexLock out_lock(_out_state);
 				_out_state.setState(CONNECTION_CONNECTED);
+			}
 
+			{
 				ibrcommon::MutexLock in_lock(_in_state);
 				_in_state.setState(CONNECTION_CONNECTED);
 			}

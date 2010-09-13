@@ -170,12 +170,17 @@ namespace dtn
 		 */
 		size_t StreamConnection::StreamBuffer::timeout(size_t)
 		{
-			ibrcommon::MutexLock timerl(_timer_lock);
+			size_t out_timeout_value = 0;
+			size_t in_timeout_value = 0;
+			{
+				ibrcommon::MutexLock timerl(_timer_lock);
+				_out_timeout_value--;
+				_in_timeout_value--;
+				out_timeout_value = _out_timeout_value;
+				in_timeout_value = _in_timeout_value;
+			}
 
-			_out_timeout_value--;
-			_in_timeout_value--;
-
-			if (_out_timeout_value <= 0)
+			if (out_timeout_value <= 0)
 			{
 				try {
 					ibrcommon::MutexLock l(_sendlock);
@@ -191,10 +196,11 @@ namespace dtn
 					return 0;
 				}
 
+				ibrcommon::MutexLock timerl(_timer_lock);
 				_out_timeout_value = _out_timeout;
 			}
 
-			if (_in_timeout_value <= 0)
+			if (in_timeout_value <= 0)
 			{
 				IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE timeout reached -> shutdown connection" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_IDLE);
