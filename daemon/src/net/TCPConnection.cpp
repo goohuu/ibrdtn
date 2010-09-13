@@ -329,6 +329,7 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::Receiver::finally()
 		{
 			_connection.eventShutdown();
+			_connection.iamfree();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
