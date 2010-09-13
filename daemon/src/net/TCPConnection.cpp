@@ -8,7 +8,6 @@
 #include "net/TCPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleCore.h"
-#include "core/NodeEvent.h"
 #include "core/GlobalEvent.h"
 #include "net/ConnectionEvent.h"
 #include "core/BundleEvent.h"
@@ -172,7 +171,7 @@ namespace dtn
 		{
 			// close the tcpstream
 			try {
-				_tcpstream->done();
+				//_tcpstream->done();
 				_tcpstream->close();
 			} catch (ibrcommon::ConnectionClosedException ex) {
 
@@ -186,7 +185,7 @@ namespace dtn
 
 			// close the tcpstream
 			try {
-				_tcpstream->done();
+				//_tcpstream->done();
 				_tcpstream->close();
 			} catch (ibrcommon::ConnectionClosedException ex) {
 

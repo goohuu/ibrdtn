@@ -52,13 +52,13 @@ namespace dtn
 		void ClientHandler::eventShutdown()
 		{
 			// shutdown message received
-			(*_stream).done();
+			//(*_stream).done();
 			(*_stream).close();
 		}
 
 		void ClientHandler::eventTimeout()
 		{
-			(*_stream).done();
+			//(*_stream).done();
 			(*_stream).close();
 		}
 

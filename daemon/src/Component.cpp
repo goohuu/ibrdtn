@@ -52,6 +52,7 @@ namespace dtn
 				_running = false;
 			}
 
+			JoinableThread::stop();
 			componentDown();
 		}
 

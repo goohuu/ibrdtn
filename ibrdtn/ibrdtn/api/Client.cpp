@@ -129,7 +129,7 @@ namespace dtn
 
 		void Client::eventTimeout()
 		{
-			_stream.done();
+			//_stream.done();
 			_stream.close();
 
 			ibrcommon::MutexLock l(_inqueue);
@@ -138,7 +138,7 @@ namespace dtn
 
 		void Client::eventShutdown()
 		{
-			_stream.done();
+			//_stream.done();
 			_stream.close();
 
 			ibrcommon::MutexLock l(_inqueue);
