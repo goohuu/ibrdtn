@@ -69,6 +69,8 @@ class Tracer : public dtn::api::Client
 					}
 				} catch (ibrcommon::Exception) {
 
+				} catch (std::exception) {
+
 				}
 
 				std::cout << "No more reports received." << std::endl;

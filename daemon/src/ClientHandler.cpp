@@ -52,8 +52,12 @@ namespace dtn
 		void ClientHandler::eventShutdown()
 		{
 			// shutdown message received
-			//(*_stream).done();
-			(*_stream).close();
+			try {
+				//(*_stream).done();
+				(*_stream).close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
 		}
 
 		void ClientHandler::eventTimeout()
@@ -158,6 +162,12 @@ namespace dtn
 
 			// close the reading thread
 			JoinableThread::stop();
+		}
+
+		void ClientHandler::finally()
+		{
+			eventShutdown();
+			iamfree();
 		}
 
 		void ClientHandler::run()

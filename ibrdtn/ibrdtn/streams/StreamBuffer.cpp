@@ -150,6 +150,11 @@ namespace dtn
 				set(STREAM_FAILED);
 
 				throw StreamErrorException("can not send shutdown message");
+			} catch (std::exception) {
+				// set failed bit
+				set(STREAM_FAILED);
+
+				throw StreamErrorException("can not send shutdown message");
 			}
 		}
 
@@ -177,6 +182,10 @@ namespace dtn
 					_stream << StreamDataSegment() << std::flush;
 					IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
 				} catch (ibrcommon::Exception) {
+					// set failed bit
+					set(STREAM_FAILED);
+					return 0;
+				} catch (std::exception) {
 					// set failed bit
 					set(STREAM_FAILED);
 					return 0;

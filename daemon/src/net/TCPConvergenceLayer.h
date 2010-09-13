@@ -124,6 +124,7 @@ namespace dtn
 					virtual ~Receiver();
 					void run();
 					void shutdown();
+					void finally();
 
 				private:
 					bool _running;

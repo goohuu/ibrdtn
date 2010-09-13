@@ -52,6 +52,7 @@ namespace dtn
 		protected:
 			void received(const dtn::streams::StreamContactHeader &h);
 			void run();
+			void finally();
 
 		private:
 			ibrcommon::Mutex _freemutex;

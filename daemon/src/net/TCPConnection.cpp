@@ -204,13 +204,13 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			_stream.shutdown();
-
 			// stop the sender
 			_sender.shutdown();
 
 			// stop the receiver
 			_receiver.shutdown();
+
+			_stream.shutdown();
 		}
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
@@ -324,6 +324,11 @@ namespace dtn
 			} catch (ibrcommon::Exception) {
 				_running = false;
 			} catch (std::exception) { }
+		}
+
+		void TCPConvergenceLayer::TCPConnection::Receiver::finally()
+		{
+			_connection.eventShutdown();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
