@@ -212,6 +212,9 @@ namespace dtn
 
 		void StreamConnection::StreamBuffer::close()
 		{
+			// stop all timer
+			_timer.remove();
+
 			// set shutdown bit
 			set(STREAM_SHUTDOWN);
 		}

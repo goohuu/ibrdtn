@@ -204,6 +204,9 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
+			// call shutdown
+			_stream.closeBuffer();
+
 			// stop the sender
 			_sender.shutdown();
 

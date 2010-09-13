@@ -76,6 +76,11 @@ namespace dtn
 			}
 		}
 
+		void StreamConnection::closeBuffer()
+		{
+			_buf.close();
+		}
+
 		void StreamConnection::shutdown(ConnectionShutdownCases csc)
 		{
 			// skip if another shutdown is in progress
