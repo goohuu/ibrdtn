@@ -169,6 +169,9 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
 		{
+			// shutdown the connection if nobody did this before
+			_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_NODE_TIMEOUT);
+
 			// close the tcpstream
 			try {
 				//_tcpstream->done();
@@ -209,8 +212,6 @@ namespace dtn
 
 			// stop the receiver
 			_receiver.shutdown();
-
-			_stream.shutdown();
 		}
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
@@ -271,14 +272,14 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				// forward exception
-				throw ex;
+				throw;
 			}
 
 			return conn;
 		}
 
 		TCPConvergenceLayer::TCPConnection::Receiver::Receiver(TCPConnection &connection)
-		 :  _running(true), _connection(connection)
+		 : _connection(connection)
 		{
 		}
 
@@ -293,7 +294,7 @@ namespace dtn
 				// firstly, do the handshake
 				_connection.handshake();
 
-				while (_running)
+				while (true)
 				{
 					dtn::data::Bundle bundle;
 
@@ -322,7 +323,6 @@ namespace dtn
 					yield();
 				}
 			} catch (ibrcommon::Exception) {
-				_running = false;
 			} catch (std::exception) { }
 		}
 
@@ -334,12 +334,11 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
 		{
-			_running = false;
 			JoinableThread::stop();
 		}
 
 		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection)
-		 : _running(true), _connection(connection)
+		 : _connection(connection)
 		{
 		}
 
@@ -351,7 +350,7 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
 		{
 			try {
-				while (_running)
+				while (true)
 				{
 					dtn::data::Bundle bundle = blockingpop();
 
@@ -362,14 +361,16 @@ namespace dtn
 					yield();
 				}
 			} catch (ibrcommon::Exception) {
-				_running = false;
 			} catch (std::exception) { }
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
 		{
-			_running = false;
 			JoinableThread::stop();
+		}
+
+		void TCPConvergenceLayer::TCPConnection::Sender::finally()
+		{
 		}
 	}
 }

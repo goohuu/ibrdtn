@@ -127,7 +127,6 @@ namespace dtn
 					void finally();
 
 				private:
-					bool _running;
 					TCPConnection &_connection;
 				};
 
@@ -138,9 +137,9 @@ namespace dtn
 					virtual ~Sender();
 					void run();
 					void shutdown();
+					void finally();
 
 				private:
-					bool _running;
 					TCPConnection &_connection;
 				};
 
