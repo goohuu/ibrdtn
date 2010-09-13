@@ -169,9 +169,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
 		{
-			// shutdown the connection if nobody did this before
-			_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_NODE_TIMEOUT);
-
 			// close the tcpstream
 			try {
 				//_tcpstream->done();
@@ -226,13 +223,7 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
-			try {
-				dtn::data::DefaultDeserializer(conn._stream, dtn::core::BundleCore::getInstance()) >> bundle;
-			} catch (dtn::data::Validator::RejectedException ex) {
-				// bundle rejected
-				conn.rejectTransmission();
-			}
-
+			dtn::data::DefaultDeserializer(conn._stream, dtn::core::BundleCore::getInstance()) >> bundle;
 			return conn;
 		}
 
@@ -315,21 +306,21 @@ namespace dtn
 					} catch (dtn::data::Validator::RejectedException ex) {
 						// bundle rejected
 						_connection.rejectTransmission();
-					} catch (dtn::InvalidDataException ex) {
-						// cannot decode the bundle data, reject bundle
-						_connection.rejectTransmission();
 					}
 
 					yield();
 				}
+			} catch (dtn::InvalidDataException ex) {
+				// cannot decode the bundle data, reject bundle
+				_connection.rejectTransmission();
 			} catch (ibrcommon::Exception) {
 			} catch (std::exception) { }
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::finally()
 		{
-			_connection.eventShutdown();
-			_connection.iamfree();
+			// shutdown the connection if nobody did this before
+			_connection._stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_NODE_TIMEOUT);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
