@@ -119,8 +119,11 @@ namespace dtn
 						{
 							_connected_nodes.erase(connection.node);
 
-							// announce the unavailable event
-							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_UNAVAILABLE);
+							if (!isNeighbor(connection.node))
+							{
+								// announce the unavailable event
+								dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_UNAVAILABLE);
+							}
 						}
 						break;
 					}
@@ -185,7 +188,7 @@ namespace dtn
 					_connected_nodes.erase(n);
 
 					// announce the unavailable event
-					dtn::core::NodeEvent::raise(*iter, dtn::core::NODE_UNAVAILABLE);
+					dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
 				}
 				else
 				{
