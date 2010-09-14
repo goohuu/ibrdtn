@@ -91,9 +91,9 @@ namespace dtn
 						{
 							add( obj );
 						}
-					} catch (ibrcommon::Exception) {
+					} catch (std::exception) {
 						// ignore all errors
-					} catch (std::exception) { }
+					}
 
 					{
 						ibrcommon::MutexLock l(_cleaner);

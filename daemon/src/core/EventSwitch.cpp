@@ -89,8 +89,6 @@ namespace dtn
 
 					delete evt;
 				}
-			} catch (ibrcommon::Exception) {
-				_running = false;
 			} catch (std::exception) {
 				_running = false;
 			}

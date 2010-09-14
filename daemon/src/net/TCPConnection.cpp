@@ -313,7 +313,6 @@ namespace dtn
 			} catch (dtn::InvalidDataException ex) {
 				// cannot decode the bundle data, reject bundle
 				_connection.rejectTransmission();
-			} catch (ibrcommon::Exception) {
 			} catch (std::exception) { }
 		}
 
@@ -351,7 +350,6 @@ namespace dtn
 					// idle a little bit
 					yield();
 				}
-			} catch (ibrcommon::Exception) {
 			} catch (std::exception) { }
 		}
 

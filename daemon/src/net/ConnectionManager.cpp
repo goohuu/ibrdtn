@@ -222,109 +222,100 @@ namespace dtn
 
 		void ConnectionManager::queue(const ConvergenceLayer::Job &job)
 		{
-			ibrcommon::MutexLock l(_node_lock);
+			try {
+				ibrcommon::MutexLock l(_node_lock);
 
-			// create a match rank list
-			std::list<dtn::core::Node> match_rank;
+				// create a match rank list
+				std::list<dtn::core::Node> match_rank;
 
-			// we prefer TCP as primary connection type
-			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_TCPIP));
+				// we prefer TCP as primary connection type
+				match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_TCPIP));
 
-			// use UDP as seconds connection type
-			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_UDPIP));
+				// use UDP as seconds connection type
+				match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_UDPIP));
 
-			// use Bluetooth as fourth connection type
-			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_BLUETOOTH));
+				// use Bluetooth as fourth connection type
+				match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_BLUETOOTH));
 
-			// use ZigBee as fifth connection type
-			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_ZIGBEE));
+				// use ZigBee as fifth connection type
+				match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_ZIGBEE));
 
-			// use HTTP as sixth connection type
-			match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_HTTP));
+				// use HTTP as sixth connection type
+				match_rank.push_back(dtn::core::Node(job._destination, Node::CONN_HTTP));
 
-			if (IBRCOMMON_LOGGER_LEVEL >= 50)
-			{
-				IBRCOMMON_LOGGER_DEBUG(50) << "## static node list ##" << IBRCOMMON_LOGGER_ENDL;
-				for (std::set<dtn::core::Node>::const_iterator iter = _static_nodes.begin(); iter != _static_nodes.end(); iter++)
+				if (IBRCOMMON_LOGGER_LEVEL >= 50)
 				{
-					const dtn::core::Node &n = (*iter);
-					IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(50) << "## static node list ##" << IBRCOMMON_LOGGER_ENDL;
+					for (std::set<dtn::core::Node>::const_iterator iter = _static_nodes.begin(); iter != _static_nodes.end(); iter++)
+					{
+						const dtn::core::Node &n = (*iter);
+						IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
-			}
 
-			if (IBRCOMMON_LOGGER_LEVEL >= 50)
-			{
-				IBRCOMMON_LOGGER_DEBUG(50) << "## dynamic node list ##" << IBRCOMMON_LOGGER_ENDL;
-				for (std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
+				if (IBRCOMMON_LOGGER_LEVEL >= 50)
 				{
-					const dtn::core::Node &n = (*iter);
-					IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(50) << "## dynamic node list ##" << IBRCOMMON_LOGGER_ENDL;
+					for (std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
+					{
+						const dtn::core::Node &n = (*iter);
+						IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
-			}
 
-			if (IBRCOMMON_LOGGER_LEVEL >= 50)
-			{
-				IBRCOMMON_LOGGER_DEBUG(50) << "## connected node list ##" << IBRCOMMON_LOGGER_ENDL;
-				for (std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.begin(); iter != _connected_nodes.end(); iter++)
+				if (IBRCOMMON_LOGGER_LEVEL >= 50)
 				{
-					const dtn::core::Node &n = (*iter);
-					IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-
-			// iterate through all matches in the rank list
-			for (std::list<dtn::core::Node>::const_iterator imatch = match_rank.begin(); imatch != match_rank.end(); imatch++)
-			{
-				const dtn::core::Node &match = (*imatch);
-				IBRCOMMON_LOGGER_DEBUG(50) << "match for " << match.toString() << IBRCOMMON_LOGGER_ENDL;
-
-				try {
-					// queue to a static node
-					std::set<dtn::core::Node>::const_iterator iter = _static_nodes.find(match);
-
-					if (iter != _static_nodes.end())
+					IBRCOMMON_LOGGER_DEBUG(50) << "## connected node list ##" << IBRCOMMON_LOGGER_ENDL;
+					for (std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.begin(); iter != _connected_nodes.end(); iter++)
 					{
-						const dtn::core::Node &next = (*iter);
-						IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;
-
-						queue(next, job);
-						return;
+						const dtn::core::Node &n = (*iter);
+						IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (...) {
-
 				}
 
-				try {
-					// queue to a dynamic discovered node
-					std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.find(match);
+				// iterate through all matches in the rank list
+				for (std::list<dtn::core::Node>::const_iterator imatch = match_rank.begin(); imatch != match_rank.end(); imatch++)
+				{
+					const dtn::core::Node &match = (*imatch);
+					IBRCOMMON_LOGGER_DEBUG(50) << "match for " << match.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					if (iter != _discovered_nodes.end())
-					{
-						const dtn::core::Node &next = (*iter);
-						IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;
+					try {
+						// queue to a static node
+						std::set<dtn::core::Node>::const_iterator iter = _static_nodes.find(match);
 
-						queue(next, job);
-						return;
-					}
-				} catch (...) {
+						if (iter != _static_nodes.end())
+						{
+							const dtn::core::Node &next = (*iter);
+							throw next;
+						}
+					} catch (std::exception) { }
 
+					try {
+						// queue to a dynamic discovered node
+						std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.find(match);
+
+						if (iter != _discovered_nodes.end())
+						{
+							const dtn::core::Node &next = (*iter);
+							throw next;
+						}
+					} catch (std::exception) { }
+
+					try {
+						// queue to a connected node
+						std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.find(match);
+
+						if (iter != _connected_nodes.end())
+						{
+							const dtn::core::Node &next = (*iter);
+							throw next;
+						}
+					} catch (std::exception) { }
 				}
-
-				try {
-					// queue to a connected node
-					std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.find(match);
-
-					if (iter != _connected_nodes.end())
-					{
-						const dtn::core::Node &next = (*iter);
-						IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;
-
-						queue(next, job);
-						return;
-					}
-				} catch (...) {
-
-				}
+			} catch (const dtn::core::Node next) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;
+				queue(next, job);
+				return;
 			}
 
 			throw NeighborNotAvailableException("No active connection to this neighbor available!");

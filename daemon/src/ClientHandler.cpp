@@ -227,7 +227,6 @@ namespace dtn
 					_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 					_running = false;
 				}
-			} catch (ibrcommon::Exception) {
 			} catch (std::exception) {
 			}
 		}

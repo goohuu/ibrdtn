@@ -106,19 +106,6 @@ namespace dtn
 				// return the received header
 				return peer;
 
-			} catch (ibrcommon::Exception) {
-
-				// set failed bit
-				set(STREAM_FAILED);
-
-				// shutdown the stream
-				shutdown(StreamDataSegment::MSG_SHUTDOWN_VERSION_MISSMATCH);
-
-				// call the shutdown event
-				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
-
-				// forward the catched exception
-				throw StreamErrorException("handshake not completed");
 			} catch (std::exception) {
 				// set failed bit
 				set(STREAM_FAILED);
@@ -145,11 +132,6 @@ namespace dtn
 				ibrcommon::MutexLock l(_sendlock);
 				// send a SHUTDOWN message
 				_stream << StreamDataSegment(reason) << std::flush;
-			} catch (ibrcommon::Exception) {
-				// set failed bit
-				set(STREAM_FAILED);
-
-				throw StreamErrorException("can not send shutdown message");
 			} catch (std::exception) {
 				// set failed bit
 				set(STREAM_FAILED);
@@ -186,10 +168,6 @@ namespace dtn
 					ibrcommon::MutexLock l(_sendlock);
 					_stream << StreamDataSegment() << std::flush;
 					IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
-				} catch (ibrcommon::Exception) {
-					// set failed bit
-					set(STREAM_FAILED);
-					return 0;
 				} catch (std::exception) {
 					// set failed bit
 					set(STREAM_FAILED);

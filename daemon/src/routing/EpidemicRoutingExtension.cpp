@@ -356,9 +356,9 @@ namespace dtn
 					} catch (ibrcommon::Exception ex) {
 						IBRCOMMON_LOGGER(error) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (ibrcommon::Exception ex) {
+				} catch (std::exception) {
 					return;
-				} catch (std::exception) { }
+				}
 			}
 		}
 

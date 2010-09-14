@@ -135,9 +135,6 @@ namespace dtn
 									} catch (dtn::InvalidDataException ex) {
 										IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
 										handler->shutdown();
-									} catch (ibrcommon::Exception) {
-										IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
-										handler->shutdown();
 									} catch (std::exception) {
 										IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
 										handler->shutdown();
@@ -154,9 +151,9 @@ namespace dtn
 						}
 					}
 				}
-			} catch (ibrcommon::Exception) {
+			} catch (std::exception) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected error or shutdown" << IBRCOMMON_LOGGER_ENDL;
-			} catch (std::exception) { }
+			}
 		}
 
 		/**

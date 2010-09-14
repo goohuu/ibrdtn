@@ -567,8 +567,6 @@ namespace core {
 
 				}
 			}
-		} catch (ibrcommon::Exception) {
-
 		} catch (std::exception) {
 
 		}

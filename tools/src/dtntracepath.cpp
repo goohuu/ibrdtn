@@ -67,8 +67,6 @@ class Tracer : public dtn::api::Client
 
 						std::cout << "Report received after " << tm << std::endl;
 					}
-				} catch (ibrcommon::Exception) {
-
 				} catch (std::exception) {
 
 				}

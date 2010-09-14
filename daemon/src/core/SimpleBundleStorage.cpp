@@ -60,8 +60,6 @@ namespace dtn
 
 					}
 				}
-			} catch (ibrcommon::Exception) {
-
 			} catch (std::exception) {
 
 			}

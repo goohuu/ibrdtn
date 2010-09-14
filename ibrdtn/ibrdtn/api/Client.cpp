@@ -56,9 +56,6 @@ namespace dtn
 			} catch (dtn::InvalidDataException ex) {
 				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
-			} catch (ibrcommon::Exception) {
-				IBRCOMMON_LOGGER(error) << "unknown error" << IBRCOMMON_LOGGER_ENDL;
-				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (std::exception) {
 				IBRCOMMON_LOGGER(error) << "unknown error" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
