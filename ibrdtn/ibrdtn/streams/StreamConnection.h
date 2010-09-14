@@ -231,6 +231,11 @@ namespace dtn
 				void close();
 
 				/**
+				 * This terminates all internal timer to avoid deadlocks.
+				 */
+				void shutdowntimers();
+
+				/**
 				 * send a shutdown message to the peer
 				 */
 				void shutdown(const StreamDataSegment::ShutdownReason reason = StreamDataSegment::MSG_SHUTDOWN_NONE);

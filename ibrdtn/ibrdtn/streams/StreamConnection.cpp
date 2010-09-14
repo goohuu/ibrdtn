@@ -90,6 +90,9 @@ namespace dtn
 				_shutdown_reason = csc;
 			}
 
+			// shutdown all timer
+			_buf.shutdowntimers();
+
 			try {
 				switch (csc)
 				{
