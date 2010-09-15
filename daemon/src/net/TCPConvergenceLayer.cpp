@@ -89,9 +89,6 @@ namespace dtn
 				{
 					TCPConvergenceLayer::Server::Connection &conn = (*iter);
 
-					// do not use the connection if it is marked as "free"
-					if ((*conn).free()) continue;
-
 					if (conn.match(job._destination))
 					{
 						if (!conn._active)
@@ -126,7 +123,7 @@ namespace dtn
 			// enable linger option
 			stream->enableLinger();
 
-			TCPConnection *conn = new TCPConnection(stream);
+			TCPConnection *conn = new TCPConnection((GenericServer<TCPConnection>&)*this, stream);
 
 			// add connection as pending
 			_connections.push_back( Connection( conn, n ) );
@@ -164,9 +161,6 @@ namespace dtn
 					for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 					{
 						TCPConvergenceLayer::Server::Connection &conn = (*iter);
-
-						// do not use the connection if it is marked as "free"
-						if ( (*conn).free()) continue;
 
 						if (conn.match(*node))
 						{
@@ -222,7 +216,7 @@ namespace dtn
 				stream->enableLinger();
 
 				// create new TCPConnection object
-				TCPConnection *conn = new TCPConnection(stream);
+				TCPConnection *conn = new TCPConnection(*this, stream);
 
 				{
 					ibrcommon::MutexLock l(_connection_lock);
@@ -246,7 +240,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::shutdown()
 		{
-			shutdownAll();
 		}
 
 		TCPConvergenceLayer::Server::Connection::Connection(TCPConvergenceLayer::TCPConnection *conn, const dtn::core::Node &node, const bool &active)

@@ -13,18 +13,18 @@
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
+#include <ibrcommon/thread/ThreadSafeQueue.h>
 #include <list>
 
 namespace dtn
 {
 	namespace net
 	{
-		class GenericConnection
+		class GenericConnectionInterface
 		{
 		public:
-			virtual ~GenericConnection() { };
+			virtual ~GenericConnectionInterface() { };
 			virtual void shutdown() = 0;
-			virtual bool free() = 0;
 		};
 
 		template <class T>
@@ -45,6 +45,11 @@ namespace dtn
 				connectionUp(obj);
 			}
 
+			void setFree(T *conn)
+			{
+				_cleaner.freequeue.push(conn);
+			}
+
 		protected:
 			virtual T* accept() = 0;
 			virtual void listen() = 0;
@@ -53,36 +58,15 @@ namespace dtn
 			virtual void connectionUp(T *conn) = 0;
 			virtual void connectionDown(T *conn) = 0;
 
-			void shutdownAll()
-			{
-				ibrcommon::MutexLock l(_cleaner);
-
-				std::list<GenericConnection*>::iterator iter = _clients.begin();
-				while (iter != _clients.end())
-				{
-					if ( (*iter)->free() )
-					{
-						delete (*iter);
-						_clients.erase(iter++);
-					}
-					else
-					{
-						(*iter)->shutdown();
-						iter++;
-					}
-				}
-			}
-
 			void componentUp()
 			{
+				_running = true;
 				_cleaner.start();
 				listen();
 			}
 
 			void componentRun()
 			{
-				_running = true;
-
 				while (_running)
 				{
 					try {
@@ -109,14 +93,15 @@ namespace dtn
 			{
 				_running = false;
 				shutdown();
+				_cleaner.stop();
 			}
 
 		private:
 			class ClientCleaner : public ibrcommon::JoinableThread, public ibrcommon::Conditional
 			{
 			public:
-				ClientCleaner(GenericServer &callback, std::list<GenericConnection*> &clients)
-				 : _running(false), _clients(clients), _callback(callback)
+				ClientCleaner(GenericServer &callback, std::list<T*> &clients)
+				 : _running(true), _clients(clients), _callback(callback)
 				{
 				}
 
@@ -130,53 +115,87 @@ namespace dtn
 					join();
 				}
 
+				ibrcommon::ThreadSafeQueue<T*> freequeue;
+
 			protected:
-				void run()
+				void finally()
 				{
 					ibrcommon::MutexLock l(*this);
-					_running = true;
 
-					while (_running)
+					typename std::list< T* >::iterator iter = _clients.begin();
+					while (iter != _clients.end())
 					{
-						std::list<GenericConnection*>::iterator iter = _clients.begin();
-						while (iter != _clients.end())
+						delete (*iter);
+						_clients.erase(iter++);
+					}
+				}
+
+				void run()
+				{
+					try {
+						while (_running)
 						{
-							if ( (*iter)->free() )
-							{
-								_callback.__connectionDown(*iter);
+							T *conn = freequeue.blockingpop();
+							bool delobj = false;
 
-								// free the object
-								delete (*iter);
-
-								_clients.erase(iter++);
-							}
-							else
+							// delete in list
 							{
-								iter++;
+								ibrcommon::MutexLock l(*this);
+								typename std::list<T* >::iterator iter = _clients.begin();
+								while (iter != _clients.end())
+								{
+									if ( (*iter) == conn )
+									{
+										delobj = true;
+										_clients.erase(iter++);
+									}
+									else
+									{
+										iter++;
+									}
+								}
 							}
+
+							if (delobj)
+							{
+								_callback.connectionDown(conn);
+								delete conn;
+							}
+
+							ibrcommon::Thread::yield();
+							ibrcommon::Thread::testcancel();
 						}
+					} catch (ibrcommon::Exception) {
 
-						ibrcommon::Thread::yield();
-						(*this).wait(500); // wait max. 0.5 seconds
 					}
 				}
 
 			private:
 				bool _running;
-				std::list<GenericConnection*> &_clients;
+				std::list< T* > &_clients;
 				GenericServer &_callback;
 			};
 
-			void __connectionDown(GenericConnection *conn)
-			{
-				T *tconn = dynamic_cast<T*>(conn);
-				if (tconn != NULL)
-					connectionDown(tconn);
-			}
-
-			std::list<GenericConnection*> _clients;
+			std::list< T* > _clients;
 			bool _running;
 			ClientCleaner _cleaner;
+		};
+
+		template <class T>
+		class GenericConnection : public GenericConnectionInterface
+		{
+		public:
+			GenericConnection(GenericServer<T> &server) : _server(server) { };
+			virtual ~GenericConnection() { };
+
+			void free()
+			{
+				T *obj = dynamic_cast<T*>(this);
+				_server.setFree(obj);
+			};
+
+		private:
+			GenericServer<T> &_server;
 		};
 	}
 }

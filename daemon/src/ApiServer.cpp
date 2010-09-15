@@ -41,7 +41,7 @@ namespace dtn
 		{
 			try {
 				// create a new ClientHandler
-				ClientHandler *handler = new ClientHandler(_tcpsrv.accept());
+				ClientHandler *handler = new ClientHandler((dtn::net::GenericServer<ClientHandler>&)*this, _tcpsrv.accept());
 
 				// start the ClientHandler (service)
 				handler->start();
@@ -60,7 +60,6 @@ namespace dtn
 
 		void ApiServer::shutdown()
 		{
-			shutdownAll();
 		}
 
 		void ApiServer::connectionUp(ClientHandler *conn)

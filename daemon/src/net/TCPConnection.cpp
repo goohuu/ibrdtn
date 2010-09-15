@@ -29,8 +29,10 @@ namespace dtn
 		/*
 		 * class TCPConnection
 		 */
-		TCPConvergenceLayer::TCPConnection::TCPConnection(ibrcommon::tcpstream *stream)
-		 : _free(false), _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream), _sender(*this), _receiver(*this), _name(), _timeout(0), _lastack(0), _shutdown(false)
+		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream)
+		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv),
+		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream), _sender(*this),
+		   _receiver(*this), _name(), _timeout(0), _lastack(0), _shutdown(false)
 		{
 			stream->enableKeepalive();
 			_node.setProtocol(Node::CONN_TCPIP);
@@ -39,17 +41,6 @@ namespace dtn
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()
 		{
 			shutdown();
-		}
-
-		void TCPConvergenceLayer::TCPConnection::iamfree()
-		{
-			_free = true;
-		}
-
-		bool TCPConvergenceLayer::TCPConnection::free()
-		{
-			ibrcommon::MutexLock l(_freemutex);
-			return _free;
 		}
 
 		void TCPConvergenceLayer::TCPConnection::queue(const dtn::data::Bundle &bundle)
@@ -124,8 +115,7 @@ namespace dtn
 				// queue emtpy
 			}
 
-			ibrcommon::MutexLock l(_freemutex);
-			iamfree();
+			free();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventBundleRefused()

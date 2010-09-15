@@ -22,8 +22,9 @@ namespace dtn
 {
 	namespace daemon
 	{
-		ClientHandler::ClientHandler(ibrcommon::tcpstream *stream)
-		 : ibrcommon::JoinableThread(), _free(false), _running(true), _stream(stream), _connection(*this, *_stream)
+		ClientHandler::ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream)
+		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv),
+		   ibrcommon::JoinableThread(), _running(true), _stream(stream), _connection(*this, *_stream)
 		{
 		}
 
@@ -36,17 +37,6 @@ namespace dtn
 		const dtn::data::EID& ClientHandler::getPeer() const
 		{
 			return _eid;
-		}
-
-		void ClientHandler::iamfree()
-		{
-			_free = true;
-		}
-
-		bool ClientHandler::free()
-		{
-			ibrcommon::MutexLock l(_freemutex);
-			return _free;
 		}
 
 		void ClientHandler::eventShutdown()
@@ -93,18 +83,6 @@ namespace dtn
 				{
 					const dtn::data::Bundle bundle = _sentqueue.frontpop();
 
-//					if (_lastack > 0)
-//					{
-//						// some data are already acknowledged, make a fragment?
-//						//TODO: make a fragment
-//						TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
-//					}
-//					else
-//					{
-//						// raise transfer abort event for all bundles without an ACK
-//						TransferAbortedEvent::raise(EID(_node.getURI()), bundle);
-//					}
-
 					// set last ack to zero
 					_lastack = 0;
 				}
@@ -112,8 +90,7 @@ namespace dtn
 				// queue emtpy
 			}
 
-			ibrcommon::MutexLock l(_freemutex);
-			iamfree();
+			free();
 		}
 
 		void ClientHandler::eventBundleRefused()
@@ -167,7 +144,7 @@ namespace dtn
 		void ClientHandler::finally()
 		{
 			eventShutdown();
-			iamfree();
+			free();
 		}
 
 		void ClientHandler::run()

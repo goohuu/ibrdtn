@@ -44,16 +44,11 @@ namespace dtn
 		class TCPConvergenceLayer : public dtn::daemon::Component, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
-			class TCPConnection : public GenericConnection, public StreamConnection::Callback
+			class TCPConnection : public GenericConnection<TCPConvergenceLayer::TCPConnection>, public StreamConnection::Callback
 			{
 			public:
-				TCPConnection(ibrcommon::tcpstream *stream);
+				TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream);
 				virtual ~TCPConnection();
-
-				/**
-				 * This method sets this instance free. (Mark it for the "garbage collector".)
-				 */
-				void iamfree();
 
 				/**
 				 * initialize this connection by send and receive
@@ -91,8 +86,6 @@ namespace dtn
 				virtual void eventBundleRefused();
 				virtual void eventBundleForwarded();
 				virtual void eventBundleAck(size_t ack);
-
-				bool free();
 
 				dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -142,9 +135,6 @@ namespace dtn
 				private:
 					TCPConnection &_connection;
 				};
-
-				ibrcommon::Mutex _freemutex;
-				bool _free;
 
 				StreamContactHeader _peer;
 				dtn::core::Node _node;
