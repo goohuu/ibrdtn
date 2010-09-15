@@ -285,8 +285,7 @@ namespace dtn
 
 						if (iter != _static_nodes.end())
 						{
-							const dtn::core::Node &next = (*iter);
-							throw next;
+							throw (*iter);
 						}
 					} catch (std::exception) { }
 
@@ -296,8 +295,7 @@ namespace dtn
 
 						if (iter != _discovered_nodes.end())
 						{
-							const dtn::core::Node &next = (*iter);
-							throw next;
+							throw (*iter);
 						}
 					} catch (std::exception) { }
 
@@ -307,8 +305,7 @@ namespace dtn
 
 						if (iter != _connected_nodes.end())
 						{
-							const dtn::core::Node &next = (*iter);
-							throw next;
+							throw (*iter);
 						}
 					} catch (std::exception) { }
 				}
