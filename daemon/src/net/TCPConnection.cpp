@@ -330,7 +330,7 @@ namespace dtn
 		}
 
 		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection)
-		 : _connection(connection)
+		 : _connection(connection), _shutdown(false)
 		{
 		}
 
@@ -342,7 +342,7 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
 		{
 			try {
-				while (true)
+				while (!_shutdown)
 				{
 					dtn::data::Bundle bundle = blockingpop();
 
@@ -357,6 +357,12 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
 		{
+			{
+				ibrcommon::MutexLock l(*this);
+				_shutdown = true;
+				signal();
+			}
+
 			JoinableThread::stop();
 		}
 

@@ -141,6 +141,9 @@ namespace dtn
 
 				private:
 					TCPConnection &_connection;
+
+					ibrcommon::Mutex _shutdownlock;
+					bool _shutdown;
 				};
 
 				ibrcommon::Mutex _freemutex;
