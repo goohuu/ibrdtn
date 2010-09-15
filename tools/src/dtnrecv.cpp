@@ -20,13 +20,12 @@ void print_help()
 {
 	cout << "-- dtnrecv (IBR-DTN) --" << endl;
 	cout << "Syntax: dtnrecv [options]"  << endl;
-	cout << " <filename>    the file to transfer" << endl;
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help            display this text" << endl;
 	cout << " --file <filename>    write the incoming data to the a file instead of the standard output" << endl;
 	cout << " --name <name>        set the application name (e.g. filetransfer)" << endl;
 	cout << " --timeout <seconds>  receive timeout in seconds" << endl;
-
+	cout << " --count <number>     receive that many bundles" << endl;
 }
 
 void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
@@ -82,6 +81,8 @@ int main(int argc, char *argv[])
 	string name = "filetransfer";
 	bool stdout = true;
 	int timeout = 0;
+	int count   = 1;
+	int h       = 0;
 
 	for (int i = 0; i < argc; i++)
 	{
@@ -109,6 +110,11 @@ int main(int argc, char *argv[])
 		{
 			timeout = atoi(argv[i + 1]);
 		}
+
+		if (arg == "--count" && argc > i) 
+		{
+			count = atoi(argv[i + 1]);
+		}
 	}
 
 	try {
@@ -128,11 +134,15 @@ int main(int argc, char *argv[])
 
 		if (!stdout) std::cout << "Wait for incoming bundle... " << std::flush;
 
-		// receive the bundle
-		dtn::api::Bundle b = client.getBundle(timeout);
+		dtn::api::Bundle b;
 
-		// write the bundle to stdout/file
-		writeBundle(stdout, filename, b);
+		for(h=0; h<count; h++) {
+			// receive the bundle
+			b = client.getBundle(timeout);
+
+			// write the bundle to stdout/file
+			writeBundle(stdout, filename, b);
+		}
 
 		// Shutdown the client connection.
 		client.close();
@@ -150,6 +160,7 @@ int main(int argc, char *argv[])
 		}
 	} catch (...) {
 		ret = EXIT_FAILURE;
+		cout << "EXCEPTION" << endl;
 	}
 
 	return ret;
