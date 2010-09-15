@@ -106,17 +106,17 @@ namespace dtn
 		void Client::close()
 		{
 			// wait for the last ACKs
-			wait(30000);
+			// wait(30000);
 
-			StreamConnection::shutdown();
+			// stop the asynchronous receiver
+			_receiver.stop();
 
 			{
 				ibrcommon::MutexLock l(_inqueue);
 				_inqueue.signal(true);
 			}
 
-			// stop the asynchronous receiver
-			_receiver.stop();
+			StreamConnection::shutdown();
 		}
 
 		void Client::received(const StreamContactHeader&)

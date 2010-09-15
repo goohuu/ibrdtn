@@ -28,45 +28,30 @@ void print_help()
 	cout << " --count <number>     receive that many bundles" << endl;
 }
 
-void writeBundle(bool stdout, string filename, dtn::api::Bundle &b)
-{
-	ibrcommon::BLOB::Reference data = b.getData();
-
-	// write the data to output
-	if (stdout)
-	{
-		ibrcommon::MutexLock l(data);
-		cout << (*data).rdbuf();
-	}
-	else
-	{
-		cout << " received." << endl;
-		cout << "Writing bundle payload to " << filename << endl;
-
-		fstream file(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
-
-		ibrcommon::MutexLock l(data);
-		file << (*data).rdbuf();
-
-		file.close();
-
-		cout << "finished" << endl;
-	}
-}
-
 dtn::api::Client *_client = NULL;
 ibrcommon::tcpclient *_conn = NULL;
 
+int h = 0;
+bool __stdout = true;
+
 void term(int signal)
 {
-	if (signal >= 1)
+	if (!__stdout)
 	{
-		if (_client != NULL)
+		std::cout << h << " bundles received." << std::endl;
+	}
+
+	try {
+		if (signal >= 1)
 		{
-			_client->close();
-			_conn->close();
+			if (_client != NULL)
+			{
+				_client->close();
+				_conn->close();
+			}
 		}
-		exit(0);
+	} catch (ibrcommon::ConnectionClosedException ex) {
+
 	}
 }
 
@@ -79,10 +64,8 @@ int main(int argc, char *argv[])
 	int ret = EXIT_SUCCESS;
 	string filename = "";
 	string name = "filetransfer";
-	bool stdout = true;
 	int timeout = 0;
 	int count   = 1;
-	int h       = 0;
 
 	for (int i = 0; i < argc; i++)
 	{
@@ -103,7 +86,7 @@ int main(int argc, char *argv[])
 		if (arg == "--file" && argc > i)
 		{
 			filename = argv[i + 1];
-			stdout = false;
+			__stdout = false;
 		}
 
 		if (arg == "--timeout" && argc > i)
@@ -122,7 +105,7 @@ int main(int argc, char *argv[])
 		ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
 		// Initiate a client for synchronous receiving
-		dtn::api::Client client(name, conn);
+		dtn::api::Client client(name, *_conn);
 
 		// export objects for the signal handler
 		_conn = &conn;
@@ -132,16 +115,49 @@ int main(int argc, char *argv[])
 		// stream protocol by starting the thread and sending the contact header.
 		client.connect();
 
-		if (!stdout) std::cout << "Wait for incoming bundle... " << std::flush;
+		std::fstream file;
 
-		dtn::api::Bundle b;
+		if (!__stdout)
+		{
+			std::cout << "Wait for incoming bundle... " << std::flush;
+			file.open(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
+			file.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+		}
 
-		for(h=0; h<count; h++) {
+		for(h = 0; h < count; h++)
+		{
 			// receive the bundle
-			b = client.getBundle(timeout);
+			dtn::api::Bundle b = client.getBundle(timeout);
 
-			// write the bundle to stdout/file
-			writeBundle(stdout, filename, b);
+			// get the reference to the blob
+			ibrcommon::BLOB::Reference ref = b.getData();
+
+			// write the data to output
+			if (__stdout)
+			{
+				ibrcommon::MutexLock l(ref);
+				cout << (*ref).rdbuf();
+			}
+			else
+			{
+				// write data to temporary file
+				try {
+					cout << " received." << endl;
+					cout << "Writing bundle payload to " << filename << endl;
+
+					ibrcommon::MutexLock l(ref);
+					file << (*ref).rdbuf();
+
+					cout << "finished" << endl;
+				} catch (ios_base::failure ex) {
+
+				}
+			}
+		}
+
+		if (!__stdout)
+		{
+			file.close();
 		}
 
 		// Shutdown the client connection.
@@ -149,18 +165,10 @@ int main(int argc, char *argv[])
 
 		// close the tcp connection
 		conn.close();
-
-		// write all following bundles
-		while (!client.eof())
-		{
-			client >> b;
-
-			// write the bundle to stdout/file
-			writeBundle(stdout, filename, b);
-		}
-	} catch (...) {
+	} catch (ibrcommon::ConnectionClosedException ex) {
+	} catch (std::exception) {
 		ret = EXIT_FAILURE;
-		cout << "EXCEPTION" << endl;
+		throw;
 	}
 
 	return ret;
