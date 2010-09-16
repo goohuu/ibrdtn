@@ -125,19 +125,8 @@ namespace dtn
 									ClientHandler *handler = receivers.front();
 									IBRCOMMON_LOGGER_DEBUG(5) << "Transfer bundle " << mb.toString() << " to client " << handler->getPeer().getString() << IBRCOMMON_LOGGER_ENDL;
 
-									try {
-										// send the bundle
-										(*handler) << bundle;
-									} catch (ibrcommon::IOException ex) {
-										IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException" << IBRCOMMON_LOGGER_ENDL;
-										handler->shutdown();
-									} catch (dtn::InvalidDataException ex) {
-										IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
-										handler->shutdown();
-									} catch (std::exception) {
-										IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
-										handler->shutdown();
-									}
+									// send the bundle
+									(*handler).queue(bundle);
 
 									receivers.pop();
 								}

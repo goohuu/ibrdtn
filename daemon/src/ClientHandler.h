@@ -46,12 +46,29 @@ namespace dtn
 
 			const dtn::data::EID& getPeer() const;
 
+			void queue(const dtn::data::Bundle &bundle);
+
 		protected:
 			void received(const dtn::streams::StreamContactHeader &h);
 			void run();
 			void finally();
 
 		private:
+			class Sender : public ibrcommon::JoinableThread, public ibrcommon::ThreadSafeQueue<dtn::data::Bundle>
+			{
+			public:
+				Sender(ClientHandler &client);
+				virtual ~Sender();
+				void run();
+				void shutdown();
+				void finally();
+
+			private:
+				ClientHandler &_client;
+			};
+
+			ClientHandler::Sender _sender;
+
 			bool _running;
 			dtn::data::EID _eid;
 

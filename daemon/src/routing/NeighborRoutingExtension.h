@@ -53,6 +53,8 @@ namespace dtn
 			void route(const dtn::data::MetaBundle &meta);
 
 			std::list<dtn::core::Node> _neighbors;
+
+			ibrcommon::Mutex _stored_bundles_lock;
 			std::map<dtn::data::EID, std::queue<dtn::data::BundleID> > _stored_bundles;
 			std::queue<dtn::data::EID> _available;
 

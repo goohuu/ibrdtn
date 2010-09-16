@@ -342,7 +342,9 @@ namespace dtn
 					// idle a little bit
 					yield();
 				}
-			} catch (std::exception) { }
+			} catch (std::exception ex) {
+				IBRCOMMON_LOGGER(error) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()

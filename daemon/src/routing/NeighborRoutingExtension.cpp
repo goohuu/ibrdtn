@@ -8,6 +8,7 @@
 #include "routing/NeighborRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
 #include "core/BundleExpiredEvent.h"
 #include "core/NodeEvent.h"
 #include "core/Node.h"
@@ -79,6 +80,7 @@ namespace dtn
 					EID eid = _available.front();
 					_available.pop();
 
+					ibrcommon::MutexLock l(_stored_bundles_lock);
 					if ( _stored_bundles.find(eid) != _stored_bundles.end() )
 					{
 						std::queue<dtn::data::BundleID> &bundlequeue = _stored_bundles[eid];
@@ -112,7 +114,6 @@ namespace dtn
 		{
 			const QueueBundleEvent *queued = dynamic_cast<const QueueBundleEvent*>(evt);
 			const dtn::core::NodeEvent *nodeevent = dynamic_cast<const dtn::core::NodeEvent*>(evt);
-			const dtn::net::TransferCompletedEvent *completed = dynamic_cast<const dtn::net::TransferCompletedEvent*>(evt);
 			const dtn::core::BundleExpiredEvent *expired = dynamic_cast<const dtn::core::BundleExpiredEvent*>(evt);
 
 			if (queued != NULL)
@@ -157,18 +158,57 @@ namespace dtn
 			}
 			else if (expired != NULL)
 			{
+				ibrcommon::MutexLock l(_stored_bundles_lock);
 				remove(expired->_bundle);
 			}
-			else if (completed != NULL)
-			{
-				dtn::data::EID eid = completed->getPeer();
 
+			try {
+				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+
+				dtn::data::EID eid = completed.getPeer();
+
+				ibrcommon::MutexLock l(_stored_bundles_lock);
 				if ( _stored_bundles.find(eid) != _stored_bundles.end() )
 				{
 					// if a bundle is delivered remove it from _stored_bundles
-					remove(completed->getBundle());
+					remove(completed.getBundle());
 				}
-			}
+			} catch (std::bad_cast ex) { };
+
+			try {
+				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+				dtn::data::EID eid = aborted.getPeer();
+				dtn::data::BundleID id = aborted.getBundleID();
+
+				switch (aborted.reason)
+				{
+					default:
+					case dtn::net::TransferAbortedEvent::REASON_UNDEFINED:
+					case dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED:
+					case dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN:
+					{
+						ibrcommon::MutexLock l(_stored_bundles_lock);
+						// get the queue for this destination
+						std::queue<dtn::data::BundleID> &q = _stored_bundles[eid];
+						q.push(id);
+
+						break;
+					}
+
+					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
+					case dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED:
+					{
+						ibrcommon::MutexLock l(_stored_bundles_lock);
+						if ( _stored_bundles.find(eid) != _stored_bundles.end() )
+						{
+							// if a bundle is delivered remove it from _stored_bundles
+							remove(id);
+						}
+
+						break;
+					}
+				}
+			} catch (std::bad_cast ex) { };
 		}
 
 		void NeighborRoutingExtension::route(const dtn::data::MetaBundle &meta)
