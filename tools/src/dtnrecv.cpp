@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 		ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
 		// Initiate a client for synchronous receiving
-		dtn::api::Client client(name, *_conn);
+		dtn::api::Client client(name, conn);
 
 		// export objects for the signal handler
 		_conn = &conn;
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 
 		if (!__stdout)
 		{
-			std::cout << "Wait for incoming bundle... " << std::flush;
+			std::cout << "Wait for incoming bundle... " << std::endl;
 			file.open(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
 			file.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 		}
@@ -142,13 +142,10 @@ int main(int argc, char *argv[])
 			{
 				// write data to temporary file
 				try {
-					cout << " received." << endl;
-					cout << "Writing bundle payload to " << filename << endl;
+					std::cout << "Bundle received (" << (h + 1) << ")." << endl;
 
 					ibrcommon::MutexLock l(ref);
 					file << (*ref).rdbuf();
-
-					cout << "finished" << endl;
 				} catch (ios_base::failure ex) {
 
 				}
@@ -158,6 +155,7 @@ int main(int argc, char *argv[])
 		if (!__stdout)
 		{
 			file.close();
+			std::cout << "done." << std::endl;
 		}
 
 		// Shutdown the client connection.
