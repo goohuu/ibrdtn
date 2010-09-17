@@ -254,9 +254,9 @@ namespace dtn
 				void reject();
 
 				/**
-				 * This method checks if all transmitted segments are acknowledged
+				 * Wait until all segments are acknowledged
 				 */
-				bool isCompleted();
+				void waitCompleted(const size_t timeout);
 
 			protected:
 				virtual int sync();

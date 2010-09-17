@@ -32,9 +32,10 @@ namespace dtn
 		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream)
 		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv),
 		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream), _sender(*this),
-		   _receiver(*this), _name(), _timeout(0), _lastack(0), _shutdown(false)
+		   _receiver(*this), _name(), _timeout(0), _lastack(0), _shutdown(false), _semaphore(0)
 		{
 			stream->enableKeepalive();
+			stream->enableNoDelay();
 			_node.setProtocol(Node::CONN_TCPIP);
 		}
 
@@ -68,6 +69,66 @@ namespace dtn
 			_sender.start();
 		}
 
+		void TCPConvergenceLayer::TCPConnection::threadUp()
+		{
+			ibrcommon::MutexLock l(_semaphore_lock);
+			_semaphore++;
+		}
+
+		bool TCPConvergenceLayer::TCPConnection::threadDown()
+		{
+			bool connection_down = false;
+			{
+				ibrcommon::MutexLock l(_semaphore_lock);
+				if (_semaphore == 1)
+				{
+					connection_down = true;
+				}
+				else
+				{
+					_semaphore--;
+					return false;
+				}
+			}
+
+			if (connection_down)
+			{
+				// shutdown the connection if nobody did this before
+				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_NODE_TIMEOUT);
+
+				// event
+				ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _node);
+
+				try {
+					while (true)
+					{
+						const dtn::data::Bundle bundle = _sentqueue.frontpop();
+
+						if (_lastack > 0)
+						{
+							// some data are already acknowledged, make a fragment?
+							//TODO: make a fragment
+							TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+						}
+						else
+						{
+							// raise transfer abort event for all bundles without an ACK
+							TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+						}
+
+						// set last ack to zero
+						_lastack = 0;
+					}
+				} catch (ibrcommon::Exception ex) {
+					// queue emtpy
+				}
+
+				free();
+			}
+
+			return connection_down;
+		}
+
 		void TCPConvergenceLayer::TCPConnection::initialize(const dtn::data::EID &name, const size_t timeout)
 		{
 			_name = name;
@@ -88,34 +149,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionDown()
 		{
-			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _node);
-
-			try {
-				while (true)
-				{
-					const dtn::data::Bundle bundle = _sentqueue.frontpop();
-
-					if (_lastack > 0)
-					{
-						// some data are already acknowledged, make a fragment?
-						//TODO: make a fragment
-						TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
-					}
-					else
-					{
-						// raise transfer abort event for all bundles without an ACK
-						TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
-					}
-
-					// set last ack to zero
-					_lastack = 0;
-				}
-			} catch (ibrcommon::Exception ex) {
-				// queue emtpy
-			}
-
-			free();
+			shutdown();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventBundleRefused()
@@ -198,9 +232,6 @@ namespace dtn
 
 			// stop the sender
 			_sender.shutdown();
-
-			// stop the receiver
-			_receiver.shutdown();
 		}
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
@@ -273,6 +304,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::run()
 		{
+			_connection.threadUp();
+
 			try {
 				// firstly, do the handshake
 				_connection.handshake();
@@ -310,8 +343,10 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::finally()
 		{
-			// shutdown the connection if nobody did this before
-			_connection._stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_NODE_TIMEOUT);
+			if (!_connection.threadDown())
+			{
+				_connection._sender.shutdown();
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
@@ -331,6 +366,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
 		{
+			_connection.threadUp();
+
 			try {
 				while (true)
 				{
@@ -342,6 +379,7 @@ namespace dtn
 					// idle a little bit
 					yield();
 				}
+			} catch (ibrcommon::QueueEmptyException) {
 			} catch (std::exception ex) {
 				IBRCOMMON_LOGGER(error) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -355,6 +393,10 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Sender::finally()
 		{
+			if (!_connection.threadDown())
+			{
+				_connection._receiver.shutdown();
+			}
 		}
 	}
 }

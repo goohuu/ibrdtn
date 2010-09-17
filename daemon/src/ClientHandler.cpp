@@ -25,8 +25,9 @@ namespace dtn
 	{
 		ClientHandler::ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream)
 		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv),
-		   ibrcommon::JoinableThread(), _sender(*this), _running(true), _stream(stream), _connection(*this, *_stream)
+		   ibrcommon::JoinableThread(), _sender(*this), _running(true), _stream(stream), _connection(*this, *_stream), _semaphore(0)
 		{
+			stream->enableNoDelay();
 		}
 
 		ClientHandler::~ClientHandler()
@@ -44,7 +45,6 @@ namespace dtn
 		{
 			// shutdown message received
 			try {
-				//(*_stream).done();
 				(*_stream).close();
 			} catch (ibrcommon::ConnectionClosedException ex) {
 
@@ -53,8 +53,52 @@ namespace dtn
 
 		void ClientHandler::eventTimeout()
 		{
-			//(*_stream).done();
-			(*_stream).close();
+			try {
+				(*_stream).close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
+		}
+
+		void ClientHandler::threadUp()
+		{
+			ibrcommon::MutexLock l(_semaphore_lock);
+			_semaphore++;
+		}
+
+		bool ClientHandler::threadDown()
+		{
+			bool connection_down = false;
+			{
+				ibrcommon::MutexLock l(_semaphore_lock);
+				if (_semaphore == 1)
+				{
+					connection_down = true;
+				}
+				else
+				{
+					_semaphore--;
+					return false;
+				}
+			}
+
+			if (connection_down)
+			{
+				// shutdown the connection if nobody did this before
+				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_NODE_TIMEOUT);
+
+				eventShutdown();
+
+				try {
+					(*_stream).close();
+				} catch (ibrcommon::ConnectionClosedException ex) {
+
+				}
+
+				free();
+			}
+
+			return connection_down;
 		}
 
 		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
@@ -74,24 +118,16 @@ namespace dtn
 
 		void ClientHandler::eventError()
 		{
-			(*_stream).close();
+			try {
+				(*_stream).close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
 		}
 
 		void ClientHandler::eventConnectionDown()
 		{
-			try {
-				while (true)
-				{
-					const dtn::data::Bundle bundle = _sentqueue.frontpop();
-
-					// set last ack to zero
-					_lastack = 0;
-				}
-			} catch (ibrcommon::Exception ex) {
-				// queue emtpy
-			}
-
-			free();
+			shutdown();
 		}
 
 		void ClientHandler::eventBundleRefused()
@@ -136,23 +172,21 @@ namespace dtn
 		void ClientHandler::shutdown()
 		{
 			// shutdown the sender thread
-			_sender.stop();
-
-			// shutdown the connection
-			_connection.shutdown();
-
-			// close the reading thread
-			JoinableThread::stop();
+			_sender.shutdown();
 		}
 
 		void ClientHandler::finally()
 		{
-			eventShutdown();
-			free();
+			if (!threadDown())
+			{
+				_sender.shutdown();
+			}
 		}
 
 		void ClientHandler::run()
 		{
+			threadUp();
+
 			try {
 				try {
 					char flags = 0;
@@ -191,8 +225,6 @@ namespace dtn
 
 						yield();
 					}
-
-					_connection.shutdown();
 				} catch (ibrcommon::IOException ex) {
 					_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 					_running = false;
@@ -214,6 +246,8 @@ namespace dtn
 
 		ClientHandler& operator<<(ClientHandler &conn, const dtn::data::Bundle &bundle)
 		{
+			ibrcommon::MutexLock l(conn._send_lock);
+
 			// add bundle to the queue
 			conn._sentqueue.push(bundle);
 
@@ -238,6 +272,8 @@ namespace dtn
 
 		void ClientHandler::Sender::run()
 		{
+			_client.threadUp();
+
 			try {
 				BundleStorage &storage = BundleCore::getInstance().getStorage();
 
@@ -266,13 +302,11 @@ namespace dtn
 				}
 			} catch (ibrcommon::IOException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException" << IBRCOMMON_LOGGER_ENDL;
-				_client.shutdown();
 			} catch (dtn::InvalidDataException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
-				_client.shutdown();
+			} catch (ibrcommon::QueueEmptyException) {
 			} catch (std::exception) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
-				_client.shutdown();
 			}
 		}
 
@@ -284,6 +318,10 @@ namespace dtn
 
 		void ClientHandler::Sender::finally()
 		{
+			if (!_client.threadDown())
+			{
+				_client.stop();
+			}
 		}
 
 		void ClientHandler::queue(const dtn::data::Bundle &bundle)

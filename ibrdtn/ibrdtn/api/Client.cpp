@@ -65,11 +65,13 @@ namespace dtn
 		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
 		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _connected(false), _receiver(*this)
 		{
+			stream.enableNoDelay();
 		}
 
 		Client::Client(string app, ibrcommon::tcpstream &stream)
 		  : StreamConnection(*this, stream), _stream(stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _receiver(*this)
 		{
+			stream.enableNoDelay();
 		}
 
 		Client::~Client()

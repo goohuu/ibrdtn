@@ -7,6 +7,7 @@
 
 #include "ibrdtn/streams/StreamConnection.h"
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/TimeMeasurement.h>
 
 namespace dtn
 {
@@ -213,11 +214,30 @@ namespace dtn
 			setg(0, 0, 0);
 		}
 
-		bool StreamConnection::StreamBuffer::isCompleted()
+		void StreamConnection::StreamBuffer::waitCompleted(const size_t timeout)
 		{
-			size_t size = _segments.size();
-			IBRCOMMON_LOGGER_DEBUG(15) << size << " segments to confirm" << IBRCOMMON_LOGGER_ENDL;
-			return (size == 0);
+			ibrcommon::TimeMeasurement tm;
+			if (timeout > 0) tm.start();
+
+			ibrcommon::LockedQueue<StreamDataSegment> q = _segments.LockedAccess();
+
+			while (!(*q).empty())
+			{
+				IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): wait for completion of transmission, " << (*q).size() << " ACKs left" << IBRCOMMON_LOGGER_ENDL;
+
+				q.wait(timeout);
+				if (timeout > 0)
+				{
+					tm.stop();
+					if (tm.getMilliseconds() >= timeout)
+					{
+						IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): transfer aborted (timeout)" << IBRCOMMON_LOGGER_ENDL;
+						return;
+					}
+				}
+			}
+
+			IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): transfer completed" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		// This function is called when the output buffer is filled.
@@ -425,6 +445,8 @@ namespace dtn
 					{
 						case StreamDataSegment::MSG_DATA_SEGMENT:
 						{
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_DATA_SEGMENT received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
+
 							if (seg._flags & StreamDataSegment::MSG_MARK_BEGINN)
 							{
 								_recv_size = seg._value;
@@ -462,6 +484,8 @@ namespace dtn
 
 						case StreamDataSegment::MSG_ACK_SEGMENT:
 						{
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_ACK_SEGMENT received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
+
 							// remove the segment in the queue
 							if (get(STREAM_ACK_SUPPORT))
 							{
@@ -473,14 +497,16 @@ namespace dtn
 								}
 								else
 								{
-									StreamDataSegment &qs = (*q).front();
+									StreamDataSegment &qs = q.front();
 
 									if (qs._flags & StreamDataSegment::MSG_MARK_END)
 									{
 										_conn.eventBundleForwarded();
 									}
 
-									(*q).pop();
+									q.pop();
+
+									IBRCOMMON_LOGGER_DEBUG(60) << (*q).size() << " elements to ACK" << IBRCOMMON_LOGGER_ENDL;
 
 									_conn.eventBundleAck(seg._value);
 								}
@@ -489,10 +515,13 @@ namespace dtn
 						}
 
 						case StreamDataSegment::MSG_KEEPALIVE:
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_KEEPALIVE received, size: " << seg._value << IBRCOMMON_LOGGER_ENDL;
 							break;
 
 						case StreamDataSegment::MSG_REFUSE_BUNDLE:
 						{
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_REFUSE_BUNDLE received, flags: " << seg._flags << IBRCOMMON_LOGGER_ENDL;
+
 							// remove the segment in the queue
 							if (get(STREAM_ACK_SUPPORT) && get(STREAM_NACK_SUPPORT))
 							{
@@ -516,19 +545,19 @@ namespace dtn
 									IBRCOMMON_LOGGER_DEBUG(20) << "NACK received!" << IBRCOMMON_LOGGER_ENDL;
 
 									// remove the next segment
-									(*q).pop();
+									q.pop();
 
 									// get all segment ACKs in the queue for this transmission
 									while (!(*q).empty())
 									{
-										if ((*q).front()._flags & StreamDataSegment::MSG_MARK_BEGINN)
+										if (q.front()._flags & StreamDataSegment::MSG_MARK_BEGINN)
 										{
 											break;
 										}
 
 										// move the segments to another queue
-										_rejected_segments.push((*q).front());
-										(*q).pop();
+										_rejected_segments.push(q.front());
+										q.pop();
 									}
 
 									// call event reject
@@ -557,6 +586,7 @@ namespace dtn
 
 						case StreamDataSegment::MSG_SHUTDOWN:
 						{
+							IBRCOMMON_LOGGER_DEBUG(70) << "MSG_SHUTDOWN received" << IBRCOMMON_LOGGER_ENDL;
 							throw StreamShutdownException();
 						}
 					}

@@ -103,6 +103,9 @@ namespace dtn
 
 				void rejectTransmission();
 
+				void threadUp();
+				bool threadDown();
+
 			private:
 				/**
 				 * Receiver sub-process
@@ -157,6 +160,9 @@ namespace dtn
 				size_t _lastack;
 
 				bool _shutdown;
+
+				ibrcommon::Mutex _semaphore_lock;
+				int _semaphore;
 			};
 
 			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver

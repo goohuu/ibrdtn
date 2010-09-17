@@ -163,39 +163,7 @@ namespace dtn
 
 		void StreamConnection::wait(const size_t timeout)
 		{
-			ibrcommon::MutexLock l(_in_state);
-			ibrcommon::TimeMeasurement tm;
-
-			if (timeout == 0) tm.start();
-
-			while (!_buf.isCompleted() && (_in_state.getState() == CONNECTION_CONNECTED))
-			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): wait for completion of transmission" << IBRCOMMON_LOGGER_ENDL;
-
-				if (timeout == 0)
-				{
-					_in_state.wait();
-				}
-				else
-				{
-					_in_state.wait(timeout);
-					tm.stop();
-					if (tm.getMilliseconds() >= timeout)
-					{
-						IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer aborted (timeout)" << IBRCOMMON_LOGGER_ENDL;
-						return;
-					}
-				}
-			}
-
-			if (_buf.isCompleted())
-			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer completed" << IBRCOMMON_LOGGER_ENDL;
-			}
-			else
-			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "StreamConnection::wait(): transfer aborted" << IBRCOMMON_LOGGER_ENDL;
-			}
+			_buf.waitCompleted(timeout);
 		}
 
 		void StreamConnection::connectionTimeout()

@@ -48,10 +48,14 @@ namespace dtn
 
 			void queue(const dtn::data::Bundle &bundle);
 
+			void finally();
+
 		protected:
 			void received(const dtn::streams::StreamContactHeader &h);
 			void run();
-			void finally();
+
+			void threadUp();
+			bool threadDown();
 
 		private:
 			class Sender : public ibrcommon::JoinableThread, public ibrcommon::ThreadSafeQueue<dtn::data::Bundle>
@@ -78,6 +82,11 @@ namespace dtn
 
 			ibrcommon::ThreadSafeQueue<dtn::data::Bundle> _sentqueue;
 			size_t _lastack;
+
+			ibrcommon::Mutex _semaphore_lock;
+			int _semaphore;
+
+			ibrcommon::Mutex _send_lock;
 		};
 	}
 }
