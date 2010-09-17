@@ -108,7 +108,7 @@ namespace dtn
 		void Client::close()
 		{
 			// wait for the last ACKs
-			// wait(30000);
+			wait(30000);
 
 			// stop the asynchronous receiver
 			_receiver.stop();
