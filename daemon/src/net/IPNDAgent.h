@@ -46,6 +46,7 @@ namespace dtn
 		private:
 			void send(ibrcommon::udpsocket::peer &p, const DiscoveryAnnouncement &announcement);
 
+			DiscoveryAnnouncement::DiscoveryVersion _version;
 			ibrcommon::udpsocket *_socket;
 			std::string _destination;
 			std::list<ibrcommon::NetInterface> _interfaces;

@@ -374,7 +374,7 @@ namespace dtn
 				}
 			} catch (ios_base::failure ex) {
 				_underflow_state = IDLE;
-				throw StreamErrorException("read error");
+				throw StreamErrorException("read error during data skip: " + std::string(ex.what()));
 			}
 		}
 
@@ -382,7 +382,7 @@ namespace dtn
 		int StreamConnection::StreamBuffer::underflow()
 		{
 			// check if shutdown is executed
-			if (!good()) throw StreamErrorException();
+			if (!good()) throw StreamErrorException("stream went bad");
 
 			// lock this method and avoid concurrent calls
 			ibrcommon::MutexLock l(_underflow_mutex);
@@ -432,7 +432,7 @@ namespace dtn
 						// read the segment
 						_stream >> seg;
 					} catch (ios_base::failure ex) {
-						throw StreamErrorException("read error");
+						throw StreamErrorException("read error: " + std::string(ex.what()));
 					}
 
 					// reset the incoming timer
@@ -601,7 +601,7 @@ namespace dtn
 					_stream.read(in_buf_, readsize);
 				} catch (ios_base::failure ex) {
 					_underflow_state = IDLE;
-					throw StreamErrorException("read error");
+					throw StreamErrorException("read error: " + std::string(ex.what()));
 				}
 
 				// adjust the remain counter

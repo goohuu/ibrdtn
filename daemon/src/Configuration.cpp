@@ -4,6 +4,7 @@
 #include "core/Node.h"
 #include "ibrcommon/net/NetInterface.h"
 #include <ibrcommon/Logger.h>
+#include "net/DiscoveryAnnouncement.h"
 
 using namespace dtn::net;
 using namespace dtn::core;
@@ -40,12 +41,39 @@ namespace dtn
 		}
 
 		Configuration::Configuration()
-		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true), _dodiscovery(true), _debuglevel(0), _debug(false), _quiet(false), _disco_timeout(5)
+		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true)
 		{
 		}
 
 		Configuration::~Configuration()
 		{}
+
+		Configuration::Discovery::Discovery()
+		 : _enabled(true), _timeout(5) {};
+
+		Configuration::Statistic::Statistic() {};
+
+		Configuration::Debug::Debug()
+		 : _enabled(false), _quiet(false), _level(0) {};
+
+		Configuration::Discovery::~Discovery() {};
+		Configuration::Statistic::~Statistic() {};
+		Configuration::Debug::~Debug() {};
+
+		const Configuration::Discovery& Configuration::getDiscovery() const
+		{
+			return _disco;
+		}
+
+		const Configuration::Statistic& Configuration::getStatistic() const
+		{
+			return _stats;
+		}
+
+		const Configuration::Debug& Configuration::getDebug() const
+		{
+			return _debug;
+		}
 
 		Configuration& Configuration::getInstance()
 		{
@@ -83,18 +111,18 @@ namespace dtn
 
 				if (arg == "--nodiscovery")
 				{
-						_dodiscovery = false;
+					_disco._enabled = false;
 				}
 
 				if (arg == "-d")
 				{
-						_debuglevel = atoi(argv[i + 1]);
-						_debug = true;
+					_debug._enabled = true;
+					_debug._level = atoi(argv[i + 1]);
 				}
 
 				if (arg == "-q")
 				{
-					_quiet = true;
+					_debug._quiet = true;
 				}
 			}
 		}
@@ -108,7 +136,9 @@ namespace dtn
 		{
 			try {
 					_conf = ibrcommon::ConfigFile(filename);
-					_disco_timeout = _conf.read<unsigned int>("discovery_timeout", 5);
+					_disco.load(_conf);
+					_stats.load(_conf);
+					_debug.load(_conf);
 					IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::ConfigFile::file_not_found ex) {
 					IBRCOMMON_LOGGER(info) << "Using defaults. To use custom config file use parameter -c configfile." << IBRCOMMON_LOGGER_ENDL;
@@ -116,19 +146,32 @@ namespace dtn
 			}
 		}
 
-		bool Configuration::beQuiet() const
+		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
+		{
+			_timeout = conf.read<unsigned int>("discovery_timeout", 5);
+		}
+
+		void Configuration::Statistic::load(const ibrcommon::ConfigFile &conf)
+		{
+		}
+
+		void Configuration::Debug::load(const ibrcommon::ConfigFile &conf)
+		{
+		}
+
+		bool Configuration::Debug::quiet() const
 		{
 			return _quiet;
 		}
 
-		bool Configuration::doDebug() const
+		bool Configuration::Debug::enabled() const
 		{
-			return _debug;
+			return _enabled;
 		}
 
-		int Configuration::getDebugLevel() const
+		int Configuration::Debug::level() const
 		{
-			return _debuglevel;
+			return _level;
 		}
 
 		string Configuration::getNodename()
@@ -216,23 +259,23 @@ namespace dtn
 			return ret;
 		}
 
-		std::string Configuration::getDiscoveryAddress()
+		std::string Configuration::Discovery::address() const throw (ParameterNotFoundException)
 		{
 			try {
-				return _conf.read<string>("discovery_address");
+				return Configuration::getInstance()._conf.read<string>("discovery_address");
 			} catch (ConfigFile::key_not_found ex) {
 				throw ParameterNotFoundException();
 			}
 		}
 
-		int Configuration::getDiscoveryPort()
+		int Configuration::Discovery::port() const
 		{
-			return _conf.read<int>("discovery_port", 4551);
+			return Configuration::getInstance()._conf.read<int>("discovery_port", 4551);
 		}
 
-		unsigned int Configuration::getDiscoveryTimeout()
+		unsigned int Configuration::Discovery::timeout() const
 		{
-			return _disco_timeout;
+			return _timeout;
 		}
 
 		Configuration::NetConfig Configuration::getAPIInterface()
@@ -332,9 +375,24 @@ namespace dtn
 		}
 
 
-		bool Configuration::doDiscovery()
+		bool Configuration::Discovery::enabled() const
 		{
-			return _dodiscovery;
+			return _enabled;
+		}
+
+		bool Configuration::Discovery::announce() const
+		{
+			return (Configuration::getInstance()._conf.read<int>("discovery_announce", 1) == 1);
+		}
+
+		bool Configuration::Discovery::shortbeacon() const
+		{
+			return (Configuration::getInstance()._conf.read<int>("discovery_short", 0) == 1);
+		}
+
+		char Configuration::Discovery::version() const
+		{
+			return Configuration::getInstance()._conf.read<int>("discovery_version", 2);
 		}
 
 		bool Configuration::doAPI()
@@ -356,6 +414,7 @@ namespace dtn
 			try {
 				string mode = _conf.read<string>("routing");
 				if ( mode == "epidemic" ) return EPIDEMIC_ROUTING;
+				if ( mode == "flooding" ) return FLOOD_ROUTING;
 				return DEFAULT_ROUTING;
 			} catch (ConfigFile::key_not_found ex) {
 				return DEFAULT_ROUTING;
@@ -379,38 +438,38 @@ namespace dtn
 			}
 		}
 
-		bool Configuration::useStatLogger()
+		bool Configuration::Statistic::enabled() const
 		{
-			return _conf.keyExists("statistic_type");
+			return Configuration::getInstance()._conf.keyExists("statistic_type");
 		}
 
-		ibrcommon::File Configuration::getStatLogfile()
+		ibrcommon::File Configuration::Statistic::logfile() const throw (ParameterNotSetException)
 		{
 			try {
-				return ibrcommon::File(_conf.read<std::string>("statistic_file"));
+				return ibrcommon::File(Configuration::getInstance()._conf.read<std::string>("statistic_file"));
 			} catch (ConfigFile::key_not_found ex) {
 				throw ParameterNotSetException();
 			}
 		}
 
-		std::string Configuration::getStatLogType()
+		std::string Configuration::Statistic::type() const
 		{
-			return _conf.read<std::string>("statistic_type", "stdout");
+			return Configuration::getInstance()._conf.read<std::string>("statistic_type", "stdout");
 		}
 
-		unsigned int Configuration::getStatLogInterval()
+		unsigned int Configuration::Statistic::interval() const
 		{
-			return _conf.read<unsigned int>("statistic_interval", 300);
+			return Configuration::getInstance()._conf.read<unsigned int>("statistic_interval", 300);
 		}
 
-		std::string Configuration::getStatAddress()
+		std::string Configuration::Statistic::address() const
 		{
-			return _conf.read<std::string>("statistic_address", "127.0.0.1");
+			return Configuration::getInstance()._conf.read<std::string>("statistic_address", "127.0.0.1");
 		}
 
-		unsigned int Configuration::getStatPort()
+		unsigned int Configuration::Statistic::port() const
 		{
-			return _conf.read<unsigned int>("statistic_port", 1234);
+			return Configuration::getInstance()._conf.read<unsigned int>("statistic_port", 1234);
 		}
 
 		size_t Configuration::getLimit(std::string suffix)

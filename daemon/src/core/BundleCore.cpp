@@ -100,6 +100,8 @@ namespace dtn
 			} catch (dtn::net::ConnectionNotAvailableException ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
+			} catch (ibrcommon::Exception) {
+				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
 			}
 		}
 

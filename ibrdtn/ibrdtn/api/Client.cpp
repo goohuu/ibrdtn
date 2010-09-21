@@ -62,6 +62,16 @@ namespace dtn
 			}
 		}
 
+		void Client::AsyncReceiver::finally()
+		{
+			{
+				ibrcommon::MutexLock l(_client._inqueue);
+				_client._inqueue.signal(true);
+			}
+
+			((StreamConnection&)_client).shutdown();
+		}
+
 		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
 		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _connected(false), _receiver(*this)
 		{
@@ -112,13 +122,6 @@ namespace dtn
 
 			// stop the asynchronous receiver
 			_receiver.stop();
-
-			{
-				ibrcommon::MutexLock l(_inqueue);
-				_inqueue.signal(true);
-			}
-
-			StreamConnection::shutdown();
 		}
 
 		void Client::received(const StreamContactHeader&)

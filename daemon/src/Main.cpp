@@ -22,6 +22,7 @@
 #include "routing/StaticRoutingExtension.h"
 #include "routing/NeighborRoutingExtension.h"
 #include "routing/EpidemicRoutingExtension.h"
+#include "routing/FloodRoutingExtension.h"
 #include "routing/RetransmissionExtension.h"
 
 #include "net/UDPConvergenceLayer.h"
@@ -253,7 +254,7 @@ int main(int argc, char *argv[])
 		// init syslog
 		ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
 
-		if (!conf.beQuiet())
+		if (!conf.getDebug().quiet())
 		{
 			// add logging to the cout
 			ibrcommon::Logger::addStream(std::cout, logstd, logopts);
@@ -266,12 +267,12 @@ int main(int argc, char *argv[])
 		IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
 
 		// activate debugging
-		if (conf.doDebug() && !conf.beQuiet())
+		if (conf.getDebug().enabled() && !conf.getDebug().quiet())
 		{
 			// init logger
-			ibrcommon::Logger::setVerbosity(conf.getDebugLevel());
+			ibrcommon::Logger::setVerbosity(conf.getDebug().level());
 
-			IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebugLevel() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
 
 			ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_DEBUG, logopts);
 		}
@@ -308,13 +309,13 @@ int main(int argc, char *argv[])
 	// initialize the DiscoveryAgent
 	dtn::net::IPNDAgent *ipnd = NULL;
 
-	if (conf.doDiscovery())
+	if (conf.getDiscovery().enabled())
 	{
 		// get the discovery port
-		int disco_port = conf.getDiscoveryPort();
+		int disco_port = conf.getDiscovery().port();
 
 		try {
-			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscoveryAddress() );
+			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscovery().address() );
 		} catch (Configuration::ParameterNotFoundException ex) {
 			ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
 		}
@@ -348,6 +349,15 @@ int main(int argc, char *argv[])
 	// add routing extensions
 	switch (conf.getRoutingExtension())
 	{
+	case Configuration::FLOOD_ROUTING:
+	{
+		IBRCOMMON_LOGGER(info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
+		dtn::routing::FloodRoutingExtension *flooding = new dtn::routing::FloodRoutingExtension();
+		router->addExtension( flooding );
+		router->addExtension( new dtn::routing::RetransmissionExtension() );
+		break;
+	}
+
 	case Configuration::EPIDEMIC_ROUTING:
 	{
 		IBRCOMMON_LOGGER(info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
@@ -400,36 +410,36 @@ int main(int argc, char *argv[])
 	}
 
 	// create a statistic logger if configured
-	if (conf.useStatLogger())
+	if (conf.getStatistic().enabled())
 	{
 		try {
-			if (conf.getStatLogType() == "stdout")
+			if (conf.getStatistic().type() == "stdout")
 			{
-				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatLogInterval() ) );
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatistic().interval() ) );
 			}
-			else if (conf.getStatLogType() == "syslog")
+			else if (conf.getStatistic().type() == "syslog")
 			{
-				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_SYSLOG, conf.getStatLogInterval() ) );
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_SYSLOG, conf.getStatistic().interval() ) );
 			}
-			else if (conf.getStatLogType() == "plain")
+			else if (conf.getStatistic().type() == "plain")
 			{
-				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_PLAIN, conf.getStatLogInterval(), conf.getStatLogfile() ) );
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_PLAIN, conf.getStatistic().interval(), conf.getStatistic().logfile() ) );
 			}
-			else if (conf.getStatLogType() == "csv")
+			else if (conf.getStatistic().type() == "csv")
 			{
-				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_CSV, conf.getStatLogInterval(), conf.getStatLogfile() ) );
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_CSV, conf.getStatistic().interval(), conf.getStatistic().logfile() ) );
 			}
-			else if (conf.getStatLogType() == "stat")
+			else if (conf.getStatistic().type() == "stat")
 			{
-				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_STAT, conf.getStatLogInterval(), conf.getStatLogfile() ) );
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_FILE_STAT, conf.getStatistic().interval(), conf.getStatistic().logfile() ) );
 			}
-			else if (conf.getStatLogType() == "udp")
+			else if (conf.getStatistic().type() == "udp")
 			{
-				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_UDP, conf.getStatLogInterval(), conf.getStatAddress(), conf.getStatPort() ) );
+				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_UDP, conf.getStatistic().interval(), conf.getStatistic().address(), conf.getStatistic().port() ) );
 			}
 		} catch (Configuration::ParameterNotSetException ex) {
 			IBRCOMMON_LOGGER(error) << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << IBRCOMMON_LOGGER_ENDL;
-			components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatLogInterval() ) );
+			components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatistic().interval() ) );
 		}
 	}
 

@@ -13,6 +13,7 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/net/MulticastSocket.h>
 #include <ibrcommon/net/BroadcastSocket.h>
+#include "Configuration.h"
 #include <typeinfo>
 
 namespace dtn
@@ -20,7 +21,7 @@ namespace dtn
 	namespace net
 	{
 		IPNDAgent::IPNDAgent(int port, std::string address)
-		 : _socket(NULL), _destination(address), _port(port)
+		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()), _version(DiscoveryAnnouncement::DISCO_VERSION_01), _socket(NULL), _destination(address), _port(port)
 		{
 			if (ibrcommon::MulticastSocket::isMulticast(_destination))
 			{
@@ -32,6 +33,22 @@ namespace dtn
 				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: broadcast mode " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
 				_socket = new ibrcommon::BroadcastSocket();
 			}
+
+			switch (_config.version())
+			{
+			case 2:
+				_version = DiscoveryAnnouncement::DISCO_VERSION_01;
+				break;
+
+			case 1:
+				_version = DiscoveryAnnouncement::DISCO_VERSION_00;
+				break;
+
+			case 0:
+				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: DTN2 compatibility mode" << IBRCOMMON_LOGGER_ENDL;
+				_version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
+				break;
+			};
 		}
 
 		IPNDAgent::~IPNDAgent()
@@ -56,18 +73,21 @@ namespace dtn
 
 		void IPNDAgent::sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services)
 		{
-			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
+			DiscoveryAnnouncement announcement(_version, dtn::core::BundleCore::local);
 
 			// set sequencenumber
 			announcement.setSequencenumber(sn);
 
 			if (_sockets.empty())
 			{
-				// add services
-				for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+				if (!_config.shortbeacon())
 				{
-					const DiscoveryService &service = (*iter);
-					announcement.addService(service);
+					// add services
+					for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+					{
+						const DiscoveryService &service = (*iter);
+						announcement.addService(service);
+					}
 				}
 
 				ibrcommon::udpsocket::peer p = _socket->getPeer(_destination, _port);
@@ -85,13 +105,16 @@ namespace dtn
 				// clear all services
 				announcement.clearServices();
 
-				// add services
-				for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+				if (!_config.shortbeacon())
 				{
-					const DiscoveryService &service = (*iter);
-					if (service.onInterface(iface))
+					// add services
+					for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
 					{
-						announcement.addService(service);
+						const DiscoveryService &service = (*iter);
+						if (service.onInterface(iface))
+						{
+							announcement.addService(service);
+						}
 					}
 				}
 
@@ -166,11 +189,22 @@ namespace dtn
 
 			while (_running)
 			{
-				DiscoveryAnnouncement announce;
+				DiscoveryAnnouncement announce(_version);
 
 				char data[1500];
 
-				int len = _socket->receive(data, 1500);
+				std::string sender;
+				int len = _socket->receive(data, 1500, sender);
+				
+				if (announce.isShort())
+				{
+					// TODO: generate name with the sender address
+				}
+
+				if (announce.getServices().empty())
+				{
+					announce.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender + ";port=4556;"));
+				}
 
 				if (len < 0) return;
 

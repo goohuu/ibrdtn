@@ -21,8 +21,8 @@ namespace dtn
 {
 	namespace net
 	{
-		DiscoveryAgent::DiscoveryAgent()
-		 : _running(false), _sn(0)
+		DiscoveryAgent::DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config)
+		 : _config(config), _running(false), _sn(0)
 		{
 		}
 
@@ -67,7 +67,7 @@ namespace dtn
 			n.setURI(announcement.getEID().getString());
 
 			// get configured timeout value
-			n.setTimeout( dtn::daemon::Configuration::getInstance().getDiscoveryTimeout() );
+			n.setTimeout( _config.timeout() );
 
 			const list<DiscoveryService> services = announcement.getServices();
 			for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
@@ -122,19 +122,23 @@ namespace dtn
 			try {
 				dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 
-				static ibrcommon::Mutex mutex;
-				ibrcommon::MutexLock l(mutex);
-
-				// update all services
-				for (std::list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
+				// check if announcements are enabled
+				if (_config.announce())
 				{
-					(*iter).update();
+					static ibrcommon::Mutex mutex;
+					ibrcommon::MutexLock l(mutex);
+
+					// update all services
+					for (std::list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
+					{
+						(*iter).update();
+					}
+
+					sendAnnoucement(_sn, _services);
+
+					// increment sequencenumber
+					_sn++;
 				}
-
-				sendAnnoucement(_sn, _services);
-
-				// increment sequencenumber
-				_sn++;
 			} catch (std::bad_cast) {
 
 			}

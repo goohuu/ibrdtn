@@ -37,6 +37,7 @@ namespace dtn
 		public:
 			enum DiscoveryVersion
 			{
+				DTND_IPDISCOVERY = 0x00,
 				DISCO_VERSION_00 = 0x01,
 				DISCO_VERSION_01 = 0x02
 			};
@@ -55,6 +56,8 @@ namespace dtn
 			string toString() const;
 
 			void setSequencenumber(u_int16_t sequence);
+
+			bool isShort();
 
 		private:
 			friend std::ostream &operator<<(std::ostream &stream, const DiscoveryAnnouncement &announcement);

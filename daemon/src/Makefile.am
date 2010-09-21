@@ -73,6 +73,8 @@ routing_SOURCES = routing/BaseRouter.cpp \
 				routing/BundleSummary.h \
 				routing/EpidemicRoutingExtension.cpp \
 				routing/EpidemicRoutingExtension.h \
+				routing/FloodRoutingExtension.cpp \
+				routing/FloodRoutingExtension.h \
 				routing/NeighborDatabase.cpp \
 				routing/NeighborDatabase.h \
 				routing/NeighborRoutingExtension.cpp \

@@ -16,6 +16,7 @@
 #include "net/Neighbor.h"
 #include "net/DiscoveryAnnouncement.h"
 #include "net/DiscoveryService.h"
+#include "Configuration.h"
 
 using namespace dtn::data;
 
@@ -28,7 +29,7 @@ namespace dtn
 		class DiscoveryAgent : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
 		{
 		public:
-			DiscoveryAgent();
+			DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config);
 			virtual ~DiscoveryAgent() = 0;
 
 			void received(const DiscoveryAnnouncement &announcement);
@@ -42,6 +43,8 @@ namespace dtn
 			virtual void componentDown();
 			virtual void componentRun() = 0;
 			virtual void sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services) = 0;
+
+			const dtn::daemon::Configuration::Discovery &_config;
 			bool _running;
 
 		private:

@@ -28,6 +28,18 @@ namespace dtn
 		{
 		}
 
+		bool DiscoveryAnnouncement::isShort()
+		{
+			switch (_version)
+			{
+			case DISCO_VERSION_00:
+				return (_flags & DiscoveryAnnouncement::BEACON_SHORT);
+
+			case DISCO_VERSION_01:
+				return !(_flags & DiscoveryAnnouncement::BEACON_SERVICE_BLOCK);
+			};
+		}
+
 		dtn::data::EID DiscoveryAnnouncement::getEID() const
 		{
 			return _canonical_eid;
@@ -99,6 +111,8 @@ namespace dtn
 					{
 						stream << (*iter);
 					}
+
+					break;
 				}
 
 				case DiscoveryAnnouncement::DISCO_VERSION_01:
@@ -138,6 +152,50 @@ namespace dtn
 							stream << (*iter);
 						}
 					}
+
+					break;
+				}
+
+				case DiscoveryAnnouncement::DTND_IPDISCOVERY:
+				{
+					char zero = '\0';
+					u_int8_t interval = 10;
+					// u_int32_t inet_addr;
+					u_int16_t inet_port = htons(4556);
+					std::string eid = announcement._canonical_eid.getString();
+					u_int16_t eid_len = htons(eid.length());
+					unsigned int add_zeros = (4 - (eid.length() % 4)) % 4;
+					u_int16_t length = htons(12 + eid.length() + add_zeros);
+
+
+					stream << (unsigned char)DiscoveryAnnouncement::DTND_IPDISCOVERY;
+					stream.write((char*)&interval, 1);
+					stream.write((char*)&length, 2);
+
+//					std::list<dtn::daemon::Configuration::NetConfig> interfaces = dtn::daemon::Configuration::getInstance().getInterfaces();
+//					dtn::daemon::Configuration::NetConfig &i = interfaces.front();
+
+//					struct sockaddr_in sock_address;
+//
+//					// set the local interface address
+//					i.interface.getAddress(&sock_address.sin_addr);
+//
+//					stream.write((char*)&sock_address.sin_addr, 4);
+					stream.write(&zero, 1);
+					stream.write(&zero, 1);
+					stream.write(&zero, 1);
+					stream.write(&zero, 1);
+
+					stream.write((char*)&inet_port, 2);
+					stream.write((char*)&eid_len, 2);
+					stream << eid;
+
+					for (unsigned int i = 0; i < add_zeros; i++)
+					{
+						stream.write((char*)&zero, 1);
+					}
+
+					break;
 				}
 			}
 
@@ -147,6 +205,16 @@ namespace dtn
 		std::istream &operator>>(std::istream &stream, DiscoveryAnnouncement &announcement)
 		{
 			unsigned char version = stream.get();
+
+			// do we running DTN2 compatibility mode?
+			if (announcement._version == DiscoveryAnnouncement::DTND_IPDISCOVERY)
+			{
+				// read disco messages with version 1 as IPDiscovery (DTN2)
+				if (version == DiscoveryAnnouncement::DISCO_VERSION_00)
+				{
+					version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
+				}
+			}
 
 			switch (version)
 			{
@@ -244,6 +312,31 @@ namespace dtn
 				{
 					// TODO: read the bloomfilter
 				}
+
+				break;
+			}
+
+			case DiscoveryAnnouncement::DTND_IPDISCOVERY:
+			{
+				u_int8_t interval;
+				u_int16_t length;
+				u_int32_t inet_addr;
+				u_int16_t inet_port;
+				u_int16_t eid_len;
+
+				IBRCOMMON_LOGGER_DEBUG(15) << "beacon version 0 received" << IBRCOMMON_LOGGER_ENDL;
+
+				stream.read((char*)&interval, 1);
+				stream.read((char*)&length, 2);
+				stream.read((char*)&inet_addr, 4);
+				stream.read((char*)&inet_port, 2);
+				stream.read((char*)&eid_len, 2);
+
+				char eid[eid_len];
+				stream.read((char*)&eid, eid_len);
+
+				announcement._version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
+				announcement._canonical_eid = EID(std::string(eid));
 
 				break;
 			}

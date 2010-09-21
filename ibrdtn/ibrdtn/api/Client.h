@@ -50,6 +50,7 @@ namespace dtn
 				virtual ~AsyncReceiver();
 
 				void run();
+				void finally();
 
 			private:
 				Client &_client;
