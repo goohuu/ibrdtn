@@ -26,6 +26,7 @@ namespace dtn
 			SummaryVector();
 			virtual ~SummaryVector();
 
+			virtual void commit();
 			virtual bool contains(const dtn::data::BundleID &id) const;
 			virtual void add(const dtn::data::BundleID &id);
 			virtual void remove(const dtn::data::BundleID &id);
@@ -43,7 +44,6 @@ namespace dtn
 			friend std::istream &operator>>(std::istream &stream, SummaryVector &obj);
 
 		private:
-			void rebuild();
 			std::set<dtn::data::BundleID> _ids;
 			ibrcommon::BloomFilter _bf;
 		};

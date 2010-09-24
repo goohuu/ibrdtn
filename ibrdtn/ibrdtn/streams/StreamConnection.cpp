@@ -76,7 +76,7 @@ namespace dtn
 			}
 		}
 
-		void StreamConnection::closeBuffer()
+		void StreamConnection::abort()
 		{
 			_buf.close();
 		}
@@ -105,6 +105,7 @@ namespace dtn
 						break;
 					case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
+						_buf.waitCompleted(2000);
 						_callback.eventShutdown();
 						break;
 					case CONNECTION_SHUTDOWN_NODE_TIMEOUT:

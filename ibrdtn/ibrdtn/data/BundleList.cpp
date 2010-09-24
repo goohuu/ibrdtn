@@ -62,6 +62,8 @@ namespace dtn
 
 		void BundleList::expire(const size_t timestamp)
 		{
+			bool commit = false;
+
 			// we can not expire bundles if we have no idea of time
 			if (dtn::utils::Clock::quality == 0) return;
 
@@ -81,7 +83,11 @@ namespace dtn
 
 				// remove this item in private list
 				_bundles.erase( iter++ );
+
+				commit = true;
 			}
+
+			if (commit) eventCommitExpired();
 		}
 
 		BundleList::ExpiringBundle::ExpiringBundle(const MetaBundle b)

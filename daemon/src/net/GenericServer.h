@@ -15,6 +15,7 @@
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/thread/ThreadSafeQueue.h>
 #include <list>
+#include <algorithm>
 
 namespace dtn
 {
@@ -32,7 +33,6 @@ namespace dtn
 		{
 		public:
 			GenericServer()
-			 : _running(false), _cleaner(*this, _clients)
 			{ }
 
 			virtual ~GenericServer()
@@ -40,14 +40,22 @@ namespace dtn
 
 			void add(T *obj)
 			{
-				ibrcommon::MutexLock l(_cleaner);
-				_clients.push_back(obj);
+				{
+					ibrcommon::MutexLock l(_lock);
+					_clients.push_back(obj);
+				}
+
 				connectionUp(obj);
 			}
 
-			void setFree(T *conn)
+			void remove(T *obj)
 			{
-				_cleaner.freequeue.push(conn);
+				{
+					ibrcommon::MutexLock l(_lock);
+					_clients.erase( std::remove( _clients.begin(), _clients.end(), obj) );
+				}
+
+				connectionDown(obj);
 			}
 
 		protected:
@@ -60,28 +68,21 @@ namespace dtn
 
 			void componentUp()
 			{
-				_running = true;
-				_cleaner.start();
 				listen();
 			}
 
 			void componentRun()
 			{
-				while (_running)
+				while (true)
 				{
 					try {
 						T* obj = accept();
-						if (_running && (obj != NULL))
+						if (obj != NULL)
 						{
 							add( obj );
 						}
 					} catch (std::exception) {
 						// ignore all errors
-					}
-
-					{
-						ibrcommon::MutexLock l(_cleaner);
-						_cleaner.signal(true);
 					}
 
 					// breakpoint
@@ -91,94 +92,18 @@ namespace dtn
 
 			void componentDown()
 			{
-				_running = false;
+//				while (true)
+//				{
+//					ibrcommon::MutexLock l(_lock);
+//					if (_clients.empty()) break;
+//					_clients.front()->shutdown();
+//				}
+
 				shutdown();
-				_cleaner.stop();
 			}
 
-		private:
-			class ClientCleaner : public ibrcommon::JoinableThread, public ibrcommon::Conditional
-			{
-			public:
-				ClientCleaner(GenericServer &callback, std::list<T*> &clients)
-				 : _running(true), _clients(clients), _callback(callback)
-				{
-				}
-
-				virtual ~ClientCleaner()
-				{
-					{
-						ibrcommon::MutexLock l(*this);
-						_running = false;
-					}
-
-					join();
-				}
-
-				ibrcommon::ThreadSafeQueue<T*> freequeue;
-
-			protected:
-				void finally()
-				{
-					ibrcommon::MutexLock l(*this);
-
-					typename std::list< T* >::iterator iter = _clients.begin();
-					while (iter != _clients.end())
-					{
-						delete (*iter);
-						_clients.erase(iter++);
-					}
-				}
-
-				void run()
-				{
-					try {
-						while (_running)
-						{
-							T *conn = freequeue.blockingpop();
-							bool delobj = false;
-
-							// delete in list
-							{
-								ibrcommon::MutexLock l(*this);
-								typename std::list<T* >::iterator iter = _clients.begin();
-								while (iter != _clients.end())
-								{
-									if ( (*iter) == conn )
-									{
-										delobj = true;
-										_clients.erase(iter++);
-									}
-									else
-									{
-										iter++;
-									}
-								}
-							}
-
-							if (delobj)
-							{
-								_callback.connectionDown(conn);
-								delete conn;
-							}
-
-							ibrcommon::Thread::yield();
-							ibrcommon::Thread::testcancel();
-						}
-					} catch (ibrcommon::Exception) {
-
-					}
-				}
-
-			private:
-				bool _running;
-				std::list< T* > &_clients;
-				GenericServer &_callback;
-			};
-
+			ibrcommon::Mutex _lock;
 			std::list< T* > _clients;
-			bool _running;
-			ClientCleaner _cleaner;
 		};
 
 		template <class T>
@@ -188,13 +113,7 @@ namespace dtn
 			GenericConnection(GenericServer<T> &server) : _server(server) { };
 			virtual ~GenericConnection() { };
 
-			void free()
-			{
-				T *obj = dynamic_cast<T*>(this);
-				_server.setFree(obj);
-			};
-
-		private:
+		protected:
 			GenericServer<T> &_server;
 		};
 	}

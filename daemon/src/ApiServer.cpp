@@ -24,9 +24,8 @@ namespace dtn
 	namespace daemon
 	{
 		ApiServer::ApiServer(ibrcommon::NetInterface net, int port)
-		 : dtn::net::GenericServer<ClientHandler>(), _tcpsrv(net, port), _dist(_connections, _connection_lock)
+		 : dtn::net::GenericServer<ClientHandler>(), _tcpsrv(net, port), _dist(_connections, _list_lock)
 		{
-			_dist.start();
 		}
 
 		ApiServer::~ApiServer()
@@ -55,29 +54,30 @@ namespace dtn
 
 		void ApiServer::listen()
 		{
-
+			_dist.start();
 		}
 
 		void ApiServer::shutdown()
 		{
+			_dist.stop();
 		}
 
 		void ApiServer::connectionUp(ClientHandler *conn)
 		{
-			ibrcommon::MutexLock l(_connection_lock);
+			ibrcommon::MutexLock l(_list_lock);
 			_connections.push_back(conn);
 			IBRCOMMON_LOGGER_DEBUG(5) << "Client connection up" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void ApiServer::connectionDown(ClientHandler *conn)
 		{
-			ibrcommon::MutexLock l(_connection_lock);
+			ibrcommon::MutexLock l(_list_lock);
 			_connections.erase( std::remove(_connections.begin(), _connections.end(), conn) );
 			IBRCOMMON_LOGGER_DEBUG(5) << "Client connection down" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		ApiServer::Distributor::Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &lock)
-		 : _running(true), _lock(lock), _connections(connections)
+		ApiServer::Distributor::Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &list)
+		 : _list_lock(list), _connections(connections)
 		{
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 		}
@@ -85,7 +85,7 @@ namespace dtn
 		ApiServer::Distributor::~Distributor()
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
-			shutdown();
+			join();
 		}
 
 		/**
@@ -95,66 +95,52 @@ namespace dtn
 		{
 			try
 			{
-				while (_running)
+				while (true)
 				{
 					// get the next element in the queue
 					dtn::data::MetaBundle mb = _received.blockingpop();
 
+					ibrcommon::MutexLock l(_list_lock);
+
 					// search for the receiver of this bundle
+					std::queue<ClientHandler*> receivers;
+
+					for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 					{
-						ibrcommon::MutexLock l(_lock);
-						std::queue<ClientHandler*> receivers;
-
-						for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+						ClientHandler *handler = (*iter);
+						if (handler->getPeer() == mb.destination)
 						{
-							ClientHandler *handler = (*iter);
-							if (handler->getPeer() == mb.destination)
-							{
-								receivers.push(handler);
-							}
+							receivers.push(handler);
 						}
+					}
 
-						if (!receivers.empty())
-						{
-							try {
-								BundleStorage &storage = BundleCore::getInstance().getStorage();
-								dtn::data::Bundle bundle = storage.get( mb );
+					if (!receivers.empty())
+					{
+						try {
+							BundleStorage &storage = BundleCore::getInstance().getStorage();
+							dtn::data::Bundle bundle = storage.get( mb );
 
-								while (!receivers.empty())
-								{
-									ClientHandler *handler = receivers.front();
-									IBRCOMMON_LOGGER_DEBUG(5) << "Transfer bundle " << mb.toString() << " to client " << handler->getPeer().getString() << IBRCOMMON_LOGGER_ENDL;
+							while (!receivers.empty())
+							{
+								ClientHandler *handler = receivers.front();
+								IBRCOMMON_LOGGER_DEBUG(5) << "Transfer bundle " << mb.toString() << " to client " << handler->getPeer().getString() << IBRCOMMON_LOGGER_ENDL;
 
-									// send the bundle
-									(*handler).queue(bundle);
+								// send the bundle
+								(*handler).queue(bundle);
 
-									receivers.pop();
-								}
-
-								// bundle has been delivered, delete it
-								storage.remove( mb );
-							} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-								IBRCOMMON_LOGGER_DEBUG(10) << "API: NoBundleFoundException; BundleID: " << mb.toString() << IBRCOMMON_LOGGER_ENDL;
+								receivers.pop();
 							}
+
+							// bundle has been delivered, delete it
+							storage.remove( mb );
+						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+							IBRCOMMON_LOGGER_DEBUG(10) << "API: NoBundleFoundException; BundleID: " << mb.toString() << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 				}
 			} catch (std::exception) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected error or shutdown" << IBRCOMMON_LOGGER_ENDL;
 			}
-		}
-
-		/**
-		 * Stop the running daemon
-		 */
-		void ApiServer::Distributor::shutdown()
-		{
-			{
-				ibrcommon::MutexLock l(_received);
-				_running = false;
-				_received.signal(true);
-			}
-			join();
 		}
 
 		/**

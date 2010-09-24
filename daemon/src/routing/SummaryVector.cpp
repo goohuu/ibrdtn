@@ -6,6 +6,8 @@
  */
 
 #include "routing/SummaryVector.h"
+#include <ibrcommon/Logger.h>
+#include <ibrcommon/TimeMeasurement.h>
 
 namespace dtn
 {
@@ -26,14 +28,21 @@ namespace dtn
 		{
 		}
 
-		void SummaryVector::rebuild()
+		void SummaryVector::commit()
 		{
+			IBRCOMMON_LOGGER_DEBUG(60) << "rebuilt of the bloomfilter needed" << IBRCOMMON_LOGGER_ENDL;
+			ibrcommon::TimeMeasurement tm;
+			tm.start();
+
 			_bf.clear();
 
 			for (std::set<dtn::data::BundleID>::const_iterator iter = _ids.begin(); iter != _ids.end(); iter++)
 			{
 				_bf.insert( (*iter).toString() );
 			}
+
+			tm.stop();
+			IBRCOMMON_LOGGER_DEBUG(60) << "rebuilt done in " << tm << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void SummaryVector::add(const std::set<dtn::data::MetaBundle> &list)
@@ -58,7 +67,6 @@ namespace dtn
 		void SummaryVector::remove(const dtn::data::BundleID &id)
 		{
 			_ids.erase( id );
-			rebuild();
 		}
 
 		void SummaryVector::clear()

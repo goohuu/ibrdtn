@@ -45,6 +45,7 @@ namespace dtn
 			};
 
 			virtual void eventBundleExpired(const ExpiringBundle&) {};
+			virtual void eventCommitExpired() {};
 
 			std::set<ExpiringBundle> _bundles;
 		};

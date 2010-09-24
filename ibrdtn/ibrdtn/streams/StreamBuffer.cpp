@@ -193,6 +193,8 @@ namespace dtn
 		{
 			shutdowntimers();
 
+			abort();
+
 			// set shutdown bit
 			set(STREAM_SHUTDOWN);
 		}
@@ -212,6 +214,11 @@ namespace dtn
 			// set the current in buffer to zero
 			// this should result in a underflow call on the next read
 			setg(0, 0, 0);
+		}
+
+		void StreamConnection::StreamBuffer::abort()
+		{
+			_segments.clear();
 		}
 
 		void StreamConnection::StreamBuffer::waitCompleted(const size_t timeout)
@@ -289,8 +296,6 @@ namespace dtn
 
 				if (!get(STREAM_SKIP))
 				{
-					ibrcommon::MutexLock l(_sendlock);
-
 					// put the segment into the queue
 					if (get(STREAM_ACK_SUPPORT))
 					{
@@ -302,6 +307,8 @@ namespace dtn
 						// when the last segment is sent.
 						_conn.eventBundleForwarded();
 					}
+
+					ibrcommon::MutexLock l(_sendlock);
 
 					// write the segment to the stream
 					_stream << seg;

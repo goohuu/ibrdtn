@@ -186,7 +186,7 @@ namespace dtn
 			 */
 			void shutdown(ConnectionShutdownCases csc = CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
 
-			void closeBuffer();
+			void abort();
 
 			/**
 			 * This method rejects the currently transmitted bundle
@@ -257,6 +257,8 @@ namespace dtn
 				 * Wait until all segments are acknowledged
 				 */
 				void waitCompleted(const size_t timeout);
+
+				void abort();
 
 			protected:
 				virtual int sync();

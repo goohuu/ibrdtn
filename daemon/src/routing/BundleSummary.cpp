@@ -42,6 +42,11 @@ namespace dtn
 			_vector.remove(bundle.bundle);
 		}
 
+		void BundleSummary::eventCommitExpired()
+		{
+			_vector.commit();
+		}
+
 		bool BundleSummary::contains(const dtn::data::BundleID &bundle) const
 		{
 			// quick check

@@ -27,24 +27,24 @@ namespace dtn
 	namespace api
 	{
 		Client::AsyncReceiver::AsyncReceiver(Client &client)
-		 : _client(client), _shutdown(false)
+		 : _client(client)
 		{
 		}
 
 		Client::AsyncReceiver::~AsyncReceiver()
 		{
-			_shutdown = true;
 			join();
 		}
 
 		void Client::AsyncReceiver::run()
 		{
 			try {
-				while (!_shutdown)
+				while (true)
 				{
 					dtn::api::Bundle b;
 					_client >> b;
 					_client.received(b);
+					testcancel();
 					yield();
 				}
 			} catch (dtn::api::ConnectionException ex) {
@@ -57,19 +57,14 @@ namespace dtn
 				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (std::exception) {
-				IBRCOMMON_LOGGER(error) << "unknown error" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "error" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			}
 		}
 
 		void Client::AsyncReceiver::finally()
 		{
-			{
-				ibrcommon::MutexLock l(_client._inqueue);
-				_client._inqueue.signal(true);
-			}
-
-			((StreamConnection&)_client).shutdown();
+			_client.shutdown();
 		}
 
 		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
@@ -117,11 +112,7 @@ namespace dtn
 
 		void Client::close()
 		{
-			// wait for the last ACKs
-			wait(30000);
-
-			// stop the asynchronous receiver
-			_receiver.stop();
+			shutdown(StreamConnection::CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
 		}
 
 		void Client::received(const StreamContactHeader&)
@@ -131,48 +122,24 @@ namespace dtn
 
 		void Client::eventTimeout()
 		{
-			//_stream.done();
-			_stream.close();
-
-			ibrcommon::MutexLock l(_inqueue);
-			_inqueue.signal(true);
 		}
 
 		void Client::eventShutdown()
 		{
-			//_stream.done();
-			_stream.close();
-
-			ibrcommon::MutexLock l(_inqueue);
-			_inqueue.signal(true);
 		}
 
 		void Client::eventConnectionUp(const StreamContactHeader &header)
 		{
-			// call received method
-			received(header);
-
-			// set connected to true
-			_connected = true;
-
-			ibrcommon::MutexLock l(_inqueue);
-			_inqueue.signal(true);
 		}
 
 		void Client::eventError()
 		{
-			_stream.close();
-
-			ibrcommon::MutexLock l(_inqueue);
-			_inqueue.signal(true);
 		}
 
 		void Client::eventConnectionDown()
 		{
 			_connected = false;
-
-			ibrcommon::MutexLock l(_inqueue);
-			_inqueue.signal(true);
+			_inqueue.unblock();
 		}
 
 		void Client::eventBundleRefused()
@@ -201,8 +168,8 @@ namespace dtn
 		{
 			try {
 				return _inqueue.blockingpop(timeout * 1000);
-			} catch (ibrcommon::Exception ex) {
-				throw ibrcommon::ConnectionClosedException();
+			} catch (std::exception ex) {
+				throw ibrcommon::ConnectionClosedException(ex.what());
 			}
 		}
 	}

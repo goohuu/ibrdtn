@@ -25,15 +25,13 @@ namespace dtn
 	{
 		ClientHandler::ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream)
 		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv),
-		   ibrcommon::JoinableThread(), _sender(*this), _running(true), _stream(stream), _connection(*this, *_stream), _semaphore(0)
+		   ibrcommon::JoinableThread(), _sender(*this), _stream(stream), _connection(*this, *_stream), _semaphore(0)
 		{
 			stream->enableNoDelay();
 		}
 
 		ClientHandler::~ClientHandler()
 		{
-			shutdown();
-			join();
 		}
 
 		const dtn::data::EID& ClientHandler::getPeer() const
@@ -43,62 +41,20 @@ namespace dtn
 
 		void ClientHandler::eventShutdown()
 		{
-			// shutdown message received
-			try {
-				(*_stream).close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
+			// stop the receiver
+			_sender.stop();
 		}
 
 		void ClientHandler::eventTimeout()
 		{
-			try {
-				(*_stream).close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
+			// stop the receiver
+			_sender.stop();
 		}
 
-		void ClientHandler::threadUp()
+		void ClientHandler::eventError()
 		{
-			ibrcommon::MutexLock l(_semaphore_lock);
-			_semaphore++;
-		}
-
-		bool ClientHandler::threadDown()
-		{
-			bool connection_down = false;
-			{
-				ibrcommon::MutexLock l(_semaphore_lock);
-				if (_semaphore == 1)
-				{
-					connection_down = true;
-				}
-				else
-				{
-					_semaphore--;
-					return false;
-				}
-			}
-
-			if (connection_down)
-			{
-				// shutdown the connection if nobody did this before
-				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_NODE_TIMEOUT);
-
-				eventShutdown();
-
-				try {
-					(*_stream).close();
-				} catch (ibrcommon::ConnectionClosedException ex) {
-
-				}
-
-				free();
-			}
-
-			return connection_down;
+			// stop the receiver
+			_sender.stop();
 		}
 
 		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
@@ -116,18 +72,8 @@ namespace dtn
 			}
 		}
 
-		void ClientHandler::eventError()
-		{
-			try {
-				(*_stream).close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
-		}
-
 		void ClientHandler::eventConnectionDown()
 		{
-			shutdown();
 		}
 
 		void ClientHandler::eventBundleRefused()
@@ -172,67 +118,73 @@ namespace dtn
 		void ClientHandler::shutdown()
 		{
 			// shutdown the sender thread
-			_sender.shutdown();
+			_sender.stop();
 		}
 
 		void ClientHandler::finally()
 		{
-			if (!threadDown())
-			{
-				_sender.shutdown();
+			try {
+				// close the stream
+				(*_stream).close();
+			} catch (std::exception) {
+
 			}
+
+			_server.remove(this);
+
+			// connection down -> connection to be deleted
+			delete this;
 		}
 
 		void ClientHandler::run()
 		{
-			threadUp();
-
 			try {
-				try {
-					char flags = 0;
+				char flags = 0;
 
-					// request acknowledgements
-					flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+				// request acknowledgements
+				flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 
-					// do the handshake
-					_connection.handshake(dtn::core::BundleCore::local, 10, flags);
+				// do the handshake
+				_connection.handshake(dtn::core::BundleCore::local, 10, flags);
 
-					// start the sender thread
-					_sender.start();
+				// start the sender thread
+				_sender.start();
 
-					BundleStorage &storage = BundleCore::getInstance().getStorage();
+				while (true)
+				{
+					dtn::data::Bundle bundle;
+					dtn::data::DefaultDeserializer(_connection) >> bundle;
 
-					while (_running)
-					{
-						dtn::data::Bundle bundle;
-						dtn::data::DefaultDeserializer(_connection) >> bundle;
+					// create a new sequence number
+					bundle.relabel();
 
-						// create a new sequence number
-						bundle.relabel();
+					// check address fields for "api:me", this has to be replaced
+					dtn::data::EID clienteid("api:me");
 
-						// check address fields for "api:me", this has to be replaced
-						dtn::data::EID clienteid("api:me");
+					// set the source address to the sending EID
+					bundle._source = _eid;
 
-						// set the source address to the sending EID
-						bundle._source = _eid;
+					if (bundle._destination == clienteid) bundle._destination = _eid;
+					if (bundle._reportto == clienteid) bundle._reportto = _eid;
+					if (bundle._custodian == clienteid) bundle._custodian = _eid;
 
-						if (bundle._destination == clienteid) bundle._destination = _eid;
-						if (bundle._reportto == clienteid) bundle._reportto = _eid;
-						if (bundle._custodian == clienteid) bundle._custodian = _eid;
+					// raise default bundle received event
+					dtn::net::BundleReceivedEvent::raise(EID(), bundle);
 
-						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(EID(), bundle);
-
-						yield();
-					}
-				} catch (ibrcommon::IOException ex) {
-					_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-					_running = false;
-				} catch (dtn::InvalidDataException ex) {
-					_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-					_running = false;
+					yield();
 				}
-			} catch (std::exception) {
+			} catch (ibrcommon::IOException ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): IOException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				_connection.abort();
+				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (dtn::InvalidDataException ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): InvalidDataException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				_connection.abort();
+				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (std::exception ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				_connection.abort();
+				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			}
 		}
 
@@ -267,17 +219,15 @@ namespace dtn
 
 		ClientHandler::Sender::~Sender()
 		{
-			JoinableThread::join();
+			join();
 		}
 
 		void ClientHandler::Sender::run()
 		{
-			_client.threadUp();
-
 			try {
-				BundleStorage &storage = BundleCore::getInstance().getStorage();
-
 				try {
+					BundleStorage &storage = BundleCore::getInstance().getStorage();
+
 					while (true)
 					{
 						dtn::data::Bundle b = storage.get( _client.getPeer() );
@@ -285,7 +235,8 @@ namespace dtn
 						storage.remove(b);
 
 						// idle a little bit
-						testcancel(); yield();
+						testcancel();
+						yield();
 					}
 				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 				}
@@ -298,30 +249,23 @@ namespace dtn
 					_client << bundle;
 
 					// idle a little bit
-					testcancel(); yield();
+					testcancel();
+					yield();
 				}
 			} catch (ibrcommon::IOException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException" << IBRCOMMON_LOGGER_ENDL;
 			} catch (dtn::InvalidDataException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::QueueEmptyException) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "API: QueueEmptyException" << IBRCOMMON_LOGGER_ENDL;
 			} catch (std::exception) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void ClientHandler::Sender::shutdown()
-		{
-			unblock();
-			JoinableThread::stop();
-		}
-
 		void ClientHandler::Sender::finally()
 		{
-			if (!_client.threadDown())
-			{
-				_client.stop();
-			}
+			_client.stop();
 		}
 
 		void ClientHandler::queue(const dtn::data::Bundle &bundle)
@@ -330,4 +274,3 @@ namespace dtn
 		}
 	}
 }
-

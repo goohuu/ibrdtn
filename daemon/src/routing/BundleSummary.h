@@ -32,6 +32,7 @@ namespace dtn
 
 		protected:
 			void eventBundleExpired(const ExpiringBundle&);
+			void eventCommitExpired();
 
 		private:
 			SummaryVector _vector;

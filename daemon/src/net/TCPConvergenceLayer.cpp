@@ -204,6 +204,8 @@ namespace dtn
 					return;
 				}
 			}
+
+			delete conn;
 		}
 
 		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::Server::accept()

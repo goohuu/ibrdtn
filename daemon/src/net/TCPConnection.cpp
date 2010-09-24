@@ -122,8 +122,6 @@ namespace dtn
 				} catch (ibrcommon::Exception ex) {
 					// queue emtpy
 				}
-
-				free();
 			}
 
 			return connection_down;
@@ -228,7 +226,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			_stream.closeBuffer();
+			_stream.abort();
 
 			// stop the sender
 			_sender.shutdown();

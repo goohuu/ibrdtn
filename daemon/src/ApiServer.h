@@ -41,7 +41,7 @@ namespace dtn
 			class Distributor : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
 			{
 			public:
-				Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &lock);
+				Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &list);
 				~Distributor();
 
 				/**
@@ -50,25 +50,18 @@ namespace dtn
 				void run();
 
 				/**
-				 * Stop the running daemon
-				 */
-				void shutdown();
-
-				/**
 				 * @see dtn::core::EventReceiver::raiseEvent()
 				 */
 				void raiseEvent(const dtn::core::Event *evt);
 
 			private:
-				bool _running;
-
-				ibrcommon::Mutex &_lock;
+				ibrcommon::Mutex &_list_lock;
 				std::list<ClientHandler*> &_connections;
 				ibrcommon::ThreadSafeQueue<dtn::data::MetaBundle> _received;
 			};
 
 			std::list<ClientHandler*> _connections;
-			ibrcommon::Mutex _connection_lock;
+			ibrcommon::Mutex _list_lock;
 			ibrcommon::tcpserver _tcpsrv;
 			Distributor _dist;
 		};

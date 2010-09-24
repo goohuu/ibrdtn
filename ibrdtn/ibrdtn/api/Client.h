@@ -54,7 +54,6 @@ namespace dtn
 
 			private:
 				Client &_client;
-				bool _shutdown;
 			};
 
 			enum HANDSHAKE_FLAGS
