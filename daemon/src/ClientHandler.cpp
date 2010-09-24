@@ -25,13 +25,15 @@ namespace dtn
 	{
 		ClientHandler::ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream)
 		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv),
-		   ibrcommon::JoinableThread(), _sender(*this), _stream(stream), _connection(*this, *_stream), _semaphore(0)
+		   ibrcommon::JoinableThread(), _sender(*this), _stream(stream), _connection(*this, *_stream)
 		{
 			stream->enableNoDelay();
 		}
 
 		ClientHandler::~ClientHandler()
 		{
+			// no join() here! because the finally() can not delete
+			// this object and join in the destructor
 		}
 
 		const dtn::data::EID& ClientHandler::getPeer() const
@@ -41,20 +43,14 @@ namespace dtn
 
 		void ClientHandler::eventShutdown()
 		{
-			// stop the receiver
-			_sender.stop();
 		}
 
 		void ClientHandler::eventTimeout()
 		{
-			// stop the receiver
-			_sender.stop();
 		}
 
 		void ClientHandler::eventError()
 		{
-			// stop the receiver
-			_sender.stop();
 		}
 
 		void ClientHandler::eventConnectionUp(const StreamContactHeader &header)
@@ -74,6 +70,8 @@ namespace dtn
 
 		void ClientHandler::eventConnectionDown()
 		{
+			// stop the sender
+			_sender.stop();
 		}
 
 		void ClientHandler::eventBundleRefused()
@@ -117,8 +115,8 @@ namespace dtn
 
 		void ClientHandler::shutdown()
 		{
-			// shutdown the sender thread
-			_sender.stop();
+			// shutdown
+			_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 		}
 
 		void ClientHandler::finally()
@@ -219,7 +217,8 @@ namespace dtn
 
 		ClientHandler::Sender::~Sender()
 		{
-			join();
+			// no join() here! because the finally() can not delete
+			// this object and join in the destructor
 		}
 
 		void ClientHandler::Sender::run()

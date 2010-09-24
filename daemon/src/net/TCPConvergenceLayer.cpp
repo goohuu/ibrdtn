@@ -83,7 +83,7 @@ namespace dtn
 		{
 			{
 				// search for an existing connection
-				ibrcommon::MutexLock l(_connection_lock);
+				ibrcommon::MutexLock l(_lock);
 
 				for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 				{
@@ -120,9 +120,6 @@ namespace dtn
 			// create a connection
 			ibrcommon::tcpstream* stream = new ibrcommon::tcpclient(n.getAddress(), n.getPort());
 
-			// enable linger option
-			stream->enableLinger();
-
 			TCPConnection *conn = new TCPConnection((GenericServer<TCPConnection>&)*this, stream);
 
 			// add connection as pending
@@ -157,7 +154,7 @@ namespace dtn
 				if (node->getAction() == NODE_UNAVAILABLE)
 				{
 					// search for an existing connection
-					ibrcommon::MutexLock l(_connection_lock);
+					ibrcommon::MutexLock l(_lock);
 					for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 					{
 						TCPConvergenceLayer::Server::Connection &conn = (*iter);
@@ -174,7 +171,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::connectionUp(TCPConvergenceLayer::TCPConnection *conn)
 		{
-			ibrcommon::MutexLock l(_connection_lock);
+			ibrcommon::MutexLock l(_lock);
 
 			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
@@ -193,7 +190,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::connectionDown(TCPConvergenceLayer::TCPConnection *conn)
 		{
-			ibrcommon::MutexLock l(_connection_lock);
+			ibrcommon::MutexLock l(_lock);
 			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
 				TCPConvergenceLayer::Server::Connection &item = (*iter);
@@ -204,8 +201,6 @@ namespace dtn
 					return;
 				}
 			}
-
-			delete conn;
 		}
 
 		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::Server::accept()
@@ -214,14 +209,11 @@ namespace dtn
 				// wait for incoming connections
 				ibrcommon::tcpstream* stream = _tcpsrv.accept();
 
-				// enable linger option
-				stream->enableLinger();
-
 				// create new TCPConnection object
 				TCPConnection *conn = new TCPConnection(*this, stream);
 
 				{
-					ibrcommon::MutexLock l(_connection_lock);
+					ibrcommon::MutexLock l(_lock);
 
 					// add connection as pending
 					_connections.push_back( Connection( conn, conn->getNode() ) );
@@ -242,6 +234,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::shutdown()
 		{
+			_tcpsrv.close();
 		}
 
 		TCPConvergenceLayer::Server::Connection::Connection(TCPConvergenceLayer::TCPConnection *conn, const dtn::core::Node &node, const bool &active)

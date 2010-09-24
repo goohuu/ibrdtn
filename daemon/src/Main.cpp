@@ -389,8 +389,12 @@ int main(int argc, char *argv[])
 		BundleCore::forwarding = false;
 	}
 
-	// initialize all convergence layers
-	createConvergenceLayers(core, conf, components, ipnd);
+	try {
+		// initialize all convergence layers
+		createConvergenceLayers(core, conf, components, ipnd);
+	} catch (std::exception) {
+		return -1;
+	}
 
 	if (conf.doAPI())
 	{

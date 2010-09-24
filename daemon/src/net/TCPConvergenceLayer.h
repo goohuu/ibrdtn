@@ -44,11 +44,13 @@ namespace dtn
 		class TCPConvergenceLayer : public dtn::daemon::Component, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
-			class TCPConnection : public GenericConnection<TCPConvergenceLayer::TCPConnection>, public StreamConnection::Callback
+			class TCPConnection : public GenericConnection<TCPConvergenceLayer::TCPConnection>, public StreamConnection::Callback, public ibrcommon::JoinableThread
 			{
+			protected:
+				virtual ~TCPConnection();
+
 			public:
 				TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream);
-				virtual ~TCPConnection();
 
 				/**
 				 * initialize this connection by send and receive
@@ -103,36 +105,18 @@ namespace dtn
 
 				void rejectTransmission();
 
-				void threadUp();
-				bool threadDown();
+				void run();
+				void finally();
+
+				void clearQueue();
 
 			private:
-				/**
-				 * Receiver sub-process
-				 * This sub-process is implemented as a thread
-				 * and do a constant read to this connection until
-				 * the receiver is stopped or a exception is thrown.
-				 */
-				class Receiver : public ibrcommon::JoinableThread
-				{
-				public:
-					Receiver(TCPConnection &connection);
-					virtual ~Receiver();
-					void run();
-					void shutdown();
-					void finally();
-
-				private:
-					TCPConnection &_connection;
-				};
-
 				class Sender : public ibrcommon::JoinableThread, public ibrcommon::ThreadSafeQueue<dtn::data::Bundle>
 				{
 				public:
 					Sender(TCPConnection &connection);
 					virtual ~Sender();
 					void run();
-					void shutdown();
 					void finally();
 
 				private:
@@ -149,20 +133,12 @@ namespace dtn
 				// and transmit them to the peer.
 				Sender _sender;
 
-				// This thread receive all bundles
-				Receiver _receiver;
-
 				// handshake variables
 				dtn::data::EID _name;
 				size_t _timeout;
 
 				ibrcommon::ThreadSafeQueue<dtn::data::Bundle> _sentqueue;
 				size_t _lastack;
-
-				bool _shutdown;
-
-				ibrcommon::Mutex _semaphore_lock;
-				int _semaphore;
 			};
 
 			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver
@@ -209,7 +185,7 @@ namespace dtn
 
 				TCPConnection* getConnection(const dtn::core::Node &n);
 				ibrcommon::tcpserver _tcpsrv;
-				ibrcommon::Conditional _connection_lock;
+				ibrcommon::Conditional _lock;
 				std::list<Connection> _connections;
 			};
 

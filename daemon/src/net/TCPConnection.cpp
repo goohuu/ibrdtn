@@ -32,7 +32,7 @@ namespace dtn
 		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream)
 		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv),
 		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream), _sender(*this),
-		   _receiver(*this), _name(), _timeout(0), _lastack(0), _shutdown(false), _semaphore(0)
+		   _name(), _timeout(0), _lastack(0)
 		{
 			stream->enableKeepalive();
 			stream->enableNoDelay();
@@ -41,7 +41,8 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()
 		{
-			shutdown();
+			// no join() here! because the finally() can not delete
+			// this object and join in the destructor
 		}
 
 		void TCPConvergenceLayer::TCPConnection::queue(const dtn::data::Bundle &bundle)
@@ -64,67 +65,6 @@ namespace dtn
 
 			// do the handshake
 			_stream.handshake(_name, _timeout, flags);
-
-			// start the sender for outgoing bundles
-			_sender.start();
-		}
-
-		void TCPConvergenceLayer::TCPConnection::threadUp()
-		{
-			ibrcommon::MutexLock l(_semaphore_lock);
-			_semaphore++;
-		}
-
-		bool TCPConvergenceLayer::TCPConnection::threadDown()
-		{
-			bool connection_down = false;
-			{
-				ibrcommon::MutexLock l(_semaphore_lock);
-				if (_semaphore == 1)
-				{
-					connection_down = true;
-				}
-				else
-				{
-					_semaphore--;
-					return false;
-				}
-			}
-
-			if (connection_down)
-			{
-				// shutdown the connection if nobody did this before
-				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_NODE_TIMEOUT);
-
-				// event
-				ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _node);
-
-				try {
-					while (true)
-					{
-						const dtn::data::Bundle bundle = _sentqueue.frontpop();
-
-						if (_lastack > 0)
-						{
-							// some data are already acknowledged, make a fragment?
-							//TODO: make a fragment
-							TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
-						}
-						else
-						{
-							// raise transfer abort event for all bundles without an ACK
-							TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
-						}
-
-						// set last ack to zero
-						_lastack = 0;
-					}
-				} catch (ibrcommon::Exception ex) {
-					// queue emtpy
-				}
-			}
-
-			return connection_down;
 		}
 
 		void TCPConvergenceLayer::TCPConnection::initialize(const dtn::data::EID &name, const size_t timeout)
@@ -133,7 +73,7 @@ namespace dtn
 			_timeout = timeout;
 
 			// start the receiver for incoming bundles + handshake
-			_receiver.start();
+			start();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionUp(const StreamContactHeader &header)
@@ -147,7 +87,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionDown()
 		{
-			shutdown();
+			// stop the sender
+			_sender.stop();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventBundleRefused()
@@ -191,45 +132,22 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::eventShutdown()
 		{
-			// close the tcpstream
-			try {
-				//_tcpstream->done();
-				_tcpstream->close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventTimeout()
 		{
 			// event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _node);
-
-			// close the tcpstream
-			try {
-				//_tcpstream->done();
-				_tcpstream->close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventError()
 		{
-			// close the tcpstream
-			try {
-				_tcpstream->close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
-			_stream.abort();
-
-			// stop the sender
-			_sender.shutdown();
+			// shutdown
+			_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 		}
 
 		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
@@ -290,30 +208,21 @@ namespace dtn
 			return conn;
 		}
 
-		TCPConvergenceLayer::TCPConnection::Receiver::Receiver(TCPConnection &connection)
-		 : _connection(connection)
+		void TCPConvergenceLayer::TCPConnection::run()
 		{
-		}
-
-		TCPConvergenceLayer::TCPConnection::Receiver::~Receiver()
-		{
-			JoinableThread::join();
-		}
-
-		void TCPConvergenceLayer::TCPConnection::Receiver::run()
-		{
-			_connection.threadUp();
-
 			try {
 				// firstly, do the handshake
-				_connection.handshake();
+				handshake();
+
+				// start the sender
+				_sender.start();
 
 				while (true)
 				{
 					dtn::data::Bundle bundle;
 
 					try {
-						_connection >> bundle;
+						(*this) >> bundle;
 
 						// check the bundle
 						if ( ( bundle._destination == EID() ) || ( bundle._source == EID() ) )
@@ -328,28 +237,38 @@ namespace dtn
 
 					} catch (dtn::data::Validator::RejectedException ex) {
 						// bundle rejected
-						_connection.rejectTransmission();
+						rejectTransmission();
 					}
+//					} catch (dtn::InvalidDataException ex) {
+//						// cannot decode the bundle data, reject bundle
+//						rejectTransmission();
+//					}
 
 					yield();
 				}
-			} catch (dtn::InvalidDataException ex) {
-				// cannot decode the bundle data, reject bundle
-				_connection.rejectTransmission();
-			} catch (std::exception) { }
-		}
-
-		void TCPConvergenceLayer::TCPConnection::Receiver::finally()
-		{
-			if (!_connection.threadDown())
-			{
-				_connection._sender.shutdown();
+			} catch (std::exception ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Receiver::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				_stream.abort();
+				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::Receiver::shutdown()
+		void TCPConvergenceLayer::TCPConnection::finally()
 		{
-			JoinableThread::stop();
+			// close the tcpstream
+			try {
+				_tcpstream->close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
+
+			// event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _node);
+
+			_server.remove(this);
+
+			// connection down -> connection to be deleted
+			delete this;
 		}
 
 		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection)
@@ -359,13 +278,12 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection::Sender::~Sender()
 		{
-			JoinableThread::join();
+			// no join() here! because the finally() can not delete
+			// this object and join in the destructor
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
 		{
-			_connection.threadUp();
-
 			try {
 				while (true)
 				{
@@ -378,23 +296,43 @@ namespace dtn
 					yield();
 				}
 			} catch (ibrcommon::QueueEmptyException) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender: QueueEmptyException" << IBRCOMMON_LOGGER_ENDL;
 			} catch (std::exception ex) {
 				IBRCOMMON_LOGGER(error) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
+		void TCPConvergenceLayer::TCPConnection::clearQueue()
 		{
-			unblock();
-			JoinableThread::stop();
+			try {
+				while (true)
+				{
+					const dtn::data::Bundle bundle = _sender.frontpop();
+
+					if (_lastack > 0)
+					{
+						// some data are already acknowledged, make a fragment?
+						//TODO: make a fragment
+						TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+					}
+					else
+					{
+						// raise transfer abort event for all bundles without an ACK
+						TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+					}
+
+					// set last ack to zero
+					_lastack = 0;
+				}
+			} catch (ibrcommon::Exception ex) {
+				// queue emtpy
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::finally()
 		{
-			if (!_connection.threadDown())
-			{
-				_connection._receiver.shutdown();
-			}
+			_connection.clearQueue();
+			_connection.stop();
 		}
 	}
 }

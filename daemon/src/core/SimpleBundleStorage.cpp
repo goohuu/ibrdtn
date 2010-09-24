@@ -552,20 +552,20 @@ namespace dtn
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b )
-		 : _count(1), _bundle(b), _state(HOLDER_MEMORY)
+		 :  _count(1), _state(HOLDER_MEMORY), _bundle(b)
 		{
 			dtn::data::DefaultSerializer s(std::cout);
 			_size = s.getLength(_bundle);
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const ibrcommon::File &file )
-		 : _count(1), _bundle(), _container(file), _state(HOLDER_STORED)
+		 : _count(1), _state(HOLDER_STORED), _bundle(), _container(file)
 		{
 			_size = file.size();
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size )
-		 : _count(1), _bundle(b), _state(HOLDER_PENDING), _size(size)
+		 : _count(1), _state(HOLDER_PENDING), _bundle(b), _size(size)
 		{
 			std::string namestr = workdir.getPath() + "/bundle-XXXXXXXX";
 			char name[namestr.length()];

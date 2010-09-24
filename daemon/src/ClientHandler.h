@@ -80,9 +80,6 @@ namespace dtn
 			ibrcommon::ThreadSafeQueue<dtn::data::Bundle> _sentqueue;
 			size_t _lastack;
 
-			ibrcommon::Mutex _semaphore_lock;
-			int _semaphore;
-
 			ibrcommon::Mutex _send_lock;
 		};
 	}

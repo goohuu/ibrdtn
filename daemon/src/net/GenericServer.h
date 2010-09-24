@@ -52,7 +52,7 @@ namespace dtn
 			{
 				{
 					ibrcommon::MutexLock l(_lock);
-					_clients.erase( std::remove( _clients.begin(), _clients.end(), obj) );
+					_clients.erase( std::remove( _clients.begin(), _clients.end(), obj), _clients.end() );
 				}
 
 				connectionDown(obj);
@@ -92,12 +92,18 @@ namespace dtn
 
 			void componentDown()
 			{
-//				while (true)
-//				{
-//					ibrcommon::MutexLock l(_lock);
-//					if (_clients.empty()) break;
-//					_clients.front()->shutdown();
-//				}
+				while (true)
+				{
+					T* client = NULL;
+					{
+						ibrcommon::MutexLock l(_lock);
+						if (_clients.empty()) break;
+						client = _clients.front();
+						_clients.remove(client);
+					}
+
+					client->shutdown();
+				}
 
 				shutdown();
 			}
@@ -111,9 +117,9 @@ namespace dtn
 		{
 		public:
 			GenericConnection(GenericServer<T> &server) : _server(server) { };
-			virtual ~GenericConnection() { };
 
 		protected:
+			virtual ~GenericConnection() { };
 			GenericServer<T> &_server;
 		};
 	}

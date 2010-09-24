@@ -60,6 +60,7 @@ namespace dtn
 		void ApiServer::shutdown()
 		{
 			_dist.stop();
+			_tcpsrv.close();
 		}
 
 		void ApiServer::connectionUp(ClientHandler *conn)
@@ -72,7 +73,7 @@ namespace dtn
 		void ApiServer::connectionDown(ClientHandler *conn)
 		{
 			ibrcommon::MutexLock l(_list_lock);
-			_connections.erase( std::remove(_connections.begin(), _connections.end(), conn) );
+			_connections.erase( std::remove(_connections.begin(), _connections.end(), conn), _connections.end() );
 			IBRCOMMON_LOGGER_DEBUG(5) << "Client connection down" << IBRCOMMON_LOGGER_ENDL;
 		}
 
