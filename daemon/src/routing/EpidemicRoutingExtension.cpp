@@ -61,7 +61,7 @@ namespace dtn
 
 		void EpidemicRoutingExtension::stopExtension()
 		{
-			_taskqueue.unblock();
+			_taskqueue.abort();
 		}
 
 		void EpidemicRoutingExtension::update(std::string &name, std::string &data)
@@ -242,7 +242,7 @@ namespace dtn
 			while (true)
 			{
 				try {
-					Task *t = _taskqueue.blockingpop();
+					Task *t = _taskqueue.getnpop(true);
 					ibrcommon::AutoDelete<Task> killer(t);
 
 					IBRCOMMON_LOGGER_DEBUG(10) << "processing epidemic task " << t->toString() << IBRCOMMON_LOGGER_ENDL;

@@ -12,6 +12,7 @@
 #include <ibrdtn/data/MetaBundle.h>
 #include "ibrdtn/data/EID.h"
 #include "core/Node.h"
+#include <ibrcommon/thread/Queue.h>
 #include <list>
 #include <map>
 #include <queue>
@@ -56,10 +57,7 @@ namespace dtn
 
 			ibrcommon::Mutex _stored_bundles_lock;
 			std::map<dtn::data::EID, std::queue<dtn::data::BundleID> > _stored_bundles;
-			std::queue<dtn::data::EID> _available;
-
-			bool _running;
-			ibrcommon::Conditional _wait;
+			ibrcommon::Queue<dtn::data::EID> _available;
 		};
 	}
 }

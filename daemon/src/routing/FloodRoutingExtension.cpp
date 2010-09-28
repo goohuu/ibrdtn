@@ -61,7 +61,7 @@ namespace dtn
 
 		void FloodRoutingExtension::stopExtension()
 		{
-			_taskqueue.unblock();
+			_taskqueue.abort();
 		}
 
 		void FloodRoutingExtension::notify(const dtn::core::Event *evt)
@@ -210,7 +210,7 @@ namespace dtn
 			while (true)
 			{
 				try {
-					Task *t = _taskqueue.blockingpop();
+					Task *t = _taskqueue.getnpop(true);
 					ibrcommon::AutoDelete<Task> killer(t);
 
 					IBRCOMMON_LOGGER_DEBUG(10) << "processing epidemic task " << t->toString() << IBRCOMMON_LOGGER_ENDL;

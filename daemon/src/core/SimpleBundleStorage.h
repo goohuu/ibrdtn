@@ -14,7 +14,7 @@
 #include <ibrcommon/data/File.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleList.h>
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 
 #include <set>
 
@@ -254,7 +254,7 @@ namespace dtn
 			BundleStore _store;
 			bool _running;
 
-			ibrcommon::ThreadSafeQueue<Task*> _tasks;
+			ibrcommon::Queue<Task*> _tasks;
 		};
 	}
 }

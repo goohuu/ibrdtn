@@ -34,16 +34,16 @@ namespace dtn
 		void EventSwitch::componentDown()
 		{
 			try {
-				while (!_queue.empty())
+				while (true)
 				{
-					delete _queue.frontpop();
+					delete _queue.getnpop();
 				}
-			} catch (ibrcommon::Exception) {
+			} catch (ibrcommon::QueueUnblockedException) {
 
 			}
 
 			_running = false;
-			_queue.unblock();
+			_queue.abort();
 		}
 
 		void EventSwitch::loop()
@@ -53,7 +53,7 @@ namespace dtn
 			try {
 				while (_running)
 				{
-					Event *evt = _queue.blockingpop();
+					Event *evt = _queue.getnpop(true);
 					dtn::core::GlobalEvent *global = dynamic_cast<dtn::core::GlobalEvent*>(evt);
 
 					{

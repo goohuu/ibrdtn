@@ -14,7 +14,7 @@
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 #include "core/EventDebugger.h"
 
 #include <list>
@@ -48,7 +48,7 @@ namespace dtn
 
 			ibrcommon::Mutex _receiverlock;
 			std::map<std::string,std::list<EventReceiver*> > _list;
-			ibrcommon::ThreadSafeQueue<dtn::core::Event*> _queue;
+			ibrcommon::Queue<dtn::core::Event*> _queue;
 			bool _running;
 
 			// create event debugger

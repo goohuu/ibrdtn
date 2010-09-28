@@ -19,7 +19,7 @@
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/data/File.h>
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 
 #include <sqlite3.h>
 #include <string>
@@ -166,7 +166,7 @@ namespace dtn
 			size_t dbSize;
 			sqlite3 *database;
 			ibrcommon::Conditional dbMutex;
-			ibrcommon::ThreadSafeQueue<Task*> _tasks;
+			ibrcommon::Queue<Task*> _tasks;
 
 			sqlite3_stmt *getTTL;
 			sqlite3_stmt *getBundleByDestination;

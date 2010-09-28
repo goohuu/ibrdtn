@@ -21,7 +21,7 @@
 #include <ibrdtn/data/BundleList.h>
 #include <ibrdtn/data/ExtensionBlockFactory.h>
 
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 
 #include <list>
 #include <queue>
@@ -179,7 +179,7 @@ namespace dtn
 			/**
 			 * hold queued tasks for later processing
 			 */
-			ibrcommon::ThreadSafeQueue<EpidemicRoutingExtension::Task* > _taskqueue;
+			ibrcommon::Queue<EpidemicRoutingExtension::Task* > _taskqueue;
 		};
 
 		/**

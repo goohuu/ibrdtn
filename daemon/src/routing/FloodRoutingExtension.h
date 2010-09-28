@@ -19,7 +19,7 @@
 #include <ibrdtn/data/BundleString.h>
 #include <ibrdtn/data/BundleList.h>
 
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 
 #include <list>
 #include <queue>
@@ -118,7 +118,7 @@ namespace dtn
 			/**
 			 * hold queued tasks for later processing
 			 */
-			ibrcommon::ThreadSafeQueue<FloodRoutingExtension::Task* > _taskqueue;
+			ibrcommon::Queue<FloodRoutingExtension::Task* > _taskqueue;
 		};
 	}
 }

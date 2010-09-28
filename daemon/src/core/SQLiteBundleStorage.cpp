@@ -149,7 +149,7 @@ namespace core {
 		unbindEvent(TimeEvent::className);
 		unbindEvent(GlobalEvent::className);
 
-		_tasks.unblock();
+		_tasks.abort();
 	}
 
 	void SQLiteBundleStorage::releaseCustody(dtn::data::BundleID&)

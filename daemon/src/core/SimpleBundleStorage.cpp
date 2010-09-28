@@ -43,7 +43,7 @@ namespace dtn
 		{
 			unbindEvent(TimeEvent::className);
 
-			_tasks.unblock();
+			_tasks.abort();
 		}
 
 		void SimpleBundleStorage::componentRun()
@@ -51,7 +51,7 @@ namespace dtn
 			try {
 				while (isRunning())
 				{
-					Task *t = _tasks.blockingpop();
+					Task *t = _tasks.getnpop(true);
 					ibrcommon::AutoDelete<Task> ad(t);
 
 					try {

@@ -32,7 +32,6 @@ namespace dtn
 		};
 
 		NeighborRoutingExtension::NeighborRoutingExtension()
-		 : _running(true)
 		{
 			try {
 				// scan for bundles in the storage
@@ -64,49 +63,40 @@ namespace dtn
 
 		void NeighborRoutingExtension::stopExtension()
 		{
-			ibrcommon::MutexLock l(_wait);
-			_running = false;
-			_wait.signal(true);
+			_available.abort();
 		}
 
 		void NeighborRoutingExtension::run()
 		{
-			ibrcommon::Mutex l(_wait);
-
-			while (_running)
+			while (true)
 			{
-				while (!_available.empty())
+				EID eid = _available.getnpop();
+
+				ibrcommon::MutexLock l(_stored_bundles_lock);
+				if ( _stored_bundles.find(eid) != _stored_bundles.end() )
 				{
-					EID eid = _available.front();
-					_available.pop();
+					std::queue<dtn::data::BundleID> &bundlequeue = _stored_bundles[eid];
 
-					ibrcommon::MutexLock l(_stored_bundles_lock);
-					if ( _stored_bundles.find(eid) != _stored_bundles.end() )
+					while (!bundlequeue.empty())
 					{
-						std::queue<dtn::data::BundleID> &bundlequeue = _stored_bundles[eid];
+						dtn::data::BundleID id = bundlequeue.front();
+						bundlequeue.pop();
 
-						while (!bundlequeue.empty())
+						if ( isNeighbor(eid) )
 						{
-							dtn::data::BundleID id = bundlequeue.front();
-							bundlequeue.pop();
-
-							if ( isNeighbor(eid) )
-							{
-								try {
-									getRouter()->transferTo(eid, id);
-								} catch (BaseRouter::NoRouteFoundException ex) {
-									bundlequeue.push(id);
-								} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-									// bundle may expired, ignore it.
-								}
+							try {
+								getRouter()->transferTo(eid, id);
+							} catch (BaseRouter::NoRouteFoundException ex) {
+								bundlequeue.push(id);
+							} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+								// bundle may expired, ignore it.
 							}
-							else break;
 						}
+						else break;
 					}
 				}
 
 				yield();
-				_wait.wait();
 			}
 		}
 
@@ -135,10 +125,8 @@ namespace dtn
 							_neighbors.push_back(nodeevent->getNode());
 						}
 
-						ibrcommon::MutexLock l(_wait);
 						dtn::data::EID eid(n.getURI());
 						_available.push(eid);
-						_wait.signal(true);
 					}
 					break;
 
