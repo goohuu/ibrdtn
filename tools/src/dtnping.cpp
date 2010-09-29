@@ -71,7 +71,7 @@ class EchoClient : public dtn::api::Client
 			
 			// create testing pattern, chunkwise to ocnserve memory
 			char pattern[CREATE_CHUNK_SIZE];
-			for (int i = 0; i < sizeof(pattern); i++)
+			for (size_t i = 0; i < sizeof(pattern); i++)
 			{
 				pattern[i] = '0';
 				pattern[i] += i % 10;
@@ -95,7 +95,7 @@ class EchoClient : public dtn::api::Client
 		}
 		
 		bool checkReply(dtn::api::Bundle *bundle) {
-			int reply_seq;
+			size_t reply_seq = 0;
 			ibrcommon::BLOB::Reference blob=bundle->getData();
 			(*blob).read((char *)(&reply_seq),4 );
 			//cout << "Reply seq is " << reply_seq << endl;
@@ -134,8 +134,6 @@ void print_help()
 
 }
 
-EchoClient *client; //for signal cb
-
 int main(int argc, char *argv[])
 {
 	string ping_destination = "dtn://local/echo";
@@ -146,8 +144,6 @@ int main(int argc, char *argv[])
 	bool stop_after_first_fail = false;
 	size_t count = 1;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
-
-	 //signal (SIGALRM, catch_alarm);
 
 	if (argc == 1)
 	{
@@ -225,13 +221,13 @@ int main(int argc, char *argv[])
 		ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
 		// Initiate a derivated client
-		client = new EchoClient(mode, ping_source,  conn);
+		EchoClient client(mode, ping_source,  conn);
 		
 
 
 		// Connect to the server. Actually, this function initiate the
 		// stream protocol by starting the thread and sending the contact header.
-		client->connect();
+		client.connect();
 
 		// target address
 		EID addr = EID(ping_destination);
@@ -245,12 +241,12 @@ int main(int argc, char *argv[])
 				tm.start();
 
 				// Call out a ECHO
-				client->echo( addr, ping_size, lifetime );
+				client.echo( addr, ping_size, lifetime );
 			
 				if (wait_for_reply)
 				{
 					
-					if (client->waitForReply(2*lifetime)) {
+					if (client.waitForReply(2*lifetime)) {
 					// print out measurement result
 						tm.stop();
 						cout << tm << endl;
@@ -273,7 +269,7 @@ int main(int argc, char *argv[])
 		}
 
 		// Shutdown the client connection.
-		client->close();
+		client.close();
 		conn.close();
 
 	} catch (ibrcommon::tcpclient::SocketException ex) {

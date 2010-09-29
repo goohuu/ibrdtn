@@ -80,6 +80,7 @@ namespace dtn
 		Client::~Client()
 		{
 			_receiver.stop();
+			_receiver.join();
 			shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 		}
 
