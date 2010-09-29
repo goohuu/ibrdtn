@@ -36,8 +36,6 @@ namespace dtn
 
 			virtual ~EID();
 
-			EID(const EID &other);
-
 			EID& operator=(const EID &other);
 
 			bool operator==(EID const& other) const;

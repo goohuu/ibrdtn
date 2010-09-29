@@ -21,11 +21,6 @@ namespace dtn
 		{
 		}
 
-		EID::EID(const EID &other)
-		 : _scheme(other._scheme), _ssp(other._ssp)
-		{
-		}
-
 		EID::EID(std::string scheme, std::string ssp)
 		 : _scheme(scheme), _ssp(ssp)
 		{
