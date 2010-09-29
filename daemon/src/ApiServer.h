@@ -14,7 +14,7 @@
 #include "ibrcommon/net/NetInterface.h"
 #include "net/GenericServer.h"
 #include <ibrdtn/data/MetaBundle.h>
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 
 #include <queue>
 #include <list>
@@ -55,13 +55,11 @@ namespace dtn
 				void raiseEvent(const dtn::core::Event *evt);
 
 			private:
-				ibrcommon::Mutex &_list_lock;
+				ibrcommon::Mutex &_lock;
 				std::list<ClientHandler*> &_connections;
-				ibrcommon::ThreadSafeQueue<dtn::data::MetaBundle> _received;
+				ibrcommon::Queue<dtn::data::MetaBundle> _received;
 			};
 
-			std::list<ClientHandler*> _connections;
-			ibrcommon::Mutex _list_lock;
 			ibrcommon::tcpserver _tcpsrv;
 			Distributor _dist;
 		};

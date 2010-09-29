@@ -13,6 +13,7 @@
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/data/BLOB.h>
+#include <ibrcommon/Logger.h>
 
 #include <iostream>
 
@@ -32,12 +33,16 @@ void print_help()
 
 int main(int argc, char *argv[])
 {
+	bool error = false;
 	string file_destination = "dtn://local/filetransfer";
 	string file_source = "filetransfer";
 	unsigned int lifetime = 3600;
 	bool use_stdin = false;
 	std::string filename;
 	int priority = 1;
+
+//	ibrcommon::Logger::setVerbosity(99);
+//	ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_LEVEL);
 
 	std::list<std::string> arglist;
 
@@ -180,19 +185,23 @@ int main(int argc, char *argv[])
 			} catch (ibrcommon::IOException ex) {
 				std::cerr << "Error while sending bundle." << std::endl;
 				std::cerr << "\t" << ex.what() << std::endl;
+				error = true;
 			}
 
 			// Shutdown the client connection.
 			client.close();
 		} catch (ibrcommon::IOException ex) {
 			cout << "Error: " << ex.what() << endl;
+			error = true;
 		}
 
 		// close the tcpstream
 		conn.close();
 	} catch (...) {
-
+		return -1;
 	}
+
+	if (error) return -1;
 
 	return 0;
 }

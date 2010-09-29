@@ -29,7 +29,7 @@
 #include <ibrcommon/net/NetInterface.h>
 
 #include <memory>
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 
 using namespace dtn::streams;
 
@@ -50,14 +50,12 @@ namespace dtn
 				virtual ~TCPConnection();
 
 			public:
-				TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream);
+				TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout = 10);
 
 				/**
-				 * initialize this connection by send and receive
-				 * the connection header.
-				 * @param header
+				 * This method is called by the GenericServer thread after accept()
 				 */
-				void initialize(const dtn::data::EID &name, const size_t timeout = 10);
+				virtual void initialize();
 
 				/**
 				 * shutdown the whole tcp connection
@@ -111,15 +109,17 @@ namespace dtn
 				void clearQueue();
 
 			private:
-				class Sender : public ibrcommon::JoinableThread, public ibrcommon::ThreadSafeQueue<dtn::data::Bundle>
+				class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::Bundle>
 				{
 				public:
 					Sender(TCPConnection &connection);
 					virtual ~Sender();
 					void run();
 					void finally();
+					void shutdown();
 
 				private:
+					bool _abort;
 					TCPConnection &_connection;
 				};
 
@@ -137,7 +137,7 @@ namespace dtn
 				dtn::data::EID _name;
 				size_t _timeout;
 
-				ibrcommon::ThreadSafeQueue<dtn::data::Bundle> _sentqueue;
+				ibrcommon::Queue<dtn::data::Bundle> _sentqueue;
 				size_t _lastack;
 			};
 
@@ -183,9 +183,7 @@ namespace dtn
 					bool _active;
 				};
 
-				TCPConnection* getConnection(const dtn::core::Node &n);
 				ibrcommon::tcpserver _tcpsrv;
-				ibrcommon::Conditional _lock;
 				std::list<Connection> _connections;
 			};
 

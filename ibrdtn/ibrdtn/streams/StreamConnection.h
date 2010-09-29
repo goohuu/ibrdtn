@@ -17,7 +17,7 @@
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/thread/Timer.h>
 #include <ibrcommon/Exceptions.h>
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 #include <iostream>
 #include <streambuf>
 
@@ -158,12 +158,6 @@ namespace dtn
 			bool isConnected();
 
 			/**
-			 * wait until all data has been acknowledged
-			 * or the connection has been closed
-			 */
-			void wait(const size_t timeout = 0);
-
-			/**
 			 * This method shutdown the whole connection handling process. To differ between the
 			 * expected cases of disconnection a connection shutdown case is needed.
 			 *
@@ -185,8 +179,6 @@ namespace dtn
 			 * @param csc The case of the requested shutdown.
 			 */
 			void shutdown(ConnectionShutdownCases csc = CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
-
-			void abort();
 
 			/**
 			 * This method rejects the currently transmitted bundle
@@ -256,7 +248,7 @@ namespace dtn
 				/**
 				 * Wait until all segments are acknowledged
 				 */
-				void waitCompleted(const size_t timeout);
+				void wait();
 
 				void abort();
 
@@ -321,7 +313,7 @@ namespace dtn
 
 				// this queue contains all sent data segments
 				// they are removed if an ack or nack is received
-				ibrcommon::ThreadSafeQueue<StreamDataSegment> _segments;
+				ibrcommon::Queue<StreamDataSegment> _segments;
 				std::queue<StreamDataSegment> _rejected_segments;
 
 				ibrcommon::Mutex _underflow_mutex;

@@ -25,15 +25,13 @@ namespace dtn
 	{
 		ClientHandler::ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream)
 		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv),
-		   ibrcommon::JoinableThread(), _sender(*this), _stream(stream), _connection(*this, *_stream)
+		   _sender(*this), _stream(stream), _connection(*this, *_stream)
 		{
 			stream->enableNoDelay();
 		}
 
 		ClientHandler::~ClientHandler()
 		{
-			// no join() here! because the finally() can not delete
-			// this object and join in the destructor
 		}
 
 		const dtn::data::EID& ClientHandler::getPeer() const
@@ -70,19 +68,22 @@ namespace dtn
 
 		void ClientHandler::eventConnectionDown()
 		{
+			IBRCOMMON_LOGGER_DEBUG(40) << "ClientHandler::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
+
 			// stop the sender
+			_sender.abort();
 			_sender.stop();
 		}
 
 		void ClientHandler::eventBundleRefused()
 		{
 			try {
-				const dtn::data::Bundle bundle = _sentqueue.frontpop();
+				const dtn::data::Bundle bundle = _sentqueue.getnpop();
 
 				// set ACK to zero
 				_lastack = 0;
 
-			} catch (ibrcommon::Exception ex) {
+			} catch (ibrcommon::QueueUnblockedException) {
 				// pop on empty queue!
 			}
 		}
@@ -90,7 +91,7 @@ namespace dtn
 		void ClientHandler::eventBundleForwarded()
 		{
 			try {
-				const dtn::data::Bundle bundle = _sentqueue.frontpop();
+				const dtn::data::Bundle bundle = _sentqueue.getnpop();
 
 				// raise bundle event
 				dtn::core::BundleEvent::raise(bundle, BUNDLE_DELIVERED);
@@ -98,7 +99,7 @@ namespace dtn
 				// set ACK to zero
 				_lastack = 0;
 
-			} catch (ibrcommon::Exception ex) {
+			} catch (ibrcommon::QueueUnblockedException) {
 				// pop on empty queue!
 			}
 		}
@@ -113,6 +114,12 @@ namespace dtn
 			return _connection.isConnected();
 		}
 
+		void ClientHandler::initialize()
+		{
+			// start the ClientHandler (service)
+			start();
+		}
+
 		void ClientHandler::shutdown()
 		{
 			// shutdown
@@ -121,6 +128,8 @@ namespace dtn
 
 		void ClientHandler::finally()
 		{
+			IBRCOMMON_LOGGER_DEBUG(60) << "delete ClientHandler" << IBRCOMMON_LOGGER_ENDL;
+
 			try {
 				// close the stream
 				(*_stream).close();
@@ -128,7 +137,13 @@ namespace dtn
 
 			}
 
-			_server.remove(this);
+			// shutdown the sender thread
+			_sender.shutdown();
+
+			{
+				ibrcommon::MutexLock l(_server.mutex());
+				_server.remove(this);
+			}
 
 			// connection down -> connection to be deleted
 			delete this;
@@ -173,16 +188,16 @@ namespace dtn
 				}
 			} catch (ibrcommon::IOException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): IOException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-				_connection.abort();
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (dtn::InvalidDataException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): InvalidDataException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-				_connection.abort();
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (std::exception ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-				_connection.abort();
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (...) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): canceled" << IBRCOMMON_LOGGER_ENDL;
+				throw;
 			}
 		}
 
@@ -196,8 +211,6 @@ namespace dtn
 
 		ClientHandler& operator<<(ClientHandler &conn, const dtn::data::Bundle &bundle)
 		{
-			ibrcommon::MutexLock l(conn._send_lock);
-
 			// add bundle to the queue
 			conn._sentqueue.push(bundle);
 
@@ -211,14 +224,23 @@ namespace dtn
 		}
 
 		ClientHandler::Sender::Sender(ClientHandler &client)
-		 : _client(client)
+		 : _abort(false), _client(client)
 		{
 		}
 
 		ClientHandler::Sender::~Sender()
 		{
-			// no join() here! because the finally() can not delete
-			// this object and join in the destructor
+			// enable this to force the dtnd to block on unsuccessful object free
+			// shutdown();
+		}
+
+		void ClientHandler::Sender::shutdown()
+		{
+			_abort = true;
+			this->abort();
+			::sleep(1);
+			this->stop();
+			this->join();
 		}
 
 		void ClientHandler::Sender::run()
@@ -227,43 +249,39 @@ namespace dtn
 				try {
 					BundleStorage &storage = BundleCore::getInstance().getStorage();
 
-					while (true)
+					while (!_abort)
 					{
 						dtn::data::Bundle b = storage.get( _client.getPeer() );
 						_client << b;
 						storage.remove(b);
-
-						// idle a little bit
-						testcancel();
-						yield();
 					}
 				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 				}
 
-				while (true)
+				while (!_abort)
 				{
-					dtn::data::Bundle bundle = blockingpop();
+					try {
+						dtn::data::Bundle bundle = getnpop(true, 1000);
 
-					// send bundle
-					_client << bundle;
+						// send bundle
+						_client << bundle;
+					} catch (ibrcommon::QueueUnblockedException) { }
 
 					// idle a little bit
-					testcancel();
 					yield();
 				}
+
 			} catch (ibrcommon::IOException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException" << IBRCOMMON_LOGGER_ENDL;
 			} catch (dtn::InvalidDataException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
-			} catch (ibrcommon::QueueEmptyException) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "API: QueueEmptyException" << IBRCOMMON_LOGGER_ENDL;
 			} catch (std::exception) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
+			} catch (...) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "API: canceled" << IBRCOMMON_LOGGER_ENDL;
+				throw;
 			}
-		}
 
-		void ClientHandler::Sender::finally()
-		{
 			_client.stop();
 		}
 

@@ -103,35 +103,30 @@ namespace dtn
 			}
 
 			try {
-				TCPConvergenceLayer::TCPConnection *conn = getConnection(n);
+				// create a connection
+				ibrcommon::tcpstream* stream = new ibrcommon::tcpclient(n.getAddress(), n.getPort());
+
+				TCPConnection *conn = new TCPConnection((GenericServer<TCPConnection>&)*this, stream, dtn::core::BundleCore::local, 10);
+
+				// raise setup event
+				ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
+
+				ibrcommon::MutexLock l(_lock);
+
+				// add connection as pending
+				_connections.push_back( Connection( conn, n ) );
 
 				// add the connection to the connection list
 				add(conn);
+
+				// start the ClientHandler (service)
+				conn->initialize();
 
 				conn->queue(job._bundle);
 			} catch (ibrcommon::SocketException ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 			}
-		}
-
-		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::Server::getConnection(const dtn::core::Node &n)
-		{
-			// create a connection
-			ibrcommon::tcpstream* stream = new ibrcommon::tcpclient(n.getAddress(), n.getPort());
-
-			TCPConnection *conn = new TCPConnection((GenericServer<TCPConnection>&)*this, stream);
-
-			// add connection as pending
-			_connections.push_back( Connection( conn, n ) );
-
-			// raise setup event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
-
-			// start the ClientHandler (service)
-			conn->initialize(dtn::core::BundleCore::local, 10);
-
-			return conn;
 		}
 
 		TCPConvergenceLayer::Server::Server(ibrcommon::NetInterface net, int port)
@@ -171,8 +166,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::connectionUp(TCPConvergenceLayer::TCPConnection *conn)
 		{
-			ibrcommon::MutexLock l(_lock);
-
 			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
 				TCPConvergenceLayer::Server::Connection &item = (*iter);
@@ -190,7 +183,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::connectionDown(TCPConvergenceLayer::TCPConnection *conn)
 		{
-			ibrcommon::MutexLock l(_lock);
 			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
 				TCPConvergenceLayer::Server::Connection &item = (*iter);
@@ -207,11 +199,7 @@ namespace dtn
 		{
 			try {
 				// wait for incoming connections
-				ibrcommon::tcpstream* stream = _tcpsrv.accept();
-
-				// create new TCPConnection object
-				TCPConnection *conn = new TCPConnection(*this, stream);
-
+				TCPConnection *conn = new TCPConnection(*this, _tcpsrv.accept(), dtn::core::BundleCore::local, 10);
 				{
 					ibrcommon::MutexLock l(_lock);
 
@@ -219,7 +207,6 @@ namespace dtn
 					_connections.push_back( Connection( conn, conn->getNode() ) );
 				}
 
-				conn->initialize(dtn::core::BundleCore::local, 10);
 				return conn;
 			} catch (ibrcommon::SocketException ex) {
 				// socket is closed

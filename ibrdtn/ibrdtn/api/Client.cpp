@@ -59,12 +59,10 @@ namespace dtn
 			} catch (std::exception) {
 				IBRCOMMON_LOGGER(error) << "error" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (...) {
+				_client.shutdown();
+				throw;
 			}
-		}
-
-		void Client::AsyncReceiver::finally()
-		{
-			_client.shutdown();
 		}
 
 		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
@@ -81,7 +79,8 @@ namespace dtn
 
 		Client::~Client()
 		{
-			close();
+			_receiver.stop();
+			shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 		}
 
 		void Client::connect()
@@ -128,7 +127,7 @@ namespace dtn
 		{
 		}
 
-		void Client::eventConnectionUp(const StreamContactHeader &header)
+		void Client::eventConnectionUp(const StreamContactHeader&)
 		{
 		}
 
@@ -139,7 +138,8 @@ namespace dtn
 		void Client::eventConnectionDown()
 		{
 			_connected = false;
-			_inqueue.unblock();
+			_inqueue.abort();
+			_receiver.stop();
 		}
 
 		void Client::eventBundleRefused()
@@ -167,7 +167,7 @@ namespace dtn
 		dtn::api::Bundle Client::getBundle(size_t timeout)
 		{
 			try {
-				return _inqueue.blockingpop(timeout * 1000);
+				return _inqueue.getnpop(true, timeout * 1000);
 			} catch (std::exception ex) {
 				throw ibrcommon::ConnectionClosedException(ex.what());
 			}

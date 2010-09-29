@@ -16,7 +16,7 @@
 #include "ibrcommon/thread/Mutex.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "ibrcommon/Exceptions.h"
-#include "ibrcommon/thread/ThreadSafeQueue.h"
+#include "ibrcommon/thread/Queue.h"
 
 using namespace dtn::data;
 using namespace dtn::streams;
@@ -50,7 +50,6 @@ namespace dtn
 				virtual ~AsyncReceiver();
 
 				void run();
-				void finally();
 
 			private:
 				Client &_client;
@@ -129,7 +128,7 @@ namespace dtn
 			dtn::streams::StreamContactHeader _header;
 			Client::AsyncReceiver _receiver;
 
-			ibrcommon::ThreadSafeQueue<dtn::api::Bundle> _inqueue;
+			ibrcommon::Queue<dtn::api::Bundle> _inqueue;
 		};
 	}
 }

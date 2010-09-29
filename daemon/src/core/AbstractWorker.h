@@ -31,7 +31,6 @@ namespace dtn
 
 			protected:
 				void run();
-				void finally();
 
 			private:
 				AbstractWorker &_worker;

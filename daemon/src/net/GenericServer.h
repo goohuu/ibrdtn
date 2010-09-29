@@ -13,7 +13,7 @@
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
-#include <ibrcommon/thread/ThreadSafeQueue.h>
+#include <ibrcommon/thread/Queue.h>
 #include <list>
 #include <algorithm>
 
@@ -23,8 +23,11 @@ namespace dtn
 	{
 		class GenericConnectionInterface
 		{
-		public:
+		protected:
 			virtual ~GenericConnectionInterface() { };
+
+		public:
+			virtual void initialize() = 0;
 			virtual void shutdown() = 0;
 		};
 
@@ -38,23 +41,20 @@ namespace dtn
 			virtual ~GenericServer()
 			{ }
 
+			ibrcommon::Mutex& mutex()
+			{
+				return _lock;
+			}
+
 			void add(T *obj)
 			{
-				{
-					ibrcommon::MutexLock l(_lock);
-					_clients.push_back(obj);
-				}
-
+				_clients.push_back(obj);
 				connectionUp(obj);
 			}
 
 			void remove(T *obj)
 			{
-				{
-					ibrcommon::MutexLock l(_lock);
-					_clients.erase( std::remove( _clients.begin(), _clients.end(), obj), _clients.end() );
-				}
-
+				_clients.erase( std::remove( _clients.begin(), _clients.end(), obj), _clients.end() );
 				connectionDown(obj);
 			}
 
@@ -77,10 +77,13 @@ namespace dtn
 				{
 					try {
 						T* obj = accept();
-						if (obj != NULL)
+
 						{
-							add( obj );
+							ibrcommon::MutexLock l(_lock);
+							add(obj);
 						}
+
+						obj->initialize();
 					} catch (std::exception) {
 						// ignore all errors
 					}

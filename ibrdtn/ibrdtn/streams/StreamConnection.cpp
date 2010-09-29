@@ -76,17 +76,16 @@ namespace dtn
 			}
 		}
 
-		void StreamConnection::abort()
-		{
-			_buf.close();
-		}
-
 		void StreamConnection::shutdown(ConnectionShutdownCases csc)
 		{
 			// skip if another shutdown is in progress
 			{
 				ibrcommon::MutexLock l(_shutdown_reason_lock);
-				if (_shutdown_reason != CONNECTION_SHUTDOWN_NOTSET) return;
+				if (_shutdown_reason != CONNECTION_SHUTDOWN_NOTSET)
+				{
+					_buf.abort();
+					return;
+				}
 				_shutdown_reason = csc;
 			}
 
@@ -98,23 +97,28 @@ namespace dtn
 				{
 					case CONNECTION_SHUTDOWN_IDLE:
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
+						_buf.abort();
 						_callback.eventTimeout();
 						break;
 					case CONNECTION_SHUTDOWN_ERROR:
+						_buf.abort();
 						_callback.eventError();
 						break;
 					case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
+						_buf.wait();
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
-						_buf.waitCompleted(2000);
 						_callback.eventShutdown();
 						break;
 					case CONNECTION_SHUTDOWN_NODE_TIMEOUT:
+						_buf.abort();
 						_callback.eventTimeout();
 						break;
 					case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
+						_buf.abort();
 						_callback.eventShutdown();
 						break;
 					case CONNECTION_SHUTDOWN_NOTSET:
+						_buf.abort();
 						_callback.eventShutdown();
 						break;
 				}
@@ -160,11 +164,6 @@ namespace dtn
 					return true;
 
 			return false;
-		}
-
-		void StreamConnection::wait(const size_t timeout)
-		{
-			_buf.waitCompleted(timeout);
 		}
 
 		void StreamConnection::connectionTimeout()

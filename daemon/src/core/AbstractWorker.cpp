@@ -55,10 +55,6 @@ namespace dtn
 			join();
 		}
 
-		void AbstractWorker::AbstractWorkerAsync::finally()
-		{
-		}
-
 		void AbstractWorker::AbstractWorkerAsync::run()
 		{
 			BundleStorage &storage = BundleCore::getInstance().getStorage();

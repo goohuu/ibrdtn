@@ -31,6 +31,8 @@ namespace dtn
 			ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream);
 
 			bool isConnected();
+
+			virtual void initialize();
 			virtual void shutdown();
 
 			virtual void eventShutdown();
@@ -50,22 +52,22 @@ namespace dtn
 
 			void queue(const dtn::data::Bundle &bundle);
 
-			void finally();
-
 		protected:
 			void received(const dtn::streams::StreamContactHeader &h);
 			void run();
+			void finally();
 
 		private:
-			class Sender : public ibrcommon::JoinableThread, public ibrcommon::ThreadSafeQueue<dtn::data::Bundle>
+			class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::Bundle>
 			{
 			public:
 				Sender(ClientHandler &client);
 				virtual ~Sender();
 				void run();
-				void finally();
+				void shutdown();
 
 			private:
+				bool _abort;
 				ClientHandler &_client;
 			};
 
@@ -77,10 +79,8 @@ namespace dtn
 			dtn::streams::StreamConnection _connection;
 			StreamContactHeader _contact;
 
-			ibrcommon::ThreadSafeQueue<dtn::data::Bundle> _sentqueue;
+			ibrcommon::Queue<dtn::data::Bundle> _sentqueue;
 			size_t _lastack;
-
-			ibrcommon::Mutex _send_lock;
 		};
 	}
 }

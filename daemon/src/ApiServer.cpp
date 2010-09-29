@@ -24,7 +24,7 @@ namespace dtn
 	namespace daemon
 	{
 		ApiServer::ApiServer(ibrcommon::NetInterface net, int port)
-		 : dtn::net::GenericServer<ClientHandler>(), _tcpsrv(net, port), _dist(_connections, _list_lock)
+		 : dtn::net::GenericServer<ClientHandler>(), _tcpsrv(net, port), _dist(_clients, mutex())
 		{
 		}
 
@@ -34,18 +34,15 @@ namespace dtn
 			{
 				componentDown();
 			}
+
+			join();
 		}
 
 		ClientHandler* ApiServer::accept()
 		{
 			try {
 				// create a new ClientHandler
-				ClientHandler *handler = new ClientHandler((dtn::net::GenericServer<ClientHandler>&)*this, _tcpsrv.accept());
-
-				// start the ClientHandler (service)
-				handler->start();
-
-				return handler;
+				return new ClientHandler(*this, _tcpsrv.accept());
 			} catch (ibrcommon::SocketException ex) {
 				// socket is closed
 				return NULL;
@@ -63,22 +60,20 @@ namespace dtn
 			_tcpsrv.close();
 		}
 
-		void ApiServer::connectionUp(ClientHandler *conn)
+		void ApiServer::connectionUp(ClientHandler*)
 		{
-			ibrcommon::MutexLock l(_list_lock);
-			_connections.push_back(conn);
-			IBRCOMMON_LOGGER_DEBUG(5) << "Client connection up" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(5) << "client connection up" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(60) << "current open connections " << _clients.size() << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void ApiServer::connectionDown(ClientHandler *conn)
+		void ApiServer::connectionDown(ClientHandler*)
 		{
-			ibrcommon::MutexLock l(_list_lock);
-			_connections.erase( std::remove(_connections.begin(), _connections.end(), conn), _connections.end() );
-			IBRCOMMON_LOGGER_DEBUG(5) << "Client connection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(5) << "client connection down" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(60) << "current open connections " << _clients.size() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		ApiServer::Distributor::Distributor(std::list<ClientHandler*> &connections, ibrcommon::Mutex &list)
-		 : _list_lock(list), _connections(connections)
+		 : _lock(list), _connections(connections)
 		{
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 		}
@@ -99,9 +94,9 @@ namespace dtn
 				while (true)
 				{
 					// get the next element in the queue
-					dtn::data::MetaBundle mb = _received.blockingpop();
+					dtn::data::MetaBundle mb = _received.getnpop(true);
 
-					ibrcommon::MutexLock l(_list_lock);
+					ibrcommon::MutexLock l(_lock);
 
 					// search for the receiver of this bundle
 					std::queue<ClientHandler*> receivers;
