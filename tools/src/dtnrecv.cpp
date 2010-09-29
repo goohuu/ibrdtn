@@ -163,10 +163,10 @@ int main(int argc, char *argv[])
 
 		// close the tcp connection
 		conn.close();
-	} catch (ibrcommon::ConnectionClosedException ex) {
-	} catch (std::exception) {
+	} catch (const ibrcommon::ConnectionClosedException &ex) {
+	} catch (const std::exception &ex) {
+		std::cerr << "Error: " << ex.what() << std::endl;
 		ret = EXIT_FAILURE;
-		throw;
 	}
 
 	return ret;

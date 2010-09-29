@@ -261,7 +261,7 @@ namespace dtn
 				while (!_abort)
 				{
 					try {
-						dtn::data::Bundle bundle = getnpop(true, 1000);
+						dtn::data::Bundle bundle = getnpop(true);
 
 						// send bundle
 						_client << bundle;
