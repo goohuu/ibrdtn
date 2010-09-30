@@ -1,16 +1,16 @@
 #ifndef ABSTRACTWORKER_H_
 #define ABSTRACTWORKER_H_
 
-#include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/data/BundleID.h"
-#include "ibrdtn/data/EID.h"
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/data/EID.h>
 #include "core/EventReceiver.h"
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/Conditional.h"
-#include "ibrcommon/thread/Thread.h"
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/Conditional.h>
+#include <ibrcommon/thread/Thread.h>
 #include "net/ConvergenceLayer.h"
 
-#include <queue>
+#include <ibrcommon/thread/Queue.h>
 
 using namespace dtn::data;
 
@@ -36,8 +36,7 @@ namespace dtn
 				AbstractWorker &_worker;
 				bool _running;
 
-				ibrcommon::Conditional _receive_cond;
-				std::queue<dtn::data::BundleID> _receive_bundles;
+				ibrcommon::Queue<dtn::data::BundleID> _receive_bundles;
 			};
 
 			public:

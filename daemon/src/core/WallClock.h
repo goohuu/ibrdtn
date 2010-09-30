@@ -9,14 +9,14 @@
 #define WALLCLOCK_H_
 
 #include <ibrcommon/thread/Thread.h>
-#include <ibrcommon/thread/WaitForConditional.h>
+#include <ibrcommon/thread/Conditional.h>
 #include "Component.h"
 
 namespace dtn
 {
 	namespace core
 	{
-		class WallClock : public ibrcommon::WaitForConditional, public dtn::daemon::IndependentComponent
+		class WallClock : public ibrcommon::Conditional, public dtn::daemon::IndependentComponent
 		{
 		public:
 			/**

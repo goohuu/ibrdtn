@@ -8,6 +8,7 @@
 #include "core/WallClock.h"
 #include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {
@@ -27,7 +28,12 @@ namespace dtn
 
 		void WallClock::sync()
 		{
-			wait();
+			try {
+				ibrcommon::MutexLock l(*this);
+				wait();
+			} catch (const ibrcommon::Conditional::ConditionalAbortException &ex) {
+
+			}
 		}
 
 		void WallClock::componentUp()
@@ -50,14 +56,15 @@ namespace dtn
 
 				if (dtntime == 0)
 				{
+					ibrcommon::MutexLock l(*this);
 					TimeEvent::raise(dtntime, TIME_SECOND_TICK);
-					go();
-					this->sleep(500);
+					signal(true);
 				}
 				else if (_next <= dtntime)
 				{
+					ibrcommon::MutexLock l(*this);
 					TimeEvent::raise(dtntime, TIME_SECOND_TICK);
-					go();
+					signal(true);
 					_next = dtntime + _frequency;
 				}
 

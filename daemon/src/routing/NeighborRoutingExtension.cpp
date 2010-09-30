@@ -70,7 +70,7 @@ namespace dtn
 		{
 			while (true)
 			{
-				EID eid = _available.getnpop();
+				EID eid = _available.getnpop(true);
 
 				ibrcommon::MutexLock l(_stored_bundles_lock);
 				if ( _stored_bundles.find(eid) != _stored_bundles.end() )

@@ -239,7 +239,7 @@ namespace dtn
 						else
 						{
 							// raise default bundle received event
-							dtn::net::BundleReceivedEvent::raise(EID(), bundle);
+							dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle);
 						}
 
 					} catch (dtn::data::Validator::RejectedException ex) {

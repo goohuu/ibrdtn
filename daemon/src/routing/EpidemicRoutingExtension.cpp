@@ -74,7 +74,7 @@ namespace dtn
 		{
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
-				_taskqueue.push( new ProcessBundleTask(queued.bundle) );
+				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
 			} catch (std::bad_cast ex) { };
 
 			try {
@@ -315,7 +315,7 @@ namespace dtn
 								const ibrcommon::BloomFilter &purge = ext.getPurgeVector().getBloomFilter();
 
 								// update the neighbor database with this filter
-								_neighbors.updateBundles(bundle._source, filter);
+								_neighbors.updateBundles(task.origin, filter);
 
 								while (true)
 								{
@@ -482,8 +482,8 @@ namespace dtn
 
 		/****************************************/
 
-		EpidemicRoutingExtension::ProcessBundleTask::ProcessBundleTask(const dtn::data::MetaBundle &meta)
-		 : bundle(meta)
+		EpidemicRoutingExtension::ProcessBundleTask::ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &o)
+		 : bundle(meta), origin(o)
 		{ }
 
 		EpidemicRoutingExtension::ProcessBundleTask::~ProcessBundleTask()

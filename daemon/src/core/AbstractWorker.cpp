@@ -36,9 +36,7 @@ namespace dtn
 
 				if (queued.bundle.destination == _worker._eid)
 				{
-					ibrcommon::MutexLock l(_receive_cond);
 					_receive_bundles.push(queued.bundle);
-					_receive_cond.signal(true);
 				}
 			} catch (std::bad_cast ex) {
 
@@ -47,11 +45,8 @@ namespace dtn
 
 		void AbstractWorker::AbstractWorkerAsync::shutdown()
 		{
-			{
-				ibrcommon::MutexLock l(_receive_cond);
-				_running = false;
-				_receive_cond.signal(true);
-			}
+			_running = false;
+			_receive_bundles.abort();
 
 			join();
 		}
@@ -67,26 +62,20 @@ namespace dtn
 				try {
 					b = storage.get( _worker._eid );
 					storage.remove(b);
-				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-					{
-						ibrcommon::MutexLock l(_receive_cond);
-						while (_receive_bundles.empty())
-						{
-							if (!_running) return;
-							_receive_cond.wait();
-						}
+					_worker.callbackBundleReceived(b);
+				}
+				catch (dtn::core::BundleStorage::NoBundleFoundException ex)
+				{
+					dtn::data::BundleID id = _receive_bundles.getnpop(true);
 
-						try {
-							b = storage.get( _receive_bundles.front() );
-							storage.remove(b);
-						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+					try {
+						b = storage.get( _receive_bundles.front() );
+						storage.remove(b);
+						_worker.callbackBundleReceived(b);
+					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 
-						}
-
-						_receive_bundles.pop();
 					}
 				}
-				_worker.callbackBundleReceived(b);
 			}
 		}
 

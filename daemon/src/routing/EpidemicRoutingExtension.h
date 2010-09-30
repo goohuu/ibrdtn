@@ -146,12 +146,13 @@ namespace dtn
 			class ProcessBundleTask : public Task
 			{
 			public:
-				ProcessBundleTask(const dtn::data::MetaBundle &meta);
+				ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &origin);
 				virtual ~ProcessBundleTask();
 
 				virtual std::string toString();
 
 				const dtn::data::MetaBundle bundle;
+				const dtn::data::EID origin;
 			};
 
 			void transferEpidemicInformation(const dtn::data::EID &eid);

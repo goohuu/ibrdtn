@@ -192,7 +192,7 @@ namespace dtn
 						_known_bundles.add(received.bundle);
 
 						// raise the queued event to notify all receivers about the new bundle
-						QueueBundleEvent::raise(received.bundle);
+						QueueBundleEvent::raise(received.bundle, received.peer);
 					}
 
 					// finally create a bundle received event
@@ -223,7 +223,7 @@ namespace dtn
 					dtn::core::BundleCore::getInstance().getStorage().store(generated.bundle);
 
 					// raise the queued event to notify all receivers about the new bundle
-					QueueBundleEvent::raise(generated.bundle);
+					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
 
 				} catch (ibrcommon::IOException ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;

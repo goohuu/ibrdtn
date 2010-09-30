@@ -8,7 +8,7 @@
 #include "core/BundleCore.h"
 #include "core/BundleStorage.h"
 #include "core/CustodyEvent.h"
-#include "routing/QueueBundleEvent.h"
+#include "core/BundleGeneratedEvent.h"
 #include <ibrdtn/data/BundleID.h>
 
 namespace dtn
@@ -53,7 +53,7 @@ namespace dtn
 				b._source = dtn::core::BundleCore::local;
 
 				// send the custody accepted bundle
-				dtn::routing::QueueBundleEvent::raise(b);
+				dtn::core::BundleGeneratedEvent::raise(b);
 
 				// raise the custody accepted event
 				dtn::core::CustodyEvent::raise(b, CUSTODY_ACCEPT);
@@ -79,7 +79,7 @@ namespace dtn
 				b._source = BundleCore::local;
 
 				// send the custody rejected bundle
-				dtn::routing::QueueBundleEvent::raise(b);
+				dtn::core::BundleGeneratedEvent::raise(b);
 
 				// raise the custody rejected event
 				dtn::core::CustodyEvent::raise(b, CUSTODY_REJECT);

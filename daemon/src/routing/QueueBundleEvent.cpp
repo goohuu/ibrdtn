@@ -12,8 +12,8 @@ namespace dtn
 {
 	namespace routing
 	{
-		QueueBundleEvent::QueueBundleEvent(const dtn::data::Bundle &b)
-		 : bundle(b)
+		QueueBundleEvent::QueueBundleEvent(const dtn::data::Bundle &b, const dtn::data::EID &o)
+		 : bundle(b), origin(o)
 		{
 
 		}
@@ -23,10 +23,10 @@ namespace dtn
 
 		}
 
-		void QueueBundleEvent::raise(const dtn::data::Bundle &bundle)
+		void QueueBundleEvent::raise(const dtn::data::Bundle &bundle, const dtn::data::EID &origin)
 		{
 			// raise the new event
-			raiseEvent( new QueueBundleEvent(bundle) );
+			raiseEvent( new QueueBundleEvent(bundle, origin) );
 		}
 
 		const string QueueBundleEvent::getName() const

@@ -36,7 +36,8 @@ namespace dtn
 			try {
 				while (true)
 				{
-					delete _queue.getnpop();
+					Event *evt = _queue.getnpop();
+					delete evt;
 				}
 			} catch (ibrcommon::QueueUnblockedException) {
 
@@ -54,37 +55,42 @@ namespace dtn
 				while (_running)
 				{
 					Event *evt = _queue.getnpop(true);
-					dtn::core::GlobalEvent *global = dynamic_cast<dtn::core::GlobalEvent*>(evt);
 
+					try
 					{
-						ibrcommon::MutexLock reglock(_receiverlock);
-
-						// forward to debugger
-						_debugger.raiseEvent(evt);
-
-						try {
-							// get the list for this event
-							const list<EventReceiver*> receivers = getReceivers(evt->getName());
-
-							for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
-							{
-								try {
-									(*iter)->raiseEvent(evt);
-								} catch (...) {
-									// An error occurred during event raising
-								}
-							}
-						} catch (NoReceiverFoundException ex) {
-							// No receiver available!
-						}
-					}
-
-					if (global != NULL)
-					{
-						if (global->getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
 						{
-							_running = false;
+							ibrcommon::MutexLock reglock(_receiverlock);
+
+							// forward to debugger
+							_debugger.raiseEvent(evt);
+
+							try {
+								// get the list for this event
+								const list<EventReceiver*> receivers = getReceivers(evt->getName());
+
+								for (list<EventReceiver*>::const_iterator iter = receivers.begin(); iter != receivers.end(); iter++)
+								{
+									try {
+										(*iter)->raiseEvent(evt);
+									} catch (...) {
+										// An error occurred during event raising
+									}
+								}
+							} catch (NoReceiverFoundException ex) {
+								// No receiver available!
+							}
 						}
+
+						dtn::core::GlobalEvent *global = dynamic_cast<dtn::core::GlobalEvent*>(evt);
+						if (global != NULL)
+						{
+							if (global->getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
+							{
+								_running = false;
+							}
+						}
+					} catch (std::exception) {
+						_running = false;
 					}
 
 					delete evt;
