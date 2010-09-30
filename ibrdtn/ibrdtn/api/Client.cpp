@@ -105,7 +105,7 @@ namespace dtn
 				// run the receiver
 				_receiver.start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start Client::Receiver" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "failed to start Client::Receiver\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

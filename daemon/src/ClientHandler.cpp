@@ -120,7 +120,7 @@ namespace dtn
 				// start the ClientHandler (service)
 				start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in ClientHandler" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "failed to start thread in ClientHandler\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -191,7 +191,7 @@ namespace dtn
 					yield();
 				}
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in ClientHandler" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "failed to start thread in ClientHandler\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (ibrcommon::IOException ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): IOException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;

@@ -46,7 +46,7 @@ namespace dtn
 			try {
 				this->start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start IndependentComponent" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "failed to start IndependentComponent\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

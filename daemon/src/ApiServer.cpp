@@ -54,7 +54,7 @@ namespace dtn
 			try {
 				_dist.start();
 			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start ApiServer" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "failed to start ApiServer\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
