@@ -101,8 +101,12 @@ namespace dtn
 			// do the handshake
 			handshake(localeid, 10, flags);
 
-			// run the receiver
-			_receiver.start();
+			try {
+				// run the receiver
+				_receiver.start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start Client::Receiver" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		bool Client::isConnected()

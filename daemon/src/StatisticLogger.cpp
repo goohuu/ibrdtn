@@ -53,7 +53,12 @@ namespace dtn
 
 			// start the timer
 			_timer.set(1);
-			_timer.start();
+
+			try {
+				_timer.start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start StatisticLogger" << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			// register at the events
 			bindEvent(dtn::core::NodeEvent::className);

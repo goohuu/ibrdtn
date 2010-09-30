@@ -9,7 +9,8 @@
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleGeneratedEvent.h"
-#include "ibrcommon/thread/MutexLock.h"
+#include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/Logger.h>
 #include <typeinfo>
 
 namespace dtn
@@ -96,7 +97,12 @@ namespace dtn
 		void AbstractWorker::initialize(const string uri, bool async)
 		{
 			_eid = BundleCore::local + uri;
-			if (async) _thread.start();
+
+			try {
+				if (async) _thread.start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start thread in AbstractWorker" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		AbstractWorker::~AbstractWorker()

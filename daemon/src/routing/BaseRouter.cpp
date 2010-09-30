@@ -114,8 +114,12 @@ namespace dtn
 
 				if (thread != NULL)
 				{
-					// run the thread
-					thread->start();
+					try {
+						// run the thread
+						thread->start();
+					} catch (const ibrcommon::ThreadException &ex) {
+						IBRCOMMON_LOGGER(error) << "failed to start component in BaseRouter" << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 			}
 		}

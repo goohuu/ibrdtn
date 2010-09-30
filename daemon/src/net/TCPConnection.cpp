@@ -68,7 +68,11 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::initialize()
 		{
 			// start the receiver for incoming bundles + handshake
-			start();
+			try {
+				start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionUp(const StreamContactHeader &header)
@@ -245,7 +249,10 @@ namespace dtn
 
 					yield();
 				}
-			} catch (std::exception ex) {
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection" << IBRCOMMON_LOGGER_ENDL;
+				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (...) {

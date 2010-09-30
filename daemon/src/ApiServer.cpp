@@ -51,7 +51,11 @@ namespace dtn
 
 		void ApiServer::listen()
 		{
-			_dist.start();
+			try {
+				_dist.start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start ApiServer" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void ApiServer::shutdown()
