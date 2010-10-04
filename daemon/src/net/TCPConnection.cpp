@@ -90,9 +90,13 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(40) << "TCPConnection::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
-			// stop the sender
-			_sender.abort();
-			_sender.stop();
+			try {
+				// stop the sender
+				_sender.abort();
+				_sender.stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::eventConnectionDown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 
 			if (_peer._localeid != dtn::data::EID())
 			{
@@ -155,8 +159,12 @@ namespace dtn
 			// shutdown
 			_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 
-			// abort the connection thread
-			this->stop();
+			try {
+				// abort the connection thread
+				this->stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::finally()
@@ -297,13 +305,12 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
 		{
 			try {
-//				_abort = true;
-//				this->abort();
 				this->stop();
-				this->join();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::Sender::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			this->join();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::run()

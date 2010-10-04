@@ -70,9 +70,13 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(40) << "ClientHandler::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
-			// stop the sender
-			_sender.abort();
-			_sender.stop();
+			try {
+				// stop the sender
+				_sender.abort();
+				_sender.stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::eventConnectionDown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void ClientHandler::eventBundleRefused()
@@ -129,8 +133,12 @@ namespace dtn
 			// shutdown
 			_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 
-			// abort the connection thread
-			this->stop();
+			try {
+				// abort the connection thread
+				this->stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void ClientHandler::finally()
@@ -246,13 +254,12 @@ namespace dtn
 		void ClientHandler::Sender::shutdown()
 		{
 			try {
-//				_abort = true;
-//				this->abort();
 				this->stop();
-				this->join();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
+
+			this->join();
 		}
 
 		void ClientHandler::Sender::run()
@@ -294,7 +301,11 @@ namespace dtn
 				throw;
 			}
 
-			_client.stop();
+			try {
+				_client.stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): ThreadException (" << ex.what() << ") on termination" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void ClientHandler::queue(const dtn::data::Bundle &bundle)

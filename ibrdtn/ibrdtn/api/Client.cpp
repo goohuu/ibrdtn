@@ -12,11 +12,10 @@
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/Exceptions.h"
-
-#include "ibrcommon/net/tcpstream.h"
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 
+#include <ibrcommon/net/tcpstream.h>
 #include <ibrcommon/Logger.h>
 
 using namespace dtn::data;
@@ -79,8 +78,14 @@ namespace dtn
 
 		Client::~Client()
 		{
-			_receiver.stop();
+			try {
+				_receiver.stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client destructor: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+
 			_receiver.join();
+
 			shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 		}
 
@@ -144,7 +149,12 @@ namespace dtn
 		{
 			_connected = false;
 			_inqueue.abort();
-			_receiver.stop();
+
+			try {
+				_receiver.stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client::eventConnectionDown: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void Client::eventBundleRefused()
