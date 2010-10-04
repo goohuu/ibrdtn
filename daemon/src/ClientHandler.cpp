@@ -132,7 +132,7 @@ namespace dtn
 
 		void ClientHandler::finally()
 		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "delete ClientHandler" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(60) << "ClientHandler down" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// close the stream

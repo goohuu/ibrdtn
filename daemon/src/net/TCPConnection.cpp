@@ -79,23 +79,15 @@ namespace dtn
 		{
 			_peer = header;
 			_node.setURI(header._localeid.getString());
-
-			// raise up event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionDown()
 		{
 			IBRCOMMON_LOGGER_DEBUG(40) << "TCPConnection::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
-			if (_peer._localeid != dtn::data::EID())
-			{
-				// event
-				ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _node);
-			}
-
 			// stop the sender
-			_sender.shutdown();
+			_sender.abort();
+			_sender.stop();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventBundleRefused()
@@ -263,6 +255,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::finally()
 		{
+			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
+
 			// close the tcpstream
 			try {
 				_tcpstream->close();

@@ -166,6 +166,9 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::connectionUp(TCPConvergenceLayer::TCPConnection *conn)
 		{
+			// raise up event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, conn->getNode());
+
 			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
 				TCPConvergenceLayer::Server::Connection &item = (*iter);
@@ -183,6 +186,12 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::connectionDown(TCPConvergenceLayer::TCPConnection *conn)
 		{
+			if (conn->getHeader()._localeid != dtn::data::EID())
+			{
+				// event
+				ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, conn->getNode());
+			}
+
 			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
 				TCPConvergenceLayer::Server::Connection &item = (*iter);
