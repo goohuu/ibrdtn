@@ -53,32 +53,37 @@ namespace dtn
 			return _peer;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::handshake()
+		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
 		{
-			char flags = 0;
-
-			// enable ACKs and NACKs
-			flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
-			flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
-
-			// do the handshake
-			_stream.handshake(_name, _timeout, flags);
+			return _node;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::initialize()
+		void TCPConvergenceLayer::TCPConnection::rejectTransmission()
 		{
-			// start the receiver for incoming bundles + handshake
-			try {
-				start();
-			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			}
+			_stream.reject();
+		}
+
+		void TCPConvergenceLayer::TCPConnection::eventShutdown()
+		{
+		}
+
+		void TCPConvergenceLayer::TCPConnection::eventTimeout()
+		{
+			// event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _node);
+		}
+
+		void TCPConvergenceLayer::TCPConnection::eventError()
+		{
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionUp(const StreamContactHeader &header)
 		{
 			_peer = header;
 			_node.setURI(header._localeid.getString());
+
+			// raise up event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventConnectionDown()
@@ -88,6 +93,12 @@ namespace dtn
 			// stop the sender
 			_sender.abort();
 			_sender.stop();
+
+			if (_peer._localeid != dtn::data::EID())
+			{
+				// event
+				ConnectionEvent::raise(ConnectionEvent::CONNECTION_DOWN, _node);
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventBundleRefused()
@@ -129,35 +140,102 @@ namespace dtn
 			_lastack = ack;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventShutdown()
+		void TCPConvergenceLayer::TCPConnection::initialize()
 		{
-		}
-
-		void TCPConvergenceLayer::TCPConnection::eventTimeout()
-		{
-			// event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _node);
-		}
-
-		void TCPConvergenceLayer::TCPConnection::eventError()
-		{
+			// start the receiver for incoming bundles + handshake
+			try {
+				start();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::shutdown()
 		{
 			// shutdown
 			_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+
+			// abort the connection thread
+			this->stop();
 		}
 
-		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
+		void TCPConvergenceLayer::TCPConnection::finally()
 		{
-			return _node;
+			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
+
+			// close the tcpstream
+			try {
+				_tcpstream->close();
+			} catch (ibrcommon::ConnectionClosedException ex) {
+
+			}
+
+			try {
+				// shutdown the sender thread
+				_sender.shutdown();
+			} catch (std::exception) {
+
+			}
+
+			ibrcommon::MutexLock l(_server.mutex());
+			_server.remove(this);
 		}
 
-		void TCPConvergenceLayer::TCPConnection::rejectTransmission()
+		void TCPConvergenceLayer::TCPConnection::run()
 		{
-			_stream.reject();
+			try {
+				// do the handshake
+				char flags = 0;
+
+				// enable ACKs and NACKs
+				flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+				flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
+
+				// do the handshake
+				_stream.handshake(_name, _timeout, flags);
+
+				// start the sender
+				_sender.start();
+
+				while (true)
+				{
+					try {
+						// create a new empty bundle
+						dtn::data::Bundle bundle;
+
+						// deserialize the bundle
+						(*this) >> bundle;
+
+						// check the bundle
+						if ( ( bundle._destination == EID() ) || ( bundle._source == EID() ) )
+						{
+							// invalid bundle!
+							throw dtn::data::Validator::RejectedException("destination or source EID is null");
+						}
+
+						// raise default bundle received event
+						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle);
+					}
+					catch (dtn::data::Validator::RejectedException ex)
+					{
+						// bundle rejected
+						rejectTransmission();
+					}
+
+					yield();
+				}
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (const std::exception &ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (...) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): canceled" << IBRCOMMON_LOGGER_ENDL;
+				throw;
+			}
 		}
+
 
 		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
@@ -207,74 +285,6 @@ namespace dtn
 			return conn;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::run()
-		{
-			try {
-				// firstly, do the handshake
-				handshake();
-
-				// start the sender
-				_sender.start();
-
-				while (true)
-				{
-					dtn::data::Bundle bundle;
-
-					try {
-						(*this) >> bundle;
-
-						// check the bundle
-						if ( ( bundle._destination == EID() ) || ( bundle._source == EID() ) )
-						{
-							// invalid bundle!
-						}
-						else
-						{
-							// raise default bundle received event
-							dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle);
-						}
-
-					} catch (dtn::data::Validator::RejectedException ex) {
-						// bundle rejected
-						rejectTransmission();
-					}
-
-					yield();
-				}
-			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start thread in TCPConnection\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-			} catch (...) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): canceled" << IBRCOMMON_LOGGER_ENDL;
-				throw;
-			}
-		}
-
-		void TCPConvergenceLayer::TCPConnection::finally()
-		{
-			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
-
-			// close the tcpstream
-			try {
-				_tcpstream->close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
-
-			try {
-				// shutdown the sender thread
-				_sender.shutdown();
-			} catch (std::exception) {
-
-			}
-
-			ibrcommon::MutexLock l(_server.mutex());
-			_server.remove(this);
-		}
-
 		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection)
 		 : _abort(false), _connection(connection)
 		{
@@ -314,7 +324,7 @@ namespace dtn
 			} catch (std::exception ex) {
 				IBRCOMMON_LOGGER(error) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (...) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection: canceled" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender canceled" << IBRCOMMON_LOGGER_ENDL;
 				throw;
 			}
 

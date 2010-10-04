@@ -128,6 +128,9 @@ namespace dtn
 		{
 			// shutdown
 			_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+
+			// abort the connection thread
+			this->stop();
 		}
 
 		void ClientHandler::finally()

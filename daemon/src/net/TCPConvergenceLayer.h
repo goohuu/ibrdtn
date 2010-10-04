@@ -98,8 +98,6 @@ namespace dtn
 				friend TCPConvergenceLayer::TCPConnection& operator<<(TCPConvergenceLayer::TCPConnection &conn, const dtn::data::Bundle &bundle);
 
 			protected:
-				void handshake();
-
 				void rejectTransmission();
 
 				void run();
