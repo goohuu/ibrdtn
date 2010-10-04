@@ -17,6 +17,7 @@
 #include "net/DiscoveryAnnouncement.h"
 #include "net/DiscoveryService.h"
 #include "Configuration.h"
+#include <ibrcommon/thread/Timer.h>
 
 using namespace dtn::data;
 
@@ -26,7 +27,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryAgent : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
+		class DiscoveryAgent : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ibrcommon::SimpleTimerCallback
 		{
 		public:
 			DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config);
@@ -37,6 +38,8 @@ namespace dtn
 
 			void addService(string name, string parameters);
 			void addService(DiscoveryServiceProvider *provider);
+
+			virtual size_t timeout(size_t identifier);
 
 		protected:
 			virtual void componentUp();
@@ -51,6 +54,7 @@ namespace dtn
 			list<Neighbor> _neighbors;
 			u_int16_t _sn;
 			std::list<DiscoveryService> _services;
+			ibrcommon::SimpleTimer _clock;
 		};
 	}
 }

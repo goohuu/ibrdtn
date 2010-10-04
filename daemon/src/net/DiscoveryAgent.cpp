@@ -22,7 +22,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryAgent::DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config)
-		 : _config(config), _running(false), _sn(0)
+		 : _config(config), _running(false), _sn(0), _clock(*this, 0)
 		{
 		}
 
@@ -32,12 +32,15 @@ namespace dtn
 
 		void DiscoveryAgent::componentUp()
 		{
-			bindEvent(TimeEvent::className);
+			//bindEvent(TimeEvent::className);
+			_clock.set(1);
+			_clock.start();
 		}
 
 		void DiscoveryAgent::componentDown()
 		{
-			unbindEvent(TimeEvent::className);
+			//unbindEvent(TimeEvent::className);
+			_clock.remove();
 
 			_running = false;
 			join();
@@ -115,6 +118,29 @@ namespace dtn
 				// create and raise a new event
 				dtn::core::NodeEvent::raise(n, NODE_INFO_UPDATED);
 			}
+		}
+
+		size_t DiscoveryAgent::timeout(size_t)
+		{
+			// check if announcements are enabled
+			if (_config.announce())
+			{
+				static ibrcommon::Mutex mutex;
+				ibrcommon::MutexLock l(mutex);
+
+				// update all services
+				for (std::list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
+				{
+					(*iter).update();
+				}
+
+				sendAnnoucement(_sn, _services);
+
+				// increment sequencenumber
+				_sn++;
+			}
+
+			return 1;
 		}
 
 		void DiscoveryAgent::raiseEvent(const dtn::core::Event *evt)
