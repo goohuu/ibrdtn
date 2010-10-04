@@ -22,13 +22,11 @@ namespace dtn
 {
 	namespace daemon
 	{
-		class ClientHandler : public dtn::net::GenericConnection<ClientHandler>, public dtn::streams::StreamConnection::Callback, public ibrcommon::JoinableThread
+		class ClientHandler : public dtn::net::GenericConnection<ClientHandler>, public dtn::streams::StreamConnection::Callback, public ibrcommon::DetachedThread
 		{
-		protected:
-			virtual ~ClientHandler();
-
 		public:
 			ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream);
+			virtual ~ClientHandler();
 
 			bool isConnected();
 

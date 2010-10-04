@@ -44,13 +44,12 @@ namespace dtn
 		class TCPConvergenceLayer : public dtn::daemon::Component, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 		public:
-			class TCPConnection : public GenericConnection<TCPConvergenceLayer::TCPConnection>, public StreamConnection::Callback, public ibrcommon::JoinableThread
+			class TCPConnection : public GenericConnection<TCPConvergenceLayer::TCPConnection>, public StreamConnection::Callback, public ibrcommon::DetachedThread
 			{
-			protected:
-				virtual ~TCPConnection();
-
 			public:
 				TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout = 10);
+
+				virtual ~TCPConnection();
 
 				/**
 				 * This method is called by the GenericServer thread after accept()

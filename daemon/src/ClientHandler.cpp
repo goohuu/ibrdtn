@@ -24,7 +24,7 @@ namespace dtn
 	namespace daemon
 	{
 		ClientHandler::ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream)
-		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv),
+		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv), ibrcommon::DetachedThread(0),
 		   _sender(*this), _stream(stream), _connection(*this, *_stream)
 		{
 			stream->enableNoDelay();
@@ -141,16 +141,15 @@ namespace dtn
 
 			}
 
-			// shutdown the sender thread
-			_sender.shutdown();
+			try {
+				// shutdown the sender thread
+				_sender.shutdown();
+			} catch (std::exception) {
 
-			{
-				ibrcommon::MutexLock l(_server.mutex());
-				_server.remove(this);
 			}
 
-			// connection down -> connection to be deleted
-			delete this;
+			ibrcommon::MutexLock l(_server.mutex());
+			_server.remove(this);
 		}
 
 		void ClientHandler::run()
@@ -243,11 +242,14 @@ namespace dtn
 
 		void ClientHandler::Sender::shutdown()
 		{
-			_abort = true;
-			this->abort();
-			::sleep(1);
-			this->stop();
-			this->join();
+			try {
+//				_abort = true;
+//				this->abort();
+				this->stop();
+				this->join();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void ClientHandler::Sender::run()

@@ -120,9 +120,9 @@ namespace dtn
 		{
 		public:
 			GenericConnection(GenericServer<T> &server) : _server(server) { };
+			virtual ~GenericConnection() { };
 
 		protected:
-			virtual ~GenericConnection() { };
 			GenericServer<T> &_server;
 		};
 	}

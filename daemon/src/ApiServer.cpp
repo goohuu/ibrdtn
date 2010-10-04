@@ -40,6 +40,14 @@ namespace dtn
 
 		ClientHandler* ApiServer::accept()
 		{
+//			// Limits the API to one client only for debugging purpose
+//			while (true)
+//			{
+//				::usleep(100000);
+//				ibrcommon::MutexLock l(mutex());
+//				if (_clients.size() == 0) break;
+//			}
+
 			try {
 				// create a new ClientHandler
 				return new ClientHandler(*this, _tcpsrv.accept());

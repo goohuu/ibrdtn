@@ -30,7 +30,7 @@ namespace dtn
 		 * class TCPConnection
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout)
-		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv),
+		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv), ibrcommon::DetachedThread(),
 		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream), _sender(*this),
 		   _name(name), _timeout(timeout), _lastack(0)
 		{
@@ -270,16 +270,15 @@ namespace dtn
 
 			}
 
-			// shutdown the sender thread
-			_sender.shutdown();
+			try {
+				// shutdown the sender thread
+				_sender.shutdown();
+			} catch (std::exception) {
 
-			{
-				ibrcommon::MutexLock l(_server.mutex());
-				_server.remove(this);
 			}
 
-			// connection down -> connection to be deleted
-			delete this;
+			ibrcommon::MutexLock l(_server.mutex());
+			_server.remove(this);
 		}
 
 		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection)
@@ -293,11 +292,14 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
 		{
-			_abort = true;
-			this->abort();
-			//::sleep(1);
-			this->stop();
-			this->join();
+			try {
+//				_abort = true;
+//				this->abort();
+				this->stop();
+				this->join();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::Sender::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
