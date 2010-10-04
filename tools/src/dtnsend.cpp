@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	int priority = 1;
 
 //	ibrcommon::Logger::setVerbosity(99);
-//	ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_LEVEL);
+//	ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL);
 
 	std::list<std::string> arglist;
 

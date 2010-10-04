@@ -243,7 +243,7 @@ int main(int argc, char *argv[])
 	// setup logging capabilities
 	{
 		// logging options
-		unsigned char logopts = ibrcommon::Logger::LOG_TIMESTAMP | ibrcommon::Logger::LOG_LEVEL;
+		unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
 
 		// error filter
 		unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
