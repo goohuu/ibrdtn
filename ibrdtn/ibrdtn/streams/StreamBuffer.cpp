@@ -13,13 +13,13 @@ namespace dtn
 {
 	namespace streams
 	{
-		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream)
-			: _statebits(STREAM_SOB), _conn(conn), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]), _stream(stream),
+		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const size_t buffer_size)
+			: _buffer_size(buffer_size), _statebits(STREAM_SOB), _conn(conn), in_buf_(new char[buffer_size]), out_buf_(new char[buffer_size]), _stream(stream),
 			  _recv_size(0), _timer(*this, 0), _underflow_data_remain(0), _underflow_state(IDLE)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
-			setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
+			setp(out_buf_, out_buf_ + _buffer_size - 1);
 		}
 
 		StreamConnection::StreamBuffer::~StreamBuffer()
@@ -249,7 +249,7 @@ namespace dtn
 				char *iend = pptr();
 
 				// mark the buffer as free
-				setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
+				setp(out_buf_, out_buf_ + _buffer_size - 1);
 
 				// append the last character
 				if(!traits_type::eq_int_type(c, traits_type::eof())) {
@@ -350,14 +350,14 @@ namespace dtn
 		void StreamConnection::StreamBuffer::skipData(size_t &size)
 		{
 			// a temporary buffer
-			char tmpbuf[BUFF_SIZE];
+			char tmpbuf[_buffer_size];
 
 			try {
 				//  and read until the next segment
 				while (size > 0 && _stream.good())
 				{
-					size_t readsize = BUFF_SIZE;
-					if (size < BUFF_SIZE) readsize = size;
+					size_t readsize = _buffer_size;
+					if (size < _buffer_size) readsize = size;
 
 					// to reject a bundle read all remaining data of this segment
 					_stream.read(tmpbuf, readsize);
@@ -585,8 +585,8 @@ namespace dtn
 				}
 
 				// currently transferring data
-				size_t readsize = BUFF_SIZE;
-				if (_underflow_data_remain < BUFF_SIZE) readsize = _underflow_data_remain;
+				size_t readsize = _buffer_size;
+				if (_underflow_data_remain < _buffer_size) readsize = _underflow_data_remain;
 
 				try {
 					// here receive the data

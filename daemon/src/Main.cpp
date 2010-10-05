@@ -156,7 +156,7 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< dtn::daemon::Component* > &components, dtn::net::IPNDAgent *ipnd)
 {
 	// get the configuration of the convergence layers
-	std::list<Configuration::NetConfig> nets = conf.getInterfaces();
+	const std::list<Configuration::NetConfig> &nets = conf.getNetwork().getInterfaces();
 
 	// create the convergence layers
  	for (std::list<Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
@@ -323,7 +323,7 @@ int main(int argc, char *argv[])
 		// collect all interfaces of convergence layer instances
 		std::set<ibrcommon::NetInterface> interfaces;
 
-		std::list<Configuration::NetConfig> nets = conf.getInterfaces();
+		const std::list<Configuration::NetConfig> &nets = conf.getNetwork().getInterfaces();
 		for (std::list<Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 		{
 			const Configuration::NetConfig &net = (*iter);
@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
 	// add routing extensions
-	switch (conf.getRoutingExtension())
+	switch (conf.getNetwork().getRoutingExtension())
 	{
 	case Configuration::FLOOD_ROUTING:
 	{
@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
 
 	default:
 		IBRCOMMON_LOGGER(info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
-		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getStaticRoutes() ) );
+		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
 		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
 		break;
 	}
@@ -378,7 +378,7 @@ int main(int argc, char *argv[])
 	components.push_back(router);
 
 	// enable or disable forwarding of bundles
-	if (conf.doForwarding())
+	if (conf.getNetwork().doForwarding())
 	{
 		IBRCOMMON_LOGGER(info) << "Forwarding of bundles enabled." << IBRCOMMON_LOGGER_ENDL;
 		BundleCore::forwarding = true;
@@ -482,7 +482,7 @@ int main(int argc, char *argv[])
 	DevNull devnull;
 
 	// announce static nodes, create a list of static nodes
-	list<Node> static_nodes = conf.getStaticNodes();
+	list<Node> static_nodes = conf.getNetwork().getStaticNodes();
 
 	for (list<Node>::iterator iter = static_nodes.begin(); iter != static_nodes.end(); iter++)
 	{

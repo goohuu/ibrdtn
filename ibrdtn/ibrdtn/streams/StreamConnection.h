@@ -136,7 +136,7 @@ namespace dtn
 			 * @param cb Callback object for events of this stream
 			 * @param stream The underlying stream object
 			 */
-			StreamConnection(StreamConnection::Callback &cb, iostream &stream);
+			StreamConnection(StreamConnection::Callback &cb, iostream &stream, const size_t buffer_size = 1024);
 
 			/**
 			 * Destructor of the StreamConnection class
@@ -201,13 +201,10 @@ namespace dtn
 					SHUTDOWN = 4
 				};
 
-				// The size of the input and output buffers.
-				static const size_t BUFF_SIZE = 1024;
-
 				/**
 				 * constructor
 				 */
-				StreamBuffer(StreamConnection &conn, iostream &stream);
+				StreamBuffer(StreamConnection &conn, iostream &stream, const size_t buffer_size = 1024);
 				virtual ~StreamBuffer();
 
 				/**
@@ -286,6 +283,8 @@ namespace dtn
 				void set(const StateBits bit);
 				void unset(const StateBits bit);
 				bool good() const;
+
+				const size_t _buffer_size;
 
 				ibrcommon::Mutex _statelock;
 				int _statebits;

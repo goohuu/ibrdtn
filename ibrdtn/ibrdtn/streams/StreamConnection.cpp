@@ -19,9 +19,9 @@ namespace dtn
 {
 	namespace streams
 	{
-		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream)
+		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream, const size_t buffer_size)
 		 : std::iostream(&_buf), _callback(cb), _in_state(CONNECTION_INITIAL),
-		   _out_state(CONNECTION_INITIAL), _buf(*this, stream), _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
+		   _out_state(CONNECTION_INITIAL), _buf(*this, stream, buffer_size), _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
 		{
 		}
 

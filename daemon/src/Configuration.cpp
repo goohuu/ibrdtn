@@ -41,7 +41,7 @@ namespace dtn
 		}
 
 		Configuration::Configuration()
-		 : _filename("config.ini"), _default_net("lo"), _use_default_net(false), _doapi(true)
+		 : _filename("config.ini"), _doapi(true)
 		{
 		}
 
@@ -56,9 +56,17 @@ namespace dtn
 		Configuration::Debug::Debug()
 		 : _enabled(false), _quiet(false), _level(0) {};
 
+		Configuration::Logger::Logger()
+		 : _quiet(false), _options(0) {};
+
+		Configuration::Network::Network()
+		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false) {};
+
 		Configuration::Discovery::~Discovery() {};
 		Configuration::Statistic::~Statistic() {};
 		Configuration::Debug::~Debug() {};
+		Configuration::Logger::~Logger() {};
+		Configuration::Network::~Network() {};
 
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
@@ -73,6 +81,16 @@ namespace dtn
 		const Configuration::Debug& Configuration::getDebug() const
 		{
 			return _debug;
+		}
+
+		const Configuration::Logger& Configuration::getLogger() const
+		{
+			return _logger;
+		}
+
+		const Configuration::Network& Configuration::getNetwork() const
+		{
+			return _network;
 		}
 
 		Configuration& Configuration::getInstance()
@@ -94,8 +112,8 @@ namespace dtn
 
 				if (arg == "-i" && argc > i)
 				{
-						_default_net = ibrcommon::NetInterface(argv[i + 1]);
-						_use_default_net = true;
+						_network._default_net = ibrcommon::NetInterface(argv[i + 1]);
+						_network._use_default_net = true;
 				}
 
 				if (arg == "--noapi")
@@ -135,14 +153,20 @@ namespace dtn
 		void Configuration::load(string filename)
 		{
 			try {
-					_conf = ibrcommon::ConfigFile(filename);
-					_disco.load(_conf);
-					_stats.load(_conf);
-					_debug.load(_conf);
-					IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
+				// load main configuration
+				_conf = ibrcommon::ConfigFile(filename);
+
+				// load all configuration extensions
+				_disco.load(_conf);
+				_stats.load(_conf);
+				_debug.load(_conf);
+				_logger.load(_conf);
+				_network.load(_conf);
+
+				IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::ConfigFile::file_not_found ex) {
-					IBRCOMMON_LOGGER(info) << "Using defaults. To use custom config file use parameter -c configfile." << IBRCOMMON_LOGGER_ENDL;
-					_conf = ConfigFile();
+				IBRCOMMON_LOGGER(info) << "Using defaults. To use custom config file use parameter -c configfile." << IBRCOMMON_LOGGER_ENDL;
+				_conf = ConfigFile();
 			}
 		}
 
@@ -151,11 +175,15 @@ namespace dtn
 			_timeout = conf.read<unsigned int>("discovery_timeout", 5);
 		}
 
-		void Configuration::Statistic::load(const ibrcommon::ConfigFile &conf)
+		void Configuration::Statistic::load(const ibrcommon::ConfigFile&)
 		{
 		}
 
-		void Configuration::Debug::load(const ibrcommon::ConfigFile &conf)
+		void Configuration::Logger::load(const ibrcommon::ConfigFile&)
+		{
+		}
+
+		void Configuration::Debug::load(const ibrcommon::ConfigFile&)
 		{
 		}
 
@@ -198,65 +226,9 @@ namespace dtn
 			}
 		}
 
-		std::list<Configuration::NetConfig> Configuration::getInterfaces()
+		const std::list<Configuration::NetConfig>& Configuration::Network::getInterfaces() const
 		{
-			std::list<NetConfig> ret;
-
-			if (_use_default_net)
-			{
-				ret.push_back( Configuration::NetConfig("default", Configuration::NetConfig::NETWORK_TCP, _default_net, 4556) );
-				return ret;
-			}
-
-			try {
-				vector<string> nets = dtn::utils::Utils::tokenize(" ", _conf.read<string>("net_interfaces") );
-				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
-				{
-					std::string netname = (*iter);
-
-					std::string key_type = "net_" + netname + "_type";
-					std::string key_port = "net_" + netname + "_port";
-					std::string key_interface = "net_" + netname + "_interface";
-					std::string key_address = "net_" + netname + "_address";
-					std::string key_discovery = "net_" + netname + "_discovery";
-
-					std::string type_name = _conf.read<string>(key_type, "tcp");
-					Configuration::NetConfig::NetType type = Configuration::NetConfig::NETWORK_UNKNOWN;
-
-					if (type_name == "tcp") type = Configuration::NetConfig::NETWORK_TCP;
-					if (type_name == "udp") type = Configuration::NetConfig::NETWORK_UDP;
-					if (type_name == "http") type = Configuration::NetConfig::NETWORK_HTTP;
-					if (type_name == "lowpan") type = Configuration::NetConfig::NETWORK_LOWPAN;
-
-					switch (type)
-					{
-						case Configuration::NetConfig::NETWORK_HTTP:
-						{
-							Configuration::NetConfig::NetConfig nc(netname, type,
-									_conf.read<std::string>(key_address, "http://localhost/"), 0,
-									_conf.read<std::string>(key_discovery, "yes") == "no");
-
-							ret.push_back(nc);
-							break;
-						}
-
-						default:
-						{
-							Configuration::NetConfig::NetConfig nc(netname, type,
-									ibrcommon::NetInterface(_conf.read<std::string>(key_interface, "lo")),
-									_conf.read<unsigned int>(key_port, 4556),
-									_conf.read<std::string>(key_discovery, "yes") == "yes");
-
-							ret.push_back(nc);
-							break;
-						}
-					}
-				}
-			} catch (ConfigFile::key_not_found ex) {
-				return ret;
-			}
-
-			return ret;
+			return _interfaces;
 		}
 
 		std::string Configuration::Discovery::address() const throw (ParameterNotFoundException)
@@ -283,43 +255,43 @@ namespace dtn
 			return Configuration::NetConfig("local", Configuration::NetConfig::NETWORK_TCP, ibrcommon::NetInterface("lo"), 4550);
 		}
 
-		list<dtn::routing::StaticRoutingExtension::StaticRoute> Configuration::getStaticRoutes()
+		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
 		{
-			list<dtn::routing::StaticRoutingExtension::StaticRoute> ret;
+			/**
+			 * Load static routes
+			 */
+			_static_routes.clear();
+
 			string key = "route1";
 			unsigned int keynumber = 1;
 
-			while (_conf.keyExists( key ))
+			while (conf.keyExists( key ))
 			{
-				vector<string> route = dtn::utils::Utils::tokenize(" ", _conf.read<string>(key, "dtn:none dtn:none"));
-				ret.push_back( dtn::routing::StaticRoutingExtension::StaticRoute( route.front(), route.back() ) );
+				vector<string> route = dtn::utils::Utils::tokenize(" ", conf.read<string>(key, "dtn:none dtn:none"));
+				_static_routes.push_back( dtn::routing::StaticRoutingExtension::StaticRoute( route.front(), route.back() ) );
 
 				keynumber++;
 				stringstream ss; ss << "route" << keynumber; ss >> key;
 			}
 
-			return ret;
-		}
-
-		list<Node> Configuration::getStaticNodes()
-		{
-			std::list<Node> nodes;
-
+			/**
+			 * load static nodes
+			 */
 			// read the node count
 			int count = 1;
 
 			// initial prefix
 			std::string prefix = "static1_";
 
-			while ( _conf.keyExists(prefix + "uri") )
+			while ( conf.keyExists(prefix + "uri") )
 			{
 				Node n(Node::NODE_PERMANENT);
 
-				n.setAddress( _conf.read<std::string>(prefix + "address", "127.0.0.1") );
-				n.setPort( _conf.read<unsigned int>(prefix + "port", 4556) );
-				n.setURI( _conf.read<std::string>(prefix + "uri", "dtn:none") );
+				n.setAddress( conf.read<std::string>(prefix + "address", "127.0.0.1") );
+				n.setPort( conf.read<unsigned int>(prefix + "port", 4556) );
+				n.setURI( conf.read<std::string>(prefix + "uri", "dtn:none") );
 
-				std::string protocol = _conf.read<std::string>(prefix + "proto", "tcp");
+				std::string protocol = conf.read<std::string>(prefix + "proto", "tcp");
 				if (protocol == "tcp") n.setProtocol(Node::CONN_TCPIP);
 				if (protocol == "udp") n.setProtocol(Node::CONN_UDPIP);
 				if (protocol == "zigbee") n.setProtocol(Node::CONN_ZIGBEE);
@@ -332,10 +304,92 @@ namespace dtn
 				prefix_stream << "static" << count << "_";
 				prefix = prefix_stream.str();
 
-				nodes.push_back(n);
+				_nodes.push_back(n);
 			}
 
-			return nodes;
+			/**
+			 * get routing extension
+			 */
+			_routing = conf.read<string>("routing", "default");
+
+			/**
+			 * get the routing extension
+			 */
+			_forwarding = (conf.read<std::string>("routing_forwarding", "yes") == "yes");
+
+			/**
+			 * get network interfaces
+			 */
+			_interfaces.clear();
+
+			if (_use_default_net)
+			{
+				_interfaces.push_back( Configuration::NetConfig("default", Configuration::NetConfig::NETWORK_TCP, _default_net, 4556) );
+			}
+			else try
+			{
+				vector<string> nets = dtn::utils::Utils::tokenize(" ", conf.read<string>("net_interfaces") );
+				for (vector<string>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
+				{
+					std::string netname = (*iter);
+
+					std::string key_type = "net_" + netname + "_type";
+					std::string key_port = "net_" + netname + "_port";
+					std::string key_interface = "net_" + netname + "_interface";
+					std::string key_address = "net_" + netname + "_address";
+					std::string key_discovery = "net_" + netname + "_discovery";
+
+					std::string type_name = conf.read<string>(key_type, "tcp");
+					Configuration::NetConfig::NetType type = Configuration::NetConfig::NETWORK_UNKNOWN;
+
+					if (type_name == "tcp") type = Configuration::NetConfig::NETWORK_TCP;
+					if (type_name == "udp") type = Configuration::NetConfig::NETWORK_UDP;
+					if (type_name == "http") type = Configuration::NetConfig::NETWORK_HTTP;
+					if (type_name == "lowpan") type = Configuration::NetConfig::NETWORK_LOWPAN;
+
+					switch (type)
+					{
+						case Configuration::NetConfig::NETWORK_HTTP:
+						{
+							Configuration::NetConfig::NetConfig nc(netname, type,
+									conf.read<std::string>(key_address, "http://localhost/"), 0,
+									conf.read<std::string>(key_discovery, "yes") == "no");
+
+							_interfaces.push_back(nc);
+							break;
+						}
+
+						default:
+						{
+							Configuration::NetConfig::NetConfig nc(netname, type,
+									ibrcommon::NetInterface(conf.read<std::string>(key_interface, "lo")),
+									conf.read<unsigned int>(key_port, 4556),
+									conf.read<std::string>(key_discovery, "yes") == "yes");
+
+							_interfaces.push_back(nc);
+							break;
+						}
+					}
+				}
+			} catch (ConfigFile::key_not_found ex) {
+				// stop the one network is not found.
+			}
+
+			/**
+			 * TCP options
+			 */
+			_tcp_nodelay = (conf.read<std::string>("tcp_nodelay", "yes") == "yes");
+			_tcp_chunksize = conf.read<unsigned int>("tcp_chunksize", 1024);
+		}
+
+		const list<dtn::routing::StaticRoutingExtension::StaticRoute>& Configuration::Network::getStaticRoutes() const
+		{
+			return _static_routes;
+		}
+
+		const std::list<Node>& Configuration::Network::getStaticNodes() const
+		{
+			return _nodes;
 		}
 
 		int Configuration::getTimezone()
@@ -409,33 +463,27 @@ namespace dtn
 			}
 		}
 
-		Configuration::RoutingExtension Configuration::getRoutingExtension()
+		Configuration::RoutingExtension Configuration::Network::getRoutingExtension() const
 		{
-			try {
-				string mode = _conf.read<string>("routing");
-				if ( mode == "epidemic" ) return EPIDEMIC_ROUTING;
-				if ( mode == "flooding" ) return FLOOD_ROUTING;
-				return DEFAULT_ROUTING;
-			} catch (ConfigFile::key_not_found ex) {
-				return DEFAULT_ROUTING;
-			}
+			if ( _routing == "epidemic" ) return EPIDEMIC_ROUTING;
+			if ( _routing == "flooding" ) return FLOOD_ROUTING;
+			return DEFAULT_ROUTING;
 		}
 
 
-		bool Configuration::doForwarding()
+		bool Configuration::Network::doForwarding() const
 		{
-			try {
-				if (_conf.read<std::string>("routing_forwarding") == "yes")
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			} catch (ConfigFile::key_not_found ex) {
-				return true;
-			}
+			return _forwarding;
+		}
+
+		bool Configuration::Network::getTCPOptionNoDelay() const
+		{
+			return _tcp_nodelay;
+		}
+
+		size_t Configuration::Network::getTCPChunkSize() const
+		{
+			return _tcp_chunksize;
 		}
 
 		bool Configuration::Statistic::enabled() const
@@ -501,6 +549,21 @@ namespace dtn
 			}
 
 			return 0;
+		}
+
+		bool Configuration::Logger::quiet() const
+		{
+			return _quiet;
+		}
+
+		unsigned int Configuration::Logger::options() const
+		{
+			return _options;
+		}
+
+		std::ostream& Configuration::Logger::output() const
+		{
+			return std::cout;
 		}
 	}
 }

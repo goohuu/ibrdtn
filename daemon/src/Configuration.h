@@ -73,34 +73,57 @@ namespace dtn
 			string getNodename();
 
 			/**
-			 * Returns all configured network interfaces
+			 * Returns the manual timezone difference in hours.
+			 * @return A positive or negative number containing the
+			 * timezone offset in hours.
 			 */
-			std::list<NetConfig> getInterfaces();
+			int getTimezone();
+
+			/**
+			 * Generic command to get a specific path. If "name" is
+			 * set to "foo" then the parameter "foo_path" is returned.
+			 * @param name The prefix of the path to get.
+			 * @return The path as file object.
+			 */
+			ibrcommon::File getPath(string name);
+
+			/**
+			 * The "user" keyword in the configuration can define
+			 * a user to work as. If this daemon is started as root
+			 * the daemon will switch to the defined user on startup.
+			 * @return The UID of the user.
+			 */
+			unsigned int getUID();
+
+			/**
+			 * The "group" keyword in the configuration can define
+			 * a group to work as. If this daemon is started as root
+			 * the daemon will swithc to the defined group on startup.
+			 * @return The  GID of the group.
+			 */
+			unsigned int getGID();
+
+			/**
+			 * Enable/Disable the API interface.
+			 * @return True, if the API interface should be enabled.
+			 */
+			bool doAPI();
 
 			Configuration::NetConfig getAPIInterface();
 
 			/**
-			 * Returns all static neighboring nodes
+			 * Get the version of this daemon.
+			 * @return The version string.
 			 */
-			list<Node> getStaticNodes();
-
-			/**
-			 * Returns all static routes
-			 */
-			list<dtn::routing::StaticRoutingExtension::StaticRoute> getStaticRoutes();
-
-			int getTimezone();
-
-			ibrcommon::File getPath(string name);
-
-			unsigned int getUID();
-			unsigned int getGID();
-
-			bool doAPI();
-
 			std::string version();
 
-			string getNotifyCommand();
+			/**
+			 * The keyword "notify_cmd" can define an external application which
+			 * is called by some events. This could be used to notify the user
+			 * of some events of interest.
+			 * @return A path to the notify command.
+			 */
+			std::string getNotifyCommand();
 
 			enum RoutingExtension
 			{
@@ -108,17 +131,6 @@ namespace dtn
 				EPIDEMIC_ROUTING = 1,
 				FLOOD_ROUTING = 2
 			};
-
-			/**
-			 * @return the routing extension to use.
-			 */
-			RoutingExtension getRoutingExtension();
-
-			/**
-			 * Define if forwarding is enabled. If not, only local bundles will be accepted.
-			 * @return True, if forwarding is enabled.
-			 */
-			bool doForwarding();
 
 			/**
 			 * Returns a limit defined in the configuration file. The given string specify with limit is to return.
@@ -225,19 +237,112 @@ namespace dtn
 
 			};
 
+			class Logger : public Configuration::Extension
+			{
+				friend class Configuration;
+			protected:
+				Logger();
+				~Logger();
+				void load(const ibrcommon::ConfigFile &conf);
+
+				bool _quiet;
+				unsigned int _options;
+
+			public:
+				/**
+				 * Enable the quiet mode if set to true.
+				 * @return True, if quiet mode is set.
+				 */
+				bool quiet() const;
+
+				/**
+				 * Get the options for logging.
+				 * This is an unsigned integer with bit flags.
+				 * 1 = DATETIME
+				 * 2 = HOSTNAME
+				 * 4 = LEVEL
+				 * 8 = TIMESTAMP
+				 * @return The options to set as bit field.
+				 */
+				unsigned int options() const;
+
+				/**
+				 * The output stream for the logging output
+				 */
+				std::ostream &output() const;
+			};
+
+			class Network :  public Configuration::Extension
+			{
+				friend class Configuration;
+			protected:
+				Network();
+				~Network();
+				void load(const ibrcommon::ConfigFile &conf);
+
+				std::list<dtn::routing::StaticRoutingExtension::StaticRoute> _static_routes;
+				std::list<Node> _nodes;
+				std::list<NetConfig> _interfaces;
+				std::string _routing;
+				bool _forwarding;
+				bool _tcp_nodelay;
+				size_t _tcp_chunksize;
+				ibrcommon::NetInterface _default_net;
+				bool _use_default_net;
+
+			public:
+				/**
+				 * Returns all configured network interfaces
+				 */
+				const std::list<NetConfig>& getInterfaces() const;
+
+				/**
+				 * Returns all static neighboring nodes
+				 */
+				const std::list<Node>& getStaticNodes() const;
+
+				/**
+				 * Returns all static routes
+				 */
+				const list<dtn::routing::StaticRoutingExtension::StaticRoute>& getStaticRoutes() const;
+
+				/**
+				 * @return the routing extension to use.
+				 */
+				RoutingExtension getRoutingExtension() const;
+
+				/**
+				 * Define if forwarding is enabled. If not, only local bundles will be accepted.
+				 * @return True, if forwarding is enabled.
+				 */
+				bool doForwarding() const;
+
+				/**
+				 * @return True, is tcp options NODELAY should be set.
+				 */
+				bool getTCPOptionNoDelay() const;
+
+				/**
+				 * @return The size of TCP chunks for bundles.
+				 */
+				size_t getTCPChunkSize() const;
+			};
+
 			const Configuration::Discovery& getDiscovery() const;
 			const Configuration::Statistic& getStatistic() const;
 			const Configuration::Debug& getDebug() const;
+			const Configuration::Logger& getLogger() const;
+			const Configuration::Network& getNetwork() const;
 
 		private:
 			ibrcommon::ConfigFile _conf;
 			Configuration::Discovery _disco;
 			Configuration::Statistic _stats;
 			Configuration::Debug _debug;
+			Configuration::Logger _logger;
+			Configuration::Network _network;
 
 			string _filename;
-			ibrcommon::NetInterface _default_net;
-			bool _use_default_net;
 			bool _doapi;
 		};
 	}

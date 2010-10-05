@@ -5,17 +5,18 @@
  *      Author: morgenro
  */
 
-#include "net/TCPConvergenceLayer.h"
-#include "net/BundleReceivedEvent.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
-#include "net/ConnectionEvent.h"
 #include "core/BundleEvent.h"
-#include "ibrcommon/TimeMeasurement.h"
+#include "Configuration.h"
 
+#include "net/TCPConvergenceLayer.h"
+#include "net/BundleReceivedEvent.h"
+#include "net/ConnectionEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 
+#include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/NetInterface.h>
 #include <ibrcommon/Logger.h>
 
@@ -31,11 +32,15 @@ namespace dtn
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout)
 		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv), ibrcommon::DetachedThread(),
-		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream), _sender(*this),
+		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this),
 		   _name(name), _timeout(timeout), _lastack(0)
 		{
+			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
+			{
+				stream->enableNoDelay();
+			}
+
 			stream->enableKeepalive();
-			stream->enableNoDelay();
 			_node.setProtocol(Node::CONN_TCPIP);
 		}
 
