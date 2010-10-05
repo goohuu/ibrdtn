@@ -1,3 +1,10 @@
+2010-10-05
+--------------------------------------------------------
+ * Help output for daemon added
+ * New TCP tuning options added
+ * Improved API and TCPCL connections
+ * Added flooding for routing options
+
 2010-09-10
 --------------------------------------------------------
  * Purge vector exchange added to epidemic routing

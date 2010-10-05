@@ -16,13 +16,33 @@
 #timezone = +1
 
 #
+# Limit the block size of all bundles
+# The value accepts different multipliers.
+# G = 1,000,000,000 bytes
+# M = 1,000,000 bytes
+# K = 1,000 bytes
+#
+limit_blocksize = 1.3G
+
+#
+# Limit the size of the storage.
+# The value accepts different multipliers.
+# G = 1,000,000,000 bytes
+# M = 1,000,000 bytes
+# K = 1,000 bytes
+#
+limit_storage = 20M
+
+#
 # statistic logging
 #
-# types: stdout | syslog | plain | csv | stat
+# types: stdout | syslog | plain | csv | stat | udp
 #
 # statistic_type = stdout
 # statistic_interval = 2
 # statistic_file = /tmp/ibrdtn.stats
+# statistic_address = 127.0.0.1
+# statistic_port = 1234
 
 #
 # a list (seperated by spaces) of names for convergence layer instances.
@@ -34,36 +54,53 @@ net_interfaces = lan0
 #
 net_lan0_type = tcp					# we want to use TCP as protocol
 net_lan0_interface = eth0			# listen on interface eth0 
-#net_lan0_port = 4556				# with port 4556
+#net_lan0_port = 4556				# with port 4556 (default)
+#net_lan0_discovery = yes			# enable discovery (default)
 
 #
 # configuration for a convergence layer named lan1
 #
 #net_lan1_type = udp				# we want to use UDP as protocol
 #net_lan1_interface = eth0			# listen on interface eth0 
-#net_lan1_port = 4556				# with port 4556
+#net_lan1_port = 4556				# with port 4556 (default)
+#net_lan1_discovery = no			# disable discovery
 
 #
 # discovery over UDP/IP
 #
-# You can specify a network interface (such as eth0, wlan0, etc.)
-# or an address to listen to. Multicast addresses are supported with
-# the second option. If no option is specified the default broadcast
-# address is used.
+# You can specify an address to listen to for discovery announcements.
+# Multicast addresses are supported. If no address is specified the default
+# broadcast address is used.
 #
-#discovery_interface = eth0
 #discovery_address = 224.0.0.1
+#discovery_timeout = 5
+
+#
+# TCP tuning options
+#
+# NODELAY option in TCP disables the nagle algorithm, if set to yes (default). 
+#tcp_nodelay = yes
+#
+# The bundles are split into chunks while they are transmitted over TCP. This
+# parameter defines the size of these chunks (1024 is the default).
+#tcp_chunksize = 1024
 
 #
 # routing strategy
 #
-# values: default | epidemic
+# values: default | epidemic | flooding
 #
 # In the "default" the daemon only delivers bundles to neighbors and static
 # available nodes. The alternative module "epidemic" spread all bundles to
-# all available neighbors.
+# all available neighbors. Flooding works like epidemic, but do not send the
+# own summary vector to neighbors.
 #
 routing = default
+
+#
+# forward bundles to other nodes (yes/no)
+#
+routing_forwarding = yes
 
 #
 # static routing rules
