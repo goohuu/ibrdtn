@@ -7,6 +7,7 @@
 
 #include "ibrdtn/data/BundleList.h"
 #include "ibrdtn/utils/Clock.h"
+#include <algorithm>
 
 namespace dtn
 {
@@ -18,7 +19,7 @@ namespace dtn
 		BundleList::~BundleList()
 		{ }
 
-		void BundleList::add(const dtn::data::MetaBundle bundle)
+		void BundleList::add(const dtn::data::MetaBundle &bundle)
 		{
 			// insert bundle id to the private list
 			_bundles.insert(bundle);
@@ -27,7 +28,7 @@ namespace dtn
 			std::set<dtn::data::MetaBundle>::insert(bundle);
 		}
 
-		void BundleList::remove(const dtn::data::MetaBundle bundle)
+		void BundleList::remove(const dtn::data::MetaBundle &bundle)
 		{
 			// delete bundle id in the private list
 			_bundles.erase(bundle);
@@ -42,22 +43,14 @@ namespace dtn
 			std::set<dtn::data::MetaBundle>::clear();
 		}
 
-		bool BundleList::contains(const dtn::data::BundleID bundle) const
+		bool BundleList::contains(const dtn::data::BundleID &bundle) const
 		{
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = begin(); iter != end(); iter++)
+			if (::find(begin(), end(), bundle) == end())
 			{
-				if ((*iter) == bundle)
-				{
-					return true;
-				}
-
-				if ((*iter) > bundle)
-				{
-					return false;
-				}
+				return false;
 			}
 
-			return false;
+			return true;
 		}
 
 		void BundleList::expire(const size_t timestamp)
@@ -90,7 +83,7 @@ namespace dtn
 			if (commit) eventCommitExpired();
 		}
 
-		BundleList::ExpiringBundle::ExpiringBundle(const MetaBundle b)
+		BundleList::ExpiringBundle::ExpiringBundle(const MetaBundle &b)
 		 : bundle(b), expiretime(dtn::utils::Clock::getExpireTime(b.getTimestamp(), b.lifetime))
 		{ }
 

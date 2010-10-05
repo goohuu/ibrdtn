@@ -21,10 +21,10 @@ namespace dtn
 			BundleList();
 			~BundleList();
 
-			virtual void add(const dtn::data::MetaBundle bundle);
-			virtual void remove(const dtn::data::MetaBundle bundle);
+			virtual void add(const dtn::data::MetaBundle &bundle);
+			virtual void remove(const dtn::data::MetaBundle &bundle);
 			virtual void clear();
-			virtual bool contains(const dtn::data::BundleID bundle) const;
+			virtual bool contains(const dtn::data::BundleID &bundle) const;
 
 			void expire(const size_t timestamp);
 
@@ -32,7 +32,7 @@ namespace dtn
 			class ExpiringBundle
 			{
 			public:
-				ExpiringBundle(const MetaBundle b);
+				ExpiringBundle(const MetaBundle &b);
 				~ExpiringBundle();
 
 				bool operator!=(const ExpiringBundle& other) const;
