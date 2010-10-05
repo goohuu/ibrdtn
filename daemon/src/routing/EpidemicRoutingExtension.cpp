@@ -314,8 +314,12 @@ namespace dtn
 								const ibrcommon::BloomFilter &filter = ext.getSummaryVector().getBloomFilter();
 								const ibrcommon::BloomFilter &purge = ext.getPurgeVector().getBloomFilter();
 
-								// update the neighbor database with this filter
-								_neighbors.updateBundles(task.origin, filter);
+								/**
+								 * Update the neighbor database with the received filter.
+								 * The filter was sent by the owner, so we assign the contained summary vector to
+								 * the EID of the sender of this bundle.
+								 */
+								_neighbors.updateBundles(bundle._source, filter);
 
 								while (true)
 								{
