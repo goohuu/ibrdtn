@@ -142,6 +142,20 @@ namespace dtn
 				{
 					_debug._quiet = true;
 				}
+
+				if ((arg == "--help") || (arg == "-h"))
+				{
+						std::cout << "IBR-DTN version: " << version() << std::endl;
+						std::cout << "Syntax: dtnd [options]"  << std::endl;
+						std::cout << " -h|--help       display this text" << std::endl;
+						std::cout << " -c <file>       set a configuration file" << std::endl;
+						std::cout << " -i <interface>  interface to bind on (e.g. eth0)" << std::endl;
+						std::cout << " -d <level>      enable debugging and set a verbose level" << std::endl;
+						std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
+						std::cout << " --noapi         disable API module" << std::endl;
+						std::cout << " --nodiscovery   disable discovery module" << std::endl;
+						exit(0);
+				}
 			}
 		}
 
@@ -165,7 +179,7 @@ namespace dtn
 
 				IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::ConfigFile::file_not_found ex) {
-				IBRCOMMON_LOGGER(info) << "Using defaults. To use custom config file use parameter -c configfile." << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
 			}
 		}
