@@ -40,7 +40,7 @@ namespace dtn
 			void setStorage(dtn::core::BundleStorage *storage);
 			dtn::core::BundleStorage& getStorage();
 
-			void transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle);
+			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle);
 
 			void addConvergenceLayer(dtn::net::ConvergenceLayer *cl);
 

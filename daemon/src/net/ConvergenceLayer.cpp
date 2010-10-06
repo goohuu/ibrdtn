@@ -5,7 +5,7 @@ namespace dtn
 {
 	namespace net
 	{
-		ConvergenceLayer::Job::Job(const dtn::data::EID &eid, const dtn::data::Bundle &b)
+		ConvergenceLayer::Job::Job(const dtn::data::EID &eid, const dtn::data::BundleID &b)
 		 : _bundle(b), _destination(eid)
 		{
 		}

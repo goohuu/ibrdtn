@@ -318,7 +318,7 @@ namespace dtn
 			throw NeighborNotAvailableException("No active connection to this neighbor available!");
 		}
 
-		void ConnectionManager::queue(const dtn::data::EID &eid, const dtn::data::Bundle &b)
+		void ConnectionManager::queue(const dtn::data::EID &eid, const dtn::data::BundleID &b)
 		{
 			queue( ConvergenceLayer::Job(eid, b) );
 		}

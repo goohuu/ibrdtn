@@ -1,7 +1,7 @@
 #ifndef CONVERGENCELAYER_H_
 #define CONVERGENCELAYER_H_
 
-#include "ibrdtn/data/Bundle.h"
+#include "ibrdtn/data/BundleID.h"
 #include "core/Node.h"
 
 using namespace dtn::data;
@@ -21,10 +21,10 @@ namespace dtn
 			class Job
 			{
 			public:
-				Job(const dtn::data::EID &eid, const dtn::data::Bundle &b);
+				Job(const dtn::data::EID &eid, const dtn::data::BundleID &b);
 				~Job();
 
-				dtn::data::Bundle _bundle;
+				dtn::data::BundleID _bundle;
 				dtn::data::EID _destination;
 			};
 

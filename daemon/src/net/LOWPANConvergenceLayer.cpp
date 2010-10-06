@@ -2,6 +2,7 @@
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include <ibrcommon/net/UnicastSocketLowpan.h>
 #include "core/BundleCore.h"
@@ -78,38 +79,48 @@ namespace dtn
 			std::stringstream ss;
 			dtn::data::DefaultSerializer serializer(ss);
 
-			unsigned int size = serializer.getLength(job._bundle);
+			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-			if (size > m_maxmsgsize)
-			{
-				throw ConnectionInterruptedException();
+			try {
+				// read the bundle out of the storage
+				const dtn::data::Bundle bundle = storage.get(job._bundle);
+
+				unsigned int size = serializer.getLength(bundle);
+
+				if (size > m_maxmsgsize)
+				{
+					throw ConnectionInterruptedException();
+				}
+
+				cout << "CL LOWPAN was asked to connect to " << hex << node.getAddress() << " in PAN " << hex << node.getPort() << endl;
+
+				serializer << bundle;
+				string data = ss.str();
+
+				// get a lowpan peer //FIXME should be getPan not getPort
+				ibrcommon::lowpansocket::peer p = _socket->getPeer(node.getAddress(), node.getPort());
+
+				// set write lock
+				ibrcommon::MutexLock l(m_writelock);
+
+				// send converted line back to client.
+				int ret = p.send(data.c_str(), data.length());
+
+				if (ret == -1)
+				{
+					// CL is busy, requeue bundle
+					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+
+					return;
+				}
+
+				// raise bundle event
+				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+				// send transfer aborted event
+				dtn::net::TransferAbortedEvent::raise(EID(node.getURI()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}
-
-			cout << "CL LOWPAN was asked to connect to " << hex << node.getAddress() << " in PAN " << hex << node.getPort() << endl;
-
-			serializer << job._bundle;
-			string data = ss.str();
-
-			// get a lowpan peer //FIXME should be getPan not getPort
-			ibrcommon::lowpansocket::peer p = _socket->getPeer(node.getAddress(), node.getPort());
-
-			// set write lock
-			ibrcommon::MutexLock l(m_writelock);
-
-			// send converted line back to client.
-			int ret = p.send(data.c_str(), data.length());
-
-			if (ret == -1)
-			{
-				// CL is busy, requeue bundle
-				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-
-				return;
-			}
-
-			// raise bundle event
-			dtn::net::TransferCompletedEvent::raise(job._destination, job._bundle);
-			dtn::core::BundleEvent::raise(job._bundle, dtn::core::BUNDLE_FORWARDED);
 		}
 
 		LOWPANConvergenceLayer& LOWPANConvergenceLayer::operator>>(dtn::data::Bundle &bundle)

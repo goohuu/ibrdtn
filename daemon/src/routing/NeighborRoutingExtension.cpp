@@ -47,7 +47,7 @@ namespace dtn
 
 						// push the bundle into the queue
 						route( meta );
-					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 						// error, bundle not found!
 					}
 				}
@@ -89,8 +89,6 @@ namespace dtn
 								getRouter()->transferTo(eid, id);
 							} catch (BaseRouter::NoRouteFoundException ex) {
 								bundlequeue.push(id);
-							} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-								// bundle may expired, ignore it.
 							}
 						}
 						else break;
@@ -201,10 +199,10 @@ namespace dtn
 			} catch (std::bad_cast ex) { };
 
 			try {
-				const dtn::core::BundleExpiredEvent *expired = dynamic_cast<const dtn::core::BundleExpiredEvent*>(evt);
+				const dtn::core::BundleExpiredEvent &expired = dynamic_cast<const dtn::core::BundleExpiredEvent&>(*evt);
 
 				ibrcommon::MutexLock l(_stored_bundles_lock);
-				remove(expired->_bundle);
+				remove(expired._bundle);
 
 				return;
 			} catch (std::bad_cast ex) { };
@@ -228,13 +226,9 @@ namespace dtn
 				// remember the bundle id for later delivery
 				q.push( meta );
 
-			} catch (dtn::net::ConnectionNotAvailableException ex) {
+			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// the connection to the node is not possible
 				IBRCOMMON_LOGGER(warning) << "bundle forward aborted: connection to host not available" << IBRCOMMON_LOGGER_ENDL;
-
-			} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-				// bundle may expired, ignore it.
-				IBRCOMMON_LOGGER(error) << "bundle forward aborted: bundle not in storage" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 

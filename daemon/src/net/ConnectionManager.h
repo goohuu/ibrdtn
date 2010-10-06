@@ -47,7 +47,7 @@ namespace dtn
 			void addConnection(const dtn::core::Node &n);
 			void addConvergenceLayer(ConvergenceLayer *cl);
 
-			void queue(const dtn::data::EID &eid, const dtn::data::Bundle &b);
+			void queue(const dtn::data::EID &eid, const dtn::data::BundleID &b);
 
 			/**
 			 * method to receive new events from the EventSwitch

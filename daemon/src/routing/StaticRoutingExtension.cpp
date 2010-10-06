@@ -49,50 +49,48 @@ namespace dtn
 
 		void StaticRoutingExtension::notify(const dtn::core::Event *evt)
 		{
-			const QueueBundleEvent *queued = dynamic_cast<const QueueBundleEvent*>(evt);
-			const dtn::net::TransferCompletedEvent *completed = dynamic_cast<const dtn::net::TransferCompletedEvent*>(evt);
-			const dtn::net::TransferAbortedEvent *aborted = dynamic_cast<const dtn::net::TransferAbortedEvent*>(evt);
+			try {
+				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 
-			if (queued != NULL)
-			{
 				// try to route this bundle
-				route(queued->bundle);
-			}
-			else if (completed != NULL)
-			{
+				route(queued.bundle);
+
+				return;
+			} catch (std::bad_cast ex) { };
+
+			try {
+				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 				try {
 					// delete bundle in storage
 					dtn::core::BundleStorage &storage = getRouter()->getStorage();
 
-					storage.remove(completed->getBundle());
-				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+					storage.remove(completed.getBundle());
+				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 
 				}
-			}
-			else if (aborted != NULL)
-			{
-				// nothing?
-			}
+				return;
+			} catch (std::bad_cast ex) { };
+
+//			try {
+//				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+//				// nothing?
+//			} catch (std::bad_cast ex) { };
 		}
 
 		void StaticRoutingExtension::route(const dtn::data::MetaBundle &meta)
 		{
-			try {
-				// check all routes
-				for (std::list<StaticRoute>::const_iterator iter = _routes.begin(); iter != _routes.end(); iter++)
+			// check all routes
+			for (std::list<StaticRoute>::const_iterator iter = _routes.begin(); iter != _routes.end(); iter++)
+			{
+				StaticRoute route = (*iter);
+				if ( route.match(meta.destination) )
 				{
-					StaticRoute route = (*iter);
-					if ( route.match(meta.destination) )
-					{
-						dtn::data::EID target = dtn::data::EID(route.getDestination());
+					dtn::data::EID target = dtn::data::EID(route.getDestination());
 
-						// Yes, make transmit it now!
-						getRouter()->transferTo( target, meta);
-						return;
-					}
+					// Yes, make transmit it now!
+					getRouter()->transferTo( target, meta);
+					return;
 				}
-			} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-				// bundle may expired, ignore it.
 			}
 		}
 

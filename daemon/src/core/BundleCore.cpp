@@ -90,7 +90,7 @@ namespace dtn
 			return _clock;
 		}
 
-		void BundleCore::transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle)
+		void BundleCore::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle)
 		{
 			try {
 				_connectionmanager.queue(destination, bundle);

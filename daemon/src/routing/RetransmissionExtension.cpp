@@ -28,41 +28,39 @@ namespace dtn
 
 		void RetransmissionExtension::notify(const dtn::core::Event *evt)
 		{
-			const dtn::core::TimeEvent *time = dynamic_cast<const dtn::core::TimeEvent*>(evt);
-			const dtn::net::TransferCompletedEvent *completed = dynamic_cast<const dtn::net::TransferCompletedEvent*>(evt);
-			const dtn::routing::RequeueBundleEvent *requeue = dynamic_cast<const dtn::routing::RequeueBundleEvent*>(evt);
-			const dtn::core::BundleExpiredEvent *expired = dynamic_cast<const dtn::core::BundleExpiredEvent*>(evt);
+			try {
+				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 
-			if (time != NULL)
-			{
 				if (!_queue.empty())
 				{
 					const RetransmissionData &data = _queue.front();
 
-					if ( data.getTimestamp() <= time->getTimestamp() )
+					if ( data.getTimestamp() <= time.getTimestamp() )
 					{
-						try {
-							// retransmit the bundle
-							getRouter()->transferTo(data.destination, data);
-						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-							// bundle is not available, stop retransmission.
-							dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
-						}
+						// retransmit the bundle
+						getRouter()->transferTo(data.destination, data);
 
 						// remove the item off the queue
 						_queue.pop();
 					}
 				}
-			}
-			else if (completed != NULL)
-			{
+				return;
+			} catch (std::bad_cast ex) { };
+
+			try {
+				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+
 				// remove the bundleid in our list
-				RetransmissionData data(completed->getBundle(), completed->getPeer());
+				RetransmissionData data(completed.getBundle(), completed.getPeer());
 				_set.erase(data);
-			}
-			else if (requeue != NULL)
-			{
-				const RetransmissionData data(requeue->_bundle, requeue->_peer);
+
+				return;
+			} catch (std::bad_cast ex) { };
+
+			try {
+				const dtn::routing::RequeueBundleEvent &requeue = dynamic_cast<const dtn::routing::RequeueBundleEvent&>(*evt);
+
+				const RetransmissionData data(requeue._bundle, requeue._peer);
 				std::set<RetransmissionData>::const_iterator iter = _set.find(data);
 
 				if (iter != _set.end())
@@ -82,7 +80,7 @@ namespace dtn
 					}
 					else
 					{
-						dtn::net::TransferAbortedEvent::raise(requeue->_peer, requeue->_bundle, dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
+						dtn::net::TransferAbortedEvent::raise(requeue._peer, requeue._bundle, dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED);
 					}
 				}
 				else
@@ -91,7 +89,15 @@ namespace dtn
 					_set.insert(data);
 					_queue.push(data);
 				}
-			}
+
+				return;
+			} catch (std::bad_cast ex) { };
+
+//			try {
+//				const dtn::core::BundleExpiredEvent &expired = dynamic_cast<const dtn::core::BundleExpiredEvent&>(*evt);
+//
+//				return;
+//			} catch (std::bad_cast ex) { };
 		}
 
 		bool RetransmissionExtension::RetransmissionData::operator!=(const RetransmissionData &obj)

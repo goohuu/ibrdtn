@@ -12,6 +12,7 @@
 #include <ibrdtn/data/Serializer.h>
 #include "core/BundleEvent.h"
 #include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
 #include "net/BundleReceivedEvent.h"
 #include <ibrcommon/Logger.h>
 
@@ -59,52 +60,62 @@ namespace dtn
 			curl_global_cleanup();
 		}
 
-		void HTTPConvergenceLayer::queue(const dtn::core::Node&, const ConvergenceLayer::Job &job)
+		void HTTPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
-			ibrcommon::MutexLock l(_write_lock);
+			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-			ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
-			{
-				ibrcommon::MutexLock reflock(ref);
-				dtn::data::DefaultSerializer(*ref) << job._bundle;
-			}
+			try {
+				// read the bundle out of the storage
+				const dtn::data::Bundle bundle = storage.get(job._bundle);
 
-			size_t length = ref.getSize();
-			CURLcode res;
+				ibrcommon::MutexLock l(_write_lock);
 
-			CURL *curl = curl_easy_init();
-			if(curl)
-			{
-				/* we want to use our own read function */
-				curl_easy_setopt(curl, CURLOPT_READFUNCTION, HTTPConvergenceLayer_callback_read);
+				ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+				{
+					ibrcommon::MutexLock reflock(ref);
+					dtn::data::DefaultSerializer(*ref) << bundle;
+				}
 
-				/* enable uploading */
-				curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
+				size_t length = ref.getSize();
+				CURLcode res;
 
-				/* HTTP PUT please */
-				curl_easy_setopt(curl, CURLOPT_PUT, 1L);
+				CURL *curl = curl_easy_init();
+				if(curl)
+				{
+					/* we want to use our own read function */
+					curl_easy_setopt(curl, CURLOPT_READFUNCTION, HTTPConvergenceLayer_callback_read);
 
-				/* specify target URL, and note that this URL should include a file
-				   name, not only a directory */
-				curl_easy_setopt(curl, CURLOPT_URL, _server.c_str());
+					/* enable uploading */
+					curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 
-				/* now specify which file to upload */
-				curl_easy_setopt(curl, CURLOPT_READDATA, &(*ref));
+					/* HTTP PUT please */
+					curl_easy_setopt(curl, CURLOPT_PUT, 1L);
 
-				/* provide the size of the upload, we specicially typecast the value
-				   to curl_off_t since we must be sure to use the correct data size */
-				curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
-								 (curl_off_t)length);
+					/* specify target URL, and note that this URL should include a file
+					   name, not only a directory */
+					curl_easy_setopt(curl, CURLOPT_URL, _server.c_str());
 
-				ibrcommon::MutexLock reflock(ref);
-				/* Now run off and do what you've been told! */
-				res = curl_easy_perform(curl);
+					/* now specify which file to upload */
+					curl_easy_setopt(curl, CURLOPT_READDATA, &(*ref));
 
-				/* always cleanup */
-				curl_easy_cleanup(curl);
+					/* provide the size of the upload, we specicially typecast the value
+					   to curl_off_t since we must be sure to use the correct data size */
+					curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
+									 (curl_off_t)length);
 
-				dtn::net::TransferCompletedEvent::raise(job._destination, job._bundle);
-				dtn::core::BundleEvent::raise(job._bundle, dtn::core::BUNDLE_FORWARDED);
+					ibrcommon::MutexLock reflock(ref);
+					/* Now run off and do what you've been told! */
+					res = curl_easy_perform(curl);
+
+					/* always cleanup */
+					curl_easy_cleanup(curl);
+
+					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+				}
+			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+				// send transfer aborted event
+				dtn::net::TransferAbortedEvent::raise(EID(node.getURI()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}
 		}
 

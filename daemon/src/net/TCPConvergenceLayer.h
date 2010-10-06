@@ -92,7 +92,7 @@ namespace dtn
 				 * queue a bundle for this connection
 				 * @param bundle
 				 */
-				void queue(const dtn::data::Bundle &bundle);
+				void queue(const dtn::data::BundleID &bundle);
 
 				friend TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle);
 				friend TCPConvergenceLayer::TCPConnection& operator<<(TCPConvergenceLayer::TCPConnection &conn, const dtn::data::Bundle &bundle);
@@ -106,7 +106,7 @@ namespace dtn
 				void clearQueue();
 
 			private:
-				class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::Bundle>
+				class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::BundleID>
 				{
 				public:
 					Sender(TCPConnection &connection);

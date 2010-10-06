@@ -8,6 +8,7 @@
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"
+#include "core/BundleStorage.h"
 #include "Configuration.h"
 
 #include "net/TCPConvergenceLayer.h"
@@ -48,7 +49,7 @@ namespace dtn
 		{
 		}
 
-		void TCPConvergenceLayer::TCPConnection::queue(const dtn::data::Bundle &bundle)
+		void TCPConvergenceLayer::TCPConnection::queue(const dtn::data::BundleID &bundle)
 		{
 			_sender.push(bundle);
 		}
@@ -321,14 +322,24 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
 		{
 			try {
+				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
 				while (!_abort)
 				{
 					try {
-						dtn::data::Bundle bundle = getnpop(true);
+						dtn::data::BundleID id = getnpop(true);
 
-						// send bundle
-						_connection << bundle;
-					} catch (ibrcommon::QueueUnblockedException) { }
+						try {
+							// read the bundle out of the storage
+							const dtn::data::Bundle bundle = storage.get(id);
+
+							// send bundle
+							_connection << bundle;
+						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+							// send transfer aborted event
+							TransferAbortedEvent::raise(EID(_connection._node.getURI()), id, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+						}
+					} catch (const ibrcommon::QueueUnblockedException&) { }
 
 					// idle a little bit
 					yield();
@@ -348,18 +359,18 @@ namespace dtn
 			try {
 				while (true)
 				{
-					const dtn::data::Bundle bundle = _sender.getnpop();
+					const dtn::data::BundleID id = _sender.getnpop();
 
 					if (_lastack > 0)
 					{
 						// some data are already acknowledged, make a fragment?
 						//TODO: make a fragment
-						TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+						TransferAbortedEvent::raise(EID(_node.getURI()), id, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 					}
 					else
 					{
 						// raise transfer abort event for all bundles without an ACK
-						TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+						TransferAbortedEvent::raise(EID(_node.getURI()), id, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 					}
 
 					// set last ack to zero

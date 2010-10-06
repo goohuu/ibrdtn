@@ -122,7 +122,6 @@ namespace dtn
 			 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
 			 */
 			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id);
-			void transferTo(const dtn::data::EID &destination, dtn::data::Bundle &bundle);
 
 			/**
 			 * method to receive new events from the EventSwitch

@@ -182,7 +182,7 @@ namespace dtn
 
 						// add it to the purge vector
 						_purge_vector.add(meta);
-					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 
 					}
 				}
@@ -234,7 +234,7 @@ namespace dtn
 							dtn::data::Bundle b = getRouter()->getStorage().get(bf);
 							getRouter()->transferTo(task.eid, b);
 
-						} catch (dtn::core::BundleStorage::NoBundleFoundException) {
+						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 						} catch (std::bad_cast) { };
 
 						try {
@@ -254,7 +254,7 @@ namespace dtn
 							}
 						} catch (dtn::data::Bundle::NoSuchBlockFoundException) {
 							// if the bundle does not contains the expected block
-						} catch (dtn::core::BundleStorage::NoBundleFoundException) {
+						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 							// if the bundle is not in the storage we have nothing to do
 						} catch (std::bad_cast) { };
 					} catch (ibrcommon::Exception ex) {
