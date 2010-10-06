@@ -64,19 +64,54 @@ using namespace dtn::net;
 
 #define UNIT_MB * 1048576
 
-// on interruption do this!
-void term(int signal)
-{
-	if (signal >= 1)
-	{
-		dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
-	}
-}
+/**
+ * setup logging capabilities
+ */
 
-void reload(int)
+// logging options
+unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
+
+// error filter
+unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
+
+// logging filter, everything but debug, err and crit
+unsigned int logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
+
+// debug off by default
+bool _debug = false;
+
+// on interruption do this!
+void sighandler(int signal)
 {
-	// send shutdown signal to unbound threads
-	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
+	switch (signal)
+	{
+	case SIGTERM:
+	case SIGINT:
+		dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+		break;
+	case SIGUSR1:
+		// activate debugging
+		// init logger
+		ibrcommon::Logger::setVerbosity(99);
+		IBRCOMMON_LOGGER(info) << "debug level set to 99" << IBRCOMMON_LOGGER_ENDL;
+
+		if (!_debug)
+		{
+			ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_DEBUG, logopts);
+			_debug = true;
+		}
+		break;
+	case SIGUSR2:
+		// activate debugging
+		// init logger
+		ibrcommon::Logger::setVerbosity(0);
+		IBRCOMMON_LOGGER(info) << "debug level set to 0" << IBRCOMMON_LOGGER_ENDL;
+		break;
+	case SIGHUP:
+		// send shutdown signal to unbound threads
+		dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
+		break;
+	}
 }
 
 void switchUser(Configuration &config)
@@ -230,9 +265,11 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 int main(int argc, char *argv[])
 {
 	// catch process signals
-	signal(SIGINT, term);
-	signal(SIGTERM, term);
-	signal(SIGHUP, reload);
+	signal(SIGINT, sighandler);
+	signal(SIGTERM, sighandler);
+	signal(SIGHUP, sighandler);
+	signal(SIGUSR1, sighandler);
+	signal(SIGUSR2, sighandler);
 
 	// create a configuration
 	Configuration &conf = Configuration::getInstance();
@@ -240,42 +277,32 @@ int main(int argc, char *argv[])
 	// load parameter into the configuration
 	conf.params(argc, argv);
 
-	// setup logging capabilities
+	// init syslog
+	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
+
+	if (!conf.getDebug().quiet())
 	{
-		// logging options
-		unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
+		// add logging to the cout
+		ibrcommon::Logger::addStream(std::cout, logstd, logopts);
 
-		// error filter
-		unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
+		// add logging to the cerr
+		ibrcommon::Logger::addStream(std::cerr, logerr, logopts);
+	}
 
-		// logging filter, everything but debug, err and crit
-		unsigned int logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
+	// greeting
+	IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
 
-		// init syslog
-		ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
+	// activate debugging
+	if (conf.getDebug().enabled() && !conf.getDebug().quiet())
+	{
+		// init logger
+		ibrcommon::Logger::setVerbosity(conf.getDebug().level());
 
-		if (!conf.getDebug().quiet())
-		{
-			// add logging to the cout
-			ibrcommon::Logger::addStream(std::cout, logstd, logopts);
+		IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
 
-			// add logging to the cerr
-			ibrcommon::Logger::addStream(std::cerr, logerr, logopts);
-		}
+		ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_DEBUG, logopts);
 
-		// greeting
-		IBRCOMMON_LOGGER(info) << "IBR-DTN daemon " << conf.version() << IBRCOMMON_LOGGER_ENDL;
-
-		// activate debugging
-		if (conf.getDebug().enabled() && !conf.getDebug().quiet())
-		{
-			// init logger
-			ibrcommon::Logger::setVerbosity(conf.getDebug().level());
-
-			IBRCOMMON_LOGGER(info) << "debug level set to " << conf.getDebug().level() << IBRCOMMON_LOGGER_ENDL;
-
-			ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_DEBUG, logopts);
-		}
+		_debug = true;
 	}
 
 	// load the configuration file
