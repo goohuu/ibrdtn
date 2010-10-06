@@ -15,6 +15,7 @@
 #include "net/ConnectionManager.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "core/SimpleBundleStorage.h"
+#include <ibrcommon/Logger.h>
 
 #include <functional>
 #include <list>
@@ -102,53 +103,14 @@ namespace dtn
 
 		void NeighborRoutingExtension::notify(const dtn::core::Event *evt)
 		{
-			const QueueBundleEvent *queued = dynamic_cast<const QueueBundleEvent*>(evt);
-			const dtn::core::NodeEvent *nodeevent = dynamic_cast<const dtn::core::NodeEvent*>(evt);
-			const dtn::core::BundleExpiredEvent *expired = dynamic_cast<const dtn::core::BundleExpiredEvent*>(evt);
+			try {
+				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 
-			if (queued != NULL)
-			{
 				// try to route this bundle
-				route(queued->bundle);
-			}
-			else if (nodeevent != NULL)
-			{
-				dtn::core::Node n = nodeevent->getNode();
+				route(queued.bundle);
 
-				switch (nodeevent->getAction())
-				{
-					case NODE_AVAILABLE:
-					{
-						std::list<dtn::core::Node>::iterator iter = std::find_if(_neighbors.begin(), _neighbors.end(), std::bind2nd( FindNode(), n ) );
-						if (iter == _neighbors.end())
-						{
-							_neighbors.push_back(nodeevent->getNode());
-						}
-
-						dtn::data::EID eid(n.getURI());
-						_available.push(eid);
-					}
-					break;
-
-					case NODE_UNAVAILABLE:
-					{
-						std::list<dtn::core::Node>::iterator iter = std::find_if(_neighbors.begin(), _neighbors.end(), std::bind2nd( FindNode(), n ) );
-						if (iter != _neighbors.end())
-						{
-							_neighbors.erase(iter);
-						}
-					}
-					break;
-
-					default:
-						break;
-				}
-			}
-			else if (expired != NULL)
-			{
-				ibrcommon::MutexLock l(_stored_bundles_lock);
-				remove(expired->_bundle);
-			}
+				return;
+			} catch (std::bad_cast ex) { };
 
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
@@ -161,6 +123,8 @@ namespace dtn
 					// if a bundle is delivered remove it from _stored_bundles
 					remove(completed.getBundle());
 				}
+
+				return;
 			} catch (std::bad_cast ex) { };
 
 			try {
@@ -196,6 +160,53 @@ namespace dtn
 						break;
 					}
 				}
+
+				return;
+			} catch (std::bad_cast ex) { };
+
+			try {
+				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+
+				dtn::core::Node n = nodeevent.getNode();
+
+				switch (nodeevent.getAction())
+				{
+					case NODE_AVAILABLE:
+					{
+						std::list<dtn::core::Node>::iterator iter = std::find_if(_neighbors.begin(), _neighbors.end(), std::bind2nd( FindNode(), n ) );
+						if (iter == _neighbors.end())
+						{
+							_neighbors.push_back(nodeevent.getNode());
+						}
+
+						dtn::data::EID eid(n.getURI());
+						_available.push(eid);
+					}
+					break;
+
+					case NODE_UNAVAILABLE:
+					{
+						std::list<dtn::core::Node>::iterator iter = std::find_if(_neighbors.begin(), _neighbors.end(), std::bind2nd( FindNode(), n ) );
+						if (iter != _neighbors.end())
+						{
+							_neighbors.erase(iter);
+						}
+					}
+					break;
+
+					default:
+						break;
+				}
+				return;
+			} catch (std::bad_cast ex) { };
+
+			try {
+				const dtn::core::BundleExpiredEvent *expired = dynamic_cast<const dtn::core::BundleExpiredEvent*>(evt);
+
+				ibrcommon::MutexLock l(_stored_bundles_lock);
+				remove(expired->_bundle);
+
+				return;
 			} catch (std::bad_cast ex) { };
 		}
 
@@ -219,9 +230,11 @@ namespace dtn
 
 			} catch (dtn::net::ConnectionNotAvailableException ex) {
 				// the connection to the node is not possible
+				IBRCOMMON_LOGGER(warning) << "bundle forward aborted: connection to host not available" << IBRCOMMON_LOGGER_ENDL;
 
 			} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
 				// bundle may expired, ignore it.
+				IBRCOMMON_LOGGER(error) << "bundle forward aborted: bundle not in storage" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
