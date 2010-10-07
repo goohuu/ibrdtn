@@ -323,11 +323,8 @@ namespace dtn
 				ibrcommon::Queue<StreamDataSegment> _segments;
 				std::queue<StreamDataSegment> _rejected_segments;
 
-				ibrcommon::Mutex _underflow_mutex;
 				size_t _underflow_data_remain;
 				State _underflow_state;
-
-				ibrcommon::Mutex _overflow_mutex;
 			};
 
 			/**

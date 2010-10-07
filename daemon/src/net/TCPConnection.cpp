@@ -257,6 +257,9 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
+			// activate exceptions for this method
+			if (!conn._stream.good()) throw ibrcommon::IOException("stream went bad");
+
 			dtn::data::DefaultDeserializer(conn._stream, dtn::core::BundleCore::getInstance()) >> bundle;
 			return conn;
 		}
@@ -276,6 +279,9 @@ namespace dtn
 			m.start();
 
 			try {
+				// activate exceptions for this method
+				if (!conn._stream.good()) throw ibrcommon::IOException("stream went bad");
+
 				// transmit the bundle
 				serializer << bundle;
 
@@ -292,7 +298,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(5) << "transfer finished after " << m << " with "
 						<< std::setiosflags(std::ios::fixed) << std::setprecision(2) << kbytes_per_second << " kb/s" << IBRCOMMON_LOGGER_ENDL;
 
-			} catch (ibrcommon::Exception ex) {
+			} catch (const ibrcommon::Exception &ex) {
 				// the connection not available
 				IBRCOMMON_LOGGER_DEBUG(10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
@@ -360,7 +366,7 @@ namespace dtn
 					// idle a little bit
 					yield();
 				}
-			} catch (std::exception ex) {
+			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER(error) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (...) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender canceled" << IBRCOMMON_LOGGER_ENDL;

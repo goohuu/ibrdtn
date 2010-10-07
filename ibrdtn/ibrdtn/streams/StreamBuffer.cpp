@@ -230,8 +230,7 @@ namespace dtn
 			// check if shutdown is executed
 			if (!good()) throw StreamErrorException();
 
-			// lock this method and avoid concurrent calls
-			ibrcommon::MutexLock l(_overflow_mutex);
+			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::overflow() called" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				char *ibegin = out_buf_;
@@ -372,8 +371,7 @@ namespace dtn
 			// check if shutdown is executed
 			if (!good()) throw StreamErrorException("stream went bad");
 
-			// lock this method and avoid concurrent calls
-			ibrcommon::MutexLock l(_underflow_mutex);
+			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::underflow() called" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				if (_underflow_state == DATA_TRANSFER)
