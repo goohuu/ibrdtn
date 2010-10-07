@@ -186,19 +186,17 @@ namespace dtn
 			// close the tcpstream
 			try {
 				_tcpstream->close();
-			} catch (ibrcommon::ConnectionClosedException ex) {
-
-			}
+			} catch (const ibrcommon::ConnectionClosedException&) { };
 
 			try {
 				// shutdown the sender thread
 				_sender.shutdown();
-			} catch (std::exception) {
+			} catch (const std::exception&) { };
 
-			}
-
-			ibrcommon::MutexLock l(_server.mutex());
-			_server.remove(this);
+			try {
+				ibrcommon::MutexLock l(_server.mutex());
+				_server.remove(this);
+			} catch (const ibrcommon::MutexException&) { };
 		}
 
 		void TCPConvergenceLayer::TCPConnection::run()
