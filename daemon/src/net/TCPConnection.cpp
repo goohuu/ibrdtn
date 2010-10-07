@@ -33,8 +33,8 @@ namespace dtn
 		 */
 		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout)
 		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv), ibrcommon::DetachedThread(),
-		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this),
-		   _name(name), _timeout(timeout), _lastack(0)
+		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
+		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0)
 		{
 			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
 			{
@@ -87,6 +87,7 @@ namespace dtn
 		{
 			_peer = header;
 			_node.setURI(header._localeid.getString());
+			_keepalive_timeout = header._keepalive * 1000;
 
 			// raise up event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
@@ -114,7 +115,7 @@ namespace dtn
 		void TCPConvergenceLayer::TCPConnection::eventBundleRefused()
 		{
 			try {
-				const dtn::data::Bundle bundle = _sentqueue.getnpop();
+				const dtn::data::BundleID bundle = _sentqueue.getnpop();
 
 				// requeue the bundle
 				TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
@@ -124,13 +125,14 @@ namespace dtn
 
 			} catch (ibrcommon::QueueUnblockedException) {
 				// pop on empty queue!
+				IBRCOMMON_LOGGER(error) << "transfer refused without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventBundleForwarded()
 		{
 			try {
-				const dtn::data::Bundle bundle = _sentqueue.getnpop();
+				const dtn::data::MetaBundle bundle = _sentqueue.getnpop();
 
 				// signal completion of the transfer
 				TransferCompletedEvent::raise(EID(_node.getURI()), bundle);
@@ -142,6 +144,7 @@ namespace dtn
 				_lastack = 0;
 			} catch (ibrcommon::QueueUnblockedException) {
 				// pop on empty queue!
+				IBRCOMMON_LOGGER(error) << "transfer completed without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -299,8 +302,8 @@ namespace dtn
 			return conn;
 		}
 
-		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection)
-		 : _abort(false), _connection(connection)
+		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection, size_t &keepalive_timeout)
+		 : _abort(false), _connection(connection), _keepalive_timeout(keepalive_timeout)
 		{
 		}
 
@@ -327,7 +330,7 @@ namespace dtn
 				while (!_abort)
 				{
 					try {
-						dtn::data::BundleID id = getnpop(true);
+						dtn::data::BundleID id = getnpop(true, _keepalive_timeout);
 
 						try {
 							// read the bundle out of the storage
@@ -339,7 +342,19 @@ namespace dtn
 							// send transfer aborted event
 							TransferAbortedEvent::raise(EID(_connection._node.getURI()), id, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 						}
-					} catch (const ibrcommon::QueueUnblockedException&) { }
+					} catch (const ibrcommon::QueueUnblockedException &ex) {
+						switch (ex.reason)
+						{
+							case ibrcommon::QueueUnblockedException::QUEUE_ERROR:
+							case ibrcommon::QueueUnblockedException::QUEUE_ABORT:
+								throw;
+							case ibrcommon::QueueUnblockedException::QUEUE_TIMEOUT:
+							{
+								// send a keepalive
+								_connection.keepalive();
+							}
+						}
+					}
 
 					// idle a little bit
 					yield();
@@ -379,6 +394,11 @@ namespace dtn
 			} catch (ibrcommon::QueueUnblockedException) {
 				// queue emtpy
 			}
+		}
+
+		void TCPConvergenceLayer::TCPConnection::keepalive()
+		{
+			_stream.keepalive();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::finally()

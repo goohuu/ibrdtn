@@ -7,7 +7,6 @@
 
 #include "ibrdtn/streams/StreamDataSegment.h"
 #include "ibrdtn/data/SDNV.h"
-#include <ibrcommon/Logger.h>
 
 using namespace std;
 
@@ -58,7 +57,6 @@ namespace dtn
 				break;
 
 			case StreamDataSegment::MSG_KEEPALIVE:
-				IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
 				break;
 
 			case StreamDataSegment::MSG_SHUTDOWN:

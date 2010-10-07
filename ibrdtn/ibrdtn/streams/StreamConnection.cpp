@@ -63,6 +63,11 @@ namespace dtn
 			_buf.reject();
 		}
 
+		void StreamConnection::keepalive()
+		{
+			_buf.keepalive();
+		}
+
 		void StreamConnection::close()
 		{
 			{

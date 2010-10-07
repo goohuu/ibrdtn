@@ -89,12 +89,10 @@ namespace dtn
 
 					// read the timer values
 					_in_timeout = header._keepalive * 2;
-					_out_timeout = peer._keepalive - 2;
 
 					// activate timer
 					ibrcommon::MutexLock timerl(_timer_lock);
 					_in_timeout_value = _in_timeout;
-					_out_timeout_value = _out_timeout;
 					_timer.set(1);
 
 					// start the timer
@@ -141,6 +139,18 @@ namespace dtn
 			}
 		}
 
+		void StreamConnection::StreamBuffer::keepalive()
+		{
+			try {
+				ibrcommon::MutexLock l(_sendlock);
+				_stream << StreamDataSegment() << std::flush;
+				IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
+			} catch (std::exception) {
+				// set failed bit
+				set(STREAM_FAILED);
+			}
+		}
+
 		/**
 		 * This method is called by the timer object.
 		 * In this class we have two timer.
@@ -153,30 +163,11 @@ namespace dtn
 		 */
 		size_t StreamConnection::StreamBuffer::timeout(size_t)
 		{
-			size_t out_timeout_value = 0;
 			size_t in_timeout_value = 0;
 			{
 				ibrcommon::MutexLock timerl(_timer_lock);
-				_out_timeout_value--;
 				_in_timeout_value--;
-				out_timeout_value = _out_timeout_value;
 				in_timeout_value = _in_timeout_value;
-			}
-
-			if (out_timeout_value <= 0)
-			{
-				try {
-					ibrcommon::MutexLock l(_sendlock);
-					_stream << StreamDataSegment() << std::flush;
-					IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
-				} catch (std::exception) {
-					// set failed bit
-					set(STREAM_FAILED);
-					return 0;
-				}
-
-				ibrcommon::MutexLock timerl(_timer_lock);
-				_out_timeout_value = _out_timeout;
 			}
 
 			if (in_timeout_value <= 0)
@@ -364,6 +355,12 @@ namespace dtn
 
 					// adjust the remain counter
 					size -= readsize;
+
+					// reset the incoming timer
+					{
+						ibrcommon::MutexLock timerl(_timer_lock);
+						_in_timeout_value = _in_timeout;
+					}
 				}
 			} catch (ios_base::failure ex) {
 				_underflow_state = IDLE;

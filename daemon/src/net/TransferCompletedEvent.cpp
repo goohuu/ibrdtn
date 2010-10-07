@@ -12,7 +12,7 @@ namespace dtn
 {
 	namespace net
 	{
-		TransferCompletedEvent::TransferCompletedEvent(const dtn::data::EID peer, const dtn::data::Bundle &bundle)
+		TransferCompletedEvent::TransferCompletedEvent(const dtn::data::EID peer, const dtn::data::MetaBundle &bundle)
 		 : _peer(peer), _bundle(bundle)
 		{
 
@@ -23,7 +23,7 @@ namespace dtn
 
 		}
 
-		void TransferCompletedEvent::raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle)
+		void TransferCompletedEvent::raise(const dtn::data::EID peer, const dtn::data::MetaBundle &bundle)
 		{
 			// raise the new event
 			dtn::core::Event::raiseEvent( new TransferCompletedEvent(peer, bundle) );

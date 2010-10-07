@@ -185,6 +185,11 @@ namespace dtn
 			 */
 			void reject();
 
+			/**
+			 * send a keepalive
+			 */
+			void keepalive();
+
 		private:
 			/**
 			 * stream buffer class
@@ -249,6 +254,11 @@ namespace dtn
 
 				void abort();
 
+				/**
+				 * send a keepalive
+				 */
+				void keepalive();
+
 			protected:
 				virtual int sync();
 				virtual int overflow(int = std::char_traits<char>::eof());
@@ -303,11 +313,9 @@ namespace dtn
 				size_t _recv_size;
 
 				size_t _in_timeout;
-				size_t _out_timeout;
 
 				ibrcommon::Mutex _timer_lock;
 				size_t _in_timeout_value;
-				size_t _out_timeout_value;
 				ibrcommon::SimpleTimer _timer;
 
 				// this queue contains all sent data segments

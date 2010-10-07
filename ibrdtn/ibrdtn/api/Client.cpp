@@ -103,8 +103,8 @@ namespace dtn
 			// set comm. mode
 			if (_mode == MODE_SENDONLY) flags |= HANDSHAKE_SENDONLY;
 
-			// do the handshake
-			handshake(localeid, 10, flags);
+			// do the handshake (no timeout, no keepalive)
+			handshake(localeid, 0, flags);
 
 			try {
 				// run the receiver

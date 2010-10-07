@@ -28,13 +28,13 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(const dtn::data::Bundle &bundle, const dtn::data::EID &origin);
+			static void raise(const dtn::data::MetaBundle &bundle, const dtn::data::EID &origin);
 
 			const dtn::data::MetaBundle bundle;
 			const dtn::data::EID origin;
 
 		private:
-			QueueBundleEvent(const dtn::data::Bundle &bundle, const dtn::data::EID &origin);
+			QueueBundleEvent(const dtn::data::MetaBundle &bundle, const dtn::data::EID &origin);
 		};
 	}
 }

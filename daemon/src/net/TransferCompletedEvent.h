@@ -27,7 +27,7 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
+			static void raise(const dtn::data::EID peer, const dtn::data::MetaBundle &bundle);
 
 			dtn::data::EID getPeer() const;
 			dtn::data::MetaBundle getBundle() const;
@@ -35,7 +35,7 @@ namespace dtn
 		private:
 			dtn::data::EID _peer;
 			dtn::data::MetaBundle _bundle;
-			TransferCompletedEvent(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
+			TransferCompletedEvent(const dtn::data::EID peer, const dtn::data::MetaBundle &bundle);
 		};
 	}
 }

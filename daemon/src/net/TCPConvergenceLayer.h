@@ -20,6 +20,7 @@
 #include "net/DiscoveryServiceProvider.h"
 
 #include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/MetaBundle.h>
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/streams/StreamConnection.h>
 #include <ibrdtn/streams/StreamContactHeader.h>
@@ -105,11 +106,13 @@ namespace dtn
 
 				void clearQueue();
 
+				void keepalive();
+
 			private:
 				class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::BundleID>
 				{
 				public:
-					Sender(TCPConnection &connection);
+					Sender(TCPConnection &connection, size_t &keepalive_timeout);
 					virtual ~Sender();
 					void run();
 					void finally();
@@ -118,6 +121,7 @@ namespace dtn
 				private:
 					bool _abort;
 					TCPConnection &_connection;
+					size_t &_keepalive_timeout;
 				};
 
 				StreamContactHeader _peer;
@@ -134,8 +138,9 @@ namespace dtn
 				dtn::data::EID _name;
 				size_t _timeout;
 
-				ibrcommon::Queue<dtn::data::Bundle> _sentqueue;
+				ibrcommon::Queue<dtn::data::MetaBundle> _sentqueue;
 				size_t _lastack;
+				size_t _keepalive_timeout;
 			};
 
 			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver
