@@ -77,6 +77,9 @@ namespace dtn
 		{
 			// event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _node);
+
+			// stop the receiver thread
+			this->stop();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::eventError()

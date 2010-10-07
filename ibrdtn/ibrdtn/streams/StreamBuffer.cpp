@@ -173,7 +173,7 @@ namespace dtn
 			if (in_timeout_value <= 0)
 			{
 				IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE timeout reached -> shutdown connection" << IBRCOMMON_LOGGER_ENDL;
-				_conn.shutdown(CONNECTION_SHUTDOWN_IDLE);
+				_conn.shutdown(CONNECTION_SHUTDOWN_NODE_TIMEOUT);
 				return 0;
 			}
 
@@ -182,8 +182,6 @@ namespace dtn
 
 		void StreamConnection::StreamBuffer::close()
 		{
-			shutdowntimers();
-
 			// set shutdown bit
 			set(STREAM_SHUTDOWN);
 		}
