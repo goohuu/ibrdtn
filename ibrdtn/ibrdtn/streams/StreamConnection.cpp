@@ -79,11 +79,6 @@ namespace dtn
 			return _buf.good();
 		}
 
-		void StreamConnection::wait()
-		{
-			_buf.wait();
-		}
-
 		void StreamConnection::close()
 		{
 			{
@@ -99,6 +94,12 @@ namespace dtn
 
 		void StreamConnection::shutdown(ConnectionShutdownCases csc)
 		{
+			if (csc == CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN)
+			{
+				// wait for the last ACKs
+				_buf.wait();
+			}
+
 			// skip if another shutdown is in progress
 			{
 				ibrcommon::MutexLock l(_shutdown_reason_lock);
@@ -125,7 +126,6 @@ namespace dtn
 						_callback.eventError();
 						break;
 					case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
-						_buf.wait();
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
 						_buf.shutdowntimers();
 						_callback.eventShutdown();

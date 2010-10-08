@@ -200,11 +200,6 @@ namespace dtn
 			 */
 			void error() const;
 
-			/**
-			 * Wait until all segments are acknowledged
-			 */
-			void wait();
-
 		private:
 			/**
 			 * stream buffer class

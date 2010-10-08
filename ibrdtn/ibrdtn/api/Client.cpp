@@ -121,7 +121,6 @@ namespace dtn
 
 		void Client::close()
 		{
-			wait();
 			shutdown(StreamConnection::CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
 		}
 
