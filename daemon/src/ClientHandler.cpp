@@ -27,7 +27,7 @@ namespace dtn
 		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv), ibrcommon::DetachedThread(0),
 		   _sender(*this), _stream(stream), _connection(*this, *_stream)
 		{
-			stream->enableNoDelay();
+			// stream->enableNoDelay();
 		}
 
 		ClientHandler::~ClientHandler()

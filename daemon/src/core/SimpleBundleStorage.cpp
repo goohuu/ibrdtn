@@ -635,6 +635,8 @@ namespace dtn
 				if (_state == HOLDER_PENDING)
 				{
 					std::fstream out(_container.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
+					if (!out.is_open()) throw ibrcommon::IOException("can not open file");
+
 					out.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 					dtn::data::DefaultSerializer(out) << _bundle; out << std::flush;
 					out.close();
@@ -657,13 +659,17 @@ namespace dtn
 
 		}
 
-		void SimpleBundleStorage::TaskStoreBundle::run(SimpleBundleStorage&)
+		void SimpleBundleStorage::TaskStoreBundle::run(SimpleBundleStorage &storage)
 		{
 			try {
 				_container.invokeStore();
 				IBRCOMMON_LOGGER_DEBUG(20) << "bundle stored " << _container.toString() << " (size: " << _container.size() << ")" << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::SerializationFailedException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to store bundle " << _container.toString() << " (size: " << _container.size() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "failed to store bundle " << _container.toString() << " (size: " << _container.size() << "): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::IOException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to store bundle " << _container.toString() << " (size: " << _container.size() << "): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				// reschedule the task
+				storage._tasks.push( new SimpleBundleStorage::TaskStoreBundle(_container) );
 			}
 		}
 
