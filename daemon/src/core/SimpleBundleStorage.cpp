@@ -608,7 +608,7 @@ namespace dtn
 					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
 				} catch (ios_base::failure ex) {
 					throw dtn::SerializationFailedException("can not load bundle data" + std::string(ex.what()));
-				} catch (...) {
+				} catch (const std::exception&) {
 					throw dtn::SerializationFailedException("bundle get failed");
 				}
 
@@ -636,8 +636,6 @@ namespace dtn
 				{
 					std::fstream out(_container.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
 					if (!out.is_open()) throw ibrcommon::IOException("can not open file");
-
-					out.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 					dtn::data::DefaultSerializer(out) << _bundle; out << std::flush;
 					out.close();
 					_size = _container.size();
