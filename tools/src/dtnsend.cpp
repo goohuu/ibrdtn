@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
 
 				// flush the buffers
 				client.flush();
-			} catch (ibrcommon::IOException ex) {
+			} catch (const ibrcommon::IOException &ex) {
 				std::cerr << "Error while sending bundle." << std::endl;
 				std::cerr << "\t" << ex.what() << std::endl;
 				error = true;
@@ -190,15 +190,16 @@ int main(int argc, char *argv[])
 
 			// Shutdown the client connection.
 			client.close();
-		} catch (ibrcommon::IOException ex) {
+		} catch (const ibrcommon::IOException &ex) {
 			cout << "Error: " << ex.what() << endl;
 			error = true;
 		}
 
 		// close the tcpstream
 		conn.close();
-	} catch (...) {
-		return -1;
+	} catch (const std::exception &ex) {
+		cout << "Error: " << ex.what() << endl;
+		error = true;
 	}
 
 	if (error) return -1;
