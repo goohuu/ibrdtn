@@ -33,7 +33,7 @@ namespace dtn
 			{
 			public:
 				virtual ~Task() {};
-				virtual void run() = 0;
+				virtual void run(SimpleBundleStorage &storage) = 0;
 			};
 
 		public:
@@ -207,7 +207,18 @@ namespace dtn
 			public:
 				TaskStoreBundle(const SimpleBundleStorage::BundleContainer&);
 				~TaskStoreBundle();
-				virtual void run();
+				virtual void run(SimpleBundleStorage &storage);
+
+			private:
+				SimpleBundleStorage::BundleContainer _container;
+			};
+
+			class TaskRemoveBundle : public Task
+			{
+			public:
+				TaskRemoveBundle(const SimpleBundleStorage::BundleContainer&);
+				~TaskRemoveBundle();
+				virtual void run(SimpleBundleStorage &storage);
 
 			private:
 				SimpleBundleStorage::BundleContainer _container;
@@ -222,8 +233,8 @@ namespace dtn
 
 				void load(const ibrcommon::File &file);
 				void store(const dtn::data::Bundle &bundle, SimpleBundleStorage &storage);
-				void remove(const dtn::data::BundleID &id);
-				dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter);
+				void remove(const dtn::data::BundleID &id, SimpleBundleStorage &storage);
+				dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter, SimpleBundleStorage &storage);
 				void clear();
 
 				unsigned int count();

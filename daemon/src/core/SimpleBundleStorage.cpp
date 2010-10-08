@@ -55,7 +55,7 @@ namespace dtn
 					ibrcommon::AutoDelete<Task> ad(t);
 
 					try {
-						t->run();
+						t->run(*this);
 					} catch (...) {
 
 					}
@@ -142,12 +142,12 @@ namespace dtn
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
 		{
-			_store.remove(id);
+			_store.remove(id, *this);
 		}
 
 		dtn::data::MetaBundle SimpleBundleStorage::remove(const ibrcommon::BloomFilter &filter)
 		{
-			return _store.remove(filter);
+			return _store.remove(filter, *this);
 		}
 
 		SimpleBundleStorage::BundleStore::BundleStore(size_t maxsize)
@@ -279,8 +279,6 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(bundleslock);
 
-			pair<set<BundleContainer>::iterator,bool> ret;
-
 			// create a bundle container in the memory
 			BundleContainer container(bundle);
 
@@ -303,7 +301,7 @@ namespace dtn
 			}
 
 			// insert Container
-			ret = bundles.insert( container );
+			pair<set<BundleContainer>::iterator,bool> ret = bundles.insert( container );
 
 			if (ret.second)
 			{
@@ -315,7 +313,7 @@ namespace dtn
 			}
 		}
 
-		void SimpleBundleStorage::BundleStore::remove(const dtn::data::BundleID &id)
+		void SimpleBundleStorage::BundleStore::remove(const dtn::data::BundleID &id, SimpleBundleStorage &storage)
 		{
 			ibrcommon::MutexLock l(bundleslock);
 
@@ -330,10 +328,10 @@ namespace dtn
 					dtn::data::BundleList::remove(container);
 
 					// decrement the storage size
-					_currentsize -= container.size();
+					storage._store._currentsize -= container.size();
 
-					// mark for deletion
-					container.remove();
+					// create a background task for removing the bundle
+					storage._tasks.push( new SimpleBundleStorage::TaskRemoveBundle(container) );
 
 					// remove the container
 					bundles.erase(iter);
@@ -345,7 +343,7 @@ namespace dtn
 			throw BundleStorage::NoBundleFoundException();
 		}
 
-		dtn::data::MetaBundle SimpleBundleStorage::BundleStore::remove(const ibrcommon::BloomFilter &filter)
+		dtn::data::MetaBundle SimpleBundleStorage::BundleStore::remove(const ibrcommon::BloomFilter &filter, SimpleBundleStorage &storage)
 		{
 			ibrcommon::MutexLock l(bundleslock);
 
@@ -362,10 +360,10 @@ namespace dtn
 					dtn::data::BundleList::remove(container);
 
 					// decrement the storage size
-					_currentsize -= container.size();
+					storage._store._currentsize -= container.size();
 
-					// mark for deletion
-					container.remove();
+					// create a background task for removing the bundle
+					storage._tasks.push( new SimpleBundleStorage::TaskRemoveBundle(container) );
 
 					// remove the container
 					bundles.erase(iter);
@@ -659,9 +657,25 @@ namespace dtn
 
 		}
 
-		void SimpleBundleStorage::TaskStoreBundle::run()
+		void SimpleBundleStorage::TaskStoreBundle::run(SimpleBundleStorage&)
 		{
 			_container.invokeStore();
+		}
+
+		SimpleBundleStorage::TaskRemoveBundle::TaskRemoveBundle(const SimpleBundleStorage::BundleContainer &container)
+		 : _container(container)
+		{
+		}
+
+		SimpleBundleStorage::TaskRemoveBundle::~TaskRemoveBundle()
+		{
+
+		}
+
+		void SimpleBundleStorage::TaskRemoveBundle::run(SimpleBundleStorage&)
+		{
+			// mark for deletion
+			_container.remove();
 		}
 	}
 }
