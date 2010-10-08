@@ -52,6 +52,40 @@ namespace dtn
 		bool StreamConnection::StreamBuffer::good() const
 		{
 			int badbits = STREAM_FAILED + STREAM_BAD + STREAM_EOF + STREAM_SHUTDOWN + STREAM_CLOSED;
+
+			if (IBRCOMMON_LOGGER_LEVEL >= 80)
+			{
+				if (_statebits & STREAM_FAILED)
+				{
+					IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_FAILED is set" << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				if (_statebits & STREAM_BAD)
+				{
+					IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_BAD is set" << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				if (_statebits & STREAM_EOF)
+				{
+					IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_EOF is set" << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				if (_statebits & STREAM_SHUTDOWN)
+				{
+					IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_SHUTDOWN is set" << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				if (_statebits & STREAM_CLOSED)
+				{
+					IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: STREAM_CLOSED is set" << IBRCOMMON_LOGGER_ENDL;
+				}
+
+				if (!_stream.good())
+				{
+					IBRCOMMON_LOGGER_DEBUG(80) << "stream went bad: good() returned false" << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+
 			return !(badbits & _statebits) && _stream.good();
 		}
 
@@ -227,10 +261,10 @@ namespace dtn
 		// be written to (in this case, the streambuf object that this is controlling).
 		int StreamConnection::StreamBuffer::overflow(int c)
 		{
-			// check if shutdown is executed
-			if (!good()) throw StreamErrorException();
-
 			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::overflow() called" << IBRCOMMON_LOGGER_ENDL;
+
+			// check if shutdown is executed
+			if (!good()) return traits_type::eof();
 
 			try {
 				char *ibegin = out_buf_;
@@ -368,10 +402,10 @@ namespace dtn
 		// Fill the input buffer.  This reads out of the streambuf.
 		int StreamConnection::StreamBuffer::underflow()
 		{
-			// check if shutdown is executed
-			if (!good()) throw StreamErrorException("stream went bad");
-
 			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::underflow() called" << IBRCOMMON_LOGGER_ENDL;
+
+			// check if shutdown is executed
+			if (!good()) return traits_type::eof();
 
 			try {
 				if (_underflow_state == DATA_TRANSFER)
