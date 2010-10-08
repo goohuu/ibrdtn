@@ -190,6 +190,16 @@ namespace dtn
 			 */
 			void keepalive();
 
+			/**
+			 * @return True, if the stream is working.
+			 */
+			bool good() const;
+
+			/**
+			 * print out the state of the stream
+			 */
+			void error() const;
+
 		private:
 			/**
 			 * stream buffer class
@@ -218,6 +228,16 @@ namespace dtn
 				 * @return The received header.
 				 */
 				const StreamContactHeader handshake(const StreamContactHeader &header);
+
+				/**
+				 * @return True, if the stream is working.
+				 */
+				bool good() const;
+
+				/**
+				 * print out the state of the stream
+				 */
+				void error() const;
 
 				/**
 				 * close this stream immediately
@@ -292,7 +312,6 @@ namespace dtn
 				bool get(const StateBits bit) const;
 				void set(const StateBits bit);
 				void unset(const StateBits bit);
-				bool good() const;
 
 				const size_t _buffer_size;
 

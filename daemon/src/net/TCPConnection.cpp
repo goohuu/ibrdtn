@@ -302,6 +302,9 @@ namespace dtn
 				// the connection not available
 				IBRCOMMON_LOGGER_DEBUG(10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
+				// debug error
+				conn._stream.error();
+
 				// forward exception
 				throw;
 			}
