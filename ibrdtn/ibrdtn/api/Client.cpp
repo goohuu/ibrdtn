@@ -167,8 +167,9 @@ namespace dtn
 
 		}
 
-		void Client::eventBundleAck(size_t)
+		void Client::eventBundleAck(size_t ack)
 		{
+			lastack = ack;
 		}
 
 		void Client::received(const dtn::api::Bundle &b)

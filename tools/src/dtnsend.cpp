@@ -190,6 +190,10 @@ int main(int argc, char *argv[])
 
 			// Shutdown the client connection.
 			client.close();
+
+			// print out the transmitted bytes
+			std::cout << client.lastack << " bytes sent" << std::endl;
+
 		} catch (const ibrcommon::IOException &ex) {
 			cout << "Error: " << ex.what() << endl;
 			error = true;
@@ -197,6 +201,8 @@ int main(int argc, char *argv[])
 
 		// close the tcpstream
 		conn.close();
+	} catch (const ibrcommon::ConnectionClosedException&) {
+		// connection already closed, the daemon was faster
 	} catch (const std::exception &ex) {
 		cout << "Error: " << ex.what() << endl;
 		error = true;

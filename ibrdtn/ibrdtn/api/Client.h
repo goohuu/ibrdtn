@@ -110,6 +110,8 @@ namespace dtn
 
 			dtn::api::Bundle getBundle(size_t timeout = 0);
 
+			size_t lastack;
+
 		protected:
 			/**
 			 * This method is called on the receipt of the handshake of the daemon. If
