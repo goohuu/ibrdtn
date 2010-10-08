@@ -56,8 +56,8 @@ namespace dtn
 
 					try {
 						t->run(*this);
-					} catch (...) {
-
+					} catch (const std::exception &ex) {
+						IBRCOMMON_LOGGER(error) << "error in storage: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 			} catch (std::exception) {
@@ -659,7 +659,12 @@ namespace dtn
 
 		void SimpleBundleStorage::TaskStoreBundle::run(SimpleBundleStorage&)
 		{
-			_container.invokeStore();
+			try {
+				_container.invokeStore();
+				IBRCOMMON_LOGGER_DEBUG(20) << "bundle stored " << _container.toString() << " (size: " << _container.size() << ")" << IBRCOMMON_LOGGER_ENDL;
+			} catch (const dtn::SerializationFailedException &ex) {
+				IBRCOMMON_LOGGER(error) << "failed to store bundle " << _container.toString() << " (size: " << _container.size() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		SimpleBundleStorage::TaskRemoveBundle::TaskRemoveBundle(const SimpleBundleStorage::BundleContainer &container)
