@@ -16,13 +16,11 @@ namespace dtn
 		PayloadBlock::PayloadBlock()
 		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ibrcommon::TmpFileBLOB::create())
 		{
-			//(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 		}
 
 		PayloadBlock::PayloadBlock(ibrcommon::BLOB::Reference ref)
 		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ref)
 		{
-			//(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 		}
 
 		PayloadBlock::~PayloadBlock()
@@ -44,8 +42,24 @@ namespace dtn
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::MutexLock l(blobref);
 
-			// write payload
-			stream << (*blobref).rdbuf();
+			// remember the old exceptions state
+			std::ios::iostate oldstate = (*blobref).exceptions();
+
+			// activate exceptions for this method
+			(*blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+
+			try {
+				// write payload
+				stream << (*blobref).rdbuf();
+			} catch (std::exception &ex) {
+				// restore the old state
+				(*blobref).exceptions(oldstate);
+
+				throw dtn::SerializationFailedException(ex.what());
+			}
+
+			// restore the old state
+			(*blobref).exceptions(oldstate);
 
 			return stream;
 		}
@@ -84,13 +98,11 @@ namespace dtn
 
 					remain -= stream.gcount();
 				}
-			} catch (std::ios_base::failure ex) {
-				throw dtn::SerializationFailedException();
-			} catch (...) {
+			} catch (std::exception &ex) {
 				// restore the old state
 				(*_blobref).exceptions(oldstate);
 
-				throw;
+				throw dtn::SerializationFailedException(ex.what());
 			}
 
 			// restore the old state

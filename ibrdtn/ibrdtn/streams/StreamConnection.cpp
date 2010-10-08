@@ -79,6 +79,11 @@ namespace dtn
 			return _buf.good();
 		}
 
+		void StreamConnection::wait()
+		{
+			_buf.wait();
+		}
+
 		void StreamConnection::close()
 		{
 			{
@@ -130,10 +135,6 @@ namespace dtn
 						_callback.eventTimeout();
 						break;
 					case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
-						_buf.shutdowntimers();
-						_buf.abort();
-						_callback.eventShutdown();
-						break;
 					case CONNECTION_SHUTDOWN_NOTSET:
 						_buf.shutdowntimers();
 						_buf.abort();
