@@ -211,10 +211,14 @@ namespace dtn
 			{
 				const BundleContainer &container = (*iter);
 
-				if (!filter.contains(container.toString()))
-				{
-					IBRCOMMON_LOGGER_DEBUG(10) << container.toString() << " is not in the bloomfilter" << IBRCOMMON_LOGGER_ENDL;
-					return container.get();
+				try {
+					if (!filter.contains(container.toString()))
+					{
+						IBRCOMMON_LOGGER_DEBUG(10) << container.toString() << " is not in the bloomfilter" << IBRCOMMON_LOGGER_ENDL;
+						return container.get();
+					}
+				} catch (const dtn::InvalidDataException &ex) {
+					IBRCOMMON_LOGGER_DEBUG(10) << "InvalidDataException on bundle get: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
@@ -227,9 +231,14 @@ namespace dtn
 			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
 			{
 				const BundleContainer &bundle = (*iter);
-				if (bundle.destination == eid)
-				{
-					return bundle.get();
+
+				try {
+					if (bundle.destination == eid)
+					{
+						return bundle.get();
+					}
+				} catch (const dtn::InvalidDataException &ex) {
+					IBRCOMMON_LOGGER_DEBUG(10) << "InvalidDataException on bundle get: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
@@ -563,17 +572,8 @@ namespace dtn
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size )
-		 : _count(1), _state(HOLDER_PENDING), _bundle(b), _size(size)
+		 : _count(1), _state(HOLDER_PENDING), _bundle(b), _container(workdir), _size(size)
 		{
-			std::string namestr = workdir.getPath() + "/bundle-XXXXXXXX";
-			char name[namestr.length()];
-			::strcpy(name, namestr.c_str());
-
-			int fd = mkstemp(name);
-			if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
-			::close(fd);
-
-			_container = ibrcommon::File(name);
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::~Holder()
@@ -607,7 +607,7 @@ namespace dtn
 					fs.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
 				} catch (ios_base::failure ex) {
-					throw dtn::SerializationFailedException("can not load bundle data" + std::string(ex.what()));
+					throw dtn::SerializationFailedException("can not load bundle data (" + std::string(ex.what()) + ")");
 				} catch (const std::exception&) {
 					throw dtn::SerializationFailedException("bundle get failed");
 				}
@@ -634,15 +634,31 @@ namespace dtn
 			try {
 				if (_state == HOLDER_PENDING)
 				{
-					std::fstream out(_container.getPath().c_str(), ios::in|ios::out|ios::binary|ios::trunc);
+					std::string namestr = _container.getPath() + "/bundle-XXXXXXXX";
+					char name[namestr.length()];
+					::strcpy(name, namestr.c_str());
+
+					int fd = mkstemp(name);
+					if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
+
+					_container = ibrcommon::File(name);
+					std::ofstream out(name);
+
 					if (!out.is_open()) throw ibrcommon::IOException("can not open file");
 					dtn::data::DefaultSerializer(out) << _bundle; out << std::flush;
 					out.close();
+					::close(fd);
+
+					if (_container.size() == 0)
+					{
+						throw ibrcommon::IOException("Write of bundle failed. File has size of zero.");
+					}
+
 					_size = _container.size();
 					_bundle = dtn::data::Bundle();
 					_state = HOLDER_STORED;
 				}
-			} catch (ios_base::failure ex) {
+			} catch (const std::exception &ex) {
 				throw dtn::SerializationFailedException("can not write data to the storage; " + std::string(ex.what()));
 			}
 		}
