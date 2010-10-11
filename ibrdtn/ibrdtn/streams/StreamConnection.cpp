@@ -69,16 +69,6 @@ namespace dtn
 			_buf.keepalive();
 		}
 
-		void StreamConnection::error() const
-		{
-			_buf.error();
-		}
-
-		bool StreamConnection::good() const
-		{
-			return _buf.good();
-		}
-
 		void StreamConnection::close()
 		{
 			{

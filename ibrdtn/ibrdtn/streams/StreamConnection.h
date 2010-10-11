@@ -190,15 +190,6 @@ namespace dtn
 			 */
 			void keepalive();
 
-			/**
-			 * @return True, if the stream is working.
-			 */
-			bool good() const;
-
-			/**
-			 * print out the state of the stream
-			 */
-			void error() const;
 
 		private:
 			/**
@@ -230,16 +221,6 @@ namespace dtn
 				const StreamContactHeader handshake(const StreamContactHeader &header);
 
 				/**
-				 * @return True, if the stream is working.
-				 */
-				bool good() const;
-
-				/**
-				 * print out the state of the stream
-				 */
-				void error() const;
-
-				/**
 				 * close this stream immediately
 				 */
 				void close();
@@ -256,10 +237,7 @@ namespace dtn
 
 				/**
 				 * This method is called by the timers.
-				 * @param timer
-				 * @return
 				 */
-				//bool timeout(ibrcommon::Timer *timer);
 				size_t timeout(size_t identifier);
 
 				/**
@@ -285,6 +263,16 @@ namespace dtn
 				virtual int underflow();
 
 			private:
+				/**
+				 * @return True, if the stream is working.
+				 */
+				bool __good() const;
+
+				/**
+				 * print out the state of the stream
+				 */
+				void __error() const;
+
 				enum timerNames
 				{
 					TIMER_IN = 1,

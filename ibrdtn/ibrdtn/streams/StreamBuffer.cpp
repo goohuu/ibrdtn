@@ -49,7 +49,7 @@ namespace dtn
 			_statebits &= ~(bit);
 		}
 
-		void StreamConnection::StreamBuffer::error() const
+		void StreamConnection::StreamBuffer::__error() const
 		{
 			IBRCOMMON_LOGGER_DEBUG(80) << "StreamBuffer Debugging" << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "---------------------------------------" << IBRCOMMON_LOGGER_ENDL;
@@ -95,10 +95,10 @@ namespace dtn
 			}
 		}
 
-		bool StreamConnection::StreamBuffer::good() const
+		bool StreamConnection::StreamBuffer::__good() const
 		{
 			int badbits = STREAM_FAILED + STREAM_BAD + STREAM_EOF + STREAM_SHUTDOWN + STREAM_CLOSED;
-			return !(badbits & _statebits) && _stream.good();
+			return !(badbits & _statebits);
 		}
 
 		/**
@@ -111,14 +111,14 @@ namespace dtn
 		 */
 		const StreamContactHeader StreamConnection::StreamBuffer::handshake(const StreamContactHeader &header)
 		{
-			// activate exceptions for this method
-			_stream.exceptions(std::ios::badbit | std::ios::eofbit | std::ios::failbit);
-
 			try {
-				ibrcommon::MutexLock l(_sendlock);
+				// make the send-call atomic
+				{
+					ibrcommon::MutexLock l(_sendlock);
 
-				// transfer the local header
-				_stream << header << std::flush;
+					// transfer the local header
+					_stream << header << std::flush;
+				}
 
 				// receive the remote header
 				StreamContactHeader peer;
@@ -275,9 +275,6 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::overflow() called" << IBRCOMMON_LOGGER_ENDL;
 
-			// check if shutdown is executed
-			if (!good()) return traits_type::eof();
-
 			try {
 				char *ibegin = out_buf_;
 				char *iend = pptr();
@@ -329,6 +326,7 @@ namespace dtn
 					}
 
 					ibrcommon::MutexLock l(_sendlock);
+					if (!_stream.good()) throw StreamErrorException("stream went bad");
 
 					// write the segment to the stream
 					_stream << seg;
@@ -342,18 +340,24 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in overflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+
+				throw;
 			} catch (StreamErrorException ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in overflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+
+				throw;
 			} catch (ios_base::failure ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "ios_base::failure in overflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+
+				throw;
 			}
 
 			return traits_type::eof();
@@ -416,9 +420,6 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(90) << "StreamBuffer::underflow() called" << IBRCOMMON_LOGGER_ENDL;
 
-			// check if shutdown is executed
-			if (!good()) return traits_type::eof();
-
 			try {
 				if (_underflow_state == DATA_TRANSFER)
 				{
@@ -428,6 +429,7 @@ namespace dtn
 						// send NACK on bundle reject
 						{
 							ibrcommon::MutexLock l(_sendlock);
+							if (!_stream.good()) throw StreamErrorException("stream went bad");
 
 							// send a SHUTDOWN message
 							_stream << StreamDataSegment(StreamDataSegment::MSG_REFUSE_BUNDLE) << std::flush;
@@ -446,6 +448,7 @@ namespace dtn
 						if (get(STREAM_ACK_SUPPORT))
 						{
 							ibrcommon::MutexLock l(_sendlock);
+							if (!_stream.good()) throw StreamErrorException("stream went bad");
 							_stream << StreamDataSegment(StreamDataSegment::MSG_ACK_SEGMENT, _recv_size) << std::flush;
 						}
 
@@ -462,6 +465,8 @@ namespace dtn
 
 					try {
 						// read the segment
+						if (!_stream.good()) throw StreamErrorException("stream went bad");
+
 						_stream >> seg;
 					} catch (const ios_base::failure &ex) {
 						throw StreamErrorException("read error: " + std::string(ex.what()));
@@ -498,6 +503,7 @@ namespace dtn
 								{
 									// lock for sending
 									ibrcommon::MutexLock l(_sendlock);
+									if (!_stream.good()) throw StreamErrorException("stream went bad");
 
 									// send a NACK message
 									_stream << StreamDataSegment(StreamDataSegment::MSG_REFUSE_BUNDLE, 0) << std::flush;
@@ -628,6 +634,8 @@ namespace dtn
 				if (_underflow_data_remain < _buffer_size) readsize = _underflow_data_remain;
 
 				try {
+					if (!_stream.good()) throw StreamErrorException("stream went bad");
+
 					// here receive the data
 					_stream.read(in_buf_, readsize);
 				} catch (const ios_base::failure &ex) {
@@ -650,12 +658,15 @@ namespace dtn
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in underflow()" << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+
 			} catch (StreamErrorException ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in underflow(): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
+
+				throw;
 			} catch (StreamShutdownException ex) {
 				// set failed bit
 				set(STREAM_FAILED);

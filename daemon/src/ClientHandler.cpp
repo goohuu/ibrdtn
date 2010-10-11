@@ -274,7 +274,7 @@ namespace dtn
 						_client << b;
 						storage.remove(b);
 					}
-				} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
+				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				}
 
 				while (!_abort)
@@ -290,12 +290,12 @@ namespace dtn
 					yield();
 				}
 
-			} catch (ibrcommon::IOException ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException" << IBRCOMMON_LOGGER_ENDL;
-			} catch (dtn::InvalidDataException ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
-			} catch (std::exception) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error!" << IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::IOException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			} catch (const dtn::InvalidDataException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			} catch (const std::exception &ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (...) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: canceled" << IBRCOMMON_LOGGER_ENDL;
 				throw;

@@ -257,10 +257,12 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
-			// activate exceptions for this method
-			if (!conn._stream.good()) throw ibrcommon::IOException("stream went bad");
+			std::iostream &stream = conn._stream;
 
-			dtn::data::DefaultDeserializer(conn._stream, dtn::core::BundleCore::getInstance()) >> bundle;
+			// activate exceptions for this method
+			if (!stream.good()) throw ibrcommon::IOException("stream went bad");
+
+			dtn::data::DefaultDeserializer(stream, dtn::core::BundleCore::getInstance()) >> bundle;
 			return conn;
 		}
 
@@ -269,8 +271,10 @@ namespace dtn
 			// prepare a measurement
 			ibrcommon::TimeMeasurement m;
 
+			std::iostream &stream = conn._stream;
+
 			// create a serializer
-			dtn::data::DefaultSerializer serializer(conn._stream);
+			dtn::data::DefaultSerializer serializer(stream);
 
 			// put the bundle into the sentqueue
 			conn._sentqueue.push(bundle);
@@ -280,13 +284,13 @@ namespace dtn
 
 			try {
 				// activate exceptions for this method
-				if (!conn._stream.good()) throw ibrcommon::IOException("stream went bad");
+				if (!stream.good()) throw ibrcommon::IOException("stream went bad");
 
 				// transmit the bundle
 				serializer << bundle;
 
 				// flush the stream
-				conn._stream << std::flush;
+				stream << std::flush;
 
 				// stop the time measurement
 				m.stop();
@@ -301,9 +305,6 @@ namespace dtn
 			} catch (const ibrcommon::Exception &ex) {
 				// the connection not available
 				IBRCOMMON_LOGGER_DEBUG(10) << "connection error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-
-				// debug error
-				conn._stream.error();
 
 				// forward exception
 				throw;
