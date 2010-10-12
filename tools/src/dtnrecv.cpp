@@ -32,11 +32,11 @@ dtn::api::Client *_client = NULL;
 ibrcommon::tcpclient *_conn = NULL;
 
 int h = 0;
-bool __stdout = true;
+bool _stdout = true;
 
 void term(int signal)
 {
-	if (!__stdout)
+	if (!_stdout)
 	{
 		std::cout << h << " bundles received." << std::endl;
 	}
@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 		if (arg == "--file" && argc > i)
 		{
 			filename = argv[i + 1];
-			__stdout = false;
+			_stdout = false;
 		}
 
 		if (arg == "--timeout" && argc > i)
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 
 		std::fstream file;
 
-		if (!__stdout)
+		if (!_stdout)
 		{
 			std::cout << "Wait for incoming bundle... " << std::endl;
 			file.open(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
 			ibrcommon::BLOB::Reference ref = b.getData();
 
 			// write the data to output
-			if (__stdout)
+			if (_stdout)
 			{
 				ibrcommon::MutexLock l(ref);
 				cout << (*ref).rdbuf();
@@ -152,7 +152,7 @@ int main(int argc, char *argv[])
 			}
 		}
 
-		if (!__stdout)
+		if (!_stdout)
 		{
 			file.close();
 			std::cout << "done." << std::endl;
