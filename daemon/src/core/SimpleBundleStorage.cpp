@@ -59,6 +59,8 @@ namespace dtn
 					} catch (const std::exception &ex) {
 						IBRCOMMON_LOGGER(error) << "error in storage: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
+
+					yield();
 				}
 			} catch (std::exception) {
 

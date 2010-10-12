@@ -145,6 +145,8 @@ namespace dtn
 							IBRCOMMON_LOGGER_DEBUG(10) << "API: NoBundleFoundException; BundleID: " << mb.toString() << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
+
+					yield();
 				}
 			} catch (std::exception) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected error or shutdown" << IBRCOMMON_LOGGER_ENDL;

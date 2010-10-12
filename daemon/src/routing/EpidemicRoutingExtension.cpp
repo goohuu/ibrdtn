@@ -363,6 +363,8 @@ namespace dtn
 				} catch (std::exception) {
 					return;
 				}
+
+				yield();
 			}
 		}
 
