@@ -278,6 +278,7 @@ int main(int argc, char *argv[])
 	conf.params(argc, argv);
 
 	// init syslog
+	ibrcommon::Logger::enableAsync(); // enable asynchronous logging feature (thread-safe)
 	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
 
 	if (!conf.getDebug().quiet())
