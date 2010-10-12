@@ -39,7 +39,7 @@ namespace dtn
 	{
 		const int LOWPANConvergenceLayer::DEFAULT_PANID = 0x780;
 
-		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::NetInterface net, int panid,  bool broadcast, unsigned int mtu)
+		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::NetInterface net, int panid, bool, unsigned int mtu)
 			: _socket(NULL), _net(net), _panid(panid), m_maxmsgsize(mtu), _running(false)
 		{
 			_socket = new ibrcommon::UnicastSocketLowpan();

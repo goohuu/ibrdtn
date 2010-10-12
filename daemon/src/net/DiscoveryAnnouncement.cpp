@@ -38,6 +38,8 @@ namespace dtn
 			case DISCO_VERSION_01:
 				return !(_flags & DiscoveryAnnouncement::BEACON_SERVICE_BLOCK);
 			};
+
+			return false;
 		}
 
 		dtn::data::EID DiscoveryAnnouncement::getEID() const

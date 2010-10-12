@@ -238,7 +238,7 @@ namespace dtn
 						} catch (std::bad_cast) { };
 
 						try {
-							ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
+							dynamic_cast<ProcessBundleTask&>(*t);
 							ibrcommon::MutexLock l(_list_mutex);
 
 							// trigger transmission for all neighbors
