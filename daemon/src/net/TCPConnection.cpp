@@ -215,7 +215,7 @@ namespace dtn
 				// start the sender
 				_sender.start();
 
-				while (true)
+				while (_stream.good())
 				{
 					try {
 						// create a new empty bundle
@@ -234,10 +234,13 @@ namespace dtn
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle);
 					}
-					catch (dtn::data::Validator::RejectedException ex)
+					catch (const dtn::data::Validator::RejectedException &ex)
 					{
 						// bundle rejected
 						rejectTransmission();
+
+						// display the rejection
+						IBRCOMMON_LOGGER(warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
 					yield();

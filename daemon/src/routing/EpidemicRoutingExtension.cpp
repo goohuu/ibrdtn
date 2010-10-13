@@ -222,6 +222,9 @@ namespace dtn
 			routingbundle._source = dtn::core::BundleCore::local;
 			routingbundle._destination = EID("dtn:epidemic-routing");
 
+			// add the epidemic bundle to the list of known bundles
+			getRouter()->setKnown(routingbundle);
+
 			// create a new epidemic block
 			{
 				// lock the lists
@@ -232,6 +235,10 @@ namespace dtn
 				eblock.setPurgeVector(_purge_vector);
 			}
 
+			// store the bundle in the storage
+			getRouter()->getStorage().store(routingbundle);
+
+			// then transfer the bundle to the destination
 			getRouter()->transferTo(eid, routingbundle);
 		}
 

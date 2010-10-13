@@ -137,7 +137,18 @@ namespace dtn
 
 			dtn::core::BundleStorage &getStorage();
 
+			/**
+			 * This method returns true, if the given BundleID is known.
+			 * @param id
+			 * @return
+			 */
 			bool isKnown(const dtn::data::BundleID &id);
+
+			/**
+			 * This method add a BundleID to the set of known bundles
+			 * @param id
+			 */
+			void setKnown(const dtn::data::MetaBundle &meta);
 
 			const SummaryVector getSummaryVector();
 

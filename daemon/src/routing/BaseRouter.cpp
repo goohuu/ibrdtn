@@ -266,6 +266,12 @@ namespace dtn
 			return _storage;
 		}
 
+		void BaseRouter::setKnown(const dtn::data::MetaBundle &meta)
+		{
+			ibrcommon::MutexLock l(_known_bundles_lock);
+			return _known_bundles.add(meta);
+		}
+
 		// set the bundle as known
 		bool BaseRouter::isKnown(const dtn::data::BundleID &id)
 		{
