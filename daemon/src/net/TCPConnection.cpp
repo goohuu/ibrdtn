@@ -374,7 +374,7 @@ namespace dtn
 					yield();
 				}
 			} catch (const std::exception &ex) {
-				IBRCOMMON_LOGGER(error) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (...) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender canceled" << IBRCOMMON_LOGGER_ENDL;
 				throw;
