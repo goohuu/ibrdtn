@@ -269,5 +269,10 @@ namespace dtn
 			ibrcommon::udpsocket::peer p = socket.getPeer(_address, _port);
 			p.send(data.c_str(), data.length());
 		}
+
+		const std::string StatisticLogger::getName() const
+		{
+			return "StatisticLogger";
+		}
 	}
 }

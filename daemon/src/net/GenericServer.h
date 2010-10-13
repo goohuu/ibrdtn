@@ -73,9 +73,9 @@ namespace dtn
 
 			void componentRun()
 			{
-				while (true)
-				{
-					try {
+				try {
+					while (true)
+					{
 						T* obj = accept();
 
 						{
@@ -83,13 +83,15 @@ namespace dtn
 							add(obj);
 						}
 
+						// initialize the object
 						obj->initialize();
-					} catch (std::exception) {
-						// ignore all errors
-					}
 
-					// breakpoint
-					ibrcommon::Thread::yield();
+						// breakpoint
+						ibrcommon::Thread::yield();
+					}
+				} catch (std::exception) {
+					// ignore all errors
+					return;
 				}
 			}
 

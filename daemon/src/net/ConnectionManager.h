@@ -77,6 +77,11 @@ namespace dtn
 			 */
 			bool isNeighbor(const dtn::core::Node&);
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			/**
 			 * trigger for periodical discovery of nodes

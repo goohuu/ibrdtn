@@ -38,6 +38,11 @@ namespace dtn
 			 */
 			virtual size_t timeout(size_t identifier);
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();

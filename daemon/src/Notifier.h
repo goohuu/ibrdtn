@@ -26,6 +26,11 @@ namespace dtn
 
 			void notify(std::string title, std::string msg);
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();

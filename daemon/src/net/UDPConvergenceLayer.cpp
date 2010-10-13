@@ -243,5 +243,10 @@ namespace dtn
 				yield();
 			}
 		}
+
+		const std::string UDPConvergenceLayer::getName() const
+		{
+			return "UDPConvergenceLayer";
+		}
 	}
 }

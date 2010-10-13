@@ -29,13 +29,18 @@ namespace dtn
 			ApiServer(ibrcommon::NetInterface net, int port = 4550);
 			virtual ~ApiServer();
 
-		protected:
-			ClientHandler* accept();
-			void listen();
-			void shutdown();
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
 
-			void connectionUp(ClientHandler *conn);
-			void connectionDown(ClientHandler *conn);
+		protected:
+			virtual ClientHandler* accept();
+			virtual void listen();
+			virtual void shutdown();
+
+			virtual void connectionUp(ClientHandler *conn);
+			virtual void connectionDown(ClientHandler *conn);
 
 		private:
 			class Distributor : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
@@ -54,7 +59,6 @@ namespace dtn
 				 */
 				void raiseEvent(const dtn::core::Event *evt);
 
-			private:
 				ibrcommon::Mutex &_lock;
 				std::list<ClientHandler*> &_connections;
 				ibrcommon::Queue<dtn::data::MetaBundle> _received;

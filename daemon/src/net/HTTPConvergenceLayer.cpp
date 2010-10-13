@@ -177,5 +177,10 @@ namespace dtn
 		void HTTPConvergenceLayer::componentDown()
 		{
 		}
+
+		const std::string HTTPConvergenceLayer::getName() const
+		{
+			return "HTTPConvergenceLayer";
+		}
 	}
 }

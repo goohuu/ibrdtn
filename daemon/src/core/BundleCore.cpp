@@ -249,5 +249,10 @@ namespace dtn
 			 *
 			 */
 		}
+
+		const std::string BundleCore::getName() const
+		{
+			return "BundleCore";
+		}
 	}
 }

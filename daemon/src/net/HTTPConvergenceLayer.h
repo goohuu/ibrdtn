@@ -28,6 +28,11 @@ namespace dtn
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			virtual void componentUp();
 			virtual void componentRun();

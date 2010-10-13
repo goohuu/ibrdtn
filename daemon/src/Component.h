@@ -42,6 +42,12 @@ namespace dtn
 			 * All other components still exists, but may not serve signals.
 			 */
 			virtual void terminate() = 0;
+
+			/**
+			 * Return an identifier for this component
+			 * @return
+			 */
+			virtual const std::string getName() const = 0;
 		};
 
 		/**
@@ -53,9 +59,9 @@ namespace dtn
 			IndependentComponent();
 			virtual ~IndependentComponent();
 
-			void initialize();
-			void startup();
-			void terminate();
+			virtual void initialize();
+			virtual void startup();
+			virtual void terminate();
 
 			bool isRunning();
 
@@ -77,9 +83,9 @@ namespace dtn
 			IntegratedComponent();
 			virtual ~IntegratedComponent();
 
-			void initialize();
-			void startup();
-			void terminate();
+			virtual void initialize();
+			virtual void startup();
+			virtual void terminate();
 
 		protected:
 			virtual void componentUp() = 0;

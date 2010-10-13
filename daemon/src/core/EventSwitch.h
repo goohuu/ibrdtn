@@ -56,6 +56,11 @@ namespace dtn
 
 			const std::list<EventReceiver*>& getReceivers(std::string eventName) const;
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();

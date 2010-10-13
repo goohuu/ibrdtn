@@ -160,6 +160,11 @@ namespace dtn
 				 */
 				void raiseEvent(const dtn::core::Event *evt);
 
+				/**
+				 * @see Component::getName()
+				 */
+				virtual const std::string getName() const;
+
 			protected:
 				TCPConvergenceLayer::TCPConnection* accept();
 				void listen();
@@ -218,6 +223,11 @@ namespace dtn
 			 * @param job
 			 */
 			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
 
 		private:
 			static const int DEFAULT_PORT;

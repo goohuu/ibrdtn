@@ -64,6 +64,11 @@ namespace dtn
 			 */
 			static bool forwarding;
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();

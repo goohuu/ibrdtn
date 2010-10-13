@@ -68,5 +68,10 @@ namespace dtn
 
 			system(notifycmd.str().c_str());
 		}
+
+		const std::string Notifier::getName() const
+		{
+			return "Notifier";
+		}
 	}
 }

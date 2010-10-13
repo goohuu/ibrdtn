@@ -58,6 +58,11 @@ namespace dtn
 			size_t timeout(size_t identifier);
 			void raiseEvent(const dtn::core::Event *evt);
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		private:
 			void writeStdLog(std::ostream &stream);
 			void writeSyslog(std::ostream &stream);

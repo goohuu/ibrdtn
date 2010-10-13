@@ -79,6 +79,11 @@ namespace dtn
 			_server.queue(n, job);
 		}
 
+		const std::string TCPConvergenceLayer::getName() const
+		{
+			return "TCPConvergenceLayer";
+		}
+
 		void TCPConvergenceLayer::Server::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
 		{
 			{
@@ -138,6 +143,7 @@ namespace dtn
 		TCPConvergenceLayer::Server::~Server()
 		{
 			unbindEvent(NodeEvent::className);
+			join();
 		}
 
 		void TCPConvergenceLayer::Server::raiseEvent(const Event *evt)
@@ -162,6 +168,11 @@ namespace dtn
 					}
 				}
 			}
+		}
+
+		const std::string TCPConvergenceLayer::Server::getName() const
+		{
+			return "TCPConvergenceLayer::Server";
 		}
 
 		void TCPConvergenceLayer::Server::connectionUp(TCPConvergenceLayer::TCPConnection *conn)
@@ -197,21 +208,16 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::Server::accept()
 		{
-			try {
-				// wait for incoming connections
-				TCPConnection *conn = new TCPConnection(*this, _tcpsrv.accept(), dtn::core::BundleCore::local, 10);
-				{
-					ibrcommon::MutexLock l(_lock);
+			// wait for incoming connections
+			TCPConnection *conn = new TCPConnection(*this, _tcpsrv.accept(), dtn::core::BundleCore::local, 10);
+			{
+				ibrcommon::MutexLock l(_lock);
 
-					// add connection as pending
-					_connections.push_back( Connection( conn, conn->getNode() ) );
-				}
-
-				return conn;
-			} catch (ibrcommon::SocketException ex) {
-				// socket is closed
-				return NULL;
+				// add connection as pending
+				_connections.push_back( Connection( conn, conn->getNode() ) );
 			}
+
+			return conn;
 		}
 
 		void TCPConvergenceLayer::Server::listen()
@@ -221,6 +227,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::Server::shutdown()
 		{
+			_tcpsrv.shutdown();
 			_tcpsrv.close();
 		}
 

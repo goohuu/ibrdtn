@@ -191,5 +191,10 @@ namespace dtn
 				yield();
 			}
 		}
+
+		const std::string LOWPANConvergenceLayer::getName() const
+		{
+			return "LOWPANConvergenceLayer";
+		}
 	}
 }

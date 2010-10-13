@@ -139,5 +139,10 @@ namespace dtn
 			static EventSwitch instance;
 			return instance;
 		}
+
+		const std::string EventSwitch::getName() const
+		{
+			return "EventSwitch";
+		}
 	}
 }

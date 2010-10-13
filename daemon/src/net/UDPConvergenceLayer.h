@@ -45,6 +45,11 @@ namespace dtn
 
 			UDPConvergenceLayer& operator>>(dtn::data::Bundle&);
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			virtual void componentUp();
 			virtual void componentRun();

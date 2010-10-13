@@ -219,5 +219,10 @@ namespace dtn
 				yield();
 			}
 		}
+
+		const std::string IPNDAgent::getName() const
+		{
+			return "IPNDAgent";
+		}
 	}
 }

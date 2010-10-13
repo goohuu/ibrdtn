@@ -37,6 +37,11 @@ namespace dtn
 
 			void bind(const ibrcommon::NetInterface &net);
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			void sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services);
 			virtual void componentRun();

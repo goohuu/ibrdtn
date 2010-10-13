@@ -121,6 +121,11 @@ namespace dtn
 			 */
 			void raiseEvent(const Event *evt);
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			virtual void componentUp();
 			virtual void componentRun();

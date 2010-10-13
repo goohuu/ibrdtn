@@ -65,5 +65,10 @@ namespace dtn
 
 			return _frequency;
 		}
+
+		const std::string WallClock::getName() const
+		{
+			return "WallClock";
+		}
 	}
 }

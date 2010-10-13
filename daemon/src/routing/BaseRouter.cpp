@@ -278,5 +278,10 @@ namespace dtn
 			ibrcommon::MutexLock l(_known_bundles_lock);
 			return _known_bundles.getSummaryVector();
 		}
+
+		const std::string BaseRouter::getName() const
+		{
+			return "BaseRouter";
+		}
 	}
 }

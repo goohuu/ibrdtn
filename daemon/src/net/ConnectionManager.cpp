@@ -368,5 +368,10 @@ namespace dtn
 
 			return false;
 		}
+
+		const std::string ConnectionManager::getName() const
+		{
+			return "ConnectionManager";
+		}
 	}
 }

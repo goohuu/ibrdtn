@@ -28,6 +28,7 @@ namespace dtn
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize)
 		 : _store(workdir, maxsize), _running(true)
 		{
+			_tasks.abort();
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
@@ -78,6 +79,11 @@ namespace dtn
 					_store.expire(time->getTimestamp());
 				}
 			}
+		}
+
+		const std::string SimpleBundleStorage::getName() const
+		{
+			return "SimpleBundleStorage";
 		}
 
 		void SimpleBundleStorage::clear()

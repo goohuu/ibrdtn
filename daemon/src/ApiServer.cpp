@@ -30,11 +30,6 @@ namespace dtn
 
 		ApiServer::~ApiServer()
 		{
-			if (isRunning())
-			{
-				componentDown();
-			}
-
 			join();
 		}
 
@@ -48,13 +43,8 @@ namespace dtn
 //				if (_clients.size() == 0) break;
 //			}
 
-			try {
-				// create a new ClientHandler
-				return new ClientHandler(*this, _tcpsrv.accept());
-			} catch (ibrcommon::SocketException ex) {
-				// socket is closed
-				return NULL;
-			}
+			// create a new ClientHandler
+			return new ClientHandler(*this, _tcpsrv.accept());
 		}
 
 		void ApiServer::listen()
@@ -68,7 +58,9 @@ namespace dtn
 
 		void ApiServer::shutdown()
 		{
+			_dist._received.abort();
 			_dist.stop();
+			_tcpsrv.shutdown();
 			_tcpsrv.close();
 		}
 
@@ -164,6 +156,11 @@ namespace dtn
 			} catch (std::bad_cast ex) {
 
 			}
+		}
+
+		const std::string ApiServer::getName() const
+		{
+			return "ApiServer";
 		}
 	}
 }

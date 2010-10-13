@@ -141,6 +141,11 @@ namespace dtn
 
 			const SummaryVector getSummaryVector();
 
+			/**
+			 * @see Component::getName()
+			 */
+			virtual const std::string getName() const;
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();

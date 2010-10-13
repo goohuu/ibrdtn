@@ -486,6 +486,7 @@ int main(int argc, char *argv[])
 	 */
 	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
 	{
+		IBRCOMMON_LOGGER_DEBUG(20) << "Initialize component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
 		(*iter)->initialize();
 	}
 
@@ -497,6 +498,7 @@ int main(int argc, char *argv[])
 	 */
 	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
 	{
+		IBRCOMMON_LOGGER_DEBUG(20) << "Startup component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
 		(*iter)->startup();
 	}
 
@@ -530,6 +532,7 @@ int main(int argc, char *argv[])
 	 */
 	for (std::list< dtn::daemon::Component* >::iterator iter = components.begin(); iter != components.end(); iter++ )
 	{
+		IBRCOMMON_LOGGER_DEBUG(20) << "Terminate component " << (*iter)->getName() << IBRCOMMON_LOGGER_ENDL;
 		(*iter)->terminate();
 	}
 
