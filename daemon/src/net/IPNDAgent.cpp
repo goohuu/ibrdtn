@@ -185,9 +185,7 @@ namespace dtn
 
 		void IPNDAgent::componentRun()
 		{
-			_running = true;
-
-			while (_running)
+			while (true)
 			{
 				DiscoveryAnnouncement announce(_version);
 

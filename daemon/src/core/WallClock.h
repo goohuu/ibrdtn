@@ -10,13 +10,14 @@
 
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Conditional.h>
+#include <ibrcommon/thread/Timer.h>
 #include "Component.h"
 
 namespace dtn
 {
 	namespace core
 	{
-		class WallClock : public ibrcommon::Conditional, public dtn::daemon::IndependentComponent
+		class WallClock : public ibrcommon::Conditional, public dtn::daemon::IntegratedComponent, public ibrcommon::SimpleTimerCallback
 		{
 		public:
 			/**
@@ -31,15 +32,20 @@ namespace dtn
 			 */
 			void sync();
 
+			/**
+			 * timer callback method
+			 * @see SimpleTimerCallback::timeout()
+			 */
+			virtual size_t timeout(size_t identifier);
+
 		protected:
 			virtual void componentUp();
-			virtual void componentRun();
 			virtual void componentDown();
 
 		private:
 			size_t _frequency;
 			size_t _next;
-			bool _running;
+			ibrcommon::SimpleTimer _timer;
 
 		};
 	}

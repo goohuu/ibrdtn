@@ -14,16 +14,13 @@ namespace dtn
 {
 	namespace core
 	{
-		WallClock::WallClock(size_t frequency) : _frequency(frequency), _next(0), _running(false)
+		WallClock::WallClock(size_t frequency) : _frequency(frequency), _next(0), _timer(*this, 0)
 		{
+			_timer.set(frequency);
 		}
 
 		WallClock::~WallClock()
 		{
-			if (isRunning())
-			{
-				componentDown();
-			}
 		}
 
 		void WallClock::sync()
@@ -38,39 +35,35 @@ namespace dtn
 
 		void WallClock::componentUp()
 		{
+			_timer.start();
 		}
 
 		void WallClock::componentDown()
 		{
-			_running = false;
-			join();
+			_timer.remove();
 		}
 
-		void WallClock::componentRun()
+		size_t WallClock::timeout(size_t)
 		{
-			_running = true;
+			size_t dtntime = dtn::utils::Clock::getTime();
 
-			while (_running)
+			if (dtntime == 0)
 			{
-				size_t dtntime = dtn::utils::Clock::getTime();
+				TimeEvent::raise(dtntime, TIME_SECOND_TICK);
 
-				if (dtntime == 0)
-				{
-					ibrcommon::MutexLock l(*this);
-					TimeEvent::raise(dtntime, TIME_SECOND_TICK);
-					signal(true);
-				}
-				else if (_next <= dtntime)
-				{
-					ibrcommon::MutexLock l(*this);
-					TimeEvent::raise(dtntime, TIME_SECOND_TICK);
-					signal(true);
-					_next = dtntime + _frequency;
-				}
-
-				this->sleep(500);
-				yield();
+				ibrcommon::MutexLock l(*this);
+				signal(true);
 			}
+			else if (_next <= dtntime)
+			{
+				TimeEvent::raise(dtntime, TIME_SECOND_TICK);
+				_next = dtntime + _frequency;
+
+				ibrcommon::MutexLock l(*this);
+				signal(true);
+			}
+
+			return _frequency;
 		}
 	}
 }

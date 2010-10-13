@@ -22,7 +22,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryAgent::DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config)
-		 : _config(config), _running(false), _sn(0), _clock(*this, 0)
+		 : _config(config), _sn(0), _clock(*this, 0)
 		{
 		}
 
@@ -32,17 +32,15 @@ namespace dtn
 
 		void DiscoveryAgent::componentUp()
 		{
-			//bindEvent(TimeEvent::className);
 			_clock.set(1);
 			_clock.start();
 		}
 
 		void DiscoveryAgent::componentDown()
 		{
-			//unbindEvent(TimeEvent::className);
 			_clock.remove();
 
-			_running = false;
+			stop();
 			join();
 		}
 

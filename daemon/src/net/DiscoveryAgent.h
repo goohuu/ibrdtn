@@ -48,7 +48,6 @@ namespace dtn
 			virtual void sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services) = 0;
 
 			const dtn::daemon::Configuration::Discovery &_config;
-			bool _running;
 
 		private:
 			list<Neighbor> _neighbors;
