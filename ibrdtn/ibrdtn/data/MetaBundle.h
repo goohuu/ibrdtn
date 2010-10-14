@@ -20,7 +20,10 @@ namespace dtn
 		class MetaBundle : public dtn::data::BundleID
 		{
 		public:
-			MetaBundle();
+			MetaBundle(const dtn::data::BundleID id = dtn::data::BundleID(), const dtn::data::DTNTime received = dtn::data::DTNTime(),
+					const size_t lifetime = 0, const dtn::data::EID destination = dtn::data::EID(), const dtn::data::EID reportto = dtn::data::EID(),
+					const dtn::data::EID custodian = dtn::data::EID(), const size_t appdatalength = 0, const size_t procflags = 0);
+
 			MetaBundle(const dtn::data::Bundle &b);
 			~MetaBundle();
 

@@ -346,7 +346,9 @@ namespace core {
 			sqlite3_stmt *deleteBundle = prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE BundleID = ?;");
 			for(event_Iterator = eventList.begin(); event_Iterator != eventList.end(); event_Iterator++){
 				//Raise event ToDo Integration der Storageevents
-				dtn::data::MetaBundle mb(*event_Iterator);
+
+				const dtn::data::BundleID id(*event_Iterator);
+				const dtn::data::MetaBundle mb(id, ...);
 				dtn::core::BundleEvent::raise(mb, BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 
 				//Get the all blocks of the inconsistent bundle into fileList
@@ -401,7 +403,8 @@ namespace core {
 			sqlite3_stmt *deleteFragment = prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE BundleID = ?;");
 			for(event_Iterator = eventList.begin(); event_Iterator != eventList.end(); event_Iterator++){
 				//ToDo Integration der Storageevents
-				dtn::data::MetaBundle mb(*event_Iterator);
+				const dtn::data::BundleID id(*event_Iterator);
+				const dtn::data::MetaBundle mb(id, ...);
 				dtn::core::BundleEvent::raise(mb, BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 
 				sqlite3_bind_text(deleteFragment,1,(*event_Iterator).c_str(),(*event_Iterator).length(), SQLITE_TRANSIENT);

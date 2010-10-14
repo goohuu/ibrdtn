@@ -18,9 +18,8 @@ namespace dtn
 		class BundleID
 		{
 		public:
-			BundleID();
+			BundleID(const dtn::data::EID source = dtn::data::EID(), const size_t timestamp = 0, const size_t sequencenumber = 0, const bool fragment = false, const size_t offset = 0);
 			BundleID(const dtn::data::Bundle &b);
-			BundleID(EID source, size_t timestamp, size_t sequencenumber, bool fragment = false, size_t offset = 0);
 			virtual ~BundleID();
 
 			bool operator!=(const BundleID& other) const;

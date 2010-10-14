@@ -14,12 +14,7 @@ namespace dtn
 {
 	namespace data
 	{
-		BundleID::BundleID()
-		: source(), timestamp(0), sequencenumber(0), fragment(false), offset(0)
-		{
-		}
-
-		BundleID::BundleID(EID s, size_t t, size_t sq, bool f, size_t o)
+		BundleID::BundleID(const dtn::data::EID s, const size_t t, const size_t sq, const bool f, const size_t o)
 		: source(s), timestamp(t), sequencenumber(sq), fragment(f), offset(o)
 		{
 		}
