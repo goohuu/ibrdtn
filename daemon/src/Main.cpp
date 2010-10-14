@@ -133,8 +133,6 @@ void switchUser(Configuration &config)
 
 void setGlobalVars(Configuration &config)
 {
-    //ConfigFile &conf = config.getConfigFile();
-
     // set the timezone
     dtn::utils::Clock::timezone = config.getTimezone();
 
@@ -174,6 +172,8 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 				ibrcommon::File::createDirectory(path);
 			}
 
+			IBRCOMMON_LOGGER(info) << "using sqlite bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
+
 			dtn::core::SQLiteBundleStorage *sbs = new dtn::core::SQLiteBundleStorage(path, "sqlite.db", conf.getLimit("storage") );
 
 			components.push_back(sbs);
@@ -198,11 +198,15 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 				ibrcommon::File::createDirectory(path);
 			}
 
+			IBRCOMMON_LOGGER(info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
+
 			dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path, conf.getLimit("storage"));
 
 			components.push_back(sbs);
 			storage = sbs;
 		} catch (Configuration::ParameterNotSetException ex) {
+			IBRCOMMON_LOGGER(info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
+
 			dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(conf.getLimit("storage"));
 			components.push_back(sbs);
 			storage = sbs;

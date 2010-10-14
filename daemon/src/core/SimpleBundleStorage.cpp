@@ -28,11 +28,11 @@ namespace dtn
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize)
 		 : _store(workdir, maxsize), _running(true)
 		{
-			_tasks.abort();
 		}
 
 		SimpleBundleStorage::~SimpleBundleStorage()
 		{
+			_tasks.abort();
 		}
 
 		void SimpleBundleStorage::componentUp()
@@ -63,8 +63,8 @@ namespace dtn
 
 					yield();
 				}
-			} catch (std::exception) {
-
+			} catch (const std::exception &ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "SimpleBundleStorage exited with " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
@@ -610,7 +610,7 @@ namespace dtn
 				dtn::data::Bundle bundle;
 
 				// we need to load the bundle from file
-				std::fstream fs(_container.getPath().c_str(), ios::in|ios::binary);
+				std::ifstream fs(_container.getPath().c_str(), ios::in|ios::binary);
 				try {
 					fs.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
 					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
