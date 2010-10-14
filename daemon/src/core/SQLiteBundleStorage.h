@@ -31,10 +31,10 @@
 
 
 namespace dtn {
-
 namespace testsuite{
 	class SQLiteBundleStorageTestSuite;
 }
+
 namespace core {
 
 class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public ibrcommon::JoinableThread

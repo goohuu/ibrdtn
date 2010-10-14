@@ -41,7 +41,7 @@ namespace dtn {
 namespace core {
 
 	const std::string SQLiteBundleStorage::_tables[SQL_TABLE_END] =
-			{ "Bundles", "Fragments", "Block", "Routing", "BundleRoutingInfo", "NodeRouitngInfo" };
+			{ "Bundles", "Fragments", "Block", "Routing", "BundleRoutingInfo", "NodeRoutingInfo" };
 
 	SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const string &file, const int &size)
 	 : global_shutdown(false), dbPath(path.getPath()), dbFile(file), dbSize(size), actual_time(0), nextExpiredTime(0)
@@ -563,7 +563,7 @@ namespace core {
 		return bundle;
 	}
 
-	dtn::data::Bundle SQLiteBundleStorage::get(const ibrcommon::BloomFilter&)
+	dtn::data::Bundle SQLiteBundleStorage::get(const ibrcommon::BloomFilter &filter)
 	{
 		// TODO: implement BloomFilter query
 		throw BundleStorage::NoBundleFoundException();
@@ -1253,8 +1253,7 @@ namespace core {
 		stringstream path,path2;
 		string sourceEID, destination, payloadfilename, filename;
 		char *tmp = strdup(path.str().c_str());
-		stringstream bundleID;
-		bundleID << "[" << bundle._timestamp << "." << bundle._sequencenumber << "] " << sourceEID;
+		std::string bundleID = dtn::data::BundleID(bundle).toString();
 
 		destination = bundle._destination.getString();
 		sourceEID = bundle._source.getString();
@@ -1277,7 +1276,6 @@ namespace core {
 				int i,blocknumber;
 				blocklist = bundle.getBlocks();
 
-				ss << "[" << bundle._timestamp << "." << bundle._sequencenumber << "] " << sourceEID;
 				for(it = blocklist.begin(),  i = 0; it != blocklist.end(); it++,i++){
 					char *temp = strdup(path2.str().c_str());
 					filedescriptor = mkstemp(temp);
@@ -1289,7 +1287,7 @@ namespace core {
 
 					datei.open(temp,ios::out|ios::binary);
 					dtn::data::SeparateSerializer serializer(datei);
-					serializer << (*it);
+					serializer << (*(*it));
 					datei.close();
 					filename=temp;
 					free(temp);
@@ -1300,7 +1298,7 @@ namespace core {
 					 * 		Die Blöcke des letzten Fragments beginnen bei 1 und gehen bis x
 					 * 		Der Payloadblock wird an Stelle 0 eingefügt.
 					 */
-					sqlite3_bind_text(storeBlock,1,bundleID.str().c_str(), bundleID.str().length(),SQLITE_TRANSIENT);
+					sqlite3_bind_text(storeBlock,1,bundleID.c_str(), bundleID.length(),SQLITE_TRANSIENT);
 					sqlite3_bind_int(storeBlock,2,(int)((*it)->getType()));
 					sqlite3_bind_text(storeBlock,3,filename.c_str(), filename.length(),SQLITE_TRANSIENT);
 
@@ -1442,7 +1440,7 @@ namespace core {
 				filename=temp;
 				free(temp);
 
-				sqlite3_bind_text(storeBlock,1,bundleID.str().c_str(), bundleID.str().length(),SQLITE_TRANSIENT);
+				sqlite3_bind_text(storeBlock,1,bundleID.c_str(), bundleID.length(),SQLITE_TRANSIENT);
 				sqlite3_bind_int(storeBlock,2,(int)((*it)->getType()));
 				sqlite3_bind_text(storeBlock,3,filename.c_str(), filename.length(),SQLITE_TRANSIENT);
 				sqlite3_bind_int(storeBlock,4,0);
@@ -1459,7 +1457,7 @@ namespace core {
 				size_t procFlags = bundle._procflags;
 				procFlags &= ~(dtn::data::PrimaryBlock::FRAGMENT);
 
-				sqlite3_bind_text(store_Bundle, 1, bundleID.str().c_str(), bundleID.str().length(),SQLITE_TRANSIENT);
+				sqlite3_bind_text(store_Bundle, 1, bundleID.c_str(), bundleID.length(),SQLITE_TRANSIENT);
 				sqlite3_bind_text(store_Bundle, 2,sourceEID.c_str(), sourceEID.length(),SQLITE_TRANSIENT);
 				sqlite3_bind_text(store_Bundle, 3,destination.c_str(), destination.length(),SQLITE_TRANSIENT);
 				sqlite3_bind_text(store_Bundle, 4,bundle._reportto.getString().c_str(), bundle._reportto.getString().length(),SQLITE_TRANSIENT);
@@ -1707,7 +1705,7 @@ namespace core {
 
 			filestream.open(blockfilename,ios_base::out|ios::binary);
 			dtn::data::SeparateSerializer serializer(filestream);
-			serializer << (*it);
+			serializer << (*(*it));
 			filestream.close();
 
 			//put metadata into the storage
