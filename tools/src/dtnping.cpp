@@ -97,6 +97,7 @@ class EchoClient : public dtn::api::Client
 		bool checkReply(dtn::api::Bundle *bundle) {
 			size_t reply_seq = 0;
 			ibrcommon::BLOB::Reference blob=bundle->getData();
+			ibrcommon::MutexLock l(blob);
 			(*blob).read((char *)(&reply_seq),4 );
 			//cout << "Reply seq is " << reply_seq << endl;
 			if (reply_seq != seq) {

@@ -34,7 +34,9 @@ namespace dtn
 
 		size_t PayloadBlock::getLength() const
 		{
-			return _blobref.getSize();
+			ibrcommon::BLOB::Reference blobref = _blobref;
+			ibrcommon::MutexLock l(blobref);
+			return blobref.getSize();
 		}
 
 		std::ostream& PayloadBlock::serialize(std::ostream &stream) const
@@ -66,10 +68,10 @@ namespace dtn
 
 		std::istream& PayloadBlock::deserialize(std::istream &stream)
 		{
+			ibrcommon::MutexLock l(_blobref);
+
 			// clear the blob
 			_blobref.clear();
-
-			ibrcommon::MutexLock l(_blobref);
 
 			// remember the old exceptions state
 			std::ios::iostate oldstate = (*_blobref).exceptions();

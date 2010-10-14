@@ -24,7 +24,10 @@ namespace dtn
 
 		void StringBundle::append(string data)
 		{
-			(*_payload.getBLOB()) << data;
+			ibrcommon::BLOB::Reference ref = _payload.getBLOB();
+			ibrcommon::MutexLock l(ref);
+			(*ref).seekp(0, ios::end);
+			(*ref) << data;
 		}
 	}
 }
