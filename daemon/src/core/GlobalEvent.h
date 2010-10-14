@@ -20,7 +20,9 @@ namespace dtn
 			enum Action
 			{
 				GLOBAL_SHUTDOWN = 0,
-				GLOBAL_RELOAD = 1
+				GLOBAL_RELOAD = 1,
+				GLOBAL_IDLE = 2,
+				GLOBAL_BUSY = 3
 			};
 
 			virtual ~GlobalEvent();

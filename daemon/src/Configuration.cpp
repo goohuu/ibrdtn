@@ -269,6 +269,11 @@ namespace dtn
 			return Configuration::NetConfig("local", Configuration::NetConfig::NETWORK_TCP, ibrcommon::NetInterface("lo"), 4550);
 		}
 
+		std::string Configuration::getStorage() const
+		{
+			return _conf.read<std::string>("storage", "default");
+		}
+
 		void Configuration::Network::load(const ibrcommon::ConfigFile &conf)
 		{
 			/**

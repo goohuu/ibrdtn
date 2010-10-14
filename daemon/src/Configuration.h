@@ -125,6 +125,12 @@ namespace dtn
 			 */
 			std::string getNotifyCommand();
 
+			/**
+			 * Get the type of bundle storage to use.
+			 * @return
+			 */
+			std::string getStorage() const;
+
 			enum RoutingExtension
 			{
 				DEFAULT_ROUTING = 0,

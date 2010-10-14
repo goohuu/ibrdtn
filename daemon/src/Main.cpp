@@ -161,27 +161,58 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 {
 	dtn::core::BundleStorage *storage = NULL;
 
-	try {
-		// new methods for blobs
-		ibrcommon::File path = conf.getPath("storage");
-
 #ifdef HAVE_SQLITE
-		dtn::core::SQLiteBundleStorage *sbs = new dtn::core::SQLiteBundleStorage(path, "sqlite.db", conf.getLimit("storage") );
-#else
-		// create workdir if needed
-		if (!path.exists())
-		{
-			ibrcommon::File::createDirectory(path);
-		}
+	if (conf.getStorage() == "sqlite")
+	{
+		try {
+			// new methods for blobs
+			ibrcommon::File path = conf.getPath("storage");
 
-		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path, conf.getLimit("storage"));
+			// create workdir if needed
+			if (!path.exists())
+			{
+				ibrcommon::File::createDirectory(path);
+			}
+
+			dtn::core::SQLiteBundleStorage *sbs = new dtn::core::SQLiteBundleStorage(path, "sqlite.db", conf.getLimit("storage") );
+
+			components.push_back(sbs);
+			storage = sbs;
+		} catch (Configuration::ParameterNotSetException ex) {
+			IBRCOMMON_LOGGER(error) << "storage for bundles" << IBRCOMMON_LOGGER_ENDL;
+			exit(-1);
+		}
+	}
 #endif
-		components.push_back(sbs);
-		storage = sbs;
-	} catch (Configuration::ParameterNotSetException ex) {
-		dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(conf.getLimit("storage"));
-		components.push_back(sbs);
-		storage = sbs;
+
+	if ((conf.getStorage() == "simple") || (conf.getStorage() == "default"))
+	{
+		// default behavior if no bundle storage is set
+		try {
+			// new methods for blobs
+			ibrcommon::File path = conf.getPath("storage");
+
+			// create workdir if needed
+			if (!path.exists())
+			{
+				ibrcommon::File::createDirectory(path);
+			}
+
+			dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path, conf.getLimit("storage"));
+
+			components.push_back(sbs);
+			storage = sbs;
+		} catch (Configuration::ParameterNotSetException ex) {
+			dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(conf.getLimit("storage"));
+			components.push_back(sbs);
+			storage = sbs;
+		}
+	}
+
+	if (storage == NULL)
+	{
+		IBRCOMMON_LOGGER(error) << "bundle storage module \"" << conf.getStorage() << "\" do not exists!" << IBRCOMMON_LOGGER_ENDL;
+		exit(-1);
 	}
 
 	// set the storage in the core

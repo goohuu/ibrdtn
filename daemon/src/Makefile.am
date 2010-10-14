@@ -64,7 +64,7 @@ core_SOURCES =	core/AbstractWorker.cpp \
 				core/TimeEvent.h
 				
 if SQLITE
-core_SOURCES += core/SQLiteBundleStorage.h core/SQLiteBundleStorage.cpp
+core_SOURCES += core/SQLiteConfigure.h core/SQLiteConfigure.cpp core/SQLiteBundleStorage.h core/SQLiteBundleStorage.cpp
 endif
 				
 routing_SOURCES = routing/BaseRouter.cpp \

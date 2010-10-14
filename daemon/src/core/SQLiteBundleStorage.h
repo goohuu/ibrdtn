@@ -14,13 +14,15 @@
 #include "EventReceiver.h"
 #include "core/BundleStorage.h"
 #include "core/EventReceiver.h"
+#include <ibrdtn/data/MetaBundle.h>
 
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/thread/Queue.h>
-#include "ibrcommon/thread/Thread.h"
-#include "ibrcommon/thread/Conditional.h"
+#include <ibrcommon/thread/Thread.h>
+#include <ibrcommon/thread/Conditional.h>
+#include <ibrcommon/data/File.h>
 
 #include <sqlite3.h>
 #include <string>
@@ -35,7 +37,21 @@ namespace testsuite{
 }
 namespace core {
 
-class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public ibrcommon::JoinableThread{
+class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public ibrcommon::JoinableThread
+{
+	enum SQL_TABLES
+	{
+		SQL_TABLE_BUNDLE = 0,
+		SQL_TABLE_FRAGMENT = 1,
+		SQL_TABLE_BLOCK = 2,
+		SQL_TABLE_ROUTING = 3,
+		SQL_TABLE_BUNDLE_ROUTING_INFO = 4,
+		SQL_TABLE_NODE_ROUTING_INFO = 5,
+		SQL_TABLE_END = 6
+	};
+
+	static const std::string _tables[SQL_TABLE_END];
+
 public:
 	friend class testsuite::SQLiteBundleStorageTestSuite;
 
@@ -64,7 +80,7 @@ public:
 	 * @param Dateiname der Datenbank
 	 * @param maximale Größe der Datenbank
 	 */
-	SQLiteBundleStorage(string dbPath ,string dbFile , int size);
+	SQLiteBundleStorage(const ibrcommon::File &dbPath, const string &dbFile, const int &size);
 
 	/**
 	 * destructor
@@ -114,6 +130,13 @@ public:
 	 * @return A bundle object.
 	 */
 	dtn::data::Bundle get(const dtn::data::EID &eid);
+
+	/**
+	 * Returns one bundle which is not in the bloomfilter
+	 * @param filter
+	 * @return
+	 */
+	dtn::data::Bundle get(const ibrcommon::BloomFilter &filter);
 
 	/**
 	 * Returns the routinginformation stored for a specific Bundle.
@@ -179,6 +202,11 @@ public:
 	 * @return the count of bundles in the storage
 	 */
 	unsigned int count();
+
+	/**
+	 * @sa BundleStorage::releaseCustody();
+	 */
+	void releaseCustody(dtn::data::BundleID &bundle);
 
 	/**
 	 * Sets the priority of the Bundle.
@@ -278,6 +306,12 @@ private:
 	int storeBlocks(const data::Bundle &bundle);
 
 	/**
+	 * Remove all bundles which match this filter
+	 * @param filter
+	 */
+	dtn::data::MetaBundle remove(const ibrcommon::BloomFilter&) { return dtn::data::MetaBundle(); };
+
+	/**
 	 * Reads the Blocks from the belonging to the ID and adds them to the bundle. The caller of this function has to have the Lock for the database.
 	 * @param Bundle where the Blocks should be added
 	 * @param The BundleID for which the Blocks should be read
@@ -296,26 +330,15 @@ private:
 	 */
 	void consistenceCheck();
 
-	ibrcommon::File dbPath;
-	string dbFile;
-	size_t dbSize;
-	sqlite3 *database;
-	ibrcommon::Conditional dbMutex;
-	ibrcommon::Queue<Task*> _tasks;
-
-
 	/**
 	 * updates the nextExpiredTime. The calling function has to have the databaselock.
 	 */
 	void updateexpiredTime();
 
-	//Tablename
-	const std::string _BundleTable;
-	const std::string _FragmentTable;
-	const std::string _BlockTable;
-	const std::string _RoutingTable;
-	const std::string _BundleRoutingInfo;
-	const std::string _NodeRoutingInfo;
+	/**
+	 * @see Component::getName()
+	 */
+	virtual const std::string getName() const;
 
 	bool global_shutdown;
 	string dbPath, dbFile;
