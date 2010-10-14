@@ -113,11 +113,6 @@ namespace dtn
 			_lastack = ack;
 		}
 
-		bool ClientHandler::isConnected()
-		{
-			return _connection.isConnected();
-		}
-
 		void ClientHandler::initialize()
 		{
 			try {

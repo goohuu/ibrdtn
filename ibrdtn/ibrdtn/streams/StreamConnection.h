@@ -28,14 +28,6 @@ namespace dtn
 		class StreamConnection : public iostream
 		{
 		public:
-			enum ConnectionState
-			{
-				CONNECTION_INITIAL = 0,
-				CONNECTION_CONNECTED = 1,
-				CONNECTION_SHUTDOWN = 2,
-				CONNECTION_CLOSED = 3
-			};
-
 			enum ConnectionShutdownCases
 			{
 				CONNECTION_SHUTDOWN_NOTSET = 0,
@@ -150,12 +142,6 @@ namespace dtn
 			 * @param timeout The desired timeout for this connection.
 			 */
 			void handshake(const dtn::data::EID &eid, const size_t timeout = 10, const char flags = 0);
-
-			/**
-			 * Returns a variable which tells the connection status.
-			 * @return True, if connected.
-			 */
-			bool isConnected();
 
 			/**
 			 * This method shutdown the whole connection handling process. To differ between the
@@ -348,9 +334,6 @@ namespace dtn
 			void eventBundleForwarded();
 
 			StreamConnection::Callback &_callback;
-
-			ibrcommon::StatefulConditional<ConnectionState, CONNECTION_CLOSED> _in_state;
-			ibrcommon::StatefulConditional<ConnectionState, CONNECTION_CLOSED> _out_state;
 
 			dtn::streams::StreamContactHeader _peer;
 

@@ -28,8 +28,6 @@ namespace dtn
 			ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream);
 			virtual ~ClientHandler();
 
-			bool isConnected();
-
 			virtual void initialize();
 			virtual void shutdown();
 

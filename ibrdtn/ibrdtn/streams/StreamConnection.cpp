@@ -20,8 +20,7 @@ namespace dtn
 	namespace streams
 	{
 		StreamConnection::StreamConnection(StreamConnection::Callback &cb, iostream &stream, const size_t buffer_size)
-		 : std::iostream(&_buf), _callback(cb), _in_state(CONNECTION_INITIAL),
-		   _out_state(CONNECTION_INITIAL), _buf(*this, stream, buffer_size), _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
+		 : std::iostream(&_buf), _callback(cb), _buf(*this, stream, buffer_size), _shutdown_reason(CONNECTION_SHUTDOWN_NOTSET)
 		{
 		}
 
@@ -44,17 +43,6 @@ namespace dtn
 			// do the handshake
 			_peer = _buf.handshake(header);
 
-			// set the stream state
-			{
-				ibrcommon::MutexLock out_lock(_out_state);
-				_out_state.setState(CONNECTION_CONNECTED);
-			}
-
-			{
-				ibrcommon::MutexLock in_lock(_in_state);
-				_in_state.setState(CONNECTION_CONNECTED);
-			}
-
 			// signal the complete handshake
 			_callback.eventConnectionUp(_peer);
 		}
@@ -71,15 +59,6 @@ namespace dtn
 
 		void StreamConnection::close()
 		{
-			{
-				ibrcommon::MutexLock l(_in_state);
-				_in_state.setState(CONNECTION_CLOSED);
-			}
-
-			{
-				ibrcommon::MutexLock l(_out_state);
-				_out_state.setState(CONNECTION_CLOSED);
-			}
 		}
 
 		void StreamConnection::shutdown(ConnectionShutdownCases csc)
@@ -143,14 +122,12 @@ namespace dtn
 
 		void StreamConnection::eventShutdown()
 		{
-			_in_state.setState(CONNECTION_CLOSED);
 			_callback.eventShutdown();
 		}
 
 		void StreamConnection::eventBundleAck(size_t ack)
 		{
 			_callback.eventBundleAck(ack);
-			_in_state.signal(true);
 		}
 
 		void StreamConnection::eventBundleRefused()
@@ -165,30 +142,8 @@ namespace dtn
 			_callback.eventBundleForwarded();
 		}
 
-		bool StreamConnection::isConnected()
-		{
-			if  (
-					(_in_state.getState() > CONNECTION_INITIAL) &&
-					(_in_state.getState() < CONNECTION_CLOSED)
-				)
-					return true;
-
-			return false;
-		}
-
 		void StreamConnection::connectionTimeout()
 		{
-			// connection closed
-			{
-				ibrcommon::MutexLock l(_in_state);
-				_in_state.setState(CONNECTION_CLOSED);
-			}
-
-			{
-				ibrcommon::MutexLock l(_out_state);
-				_out_state.setState(CONNECTION_CLOSED);
-			}
-
 			// call superclass
 			_callback.eventTimeout();
 		}
