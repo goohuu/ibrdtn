@@ -128,7 +128,7 @@ namespace dtn
 			 * @param cb Callback object for events of this stream
 			 * @param stream The underlying stream object
 			 */
-			StreamConnection(StreamConnection::Callback &cb, iostream &stream, const size_t buffer_size = 1024);
+			StreamConnection(StreamConnection::Callback &cb, iostream &stream, const size_t buffer_size = 4096);
 
 			/**
 			 * Destructor of the StreamConnection class
