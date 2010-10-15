@@ -27,7 +27,8 @@ void print_help()
 	cout << " -h|--help       display this text" << endl;
 	cout << " --src <name>    set the source application name (e.g. filetransfer)" << endl;
 	cout << " -p <0..2>       set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
-        cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 3600" << endl;
+	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 3600" << endl;
+	cout << " -U <socket>     use UNIX domain sockets" << endl;
 
 }
 
@@ -39,6 +40,7 @@ int main(int argc, char *argv[])
 	unsigned int lifetime = 3600;
 	bool use_stdin = false;
 	std::string filename;
+	ibrcommon::File unixdomain;
 	int priority = 1;
 
 //	ibrcommon::Logger::setVerbosity(99);
@@ -92,6 +94,17 @@ int main(int argc, char *argv[])
 				stringstream data; data << argv[i];
 					data >> priority;
 			}
+
+			if (arg == "-U" && argc > i)
+			{
+				if (++i > argc)
+				{
+					std::cout << "argument missing!" << std::endl;
+					return -1;
+				}
+
+				unixdomain = ibrcommon::File(argv[i]);
+			}
 		}
 		else
 		{
@@ -125,7 +138,19 @@ int main(int argc, char *argv[])
 
 	try {
 		// Create a stream to the server using TCP.
-		ibrcommon::tcpclient conn("127.0.0.1", 4550);
+		ibrcommon::tcpclient conn;
+
+		// check if the unixdomain socket exists
+		if (unixdomain.exists())
+		{
+			// connect to the unix domain socket
+			conn.open(unixdomain);
+		}
+		else
+		{
+			// connect to the standard local api port
+			conn.open("127.0.0.1", 4550);
+		}
 
 		// enable nodelay option
 		conn.enableNoDelay();
