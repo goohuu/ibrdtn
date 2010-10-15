@@ -26,6 +26,7 @@ void print_help()
 	cout << " --name <name>        set the application name (e.g. filetransfer)" << endl;
 	cout << " --timeout <seconds>  receive timeout in seconds" << endl;
 	cout << " --count <number>     receive that many bundles" << endl;
+	cout << " -U <socket>     use UNIX domain sockets" << endl;
 }
 
 dtn::api::Client *_client = NULL;
@@ -66,6 +67,7 @@ int main(int argc, char *argv[])
 	string name = "filetransfer";
 	int timeout = 0;
 	int count   = 1;
+	ibrcommon::File unixdomain;
 
 	for (int i = 0; i < argc; i++)
 	{
@@ -98,14 +100,37 @@ int main(int argc, char *argv[])
 		{
 			count = atoi(argv[i + 1]);
 		}
+
+		if (arg == "-U" && argc > i)
+		{
+			if (++i > argc)
+			{
+				std::cout << "argument missing!" << std::endl;
+				return -1;
+			}
+
+			unixdomain = ibrcommon::File(argv[i]);
+		}
 	}
 
 	try {
 		// Create a stream to the server using TCP.
-		ibrcommon::tcpclient conn("127.0.0.1", 4550);
+		ibrcommon::tcpclient conn;
 
-		// enable nodelay option
-		conn.enableNoDelay();
+		// check if the unixdomain socket exists
+		if (unixdomain.exists())
+		{
+			// connect to the unix domain socket
+			conn.open(unixdomain);
+		}
+		else
+		{
+			// connect to the standard local api port
+			conn.open("127.0.0.1", 4550);
+
+			// enable nodelay option
+			conn.enableNoDelay();
+		}
 
 		// Initiate a client for synchronous receiving
 		dtn::api::Client client(name, conn);

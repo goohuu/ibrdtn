@@ -150,10 +150,10 @@ int main(int argc, char *argv[])
 		{
 			// connect to the standard local api port
 			conn.open("127.0.0.1", 4550);
-		}
 
-		// enable nodelay option
-		conn.enableNoDelay();
+			// enable nodelay option
+			conn.enableNoDelay();
+		}
 
 		try {
 			// Initiate a client for synchronous receiving

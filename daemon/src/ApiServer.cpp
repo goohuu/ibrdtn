@@ -23,6 +23,11 @@ namespace dtn
 {
 	namespace daemon
 	{
+		ApiServer::ApiServer(const ibrcommon::File &socket)
+		 : dtn::net::GenericServer<ClientHandler>(), _tcpsrv(socket), _dist(_clients, mutex())
+		{
+		}
+
 		ApiServer::ApiServer(ibrcommon::NetInterface net, int port)
 		 : dtn::net::GenericServer<ClientHandler>(), _tcpsrv(net, port), _dist(_clients, mutex())
 		{

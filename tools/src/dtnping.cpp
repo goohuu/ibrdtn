@@ -132,7 +132,7 @@ void print_help()
 	cout << " --size          the size of the payload" << endl;
 	cout << " --count X       send X echo in a row" << endl;
 	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 30" << endl;
-
+	cout << " -U <socket>     use UNIX domain sockets" << endl;
 }
 
 int main(int argc, char *argv[])
@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
 	bool stop_after_first_fail = false;
 	size_t count = 1;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
+	ibrcommon::File unixdomain;
 
 	if (argc == 1)
 	{
@@ -207,6 +208,16 @@ int main(int argc, char *argv[])
 			return -1;
 		}
 		
+		if (arg == "-U" && argc > i)
+		{
+			if (++i > argc)
+			{
+				std::cout << "argument missing!" << std::endl;
+				return -1;
+			}
+
+			unixdomain = ibrcommon::File(argv[i]);
+		}
 	}
 
 	size_t bundlecounter = 0;
@@ -219,10 +230,22 @@ int main(int argc, char *argv[])
 	
 	try {
 		// Create a stream to the server using TCP.
-		ibrcommon::tcpclient conn("127.0.0.1", 4550);
+		ibrcommon::tcpclient conn;
 
-		// enable nodelay option
-		conn.enableNoDelay();
+		// check if the unixdomain socket exists
+		if (unixdomain.exists())
+		{
+			// connect to the unix domain socket
+			conn.open(unixdomain);
+		}
+		else
+		{
+			// connect to the standard local api port
+			conn.open("127.0.0.1", 4550);
+
+			// enable nodelay option
+			conn.enableNoDelay();
+		}
 
 		// Initiate a derivated client
 		EchoClient client(mode, ping_source,  conn);

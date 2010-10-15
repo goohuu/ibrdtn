@@ -110,6 +110,7 @@ namespace dtn
 			bool doAPI();
 
 			Configuration::NetConfig getAPIInterface();
+			ibrcommon::File getAPISocket();
 
 			/**
 			 * Get the version of this daemon.

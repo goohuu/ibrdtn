@@ -266,7 +266,20 @@ namespace dtn
 
 		Configuration::NetConfig Configuration::getAPIInterface()
 		{
-			return Configuration::NetConfig("local", Configuration::NetConfig::NETWORK_TCP, ibrcommon::NetInterface("lo"), 4550);
+//			try {
+				return Configuration::NetConfig("local", Configuration::NetConfig::NETWORK_TCP, ibrcommon::NetInterface("lo"), 4550);
+//			} catch (const ConfigFile::key_not_found&) {
+//				throw ParameterNotSetException();
+//			}
+		}
+
+		ibrcommon::File Configuration::getAPISocket()
+		{
+			try {
+				return ibrcommon::File(_conf.read<std::string>("api_socket"));
+			} catch (const ConfigFile::key_not_found&) {
+				throw ParameterNotSetException();
+			}
 		}
 
 		std::string Configuration::getStorage() const

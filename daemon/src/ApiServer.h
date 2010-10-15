@@ -26,6 +26,7 @@ namespace dtn
 		class ApiServer : public dtn::net::GenericServer<ClientHandler>
 		{
 		public:
+			ApiServer(const ibrcommon::File &socket);
 			ApiServer(ibrcommon::NetInterface net, int port = 4550);
 			virtual ~ApiServer();
 

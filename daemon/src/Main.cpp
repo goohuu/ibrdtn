@@ -461,14 +461,29 @@ int main(int argc, char *argv[])
 
 	if (conf.doAPI())
 	{
-		Configuration::NetConfig lo = conf.getAPIInterface();
-
 		try {
-			// instance a API server, first create a socket
-			components.push_back( new ApiServer(lo.interface, lo.port) );
-		} catch (ibrcommon::SocketException ex) {
-			IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.getAddress() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
-			exit(-1);
+			ibrcommon::File socket = conf.getAPISocket();
+
+			try {
+				// use unix domain sockets for API
+				components.push_back( new ApiServer(socket) );
+				IBRCOMMON_LOGGER(info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
+			} catch (ibrcommon::SocketException ex) {
+				IBRCOMMON_LOGGER(error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+				exit(-1);
+			}
+
+		} catch (const Configuration::ParameterNotSetException&) {
+			Configuration::NetConfig lo = conf.getAPIInterface();
+
+			try {
+				// instance a API server, first create a socket
+				components.push_back( new ApiServer(lo.interface, lo.port) );
+				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.interface.getAddress() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
+			} catch (ibrcommon::SocketException ex) {
+				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.getAddress() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+				exit(-1);
+			}
 		}
 	}
 	else
