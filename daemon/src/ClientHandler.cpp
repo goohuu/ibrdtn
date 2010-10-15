@@ -6,6 +6,7 @@
  */
 
 #include "ClientHandler.h"
+#include "Configuration.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleCore.h"
 #include "net/BundleReceivedEvent.h"
@@ -27,7 +28,10 @@ namespace dtn
 		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv), ibrcommon::DetachedThread(0),
 		   _sender(*this), _stream(stream), _connection(*this, *_stream)
 		{
-			// stream->enableNoDelay();
+			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
+			{
+				stream->enableNoDelay();
+			}
 		}
 
 		ClientHandler::~ClientHandler()

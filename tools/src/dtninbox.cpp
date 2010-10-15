@@ -113,6 +113,9 @@ int main(int argc, char** argv)
         	// Create a stream to the server using TCP.
         	ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
+    		// enable nodelay option
+    		conn.enableNoDelay();
+
         	// set the connection globally
         	_conn = &conn;
 

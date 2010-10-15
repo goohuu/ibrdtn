@@ -138,7 +138,10 @@ class TUN2BundleGateway : public dtn::api::Client
 	public:
 		TUN2BundleGateway(int fd, string app, string address = "127.0.0.1", int port = 4550)
 		: dtn::api::Client(app, _tcpclient), _fd(fd), _tcpclient(address, port)
-		{ };
+		{
+			// enable nodelay option
+			_tcpclient.enableNoDelay();
+		};
 
 		/**
 		 * Destructor of the connection.

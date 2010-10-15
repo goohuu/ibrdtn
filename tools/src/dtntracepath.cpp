@@ -170,6 +170,9 @@ int main(int argc, char *argv[])
 		// Create a stream to the server using TCP.
 		ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
+		// enable nodelay option
+		conn.enableNoDelay();
+
 		// Initiate a derivated client
 		Tracer tracer(mode, trace_source, conn);
 

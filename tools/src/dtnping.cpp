@@ -221,10 +221,11 @@ int main(int argc, char *argv[])
 		// Create a stream to the server using TCP.
 		ibrcommon::tcpclient conn("127.0.0.1", 4550);
 
+		// enable nodelay option
+		conn.enableNoDelay();
+
 		// Initiate a derivated client
 		EchoClient client(mode, ping_source,  conn);
-		
-
 
 		// Connect to the server. Actually, this function initiate the
 		// stream protocol by starting the thread and sending the contact header.
