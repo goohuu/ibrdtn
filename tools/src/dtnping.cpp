@@ -202,21 +202,20 @@ int main(int argc, char *argv[])
 			data >> lifetime;
 			i++;
 		}
+                else if (arg == "-U" && argc > i)
+                {
+                        if (++i > argc)
+                        {
+                                std::cout << "argument missing!" << std::endl;
+                                return -1;
+                        }
+
+                        unixdomain = ibrcommon::File(argv[i]);
+                }
 		else {
 			cout << "Unknown argument " << arg << endl;
 			print_help();
 			return -1;
-		}
-		
-		if (arg == "-U" && argc > i)
-		{
-			if (++i > argc)
-			{
-				std::cout << "argument missing!" << std::endl;
-				return -1;
-			}
-
-			unixdomain = ibrcommon::File(argv[i]);
 		}
 	}
 
