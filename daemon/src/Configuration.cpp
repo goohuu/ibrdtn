@@ -170,18 +170,18 @@ namespace dtn
 				// load main configuration
 				_conf = ibrcommon::ConfigFile(filename);
 
-				// load all configuration extensions
-				_disco.load(_conf);
-				_stats.load(_conf);
-				_debug.load(_conf);
-				_logger.load(_conf);
-				_network.load(_conf);
-
 				IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::ConfigFile::file_not_found ex) {
 				IBRCOMMON_LOGGER(info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
 			}
+
+			// load all configuration extensions
+			_disco.load(_conf);
+			_stats.load(_conf);
+			_debug.load(_conf);
+			_logger.load(_conf);
+			_network.load(_conf);
 		}
 
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
