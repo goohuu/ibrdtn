@@ -9,7 +9,6 @@
 #define REQUEUEBUNDLEEVENT_H_
 
 #include "core/Event.h"
-#include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/BundleID.h"
 #include "ibrdtn/data/EID.h"
 
@@ -28,7 +27,6 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle);
 			static void raise(const dtn::data::EID peer, const dtn::data::BundleID &id);
 
 			dtn::data::EID _peer;

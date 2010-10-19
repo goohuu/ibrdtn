@@ -23,12 +23,6 @@ namespace dtn
 
 		}
 
-		void RequeueBundleEvent::raise(const dtn::data::EID peer, const dtn::data::Bundle &bundle)
-		{
-			// raise the new event
-			raiseEvent( new RequeueBundleEvent(peer, dtn::data::BundleID(bundle)) );
-		}
-
 		void RequeueBundleEvent::raise(const dtn::data::EID peer, const dtn::data::BundleID &id)
 		{
 			// raise the new event

@@ -58,6 +58,16 @@ namespace dtn
 			} catch (std::bad_cast ex) { };
 
 			try {
+				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+
+				// remove the bundleid in our list
+				RetransmissionData data(aborted.getBundleID(), aborted.getPeer());
+				_set.erase(data);
+
+				return;
+			} catch (std::bad_cast ex) { };
+
+			try {
 				const dtn::routing::RequeueBundleEvent &requeue = dynamic_cast<const dtn::routing::RequeueBundleEvent&>(*evt);
 
 				const RetransmissionData data(requeue._bundle, requeue._peer);
@@ -93,11 +103,29 @@ namespace dtn
 				return;
 			} catch (std::bad_cast ex) { };
 
-//			try {
-//				const dtn::core::BundleExpiredEvent &expired = dynamic_cast<const dtn::core::BundleExpiredEvent&>(*evt);
-//
-//				return;
-//			} catch (std::bad_cast ex) { };
+			try {
+				const dtn::core::BundleExpiredEvent &expired = dynamic_cast<const dtn::core::BundleExpiredEvent&>(*evt);
+
+				// delete all matching elements in the queue
+				size_t elements = _queue.size();
+				for (size_t i = 0; i < elements; i++)
+				{
+					const RetransmissionData &data = _queue.front();
+
+					if ((dtn::data::BundleID&)data == expired._bundle)
+					{
+						dtn::net::TransferAbortedEvent::raise(data.destination, data, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+					}
+					else
+					{
+						_queue.push(data);
+					}
+
+					_queue.pop();
+				}
+
+				return;
+			} catch (std::bad_cast ex) { };
 		}
 
 		bool RetransmissionExtension::RetransmissionData::operator!=(const RetransmissionData &obj)
