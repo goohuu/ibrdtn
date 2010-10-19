@@ -59,8 +59,10 @@ namespace dtn
 			public:
 				Sender(ClientHandler &client);
 				virtual ~Sender();
+
+			protected:
 				void run();
-				void shutdown();
+				bool __cancellation();
 
 			private:
 				bool _abort;

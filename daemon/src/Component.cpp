@@ -18,19 +18,12 @@ namespace dtn
 		}
 
 		IndependentComponent::IndependentComponent()
-		 : _running(false)
 		{
 		}
 
 		IndependentComponent::~IndependentComponent()
 		{
 			join();
-		}
-
-		bool IndependentComponent::isRunning()
-		{
-			ibrcommon::MutexLock l(_running_lock);
-			return _running;
 		}
 
 		void IndependentComponent::initialize()
@@ -40,9 +33,6 @@ namespace dtn
 
 		void IndependentComponent::startup()
 		{
-			ibrcommon::MutexLock l(_running_lock);
-			_running = true;
-
 			try {
 				this->start();
 			} catch (const ibrcommon::ThreadException &ex) {
@@ -52,21 +42,12 @@ namespace dtn
 
 		void IndependentComponent::terminate()
 		{
-			{
-				ibrcommon::MutexLock l(_running_lock);
-				_running = false;
-			}
-
 			JoinableThread::stop();
-			componentDown();
 		}
 
 		void IndependentComponent::run()
 		{
 			componentRun();
-
-			ibrcommon::MutexLock l(_running_lock);
-			_running = false;
 		}
 
 		IntegratedComponent::IntegratedComponent()

@@ -63,6 +63,12 @@ namespace dtn
 			virtual void listen() = 0;
 			virtual void shutdown() = 0;
 
+			bool __cancellation()
+			{
+				shutdown();
+				return true;
+			}
+
 			virtual void connectionUp(T *conn) = 0;
 			virtual void connectionDown(T *conn) = 0;
 

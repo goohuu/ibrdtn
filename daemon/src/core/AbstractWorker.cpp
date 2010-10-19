@@ -55,29 +55,40 @@ namespace dtn
 		{
 			BundleStorage &storage = BundleCore::getInstance().getStorage();
 
-			while (_running)
-			{
-				dtn::data::Bundle b;
-
-				try {
-					b = storage.get( _worker._eid );
-					storage.remove(b);
-					_worker.callbackBundleReceived(b);
-				}
-				catch (dtn::core::BundleStorage::NoBundleFoundException ex)
+			try {
+				while (_running)
 				{
-					dtn::data::BundleID id = _receive_bundles.getnpop(true);
+					dtn::data::Bundle b;
 
 					try {
-						_worker.callbackBundleReceived( storage.get( id ) );
-						storage.remove( id );
-					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) {
-
+						b = storage.get( _worker._eid );
+						storage.remove(b);
+						_worker.callbackBundleReceived(b);
 					}
-				}
+					catch (dtn::core::BundleStorage::NoBundleFoundException ex)
+					{
+						dtn::data::BundleID id = _receive_bundles.getnpop(true);
 
-				yield();
+						try {
+							_worker.callbackBundleReceived( storage.get( id ) );
+							storage.remove( id );
+						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) { };
+					}
+
+					yield();
+				}
+			} catch (const ibrcommon::QueueUnblockedException&) {
+				// queue was aborted by another call
 			}
+		}
+
+		bool AbstractWorker::AbstractWorkerAsync::__cancellation()
+		{
+			// cancel the main thread in here
+			_receive_bundles.abort();
+
+			// return true, to signal that no further cancel (the hardway) is needed
+			return true;
 		}
 
 		AbstractWorker::AbstractWorker() : _thread(*this)

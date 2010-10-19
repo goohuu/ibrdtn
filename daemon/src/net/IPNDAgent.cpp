@@ -220,6 +220,12 @@ namespace dtn
 			}
 		}
 
+		bool IPNDAgent::__cancellation()
+		{
+			// since this is an receiving thread we have to cancel the hard way
+			return false;
+		}
+
 		const std::string IPNDAgent::getName() const
 		{
 			return "IPNDAgent";

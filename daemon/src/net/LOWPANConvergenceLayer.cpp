@@ -47,11 +47,7 @@ namespace dtn
 
 		LOWPANConvergenceLayer::~LOWPANConvergenceLayer()
 		{
-			if (isRunning())
-			{
-				componentDown();
-			}
-
+			componentDown();
 			delete _socket;
 		}
 
@@ -190,6 +186,12 @@ namespace dtn
 				}
 				yield();
 			}
+		}
+
+		bool LOWPANConvergenceLayer::__cancellation()
+		{
+			// since this is an receiving thread we have to cancel the hard way
+			return false;
 		}
 
 		const std::string LOWPANConvergenceLayer::getName() const

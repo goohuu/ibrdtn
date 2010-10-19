@@ -131,6 +131,8 @@ namespace dtn
 			virtual void componentRun();
 			virtual void componentDown();
 
+			bool __cancellation();
+
 		private:
 			enum RunMode
 			{

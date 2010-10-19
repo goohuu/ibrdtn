@@ -51,14 +51,17 @@ namespace dtn
 				~Distributor();
 
 				/**
+				 * @see dtn::core::EventReceiver::raiseEvent()
+				 */
+				void raiseEvent(const dtn::core::Event *evt);
+
+			protected:
+				/**
 				 * @see ibrcommon::JoinableThread::run()
 				 */
 				void run();
 
-				/**
-				 * @see dtn::core::EventReceiver::raiseEvent()
-				 */
-				void raiseEvent(const dtn::core::Event *evt);
+				bool __cancellation();
 
 				ibrcommon::Mutex &_lock;
 				std::list<ClientHandler*> &_connections;

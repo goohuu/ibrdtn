@@ -58,13 +58,19 @@ namespace dtn
 
 		NeighborRoutingExtension::~NeighborRoutingExtension()
 		{
-			stopExtension();
+			stop();
 			join();
 		}
 
 		void NeighborRoutingExtension::stopExtension()
 		{
 			_available.abort();
+		}
+
+		bool NeighborRoutingExtension::__cancellation()
+		{
+			_available.abort();
+			return true;
 		}
 
 		void NeighborRoutingExtension::run()

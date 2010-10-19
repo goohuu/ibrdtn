@@ -42,6 +42,7 @@ namespace dtn
 			virtual void componentUp();
 			virtual void componentRun();
 			virtual void componentDown();
+			bool __cancellation();
 
 		private:
 			ibrcommon::lowpansocket *_socket;

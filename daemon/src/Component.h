@@ -63,18 +63,13 @@ namespace dtn
 			virtual void startup();
 			virtual void terminate();
 
-			bool isRunning();
-
 		protected:
 			void run();
+			virtual bool __cancellation() = 0;
 
 			virtual void componentUp() = 0;
 			virtual void componentRun() = 0;
 			virtual void componentDown() = 0;
-
-		private:
-			ibrcommon::Mutex _running_lock;
-			bool _running;
 		};
 
 		class IntegratedComponent : public Component

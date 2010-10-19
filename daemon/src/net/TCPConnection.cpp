@@ -190,7 +190,7 @@ namespace dtn
 
 			try {
 				// shutdown the sender thread
-				_sender.shutdown();
+				_sender.stop();
 			} catch (const std::exception&) { };
 
 			try {
@@ -323,17 +323,17 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConnection::Sender::~Sender()
 		{
+			join();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::Sender::shutdown()
+		bool TCPConvergenceLayer::TCPConnection::Sender::__cancellation()
 		{
-			try {
-				this->stop();
-			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::Sender::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-			}
+			// cancel the main thread in here
+			_abort = true;
+			this->abort();
 
-			this->join();
+			// return false, to signal that further cancel (the hardway) is needed
+			return false;
 		}
 
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
@@ -344,7 +344,12 @@ namespace dtn
 				while (!_abort)
 				{
 					try {
+						// The queue is not cancel-safe with uclibc, so we need to
+						// disable cancel here
+						int oldstate;
+						ibrcommon::Thread::disableCancel(oldstate);
 						dtn::data::BundleID id = getnpop(true, _keepalive_timeout);
+						ibrcommon::Thread::restoreCancel(oldstate);
 
 						try {
 							// read the bundle out of the storage
@@ -373,6 +378,9 @@ namespace dtn
 					// idle a little bit
 					yield();
 				}
+			} catch (const ibrcommon::QueueUnblockedException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				return;
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (...) {

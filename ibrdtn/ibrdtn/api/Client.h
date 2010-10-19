@@ -49,7 +49,9 @@ namespace dtn
 				AsyncReceiver(Client &client);
 				virtual ~AsyncReceiver();
 
+			protected:
 				void run();
+				bool __cancellation();
 
 			private:
 				Client &_client;

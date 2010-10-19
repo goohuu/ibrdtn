@@ -263,10 +263,9 @@ public:
 	 */
 	void raiseEvent(const Event *evt);
 
-	/**
-	 *
-	 */
+protected:
 	void run(void);
+	bool __cancellation();
 
 private:
 	/**

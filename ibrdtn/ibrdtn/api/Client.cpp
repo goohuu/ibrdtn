@@ -35,6 +35,12 @@ namespace dtn
 			join();
 		}
 
+		bool Client::AsyncReceiver::__cancellation()
+		{
+			// return false, to signal that further cancel (the hardway) is needed
+			return false;
+		}
+
 		void Client::AsyncReceiver::run()
 		{
 			try {
@@ -43,7 +49,6 @@ namespace dtn
 					dtn::api::Bundle b;
 					_client >> b;
 					_client.received(b);
-					testcancel();
 					yield();
 				}
 			} catch (dtn::api::ConnectionException ex) {

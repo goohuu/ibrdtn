@@ -33,6 +33,7 @@ namespace dtn
 
 		protected:
 			void run();
+			bool __cancellation();
 
 		private:
 			/**

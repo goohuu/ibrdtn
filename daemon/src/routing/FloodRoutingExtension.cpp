@@ -55,7 +55,7 @@ namespace dtn
 
 		FloodRoutingExtension::~FloodRoutingExtension()
 		{
-			stopExtension();
+			stop();
 			join();
 		}
 
@@ -205,6 +205,12 @@ namespace dtn
 			} catch (std::bad_cast ex) { };
 		}
 
+		bool FloodRoutingExtension::__cancellation()
+		{
+			_taskqueue.abort();
+			return true;
+		}
+
 		void FloodRoutingExtension::run()
 		{
 			while (true)
@@ -220,7 +226,6 @@ namespace dtn
 							ExpireTask &task = dynamic_cast<ExpireTask&>(*t);
 
 							ibrcommon::MutexLock l(_list_mutex);
-							_seenlist.expire(task.timestamp);
 							_purge_vector.expire(task.timestamp);
 						} catch (std::bad_cast) { };
 
@@ -266,11 +271,6 @@ namespace dtn
 
 				yield();
 			}
-		}
-
-		bool FloodRoutingExtension::wasSeenBefore(const dtn::data::BundleID &id) const
-		{
-			return ( std::find( _seenlist.begin(), _seenlist.end(), id ) != _seenlist.end());
 		}
 
 		/****************************************/

@@ -1544,11 +1544,25 @@ namespace core {
 		} catch (const std::bad_cast&) { }
 	}
 
-	void SQLiteBundleStorage::run(void){
-		while(!global_shutdown){
+	void SQLiteBundleStorage::run(void)
+	{
+		ibrcommon::MutexLock l(timeeventConditional);
+
+		while (!global_shutdown)
+		{
 			idle_work();
 			timeeventConditional.wait();
 		}
+	}
+
+	bool SQLiteBundleStorage::__cancellation()
+	{
+		ibrcommon::MutexLock l(timeeventConditional);
+		global_shutdown = true;
+		timeeventConditional.signal(true);
+
+		// return true, to signal that no further cancel (the hardway) is needed
+		return true;
 	}
 
 	void SQLiteBundleStorage::deleteexpired(){

@@ -50,7 +50,7 @@ namespace dtn
 		void SimpleBundleStorage::componentRun()
 		{
 			try {
-				while (isRunning())
+				while (true)
 				{
 					Task *t = _tasks.getnpop(true);
 					ibrcommon::AutoDelete<Task> ad(t);
@@ -66,6 +66,12 @@ namespace dtn
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "SimpleBundleStorage exited with " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+		}
+
+		bool SimpleBundleStorage::__cancellation()
+		{
+			_tasks.abort();
+			return true;
 		}
 
 		void SimpleBundleStorage::raiseEvent(const Event *evt)

@@ -40,19 +40,7 @@ namespace dtn
 
 		protected:
 			void run();
-
-			/**
-			 * Check if one bundle was seen before.
-			 * @param id The ID of the Bundle.
-			 * @return True, if the bundle was seen before. False if not.
-			 */
-			bool wasSeenBefore(const dtn::data::BundleID &id) const;
-
-//			/**
-//			 * remove a bundle out of all local bundle lists
-//			 * @param id The ID of the Bundle.
-//			 */
-//			void remove(const dtn::data::MetaBundle &meta);
+			bool __cancellation();
 
 		private:
 			class Task
@@ -101,12 +89,7 @@ namespace dtn
 			ibrcommon::Mutex _list_mutex;
 
 			/**
-			 * contains a list of bundle references which has been seen previously
-			 */
-			dtn::data::BundleList _seenlist;
-
-			/**
-			 * contains the own summary vector for all stored bundles
+			 * contains the own summary vector for all delivered bundles
 			 */
 			dtn::routing::BundleSummary _purge_vector;
 

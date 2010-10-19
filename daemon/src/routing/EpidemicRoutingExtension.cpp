@@ -55,7 +55,7 @@ namespace dtn
 
 		EpidemicRoutingExtension::~EpidemicRoutingExtension()
 		{
-			stopExtension();
+			stop();
 			join();
 		}
 
@@ -242,6 +242,12 @@ namespace dtn
 			getRouter()->transferTo(eid, routingbundle);
 		}
 
+		bool EpidemicRoutingExtension::__cancellation()
+		{
+			_taskqueue.abort();
+			return true;
+		}
+
 		void EpidemicRoutingExtension::run()
 		{
 			bool sendVectorUpdate = false;
@@ -266,7 +272,6 @@ namespace dtn
 							}
 
 							ibrcommon::MutexLock l(_list_mutex);
-							_seenlist.expire(task.timestamp);
 							_purge_vector.expire(task.timestamp);
 						} catch (std::bad_cast) { };
 
@@ -373,11 +378,6 @@ namespace dtn
 
 				yield();
 			}
-		}
-
-		bool EpidemicRoutingExtension::wasSeenBefore(const dtn::data::BundleID &id) const
-		{
-			return ( std::find( _seenlist.begin(), _seenlist.end(), id ) != _seenlist.end());
 		}
 
 		dtn::data::Block* EpidemicRoutingExtension::EpidemicExtensionBlock::Factory::create()

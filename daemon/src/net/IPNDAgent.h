@@ -47,6 +47,7 @@ namespace dtn
 			virtual void componentRun();
 			virtual void componentUp();
 			virtual void componentDown();
+			bool __cancellation();
 
 		private:
 			void send(ibrcommon::udpsocket::peer &p, const DiscoveryAnnouncement &announcement);

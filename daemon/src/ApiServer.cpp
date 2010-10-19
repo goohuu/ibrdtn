@@ -63,7 +63,6 @@ namespace dtn
 
 		void ApiServer::shutdown()
 		{
-			_dist._received.abort();
 			_dist.stop();
 			_tcpsrv.shutdown();
 			_tcpsrv.close();
@@ -91,6 +90,15 @@ namespace dtn
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			join();
+		}
+
+		bool ApiServer::Distributor::__cancellation()
+		{
+			// cancel the main thread in here
+			_received.abort();
+
+			// return true, to signal that no further cancel (the hardway) is needed
+			return true;
 		}
 
 		/**

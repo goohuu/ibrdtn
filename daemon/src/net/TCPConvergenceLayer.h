@@ -114,9 +114,11 @@ namespace dtn
 				public:
 					Sender(TCPConnection &connection, size_t &keepalive_timeout);
 					virtual ~Sender();
+
+				protected:
 					void run();
 					void finally();
-					void shutdown();
+					bool __cancellation();
 
 				private:
 					bool _abort;

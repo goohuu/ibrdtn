@@ -133,7 +133,7 @@ namespace dtn
 			std::string url = _server + "?eid=" + dtn::core::BundleCore::local.getString();
 			CURLcode res;
 
-			while (isRunning())
+			while (true)
 			{
 				ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
 				CURL *curl = curl_easy_init();
@@ -176,6 +176,12 @@ namespace dtn
 
 		void HTTPConvergenceLayer::componentDown()
 		{
+		}
+
+		bool HTTPConvergenceLayer::__cancellation()
+		{
+			// since this is an receiving thread we have to cancel the hard way
+			return false;
 		}
 
 		const std::string HTTPConvergenceLayer::getName() const

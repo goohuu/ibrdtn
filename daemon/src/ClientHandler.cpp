@@ -153,7 +153,7 @@ namespace dtn
 
 			try {
 				// shutdown the sender thread
-				_sender.shutdown();
+				_sender.stop();
 			} catch (std::exception) {
 
 			}
@@ -246,19 +246,17 @@ namespace dtn
 
 		ClientHandler::Sender::~Sender()
 		{
-			// enable this to force the dtnd to block on unsuccessful object free
-			// shutdown();
+			join();
 		}
 
-		void ClientHandler::Sender::shutdown()
+		bool ClientHandler::Sender::__cancellation()
 		{
-			try {
-				this->stop();
-			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
-			}
+			// cancel the main thread in here
+			_abort = true;
+			this->abort();
 
-			this->join();
+			// return false, to signal that further cancel (the hardway) is needed
+			return false;
 		}
 
 		void ClientHandler::Sender::run()
@@ -278,17 +276,23 @@ namespace dtn
 
 				while (!_abort)
 				{
-					try {
-						dtn::data::Bundle bundle = getnpop(true);
+					// The queue is not cancel-safe with uclibc, so we need to
+					// disable cancel here
+					int oldstate;
+					ibrcommon::Thread::disableCancel(oldstate);
+					dtn::data::Bundle bundle = getnpop(true);
+					ibrcommon::Thread::restoreCancel(oldstate);
 
-						// send bundle
-						_client << bundle;
-					} catch (ibrcommon::QueueUnblockedException) { }
+					// send bundle
+					_client << bundle;
 
 					// idle a little bit
 					yield();
 				}
 
+			} catch (const ibrcommon::QueueUnblockedException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				return;
 			} catch (const ibrcommon::IOException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const dtn::InvalidDataException &ex) {
