@@ -75,7 +75,7 @@ AC_ARG_WITH(sqlite,
 	AS_HELP_STRING([--with-sqlite], [Build with sqlite support
 		@<:@default=no@:>@]),
 	[
-	if test "x$with_curl" = "xyes"; then
+	if test "x$with_sqlite" = "xyes"; then
 		PKG_CHECK_MODULES(SQLITE, sqlite3, use_sqlite="yes", use_sqlite="no")
 		AC_SUBST(SQLITE_CFLAGS)
 		AC_SUBST(SQLITE_LIBS)
