@@ -70,7 +70,7 @@ namespace dtn
 
 		bool TCPConvergenceLayer::onInterface(const ibrcommon::NetInterface &net) const
 		{
-			if (_net.getInterface() == net.getInterface()) return true;
+			if (_net == net) return true;
 			return false;
 		}
 

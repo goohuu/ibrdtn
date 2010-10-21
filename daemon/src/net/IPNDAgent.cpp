@@ -58,7 +58,7 @@ namespace dtn
 
 		void IPNDAgent::bind(const ibrcommon::NetInterface &net)
 		{
-			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: bind to interface " << net.getInterface() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: bind to interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
 		}
 
@@ -118,7 +118,7 @@ namespace dtn
 					}
 				}
 
-				ibrcommon::udpsocket *sock = _sockets[iface.getInterface()];
+				ibrcommon::udpsocket *sock = _sockets[iface.toString()];
 
 				if (sock == NULL)
 				{
@@ -152,14 +152,14 @@ namespace dtn
 
 						if (_sockets.empty())
 						{
-							_sockets[net.getInterface()] = _socket;
+							_sockets[net.toString()] = _socket;
 							sock.setInterface(net);
 						}
 						else
 						{
 							ibrcommon::MulticastSocket *newsock = new ibrcommon::MulticastSocket();
 							newsock->setInterface(net);
-							_sockets[net.getInterface()] = newsock;
+							_sockets[net.toString()] = newsock;
 						}
 
 						sock.joinGroup(_destination, (*iter));
