@@ -31,8 +31,11 @@ LOCAL_CHECK_IBRDTN
 AC_SUBST(ibrdtn_CFLAGS)
 AC_SUBST(ibrdtn_LIBS)
 
-# Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h])
+# Checks for header files required by dtntunnel
+AC_CHECK_HEADERS([arpa/inet.h])
+AC_CHECK_HEADERS([fcntl.h])
+AC_CHECK_HEADERS([sys/ioctl.h])
+AC_CHECK_HEADERS([sys/socket.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

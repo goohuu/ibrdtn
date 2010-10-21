@@ -18,6 +18,9 @@ AM_PATH_CPPUNIT(1.9.6)
 AM_INIT_AUTOMAKE
 AM_MAINTAINER_MODE
 
+AC_CHECK_HEADERS([netinet/in.h])
+AC_TYPE_SSIZE_T
+
 dnl --------------------------------
 dnl library version number
 dnl --------------------------------

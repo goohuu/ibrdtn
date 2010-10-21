@@ -32,6 +32,7 @@ AC_PROG_AWK
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_PROG_RANLIB
 
 AC_LANG_CPLUSPLUS
 
@@ -45,7 +46,7 @@ AC_SUBST(ibrdtn_CFLAGS)
 AC_SUBST(ibrdtn_LIBS)
 
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h limits.h netinet/in.h stdlib.h string.h sys/socket.h unistd.h])
+AC_CHECK_HEADERS([syslog.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -79,6 +80,9 @@ AC_ARG_WITH(sqlite,
 		AC_SUBST(SQLITE_CFLAGS)
 		AC_SUBST(SQLITE_LIBS)
 		AC_DEFINE(HAVE_SQLITE, [1], ["sqlite library is available"])
+		AC_CHECK_FUNCS([mkdir])
+		AC_CHECK_FUNCS([strdup])
+		AC_CHECK_FUNCS([strerror])
 	else
 		use_sqlite="no"
 	fi
@@ -96,6 +100,11 @@ AC_ARG_WITH(lowpan,
 		AC_SUBST(NL_CFLAGS)
 		AC_SUBST(NL_LIBS)
 		AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
+		AC_CHECK_HEADERS([arpa/inet.h])
+		AC_CHECK_HEADERS([fcntl.h])
+		AC_CHECK_HEADERS([limits.h])
+		AC_CHECK_HEADERS([netinet/in.h])
+		AC_CHECK_HEADERS([sys/socket.h])
 	else
 		use_lowpan="no"
 	fi
