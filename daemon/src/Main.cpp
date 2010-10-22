@@ -598,5 +598,8 @@ int main(int argc, char *argv[])
 		delete (*iter);
 	}
 
+	// stop the asynchronous logger
+	ibrcommon::Logger::stop();
+
 	return 0;
 };
