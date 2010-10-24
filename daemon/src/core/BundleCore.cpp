@@ -82,6 +82,10 @@ namespace dtn
 
 		dtn::core::BundleStorage& BundleCore::getStorage()
 		{
+			if (_storage == NULL)
+			{
+				throw ibrcommon::Exception("No bundle storage is set! Use BundleCore::setStorage() to set a storage.");
+			}
 			return *_storage;
 		}
 
