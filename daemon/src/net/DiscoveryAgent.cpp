@@ -12,7 +12,6 @@
 #include "core/NodeEvent.h"
 #include "core/Node.h"
 #include <ibrdtn/utils/Utils.h>
-#include <ibrcommon/thread/MutexLock.h>
 #include "Configuration.h"
 
 using namespace dtn::core;
@@ -123,9 +122,6 @@ namespace dtn
 			// check if announcements are enabled
 			if (_config.announce())
 			{
-				static ibrcommon::Mutex mutex;
-				ibrcommon::MutexLock l(mutex);
-
 				// update all services
 				for (std::list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
 				{
