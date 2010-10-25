@@ -27,14 +27,13 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryAgent : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ibrcommon::SimpleTimerCallback
+		class DiscoveryAgent : public dtn::daemon::IndependentComponent, public ibrcommon::SimpleTimerCallback
 		{
 		public:
 			DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config);
 			virtual ~DiscoveryAgent() = 0;
 
 			void received(const DiscoveryAnnouncement &announcement);
-			void raiseEvent(const dtn::core::Event *evt);
 
 			void addService(string name, string parameters);
 			void addService(DiscoveryServiceProvider *provider);
