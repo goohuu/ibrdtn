@@ -261,6 +261,11 @@ namespace dtn
 
 		void ClientHandler::Sender::run()
 		{
+			// The queue is not cancel-safe with uclibc, so we need to
+			// disable cancel here
+			int oldstate;
+			ibrcommon::Thread::disableCancel(oldstate);
+
 			try {
 				try {
 					BundleStorage &storage = BundleCore::getInstance().getStorage();
@@ -268,7 +273,14 @@ namespace dtn
 					while (!_abort)
 					{
 						dtn::data::Bundle b = storage.get( _client.getPeer() );
-						_client << b;
+
+						// enable cancellation during transmission
+						{
+							ibrcommon::Thread::CancelProtector cprotect(true);
+							_client << b;
+						}
+
+						// remove the bundle from the storage
 						storage.remove(b);
 					}
 				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
@@ -276,15 +288,18 @@ namespace dtn
 
 				while (!_abort)
 				{
-					// The queue is not cancel-safe with uclibc, so we need to
-					// disable cancel here
-					int oldstate;
-					ibrcommon::Thread::disableCancel(oldstate);
 					dtn::data::Bundle bundle = getnpop(true);
-					ibrcommon::Thread::restoreCancel(oldstate);
 
-					// send bundle
-					_client << bundle;
+					// enable cancellation during transmission
+					ibrcommon::Thread::CancelProtector cprotect(true);
+
+					// enable cancellation during transmission
+					{
+						ibrcommon::Thread::CancelProtector cprotect(true);
+
+						// send bundle
+						_client << bundle;
+					}
 
 					// idle a little bit
 					yield();

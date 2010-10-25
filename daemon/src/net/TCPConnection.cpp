@@ -102,7 +102,6 @@ namespace dtn
 
 			try {
 				// stop the sender
-				_sender.abort();
 				_sender.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::eventConnectionDown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
@@ -338,25 +337,29 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Sender::run()
 		{
+			// The queue is not cancel-safe with uclibc, so we need to
+			// disable cancel here
+			int oldstate;
+			ibrcommon::Thread::disableCancel(oldstate);
+
 			try {
 				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 				while (!_abort)
 				{
 					try {
-						// The queue is not cancel-safe with uclibc, so we need to
-						// disable cancel here
-						int oldstate;
-						ibrcommon::Thread::disableCancel(oldstate);
 						dtn::data::BundleID id = getnpop(true, _keepalive_timeout);
-						ibrcommon::Thread::restoreCancel(oldstate);
 
 						try {
 							// read the bundle out of the storage
 							const dtn::data::Bundle bundle = storage.get(id);
 
+							// enable cancellation during transmission
+							ibrcommon::Thread::CancelProtector cprotect(true);
+
 							// send bundle
 							_connection << bundle;
+
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 							// send transfer aborted event
 							TransferAbortedEvent::raise(EID(_connection._node.getURI()), id, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
