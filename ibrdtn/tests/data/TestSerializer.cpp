@@ -9,6 +9,7 @@
 #include <ibrdtn/data/EID.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <ibrcommon/thread/MutexLock.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/Serializer.h>
 #include <iostream>
@@ -92,7 +93,12 @@ void TestSerializer::serializer_cbhe02(void)
 	b._destination = dst;
 
 	ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
-	(*ref) << "0123456789";
+
+	{
+		ibrcommon::MutexLock l(ref);
+		(*ref) << "0123456789";
+	}
+
 	b.push_back(ref);
 
 	std::stringstream ss;
