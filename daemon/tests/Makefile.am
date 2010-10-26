@@ -23,3 +23,5 @@ check_PROGRAMS = testsuite
 testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -Wall
 testsuite_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS} @top_srcdir@/src/libdaemon.a @top_srcdir@/src/core/libcore.a @top_srcdir@/src/net/libnet.a @top_srcdir@/src/routing/librouting.a
 testsuite_SOURCES = $(h_sources) $(cc_sources) testsuite.cpp
+
+TESTS = testsuite

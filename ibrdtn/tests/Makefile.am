@@ -12,3 +12,5 @@ check_PROGRAMS = testsuite
 testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -I../../src -Wall
 testsuite_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS}
 testsuite_SOURCES = $(h_sources) $(cc_sources)
+
+TESTS = testsuite
