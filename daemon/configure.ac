@@ -122,8 +122,13 @@ dnl -----------------------------------------------
 
 AC_CONFIG_FILES([Makefile \
 	src/Makefile \
+	src/core/Makefile \
+	src/net/Makefile \
+	src/routing/Makefile \
 	doc/Makefile \
 	man/Makefile \
-	etc/Makefile])
+	etc/Makefile \
+	tests/Makefile
+	])
 	
 AC_OUTPUT

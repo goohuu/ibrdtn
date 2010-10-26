@@ -7,7 +7,7 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "routing/BundleSummary.h"
+#include "src/routing/BundleSummary.h"
 #include <iostream>
 
 #ifndef TESTBUNDLESUMMARY_H_

@@ -10,7 +10,7 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "core/SQLiteBundleStorage.h"
+#include "src/core/SQLiteBundleStorage.h"
 
 namespace dtn
 {

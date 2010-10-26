@@ -167,11 +167,11 @@ namespace dtn
 					// store the bundle into a storage module
 					dtn::core::BundleCore::getInstance().getStorage().store(received.bundle);
 
-					// set the bundle as known
+					// if the bundle is not known
 					if (!isKnown(received.bundle))
 					{
-						ibrcommon::MutexLock l(_known_bundles_lock);
-						_known_bundles.add(received.bundle);
+						// set the bundle as known
+						setKnown(received.bundle);
 
 						// raise the queued event to notify all receivers about the new bundle
 						QueueBundleEvent::raise(received.bundle, received.peer);
