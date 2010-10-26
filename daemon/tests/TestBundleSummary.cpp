@@ -21,6 +21,64 @@ void TestBundleSummary::tearDown()
 {
 }
 
+void TestBundleSummary::containTest(void)
+{
+	dtn::routing::BundleSummary l;
+
+	// define bundle one
+	dtn::data::Bundle b1;
+	b1._lifetime = 20;
+	b1._timestamp = 0;
+	b1._sequencenumber = 23;
+	b1._source = dtn::data::EID("dtn://test1/app0");
+
+	// define bundle two
+	dtn::data::Bundle b2;
+	b2._lifetime = 20;
+	b2._timestamp = 0;
+	b2._sequencenumber = 23;
+	b2._source = dtn::data::EID("dtn://test2/app3");
+
+	// generate some bundles
+	genbundles(l, 1000, 0, 500);
+
+	// the bundle one should not be in the bundle list
+	CPPUNIT_ASSERT(!l.contains(b1));
+
+	// the bundle two should not be in the bundle list
+	CPPUNIT_ASSERT(!l.contains(b2));
+
+	// add bundle one to the bundle list
+	l.add(b1);
+
+	// the bundle one should be in the bundle list
+	CPPUNIT_ASSERT(l.contains(b1));
+
+	// generate more bundles
+	genbundles(l, 1000, 0, 500);
+
+	// the bundle one should be in the bundle list
+	CPPUNIT_ASSERT(l.contains(b1));
+
+	// the bundle two should not be in the bundle list
+	CPPUNIT_ASSERT(!l.contains(b2));
+
+	// add bundle two to the bundle list
+	l.add(b2);
+
+	// the bundle two should be in the bundle list
+	CPPUNIT_ASSERT(l.contains(b2));
+
+	// remove bundle one
+	l.remove(b2);
+
+	// the bundle two should not be in the bundle list
+	CPPUNIT_ASSERT(!l.contains(b2));
+
+	// the bundle one should be in the bundle list
+	CPPUNIT_ASSERT(l.contains(b1));
+}
+
 void TestBundleSummary::expireTest(void)
 {
 	dtn::routing::BundleSummary l;
@@ -43,9 +101,6 @@ void TestBundleSummary::expireTest(void)
 	}
 
 	CPPUNIT_ASSERT(l.size() == 0);
-
-//	std::stringstream bf; bf << l.getSummaryVector() << std::flush;
-//	std::cout << getHex(bf) << std::endl;
 }
 
 void TestBundleSummary::genbundles(dtn::routing::BundleSummary &l, int number, int offset, int max)

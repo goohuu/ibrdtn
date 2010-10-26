@@ -17,6 +17,7 @@ class TestBundleSummary : public CPPUNIT_NS :: TestFixture
 {
 	CPPUNIT_TEST_SUITE (TestBundleSummary);
 	CPPUNIT_TEST (expireTest);
+	CPPUNIT_TEST (containTest);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -25,6 +26,7 @@ public:
 
 protected:
 	void expireTest(void);
+	void containTest(void);
 
 private:
 	void genbundles(dtn::routing::BundleSummary &l, int number, int offset, int max);
