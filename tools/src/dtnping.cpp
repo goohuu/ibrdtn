@@ -32,26 +32,24 @@ class EchoClient : public dtn::api::Client
 		{
 		}
 
-		bool waitForReply(int timeout)
+		const dtn::api::Bundle waitForReply(const int timeout, const dtn::data::EID &eid)
 		{
 			double wait=(timeout*1000);
 			ibrcommon::TimeMeasurement tm;
-			while ( wait > 0) {
+			while ( wait > 0)
+			{
 				try {
 					tm.start(); 
 					dtn::api::Bundle b = this->getBundle((int)(wait/1000));
 					tm.stop();
-					if (checkReply(&b))
-						return true;
+					checkReply(b);
 					wait=wait-tm.getMilliseconds();
+					return b;
+				} catch (ibrcommon::QueueUnblockedException) {
+					throw ibrcommon::Exception("timeout reached");
 				}
-				catch (ibrcommon::Exception ex) {
-					cerr << "Timeout." << endl;
-					return false;
-				} 
 			}
-			return false;
-
+			throw ibrcommon::Exception("timeout is set to zero");
 		}
 
 		void echo(EID destination, int size, int lifetime)
@@ -94,21 +92,20 @@ class EchoClient : public dtn::api::Client
 			
 		}
 		
-		bool checkReply(dtn::api::Bundle *bundle) {
+		void checkReply(dtn::api::Bundle &bundle) {
 			size_t reply_seq = 0;
-			ibrcommon::BLOB::Reference blob=bundle->getData();
+			ibrcommon::BLOB::Reference blob = bundle.getData();
 			ibrcommon::MutexLock l(blob);
 			(*blob).read((char *)(&reply_seq),4 );
-			//cout << "Reply seq is " << reply_seq << endl;
+
 			if (reply_seq != seq) {
-				cerr << "Seq-Nr mismatch, awaited  " << seq << ", got " << reply_seq << endl;
-				return false;
+				std::stringstream ss;
+				ss << "sequence number mismatch, awaited " << seq << ", got " << reply_seq;
+				throw ibrcommon::Exception(ss.str());
 			}
-			if (bundle->getSource().getString() !=lastdestination) {
-				cerr << "Ignoring bundle from source " << bundle->getSource().getString() << " awaited " << lastdestination << endl;
-				return false;
+			if (bundle.getSource().getString() != lastdestination) {
+				throw ibrcommon::Exception("ignoring bundle from source " + bundle.getSource().getString() + " awaited " + lastdestination);
 			}
-			return true;
 		}
 
 	private:
@@ -202,16 +199,16 @@ int main(int argc, char *argv[])
 			data >> lifetime;
 			i++;
 		}
-                else if (arg == "-U" && argc > i)
-                {
-                        if (++i > argc)
-                        {
-                                std::cout << "argument missing!" << std::endl;
-                                return -1;
-                        }
+		else if (arg == "-U" && argc > i)
+		{
+				if (++i > argc)
+				{
+						std::cout << "argument missing!" << std::endl;
+						return -1;
+				}
 
-                        unixdomain = ibrcommon::File(argv[i]);
-                }
+				unixdomain = ibrcommon::File(argv[i]);
+		}
 		else {
 			cout << "Unknown argument " << arg << endl;
 			print_help();
@@ -223,6 +220,9 @@ int main(int argc, char *argv[])
 
 	// the last parameter is always the destination
 	ping_destination = argv[argc - 1];
+
+	// target address
+	EID addr = EID(ping_destination);
 
 	ibrcommon::TimeMeasurement tm;
 	
@@ -253,14 +253,11 @@ int main(int argc, char *argv[])
 		// stream protocol by starting the thread and sending the contact header.
 		client.connect();
 
-		// target address
-		EID addr = EID(ping_destination);
+		std::cout << "ECHO " << addr.getString() << " " << ping_size << " bytes of data." << std::endl;
 
 		try {
 			for (unsigned int i = 0; i < count; i++)
 			{
-				cout << "ECHO: " << addr.getNodeEID() << " ..."; cout.flush();
-
 				// set sending time
 				tm.start();
 
@@ -269,27 +266,36 @@ int main(int argc, char *argv[])
 			
 				if (wait_for_reply)
 				{
-					
-					if (client.waitForReply(2*lifetime)) {
-					// print out measurement result
-						tm.stop();
-						cout << tm << endl;
-						bundlecounter++;
-					}
-					else if (stop_after_first_fail) {
-						cout << "No response, aborting " << endl;
-						break;
-					}
+					try {
+						dtn::api::Bundle response = client.waitForReply(2*lifetime, addr);
 
-					
+						// print out measurement result
+						tm.stop();
+
+						size_t reply_seq = 0;
+						{
+							ibrcommon::BLOB::Reference blob = response.getData();
+							ibrcommon::MutexLock l(blob);
+							(*blob).read((char *)(&reply_seq),4 );
+						}
+
+						std::cout << response.getSource().getString() << " seq=" << reply_seq << " ttl=" << response.getLifetime() << " time=" << tm << std::endl;
+						bundlecounter++;
+					} catch (const ibrcommon::Exception &ex) {
+						std::cerr << ex.what() << std::endl;
+
+						if (stop_after_first_fail)
+						{
+							std::cout << "No response, aborting." << std::endl;
+							break;
+						}
+					}
 				}
-				else
-					cout << endl;
 			}
 		} catch (dtn::api::ConnectionException ex) {
-			cout << "Disconnected." << endl;
+			std::cerr << "Disconnected." << std::endl;
 		} catch (ibrcommon::IOException ex) {
-			cout << "Error while receiving a bundle." << endl;
+			std::cerr << "Error while receiving a bundle." << std::endl;
 		}
 
 		// Shutdown the client connection.
@@ -297,13 +303,14 @@ int main(int argc, char *argv[])
 		conn.close();
 
 	} catch (ibrcommon::tcpclient::SocketException ex) {
-		cerr << "Can not connect to the daemon. Does it run?" << endl;
+		std::cerr << "Can not connect to the daemon. Does it run?" << std::endl;
 		return -1;
 	} catch (...) {
 
 	}
 
 	float loss = 100.0-(bundlecounter/count)*100.0;
+	std::cout << std::endl << "--- " << addr.getString() << " echo statistics --- " << std::endl;
 	std::cout << loss << "% loss. " << bundlecounter << " bundles received " << (count-bundlecounter) << " lost."  << std::endl;
 
 	return 0;

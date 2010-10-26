@@ -187,7 +187,9 @@ namespace dtn
 		{
 			try {
 				return _inqueue.getnpop(true, timeout * 1000);
-			} catch (std::exception ex) {
+			} catch (const ibrcommon::QueueUnblockedException&) {
+				throw;
+			} catch (const std::exception &ex) {
 				throw ibrcommon::ConnectionClosedException(ex.what());
 			}
 		}
