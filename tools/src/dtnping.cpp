@@ -217,6 +217,7 @@ int main(int argc, char *argv[])
 	}
 
 	size_t bundlecounter = 0;
+	size_t dispatchedcounter=0;
 
 	// the last parameter is always the destination
 	ping_destination = argv[argc - 1];
@@ -263,6 +264,7 @@ int main(int argc, char *argv[])
 
 				// Call out a ECHO
 				client.echo( addr, ping_size, lifetime );
+				dispatchedcounter++;
 			
 				if (wait_for_reply)
 				{
@@ -311,7 +313,8 @@ int main(int argc, char *argv[])
 
 	float loss = 100.0-(bundlecounter/count)*100.0;
 	std::cout << std::endl << "--- " << addr.getString() << " echo statistics --- " << std::endl;
-	std::cout << loss << "% loss. " << bundlecounter << " bundles received " << (count-bundlecounter) << " lost."  << std::endl;
+	//std::cout << loss << "% loss. " << bundlecounter << " bundles received " << (count-bundlecounter) << " lost."  << std::endl;
+	std::cout << loss << "% loss. " << dispatchedcounter << " bundles dispatched " <<  bundlecounter << " bundles received " <<  (count-bundlecounter) << " lost."  << std::endl;
 
 	return 0;
 }
