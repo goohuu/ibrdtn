@@ -114,11 +114,16 @@ namespace dtn
 					{
 						ibrcommon::MutexLock l(_node_lock);
 
-						// if this node is dynamically discovered
+						// if this node is still available (discovered or static)
 						if (isNeighbor(connection.node))
 						{
+							// remove the node from the connected list
 							_connected_nodes.erase(connection.node);
 
+							// remove the node from the discovered list
+							_discovered_nodes.erase(connection.node);
+
+							// if the node is unknown now ...
 							if (!isNeighbor(connection.node))
 							{
 								// announce the unavailable event

@@ -81,6 +81,7 @@ void term(int signal)
     {
         _running = false;
         if (_conn != NULL) _conn->close();
+        exit(0);
     }
 }
 
@@ -129,10 +130,10 @@ int main(int argc, char** argv)
             client.connect();
 
             // reset backoff if connected
-            if (client.isConnected()) backoff = 2;
+            backoff = 2;
 
             // check the connection
-            while (client.isConnected() && _running)
+            while (_running)
             {
             	list<File> files;
             	outbox.getFiles(files);

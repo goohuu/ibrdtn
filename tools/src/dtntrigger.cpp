@@ -119,7 +119,12 @@ void term(int signal)
 	if (signal >= 1)
 	{
 		_running = false;
-		if (_conn != NULL) _conn->close();
+		try {
+			if (_conn != NULL) _conn->close();
+			exit(0);
+		} catch (std::exception) {
+
+		}
 	}
 }
 
@@ -162,10 +167,10 @@ int main(int argc, char** argv)
 			client.connect();
 
 			// reset backoff if connected
-			if (client.isConnected()) backoff = 2;
+			backoff = 2;
 
 			// check the connection
-			while (client.isConnected() && _running)
+			while (_running)
 			{
 				// receive the bundle
 				dtn::api::Bundle b = client.getBundle();

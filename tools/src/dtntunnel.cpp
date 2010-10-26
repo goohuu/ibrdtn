@@ -232,7 +232,7 @@ int main(int argc, char *argv[])
 
 	cout << "ready" << endl;
 
-	while (m_running && gateway.isConnected())
+	while (m_running)
 	{
 		char data[65536];
 		int ret = ::read(tunnel_fd, data, sizeof(data));

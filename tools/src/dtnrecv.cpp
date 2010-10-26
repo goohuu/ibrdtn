@@ -49,10 +49,11 @@ void term(int signal)
 			{
 				_client->close();
 				_conn->close();
+				exit(0);
 			}
 		}
 	} catch (ibrcommon::ConnectionClosedException ex) {
-
+		exit(0);
 	}
 }
 
