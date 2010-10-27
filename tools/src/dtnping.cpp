@@ -137,6 +137,7 @@ float _min = 0.0, _max = 0.0, _avg = 0.0;
 ibrcommon::TimeMeasurement _runtime;
 
 EID _addr;
+bool __exit = false;
 
 void print_summary()
 {
@@ -154,7 +155,11 @@ void term(int signal)
 {
 	if (signal >= 1)
 	{
-		print_summary();
+		if (!__exit)
+		{
+			print_summary();
+			__exit = true;
+		}
 		exit(0);
 	}
 }
