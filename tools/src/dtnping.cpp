@@ -14,7 +14,7 @@
 #include "ibrcommon/TimeMeasurement.h"
 
 #include <iostream>
-
+#include <csignal>
 #include <stdint.h>
 
 #define CREATE_CHUNK_SIZE 2048
@@ -132,15 +132,47 @@ void print_help()
 	cout << " -U <socket>     use UNIX domain sockets" << endl;
 }
 
+size_t _received = 0, _transmitted = 0;
+float _min = 0.0, _max = 0.0, _avg = 0.0;
+ibrcommon::TimeMeasurement _runtime;
+
+EID _addr;
+
+void print_summary()
+{
+	_runtime.stop();
+
+	float loss = 0; if (_transmitted > 0) loss = ((_transmitted - _received) / _transmitted) * 100.0;
+	float avg_value = 0; if (_received > 0) avg_value = (_avg/_received);
+
+	std::cout << std::endl << "--- " << _addr.getString() << " echo statistics --- " << std::endl;
+	std::cout << _transmitted << " bundles transmitted, " << _received << " received, " << loss << "% bundle loss, time " << _runtime << std::endl;
+	std::cout << "rtt min/avg/max = " << _min << "/" << _max << "/" << avg_value << " ms" << std::endl;
+}
+
+void term(int signal)
+{
+	if (signal >= 1)
+	{
+		print_summary();
+		exit(0);
+	}
+}
+
 int main(int argc, char *argv[])
 {
+	// catch process signals
+	signal(SIGINT, term);
+	signal(SIGTERM, term);
+
 	string ping_destination = "dtn://local/echo";
 	string ping_source = "echo-client";
 	int ping_size = 64;
 	unsigned int lifetime = 30;
 	bool wait_for_reply = true;
 	bool stop_after_first_fail = false;
-	size_t count = 1;
+	bool nonstop = true;
+	size_t count = 0;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
 	ibrcommon::File unixdomain;
 
@@ -191,6 +223,7 @@ int main(int argc, char *argv[])
 			str_count.str( argv[i + 1] );
 			str_count >> count;
 			i++;
+			nonstop = false;
 		}
 
 		else if (arg == "--lifetime" && argc > i)
@@ -216,14 +249,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	size_t bundlecounter = 0;
-	size_t dispatchedcounter=0;
-
 	// the last parameter is always the destination
 	ping_destination = argv[argc - 1];
 
 	// target address
-	EID addr = EID(ping_destination);
+	_addr = EID(ping_destination);
 
 	ibrcommon::TimeMeasurement tm;
 	
@@ -248,41 +278,52 @@ int main(int argc, char *argv[])
 		}
 
 		// Initiate a derivated client
-		EchoClient client(mode, ping_source,  conn);
+		EchoClient client(mode, ping_source, conn);
 
 		// Connect to the server. Actually, this function initiate the
 		// stream protocol by starting the thread and sending the contact header.
 		client.connect();
 
-		std::cout << "ECHO " << addr.getString() << " " << ping_size << " bytes of data." << std::endl;
+		std::cout << "ECHO " << _addr.getString() << " " << ping_size << " bytes of data." << std::endl;
+
+		// measure runtime
+		_runtime.start();
 
 		try {
-			for (unsigned int i = 0; i < count; i++)
+			for (unsigned int i = 0; (i < count) || nonstop; i++)
 			{
 				// set sending time
 				tm.start();
 
 				// Call out a ECHO
-				client.echo( addr, ping_size, lifetime );
-				dispatchedcounter++;
+				client.echo( _addr, ping_size, lifetime );
+				_transmitted++;
 			
 				if (wait_for_reply)
 				{
 					try {
-						dtn::api::Bundle response = client.waitForReply(2*lifetime, addr);
+						dtn::api::Bundle response = client.waitForReply(2*lifetime, _addr);
 
 						// print out measurement result
 						tm.stop();
 
 						size_t reply_seq = 0;
+						size_t payload_size = 0;
+
+						// check for min/max/avg
+						_avg += tm.getMilliseconds();
+						if ((_min > tm.getMilliseconds()) || _min == 0) _min = tm.getMilliseconds();
+						if ((_max < tm.getMilliseconds()) || _max == 0) _max = tm.getMilliseconds();
+
 						{
 							ibrcommon::BLOB::Reference blob = response.getData();
 							ibrcommon::MutexLock l(blob);
 							(*blob).read((char *)(&reply_seq),4 );
+							payload_size = blob.getSize();
 						}
 
-						std::cout << response.getSource().getString() << " seq=" << reply_seq << " ttl=" << response.getLifetime() << " time=" << tm << std::endl;
-						bundlecounter++;
+						std::cout << payload_size << " bytes from " << response.getSource().getString() << ": seq=" << reply_seq << " ttl=" << response.getLifetime() << " time=" << tm << std::endl;
+						_received++;
 					} catch (const ibrcommon::Exception &ex) {
 						std::cerr << ex.what() << std::endl;
 
@@ -293,6 +334,8 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
+
+				if (nonstop) ::sleep(1);
 			}
 		} catch (dtn::api::ConnectionException ex) {
 			std::cerr << "Disconnected." << std::endl;
@@ -311,10 +354,7 @@ int main(int argc, char *argv[])
 
 	}
 
-	float loss = 100.0-(bundlecounter/count)*100.0;
-	std::cout << std::endl << "--- " << addr.getString() << " echo statistics --- " << std::endl;
-	//std::cout << loss << "% loss. " << bundlecounter << " bundles received " << (count-bundlecounter) << " lost."  << std::endl;
-	std::cout << loss << "% loss. " << dispatchedcounter << " bundles dispatched " <<  bundlecounter << " bundles received " <<  (count-bundlecounter) << " lost."  << std::endl;
+	print_summary();
 
 	return 0;
 }
