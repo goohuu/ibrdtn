@@ -164,12 +164,12 @@ namespace dtn
 
 				// Store incoming bundles into the storage
 				try {
-					// store the bundle into a storage module
-					dtn::core::BundleCore::getInstance().getStorage().store(received.bundle);
-
 					// if the bundle is not known
 					if (!isKnown(received.bundle))
 					{
+						// store the bundle into a storage module
+						dtn::core::BundleCore::getInstance().getStorage().store(received.bundle);
+
 						// set the bundle as known
 						setKnown(received.bundle);
 
