@@ -150,7 +150,7 @@ void print_summary()
 
 	std::cout << std::endl << "--- " << _addr.getString() << " echo statistics --- " << std::endl;
 	std::cout << _transmitted << " bundles transmitted, " << _received << " received, " << loss << "% bundle loss, time " << _runtime << std::endl;
-	std::cout << "rtt min/avg/max = " << _min << "/" << _max << "/" << avg_value << " ms" << std::endl;
+	std::cout << "rtt min/avg/max = " << _min << "/" << avg_value << "/" << _max << " ms" << std::endl;
 }
 
 void term(int signal)
