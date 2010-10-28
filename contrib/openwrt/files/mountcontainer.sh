@@ -29,10 +29,14 @@ container_mount() {
 	CONTAINER=`/sbin/uci -q get ibrdtn.storage.container`
 	CPATH=`/sbin/uci -q get ibrdtn.storage.path`
 
-	# try to mount the container
-	/bin/mount -o loop $CONTAINER $CPATH
+	if [ -e "`mount | grep ' on $CPATH '`" ]; then
+		# try to mount the container
+		/bin/mount -o loop $CONTAINER $CPATH
 
-	return $?
+		return $?
+	fi
+
+	return 0
 }
 
 container_reinitialize() {
