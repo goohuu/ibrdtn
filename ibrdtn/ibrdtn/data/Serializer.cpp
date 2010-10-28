@@ -230,11 +230,11 @@ namespace dtn
 
 					if (_compressable)
 					{
-						offsets = _dictionary.getRef(*it);
+						offsets = (*it).getCompressed();
 					}
 					else
 					{
-						offsets = (*it).getCompressed();
+						offsets = _dictionary.getRef(*it);
 					}
 
 					_stream << SDNV(offsets.first);
