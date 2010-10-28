@@ -42,8 +42,9 @@ daemon_SOURCES =  ApiServer.cpp \
 				StatisticLogger.h \
 				StatisticLogger.cpp
 
-noinst_LIBRARIES = libdaemon.a
-libdaemon_a_SOURCES= $(daemon_SOURCES)
+noinst_LTLIBRARIES = libdaemon.la
+libdaemon_la_SOURCES= $(daemon_SOURCES)
+libdaemon_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la
 
 dtnd_SOURCES = Main.cpp
-dtnd_LDADD = core/libcore.a net/libnet.a routing/librouting.a libdaemon.a
+dtnd_LDADD = libdaemon.la

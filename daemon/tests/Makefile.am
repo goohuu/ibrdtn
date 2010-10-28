@@ -1,11 +1,12 @@
 ## Source directory
+AUTOMAKE_OPTIONS = foreign
 
 h_sources = TestBundleSummary.h
 cc_sources = TestBundleSummary.cpp
 				
 # what flags you want to pass to the C compiler & linker
-AM_CPPFLAGS = @ibrdtn_CFLAGS@ 
-AM_LDFLAGS = @ibrdtn_LIBS@
+AM_CPPFLAGS = @ibrdtn_CFLAGS@ @CPPUNIT_CFLAGS@ -Wall
+AM_LDFLAGS = @ibrdtn_LIBS@ @CPPUNIT_LIBS@
 
 if CURL
 AM_CPPFLAGS += @CURL_CFLAGS@
@@ -20,8 +21,7 @@ endif
 INCLUDES = -I@top_srcdir@
 
 check_PROGRAMS = testsuite
-testsuite_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -Wall
-testsuite_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS} @top_srcdir@/src/libdaemon.a @top_srcdir@/src/core/libcore.a @top_srcdir@/src/net/libnet.a @top_srcdir@/src/routing/librouting.a
+testsuite_LDADD = @top_srcdir@/src/libdaemon.la
 testsuite_SOURCES = $(h_sources) $(cc_sources) testsuite.cpp
 
 TESTS = testsuite

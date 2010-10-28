@@ -26,5 +26,5 @@ routing_SOURCES = BaseRouter.cpp \
 				SummaryVector.cpp \
 				SummaryVector.h
 				
-noinst_LIBRARIES = librouting.a
-librouting_a_SOURCES= $(routing_SOURCES)
+noinst_LTLIBRARIES = librouting.la
+librouting_la_SOURCES= $(routing_SOURCES)

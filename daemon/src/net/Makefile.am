@@ -44,5 +44,5 @@ AM_CPPFLAGS += @CURL_CFLAGS@
 AM_LDFLAGS += @CURL_LIBS@
 endif
 				
-noinst_LIBRARIES = libnet.a
-libnet_a_SOURCES= $(net_SOURCES)
+noinst_LTLIBRARIES = libnet.la
+libnet_la_SOURCES= $(net_SOURCES)

@@ -46,5 +46,5 @@ AM_CPPFLAGS += @SQLITE_CFLAGS@
 AM_LDFLAGS += @SQLITE_LIBS@
 endif
 
-noinst_LIBRARIES = libcore.a
-libcore_a_SOURCES= $(core_SOURCES)
+noinst_LTLIBRARIES = libcore.la
+libcore_la_SOURCES= $(core_SOURCES)
