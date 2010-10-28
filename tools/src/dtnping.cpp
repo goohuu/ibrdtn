@@ -32,22 +32,24 @@ class EchoClient : public dtn::api::Client
 		{
 		}
 
-		const dtn::api::Bundle waitForReply(const int timeout, const dtn::data::EID &eid)
+		const dtn::api::Bundle waitForReply(const int timeout)
 		{
 			double wait=(timeout*1000);
 			ibrcommon::TimeMeasurement tm;
 			while ( wait > 0)
 			{
 				try {
-					tm.start(); 
+					tm.start();
 					dtn::api::Bundle b = this->getBundle((int)(wait/1000));
 					tm.stop();
 					checkReply(b);
-					wait=wait-tm.getMilliseconds();
 					return b;
-				} catch (ibrcommon::QueueUnblockedException) {
+				} catch (const ibrcommon::QueueUnblockedException&) {
 					throw ibrcommon::Exception("timeout reached");
+				} catch (const std::string &errmsg) {
+					std::cerr << errmsg << std::endl;
 				}
+				wait=wait-tm.getMilliseconds();
 			}
 			throw ibrcommon::Exception("timeout is set to zero");
 		}
@@ -101,10 +103,10 @@ class EchoClient : public dtn::api::Client
 			if (reply_seq != seq) {
 				std::stringstream ss;
 				ss << "sequence number mismatch, awaited " << seq << ", got " << reply_seq;
-				throw ibrcommon::Exception(ss.str());
+				throw ss.str();
 			}
 			if (bundle.getSource().getString() != lastdestination) {
-				throw ibrcommon::Exception("ignoring bundle from source " + bundle.getSource().getString() + " awaited " + lastdestination);
+				throw std::string("ignoring bundle from source " + bundle.getSource().getString() + " awaited " + lastdestination);
 			}
 		}
 
@@ -187,12 +189,12 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	for (int i = 1; i < argc-1; i++)
+	for (int i = 1; i < argc; i++)
 	{
 		string arg = argv[i];
 
 		// print help if requested
-		if (arg == "-h" || arg == "--help")
+		if ((arg == "-h") || (arg == "--help"))
 		{
 			print_help();
 			return 0;
@@ -239,18 +241,13 @@ int main(int argc, char *argv[])
 		}
 		else if (arg == "-U" && argc > i)
 		{
-				if (++i > argc)
-				{
-						std::cout << "argument missing!" << std::endl;
-						return -1;
-				}
+			if (++i > argc)
+			{
+					std::cout << "argument missing!" << std::endl;
+					return -1;
+			}
 
-				unixdomain = ibrcommon::File(argv[i]);
-		}
-		else {
-			cout << "Unknown argument " << arg << endl;
-			print_help();
-			return -1;
+			unixdomain = ibrcommon::File(argv[i]);
 		}
 	}
 
@@ -307,7 +304,7 @@ int main(int argc, char *argv[])
 				if (wait_for_reply)
 				{
 					try {
-						dtn::api::Bundle response = client.waitForReply(2*lifetime, _addr);
+						dtn::api::Bundle response = client.waitForReply(2*lifetime);
 
 						// print out measurement result
 						tm.stop();
