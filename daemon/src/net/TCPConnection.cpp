@@ -196,6 +196,9 @@ namespace dtn
 				ibrcommon::MutexLock l(_server.mutex());
 				_server.remove(this);
 			} catch (const ibrcommon::MutexException&) { };
+
+			// clear the queue
+			clearQueue();
 		}
 
 		void TCPConvergenceLayer::TCPConnection::run()
@@ -428,7 +431,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Sender::finally()
 		{
-			_connection.clearQueue();
 		}
 	}
 }
