@@ -351,11 +351,11 @@ namespace dtn
 				while (!_abort)
 				{
 					try {
-						dtn::data::BundleID id = getnpop(true, _keepalive_timeout);
+						dtn::data::BundleID _current_transfer = getnpop(true, _keepalive_timeout);
 
 						try {
 							// read the bundle out of the storage
-							const dtn::data::Bundle bundle = storage.get(id);
+							const dtn::data::Bundle bundle = storage.get(_current_transfer);
 
 							// enable cancellation during transmission
 							ibrcommon::Thread::CancelProtector cprotect(true);
@@ -365,8 +365,12 @@ namespace dtn
 
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 							// send transfer aborted event
-							TransferAbortedEvent::raise(EID(_connection._node.getURI()), id, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+							TransferAbortedEvent::raise(EID(_connection._node.getURI()), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 						}
+						
+						// unset the current transfer
+						_current_transfer = dtn::data::BundleID();
+						
 					} catch (const ibrcommon::QueueUnblockedException &ex) {
 						switch (ex.reason)
 						{
@@ -431,6 +435,11 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::Sender::finally()
 		{
+			// notify the aborted transfer of the last bundle
+			if (_current_transfer != dtn::data::BundleID())
+			{
+				TransferAbortedEvent::raise(EID(_connection._node.getURI()), _current_transfer, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+			}
 		}
 	}
 }
