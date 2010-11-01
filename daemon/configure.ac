@@ -129,7 +129,8 @@ AC_CONFIG_FILES([Makefile \
 	doc/Makefile \
 	man/Makefile \
 	etc/Makefile \
-	tests/Makefile
+	tests/Makefile \
+	tests/unittests/Makefile
 	])
 	
 AC_OUTPUT

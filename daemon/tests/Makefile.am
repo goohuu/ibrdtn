@@ -1,8 +1,10 @@
 ## Source directory
 AUTOMAKE_OPTIONS = foreign
 
-h_sources = TestBundleSummary.h
-cc_sources = TestBundleSummary.cpp
+SUBDIRS = unittests
+
+h_sources = 
+cc_sources = 
 				
 # what flags you want to pass to the C compiler & linker
 AM_CPPFLAGS = @ibrdtn_CFLAGS@ @CPPUNIT_CFLAGS@ -Wall
