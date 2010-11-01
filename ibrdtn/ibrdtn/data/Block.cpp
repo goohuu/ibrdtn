@@ -24,7 +24,7 @@ namespace dtn
 		{
 		}
 
-		void Block::addEID(EID eid)
+		void Block::addEID(const EID &eid)
 		{
 			_eids.push_back(eid);
 
@@ -37,7 +37,7 @@ namespace dtn
 			return _eids;
 		}
 
-		void Block::set(ProcFlags flag, bool value)
+		void Block::set(ProcFlags flag, const bool &value)
 		{
 			if (value)
 			{

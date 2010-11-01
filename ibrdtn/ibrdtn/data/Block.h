@@ -46,12 +46,12 @@ namespace dtn
 
 			virtual ~Block();
 
-			virtual void addEID(EID eid);
-			virtual std::list<EID> getEIDList() const;
+			virtual void addEID(const dtn::data::EID &eid);
+			virtual std::list<dtn::data::EID> getEIDList() const;
 
 			char getType() const { return _blocktype; }
 
-			void set(ProcFlags flag, bool value);
+			void set(ProcFlags flag, const bool &value);
 			bool get(ProcFlags flag) const;
 
 		protected:

@@ -41,6 +41,7 @@ namespace dtn
 				stream->enableNoDelay();
 			}
 
+			stream->enableLinger(10);
 			stream->enableKeepalive();
 			_node.setProtocol(Node::CONN_TCPIP);
 		}
