@@ -14,11 +14,14 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include "src/core/SimpleBundleStorage.h"
 
 #ifndef BASEROUTERTEST_HH
 #define BASEROUTERTEST_HH
 class BaseRouterTest : public CppUnit::TestFixture {
 	private:
+		dtn::core::SimpleBundleStorage _storage;
+
 	public:
 		/*=== BEGIN tests for class 'BaseRouter' ===*/
 		/*=== BEGIN tests for class 'Extension' ===*/

@@ -139,6 +139,18 @@ namespace dtn
 			// delete all extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
+				ThreadedExtension *thread = dynamic_cast<ThreadedExtension*>(*iter);
+
+				if (thread != NULL)
+				{
+					try {
+						// run the thread
+						thread->stop();
+					} catch (const ibrcommon::ThreadException &ex) {
+						IBRCOMMON_LOGGER(error) << "failed to stop component in BaseRouter\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+				}
+
 				delete (*iter);
 			}
 		}
@@ -168,7 +180,7 @@ namespace dtn
 					if (!isKnown(received.bundle))
 					{
 						// store the bundle into a storage module
-						dtn::core::BundleCore::getInstance().getStorage().store(received.bundle);
+						_storage.store(received.bundle);
 
 						// set the bundle as known
 						setKnown(received.bundle);
@@ -202,7 +214,7 @@ namespace dtn
 				// Store incoming bundles into the storage
 				try {
 					// store the bundle into a storage module
-					dtn::core::BundleCore::getInstance().getStorage().store(generated.bundle);
+					_storage.store(generated.bundle);
 
 					// raise the queued event to notify all receivers about the new bundle
 					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);

@@ -14,7 +14,15 @@
  
 
 #include "BaseRouterTest.hh"
-
+#include "src/routing/BaseRouter.h"
+#include "src/core/BundleStorage.h"
+#include "src/core/Node.h"
+#include "src/core/EventSwitch.h"
+#include "src/core/GlobalEvent.h"
+#include "src/net/BundleReceivedEvent.h"
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/data/EID.h>
+#include <ibrcommon/thread/Thread.h>
 
 
 CPPUNIT_TEST_SUITE_REGISTRATION(BaseRouterTest);
@@ -25,8 +33,23 @@ CPPUNIT_TEST_SUITE_REGISTRATION(BaseRouterTest);
 /*=== BEGIN tests for class 'Extension' ===*/
 void BaseRouterTest::testGetRouter()
 {
-	/* test signature () */
-	CPPUNIT_FAIL("not implemented");
+	class ExtensionTest : public dtn::routing::BaseRouter::Extension
+	{
+	public:
+		ExtensionTest() {};
+		~ExtensionTest() {};
+
+		void notify(const dtn::core::Event*) {};
+
+		dtn::routing::BaseRouter* testGetRouter()
+		{
+			return getRouter();
+		};
+	};
+
+	dtn::routing::BaseRouter router(_storage);
+	ExtensionTest e;
+	CPPUNIT_ASSERT_EQUAL(&router, e.testGetRouter());
 }
 
 /*=== END   tests for class 'Extension' ===*/
@@ -34,55 +57,150 @@ void BaseRouterTest::testGetRouter()
 void BaseRouterTest::testAddExtension()
 {
 	/* test signature (BaseRouter::Extension *extension) */
-	CPPUNIT_FAIL("not implemented");
+	class ExtensionTest : public dtn::routing::BaseRouter::Extension
+	{
+	public:
+		ExtensionTest() {};
+		~ExtensionTest() {};
+
+		void notify(const dtn::core::Event*) {};
+
+		dtn::routing::BaseRouter* testGetRouter()
+		{
+			return getRouter();
+		};
+	};
+
+	dtn::routing::BaseRouter router(_storage);
+	ExtensionTest e;
+	router.addExtension(&e);
 }
 
 void BaseRouterTest::testTransferTo()
 {
 	/* test signature (const dtn::data::EID &destination, const dtn::data::BundleID &id) */
-	CPPUNIT_FAIL("not implemented");
+	dtn::data::EID eid("dtn://no-neighbor");
+	dtn::data::Bundle b;
+	dtn::routing::BaseRouter router(_storage);
+	router.transferTo(eid, b);
 }
 
 void BaseRouterTest::testRaiseEvent()
 {
 	/* test signature (const dtn::core::Event *evt) */
-	CPPUNIT_FAIL("not implemented");
+	class EventSwitchLoop : public ibrcommon::JoinableThread
+	{
+	public:
+		EventSwitchLoop() {};
+		virtual ~EventSwitchLoop()
+		{
+			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+			join();
+		};
+
+	protected:
+		void run()
+		{
+			dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();
+			es.loop();
+		}
+
+		bool __cancellation()
+		{
+			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+			return true;
+		}
+	};
+
+	dtn::routing::BaseRouter router(_storage);
+	dtn::data::EID eid("dtn://no-neighbor");
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://testcase-one/foo");
+
+	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
+
+	router.initialize();
+	{
+		EventSwitchLoop esl; esl.start();
+
+		// send a bundle
+		dtn::net::BundleReceivedEvent::raise(eid, b);
+	}
+	router.terminate();
+
+	// this bundle has to be known in future
+	CPPUNIT_ASSERT_EQUAL(true, router.isKnown(b));
 }
 
 void BaseRouterTest::testGetBundle()
 {
 	/* test signature (const dtn::data::BundleID &id) */
-	CPPUNIT_FAIL("not implemented");
+	dtn::routing::BaseRouter router(_storage);
+
+	dtn::data::Bundle b1;
+	_storage.store(b1);
+
+	try {
+		dtn::data::Bundle b2 = router.getBundle(b1);
+	} catch (const ibrcommon::Exception&) {
+		CPPUNIT_FAIL("no bundle returned");
+	}
 }
 
 void BaseRouterTest::testGetStorage()
 {
 	/* test signature () */
-	CPPUNIT_FAIL("not implemented");
+	dtn::routing::BaseRouter router(_storage);
+	CPPUNIT_ASSERT_EQUAL((dtn::core::BundleStorage*)&_storage, &router.getStorage());
 }
 
 void BaseRouterTest::testIsKnown()
 {
 	/* test signature (const dtn::data::BundleID &id) */
-	CPPUNIT_FAIL("not implemented");
+	dtn::routing::BaseRouter router(_storage);
+
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://testcase-one/foo");
+
+	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
+
+	router.setKnown(b);
+
+	CPPUNIT_ASSERT_EQUAL(true, router.isKnown(b));
 }
 
 void BaseRouterTest::testSetKnown()
 {
 	/* test signature (const dtn::data::MetaBundle &meta) */
-	CPPUNIT_FAIL("not implemented");
+	dtn::routing::BaseRouter router(_storage);
+
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://testcase-one/foo");
+
+	router.setKnown(b);
+	CPPUNIT_ASSERT_EQUAL(true, router.isKnown(b));
 }
 
 void BaseRouterTest::testGetSummaryVector()
 {
 	/* test signature () */
-	CPPUNIT_FAIL("not implemented");
+	dtn::routing::BaseRouter router(_storage);
+
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://testcase-one/foo");
+
+	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
+
+	router.setKnown(b);
+
+	CPPUNIT_ASSERT_EQUAL(true, router.getSummaryVector().contains(b));
 }
 
 /*=== END   tests for class 'BaseRouter' ===*/
 
 void BaseRouterTest::setUp()
 {
+	_storage.clear();
 }
 
 void BaseRouterTest::tearDown()
