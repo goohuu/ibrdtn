@@ -14,15 +14,27 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include "src/Configuration.h"
+#include <ibrcommon/data/File.h>
 
 #ifndef CONFIGURATIONTEST_HH
 #define CONFIGURATIONTEST_HH
 class ConfigurationTest : public CppUnit::TestFixture {
 	private:
+		class FakeConfiguration
+		{
+		public:
+			FakeConfiguration();
+			~FakeConfiguration();
+
+		private:
+			ibrcommon::TemporaryFile _tmp;
+		};
+
+		static FakeConfiguration _config;
+
 	public:
 		/*=== BEGIN tests for class 'Configuration' ===*/
-		void testGetInstance();
-		void testLoad();
 		void testParams();
 		void testGetNodename();
 		void testGetTimezone();
@@ -37,7 +49,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		void testGetStorage();
 		void testGetLimit();
 		/*=== BEGIN tests for class 'Discovery' ===*/
-		void testDiscoveryLoad();
 		void testDiscoveryEnabled();
 		void testDiscoveryAnnounce();
 		void testDiscoveryShortbeacon();
@@ -48,7 +59,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		/*=== END   tests for class 'Discovery' ===*/
 
 		/*=== BEGIN tests for class 'Statistic' ===*/
-		void testStatisticLoad();
 		void testStatisticEnabled();
 		void testStatisticLogfile();
 		void testStatisticType();
@@ -58,21 +68,18 @@ class ConfigurationTest : public CppUnit::TestFixture {
 		/*=== END   tests for class 'Statistic' ===*/
 
 		/*=== BEGIN tests for class 'Debug' ===*/
-		void testDebugLoad();
 		void testDebugLevel();
 		void testDebugEnabled();
 		void testDebugQuiet();
 		/*=== END   tests for class 'Debug' ===*/
 
 		/*=== BEGIN tests for class 'Logger' ===*/
-		void testLoggerLoad();
 		void testQuiet();
 		void testOptions();
 		void testOutput();
 		/*=== END   tests for class 'Logger' ===*/
 
 		/*=== BEGIN tests for class 'Network' ===*/
-		void testNetworkLoad();
 		void testGetInterfaces();
 		void testGetStaticNodes();
 		void testGetStaticRoutes();
@@ -94,8 +101,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 
 
 		CPPUNIT_TEST_SUITE(ConfigurationTest);
-			CPPUNIT_TEST(testGetInstance);
-			CPPUNIT_TEST(testLoad);
 			CPPUNIT_TEST(testParams);
 			CPPUNIT_TEST(testGetNodename);
 			CPPUNIT_TEST(testGetTimezone);
@@ -109,7 +114,6 @@ class ConfigurationTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testGetNotifyCommand);
 			CPPUNIT_TEST(testGetStorage);
 			CPPUNIT_TEST(testGetLimit);
-			CPPUNIT_TEST(testDiscoveryLoad);
 			CPPUNIT_TEST(testDiscoveryEnabled);
 			CPPUNIT_TEST(testDiscoveryAnnounce);
 			CPPUNIT_TEST(testDiscoveryShortbeacon);
@@ -117,22 +121,18 @@ class ConfigurationTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testDiscoveryAddress);
 			CPPUNIT_TEST(testDiscoveryPort);
 			CPPUNIT_TEST(testDiscoveryTimeout);
-			CPPUNIT_TEST(testStatisticLoad);
 			CPPUNIT_TEST(testStatisticEnabled);
 			CPPUNIT_TEST(testStatisticLogfile);
 			CPPUNIT_TEST(testStatisticType);
 			CPPUNIT_TEST(testStatisticInterval);
 			CPPUNIT_TEST(testStatisticAddress);
 			CPPUNIT_TEST(testStatisticPort);
-			CPPUNIT_TEST(testDebugLoad);
 			CPPUNIT_TEST(testDebugLevel);
 			CPPUNIT_TEST(testDebugEnabled);
 			CPPUNIT_TEST(testDebugQuiet);
-			CPPUNIT_TEST(testLoggerLoad);
 			CPPUNIT_TEST(testQuiet);
 			CPPUNIT_TEST(testOptions);
 			CPPUNIT_TEST(testOutput);
-			CPPUNIT_TEST(testNetworkLoad);
 			CPPUNIT_TEST(testGetInterfaces);
 			CPPUNIT_TEST(testGetStaticNodes);
 			CPPUNIT_TEST(testGetStaticRoutes);
