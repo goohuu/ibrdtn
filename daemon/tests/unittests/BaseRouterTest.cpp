@@ -17,8 +17,7 @@
 #include "src/routing/BaseRouter.h"
 #include "src/core/BundleStorage.h"
 #include "src/core/Node.h"
-#include "src/core/EventSwitch.h"
-#include "src/core/GlobalEvent.h"
+#include "tests/tools/EventSwitchLoop.h"
 #include "src/net/BundleReceivedEvent.h"
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
@@ -88,30 +87,6 @@ void BaseRouterTest::testTransferTo()
 void BaseRouterTest::testRaiseEvent()
 {
 	/* test signature (const dtn::core::Event *evt) */
-	class EventSwitchLoop : public ibrcommon::JoinableThread
-	{
-	public:
-		EventSwitchLoop() {};
-		virtual ~EventSwitchLoop()
-		{
-			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
-			join();
-		};
-
-	protected:
-		void run()
-		{
-			dtn::core::EventSwitch &es = dtn::core::EventSwitch::getInstance();
-			es.loop();
-		}
-
-		bool __cancellation()
-		{
-			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
-			return true;
-		}
-	};
-
 	dtn::routing::BaseRouter router(_storage);
 	dtn::data::EID eid("dtn://no-neighbor");
 	dtn::data::Bundle b;
@@ -121,7 +96,7 @@ void BaseRouterTest::testRaiseEvent()
 
 	router.initialize();
 	{
-		EventSwitchLoop esl; esl.start();
+		ibrtest::EventSwitchLoop esl; esl.start();
 
 		// send a bundle
 		dtn::net::BundleReceivedEvent::raise(eid, b);

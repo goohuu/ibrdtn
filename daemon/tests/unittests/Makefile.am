@@ -2,7 +2,8 @@
 noinst_HEADERS = \
 	BundleSummaryTest.hh \
 	ConfigurationTest.hh \
-	BaseRouterTest.hh
+	BaseRouterTest.hh \
+	SimpleBundleStorageTest.hh
 	
 #	UDPConvergenceLayerTest.hh \
 #	SQLiteBundleStorageTest.hh \
@@ -35,7 +36,6 @@ noinst_HEADERS = \
 #	StatusReportGeneratorTest.hh \
 #	DiscoveryAnnouncementTest.hh \
 #	TransferCompletedEventTest.hh \
-#	SimpleBundleStorageTest.hh \
 #	EventReceiverTest.hh \
 #	RequeueBundleEventTest.hh \
 #	BundleEventTest.hh \
@@ -58,7 +58,8 @@ unittest_SOURCES = \
 	Main.cpp \
 	BundleSummaryTest.cpp \
 	BaseRouterTest.cpp \
-	ConfigurationTest.cpp
+	ConfigurationTest.cpp \
+	SimpleBundleStorageTest.cpp
 	
 #	UDPConvergenceLayerTest.cpp \
 #	SQLiteBundleStorageTest.cpp \
@@ -91,7 +92,6 @@ unittest_SOURCES = \
 #	StatusReportGeneratorTest.cpp \
 #	DiscoveryAnnouncementTest.cpp \
 #	TransferCompletedEventTest.cpp \
-#	SimpleBundleStorageTest.cpp \
 #	EventReceiverTest.cpp \
 #	RequeueBundleEventTest.cpp \
 #	BundleEventTest.cpp \

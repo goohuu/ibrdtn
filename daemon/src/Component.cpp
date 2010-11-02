@@ -42,6 +42,7 @@ namespace dtn
 
 		void IndependentComponent::terminate()
 		{
+			componentDown();
 			JoinableThread::stop();
 		}
 

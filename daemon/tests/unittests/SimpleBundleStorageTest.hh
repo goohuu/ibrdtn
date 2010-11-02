@@ -14,11 +14,15 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include "src/core/SimpleBundleStorage.h"
 
 #ifndef SIMPLEBUNDLESTORAGETEST_HH
 #define SIMPLEBUNDLESTORAGETEST_HH
 class SimpleBundleStorageTest : public CppUnit::TestFixture {
 	private:
+		void completeTest(dtn::core::SimpleBundleStorage &storage);
+		void concurrentStoreGet(dtn::core::SimpleBundleStorage &storage);
+
 	public:
 		/*=== BEGIN tests for class 'SimpleBundleStorage' ===*/
 		void testGetList();
@@ -29,8 +33,14 @@ class SimpleBundleStorageTest : public CppUnit::TestFixture {
 		void testSize();
 		void testReleaseCustody();
 		void testRaiseEvent();
-		void test__cancellation();
 		/*=== END   tests for class 'SimpleBundleStorage' ===*/
+
+		void testMemoryTest();
+		void testDiskTest();
+		void testConcurrentMemory();
+		void testConcurrentDisk();
+		void testDiskRestore();
+
 
 		void setUp();
 		void tearDown();
@@ -45,7 +55,11 @@ class SimpleBundleStorageTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testSize);
 			CPPUNIT_TEST(testReleaseCustody);
 			CPPUNIT_TEST(testRaiseEvent);
-			CPPUNIT_TEST(test__cancellation);
+			CPPUNIT_TEST(testMemoryTest);
+			CPPUNIT_TEST(testDiskTest);
+			CPPUNIT_TEST(testConcurrentMemory);
+			CPPUNIT_TEST(testConcurrentDisk);
+			CPPUNIT_TEST(testDiskRestore);
 		CPPUNIT_TEST_SUITE_END();
 };
 #endif /* SIMPLEBUNDLESTORAGETEST_HH */
