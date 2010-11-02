@@ -29,6 +29,7 @@ void print_help()
 	cout << " -p <0..2>       set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
 	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 3600" << endl;
 	cout << " -U <socket>     use UNIX domain sockets" << endl;
+	cout << " -n <copies>			create <copies> bundle copies" << endl;
 
 }
 
@@ -42,6 +43,7 @@ int main(int argc, char *argv[])
 	std::string filename;
 	ibrcommon::File unixdomain;
 	int priority = 1;
+	int copies = 1;
 
 //	ibrcommon::Logger::setVerbosity(99);
 //	ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL);
@@ -60,8 +62,7 @@ int main(int argc, char *argv[])
 				print_help();
 				return 0;
 			}
-
-			if (arg == "--src" && argc > i)
+			else if (arg == "--src" && argc > i)
 			{
 				if (++i > argc)
 				{
@@ -71,8 +72,7 @@ int main(int argc, char *argv[])
 
 				file_source = argv[i];
 			}
-
-			if (arg == "--lifetime" && argc > i)
+			else if (arg == "--lifetime" && argc > i)
 			{
 				if (++i > argc)
 				{
@@ -83,8 +83,7 @@ int main(int argc, char *argv[])
 				stringstream data; data << argv[i];
 					data >> lifetime;
 			}
-
-			if (arg == "-p" && argc > i)
+			else if (arg == "-p" && argc > i)
 			{
 				if (++i > argc)
 				{
@@ -94,8 +93,7 @@ int main(int argc, char *argv[])
 				stringstream data; data << argv[i];
 					data >> priority;
 			}
-
-			if (arg == "-U" && argc > i)
+			else if (arg == "-U" && argc > i)
 			{
 				if (++i > argc)
 				{
@@ -104,6 +102,26 @@ int main(int argc, char *argv[])
 				}
 
 				unixdomain = ibrcommon::File(argv[i]);
+			}
+			else if (arg == "-n" && argc > i)
+			{
+				if (++i > argc)
+				{
+					std::cout << "argument missing!" << std::endl;
+					return -1;
+				}
+
+				copies = atoi(argv[i]);
+				
+				if( copies < 1 ) {
+					std::cout << "invalid number of bundle copies!" << std::endl;
+					return -1;
+				}
+			} 
+			else 
+			{
+				std::cout << "invalid argument " << arg << std::endl;
+				return -1;
 			}
 		}
 		else
@@ -180,32 +198,38 @@ int main(int argc, char *argv[])
 						(*ref) << cin.rdbuf();
 					}
 
-					dtn::api::BLOBBundle b(file_destination, ref);
+					int u;
+					for(u=0; u<copies; u++){
+						dtn::api::BLOBBundle b(file_destination, ref);
 
-					// set the lifetime
-					b.setLifetime(lifetime);
+						// set the lifetime
+						b.setLifetime(lifetime);
 
-					// set the bundles priority
-					b.setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(priority));
+						// set the bundles priority
+						b.setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(priority));
 
-					// send the bundle
-					client << b;
+						// send the bundle
+						client << b;
+					}
 				}
 				else
 				{
 					cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
+					
+					int u;
+					for(u=0; u<copies; u++){
+						// create a bundle from the file
+						dtn::api::FileBundle b(file_destination, filename);
 
-					// create a bundle from the file
-					dtn::api::FileBundle b(file_destination, filename);
+						// set the lifetime
+						b.setLifetime(lifetime);
 
-					// set the lifetime
-					b.setLifetime(lifetime);
+						// set the bundles priority
+						b.setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(priority));
 
-					// set the bundles priority
-					b.setPriority(dtn::api::Bundle::BUNDLE_PRIORITY(priority));
-
-					// send the bundle
-					client << b;
+						// send the bundle
+						client << b;
+					}
 				}
 
 				// flush the buffers
