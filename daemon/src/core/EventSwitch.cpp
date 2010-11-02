@@ -144,5 +144,11 @@ namespace dtn
 		{
 			return "EventSwitch";
 		}
+
+		void EventSwitch::clear()
+		{
+			ibrcommon::MutexLock l(_receiverlock);
+			_list.clear();
+		}
 	}
 }

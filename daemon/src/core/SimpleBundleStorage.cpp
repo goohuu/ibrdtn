@@ -21,8 +21,6 @@ namespace dtn
 		SimpleBundleStorage::SimpleBundleStorage(size_t maxsize)
 		 : _store(maxsize), _running(true)
 		{
-			bindEvent(TimeEvent::className);
-			bindEvent(GlobalEvent::className);
 		}
 
 		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize)
@@ -33,6 +31,7 @@ namespace dtn
 		SimpleBundleStorage::~SimpleBundleStorage()
 		{
 			_tasks.abort();
+			join();
 		}
 
 		void SimpleBundleStorage::componentUp()
@@ -76,14 +75,14 @@ namespace dtn
 
 		void SimpleBundleStorage::raiseEvent(const Event *evt)
 		{
-			const TimeEvent *time = dynamic_cast<const TimeEvent*>(evt);
-
-			if (time != NULL)
-			{
-				if (time->getAction() == dtn::core::TIME_SECOND_TICK)
+			try {
+				const TimeEvent &time = dynamic_cast<const TimeEvent&>(*evt);
+				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
 				{
-					_store.expire(time->getTimestamp());
+					_store.expire(time.getTimestamp());
 				}
+			} catch (const std::bad_cast&) {
+
 			}
 		}
 
@@ -508,25 +507,25 @@ namespace dtn
 			return (left < right);
 		}
 
-		bool SimpleBundleStorage::BundleContainer::operator>(const SimpleBundleStorage::BundleContainer& other) const
-		{
-			MetaBundle &left = (MetaBundle&)*this;
-			MetaBundle &right = (MetaBundle&)other;
-
-			if (left.getPriority() < right.getPriority()) return true;
-			if (left.getPriority() != right.getPriority()) return false;
-			return (left > right);
-		}
-
-		bool SimpleBundleStorage::BundleContainer::operator!=(const SimpleBundleStorage::BundleContainer& other) const
-		{
-			return !((MetaBundle&)(*this) == (MetaBundle&)other);
-		}
-
-		bool SimpleBundleStorage::BundleContainer::operator==(const SimpleBundleStorage::BundleContainer& other) const
-		{
-			return ((MetaBundle&)(*this) == (MetaBundle&)other);
-		}
+//		bool SimpleBundleStorage::BundleContainer::operator>(const SimpleBundleStorage::BundleContainer& other) const
+//		{
+//			MetaBundle &left = (MetaBundle&)*this;
+//			MetaBundle &right = (MetaBundle&)other;
+//
+//			if (left.getPriority() < right.getPriority()) return true;
+//			if (left.getPriority() != right.getPriority()) return false;
+//			return (left > right);
+//		}
+//
+//		bool SimpleBundleStorage::BundleContainer::operator!=(const SimpleBundleStorage::BundleContainer& other) const
+//		{
+//			return !((MetaBundle&)(*this) == (MetaBundle&)other);
+//		}
+//
+//		bool SimpleBundleStorage::BundleContainer::operator==(const SimpleBundleStorage::BundleContainer& other) const
+//		{
+//			return ((MetaBundle&)(*this) == (MetaBundle&)other);
+//		}
 
 		SimpleBundleStorage::BundleContainer& SimpleBundleStorage::BundleContainer::operator= (const SimpleBundleStorage::BundleContainer &right)
 		{
@@ -539,16 +538,16 @@ namespace dtn
 			return *this;
 		}
 
-		SimpleBundleStorage::BundleContainer& SimpleBundleStorage::BundleContainer::operator= (SimpleBundleStorage::BundleContainer &right)
-		{
-			ibrcommon::MutexLock l(right._holder->lock);
-			++right._holder->_count;
-
-			down();
-
-			_holder = right._holder;
-			return *this;
-		}
+//		SimpleBundleStorage::BundleContainer& SimpleBundleStorage::BundleContainer::operator= (SimpleBundleStorage::BundleContainer &right)
+//		{
+//			ibrcommon::MutexLock l(right._holder->lock);
+//			++right._holder->_count;
+//
+//			down();
+//
+//			_holder = right._holder;
+//			return *this;
+//		}
 
 		SimpleBundleStorage::BundleContainer::BundleContainer(const SimpleBundleStorage::BundleContainer& right)
 		 : dtn::data::MetaBundle(right), _holder(right._holder)
@@ -622,8 +621,8 @@ namespace dtn
 					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
 				} catch (ios_base::failure ex) {
 					throw dtn::SerializationFailedException("can not load bundle data (" + std::string(ex.what()) + ")");
-				} catch (const std::exception&) {
-					throw dtn::SerializationFailedException("bundle get failed");
+				} catch (const std::exception &ex) {
+					throw dtn::SerializationFailedException("bundle get failed: " + std::string(ex.what()));
 				}
 
 				fs.close();

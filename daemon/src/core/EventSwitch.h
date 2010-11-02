@@ -75,6 +75,7 @@ namespace dtn
 		public:
 			static EventSwitch& getInstance();
 			void loop();
+			void clear();
 		};
 	}
 }

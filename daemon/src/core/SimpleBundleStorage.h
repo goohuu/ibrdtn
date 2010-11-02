@@ -148,17 +148,17 @@ namespace dtn
 				BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size);
 				~BundleContainer();
 
-				bool operator!=(const BundleContainer& other) const;
-				bool operator==(const BundleContainer& other) const;
+				//bool operator!=(const BundleContainer& other) const;
+				//bool operator==(const BundleContainer& other) const;
 				bool operator<(const BundleContainer& other) const;
-				bool operator>(const BundleContainer& other) const;
+				//bool operator>(const BundleContainer& other) const;
 
 				size_t size() const;
 
 				dtn::data::Bundle get() const;
 
 				BundleContainer& operator= (const BundleContainer &right);
-				BundleContainer& operator= (BundleContainer &right);
+				//BundleContainer& operator= (BundleContainer &right);
 				BundleContainer(const BundleContainer& right);
 
 				void invokeStore();
