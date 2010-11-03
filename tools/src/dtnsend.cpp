@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 				}
 
 				stringstream data; data << argv[i];
-					data >> lifetime;
+				data >> lifetime;
 			}
 			else if (arg == "-p" && argc > i)
 			{
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 					return -1;
 				}
 				stringstream data; data << argv[i];
-					data >> priority;
+				data >> priority;
 			}
 			else if (arg == "-U" && argc > i)
 			{
@@ -111,14 +111,15 @@ int main(int argc, char *argv[])
 					return -1;
 				}
 
-				copies = atoi(argv[i]);
-				
+				stringstream data; data << argv[i];
+				data >> copies;
+
 				if( copies < 1 ) {
 					std::cout << "invalid number of bundle copies!" << std::endl;
 					return -1;
 				}
 			} 
-			else 
+			else
 			{
 				std::cout << "invalid argument " << arg << std::endl;
 				return -1;
