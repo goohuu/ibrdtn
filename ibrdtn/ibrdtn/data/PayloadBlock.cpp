@@ -48,7 +48,7 @@ namespace dtn
 			std::ios::iostate oldstate = (*blobref).exceptions();
 
 			// activate exceptions for this method
-			(*blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+			(*blobref).exceptions(std::ios::badbit | std::ios::eofbit);
 
 			try {
 				// write payload
@@ -77,7 +77,7 @@ namespace dtn
 			std::ios::iostate oldstate = (*_blobref).exceptions();
 
 			// activate exceptions for this method
-			(*_blobref).exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+			(*_blobref).exceptions(std::ios::badbit | std::ios::eofbit);
 
 			try {
 				// read payload

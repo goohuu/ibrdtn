@@ -617,7 +617,7 @@ namespace dtn
 				// we need to load the bundle from file
 				std::ifstream fs(_container.getPath().c_str(), ios::in|ios::binary);
 				try {
-					fs.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+					fs.exceptions(std::ios::badbit | std::ios::eofbit);
 					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
 				} catch (ios_base::failure ex) {
 					throw dtn::SerializationFailedException("can not load bundle data (" + std::string(ex.what()) + ")");
@@ -647,20 +647,13 @@ namespace dtn
 			try {
 				if (_state == HOLDER_PENDING)
 				{
-					std::string namestr = _container.getPath() + "/bundle-XXXXXXXX";
-					char name[namestr.length()];
-					::strcpy(name, namestr.c_str());
-
-					int fd = mkstemp(name);
-					if (fd == -1) throw ibrcommon::IOException("Could not create a temporary name.");
-
-					_container = ibrcommon::File(name);
-					std::ofstream out(name);
+					_container = ibrcommon::TemporaryFile(_container, "bundle");
+					ibrcommon::locked_ofstream ostream(_container);
+					std::ofstream &out = (*ostream);
 
 					if (!out.is_open()) throw ibrcommon::IOException("can not open file");
 					dtn::data::DefaultSerializer(out) << _bundle; out << std::flush;
 					out.close();
-					::close(fd);
 
 					if (_container.size() == 0)
 					{

@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 		{
 			std::cout << "Wait for incoming bundle... " << std::endl;
 			file.open(filename.c_str(), ios::in|ios::out|ios::binary|ios::trunc);
-			file.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+			file.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
 		for(h = 0; h < count; h++)

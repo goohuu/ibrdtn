@@ -184,7 +184,7 @@ int main(int argc, char** argv)
 				// write data to temporary file
 				try {
 					std::fstream out(file.getPath().c_str(), ios::out|ios::binary|ios::trunc);
-					out.exceptions(std::ios::badbit | std::ios::failbit | std::ios::eofbit);
+					out.exceptions(std::ios::badbit | std::ios::eofbit);
 					ibrcommon::Mutex l(ref);
 					out << (*ref).rdbuf();
 					out.close();
