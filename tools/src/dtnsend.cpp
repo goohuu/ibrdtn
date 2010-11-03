@@ -198,8 +198,7 @@ int main(int argc, char *argv[])
 						(*ref) << cin.rdbuf();
 					}
 
-					int u;
-					for(u=0; u<copies; u++){
+					for(int u=0; u<copies; u++){
 						dtn::api::BLOBBundle b(file_destination, ref);
 
 						// set the lifetime
@@ -216,8 +215,7 @@ int main(int argc, char *argv[])
 				{
 					cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
 					
-					int u;
-					for(u=0; u<copies; u++){
+					for(int u=0; u<copies; u++){
 						// create a bundle from the file
 						dtn::api::FileBundle b(file_destination, filename);
 
