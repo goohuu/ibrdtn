@@ -28,6 +28,7 @@ namespace dtn
 		Client::AsyncReceiver::AsyncReceiver(Client &client)
 		 : _client(client)
 		{
+			_client.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
 		Client::AsyncReceiver::~AsyncReceiver()
@@ -51,21 +52,21 @@ namespace dtn
 					_client.received(b);
 					yield();
 				}
-			} catch (dtn::api::ConnectionException ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: ConnectionException" << IBRCOMMON_LOGGER_ENDL;
+			} catch (const dtn::api::ConnectionException &ex) {
+				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - ConnectionException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
+			} catch (dtn::streams::StreamConnection::StreamErrorException &ex) {
+				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - StreamErrorException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (ibrcommon::IOException ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - IOException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (dtn::InvalidDataException ex) {
-				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver: InvalidDataException" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Client::AsyncReceiver - InvalidDataException: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
 			} catch (std::exception) {
 				IBRCOMMON_LOGGER(error) << "error" << IBRCOMMON_LOGGER_ENDL;
 				_client.shutdown(CONNECTION_SHUTDOWN_ERROR);
-			} catch (...) {
-				_client.shutdown();
-				throw;
 			}
 		}
 
@@ -88,8 +89,6 @@ namespace dtn
 			}
 
 			_receiver.join();
-
-			shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 		}
 
 		void Client::connect()
@@ -136,7 +135,7 @@ namespace dtn
 		{
 		}
 
-		void Client::eventShutdown()
+		void Client::eventShutdown(StreamConnection::ConnectionShutdownCases csc)
 		{
 		}
 

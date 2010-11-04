@@ -51,11 +51,11 @@ namespace dtn
 
 		std::istream& ExtensionBlock::deserialize(std::istream &stream)
 		{
-			// clear the blob
-			_blobref.clear();
-
 			// lock the BLOB
 			ibrcommon::MutexLock l(_blobref);
+
+			// clear the blob
+			_blobref.clear();
 
 			// remember the old exceptions state
 			std::ios::iostate oldstate = (*_blobref).exceptions();

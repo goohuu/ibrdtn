@@ -615,7 +615,8 @@ namespace dtn
 				dtn::data::Bundle bundle;
 
 				// we need to load the bundle from file
-				std::ifstream fs(_container.getPath().c_str(), ios::in|ios::binary);
+				ibrcommon::locked_ifstream ostream(_container, ios::in|ios::binary);
+				std::istream &fs = (*ostream);
 				try {
 					fs.exceptions(std::ios::badbit | std::ios::eofbit);
 					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
@@ -625,7 +626,7 @@ namespace dtn
 					throw dtn::SerializationFailedException("bundle get failed: " + std::string(ex.what()));
 				}
 
-				fs.close();
+				ostream.close();
 
 				return bundle;
 			}
@@ -649,11 +650,11 @@ namespace dtn
 				{
 					_container = ibrcommon::TemporaryFile(_container, "bundle");
 					ibrcommon::locked_ofstream ostream(_container);
-					std::ofstream &out = (*ostream);
+					std::ostream &out = (*ostream);
 
-					if (!out.is_open()) throw ibrcommon::IOException("can not open file");
+					if (!ostream.is_open()) throw ibrcommon::IOException("can not open file");
 					dtn::data::DefaultSerializer(out) << _bundle; out << std::flush;
-					out.close();
+					ostream.close();
 
 					if (_container.size() == 0)
 					{

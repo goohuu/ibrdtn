@@ -85,7 +85,7 @@ namespace dtn
 				 * This method is called if a SHUTDOWN message is
 				 * received.
 				 */
-				virtual void eventShutdown() = 0;
+				virtual void eventShutdown(StreamConnection::ConnectionShutdownCases csc) = 0;
 
 				/**
 				 * This method is called if the stream is closed
@@ -327,7 +327,7 @@ namespace dtn
 
 			void connectionTimeout();
 
-			void eventShutdown();
+			void eventShutdown(StreamConnection::ConnectionShutdownCases csc);
 
 			void eventBundleAck(size_t ack);
 			void eventBundleRefused();

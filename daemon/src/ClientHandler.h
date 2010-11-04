@@ -31,7 +31,7 @@ namespace dtn
 			virtual void initialize();
 			virtual void shutdown();
 
-			virtual void eventShutdown();
+			virtual void eventShutdown(StreamConnection::ConnectionShutdownCases csc);
 			virtual void eventTimeout();
 			virtual void eventError();
 			virtual void eventConnectionDown();

@@ -97,17 +97,18 @@ namespace dtn
 					case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
 						_buf.shutdowntimers();
-						_callback.eventShutdown();
+						_callback.eventShutdown(csc);
 						break;
 					case CONNECTION_SHUTDOWN_NODE_TIMEOUT:
 						_buf.abort();
 						_callback.eventTimeout();
 						break;
 					case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
+						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
 					case CONNECTION_SHUTDOWN_NOTSET:
 						_buf.shutdowntimers();
 						_buf.abort();
-						_callback.eventShutdown();
+						_callback.eventShutdown(csc);
 						break;
 				}
 			} catch (StreamConnection::StreamErrorException ex) {
@@ -120,9 +121,9 @@ namespace dtn
 			_callback.eventConnectionDown();
 		}
 
-		void StreamConnection::eventShutdown()
+		void StreamConnection::eventShutdown(StreamConnection::ConnectionShutdownCases csc)
 		{
-			_callback.eventShutdown();
+			_callback.eventShutdown(csc);
 		}
 
 		void StreamConnection::eventBundleAck(size_t ack)

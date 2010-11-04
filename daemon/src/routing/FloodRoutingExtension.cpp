@@ -219,7 +219,7 @@ namespace dtn
 					Task *t = _taskqueue.getnpop(true);
 					ibrcommon::AutoDelete<Task> killer(t);
 
-					IBRCOMMON_LOGGER_DEBUG(10) << "processing epidemic task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(50) << "processing flooding task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
 
 					try {
 						try {

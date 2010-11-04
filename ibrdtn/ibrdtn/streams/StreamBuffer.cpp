@@ -339,7 +339,6 @@ namespace dtn
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in overflow()" << IBRCOMMON_LOGGER_ENDL;
-				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 
 				throw;
 			} catch (StreamErrorException ex) {
@@ -347,7 +346,6 @@ namespace dtn
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in overflow()" << IBRCOMMON_LOGGER_ENDL;
-				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 
 				throw;
 			} catch (ios_base::failure ex) {
@@ -355,7 +353,6 @@ namespace dtn
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "ios_base::failure in overflow()" << IBRCOMMON_LOGGER_ENDL;
-				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 
 				throw;
 			}
@@ -664,7 +661,6 @@ namespace dtn
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in underflow(): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 
 				throw;
 			} catch (StreamShutdownException ex) {

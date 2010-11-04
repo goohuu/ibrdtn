@@ -36,6 +36,8 @@ namespace dtn
 		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
 		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0)
 		{
+			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
+
 			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
 			{
 				stream->enableNoDelay();
@@ -70,7 +72,7 @@ namespace dtn
 			_stream.reject();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventShutdown()
+		void TCPConvergenceLayer::TCPConnection::eventShutdown(StreamConnection::ConnectionShutdownCases csc)
 		{
 		}
 
@@ -254,9 +256,6 @@ namespace dtn
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-			} catch (...) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::run(): canceled" << IBRCOMMON_LOGGER_ENDL;
-				throw;
 			}
 		}
 
@@ -394,9 +393,6 @@ namespace dtn
 				return;
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			} catch (...) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "TCPConnection::Sender canceled" << IBRCOMMON_LOGGER_ENDL;
-				throw;
 			}
 
 			_connection.stop();

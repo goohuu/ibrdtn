@@ -119,7 +119,7 @@ namespace dtn
 				const dtn::data::Bundle &_b = b._b;
 
 				// send the bundle
-				dtn::data::DefaultSerializer(stream) << _b;
+				dtn::data::DefaultSerializer(stream) << _b; stream.flush();
 
 				return stream;
 			}

@@ -77,7 +77,7 @@ namespace dtn
 				/**
 				 * callback methods for tcpstream
 				 */
-				virtual void eventShutdown();
+				virtual void eventShutdown(StreamConnection::ConnectionShutdownCases csc);
 				virtual void eventTimeout();
 				virtual void eventError();
 				virtual void eventConnectionUp(const StreamContactHeader &header);

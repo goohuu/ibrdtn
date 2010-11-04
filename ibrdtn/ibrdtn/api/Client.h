@@ -101,7 +101,7 @@ namespace dtn
 			/**
 			 * this method gets called if the connection goes down
 			 */
-			virtual void eventShutdown();
+			virtual void eventShutdown(StreamConnection::ConnectionShutdownCases csc);
 			virtual void eventTimeout();
 			virtual void eventError();
 			virtual void eventConnectionUp(const StreamContactHeader &header);

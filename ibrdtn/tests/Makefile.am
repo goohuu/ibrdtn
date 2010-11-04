@@ -1,7 +1,7 @@
 ## Source directory
 
-h_sources = data/TestBundleList.h data/TestDictionary.h data/TestSerializer.h
-cc_sources = data/TestBundleList.cpp data/TestDictionary.cpp data/TestSerializer.cpp Main.cpp 
+h_sources = data/TestBundleList.h data/TestDictionary.h data/TestSerializer.h net/TestStreamConnection.h
+cc_sources = data/TestBundleList.cpp data/TestDictionary.cpp data/TestSerializer.cpp net/TestStreamConnection.cpp Main.cpp 
 
 AM_CPPFLAGS = $(PTHREAD_CFLAGS) $(ibrcommon_CFLAGS)
 AM_LDFLAGS = $(PTHREAD_LIBS) $(ibrcommon_LIBS) -L@top_srcdir@/ibrdtn/.libs -librcommon -librdtn

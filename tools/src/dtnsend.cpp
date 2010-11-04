@@ -210,6 +210,11 @@ int main(int argc, char *argv[])
 
 						// send the bundle
 						client << b;
+
+						if (copies > 1)
+						{
+							std::cout << "sent copy #" << (u+1) << std::endl;
+						}
 					}
 				}
 				else
@@ -228,6 +233,11 @@ int main(int argc, char *argv[])
 
 						// send the bundle
 						client << b;
+
+						if (copies > 1)
+						{
+							std::cout << "sent copy #" << (u+1) << std::endl;
+						}
 					}
 				}
 
@@ -248,12 +258,12 @@ int main(int argc, char *argv[])
 		} catch (const ibrcommon::IOException &ex) {
 			cout << "Error: " << ex.what() << endl;
 			error = true;
+		} catch (const ibrcommon::ConnectionClosedException&) {
+			// connection already closed, the daemon was faster
 		}
 
 		// close the tcpstream
 		conn.close();
-	} catch (const ibrcommon::ConnectionClosedException&) {
-		// connection already closed, the daemon was faster
 	} catch (const std::exception &ex) {
 		cout << "Error: " << ex.what() << endl;
 		error = true;

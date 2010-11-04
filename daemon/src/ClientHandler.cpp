@@ -28,6 +28,8 @@ namespace dtn
 		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv), ibrcommon::DetachedThread(0),
 		   _sender(*this), _stream(stream), _connection(*this, *_stream)
 		{
+			_connection.exceptions(std::ios::badbit | std::ios::eofbit);
+
 			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
 			{
 				stream->enableNoDelay();
@@ -43,7 +45,7 @@ namespace dtn
 			return _eid;
 		}
 
-		void ClientHandler::eventShutdown()
+		void ClientHandler::eventShutdown(StreamConnection::ConnectionShutdownCases csc)
 		{
 		}
 
@@ -144,19 +146,13 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "ClientHandler down" << IBRCOMMON_LOGGER_ENDL;
 
-			try {
-				// close the stream
-				(*_stream).close();
-			} catch (std::exception) {
-
-			}
+			// close the stream
+			(*_stream).close();
 
 			try {
 				// shutdown the sender thread
 				_sender.stop();
-			} catch (std::exception) {
-
-			}
+			} catch (std::exception) { };
 
 			ibrcommon::MutexLock l(_server.mutex());
 			_server.remove(this);
@@ -202,18 +198,15 @@ namespace dtn
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER(error) << "failed to start thread in ClientHandler\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-			} catch (ibrcommon::IOException ex) {
+			} catch (const ibrcommon::IOException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): IOException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-			} catch (dtn::InvalidDataException ex) {
+			} catch (const dtn::InvalidDataException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): InvalidDataException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-			} catch (std::exception ex) {
+			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): std::exception (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-			} catch (...) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): canceled" << IBRCOMMON_LOGGER_ENDL;
-				throw;
 			}
 		}
 
@@ -306,7 +299,7 @@ namespace dtn
 				}
 
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(40) << "ClientHandler::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
 				return;
 			} catch (const ibrcommon::IOException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -314,9 +307,6 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: InvalidDataException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			} catch (...) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "API: canceled" << IBRCOMMON_LOGGER_ENDL;
-				throw;
 			}
 
 			try {
