@@ -191,7 +191,7 @@ namespace dtn
 					if (bundle._custodian == clienteid) bundle._custodian = _eid;
 
 					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, bundle);
+					dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, bundle, true);
 
 					yield();
 				}

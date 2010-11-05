@@ -77,6 +77,9 @@ unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_
 // logging filter, everything but debug, err and crit
 unsigned int logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
 
+// syslog filter, everything but DEBUG and NOTICE
+unsigned int logsys = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
+
 // debug off by default
 bool _debug = false;
 
@@ -314,7 +317,7 @@ int main(int argc, char *argv[])
 
 	// init syslog
 	ibrcommon::Logger::enableAsync(); // enable asynchronous logging feature (thread-safe)
-	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, ibrcommon::Logger::LOGGER_INFO | ibrcommon::Logger::LOGGER_NOTICE);
+	ibrcommon::Logger::enableSyslog("ibrdtn-daemon", LOG_PID, LOG_DAEMON, logsys);
 
 	if (!conf.getDebug().quiet())
 	{

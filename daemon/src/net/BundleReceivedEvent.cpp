@@ -13,8 +13,8 @@ namespace dtn
 {
 	namespace net
 	{
-		BundleReceivedEvent::BundleReceivedEvent(const dtn::data::EID &p, const dtn::data::Bundle &b)
-		 : peer(p), bundle(b)
+		BundleReceivedEvent::BundleReceivedEvent(const dtn::data::EID &p, const dtn::data::Bundle &b, const bool &local)
+		 : peer(p), bundle(b), fromlocal(local)
 		{
 
 		}
@@ -24,10 +24,10 @@ namespace dtn
 
 		}
 
-		void BundleReceivedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle)
+		void BundleReceivedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new BundleReceivedEvent(peer, bundle) );
+			dtn::core::Event::raiseEvent( new BundleReceivedEvent(peer, bundle, local) );
 		}
 
 		const string BundleReceivedEvent::getName() const

@@ -176,8 +176,19 @@ namespace dtn
 
 				// Store incoming bundles into the storage
 				try {
+					if (received.fromlocal)
+					{
+						// store the bundle into a storage module
+						_storage.store(received.bundle);
+
+						// set the bundle as known
+						setKnown(received.bundle);
+
+						// raise the queued event to notify all receivers about the new bundle
+						QueueBundleEvent::raise(received.bundle, received.peer);
+					}
 					// if the bundle is not known
-					if (!isKnown(received.bundle))
+					else if (!isKnown(received.bundle))
 					{
 						// store the bundle into a storage module
 						_storage.store(received.bundle);
@@ -204,12 +215,9 @@ namespace dtn
 
 			try {
 				const dtn::core::BundleGeneratedEvent &generated = dynamic_cast<const dtn::core::BundleGeneratedEvent&>(*evt);
-
+				
 				// set the bundle as known
-				{
-					ibrcommon::MutexLock l(_known_bundles_lock);
-					_known_bundles.add(generated.bundle);
-				}
+				setKnown(generated.bundle);
 
 				// Store incoming bundles into the storage
 				try {
