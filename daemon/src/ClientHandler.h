@@ -65,7 +65,6 @@ namespace dtn
 				bool __cancellation();
 
 			private:
-				bool _abort;
 				ClientHandler &_client;
 			};
 

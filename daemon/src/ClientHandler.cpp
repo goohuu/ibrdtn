@@ -38,6 +38,7 @@ namespace dtn
 
 		ClientHandler::~ClientHandler()
 		{
+			_sender.join();
 		}
 
 		const dtn::data::EID& ClientHandler::getPeer() const
@@ -78,7 +79,6 @@ namespace dtn
 
 			try {
 				// stop the sender
-				_sender.abort();
 				_sender.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::eventConnectionDown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
@@ -233,19 +233,17 @@ namespace dtn
 		}
 
 		ClientHandler::Sender::Sender(ClientHandler &client)
-		 : _abort(false), _client(client)
+		 : _client(client)
 		{
 		}
 
 		ClientHandler::Sender::~Sender()
 		{
-			join();
 		}
 
 		bool ClientHandler::Sender::__cancellation()
 		{
 			// cancel the main thread in here
-			_abort = true;
 			this->abort();
 
 			// return false, to signal that further cancel (the hardway) is needed
@@ -263,7 +261,7 @@ namespace dtn
 				try {
 					BundleStorage &storage = BundleCore::getInstance().getStorage();
 
-					while (!_abort)
+					while (true)
 					{
 						dtn::data::Bundle b = storage.get( _client.getPeer() );
 
@@ -279,7 +277,7 @@ namespace dtn
 				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				}
 
-				while (!_abort)
+				while (true)
 				{
 					dtn::data::Bundle bundle = getnpop(true);
 
