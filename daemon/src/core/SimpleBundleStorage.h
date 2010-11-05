@@ -27,7 +27,7 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent
+		class SimpleBundleStorage : public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent, private dtn::data::BundleList
 		{
 			class Task
 			{
@@ -126,12 +126,20 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+			/**
+			 * Invoke the expiration process
+			 * @param timestamp
+			 */
+			void invokeExpiration(const size_t timestamp);
+
 		protected:
 			virtual void componentUp();
 			virtual void componentRun();
 			virtual void componentDown();
 
 			bool __cancellation();
+
+			virtual void eventBundleExpired(const ExpiringBundle &b);
 
 		private:
 			enum RunMode
@@ -148,17 +156,13 @@ namespace dtn
 				BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size);
 				~BundleContainer();
 
-				//bool operator!=(const BundleContainer& other) const;
-				//bool operator==(const BundleContainer& other) const;
 				bool operator<(const BundleContainer& other) const;
-				//bool operator>(const BundleContainer& other) const;
 
 				size_t size() const;
 
 				dtn::data::Bundle get() const;
 
 				BundleContainer& operator= (const BundleContainer &right);
-				//BundleContainer& operator= (BundleContainer &right);
 				BundleContainer(const BundleContainer& right);
 
 				void invokeStore();
@@ -231,48 +235,31 @@ namespace dtn
 				SimpleBundleStorage::BundleContainer _container;
 			};
 
-			class BundleStore : private dtn::data::BundleList
+			class TaskExpireBundles : public Task
 			{
 			public:
-				BundleStore(size_t maxsize = 0);
-				BundleStore(ibrcommon::File workdir, size_t maxsize = 0);
-				~BundleStore();
-
-				void load(const ibrcommon::File &file);
-				void store(const dtn::data::Bundle &bundle, SimpleBundleStorage &storage);
-				void remove(const dtn::data::BundleID &id, SimpleBundleStorage &storage);
-				dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter, SimpleBundleStorage &storage);
-				void clear();
-
-				unsigned int count();
-				size_t size() const;
-
-				dtn::data::Bundle get(const ibrcommon::BloomFilter &filter);
-				dtn::data::Bundle get(const dtn::data::EID &eid);
-				dtn::data::Bundle get(const dtn::data::BundleID &id);
-
-				const std::list<dtn::data::BundleID> getList();
-
-				void expire(const size_t timestamp);
-
-				std::set<BundleContainer> bundles;
-				ibrcommon::Mutex bundleslock;
-
-			protected:
-				virtual void eventBundleExpired(const ExpiringBundle &b);
+				TaskExpireBundles(const size_t &timestamp);
+				~TaskExpireBundles();
+				virtual void run(SimpleBundleStorage &storage);
 
 			private:
-				ibrcommon::File _workdir;
-				RunMode _mode;
-
-				size_t _maxsize;
-				size_t _currentsize;
+				const size_t _timestamp;
 			};
 
-			BundleStore _store;
+			void load(const ibrcommon::File &file);
+
 			bool _running;
 
 			ibrcommon::Queue<Task*> _tasks;
+
+			std::set<BundleContainer> _bundles;
+			ibrcommon::Mutex _bundleslock;
+
+			ibrcommon::File _workdir;
+			RunMode _mode;
+
+			size_t _maxsize;
+			size_t _currentsize;
 		};
 	}
 }
