@@ -13,7 +13,6 @@
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrcommon/net/tcpstream.h"
 #include "core/EventReceiver.h"
-#include "net/GenericServer.h"
 #include <memory>
 
 using namespace dtn::streams;
@@ -22,11 +21,22 @@ namespace dtn
 {
 	namespace daemon
 	{
-		class ClientHandler : public dtn::net::GenericConnection<ClientHandler>, public dtn::streams::StreamConnection::Callback, public ibrcommon::DetachedThread
+		class ClientHandler;
+
+		class ApiServerInterface
 		{
 		public:
-			ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream);
+			virtual void connectionUp(ClientHandler *conn) = 0;
+			virtual void connectionDown(ClientHandler *conn) = 0;
+		};
+
+		class ClientHandler : public dtn::streams::StreamConnection::Callback, public ibrcommon::DetachedThread
+		{
+		public:
+			ClientHandler(ApiServerInterface &srv, ibrcommon::tcpstream *stream, size_t connectionid);
 			virtual ~ClientHandler();
+
+			size_t id;
 
 			virtual void initialize();
 			virtual void shutdown();
@@ -68,6 +78,7 @@ namespace dtn
 				ClientHandler &_client;
 			};
 
+			ApiServerInterface &_srv;
 			ClientHandler::Sender _sender;
 
 			dtn::data::EID _eid;

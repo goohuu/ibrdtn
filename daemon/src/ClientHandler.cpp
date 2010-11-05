@@ -24,9 +24,8 @@ namespace dtn
 {
 	namespace daemon
 	{
-		ClientHandler::ClientHandler(dtn::net::GenericServer<ClientHandler> &srv, ibrcommon::tcpstream *stream)
-		 : dtn::net::GenericConnection<ClientHandler>((dtn::net::GenericServer<ClientHandler>&)srv), ibrcommon::DetachedThread(0),
-		   _sender(*this), _stream(stream), _connection(*this, *_stream)
+		ClientHandler::ClientHandler(ApiServerInterface &srv, ibrcommon::tcpstream *stream, size_t i)
+		 : ibrcommon::DetachedThread(0), id(i), _srv(srv), _sender(*this), _stream(stream), _connection(*this, *_stream)
 		{
 			_connection.exceptions(std::ios::badbit | std::ios::eofbit);
 
@@ -46,7 +45,7 @@ namespace dtn
 			return _eid;
 		}
 
-		void ClientHandler::eventShutdown(StreamConnection::ConnectionShutdownCases csc)
+		void ClientHandler::eventShutdown(StreamConnection::ConnectionShutdownCases)
 		{
 		}
 
@@ -71,6 +70,8 @@ namespace dtn
 				// contact received event
 				_eid = BundleCore::local + "/" + header._localeid.getNode();
 			}
+
+			_srv.connectionUp(this);
 		}
 
 		void ClientHandler::eventConnectionDown()
@@ -146,6 +147,9 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "ClientHandler down" << IBRCOMMON_LOGGER_ENDL;
 
+			// remove the client from the list in ApiServer
+			_srv.connectionDown(this);
+
 			// close the stream
 			(*_stream).close();
 
@@ -153,9 +157,6 @@ namespace dtn
 				// shutdown the sender thread
 				_sender.stop();
 			} catch (std::exception) { };
-
-			ibrcommon::MutexLock l(_server.mutex());
-			_server.remove(this);
 		}
 
 		void ClientHandler::run()
@@ -258,25 +259,6 @@ namespace dtn
 			ibrcommon::Thread::disableCancel(oldstate);
 
 			try {
-				try {
-					BundleStorage &storage = BundleCore::getInstance().getStorage();
-
-					while (true)
-					{
-						dtn::data::Bundle b = storage.get( _client.getPeer() );
-
-						// enable cancellation during transmission
-						{
-							ibrcommon::Thread::CancelProtector cprotect(true);
-							_client << b;
-						}
-
-						// remove the bundle from the storage
-						storage.remove(b);
-					}
-				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-				}
-
 				while (true)
 				{
 					dtn::data::Bundle bundle = getnpop(true);
