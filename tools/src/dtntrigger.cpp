@@ -119,12 +119,8 @@ void term(int signal)
 	if (signal >= 1)
 	{
 		_running = false;
-		try {
-			if (_conn != NULL) _conn->close();
-			exit(0);
-		} catch (std::exception) {
-
-		}
+		if (_conn != NULL) _conn->close();
+		exit(0);
 	}
 }
 
@@ -208,7 +204,7 @@ int main(int argc, char** argv)
 
 			// set the global connection to NULL
 			_conn = NULL;
-		} catch (ibrcommon::tcpclient::SocketException ex) {
+		} catch (const ibrcommon::tcpclient::SocketException&) {
 			// set the global connection to NULL
 			_conn = NULL;
 
@@ -224,7 +220,7 @@ int main(int argc, char** argv)
 					backoff = backoff * 2;
 				}
 			}
-		} catch (ibrcommon::IOException ex) {
+		} catch (const ibrcommon::IOException&) {
 			// set the global connection to NULL
 			_conn = NULL;
 
@@ -240,7 +236,7 @@ int main(int argc, char** argv)
 					backoff = backoff * 2;
 				}
 			}
-		} catch (ibrcommon::ConnectionClosedException ex) {
+		} catch (const std::exception&) {
 			// set the global connection to NULL
 			_conn = NULL;
 		}

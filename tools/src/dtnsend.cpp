@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
 		} catch (const ibrcommon::IOException &ex) {
 			cout << "Error: " << ex.what() << endl;
 			error = true;
-		} catch (const ibrcommon::ConnectionClosedException&) {
+		} catch (const dtn::api::ConnectionException&) {
 			// connection already closed, the daemon was faster
 		}
 

@@ -42,18 +42,14 @@ void term(int signal)
 		std::cout << h << " bundles received." << std::endl;
 	}
 
-	try {
-		if (signal >= 1)
+	if (signal >= 1)
+	{
+		if (_client != NULL)
 		{
-			if (_client != NULL)
-			{
-				_client->close();
-				_conn->close();
-				exit(0);
-			}
+			_client->close();
+			_conn->close();
+			exit(0);
 		}
-	} catch (ibrcommon::ConnectionClosedException ex) {
-		exit(0);
 	}
 }
 
@@ -192,7 +188,13 @@ int main(int argc, char *argv[])
 
 		// close the tcp connection
 		conn.close();
-	} catch (const ibrcommon::ConnectionClosedException &ex) {
+	} catch (const dtn::api::ConnectionTimeoutException&) {
+		std::cerr << "Timeout." << std::endl;
+		ret = EXIT_FAILURE;
+	} catch (const dtn::api::ConnectionAbortedException&) {
+		std::cerr << "Aborted." << std::endl;
+		ret = EXIT_FAILURE;
+	} catch (const dtn::api::ConnectionException&) {
 	} catch (const std::exception &ex) {
 		std::cerr << "Error: " << ex.what() << std::endl;
 		ret = EXIT_FAILURE;

@@ -33,6 +33,22 @@ namespace dtn
 			};
 		};
 
+		class ConnectionTimeoutException : public ibrcommon::Exception
+		{
+		public:
+			ConnectionTimeoutException(string what = "Timeout.") throw() : ibrcommon::Exception(what)
+			{
+			};
+		};
+
+		class ConnectionAbortedException : public ibrcommon::Exception
+		{
+		public:
+			ConnectionAbortedException(string what = "Aborted.") throw() : ibrcommon::Exception(what)
+			{
+			};
+		};
+
 		/**
 		 * This is an abstract class is the base for any API connection to a
 		 * IBR-DTN daemon. It uses a existing stream to communicate bidirectional

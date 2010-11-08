@@ -186,10 +186,19 @@ namespace dtn
 		{
 			try {
 				return _inqueue.getnpop(true, timeout * 1000);
-			} catch (const ibrcommon::QueueUnblockedException&) {
-				throw;
+			} catch (const ibrcommon::QueueUnblockedException &ex) {
+				if (ex.reason == ibrcommon::QueueUnblockedException::QUEUE_TIMEOUT)
+				{
+					throw ConnectionTimeoutException();
+				}
+				else if (ex.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT)
+				{
+					throw ConnectionAbortedException(ex.what());
+				}
+
+				throw ConnectionException(ex.what());
 			} catch (const std::exception &ex) {
-				throw ibrcommon::ConnectionClosedException(ex.what());
+				throw ConnectionException(ex.what());
 			}
 		}
 	}
