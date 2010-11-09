@@ -51,13 +51,13 @@ namespace dtn
 				ibrcommon::BloomFilter _filter;
 				size_t _filter_age;
 				size_t _lastseen;
+				size_t _lastupdate;
 				bool _available;
 			};
 
 			NeighborDatabase();
 			virtual ~NeighborDatabase();
 
-			void updateLastSeen(const dtn::data::EID &eid);
 			void updateBundles(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf);
 
 			/**

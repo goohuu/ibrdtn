@@ -12,10 +12,12 @@ namespace dtn
 {
 	namespace routing
 	{
-		NeighborDatabase::NeighborEntry::NeighborEntry() : _available(false) {};
+		NeighborDatabase::NeighborEntry::NeighborEntry()
+		 : _eid(), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _available(false)
+		{};
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &eid)
-		 : _eid(eid), _available(false)
+		 : _eid(eid), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _available(false)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
@@ -29,6 +31,7 @@ namespace dtn
 		void NeighborDatabase::NeighborEntry::updateBundles(const ibrcommon::BloomFilter &bf)
 		{
 			_filter = bf;
+			_lastupdate = dtn::utils::Clock::getTime();
 		}
 
 		NeighborDatabase::NeighborDatabase()
@@ -50,11 +53,6 @@ namespace dtn
 			return _entries[eid];
 		}
 
-		void NeighborDatabase::updateLastSeen(const dtn::data::EID &eid)
-		{
-			NeighborEntry &entry = get(eid);
-			entry.updateLastSeen();
-		}
 		void NeighborDatabase::updateBundles(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf)
 		{
 			NeighborEntry &entry = get(eid);

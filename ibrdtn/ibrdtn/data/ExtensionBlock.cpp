@@ -34,7 +34,9 @@ namespace dtn
 
 		size_t ExtensionBlock::getLength() const
 		{
-			return _blobref.getSize();
+			ibrcommon::BLOB::Reference blobref = _blobref;
+			ibrcommon::MutexLock l(blobref);
+			return blobref.getSize();
 		}
 
 		std::ostream& ExtensionBlock::serialize(std::ostream &stream) const
