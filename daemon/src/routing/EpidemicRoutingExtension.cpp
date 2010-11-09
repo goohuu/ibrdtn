@@ -304,7 +304,7 @@ namespace dtn
 							{
 								// the neighbor does not seems to support epidemic routing
 								// only forward bundles with him as destination
-								dtn::data::Bundle b = getRouter()->getStorage().get(task.eid);
+								dtn::data::Bundle b = getRouter()->getStorage().get(task.eid, false);
 								getRouter()->transferTo(task.eid, b);
 							}
 

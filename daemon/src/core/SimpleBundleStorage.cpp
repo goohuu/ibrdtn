@@ -168,7 +168,7 @@ namespace dtn
 			throw BundleStorage::NoBundleFoundException();
 		}
 
-		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid)
+		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid, const bool appsensitive)
 		{
 			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: get bundle for " << eid.getString() << IBRCOMMON_LOGGER_ENDL;
 			
@@ -178,9 +178,19 @@ namespace dtn
 				const BundleContainer &bundle = (*iter);
 
 				try {
-					if (bundle.destination == eid)
+					if (appsensitive)
 					{
-						return bundle.get();
+						if (bundle.destination == eid)
+						{
+							return bundle.get();
+						}
+					}
+					else
+					{
+						if (bundle.destination.getNodeEID() == eid.getNodeEID())
+						{
+							return bundle.get();
+						}
 					}
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER_DEBUG(10) << "InvalidDataException on bundle get: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

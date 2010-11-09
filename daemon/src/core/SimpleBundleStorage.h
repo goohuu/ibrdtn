@@ -65,7 +65,7 @@ namespace dtn
 			 * @return A bundle object of the
 			 */
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
-			virtual dtn::data::Bundle get(const dtn::data::EID &eid);
+			virtual dtn::data::Bundle get(const dtn::data::EID &eid, const bool appsensitive = true);
 
 			/**
 			 * Returns one bundle which is not in the bloomfilter

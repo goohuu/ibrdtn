@@ -509,7 +509,7 @@ namespace core {
 		return bundle;
 	}
 
-	dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::EID &eid){
+	dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::EID &eid, const bool appsensitive){
 		int err;
 		size_t procflag;
 		data::Bundle bundle;

@@ -129,7 +129,7 @@ public:
 	 * @param eid The receiver for the bundle.
 	 * @return A bundle object.
 	 */
-	dtn::data::Bundle get(const dtn::data::EID &eid);
+	dtn::data::Bundle get(const dtn::data::EID &eid, const bool appsensitive = true);
 
 	/**
 	 * Returns one bundle which is not in the bloomfilter

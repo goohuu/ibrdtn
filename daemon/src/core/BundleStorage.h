@@ -70,7 +70,7 @@ namespace dtn
 			 * @param eid The receiver for the bundle.
 			 * @return A bundle object.
 			 */
-			virtual dtn::data::Bundle get(const dtn::data::EID &eid) = 0;
+			virtual dtn::data::Bundle get(const dtn::data::EID &eid, const bool appsensitive = true) = 0;
 
 			/**
 			 * This method deletes a specific bundle in the storage.
