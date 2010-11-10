@@ -297,14 +297,14 @@ namespace dtn
 								// the neighbor supports the epidemic routing scheme
 								// forward all bundles not known by him
 								ibrcommon::BloomFilter &bf = entry._filter;
-								dtn::data::Bundle b = getRouter()->getStorage().get(bf);
+								const dtn::data::BundleID b = getRouter()->getStorage().getByFilter(bf);
 								getRouter()->transferTo(task.eid, b);
 							}
 							else
 							{
 								// the neighbor does not seems to support epidemic routing
 								// only forward bundles with him as destination
-								dtn::data::Bundle b = getRouter()->getStorage().get(task.eid, false);
+								const dtn::data::BundleID b = getRouter()->getStorage().getByDestination(task.eid, false);
 								getRouter()->transferTo(task.eid, b);
 							}
 

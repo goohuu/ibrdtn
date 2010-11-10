@@ -123,20 +123,20 @@ public:
 	dtn::data::Bundle get(const dtn::data::BundleID &id);
 
 	/**
-	 * This method returns a bundle which is addressed to a EID.
-	 * If there is no bundle available the method will block until
-	 * a global shutdown or a bundle is available.
-	 * @param eid The receiver for the bundle.
-	 * @return A bundle object.
+	 * Query for a bundle with a specific destination. Set exact to true, if the application
+	 * part should be compared too.
+	 * @param eid
+	 * @param exact
+	 * @return
 	 */
-	dtn::data::Bundle get(const dtn::data::EID &eid, const bool appsensitive = true);
+	const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false);
 
 	/**
-	 * Returns one bundle which is not in the bloomfilter
+	 * Returns a bundle ID which is not in the bloomfilter, but in the storage
 	 * @param filter
 	 * @return
 	 */
-	dtn::data::Bundle get(const ibrcommon::BloomFilter &filter);
+	const dtn::data::MetaBundle getByFilter(const ibrcommon::BloomFilter &filter);
 
 	/**
 	 * Returns the routinginformation stored for a specific Bundle.

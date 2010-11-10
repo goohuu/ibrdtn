@@ -236,7 +236,7 @@ namespace dtn
 
 							ibrcommon::MutexLock l(_list_mutex);
 							ibrcommon::BloomFilter &bf = _neighbors.get(task.eid)._filter;
-							dtn::data::Bundle b = getRouter()->getStorage().get(bf);
+							const dtn::data::BundleID b = getRouter()->getStorage().getByFilter(bf);
 							getRouter()->transferTo(task.eid, b);
 
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {

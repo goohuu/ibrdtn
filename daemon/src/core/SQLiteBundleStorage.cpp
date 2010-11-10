@@ -509,10 +509,11 @@ namespace core {
 		return bundle;
 	}
 
-	dtn::data::Bundle SQLiteBundleStorage::get(const dtn::data::EID &eid, const bool appsensitive){
+	const dtn::data::MetaBundle SQLiteBundleStorage::getByDestination(const dtn::data::EID &eid, bool exact)
+	{
 		int err;
 		size_t procflag;
-		data::Bundle bundle;
+		dtn::data::MetaBundle bundle;
 		//String wird in diesem Fall verwendet, da das const char arrey bei einem step, reset oder finalize verändert wird
 		//und die Daten kopiert werden müssen.
 		const char *source, *destination, *reportto, *custodian;
@@ -537,33 +538,32 @@ namespace core {
 			reportto = (const char*) sqlite3_column_text(getBundleByDestination, 3);
 			custodian = (const char*) sqlite3_column_text(getBundleByDestination, 4);
 			procflag = sqlite3_column_int(getBundleByDestination, 5);
-			bundle._timestamp = sqlite3_column_int64(getBundleByDestination, 6);
-			bundle._sequencenumber = sqlite3_column_int64(getBundleByDestination, 7);
-			bundle._lifetime = sqlite3_column_int64(getBundleByDestination, 8);
-			if(procflag & data::Bundle::FRAGMENT){
-				bundle._fragmentoffset = sqlite3_column_int64(getBundleByDestination, 9);
-				bundle._appdatalength = sqlite3_column_int64(getBundleByDestination,10);
+			bundle.timestamp = sqlite3_column_int64(getBundleByDestination, 6);
+			bundle.sequencenumber = sqlite3_column_int64(getBundleByDestination, 7);
+			bundle.lifetime = sqlite3_column_int64(getBundleByDestination, 8);
+			if(procflag & data::Bundle::FRAGMENT)
+			{
+				bundle.fragment = true;
+				bundle.offset = sqlite3_column_int64(getBundleByDestination, 9);
+				bundle.appdatalength = sqlite3_column_int64(getBundleByDestination,10);
 			}
 
-			bundle._source = data::EID((string)source);
-			bundle._destination = data::EID((string)destination);
-			bundle._reportto = data::EID((string)reportto);
-			bundle._custodian = data::EID((string)custodian);
-			bundle._procflags = procflag;
+			bundle.received = 0;
+			bundle.source = data::EID((string)source);
+			bundle.destination = data::EID((string)destination);
+			bundle.reportto = data::EID((string)reportto);
+			bundle.custodian = data::EID((string)custodian);
+			bundle.procflags = procflag;
 
 
 			//reset the statement
 			sqlite3_reset(getBundleByDestination);
-
-			//read Blocks
-			readBlocks(bundle,bundleID);
-
 		}
 
 		return bundle;
 	}
 
-	dtn::data::Bundle SQLiteBundleStorage::get(const ibrcommon::BloomFilter &filter)
+	const dtn::data::MetaBundle SQLiteBundleStorage::getByFilter(const ibrcommon::BloomFilter &filter)
 	{
 		// TODO: implement BloomFilter query
 		throw BundleStorage::NoBundleFoundException();

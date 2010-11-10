@@ -145,7 +145,7 @@ namespace dtn
 			return _bundles.size();
 		}
 
-		dtn::data::Bundle SimpleBundleStorage::get(const ibrcommon::BloomFilter &filter)
+		const dtn::data::MetaBundle SimpleBundleStorage::getByFilter(const ibrcommon::BloomFilter &filter)
 		{
 			// search for one bundle which is not contained in the filter
 			// until we have a better strategy, we have to iterate through all bundles
@@ -158,7 +158,7 @@ namespace dtn
 					if (!filter.contains(container.toString()))
 					{
 						IBRCOMMON_LOGGER_DEBUG(10) << container.toString() << " is not in the bloomfilter" << IBRCOMMON_LOGGER_ENDL;
-						return container.get();
+						return container;
 					}
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER_DEBUG(10) << "InvalidDataException on bundle get: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -168,7 +168,7 @@ namespace dtn
 			throw BundleStorage::NoBundleFoundException();
 		}
 
-		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::EID &eid, const bool appsensitive)
+		const dtn::data::MetaBundle SimpleBundleStorage::getByDestination(const dtn::data::EID &eid, bool exact)
 		{
 			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: get bundle for " << eid.getString() << IBRCOMMON_LOGGER_ENDL;
 			
@@ -178,18 +178,18 @@ namespace dtn
 				const BundleContainer &bundle = (*iter);
 
 				try {
-					if (appsensitive)
+					if (exact)
 					{
 						if (bundle.destination == eid)
 						{
-							return bundle.get();
+							return bundle;
 						}
 					}
 					else
 					{
 						if (bundle.destination.getNodeEID() == eid.getNodeEID())
 						{
-							return bundle.get();
+							return bundle;
 						}
 					}
 				} catch (const dtn::InvalidDataException &ex) {

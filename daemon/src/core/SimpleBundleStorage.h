@@ -65,16 +65,27 @@ namespace dtn
 			 * @return A bundle object of the
 			 */
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
-			virtual dtn::data::Bundle get(const dtn::data::EID &eid, const bool appsensitive = true);
 
 			/**
-			 * Returns one bundle which is not in the bloomfilter
+			 * Query for a bundle with a specific destination. Set exact to true, if the application
+			 * part should be compared too.
+			 * @param eid
+			 * @param exact
+			 * @return
+			 */
+			virtual const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false);
+
+			/**
+			 * Returns a bundle ID which is not in the bloomfilter, but in the storage
 			 * @param filter
 			 * @return
 			 */
-			virtual dtn::data::Bundle get(const ibrcommon::BloomFilter &filter);
+			virtual const dtn::data::MetaBundle getByFilter(const ibrcommon::BloomFilter &filter);
 
-
+			/**
+			 * Returns all bundles in the storage as a list of IDs
+			 * @return
+			 */
 			const std::list<dtn::data::BundleID> getList();
 
 			/**
@@ -85,8 +96,9 @@ namespace dtn
 			void remove(const dtn::data::BundleID &id);
 
 			/**
-			 * Remove all bundles which match this filter
+			 * Remove one bundles which match this filter
 			 * @param filter
+			 * @return The bundle meta data of the removed bundle.
 			 */
 			dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter);
 
