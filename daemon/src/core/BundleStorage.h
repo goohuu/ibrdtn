@@ -15,6 +15,7 @@
 
 #include <stdexcept>
 #include <iterator>
+#include <set>
 
 namespace dtn
 {
@@ -43,6 +44,13 @@ namespace dtn
 			 * destructor
 			 */
 			virtual ~BundleStorage() = 0;
+
+			/**
+			 * Add a EID to the destination filter of the storage. This prevents search methods like getByFilter
+			 * to return a bundle with an destination EID added to the filter.
+			 * @param eid
+			 */
+			void addToFilter(const dtn::data::EID &eid);
 
 			/**
 			 * Stores a bundle in the storage.
@@ -136,6 +144,12 @@ namespace dtn
 			 * constructor
 			 */
 			BundleStorage();
+
+			/**
+			 * the destination query filter stores EID which are not returned by search methods
+			 * like getByFilter()
+			 */
+			std::set<dtn::data::EID> _destination_filter;
 		};
 	}
 }

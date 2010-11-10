@@ -44,6 +44,8 @@ namespace dtn
 			}
 		};
 
+		const dtn::data::EID EpidemicRoutingExtension::EPIDEMIC_ROUTING_ADDRESS("dtn:epidemic-routing");
+
 		EpidemicRoutingExtension::EpidemicRoutingExtension()
 		{
 			// get configuration
@@ -51,6 +53,9 @@ namespace dtn
 
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing epidemic routing module for node " << conf.getNodename() << IBRCOMMON_LOGGER_ENDL;
+
+			// add epidemic bundles to the storage destination filter
+			getRouter()->getStorage().addToFilter(EPIDEMIC_ROUTING_ADDRESS);
 		}
 
 		EpidemicRoutingExtension::~EpidemicRoutingExtension()
@@ -217,7 +222,7 @@ namespace dtn
 			} catch (std::bad_cast ex) { };
 		}
 
-		void EpidemicRoutingExtension::transferEpidemicInformation(const dtn::data::EID &eid)
+		void EpidemicRoutingExtension::transferEpidemicInformation(const std::set<dtn::data::EID> &list)
 		{
 			/**
 			 * create a routing bundle
@@ -226,7 +231,7 @@ namespace dtn
 			dtn::data::Bundle routingbundle;
 			routingbundle._lifetime = 10;
 			routingbundle._source = dtn::core::BundleCore::local;
-			routingbundle._destination = EID("dtn:epidemic-routing");
+			routingbundle._destination = EPIDEMIC_ROUTING_ADDRESS;
 
 			// add the epidemic bundle to the list of known bundles
 			getRouter()->setKnown(routingbundle);
@@ -244,8 +249,11 @@ namespace dtn
 			// store the bundle in the storage
 			getRouter()->getStorage().store(routingbundle);
 
-			// then transfer the bundle to the destination
-			getRouter()->transferTo(eid, routingbundle);
+			for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			{
+				// then transfer the bundle to the destination
+				getRouter()->transferTo(*iter, routingbundle);
+			}
 		}
 
 		bool EpidemicRoutingExtension::__cancellation()
@@ -333,11 +341,7 @@ namespace dtn
 								ibrcommon::MutexLock l(_list_mutex);
 								list = _neighbors.getAvailable();
 							}
-
-							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-							{
-								transferEpidemicInformation(*iter);
-							}
+							transferEpidemicInformation(list);
 
 						} catch (std::bad_cast) { };
 
@@ -346,7 +350,8 @@ namespace dtn
 						 */
 						try {
 							UpdateSummaryVectorTask &task = dynamic_cast<UpdateSummaryVectorTask&>(*t);
-							transferEpidemicInformation(task.eid);
+							std::set<dtn::data::EID> list; list.insert(task.eid);
+							transferEpidemicInformation(list);
 						} catch (std::bad_cast) { };
 
 						/**
@@ -356,7 +361,7 @@ namespace dtn
 							ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
 
 							// check for special addresses
-							if (task.bundle.destination == EID("dtn:epidemic-routing"))
+							if (task.bundle.destination == EPIDEMIC_ROUTING_ADDRESS)
 							{
 								// get the bundle out of the storage
 								dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);

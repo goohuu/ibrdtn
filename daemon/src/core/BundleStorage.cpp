@@ -17,10 +17,16 @@ namespace dtn
 	{
 		BundleStorage::BundleStorage()
 		{
+			_destination_filter.insert(dtn::core::BundleCore::local);
 		}
 
 		BundleStorage::~BundleStorage()
 		{
+		}
+
+		void BundleStorage::addToFilter(const dtn::data::EID &eid)
+		{
+			_destination_filter.insert(eid);
 		}
 
 		void BundleStorage::remove(const dtn::data::Bundle &b)

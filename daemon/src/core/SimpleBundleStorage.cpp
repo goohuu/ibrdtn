@@ -54,14 +54,6 @@ namespace dtn
 				}
 			}
 
-//			// debug output of storage content
-//			for (std::set<BundleContainer>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
-//			{
-//				const BundleContainer &container = (*iter);
-//
-//				std::cout << container.toString() << ", Priority: " << container.getPriority() << std::endl;
-//			}
-
 			// some output
 			IBRCOMMON_LOGGER(info) << _bundles.size() << " Bundles restored." << IBRCOMMON_LOGGER_ENDL;
 		}
@@ -155,10 +147,14 @@ namespace dtn
 				const BundleContainer &container = (*iter);
 
 				try {
-					if (!filter.contains(container.toString()))
+					if ( !filter.contains(container.toString()) )
 					{
-						IBRCOMMON_LOGGER_DEBUG(10) << container.toString() << " is not in the bloomfilter" << IBRCOMMON_LOGGER_ENDL;
-						return container;
+						// check if the destination is blocked by the destination filter
+						if ( (_destination_filter.find(container.destination) == _destination_filter.end()) )
+						{
+							IBRCOMMON_LOGGER_DEBUG(10) << container.toString() << " is not in the bloomfilter" << IBRCOMMON_LOGGER_ENDL;
+							return container;
+						}
 					}
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER_DEBUG(10) << "InvalidDataException on bundle get: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

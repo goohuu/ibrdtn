@@ -32,6 +32,9 @@ namespace dtn
 	{
 		class EpidemicRoutingExtension : public BaseRouter::ThreadedExtension, public dtn::net::DiscoveryServiceProvider
 		{
+		private:
+			static const dtn::data::EID EPIDEMIC_ROUTING_ADDRESS;
+
 		public:
 			EpidemicRoutingExtension();
 			~EpidemicRoutingExtension();
@@ -143,17 +146,12 @@ namespace dtn
 				const dtn::data::EID origin;
 			};
 
-			void transferEpidemicInformation(const dtn::data::EID &eid);
+			void transferEpidemicInformation(const std::set<dtn::data::EID> &list);
 
 			/**
 			 * contains a lock for bundles lists (_bundles, _seenlist)
 			 */
 			ibrcommon::Mutex _list_mutex;
-
-//			/**
-//			 * contains a list of bundle references which has been seen previously
-//			 */
-//			dtn::data::BundleList _seenlist;
 
 			/**
 			 * contains the own summary vector for all delivered bundles
