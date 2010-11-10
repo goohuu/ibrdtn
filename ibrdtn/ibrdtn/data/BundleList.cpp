@@ -26,6 +26,9 @@ namespace dtn
 
 			// insert the bundle to the public list
 			std::set<dtn::data::MetaBundle>::insert(bundle);
+
+			// increment the version
+			_version++;
 		}
 
 		void BundleList::remove(const dtn::data::MetaBundle &bundle)
@@ -35,12 +38,18 @@ namespace dtn
 
 			// delete bundle id in the public list
 			std::set<dtn::data::MetaBundle>::erase(bundle);
+
+			// increment the version
+			_version++;
 		}
 
 		void BundleList::clear()
 		{
 			_bundles.clear();
 			std::set<dtn::data::MetaBundle>::clear();
+
+			// increment the version
+			_version++;
 		}
 
 		bool BundleList::contains(const dtn::data::BundleID &bundle) const
@@ -80,7 +89,23 @@ namespace dtn
 				commit = true;
 			}
 
-			if (commit) eventCommitExpired();
+			if (commit)
+			{
+				eventCommitExpired();
+
+				// increment the version
+				_version++;
+			}
+		}
+
+		bool BundleList::operator==(const size_t version) const
+		{
+			return (version == _version);
+		}
+
+		size_t BundleList::getVersion() const
+		{
+			return _version;
 		}
 
 		BundleList::ExpiringBundle::ExpiringBundle(const MetaBundle &b)

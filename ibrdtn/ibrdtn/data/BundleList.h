@@ -28,6 +28,9 @@ namespace dtn
 
 			void expire(const size_t timestamp);
 
+			bool operator==(const size_t version) const;
+			size_t getVersion() const;
+
 		protected:
 			class ExpiringBundle
 			{
@@ -48,6 +51,10 @@ namespace dtn
 			virtual void eventCommitExpired() {};
 
 			std::set<ExpiringBundle> _bundles;
+
+		private:
+			// the version value gets incremented on every change
+			size_t _version;
 		};
 
 	}
