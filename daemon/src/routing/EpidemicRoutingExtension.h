@@ -114,20 +114,11 @@ namespace dtn
 				const dtn::data::EID eid;
 			};
 
-			class BroadcastSummaryVectorTask : public Task
+			class TransferSummaryVectorTask : public Task
 			{
 			public:
-				BroadcastSummaryVectorTask();
-				virtual ~BroadcastSummaryVectorTask();
-
-				virtual std::string toString();
-			};
-
-			class UpdateSummaryVectorTask : public Task
-			{
-			public:
-				UpdateSummaryVectorTask(const dtn::data::EID &eid);
-				virtual ~UpdateSummaryVectorTask();
+				TransferSummaryVectorTask(const dtn::data::EID &eid);
+				virtual ~TransferSummaryVectorTask();
 
 				virtual std::string toString();
 
@@ -146,7 +137,13 @@ namespace dtn
 				const dtn::data::EID origin;
 			};
 
-			void transferEpidemicInformation(const std::set<dtn::data::EID> &list);
+			/**
+			 * Prepare an epidemic bundle. This includes setting all parameters
+			 * like lifetime, source and destination. Additional the bundle is added
+			 * to the list of known bundles and stored in the bundle storage.
+			 * @param b The bundle sample.
+			 */
+			void prepareEpidemicInfo(dtn::data::Bundle &b);
 
 			/**
 			 * contains a lock for bundles lists (_bundles, _seenlist)
@@ -167,6 +164,11 @@ namespace dtn
 			 * hold queued tasks for later processing
 			 */
 			ibrcommon::Queue<EpidemicRoutingExtension::Task* > _taskqueue;
+
+			/**
+			 * The current epidemic bundle is stored in this variable.
+			 */
+			dtn::data::Bundle _epidemic_bundle;
 		};
 
 		/**

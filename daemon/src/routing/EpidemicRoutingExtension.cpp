@@ -107,7 +107,8 @@ namespace dtn
 						ibrcommon::MutexLock l(_list_mutex);
 						_neighbors.setAvailable(eid);
 					}
-					_taskqueue.push( new UpdateSummaryVectorTask( eid ) );
+					_taskqueue.push( new TransferSummaryVectorTask( eid ) );
+					_taskqueue.push( new SearchNextBundleTask( eid ) );
 					break;
 
 					case NODE_UNAVAILABLE:
@@ -222,38 +223,37 @@ namespace dtn
 			} catch (std::bad_cast ex) { };
 		}
 
-		void EpidemicRoutingExtension::transferEpidemicInformation(const std::set<dtn::data::EID> &list)
+		void EpidemicRoutingExtension::prepareEpidemicInfo(dtn::data::Bundle &b)
 		{
-			/**
-			 * create a routing bundle
-			 * which contains a summary vector
-			 */
-			dtn::data::Bundle routingbundle;
-			routingbundle._lifetime = 10;
-			routingbundle._source = dtn::core::BundleCore::local;
-			routingbundle._destination = EPIDEMIC_ROUTING_ADDRESS;
+			// clear all blocks
+			b.clearBlocks();
+
+			// relabel the bundle with a new timestamp and sequence number
+			b.relabel();
+
+			// set basics (lifetime, source, destination)
+			b._lifetime = 10;
+			b._source = dtn::core::BundleCore::local;
+			b._destination = EPIDEMIC_ROUTING_ADDRESS;
 
 			// add the epidemic bundle to the list of known bundles
-			getRouter()->setKnown(routingbundle);
+			getRouter()->setKnown(b);
 
-			// create a new epidemic block
-			{
-				// lock the lists
-				ibrcommon::MutexLock l(_list_mutex);
-				EpidemicExtensionBlock &eblock = routingbundle.push_back<EpidemicExtensionBlock>();
-				const SummaryVector vec = getRouter()->getSummaryVector();
-				eblock.setSummaryVector(vec);
-				eblock.setPurgeVector(_purge_vector);
-			}
+			// lock the lists
+			ibrcommon::MutexLock l(_list_mutex);
+
+			// create an epidemic extension block
+			EpidemicExtensionBlock &eblock = b.push_back<EpidemicExtensionBlock>();
+
+			// get the global summary vector of this daemon
+			const SummaryVector vec = getRouter()->getSummaryVector();
+
+			// set the summary and purge vector
+			eblock.setSummaryVector(vec);
+			eblock.setPurgeVector(_purge_vector);
 
 			// store the bundle in the storage
-			getRouter()->getStorage().store(routingbundle);
-
-			for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-			{
-				// then transfer the bundle to the destination
-				getRouter()->transferTo(*iter, routingbundle);
-			}
+			getRouter()->getStorage().store(b);
 		}
 
 		bool EpidemicRoutingExtension::__cancellation()
@@ -285,8 +285,19 @@ namespace dtn
 							// should i send a vector update?
 							if (sendVectorUpdate)
 							{
+								// set the update indicator to false
 								sendVectorUpdate = false;
-								_taskqueue.push( new BroadcastSummaryVectorTask() );
+
+								// prepare a new epidemic bundle
+								prepareEpidemicInfo(_epidemic_bundle);
+
+								ibrcommon::MutexLock l(_list_mutex);
+								std::set<dtn::data::EID> list = _neighbors.getAvailable();
+
+								for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+								{
+									_taskqueue.push( new TransferSummaryVectorTask( *iter ) );
+								}
 							}
 
 							ibrcommon::MutexLock l(_list_mutex);
@@ -331,27 +342,13 @@ namespace dtn
 						} catch (std::bad_cast) { };
 
 						/**
-						 * broadcast the own summary vector to all neighbors
+						 * push an epidemic info bundle to one neighbor
 						 */
 						try {
-							dynamic_cast<BroadcastSummaryVectorTask&>(*t);
+							TransferSummaryVectorTask &task = dynamic_cast<TransferSummaryVectorTask&>(*t);
 
-							std::set<dtn::data::EID> list;
-							{
-								ibrcommon::MutexLock l(_list_mutex);
-								list = _neighbors.getAvailable();
-							}
-							transferEpidemicInformation(list);
-
-						} catch (std::bad_cast) { };
-
-						/**
-						 * update a received summary vector
-						 */
-						try {
-							UpdateSummaryVectorTask &task = dynamic_cast<UpdateSummaryVectorTask&>(*t);
-							std::set<dtn::data::EID> list; list.insert(task.eid);
-							transferEpidemicInformation(list);
+							// then transfer the bundle to the destination
+							getRouter()->transferTo(task.eid, _epidemic_bundle);
 						} catch (std::bad_cast) { };
 
 						/**
@@ -520,29 +517,16 @@ namespace dtn
 
 		/****************************************/
 
-		EpidemicRoutingExtension::BroadcastSummaryVectorTask::BroadcastSummaryVectorTask()
-		{ }
-
-		EpidemicRoutingExtension::BroadcastSummaryVectorTask::~BroadcastSummaryVectorTask()
-		{ }
-
-		std::string EpidemicRoutingExtension::BroadcastSummaryVectorTask::toString()
-		{
-			return "BroadcastSummaryVectorTask";
-		}
-
-		/****************************************/
-
-		EpidemicRoutingExtension::UpdateSummaryVectorTask::UpdateSummaryVectorTask(const dtn::data::EID &e)
+		EpidemicRoutingExtension::TransferSummaryVectorTask::TransferSummaryVectorTask(const dtn::data::EID &e)
 		 : eid(e)
 		{ }
 
-		EpidemicRoutingExtension::UpdateSummaryVectorTask::~UpdateSummaryVectorTask()
+		EpidemicRoutingExtension::TransferSummaryVectorTask::~TransferSummaryVectorTask()
 		{ }
 
-		std::string EpidemicRoutingExtension::UpdateSummaryVectorTask::toString()
+		std::string EpidemicRoutingExtension::TransferSummaryVectorTask::toString()
 		{
-			return "UpdateSummaryVectorTask: " + eid.getString();
+			return "TransferSummaryVectorTask: " + eid.getString();
 		}
 
 		/****************************************/

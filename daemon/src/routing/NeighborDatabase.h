@@ -67,6 +67,7 @@ namespace dtn
 			private:
 				ibrcommon::Mutex _transfer_lock;
 				size_t _transfer_semaphore;
+				size_t _transfer_max;
 			};
 
 			NeighborDatabase();
