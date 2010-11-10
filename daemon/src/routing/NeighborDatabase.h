@@ -37,6 +37,13 @@ namespace dtn
 				const dtn::data::EID eid;
 			};
 
+			class NoMoreTransfersAvailable : public ibrcommon::Exception
+			{
+			public:
+				NoMoreTransfersAvailable() : ibrcommon::Exception("No more transfers allowed.") { };
+				virtual ~NoMoreTransfersAvailable() throw () { };
+			};
+
 			class NeighborEntry
 			{
 			public:
@@ -53,6 +60,13 @@ namespace dtn
 				size_t _lastseen;
 				size_t _lastupdate;
 				bool _available;
+
+				void acquireTransfer() throw (NoMoreTransfersAvailable);
+				void releaseTransfer();
+
+			private:
+				ibrcommon::Mutex _transfer_lock;
+				size_t _transfer_semaphore;
 			};
 
 			NeighborDatabase();
@@ -72,7 +86,7 @@ namespace dtn
 			void setAvailable(const dtn::data::EID &eid);
 			void setUnavailable(const dtn::data::EID &eid);
 
-			std::set<dtn::data::EID> getAvailable() const;
+			const std::set<dtn::data::EID> getAvailable() const;
 
 			NeighborDatabase::NeighborEntry& get(const dtn::data::EID &eid);
 

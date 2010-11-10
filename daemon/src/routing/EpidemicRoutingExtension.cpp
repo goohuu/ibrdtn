@@ -75,6 +75,7 @@ namespace dtn
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
+				return;
 			} catch (std::bad_cast ex) { };
 
 			try {
@@ -85,6 +86,7 @@ namespace dtn
 					// check all lists for expired entries
 					_taskqueue.push( new ExpireTask(time.getTimestamp()) );
 				}
+				return;
 			} catch (std::bad_cast ex) { };
 
 			try {
@@ -99,9 +101,8 @@ namespace dtn
 					{
 						ibrcommon::MutexLock l(_list_mutex);
 						_neighbors.setAvailable(eid);
-
-						_taskqueue.push( new UpdateSummaryVectorTask( eid ) );
 					}
+					_taskqueue.push( new UpdateSummaryVectorTask( eid ) );
 					break;
 
 					case NODE_UNAVAILABLE:
@@ -114,6 +115,7 @@ namespace dtn
 					default:
 						break;
 				}
+				return;
 			} catch (std::bad_cast ex) { };
 
 			// TransferAbortedEvent: send next bundle
@@ -122,22 +124,22 @@ namespace dtn
 				dtn::data::EID eid = aborted.getPeer();
 				dtn::data::BundleID id = aborted.getBundleID();
 
+				// lock the list of neighbors
+				ibrcommon::MutexLock l(_list_mutex);
+				NeighborDatabase::NeighborEntry &entry = _neighbors.get(eid);
+				entry.releaseTransfer();
+
 				switch (aborted.reason)
 				{
 					case dtn::net::TransferAbortedEvent::REASON_UNDEFINED:
-					{
+					case dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN:
 						break;
-					}
 
 					case dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED:
+					case dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED:
 					{
 						// transfer the next bundle to this destination
 						_taskqueue.push( new SearchNextBundleTask( eid ) );
-						break;
-					}
-
-					case dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN:
-					{
 						break;
 					}
 
@@ -145,8 +147,7 @@ namespace dtn
 					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
 					{
 						// add the transferred bundle to the bloomfilter of the receiver
-						ibrcommon::MutexLock l(_list_mutex);
-						ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
+						ibrcommon::BloomFilter &bf = entry._filter;
 						bf.insert(id.toString());
 
 						if (IBRCOMMON_LOGGER_LEVEL >= 40)
@@ -158,14 +159,8 @@ namespace dtn
 						_taskqueue.push( new SearchNextBundleTask( eid ) );
 						break;
 					}
-
-					case dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED:
-					{
-						// transfer the next bundle to this destination
-						_taskqueue.push( new SearchNextBundleTask( eid ) );
-						break;
-					}
 				}
+				return;
 			} catch (std::bad_cast ex) { };
 
 			try {
@@ -179,8 +174,6 @@ namespace dtn
 				{
 					try {
 						// bundle has been delivered to its destination
-						// TODO: generate a "delete" message for routing algorithm
-
 						// delete it from our storage
 						getRouter()->getStorage().remove(meta);
 
@@ -191,12 +184,24 @@ namespace dtn
 					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 
 					}
+
+					// lock the list of bloom filters
+					ibrcommon::MutexLock l(_list_mutex);
+					NeighborDatabase::NeighborEntry &entry = _neighbors.get(eid);
+
+					// release resources for transmission
+					entry.releaseTransfer();
 				}
 				else
 				{
 					// add the transferred bundle to the bloomfilter of the receiver
 					ibrcommon::MutexLock l(_list_mutex);
-					ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
+					NeighborDatabase::NeighborEntry &entry = _neighbors.get(eid);
+
+					// release resources for transmission
+					entry.releaseTransfer();
+
+					ibrcommon::BloomFilter &bf = entry._filter;
 					bf.insert(meta.toString());
 
 					if (IBRCOMMON_LOGGER_LEVEL >= 40)
@@ -208,6 +213,7 @@ namespace dtn
 				// transfer the next bundle to this destination
 				_taskqueue.push( new SearchNextBundleTask( eid ) );
 
+				return;
 			} catch (std::bad_cast ex) { };
 		}
 
@@ -287,11 +293,16 @@ namespace dtn
 						try {
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 
-							IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
-
-							// lock the list of bloom filters
+							// lock the neighbor list
 							ibrcommon::MutexLock l(_list_mutex);
 							NeighborDatabase::NeighborEntry &entry = _neighbors.get(task.eid);
+
+							// acquire resources for transmission
+							entry.acquireTransfer();
+
+							// some debug output
+							IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+
 							if (entry._lastupdate > 0)
 							{
 								// the neighbor supports the epidemic routing scheme
@@ -307,7 +318,7 @@ namespace dtn
 								const dtn::data::BundleID b = getRouter()->getStorage().getByDestination(task.eid, false);
 								getRouter()->transferTo(task.eid, b);
 							}
-
+						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 						} catch (std::bad_cast) { };
 
@@ -343,7 +354,6 @@ namespace dtn
 						 */
 						try {
 							ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
-							ibrcommon::MutexLock l(_list_mutex);
 
 							// check for special addresses
 							if (task.bundle.destination == EID("dtn:epidemic-routing"))
@@ -363,7 +373,13 @@ namespace dtn
 								 * The filter was sent by the owner, so we assign the contained summary vector to
 								 * the EID of the sender of this bundle.
 								 */
-								_neighbors.updateBundles(bundle._source, filter);
+								{
+									ibrcommon::MutexLock l(_list_mutex);
+									_neighbors.updateBundles(bundle._source, filter);
+								}
+
+								// trigger the search-for-next-bundle procedure
+								_taskqueue.push( new SearchNextBundleTask( bundle._source ) );
 
 								while (true)
 								{
@@ -381,6 +397,8 @@ namespace dtn
 							}
 							else
 							{
+								ibrcommon::MutexLock l(_list_mutex);
+
 								// trigger new transmission of the summary vector
 								sendVectorUpdate = true;
 

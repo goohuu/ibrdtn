@@ -13,11 +13,11 @@ namespace dtn
 	namespace routing
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
-		 : _eid(), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _available(false)
+		 : _eid(), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _available(false), _transfer_semaphore(5)
 		{};
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &eid)
-		 : _eid(eid), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _available(false)
+		 : _eid(eid), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _available(false), _transfer_semaphore(5)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
@@ -32,6 +32,19 @@ namespace dtn
 		{
 			_filter = bf;
 			_lastupdate = dtn::utils::Clock::getTime();
+		}
+
+		void NeighborDatabase::NeighborEntry::acquireTransfer() throw (NoMoreTransfersAvailable)
+		{
+			ibrcommon::MutexLock l(_transfer_lock);
+			if (_transfer_semaphore == 0) throw NoMoreTransfersAvailable();
+			_transfer_semaphore--;
+		}
+
+		void NeighborDatabase::NeighborEntry::releaseTransfer()
+		{
+			ibrcommon::MutexLock l(_transfer_lock);
+			_transfer_semaphore++;
 		}
 
 		NeighborDatabase::NeighborDatabase()
@@ -79,7 +92,7 @@ namespace dtn
 			entry._available = false;
 		}
 
-		std::set<dtn::data::EID> NeighborDatabase::getAvailable() const
+		const std::set<dtn::data::EID> NeighborDatabase::getAvailable() const
 		{
 			std::set<dtn::data::EID> ret;
 
