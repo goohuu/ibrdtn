@@ -44,7 +44,7 @@ namespace dtn
 		void NeighborDatabase::NeighborEntry::releaseTransfer()
 		{
 			ibrcommon::MutexLock l(_transfer_lock);
-			if (_transfer_max >= 5) return;
+			if (_transfer_semaphore >= _transfer_max) return;
 			_transfer_semaphore++;
 		}
 

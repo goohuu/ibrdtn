@@ -56,6 +56,15 @@ namespace dtn
 
 			// add epidemic bundles to the storage destination filter
 			getRouter()->getStorage().addToFilter(EPIDEMIC_ROUTING_ADDRESS);
+
+			// build the base epidemic info bundle
+			// set basics (lifetime, source, destination)
+			_epidemic_bundle._lifetime = 10;
+			_epidemic_bundle._source = dtn::core::BundleCore::local;
+			_epidemic_bundle._destination = EPIDEMIC_ROUTING_ADDRESS;
+
+			// create an epidemic extension block
+			_epidemic_bundle.push_back<EpidemicExtensionBlock>();
 		}
 
 		EpidemicRoutingExtension::~EpidemicRoutingExtension()
@@ -225,16 +234,13 @@ namespace dtn
 
 		void EpidemicRoutingExtension::prepareEpidemicInfo(dtn::data::Bundle &b)
 		{
-			// clear all blocks
-			b.clearBlocks();
+			// delete the old epidemic bundle
+			try {
+				getRouter()->getStorage().remove(b);
+			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 
 			// relabel the bundle with a new timestamp and sequence number
 			b.relabel();
-
-			// set basics (lifetime, source, destination)
-			b._lifetime = 10;
-			b._source = dtn::core::BundleCore::local;
-			b._destination = EPIDEMIC_ROUTING_ADDRESS;
 
 			// add the epidemic bundle to the list of known bundles
 			getRouter()->setKnown(b);
@@ -243,7 +249,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_list_mutex);
 
 			// create an epidemic extension block
-			EpidemicExtensionBlock &eblock = b.push_back<EpidemicExtensionBlock>();
+			EpidemicExtensionBlock &eblock = b.getBlock<EpidemicExtensionBlock>();
 
 			// get the global summary vector of this daemon
 			const SummaryVector vec = getRouter()->getSummaryVector();
@@ -264,6 +270,9 @@ namespace dtn
 
 		void EpidemicRoutingExtension::run()
 		{
+			dtn::routing::BaseRouter &router = (*getRouter());
+			dtn::core::BundleStorage &storage = router.getStorage();
+
 			bool sendVectorUpdate = false;
 
 			while (true)
@@ -299,6 +308,11 @@ namespace dtn
 									_taskqueue.push( new TransferSummaryVectorTask( *iter ) );
 								}
 							}
+							// prepare a new epidemic bundle every 5 seconds
+							else if ((task.timestamp % 5) == 0)
+							{
+								prepareEpidemicInfo(_epidemic_bundle);
+							}
 
 							ibrcommon::MutexLock l(_list_mutex);
 							_purge_vector.expire(task.timestamp);
@@ -316,29 +330,38 @@ namespace dtn
 							ibrcommon::MutexLock l(_list_mutex);
 							NeighborDatabase::NeighborEntry &entry = _neighbors.get(task.eid);
 
-							// acquire resources for transmission
-							entry.acquireTransfer();
+							try {
+								// acquire resources for transmission
+								entry.acquireTransfer();
 
-							// some debug output
-							IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								// some debug output
+								IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-							if (entry._lastupdate > 0)
-							{
-								// the neighbor supports the epidemic routing scheme
-								// forward all bundles not known by him
-								ibrcommon::BloomFilter &bf = entry._filter;
-								const dtn::data::BundleID b = getRouter()->getStorage().getByFilter(bf);
-								getRouter()->transferTo(task.eid, b);
-							}
-							else
-							{
-								// the neighbor does not seems to support epidemic routing
-								// only forward bundles with him as destination
-								const dtn::data::BundleID b = getRouter()->getStorage().getByDestination(task.eid, false);
-								getRouter()->transferTo(task.eid, b);
-							}
-						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+								if (entry._lastupdate > 0)
+								{
+									try {
+										// the neighbor supports the epidemic routing scheme
+										// forward all bundles not known by him
+										ibrcommon::BloomFilter &bf = entry._filter;
+										const dtn::data::BundleID b = storage.getByFilter(bf);
+										router.transferTo(task.eid, b);
+									} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+										// if the bloomfilter query returns no bundle, then query for the
+										// direct node EID
+										const dtn::data::BundleID b = storage.getByDestination(task.eid, false);
+										router.transferTo(task.eid, b);
+									}
+								}
+								else
+								{
+									// the neighbor does not seems to support epidemic routing
+									// only forward bundles with him as destination
+									const dtn::data::BundleID b = storage.getByDestination(task.eid, false);
+									router.transferTo(task.eid, b);
+								}
+							} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+								entry.releaseTransfer();
+							} catch (const NeighborDatabase::NoMoreTransfersAvailable&) { };
 						} catch (std::bad_cast) { };
 
 						/**
@@ -348,7 +371,7 @@ namespace dtn
 							TransferSummaryVectorTask &task = dynamic_cast<TransferSummaryVectorTask&>(*t);
 
 							// then transfer the bundle to the destination
-							getRouter()->transferTo(task.eid, _epidemic_bundle);
+							router.transferTo(task.eid, _epidemic_bundle);
 						} catch (std::bad_cast) { };
 
 						/**
@@ -361,7 +384,7 @@ namespace dtn
 							if (task.bundle.destination == EPIDEMIC_ROUTING_ADDRESS)
 							{
 								// get the bundle out of the storage
-								dtn::data::Bundle bundle = getRouter()->getStorage().get(task.bundle);
+								dtn::data::Bundle bundle = storage.get(task.bundle);
 
 								// get all epidemic extension blocks of this bundle
 								const EpidemicExtensionBlock &ext = bundle.getBlock<EpidemicExtensionBlock>();
@@ -381,12 +404,12 @@ namespace dtn
 								}
 
 								// trigger the search-for-next-bundle procedure
-								_taskqueue.push( new SearchNextBundleTask( bundle._source ) );
+								_taskqueue.push( new SearchNextBundleTask( task.origin ) );
 
 								while (true)
 								{
 									// delete bundles in the purge vector
-									dtn::data::MetaBundle meta = getRouter()->getStorage().remove(purge);
+									dtn::data::MetaBundle meta = storage.remove(purge);
 
 									IBRCOMMON_LOGGER_DEBUG(15) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -395,7 +418,7 @@ namespace dtn
 								}
 
 								// remove the bundle
-								getRouter()->getStorage().remove(bundle);
+								storage.remove(bundle);
 							}
 							else
 							{
