@@ -165,7 +165,9 @@ namespace dtn
 
 								if (handler->id == query.id)
 								{
-									const dtn::data::Bundle b = storage.get( handler->getPeer() );
+									const dtn::data::EID &eid = handler->getPeer();
+									const dtn::data::BundleID id = storage.getByDestination( eid, true );
+									const dtn::data::Bundle b = storage.get(id);
 
 									// push the bundle to the client
 									handler->queue(b);
