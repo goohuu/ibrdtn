@@ -529,8 +529,18 @@ namespace dtn
 				try {
 					fs.exceptions(std::ios::badbit | std::ios::eofbit);
 					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
-				} catch (ios_base::failure ex) {
-					throw dtn::SerializationFailedException("can not load bundle data (" + std::string(ex.what()) + ")");
+				} catch (const ios_base::failure &ex) {
+					// check for error state of the stream
+					if (fs.rdstate() & ifstream::eofbit)
+					{
+						throw dtn::SerializationFailedException("unable to load bundle, because we reached the end of file too early");
+					}
+					else if (fs.rdstate() & ifstream::badbit)
+					{
+						throw dtn::SerializationFailedException("unable to load bundle, because the stream went bad");
+					}
+
+					throw dtn::SerializationFailedException("unable to load bundle (" + std::string(ex.what()) + ")");
 				} catch (const std::exception &ex) {
 					throw dtn::SerializationFailedException("bundle get failed: " + std::string(ex.what()));
 				}
@@ -561,21 +571,39 @@ namespace dtn
 					ibrcommon::locked_ofstream ostream(_container);
 					std::ostream &out = (*ostream);
 
-					if (!ostream.is_open()) throw ibrcommon::IOException("can not open file");
+					// check for open stream
+					if (!ostream.is_open()) throw ibrcommon::IOException("unable to open file " + _container.getPath());
+
+					// check for bad stream
+					if (ostream.bad()) throw ibrcommon::IOException("unable to open file " + _container.getPath());
+
+					// serialize the bundle into the file
 					dtn::data::DefaultSerializer(out) << _bundle; out << std::flush;
+
+					// check for failure
+					if (ostream.fail())
+					{
+						ostream.close();
+						throw ibrcommon::IOException("write failed " + _container.getPath());
+					}
+
+					// close the stream
 					ostream.close();
 
+					// check the size of the file
 					if (_container.size() == 0)
 					{
-						throw ibrcommon::IOException("Write of bundle failed. File has size of zero.");
+						throw ibrcommon::IOException(_container.getPath() + " has size of zero");
 					}
 
 					_size = _container.size();
 					_bundle = dtn::data::Bundle();
 					_state = HOLDER_STORED;
 				}
+			} catch (const dtn::SerializationFailedException &ex) {
+				throw dtn::SerializationFailedException("serialization failed: " + std::string(ex.what()));
 			} catch (const std::exception &ex) {
-				throw dtn::SerializationFailedException("can not write data to the storage; " + std::string(ex.what()));
+				throw dtn::SerializationFailedException("can not write bundle: " + std::string(ex.what()));
 			}
 		}
 
@@ -591,10 +619,8 @@ namespace dtn
 			try {
 				_container.invokeStore();
 				IBRCOMMON_LOGGER_DEBUG(20) << "bundle stored " << _container.toString() << " (size: " << _container.size() << ")" << IBRCOMMON_LOGGER_ENDL;
-			} catch (const dtn::SerializationFailedException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to store bundle " << _container.toString() << " (size: " << _container.size() << "): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::IOException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to store bundle " << _container.toString() << " (size: " << _container.size() << "): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "store failed " << _container.toString() << " (size: " << _container.size() << "): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				// reschedule the task
 				storage._tasks.push( new SimpleBundleStorage::TaskStoreBundle(_container) );
 			}
