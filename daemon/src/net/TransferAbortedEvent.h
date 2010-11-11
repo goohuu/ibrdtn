@@ -46,6 +46,8 @@ namespace dtn
 			const AbortReason reason;
 
 		private:
+			static const std::string getReason(const AbortReason reason);
+
 			const dtn::data::EID _peer;
 			const dtn::data::BundleID _bundle;
 			TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason reason);

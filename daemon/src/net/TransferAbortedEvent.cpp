@@ -12,12 +12,12 @@ namespace dtn
 	namespace net
 	{
 		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason r)
-		 : _peer(peer), _bundle(bundle), reason(r)
+		 : reason(r), _peer(peer), _bundle(bundle)
 		{
 		}
 
 		TransferAbortedEvent::TransferAbortedEvent(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason r)
-		 : _peer(peer), _bundle(id), reason(r)
+		 : reason(r), _peer(peer), _bundle(id)
 		{
 		}
 
@@ -53,9 +53,32 @@ namespace dtn
 			return _bundle;
 		}
 
+		const std::string TransferAbortedEvent::getReason(const AbortReason reason)
+		{
+			switch (reason)
+			{
+			case REASON_UNDEFINED:
+				return "undefined";
+
+			case REASON_CONNECTION_DOWN:
+				return "connection went down";
+
+			case REASON_REFUSED:
+				return "bundle has been refused";
+
+			case REASON_RETRY_LIMIT_REACHED:
+				return "retry limit reached";
+
+			case REASON_BUNDLE_DELETED:
+				return "bundle has been deleted";
+			}
+
+			return "undefined";
+		}
+
 		string TransferAbortedEvent::toString() const
 		{
-			return className + ": transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " aborted.";
+			return className + ": transfer of bundle " + _bundle.toString() + " to " + _peer.getString() + " aborted. (" + getReason(reason) + ")";
 		}
 
 		const std::string TransferAbortedEvent::className = "TransferAbortedEvent";
