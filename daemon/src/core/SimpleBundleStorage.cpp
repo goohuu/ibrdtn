@@ -208,8 +208,10 @@ namespace dtn
 						return bundle.get();
 					}
 				}
-			} catch (dtn::SerializationFailedException) {
+			} catch (const dtn::SerializationFailedException &ex) {
 				// bundle loading failed
+				IBRCOMMON_LOGGER(error) << "Error while loading bundle data: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				throw BundleStorage::BundleLoadException();
 			}
 
 			throw BundleStorage::NoBundleFoundException();

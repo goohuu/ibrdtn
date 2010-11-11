@@ -16,6 +16,7 @@
 #include "net/ConnectionEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
+#include "routing/RequeueBundleEvent.h"
 
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/NetInterface.h>
@@ -363,6 +364,9 @@ namespace dtn
 							// send bundle
 							_connection << bundle;
 
+						} catch (const dtn::core::BundleStorage::BundleLoadException&) {
+							// requeue this bundle
+							dtn::routing::RequeueBundleEvent::raise(_connection._peer._localeid, _current_transfer);
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 							// send transfer aborted event
 							TransferAbortedEvent::raise(EID(_connection._node.getURI()), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);

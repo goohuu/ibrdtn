@@ -32,6 +32,14 @@ namespace dtn
 				};
 			};
 
+			class BundleLoadException : public NoBundleFoundException
+			{
+			public:
+				BundleLoadException(string what = "Error while loading bundle data.") throw() : NoBundleFoundException(what)
+				{
+				};
+			};
+
 			class StorageSizeExeededException : public ibrcommon::Exception
 			{
 			public:
