@@ -35,7 +35,7 @@ void TestStreamConnection::connectionUpDown()
 		testserver(ibrcommon::NetInterface net, int port) : ibrcommon::tcpserver(net, port), recv_bundles(0) {};
 		virtual ~testserver() { join(); };
 
-		void eventShutdown(StreamConnection::ConnectionShutdownCases csc) {};
+		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) {};
 		void eventTimeout() {};
 		void eventError() {};
 		void eventBundleRefused() {};
@@ -75,7 +75,7 @@ void TestStreamConnection::connectionUpDown()
 		{ }
 		virtual ~testclient() { join(); };
 
-		void eventShutdown(StreamConnection::ConnectionShutdownCases csc) {};
+		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) {};
 		void eventTimeout() {};
 		void eventError() {};
 		void eventBundleRefused() {};

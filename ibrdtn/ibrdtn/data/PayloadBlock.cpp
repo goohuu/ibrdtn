@@ -73,42 +73,38 @@ namespace dtn
 			// clear the blob
 			_blobref.clear();
 
-			// remember the old exceptions state
-			std::ios::iostate oldstate = (*_blobref).exceptions();
-
-			// activate exceptions for this method
-			(*_blobref).exceptions(std::ios::badbit | std::ios::eofbit);
-
-			try {
-				// read payload
-				const int buffer_size = 0x1000;
-				char buffer[buffer_size];
-				ssize_t remain = _blocksize;
-
-				while (remain > 0 && stream.good())
-				{
-					if (remain > buffer_size)
-					{
-						stream.read(buffer, buffer_size);
-					}
-					else
-					{
-						stream.read(buffer, remain);
-					}
-
-					(*_blobref).write(buffer, stream.gcount());
-
-					remain -= stream.gcount();
-				}
-			} catch (std::exception &ex) {
-				// restore the old state
-				(*_blobref).exceptions(oldstate);
-
-				throw dtn::SerializationFailedException(ex.what());
+			// check if the blob is ready
+			if (!(*_blobref).good())
+			{
+				throw dtn::SerializationFailedException("could not open BLOB for payload");
 			}
 
-			// restore the old state
-			(*_blobref).exceptions(oldstate);
+			// read payload
+			const int buffer_size = 0x1000;
+			char buffer[buffer_size];
+			ssize_t remain = _blocksize;
+
+			while (remain > 0)
+			{
+				// check if the reading stream is ok
+				if (stream.eof()) throw dtn::SerializationFailedException("stream reached EOF while reading payload");
+
+				// read the full buffer size of less?
+				if (remain > buffer_size)
+				{
+					stream.read(buffer, buffer_size);
+				}
+				else
+				{
+					stream.read(buffer, remain);
+				}
+
+				// write the bytes to the BLOB
+				(*_blobref).write(buffer, stream.gcount());
+
+				// shrink the remaining bytes by the red bytes
+				remain -= stream.gcount();
+			}
 
 			// unset block not processed bit
 			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);
