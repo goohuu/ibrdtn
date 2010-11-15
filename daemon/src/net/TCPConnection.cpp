@@ -248,6 +248,13 @@ namespace dtn
 						// display the rejection
 						IBRCOMMON_LOGGER(warning) << "bundle has been rejected: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
+					catch (const dtn::InvalidDataException &ex) {
+						// bundle rejected
+						rejectTransmission();
+
+						// display the rejection
+						IBRCOMMON_LOGGER(warning) << "invalid bundle-data received: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 
 					yield();
 				}
@@ -265,7 +272,7 @@ namespace dtn
 		{
 			std::iostream &stream = conn._stream;
 
-			// activate exceptions for this method
+			// check if the stream is still good
 			if (!stream.good()) throw ibrcommon::IOException("stream went bad");
 
 			dtn::data::DefaultDeserializer(stream, dtn::core::BundleCore::getInstance()) >> bundle;
