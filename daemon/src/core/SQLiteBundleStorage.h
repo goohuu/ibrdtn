@@ -268,6 +268,24 @@ protected:
 	bool __cancellation();
 
 private:
+
+	enum Position{
+		FIRST_FRAGMENT 	= 0,
+		LAST_FRAGMENT 	= 1,
+		BOTH_FRAGMENTS 	= 2
+	};
+
+	enum Appurtenant{
+		BUNDLE = 0,
+		FRAGMENT = 1
+	};
+
+	void executeQuerry(sqlite3_stmt *statement);
+
+	void executeQuerry(sqlite3_stmt *statement, list<string> &result);
+
+	void deleteFiles(list<std::string> &fileList);
+
 	/**
 	 * This Function stores Fragments.
 	 * @param bundle The bundle to store.
@@ -302,7 +320,7 @@ private:
 	 * @param Bundle which blocks should be saved
 	 * @return The total number of bytes which were stored or -1 indicating an error.
 	 */
-	int storeBlocks(const data::Bundle &bundle);
+	int storeBlocks(const data::Bundle &Bundle, int appurtenant);
 
 	/**
 	 * Remove all bundles which match this filter
@@ -328,6 +346,10 @@ private:
 	 * Checks the files on the filesystem against the filenames in the database
 	 */
 	void consistenceCheck();
+
+	void checkFragments(set<string> &blockFiles, set<string> &fragmentFiles);
+
+	void checkBundles(set<string> &blockFiles, set<string> &fragmentFiles);
 
 	/**
 	 * updates the nextExpiredTime. The calling function has to have the databaselock.

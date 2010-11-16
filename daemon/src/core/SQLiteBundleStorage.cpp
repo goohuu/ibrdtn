@@ -33,7 +33,6 @@
 #include <stdio.h>
 #include <string.h>
 
-
 using namespace std;
 
 
@@ -69,7 +68,7 @@ namespace core {
 			sqlite3_finalize(createBundleTable);
 
 			//create FragemntTable
-			sqlite3_stmt *createFragmentTable = prepareStatement("create table if not exists "+ _tables[SQL_TABLE_FRAGMENT] +" (Key INTEGER PRIMARY KEY ASC, Source text, Timestamp int, Sequencenumber int, Destination text, TTL int, Priority int, FragementationOffset int, PayloadLength int, Payloadname text);");
+			sqlite3_stmt *createFragmentTable = prepareStatement("create table if not exists "+ _tables[SQL_TABLE_FRAGMENT] +" (Key INTEGER PRIMARY KEY ASC, Source text, Timestamp int, Sequencenumber int, Destination text, TTL int, Priority int, FragementationOffset int, PayloadLength int, Payloadname text, Appdatalength int,  Reportto text, Custodian text, ProcFlags int, Lifetime int);");
 			err = sqlite3_step(createFragmentTable);
 			if(err != SQLITE_DONE){
 				std::cerr << "SQLiteBundleStorage: Constructorfailure: create FragemntTable failed " << err;
@@ -77,7 +76,7 @@ namespace core {
 			sqlite3_finalize(createFragmentTable);
 
 			//create BlockTable
-			sqlite3_stmt *createBlockTable = prepareStatement("create table if not exists "+ _tables[SQL_TABLE_BLOCK] +" (Key INTEGER PRIMARY KEY ASC, BundleID text, BlockType int, Filename text, Blocknumber int);");
+			sqlite3_stmt *createBlockTable = prepareStatement("create table if not exists "+ _tables[SQL_TABLE_BLOCK] +" (Key INTEGER PRIMARY KEY ASC, BundleID text, BlockType int, Filename text, Blocknumber int, Fragment int);");
 			err = sqlite3_step(createBlockTable);
 			if(err != SQLITE_DONE){
 				std::cerr << "SQLiteBundleStorage: Constructorfailure: create BlockTable failed " << err;
@@ -174,46 +173,60 @@ namespace core {
 			}
 		}
 
-		//prepare the sql statements
+		//Bundletable
 		getBundleTTL 			= prepareStatement("SELECT Source,Timestamp,Sequencenumber FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE TTL <= ? ORDER BY TTL ASC;");
-		getFragmentTTL			= prepareStatement("SELECT Source,Timestamp,Sequencenumber,FragementationOffset,Filename,Payloadname FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE TTL <= ? ORDER BY TTL ASC;");
-		deleteBundleTTL			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE TTL <= ?;");
-		deleteFragementTTL		= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE TTL <= ?;");
 		getBundleByDestination	= prepareStatement("SELECT BundleID, Source, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE Destination = ? ORDER BY TTL ASC;");
 		getBundleByID 			= prepareStatement("SELECT Source, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE BundleID = ?;");
-		getFragements			= prepareStatement("SELECT * FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE Source = ? AND Timestamp = ? AND Sequencenumber = ? ORDER BY Fragmentoffset ASC;");
-		store_Bundle 			= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (BundleID, Source, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength, TTL, Size) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);");
-		store_Fragment			= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_FRAGMENT] +" (Source, Timestamp, Sequencenumber, Destination, TTL, Priority, FragementationOffset, PayloadLength, Payloadname) VALUES (?,?,?,?,?,?,?,?,?);");
-		clearBundles 			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +";");
-		clearFragments			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT] +";");
-		clearBlocks				= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BLOCK] +";");
-		clearRouting			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_ROUTING] +";");
-		clearNodeRouting		= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +";");
-		countEntries 			= prepareStatement("SELECT Count(ROWID) From "+ _tables[SQL_TABLE_BUNDLE] +";");
-		vacuum 					= prepareStatement("vacuum;");
-		getROWID 				= prepareStatement("select ROWID from "+ _tables[SQL_TABLE_BUNDLE] +";");
-		removeBundle 			= prepareStatement("Delete From "+ _tables[SQL_TABLE_BUNDLE] +" Where BundleID = ?;");
-		removeFragments			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE Source = ? AND Timestamp = ? AND Sequencenumber = ?;");
-		getBlocksByID			= prepareStatement("SELECT Filename FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE BundleID = ? ORDER BY Blocknumber ASC;");
-		storeBlock				= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_BLOCK] +" (BundleID, BlockType, Filename, Blocknumber) VALUES (?,?,?,?);");
+		getROWID 				= prepareStatement("SELECT ROWID from "+ _tables[SQL_TABLE_BUNDLE] +";");
+		getProcFlags			= prepareStatement("SELECT ProcFlags From "+ _tables[SQL_TABLE_BUNDLE] +" WHERE BundleID = ?;");
+		getnextExpiredBundle	= prepareStatement("SELECT TTL FROM "+ _tables[SQL_TABLE_BUNDLE] +" ORDER BY TTL ASC LIMIT 1;");
 		getBundlesBySize		= prepareStatement("SELECT BundleID, Source, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength FROM "+ _tables[SQL_TABLE_BUNDLE] +" ORDER BY Size DESC LIMIT ?");
 //		getBundleBetweenSize	= prepareStatement("SELECT Source, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE Size > ? ORDERED BY Size DESC LIMIT ?");
 		getBundleBySource		= prepareStatement("SELECT BundleID, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE Source = ?;");
 		getBundlesByTTL			= prepareStatement("SELECT BundleID, Source, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength FROM "+ _tables[SQL_TABLE_BUNDLE] +" ORDER BY TTL ASC LIMIT ?");
-		getBlocks				= prepareStatement("SELECT Filename FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE BundleID = ? AND Blocknumber = ?;");
-		getProcFlags			= prepareStatement("SELECT ProcFlags From "+ _tables[SQL_TABLE_BUNDLE] +" WHERE BundleID = ?;");
+		countEntries 			= prepareStatement("SELECT Count(ROWID) From "+ _tables[SQL_TABLE_BUNDLE] +";");
+		deleteBundleTTL			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE TTL <= ?;");
+		removeBundle 			= prepareStatement("DELETE From "+ _tables[SQL_TABLE_BUNDLE] +" Where BundleID = ?;");
+		clearBundles 			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +";");
+		store_Bundle 			= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (BundleID, Source, Destination, Reportto, Custodian, ProcFlags, Timestamp, Sequencenumber, Lifetime, Fragmentoffset, Appdatalength, TTL, Size) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);");
 		updateProcFlags			= prepareStatement("UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET ProcFlags = ? WHERE BundleID = ?;");
-		storeBundleRouting		= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" (BundleID, Key, Routing) VALUES (?,?,?);");
-		getBundleRouting		= prepareStatement("SELECT Routing FROM "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" WHERE BundleID = ? AND Key = ?;");
-		removeBundleRouting		= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" WHERE BundleID = ? AND Key = ?;");
-		storeRouting			= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_ROUTING] +" (Key, Routing) VALUES (?,?);");
+
+		//Fragmenttable
+		getFragmentTTL			= prepareStatement("SELECT Source,Timestamp,Sequencenumber,FragementationOffset,Filename,Payloadname FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE TTL <= ? ORDER BY TTL ASC;");
+		getFragements			= prepareStatement("SELECT * FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE Source = ? AND Timestamp = ? AND Sequencenumber = ? ORDER BY Fragmentoffset ASC;");
+		getnextExpiredFragment	= prepareStatement("SELECT TTL FROM "+ _tables[SQL_TABLE_FRAGMENT] +" ORDER BY TTL ASC LIMIT 1;");
+		deleteFragementTTL		= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE TTL <= ?;");
+		clearFragments			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT] +";");
+		removeFragments			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE Source = ? AND Timestamp = ? AND Sequencenumber = ?;");
+		store_Fragment			= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_FRAGMENT] +" (Source, Timestamp, Sequencenumber, Destination, TTL, Priority, FragementationOffset, PayloadLength, Payloadname, Appdatalength, Reportto, Custodian, ProcFlags, Lifetime) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
+
+		//Blocktable
+		getBlocksByID			= prepareStatement("SELECT Filename FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE BundleID = ? ORDER BY Blocknumber ASC;");
+		getBlocks				= prepareStatement("SELECT Filename FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE BundleID = ? AND Blocknumber = ?;");
+		clearBlocks				= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BLOCK] +";");
+		storeBlock				= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_BLOCK] +" (BundleID, BlockType, Filename, Blocknumber, Fragment) VALUES (?,?,?,?,?);");
+
+		//Routingtable
 		getRouting				= prepareStatement("SELECT Routing FROM "+ _tables[SQL_TABLE_ROUTING] +" WHERE Key = ?;");
 		removeRouting			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_ROUTING] +" WHERE Key = ?;");
-		storeNodeRouting		= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" (EID, Key, Routing) VALUES (?,?,?);");
+		clearRouting			= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_ROUTING] +";");
+		storeRouting			= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_ROUTING] +" (Key, Routing) VALUES (?,?);");
+
+		//NodeRoutingInfotable
 		getNodeRouting			= prepareStatement("SELECT Routing FROM "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" WHERE EID = ? AND Key = ?;");
 		removeNodeRouting		= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" WHERE EID = ? AND Key = ?;");
-		getnextExpiredBundle	= prepareStatement("SELECT TTL FROM "+ _tables[SQL_TABLE_BUNDLE] +" ORDER BY TTL ASC LIMIT 1;");
-		getnextExpiredFragment	= prepareStatement("SELECT TTL FROM "+ _tables[SQL_TABLE_FRAGMENT] +" ORDER BY TTL ASC LIMIT 1;");
+		clearNodeRouting		= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +";");
+		storeNodeRouting		= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" (EID, Key, Routing) VALUES (?,?,?);");
+
+		//BundleRoutingInfotable
+		getBundleRouting		= prepareStatement("SELECT Routing FROM "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" WHERE BundleID = ? AND Key = ?;");
+		removeBundleRouting		= prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" WHERE BundleID = ? AND Key = ?;");
+		storeBundleRouting		= prepareStatement("INSERT INTO "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" (BundleID, Key, Routing) VALUES (?,?,?);");
+
+		vacuum 					= prepareStatement("vacuum;");
+
+
+
 
 		//Check if the database is consistent with the filesystem
 		consistenceCheck();
@@ -279,30 +292,64 @@ namespace core {
 		unbindEvent(GlobalEvent::className);
 	}
 
+	void SQLiteBundleStorage::executeQuerry(sqlite3_stmt *statement){
+		int err;
+		err = sqlite3_step(statement);
+		sqlite3_reset(statement);
+		if(err != SQLITE_DONE){
+			stringstream error;
+			error << "SQLiteBundleStorage: Unable to execute Querry: " << err << " errmsg: " << sqlite3_errmsg(database);
+			throw SQLiteQuerryException(error.str());
+		}
+
+	}
+
+	void SQLiteBundleStorage::executeQuerry(sqlite3_stmt *statement, list<string> &result){
+		int err;
+		std::string entry;
+		for(err = sqlite3_step(statement); err == SQLITE_ROW; err = sqlite3_step(statement)){
+			entry = (const char*) sqlite3_column_text(statement,1);
+			result.push_back(entry);
+		}
+		sqlite3_reset(statement);
+		if(err != SQLITE_DONE){
+			stringstream error;
+			error << "SQLiteBundleStorage: Unable to execute Querry: " << err << " errmsg: " << sqlite3_errmsg(database);
+			throw SQLiteQuerryException(error.str());
+		}
+	}
+
+	void SQLiteBundleStorage::deleteFiles(list<std::string> &fileList){
+		list<std::string>::iterator it;
+		int err;
+		for(it = fileList.begin(); it != fileList.end(); it++){
+			ibrcommon::File tmp(*it);
+			err = tmp.remove();
+			if(err != 0){
+				stringstream error;
+				error << "Unable to Delete File. Errorcode: "<<err;
+				throw (ibrcommon::Exception(error.str() ));
+			}
+		}
+	}
+
 	void SQLiteBundleStorage::consistenceCheck(){
-		/*
+		/* ToDo anpassen
 		 * check if the database is consistent with the files on the HDD. Therefore every file of the database is put in a list.
-		 * When the files of the database are scanned it is checked if the actual file is in the list of the files of the filesystem. if it is so the entry
-		 * of the of the list of the files of the filesystem is deleted. if not the file is put in a seperate list. After this procedure there are 2 lists containing file
+		 * When the files of the database are scanned it is checked if the actual file is in the list of files of the filesystem. if it is so the entry
+		 * of the list of files of the filesystem is deleted. if not the file is put in a seperate list. After this procedure there are 2 lists containing file
 		 * which are inconsistent and can be deleted.
 		 */
-
-		set<string> fileList;
-		set<string> fragmentList;
-		set<string>::iterator fileList_iterator, fileList_iterator2;
-		set<string> dbfragmentlist;	//dbfragmentlist containing files which exist in the database
-		set<string> eventList;
-		set<string>::iterator event_Iterator;
-		string source, datei;
-		string filename, id, payloadfilename;
 		int err;
-		size_t timestamp, sequencenumber, offset;
+		size_t timestamp, sequencenumber, offset, pFlags, appdata, lifetime;
+		set<string> blockFiles, fragmentFiles;
+		string datei;
 		stringstream directory,directory2;
 
 		list<ibrcommon::File> blist, flist;
 		list<ibrcommon::File>::iterator file_it;
 
-		//Durchsuche die Dateien
+		//1. Durchsuche die Dateien
 		directory << dbPath << "/" << SQL_TABLE_BLOCK;
 		directory2 << dbPath << "/" << SQL_TABLE_FRAGMENT;
 
@@ -313,129 +360,290 @@ namespace core {
 		for(file_it = blist.begin(); file_it != blist.end(); file_it++){
 			datei = (*file_it).getPath();
 			if(datei[datei.size()-1] != '.'){
-				fileList.insert(datei);
+				blockFiles.insert(datei);
 			}
 		}
 		folder2.getFiles(flist);
 		for(file_it = flist.begin(); file_it != flist.end(); file_it++){
 			datei = (*file_it).getPath();
 			if(datei[datei.size()-1] != '.'){
-				fragmentList.insert(datei);
+				fragmentFiles.insert(datei);
 			}
 		}
 
-		//Search for inconsistent bundles
-		int i;
-		sqlite3_stmt *bundleconistencycheck = prepareStatement("SELECT Filename,BundleID FROM "+ _tables[SQL_TABLE_BLOCK] +";");
-		for(i = sqlite3_step(bundleconistencycheck); i == SQLITE_ROW; i=sqlite3_step(bundleconistencycheck)){
-			filename = (const char*)sqlite3_column_text(bundleconistencycheck,0);
-			id = (const char*)sqlite3_column_text(bundleconistencycheck,1);
-			fileList_iterator = fileList.find(filename);
-			if(fileList_iterator == fileList.end()){
-				eventList.insert(id);
+
+		{
+			ibrcommon::MutexLock lock(dbMutex);
+			//2. Check Consistency of the Fragments
+			checkFragments(blockFiles,fragmentFiles);
+
+			//3. Check Consistency of the Bundles
+			checkBundles(blockFiles,fragmentFiles);
+		}
+
+		//8. calculate next Bundleexpiredtime
+	}
+
+	void SQLiteBundleStorage::checkFragments(set<string> &blockFiles, set<string> &fragmentFiles){
+		int err;
+		size_t appdata,sequencenumber, timestamp,payloadsize,offset, pFlags, lifetime;
+		string source;
+		string filename, id, payloadfilename;
+		string dest, cust, repto;
+		set<string>::iterator fileList_iterator;
+
+		list<std::string> deleteFilenames;
+		list<std::string>::iterator df_It;
+
+		map<dtn::data::BundleID,Position> deleteFragBlockID;
+		map<dtn::data::BundleID,Position>::iterator dFB_it;
+
+		map<dtn::data::BundleID,dtn::data::MetaBundle> payload_deleted;
+		map<dtn::data::BundleID,dtn::data::MetaBundle>::iterator pd_it;
+
+		//1. Search for inconsistent Blocks in the database
+		sqlite3_stmt *blockConistencyCheck = prepareStatement("SELECT Filename,BundleID,Blocknumber FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE Fragment = 1;");
+		for(err = sqlite3_step(blockConistencyCheck); err == SQLITE_ROW; err = sqlite3_step(blockConistencyCheck)){
+			filename = (const char*)sqlite3_column_text(blockConistencyCheck,0);
+			id = (const char*)sqlite3_column_text(blockConistencyCheck,1);
+			dtn::data::BundleID tmpID(id);
+
+			fileList_iterator = blockFiles.find(filename);
+			//Inconsistent:
+			if(fileList_iterator == blockFiles.end()){
+				pair<dtn::data::BundleID,Position> tmp;
+				dFB_it = deleteFragBlockID.find(tmpID);
+				if(dFB_it != deleteFragBlockID.end()){
+					SQLiteBundleStorage::Position pos = BOTH_FRAGMENTS;
+					tmp.second = pos;
+				}
+				else{
+					//if Block contains to a Fragment the ID is saved so that the corresponding Fragments could be deleted.
+					if(sqlite3_column_int(blockConistencyCheck,2) < 0){
+						SQLiteBundleStorage::Position pos = FIRST_FRAGMENT;
+						tmp.second = pos;
+					}
+					else if(sqlite3_column_int(blockConistencyCheck,2) > 0){
+						SQLiteBundleStorage::Position pos = LAST_FRAGMENT;
+						tmp.second = pos;
+					}
+				}
+				/*
+				 * The Payloadblock is in the blockFiles, that means that the Fragments are received successfully but the Fragmenttable
+				 * still contains entries of that Bundle. It has to be checked if the BundleTable already contains an entry
+				 * corresponding to this bundle. If not the entry has to be generated and the entries in the FragmentTable have to be
+				 * deleted.
+				 */
+
+				tmp.first = tmpID;
+				deleteFragBlockID.insert(tmp);
 			}
+			//Consistent:
 			else{
-				fileList.erase(fileList_iterator);
+				blockFiles.erase(fileList_iterator);
 			}
 		}
-		sqlite3_finalize(bundleconistencycheck);
+		sqlite3_finalize(blockConistencyCheck);
 
+		//2. Delete inconsistent databaseentries
+		sqlite3_stmt *getBlocknamesFirst = prepareStatement("SELECT Filename FROM "+_tables[SQL_TABLE_BLOCK]+" WHERE Blocknumber < 0 AND BundleID = ?;");
+		sqlite3_stmt *deleteBlocksFirst =  prepareStatement("DELETE FROM "+_tables[SQL_TABLE_BLOCK]+" WHERE Blocknumber < 0;");
+		sqlite3_stmt *getBlocknamesLast = prepareStatement("SELECT Filename FROM "+_tables[SQL_TABLE_BLOCK]+" WHERE Blocknumber > 0  AND BundleID = ?;");
+		sqlite3_stmt *deleteBlocksLast =  prepareStatement("DELETE FROM "+_tables[SQL_TABLE_BLOCK]+" WHERE Blocknumber > 0;");
+		sqlite3_stmt *getBlocknamesBoth = prepareStatement("SELECT Filename FROM "+_tables[SQL_TABLE_BLOCK]+" WHERE BundleID = ?;");
+		sqlite3_stmt *deleteBlocksBoth =  prepareStatement("DELETE FROM "+_tables[SQL_TABLE_BLOCK]+" WHERE BundleID = ?;");
 
-		//delete inconsistent Bundles from database
-		if(eventList.size() != 0){
-			sqlite3_stmt *deleteBundle = prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE BundleID = ?;");
-			for(event_Iterator = eventList.begin(); event_Iterator != eventList.end(); event_Iterator++){
-				//Raise event ToDo Integration der Storageevents
+		for(dFB_it = deleteFragBlockID.begin(); dFB_it != deleteFragBlockID.end(); dFB_it++){
+			switch(dFB_it->second){
+			case FIRST_FRAGMENT:
+				sqlite3_bind_text(getBlocknamesFirst,1,(dFB_it->first).toString().c_str(),(dFB_it->first).toString().length(),SQLITE_TRANSIENT);
+				sqlite3_bind_text(deleteBlocksFirst,1,(dFB_it->first).toString().c_str(),(dFB_it->first).toString().length(),SQLITE_TRANSIENT);
+				executeQuerry(getBlocknamesFirst,deleteFilenames);
+				executeQuerry(deleteBlocksFirst);
+				break;
 
-				const dtn::data::BundleID id(*event_Iterator);
-				const dtn::data::MetaBundle mb(id, ...);
-				dtn::core::BundleEvent::raise(mb, BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+			case LAST_FRAGMENT:
+				sqlite3_bind_text(getBlocknamesLast,1,(dFB_it->first).toString().c_str(),(dFB_it->first).toString().length(),SQLITE_TRANSIENT);
+				sqlite3_bind_text(deleteBlocksLast,1,(dFB_it->first).toString().c_str(),(dFB_it->first).toString().length(),SQLITE_TRANSIENT);
+				executeQuerry(getBlocknamesLast,deleteFilenames);
+				executeQuerry(deleteBlocksLast);
+				break;
 
-				//Get the all blocks of the inconsistent bundle into fileList
-				sqlite3_bind_text(getBlocksByID,1,(*event_Iterator).c_str(),(*event_Iterator).length(), SQLITE_TRANSIENT);
-				for(err = sqlite3_step(getBlocksByID); err == SQLITE_ROW; err = sqlite3_step(getBlocksByID)){
-					filename = (const char*)sqlite3_column_text(getBlocksByID,0);
-					fileList.insert(filename.c_str());
-				}
-				sqlite3_reset(getBlocksByID);
-				if ( err != SQLITE_DONE )
-				{
-					std::cerr << "SQLiteBundlestorage: consistenceCheck: failure while getting Blocks: " << err << std::endl;
-				}
-
-				//Delete the inconsistent bundle of the database
-				sqlite3_bind_text(deleteBundle,1,(*event_Iterator).c_str(),(*event_Iterator).length(), SQLITE_TRANSIENT);
-				err = sqlite3_step(deleteBundle);
-				sqlite3_reset(deleteBundle);
-				if ( err != SQLITE_DONE )
-				{
-					std::cerr << "SQLiteBundlestorage: failure while deleting inconsistent Data: " << err << std::endl;
-				}
+			case BOTH_FRAGMENTS:
+				sqlite3_bind_text(getBlocknamesBoth,1,(dFB_it->first).toString().c_str(),(dFB_it->first).toString().length(),SQLITE_TRANSIENT);
+				sqlite3_bind_text(deleteBlocksBoth,1,(dFB_it->first).toString().c_str(),(dFB_it->first).toString().length(),SQLITE_TRANSIENT);
+				executeQuerry(getBlocknamesBoth,deleteFilenames);
+				executeQuerry(deleteBlocksBoth);
+				break;
 			}
-			sqlite3_finalize(deleteBundle);
-			eventList.clear();
 		}
 
-		//Search for inconsistent fragments
-		sqlite3_stmt *fragmentconistencycheck = prepareStatement("SELECT Source, Timestamp, Sequencenumber, FragementationOffset, Payloadname FROM "+ _tables[SQL_TABLE_FRAGMENT] +";");
+		sqlite3_finalize(getBlocknamesFirst);
+		sqlite3_finalize(deleteBlocksFirst);
+		sqlite3_finalize(getBlocknamesLast);
+		sqlite3_finalize(deleteBlocksLast);
+		sqlite3_finalize(getBlocknamesBoth);
+		sqlite3_finalize(deleteBlocksBoth);
+
+		//Delete Files from blockFiles
+		for(df_It = deleteFilenames.begin(); df_It != deleteFilenames.end(); df_It++){
+			fileList_iterator = blockFiles.find(*df_It);
+			blockFiles.erase(fileList_iterator);
+		}
+		deleteFiles(deleteFilenames);
+		deleteFilenames.clear();
+
+		//3. Consistencycheck of the fragments
+		//Jedes Fragment das hier gefunden wird muss komplett entfernt werden. Einschließlich der evt. vorhandenen Blöcke.
+		sqlite3_stmt *fragmentconistencycheck = prepareStatement("SELECT * FROM "+_tables[SQL_TABLE_FRAGMENT]+";");
 		for ( int i = sqlite3_step(fragmentconistencycheck); i == SQLITE_ROW; i = sqlite3_step(fragmentconistencycheck)){
-			payloadfilename = (const char*) sqlite3_column_text(fragmentconistencycheck,4);
-			fileList_iterator = fragmentList.find(payloadfilename);
-			if( fileList_iterator == fragmentList.end()){
+			source = (const char*) 	sqlite3_column_text(fragmentconistencycheck,0);
+			timestamp = 			sqlite3_column_int64(fragmentconistencycheck,1);
+			sequencenumber = 		sqlite3_column_int64(fragmentconistencycheck,2);
+			dest = (const char*) 	sqlite3_column_text(fragmentconistencycheck,3);
+			offset = 				sqlite3_column_int64(fragmentconistencycheck,6);
+			payloadsize = 			sqlite3_column_int64(fragmentconistencycheck,7);
+			payloadfilename = (const char*) sqlite3_column_text(fragmentconistencycheck,8);
+			appdata = 				sqlite3_column_int64(fragmentconistencycheck,9);
+			repto = (const char*) 	sqlite3_column_text(fragmentconistencycheck,10);
+			cust = (const char*) 	sqlite3_column_text(fragmentconistencycheck,11);
+			pFlags = 				sqlite3_column_int64(fragmentconistencycheck,12);
+			lifetime = 				sqlite3_column_int64(fragmentconistencycheck,13);
+
+			dtn::data::EID destination(dest);
+			dtn::data::EID custody(cust);
+			dtn::data::EID reportto(repto);
+			dtn::data::BundleID idNoFrag(dtn::data::EID(source), timestamp, sequencenumber);
+			dtn::data::BundleID idFrag(dtn::data::EID(source), timestamp, sequencenumber,true,offset);
+			dtn::data::MetaBundle mb(idFrag, lifetime, dtn::data::DTNTime(),destination,reportto,custody,appdata,pFlags);
+
+			fileList_iterator = fragmentFiles.find(payloadfilename);
+			bool last = offset + payloadsize == appdata;
+			bool first = offset == 0;
+			bool inconsistent = fileList_iterator == fragmentFiles.end();
+
+			if(inconsistent){
 				//databaseentry must be deleted
-				source = (const char*) sqlite3_column_text(fragmentconistencycheck,0);
-				timestamp = sqlite3_column_int64(fragmentconistencycheck,1);
-				sequencenumber = sqlite3_column_int64(fragmentconistencycheck,2);
-				offset = sqlite3_column_int64(fragmentconistencycheck,3);
-				stringstream strom;
-				strom << "[" << timestamp << "." << sequencenumber << "." << offset << "] " << source;
-				eventList.insert(strom.str());
+				payload_deleted[idFrag] = mb;
+				dFB_it = deleteFragBlockID.find(idNoFrag);
+				deleteFragBlockID.erase(dFB_it);
+
 			}
-			else{
-				//later used to determe which file could be deleted
-				dbfragmentlist.insert((*fileList_iterator));
+			else if(first || last){
+				dFB_it = deleteFragBlockID.find(idNoFrag);
+				if(dFB_it != deleteFragBlockID.end()){
+					bool cond1 = dFB_it->second == FIRST_FRAGMENT && first;
+					bool cond2 = dFB_it->second == LAST_FRAGMENT && last;
+					bool cond3 = dFB_it->second == BOTH_FRAGMENTS && (first || last);
+					if (cond1 || cond2 || cond3){
+						payload_deleted[idFrag] = mb;
+					}
+				}
 			}
 		}
 		sqlite3_finalize(fragmentconistencycheck);
 
-		//delete inconsistent Fragments from database
-		if(eventList.size() != 0){
-			sqlite3_stmt *deleteFragment = prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT] +" WHERE BundleID = ?;");
-			for(event_Iterator = eventList.begin(); event_Iterator != eventList.end(); event_Iterator++){
-				//ToDo Integration der Storageevents
-				const dtn::data::BundleID id(*event_Iterator);
-				const dtn::data::MetaBundle mb(id, ...);
+		//4. Generate Bundle Events
+		for(pd_it = payload_deleted.begin(); pd_it != payload_deleted.end(); pd_it++){
+			dtn::core::BundleEvent::raise(pd_it->second, BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
+		}
+
+		//5. Delete inconsistent bundleentries from the database
+		sqlite3_stmt *deleteFragment = prepareStatement("DELETE FROM "+ _tables[SQL_TABLE_FRAGMENT]+" WHERE Source = ? AND Timestamp = ? AND Sequencenumber = ? AND FragmentationOffset = ?;");
+		for(pd_it = payload_deleted.begin(); pd_it != payload_deleted.end(); pd_it++){
+			string src = (pd_it->first).source.getString();
+			timestamp = (pd_it->first).timestamp;
+			sequencenumber = (pd_it->first).sequencenumber;
+			offset = (pd_it->first).offset;
+
+			sqlite3_bind_text(deleteFragment,1,src.c_str(),src.length(),SQLITE_TRANSIENT);
+			sqlite3_bind_int(deleteFragment,2,timestamp);
+			sqlite3_bind_int(deleteFragment,3,sequencenumber);
+			sqlite3_bind_int(deleteFragment,4,offset);
+			executeQuerry(deleteFragment);
+		}
+		sqlite3_finalize(deleteFragment);
+
+	}
+
+	void SQLiteBundleStorage::checkBundles(set<string> &blockFiles, set<string> &fragmentFiles){
+		int err;
+		size_t procFlags,timestamp,sequencenumber,appdatalength,lifetime;
+
+		string source,Bundle;
+		string filename, id, payloadfilename;
+		string dest, custody, repto;
+
+		stringstream path;
+
+		set<std::string> blockIDList;
+		set<string>::iterator fileList_iterator;
+
+		list<std::string> files;
+		list<std::string>::iterator list_it;
+
+		Bundle.append((int)BUNDLE);
+		sqlite3_stmt *blockConistencyCheck = prepareStatement("SELECT Filename,BundleID,Blocknumber FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE Fragment = "+ Bundle +";");
+		for(err = sqlite3_step(blockConistencyCheck); err == SQLITE_ROW; err = sqlite3_step(blockConistencyCheck)){
+			filename = (const char*)sqlite3_column_text(blockConistencyCheck,0);
+			id = (const char*)sqlite3_column_text(blockConistencyCheck,1);
+			fileList_iterator = blockFiles.find(filename);
+
+			//Inconsistent:
+			if(fileList_iterator == blockFiles.end()){
+				blockIDList.insert(id);
+			}
+			//Consistent:
+			else{
+				blockFiles.erase(fileList_iterator);
+			}
+		}
+		sqlite3_finalize(blockConistencyCheck);
+
+		for(fileList_iterator = blockIDList.begin(); fileList_iterator != blockIDList.end(); fileList_iterator++) {
+			sqlite3_bind_text(getBlocksByID,1,(*fileList_iterator).c_str(),(*fileList_iterator).length(),SQLITE_TRANSIENT);
+			executeQuerry(getBlocksByID,files);
+
+			//Generate Report
+			sqlite3_bind_text(getBundleByID,1,(*fileList_iterator).c_str(),(*fileList_iterator).length(),SQLITE_TRANSIENT);
+			err = sqlite3_step(getBundleByID);
+			if(err == SQLITE_ROW){
+				source  = (const char*) sqlite3_column_text(getBundleByID,0);
+				dest    = (const char*) sqlite3_column_text(getBundleByID,1);
+				repto   = (const char*) sqlite3_column_text(getBundleByID,2);
+				custody = (const char*) sqlite3_column_text(getBundleByID,3);
+				procFlags = sqlite3_column_int64(getBundleByID,4);
+				timestamp = sqlite3_column_int64(getBundleByID,5);
+				sequencenumber = sqlite3_column_int64(getBundleByID,6);
+				lifetime  = sqlite3_column_int64(getBundleByID,7);
+				appdatalength  = sqlite3_column_int64(getBundleByID,9);
+
+				dtn::data::BundleID id(dtn::data::EID(source),timestamp,sequencenumber);
+				dtn::data::MetaBundle mb(id, lifetime, dtn::data::DTNTime(), dtn::data::EID(dest), dtn::data::EID(repto), dtn::data::EID(custody), appdatalength, procFlags);
 				dtn::core::BundleEvent::raise(mb, BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
-
-				sqlite3_bind_text(deleteFragment,1,(*event_Iterator).c_str(),(*event_Iterator).length(), SQLITE_TRANSIENT);
-				err = sqlite3_step(deleteFragment);
-				if ( err != SQLITE_DONE )
-				{
-					std::cerr << "SQLiteBundlestorage: failure while deleting inconsistent Data: " << err << std::endl;
-				}
-				sqlite3_reset(deleteFragment);
 			}
-			sqlite3_finalize(deleteFragment);
-			eventList.clear();
+			else{
+				stringstream error;
+				error << "Inconsistence of the database. The BundleID " << id << " was not found.";
+				throw ibrcommon::Exception(error.str());
+			}
+
+			//delete BundleTable entries (include the detele of the blocks while a databasetrigger)
+			sqlite3_bind_text(removeBundle,1,(*fileList_iterator).c_str(), (*fileList_iterator).length(),SQLITE_TRANSIENT);
+			executeQuerry(removeBundle);
 		}
 
-		//delete inconsistent Blocks from the filesystem
-		if(fileList.size() != 0){
-			for(fileList_iterator = fileList.begin(); fileList_iterator != fileList.end(); fileList_iterator++){
-				::remove((*fileList_iterator).c_str());
-				clog << "Warning: the file " << (*fileList_iterator) << " was deleted" <<endl;
-			}
-		}
-		//delete inconsistent fragments from the filesystem
-		for(fileList_iterator = fragmentList.begin(); fileList_iterator != fragmentList.end(); fileList_iterator++){
-			fileList_iterator2 = dbfragmentlist.find((*fileList_iterator));
+		//Delete Blockfiles
+		for(list_it = files.begin(); list_it != files.end(); list_it++){
+			ibrcommon::File blockfile(*list_it);
+			blockfile.remove();
 
-			if(fileList_iterator2 == dbfragmentlist.end()){ // the file isn't contained in the database an can be deleted
-				::remove((*fileList_iterator).c_str());
-				clog << "Warning: the file " << (*fileList_iterator) << " was deleted" <<endl;
-			}
+			//Delete BlockFile entry
+			fileList_iterator = blockFiles.find(*list_it);
+			blockFiles.erase(fileList_iterator);
 		}
 	}
+
 
 	sqlite3_stmt* SQLiteBundleStorage::prepareStatement(string sqlquery){
 		// prepare the statement
@@ -908,7 +1116,8 @@ namespace core {
 		{
 			ibrcommon::MutexLock lock(dbMutex);
 			//stores the blocks to a file
-			int size = storeBlocks(bundle);
+			Appurtenant app = BUNDLE;
+			int size = storeBlocks(bundle,app);
 
 			sqlite3_bind_text(store_Bundle, 1, stream_bundleid.str().c_str(), stream_bundleid.str().length(),SQLITE_TRANSIENT);
 			sqlite3_bind_text(store_Bundle, 2,bundle._source.getString().c_str(), bundle._source.getString().length(),SQLITE_TRANSIENT);
@@ -1036,15 +1245,6 @@ namespace core {
 				throw SQLiteQuerryException(error.str());
 			}
 
-			//Delete Blockfiles
-//			for (it = blocklist.begin(); it!=blocklist.end(); it++){
-//				stringstream file;
-//				file << dbPath << "/" << SQL_TABLE_BLOCK << "/" << (*it);
-//				err = ::remove(file.str().c_str());
-//				if(err != 0){
-//					std::cerr << "SQLiteBundleStorage: remove():Datei konnte nicht gelöscht werden " << " errmsg: " << err <<endl;
-//				}
-//			}
 			//update deprecated timer
 			updateexpiredTime();
 		}
@@ -1243,7 +1443,7 @@ namespace core {
 	}
 
  	void SQLiteBundleStorage::storeFragment(const dtn::data::Bundle &bundle){
-		int err, filedescriptor = -1;
+		int err, filedescriptor = -1 ,size(0);
 		size_t bitcounter = 0;
 		bool allFragmentsReceived(true);
 		size_t payloadsize, TTL, fragmentoffset;
@@ -1306,11 +1506,12 @@ namespace core {
 					if(first)	{blocknumber = (blocklist.size() - i)*(-1);}
 
 					sqlite3_bind_int(storeBlock,4,blocknumber);
+					sqlite3_bind_int(storeBlock,5,(int)FRAGMENT);
 					err = sqlite3_step(storeBlock);
 					sqlite3_reset(storeBlock);
 					if(err != SQLITE_DONE){
 						stringstream error;
-						error << "SQLiteBundleStorage: storeBlocks() failure: "<< err << " " << sqlite3_errmsg(database);
+						error << "SQLiteBundleStorage: storeFragment failure: "<< err << " " << sqlite3_errmsg(database);
 						std::cerr << error.str();
 						throw SQLiteQuerryException(error.str());
 					}
@@ -1397,6 +1598,7 @@ namespace core {
 				 * 1. Payloadblock zusammensetzen
 				 * 2. PayloadBlock in der BlockTable sichern
 				 * 3. Primary BlockInfos in die BundleTable eintragen.
+				 * 4. Einträge der Fragmenttabelle löschen
 				 */
 
 				// 1. Get the payloadblockobject
@@ -1421,9 +1623,6 @@ namespace core {
 				pb.set(dtn::data::PayloadBlock::FORWARDED_WITHOUT_PROCESSED, block.get(dtn::data::PayloadBlock::FORWARDED_WITHOUT_PROCESSED));
 				pb.set(dtn::data::PayloadBlock::BLOCK_CONTAINS_EIDS, block.get(dtn::data::PayloadBlock::BLOCK_CONTAINS_EIDS));
 
-				//ToDo Copy Blocklength
-				block.getLength();
-
 				//2. Save the PayloadBlock to a file and store the metainformation in the BlockTable
 				char *temp = strdup(path2.str().c_str());
 				filedescriptor = mkstemp(temp);
@@ -1444,11 +1643,12 @@ namespace core {
 				sqlite3_bind_int(storeBlock,2,(int)((*it)->getType()));
 				sqlite3_bind_text(storeBlock,3,filename.c_str(), filename.length(),SQLITE_TRANSIENT);
 				sqlite3_bind_int(storeBlock,4,0);
+				sqlite3_bind_int(storeBlock,5,FRAGMENT);
 				err = sqlite3_step(storeBlock);
 				sqlite3_reset(storeBlock);
 				if(err != SQLITE_DONE){
 					stringstream error;
-					error << "SQLiteBundleStorage: storeBlocks() failure: "<< err << " " << sqlite3_errmsg(database);
+					error << "SQLiteBundleStorage: storeFragment failure: "<< err << " " << sqlite3_errmsg(database);
 					std::cerr << error.str();
 					throw SQLiteQuerryException(error.str());
 				}
@@ -1471,6 +1671,7 @@ namespace core {
 				sqlite3_bind_int64(store_Bundle,12,TTL);
 				sqlite3_bind_int(store_Bundle,13,size);
 				err = sqlite3_step(store_Bundle);
+				sqlite3_reset(store_Bundle);
 				if(err == SQLITE_CONSTRAINT)
 					cerr << "warning: Bundle is already in the storage"<<endl;
 				else if(err != SQLITE_DONE){
@@ -1479,7 +1680,18 @@ namespace core {
 					std::cerr << error.str();
 					throw SQLiteQuerryException(error.str());
 				}
-				sqlite3_reset(store_Bundle);
+
+				sqlite3_bind_text(removeFragments,1,sourceEID.c_str(),sourceEID.length(),SQLITE_TRANSIENT);
+				sqlite3_bind_int(removeFragments,2,bundle._timestamp);
+				sqlite3_bind_int(removeFragments,3,bundle._sequencenumber);
+				err = sqlite3_step(removeFragments);
+				sqlite3_reset(removeFragments);
+				if(err != SQLITE_DONE){
+					stringstream error;
+					error << "SQLiteBundleStorage: store() failure: "<< err << " " <<  sqlite3_errmsg(database);
+					std::cerr << error.str();
+					throw SQLiteQuerryException(error.str());
+				}
 			}
 
 			//There are some fragments missing
@@ -1493,6 +1705,11 @@ namespace core {
 				sqlite3_bind_int64(store_Fragment,7,bundle._fragmentoffset);
 				sqlite3_bind_int64(store_Fragment,8,payloadsize);
 				sqlite3_bind_text(store_Fragment,9,payloadfilename.c_str() ,payloadfilename.length(),SQLITE_TRANSIENT);
+				sqlite3_bind_int64(store_Fragment,10,bundle._appdatalength);
+				sqlite3_bind_text(store_Fragment,11,bundle._reportto.getString().c_str(),bundle._reportto.getString().length(),SQLITE_TRANSIENT);
+				sqlite3_bind_text(store_Fragment,12,bundle._custodian.getString().c_str(),bundle._custodian.getString().length(),SQLITE_TRANSIENT);
+				sqlite3_bind_int(store_Fragment,13,bundle._procflags);
+				sqlite3_bind_int64(store_Fragment,14,bundle._lifetime);
 				err = sqlite3_step(store_Fragment);
 				sqlite3_reset(store_Fragment);
 				if(err != SQLITE_DONE){
@@ -1580,6 +1797,7 @@ namespace core {
 		list<data::BundleID>::iterator it;
 		{
 			//find expired Bundle
+			//ToDo Events generieren
 			ibrcommon::MutexLock lock(dbMutex);
 			sqlite3_bind_int64(getBundleTTL,1, actual_time);
 			err = sqlite3_step(getBundleTTL);
@@ -1696,7 +1914,7 @@ namespace core {
 		nextExpiredTime = time;
 	}
 
-	int SQLiteBundleStorage::storeBlocks(const data::Bundle &bundle){
+	int SQLiteBundleStorage::storeBlocks(const data::Bundle &bundle, int appurtenant){
 		const list<const data::Block*> blocklist(bundle.getBlocks());
 		list<const data::Block*>::const_iterator it;
 		int filedescriptor(-1), blocktyp, err, blocknumber(1), storedBytes(0);
@@ -1727,6 +1945,7 @@ namespace core {
 			sqlite3_bind_int(storeBlock,2,blocktyp);
 			sqlite3_bind_text(storeBlock,3,blockfilename, strlen(blockfilename),SQLITE_TRANSIENT);
 			sqlite3_bind_int(storeBlock,4,blocknumber);
+			sqlite3_bind_int(storeBlock,5,appurtenant);
 			err = sqlite3_step(storeBlock);
 			sqlite3_reset(storeBlock);
 			if(err != SQLITE_DONE){
@@ -1804,39 +2023,39 @@ namespace core {
 		}
 	}
 
-	list<data::Block> SQLiteBundleStorage::getBlock(const data::BundleID &bundleID,const char &blocktype){
-		int err;
-		stringstream ss;
-		ss << blocktype;
-		list<data::Block> result;
-		fstream filestream;
-		string filename;
-		err = sqlite3_bind_text(getBlocks,1, bundleID.toString().c_str(), bundleID.toString().length(), SQLITE_TRANSIENT);
-		if(err != SQLITE_OK)
-			cerr << "bind error"<<endl;
-		err = sqlite3_bind_int(getBlocks,2,atoi(ss.str().c_str()));
-		if(err != SQLITE_OK)
-			cerr << "bind error"<<endl;
-		err = sqlite3_step(getBlocks);
-		while (err == SQLITE_ROW){
-			filename = (const char*)sqlite3_column_text(getBlocks,0);
-
-			std::ifstream is(filename.c_str(),ios::binary);
-			dtn::data::SeparateDeserializer deserializer(is, bundle);
-			deserializer.readBlock();
-			is.close();
-
-			err = sqlite3_step(getBlocks);
-		}
-		sqlite3_reset(getBlocks);
-		if(err != SQLITE_DONE ){
-			stringstream error;
-			error << "SQLiteBundleStorage: getBlock() failure: "<< err << " " << sqlite3_errmsg(database);
-			std::cerr << error.str();
-			throw SQLiteQuerryException(error.str());
-		}
-		return result;
-	}
+//	list<data::Block> SQLiteBundleStorage::getBlock(const data::BundleID &bundleID,const char &blocktype){
+//		int err;
+//		stringstream ss;
+//		ss << blocktype;
+//		list<data::Block> result;
+//		fstream filestream;
+//		string filename;
+//		err = sqlite3_bind_text(getBlocks,1, bundleID.toString().c_str(), bundleID.toString().length(), SQLITE_TRANSIENT);
+//		if(err != SQLITE_OK)
+//			cerr << "bind error"<<endl;
+//		err = sqlite3_bind_int(getBlocks,2,atoi(ss.str().c_str()));
+//		if(err != SQLITE_OK)
+//			cerr << "bind error"<<endl;
+//		err = sqlite3_step(getBlocks);
+//		while (err == SQLITE_ROW){
+//			filename = (const char*)sqlite3_column_text(getBlocks,0);
+//
+//			std::ifstream is(filename.c_str(),ios::binary);
+//			dtn::data::SeparateDeserializer deserializer(is, bundle);
+//			deserializer.readBlock();
+//			is.close();
+//
+//			err = sqlite3_step(getBlocks);
+//		}
+//		sqlite3_reset(getBlocks);
+//		if(err != SQLITE_DONE ){
+//			stringstream error;
+//			error << "SQLiteBundleStorage: getBlock() failure: "<< err << " " << sqlite3_errmsg(database);
+//			std::cerr << error.str();
+//			throw SQLiteQuerryException(error.str());
+//		}
+//		return result;
+//	}
 
 	const std::string SQLiteBundleStorage::getName() const
 	{
