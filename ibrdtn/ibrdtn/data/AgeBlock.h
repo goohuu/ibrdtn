@@ -30,6 +30,7 @@ namespace dtn
 
 			static const char BLOCK_TYPE = 10;
 
+			AgeBlock();
 			virtual ~AgeBlock();
 
 			virtual size_t getLength() const;
@@ -37,9 +38,6 @@ namespace dtn
 			virtual std::istream &deserialize(std::istream &stream);
 
 			size_t getAge() const;
-
-		protected:
-			AgeBlock();
 
 		private:
 			dtn::data::SDNV _age;

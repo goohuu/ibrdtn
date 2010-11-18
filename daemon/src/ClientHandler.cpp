@@ -15,6 +15,8 @@
 #include <ibrdtn/data/Serializer.h>
 #include <iostream>
 #include <ibrcommon/Logger.h>
+#include <ibrdtn/data/AgeBlock.h>
+#include <ibrdtn/utils/Clock.h>
 
 using namespace dtn::data;
 using namespace dtn::streams;
@@ -190,6 +192,18 @@ namespace dtn
 					if (bundle._destination == clienteid) bundle._destination = _eid;
 					if (bundle._reportto == clienteid) bundle._reportto = _eid;
 					if (bundle._custodian == clienteid) bundle._custodian = _eid;
+
+					// if the clock is bad, add a ageblock
+					if (dtn::utils::Clock::quality == 0)
+					{
+						// check for ageblock
+						try {
+							bundle.getBlock<dtn::data::AgeBlock>();
+						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+							// add a new ageblock
+							bundle.push_front<dtn::data::AgeBlock>();
+						}
+					}
 
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, bundle, true);
