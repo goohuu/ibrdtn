@@ -38,13 +38,7 @@ namespace dtn
 					try {
 						// load a bundle into the storage
 						load(file);
-					} catch (ibrcommon::IOException ex) {
-						// report this error to the console
-						IBRCOMMON_LOGGER(error) << "Error: Unable to restore bundle in file " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
-
-						// error while reading file
-						file.remove();
-					} catch (dtn::InvalidDataException ex) {
+					} catch (const ibrcommon::Exception &ex) {
 						// report this error to the console
 						IBRCOMMON_LOGGER(error) << "Error: Unable to restore bundle in file " << file.getPath() << IBRCOMMON_LOGGER_ENDL;
 
@@ -198,8 +192,9 @@ namespace dtn
 
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)
 		{
-			ibrcommon::MutexLock l(_bundleslock);
 			try {
+				ibrcommon::MutexLock l(_bundleslock);
+
 				for (std::set<BundleContainer>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
 				{
 					const BundleContainer &bundle = (*iter);
@@ -211,6 +206,10 @@ namespace dtn
 			} catch (const dtn::SerializationFailedException &ex) {
 				// bundle loading failed
 				IBRCOMMON_LOGGER(error) << "Error while loading bundle data: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+				// the bundle is broken, delete it
+				remove(id);
+
 				throw BundleStorage::BundleLoadException();
 			}
 
@@ -494,7 +493,7 @@ namespace dtn
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size )
-		 : _count(1), _state(HOLDER_PENDING), _bundle(b), _container(workdir), _size(size)
+		 : _count(1), _state_lock(ibrcommon::Mutex::MUTEX_NORMAL), _state(HOLDER_PENDING), _bundle(b), _container(workdir), _size(size)
 		{
 		}
 
@@ -514,45 +513,34 @@ namespace dtn
 
 		dtn::data::Bundle SimpleBundleStorage::BundleContainer::Holder::getBundle()
 		{
-			ibrcommon::MutexLock l(_state_lock);
-			if (_state == HOLDER_DELETED)
+			// the state must be protected with a mutex
 			{
-				throw dtn::SerializationFailedException("bundle deleted");
-			}
-			else if (_state == HOLDER_STORED)
-			{
-				dtn::data::Bundle bundle;
-
-				// we need to load the bundle from file
-				ibrcommon::locked_ifstream ostream(_container, ios::in|ios::binary);
-				std::istream &fs = (*ostream);
-				try {
-					fs.exceptions(std::ios::badbit | std::ios::eofbit);
-					dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
-				} catch (const ios_base::failure &ex) {
-					// check for error state of the stream
-					if (fs.rdstate() & ifstream::eofbit)
-					{
-						throw dtn::SerializationFailedException("unable to load bundle, because we reached the end of file too early");
-					}
-					else if (fs.rdstate() & ifstream::badbit)
-					{
-						throw dtn::SerializationFailedException("unable to load bundle, because the stream went bad");
-					}
-
-					throw dtn::SerializationFailedException("unable to load bundle (" + std::string(ex.what()) + ")");
-				} catch (const std::exception &ex) {
-					throw dtn::SerializationFailedException("bundle get failed: " + std::string(ex.what()));
+				ibrcommon::MutexLock l(_state_lock);
+				if (_state == HOLDER_DELETED)
+				{
+					throw dtn::SerializationFailedException("bundle deleted");
 				}
-
-				ostream.close();
-
-				return bundle;
+				else if (_state != HOLDER_STORED)
+				{
+					return _bundle;
+				}
 			}
-			else
-			{
-				return _bundle;
+
+			// we need to load the bundle from the storage
+			dtn::data::Bundle bundle;
+
+			// we need to load the bundle from file
+			ibrcommon::locked_ifstream ostream(_container, ios::in|ios::binary);
+			std::istream &fs = (*ostream);
+			try {
+				dtn::data::DefaultDeserializer(fs, dtn::core::BundleCore::getInstance()) >> bundle;
+			} catch (const std::exception &ex) {
+				throw dtn::SerializationFailedException("bundle get failed: " + std::string(ex.what()));
 			}
+
+			ostream.close();
+
+			return bundle;
 		}
 
 		void SimpleBundleStorage::BundleContainer::Holder::remove()
@@ -563,42 +551,53 @@ namespace dtn
 
 		void SimpleBundleStorage::BundleContainer::Holder::invokeStore()
 		{
-			ibrcommon::MutexLock l(_state_lock);
+			// check if this container need to be stored
+			{
+				ibrcommon::MutexLock l(_state_lock);
+				if (_state != HOLDER_PENDING) return;
+			}
+
 			try {
-				if (_state == HOLDER_PENDING)
-				{
-					_container = ibrcommon::TemporaryFile(_container, "bundle");
-					ibrcommon::locked_ofstream ostream(_container);
-					std::ostream &out = (*ostream);
+				ibrcommon::TemporaryFile tmp(_container, "bundle");
+				ibrcommon::locked_ofstream ostream(_container, ios_base::out | ios_base::trunc);
+				std::ostream &out = (*ostream);
+				size_t stream_size = 0;
+				size_t bundle_size = 0;
 
-					// check for open stream
-					if (!ostream.is_open()) throw ibrcommon::IOException("unable to open file " + _container.getPath());
+				try {
+					// check for failed stream
+					if (ostream.fail()) throw ibrcommon::IOException("unable to open file " + tmp.getPath());
 
-					// check for bad stream
-					if (ostream.bad()) throw ibrcommon::IOException("unable to open file " + _container.getPath());
+					dtn::data::DefaultSerializer s(out);
+					bundle_size = s.getLength(_bundle);
 
-					// serialize the bundle into the file
-					dtn::data::DefaultSerializer(out) << _bundle; out << std::flush;
+					s << _bundle; out << std::flush; stream_size = out.tellp();
 
-					// check for failure
-					if (ostream.fail())
+					if (stream_size == bundle_size)
 					{
-						ostream.close();
-						throw ibrcommon::IOException("write failed " + _container.getPath());
+						std::stringstream errormsg; errormsg << "stream size (" << stream_size << ") do not match bundle size (" << bundle_size << ")";
+						throw ibrcommon::IOException(errormsg.str());
 					}
-
+				} catch (const std::exception &ex) {
 					// close the stream
 					ostream.close();
+					tmp.remove();
+					throw;
+				}
 
-					// check the size of the file
-					if (_container.size() == 0)
-					{
-						throw ibrcommon::IOException(_container.getPath() + " has size of zero");
-					}
+				// close the stream
+				ostream.close();
 
-					_size = _container.size();
+				{
+					ibrcommon::MutexLock l(_state_lock);
+					_container = tmp;
+					_size = tmp.size();
 					_bundle = dtn::data::Bundle();
-					_state = HOLDER_STORED;
+
+					if (_state == HOLDER_PENDING)
+					{
+						_state = HOLDER_STORED;
+					}
 				}
 			} catch (const dtn::SerializationFailedException &ex) {
 				throw dtn::SerializationFailedException("serialization failed: " + std::string(ex.what()));
@@ -607,8 +606,8 @@ namespace dtn
 			}
 		}
 
-		SimpleBundleStorage::TaskStoreBundle::TaskStoreBundle(const SimpleBundleStorage::BundleContainer &container)
-		 : _container(container)
+		SimpleBundleStorage::TaskStoreBundle::TaskStoreBundle(const SimpleBundleStorage::BundleContainer &container, size_t retry)
+		 : _container(container), _retry(retry)
 		{ }
 
 		SimpleBundleStorage::TaskStoreBundle::~TaskStoreBundle()
@@ -619,10 +618,17 @@ namespace dtn
 			try {
 				_container.invokeStore();
 				IBRCOMMON_LOGGER_DEBUG(20) << "bundle stored " << _container.toString() << " (size: " << _container.size() << ")" << IBRCOMMON_LOGGER_ENDL;
-			} catch (const ibrcommon::IOException &ex) {
-				IBRCOMMON_LOGGER(error) << "store failed " << _container.toString() << " (size: " << _container.size() << "): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::Exception &ex) {
 				// reschedule the task
-				storage._tasks.push( new SimpleBundleStorage::TaskStoreBundle(_container) );
+				if (_retry < 10)
+				{
+					IBRCOMMON_LOGGER(warning) << "store failed " << _container.toString() << " (size: " << _container.size() << "): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					storage._tasks.push( new SimpleBundleStorage::TaskStoreBundle(_container, _retry + 1) );
+				}
+				else
+				{
+					IBRCOMMON_LOGGER(error) << "store failed " << _container.toString() << " (size: " << _container.size() << "): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				}
 			}
 		}
 

@@ -44,24 +44,11 @@ namespace dtn
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::MutexLock l(blobref);
 
-			// remember the old exceptions state
-			std::ios::iostate oldstate = (*blobref).exceptions();
-
-			// activate exceptions for this method
-			(*blobref).exceptions(std::ios::badbit | std::ios::eofbit);
-
 			try {
-				// write payload
-				stream << (*blobref).rdbuf();
-			} catch (std::exception &ex) {
-				// restore the old state
-				(*blobref).exceptions(oldstate);
-
+				ibrcommon::BLOB::copy(stream, *blobref, blobref.getSize());
+			} catch (const ibrcommon::IOException &ex) {
 				throw dtn::SerializationFailedException(ex.what());
 			}
-
-			// restore the old state
-			(*blobref).exceptions(oldstate);
 
 			return stream;
 		}
@@ -75,36 +62,12 @@ namespace dtn
 			_blobref.clear();
 
 			// check if the blob is ready
-			if (!(*_blobref).good())
-			{
-				throw dtn::SerializationFailedException("could not open BLOB for payload");
-			}
+			if (!(*_blobref).good()) throw dtn::SerializationFailedException("could not open BLOB for payload");
 
-			// read payload
-			const int buffer_size = 0x1000;
-			char buffer[buffer_size];
-			ssize_t remain = _blocksize;
-
-			while (remain > 0)
-			{
-				// check if the reading stream is ok
-				if (stream.eof()) throw dtn::SerializationFailedException("stream reached EOF while reading payload");
-
-				// read the full buffer size of less?
-				if (remain > buffer_size)
-				{
-					stream.read(buffer, buffer_size);
-				}
-				else
-				{
-					stream.read(buffer, remain);
-				}
-
-				// write the bytes to the BLOB
-				(*_blobref).write(buffer, stream.gcount());
-
-				// shrink the remaining bytes by the red bytes
-				remain -= stream.gcount();
+			try {
+				ibrcommon::BLOB::copy(*_blobref, stream, _blocksize);
+			} catch (const ibrcommon::IOException &ex) {
+				throw dtn::SerializationFailedException(ex.what());
 			}
 
 			// set block not processed bit

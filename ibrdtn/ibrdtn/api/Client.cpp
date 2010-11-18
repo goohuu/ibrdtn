@@ -45,7 +45,7 @@ namespace dtn
 		void Client::AsyncReceiver::run()
 		{
 			try {
-				while (true)
+				while (!_client.eof())
 				{
 					dtn::api::Bundle b;
 					_client >> b;

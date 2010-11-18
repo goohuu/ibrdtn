@@ -156,7 +156,7 @@ namespace dtn
 							// get the global storage
 							BundleStorage &storage = BundleCore::getInstance().getStorage();
 
-							// search for all receiver of this bundle
+							// lock the connection list
 							ibrcommon::MutexLock l(_lock);
 
 							for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
@@ -167,16 +167,26 @@ namespace dtn
 								{
 									const dtn::data::EID &eid = handler->getPeer();
 									const dtn::data::BundleID id = storage.getByDestination( eid, true );
-									const dtn::data::Bundle b = storage.get(id);
 
-									// push the bundle to the client
-									handler->queue(b);
+									try {
+										const dtn::data::Bundle b = storage.get(id);
+
+										// push the bundle to the client
+										handler->queue(b);
+
+										// generate a delete bundle task
+										_tasks.push(new RemoveBundleTask(b));
+									}
+									catch (const dtn::core::BundleStorage::BundleLoadException&)
+									{
+									}
+									catch (const dtn::core::BundleStorage::NoBundleFoundException&)
+									{
+										break;
+									}
 
 									// generate a task for this receiver
 									_tasks.push(new QueryBundleTask(query.id));
-
-									// generate a delete bundle task
-									_tasks.push(new RemoveBundleTask(b));
 								}
 							}
 						} catch (const std::bad_cast&) {};

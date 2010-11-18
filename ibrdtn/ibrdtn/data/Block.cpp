@@ -16,7 +16,7 @@ namespace dtn
 	namespace data
 	{
 		Block::Block(char blocktype)
-		 : _blocktype(blocktype), _procflags(0)
+		 : _blocktype(blocktype), _blocksize(0), _procflags(0)
 		{
 		}
 

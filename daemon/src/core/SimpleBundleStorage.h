@@ -228,12 +228,13 @@ namespace dtn
 			class TaskStoreBundle : public Task
 			{
 			public:
-				TaskStoreBundle(const SimpleBundleStorage::BundleContainer&);
+				TaskStoreBundle(const SimpleBundleStorage::BundleContainer&, size_t retry = 0);
 				~TaskStoreBundle();
 				virtual void run(SimpleBundleStorage &storage);
 
 			private:
 				SimpleBundleStorage::BundleContainer _container;
+				size_t _retry;
 			};
 
 			class TaskRemoveBundle : public Task

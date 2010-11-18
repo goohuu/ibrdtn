@@ -654,7 +654,6 @@ namespace dtn
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in underflow()" << IBRCOMMON_LOGGER_ENDL;
-				_conn.shutdown(CONNECTION_SHUTDOWN_ERROR);
 
 			} catch (StreamErrorException ex) {
 				// set failed bit
@@ -668,7 +667,6 @@ namespace dtn
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamShutdownException in underflow()" << IBRCOMMON_LOGGER_ENDL;
-				_conn.shutdown(CONNECTION_SHUTDOWN_PEER_SHUTDOWN);
 			}
 
 			return traits_type::eof();

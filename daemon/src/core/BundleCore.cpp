@@ -185,6 +185,7 @@ namespace dtn
 					// delete the bundle
 					getStorage().remove(meta);
 				}
+			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 			} catch (std::bad_cast ex) {
 
 			}

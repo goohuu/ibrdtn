@@ -63,7 +63,7 @@ namespace dtn
 			 */
 			Block(char blocktype);
 			char _blocktype;
-			ssize_t _blocksize;
+			size_t _blocksize;
 			std::list<dtn::data::EID> _eids;
 
 			virtual size_t getLength() const = 0;

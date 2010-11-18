@@ -173,7 +173,7 @@ namespace dtn
 				// start the sender thread
 				_sender.start();
 
-				while (true)
+				while (!_connection.eof())
 				{
 					dtn::data::Bundle bundle;
 					dtn::data::DefaultDeserializer(_connection) >> bundle;
@@ -198,6 +198,9 @@ namespace dtn
 				}
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER(error) << "failed to start thread in ClientHandler\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+			} catch (const dtn::SerializationFailedException &ex) {
+				IBRCOMMON_LOGGER(error) << "ClientHandler::run(): SerializationFailedException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 				_connection.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 			} catch (const ibrcommon::IOException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ClientHandler::run(): IOException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
