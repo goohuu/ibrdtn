@@ -45,6 +45,11 @@ namespace dtn
 			dtn::data::SDNV _age;
 			ibrcommon::TimeMeasurement _time;
 		};
+
+		/**
+		 * This creates a static block factory
+		 */
+		static AgeBlock::AgeBlock::Factory __AgeBlockFactory__;
 	}
 }
 
