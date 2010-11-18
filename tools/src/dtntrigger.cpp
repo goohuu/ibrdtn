@@ -61,6 +61,7 @@ int init(int argc, char** argv)
 {
 	int index;
 	int c;
+	ibrcommon::BLOB::tmppath = ibrcommon::File("/tmp");
 
 	opterr = 0;
 
@@ -181,7 +182,7 @@ int main(int argc, char** argv)
 				try {
 					std::fstream out(file.getPath().c_str(), ios::out|ios::binary|ios::trunc);
 					out.exceptions(std::ios::badbit | std::ios::eofbit);
-					ibrcommon::Mutex l(ref);
+					ibrcommon::MutexLock l(ref);
 					out << (*ref).rdbuf();
 					out.close();
 
@@ -220,7 +221,7 @@ int main(int argc, char** argv)
 					backoff = backoff * 2;
 				}
 			}
-		} catch (const ibrcommon::IOException&) {
+		} catch (const ibrcommon::IOException &ex) {
 			// set the global connection to NULL
 			_conn = NULL;
 
