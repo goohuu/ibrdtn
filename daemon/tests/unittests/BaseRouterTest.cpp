@@ -22,6 +22,7 @@
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrcommon/thread/Thread.h>
+#include <ibrcommon/Logger.h>
 
 
 CPPUNIT_TEST_SUITE_REGISTRATION(BaseRouterTest);
@@ -87,20 +88,22 @@ void BaseRouterTest::testTransferTo()
 void BaseRouterTest::testRaiseEvent()
 {
 	/* test signature (const dtn::core::Event *evt) */
-	dtn::routing::BaseRouter router(_storage);
 	dtn::data::EID eid("dtn://no-neighbor");
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://testcase-one/foo");
 
+	ibrtest::EventSwitchLoop esl; esl.start();
+	dtn::routing::BaseRouter router(_storage);
+	router.initialize();
+
 	CPPUNIT_ASSERT_EQUAL(false, router.isKnown(b));
 
-	router.initialize();
-	{
-		ibrtest::EventSwitchLoop esl; esl.start();
+	// send a bundle
+	dtn::net::BundleReceivedEvent::raise(eid, b);
 
-		// send a bundle
-		dtn::net::BundleReceivedEvent::raise(eid, b);
-	}
+	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+	esl.join();
+
 	router.terminate();
 
 	// this bundle has to be known in future

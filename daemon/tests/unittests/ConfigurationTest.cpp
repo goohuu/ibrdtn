@@ -64,64 +64,65 @@ void ConfigurationTest::testGetPath()
 void ConfigurationTest::testGetUID()
 {
 	/* test signature () */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_THROW(conf.getUID(), dtn::daemon::Configuration::ParameterNotSetException);
 }
 
 void ConfigurationTest::testGetGID()
 {
 	/* test signature () */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_THROW(conf.getGID(), dtn::daemon::Configuration::ParameterNotSetException);
 }
 
 void ConfigurationTest::testDoAPI()
 {
 	/* test signature () */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(conf.doAPI(), true);
 }
 
 void ConfigurationTest::testGetAPIInterface()
 {
 	/* test signature () */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(conf.getAPIInterface().name, std::string("local"));
 }
 
 void ConfigurationTest::testGetAPISocket()
 {
 	/* test signature () */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_THROW(conf.getAPISocket(), dtn::daemon::Configuration::ParameterNotSetException);
 }
 
 void ConfigurationTest::testVersion()
 {
 	/* test signature () */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT(conf.version() != "0.0.0");
 }
 
 void ConfigurationTest::testGetNotifyCommand()
 {
 	/* test signature () */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_THROW(conf.getNotifyCommand(), dtn::daemon::Configuration::ParameterNotSetException);
 }
 
 void ConfigurationTest::testGetStorage()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(std::string("default"), conf.getStorage());
 }
 
 void ConfigurationTest::testGetLimit()
 {
 	/* test signature (std::string) */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL((size_t)0, conf.getLimit("test"));
+	CPPUNIT_ASSERT_EQUAL((size_t)20000000, conf.getLimit("storage"));
 }
 
 /*=== BEGIN tests for class 'Discovery' ===*/
@@ -129,50 +130,50 @@ void ConfigurationTest::testGetLimit()
 void ConfigurationTest::testDiscoveryEnabled()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(true, conf.getDiscovery().enabled());
 }
 
 void ConfigurationTest::testDiscoveryAnnounce()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(true, conf.getDiscovery().announce());
 }
 
 void ConfigurationTest::testDiscoveryShortbeacon()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(false, conf.getDiscovery().shortbeacon());
 }
 
 void ConfigurationTest::testDiscoveryVersion()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL((char)2, conf.getDiscovery().version());
 }
 
 void ConfigurationTest::testDiscoveryAddress()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(std::string("224.0.0.1"), conf.getDiscovery().address());
 }
 
 void ConfigurationTest::testDiscoveryPort()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(4551, conf.getDiscovery().port());
 }
 
 void ConfigurationTest::testDiscoveryTimeout()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL((unsigned int)5, conf.getDiscovery().timeout());
 }
 
 /*=== END   tests for class 'Discovery' ===*/
@@ -183,42 +184,42 @@ void ConfigurationTest::testStatisticEnabled()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	CPPUNIT_ASSERT_EQUAL(true, conf.getStatistic().enabled());
 }
 
 void ConfigurationTest::testStatisticLogfile()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT(ibrcommon::File("/tmp/ibrdtn.stats") == conf.getStatistic().logfile());
 }
 
 void ConfigurationTest::testStatisticType()
 {
 	/* test signature () const */
-//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(std::string("stdout"), conf.getStatistic().type());
 }
 
 void ConfigurationTest::testStatisticInterval()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL((unsigned int)2, conf.getStatistic().interval());
 }
 
 void ConfigurationTest::testStatisticAddress()
 {
 	/* test signature () const */
-	//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(std::string("127.0.0.1"), conf.getStatistic().address());
 }
 
 void ConfigurationTest::testStatisticPort()
 {
 	/* test signature () const */
-//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL((unsigned int)1234, conf.getStatistic().port());
 }
 
 /*=== END   tests for class 'Statistic' ===*/
@@ -228,22 +229,22 @@ void ConfigurationTest::testStatisticPort()
 void ConfigurationTest::testDebugLevel()
 {
 	/* test signature () const */
-//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(conf.getDebug().level(), 99);
 }
 
 void ConfigurationTest::testDebugEnabled()
 {
 	/* test signature () const */
-//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(conf.getDebug().enabled(), true);
 }
 
 void ConfigurationTest::testDebugQuiet()
 {
 	/* test signature () const */
-//	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_FAIL("not implemented");
+	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
+	CPPUNIT_ASSERT_EQUAL(conf.getDebug().quiet(), false);
 }
 
 /*=== END   tests for class 'Debug' ===*/
@@ -344,7 +345,7 @@ void ConfigurationTest::testGetDebug()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(false, conf.getDebug().enabled());
+	CPPUNIT_ASSERT_EQUAL(true, conf.getDebug().enabled());
 }
 
 void ConfigurationTest::testGetLogger()

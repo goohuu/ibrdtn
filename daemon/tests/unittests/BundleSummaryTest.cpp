@@ -26,19 +26,62 @@ CPPUNIT_TEST_SUITE_REGISTRATION(BundleSummaryTest);
 void BundleSummaryTest::testAdd()
 {
 	/* test signature (const dtn::data::MetaBundle bundle) */
-	CPPUNIT_FAIL("not implemented");
+	dtn::routing::BundleSummary l;
+
+	// define bundle one
+	dtn::data::Bundle b1;
+	b1._lifetime = 20;
+	b1._timestamp = 0;
+	b1._sequencenumber = 23;
+	b1._source = dtn::data::EID("dtn://test1/app0");
+
+	CPPUNIT_ASSERT(!l.contains(b1));
+
+	l.add(b1);
+
+	CPPUNIT_ASSERT(l.contains(b1));
 }
 
 void BundleSummaryTest::testRemove()
 {
 	/* test signature (const dtn::data::MetaBundle bundle) */
-	CPPUNIT_FAIL("not implemented");
+	dtn::routing::BundleSummary l;
+
+	// define bundle one
+	dtn::data::Bundle b1;
+	b1._lifetime = 20;
+	b1._timestamp = 0;
+	b1._sequencenumber = 23;
+	b1._source = dtn::data::EID("dtn://test1/app0");
+
+	l.add(b1);
+
+	CPPUNIT_ASSERT(l.contains(b1));
+
+	l.remove(b1);
+
+	CPPUNIT_ASSERT(!l.contains(b1));
 }
 
 void BundleSummaryTest::testClear()
 {
 	/* test signature () */
-	CPPUNIT_FAIL("not implemented");
+	dtn::routing::BundleSummary l;
+
+	// define bundle one
+	dtn::data::Bundle b1;
+	b1._lifetime = 20;
+	b1._timestamp = 0;
+	b1._sequencenumber = 23;
+	b1._source = dtn::data::EID("dtn://test1/app0");
+
+	l.add(b1);
+
+	CPPUNIT_ASSERT(l.contains(b1));
+
+	l.clear();
+
+	CPPUNIT_ASSERT(!l.contains(b1));
 }
 
 void BundleSummaryTest::testContains()
@@ -103,19 +146,18 @@ void BundleSummaryTest::testContains()
 void BundleSummaryTest::testGetSummaryVector()
 {
 	/* test signature () const */
-	CPPUNIT_FAIL("not implemented");
-}
+	dtn::routing::BundleSummary l;
 
-void BundleSummaryTest::testEventBundleExpired()
-{
-	/* test signature (const ExpiringBundle&) */
-	CPPUNIT_FAIL("not implemented");
-}
+	// define bundle one
+	dtn::data::Bundle b1;
+	b1._lifetime = 20;
+	b1._timestamp = 0;
+	b1._sequencenumber = 23;
+	b1._source = dtn::data::EID("dtn://test1/app0");
 
-void BundleSummaryTest::testEventCommitExpired()
-{
-	/* test signature () */
-	CPPUNIT_FAIL("not implemented");
+	l.add(b1);
+
+	CPPUNIT_ASSERT(l.getSummaryVector().contains(b1));
 }
 
 /*=== END   tests for class 'BundleSummary' ===*/

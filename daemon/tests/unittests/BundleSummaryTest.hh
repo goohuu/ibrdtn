@@ -28,8 +28,6 @@ class BundleSummaryTest : public CppUnit::TestFixture {
 		void testClear();
 		void testContains();
 		void testGetSummaryVector();
-		void testEventBundleExpired();
-		void testEventCommitExpired();
 		/*=== END   tests for class 'BundleSummary' ===*/
 
 		void expireTest(void);
@@ -44,8 +42,6 @@ class BundleSummaryTest : public CppUnit::TestFixture {
 			CPPUNIT_TEST(testClear);
 			CPPUNIT_TEST(testContains);
 			CPPUNIT_TEST(testGetSummaryVector);
-			CPPUNIT_TEST(testEventBundleExpired);
-			CPPUNIT_TEST(testEventCommitExpired);
 			CPPUNIT_TEST(expireTest);
 		CPPUNIT_TEST_SUITE_END();
 

@@ -138,7 +138,9 @@ void SimpleBundleStorageTest::testReleaseCustody()
 
 void SimpleBundleStorageTest::testRaiseEvent()
 {
-	/* test signature (const Event *evt) */
+	ibrtest::EventSwitchLoop esl; esl.start();
+
+		/* test signature (const Event *evt) */
 	dtn::core::SimpleBundleStorage storage;
 	dtn::data::EID eid("dtn://node-one/test");
 	dtn::data::Bundle b;
@@ -147,11 +149,12 @@ void SimpleBundleStorageTest::testRaiseEvent()
 
 	storage.initialize();
 	storage.startup();
-	{
-		ibrtest::EventSwitchLoop esl; esl.start();
-		storage.store(b);
-		dtn::core::TimeEvent::raise(dtn::utils::Clock::getTime() + 3600, dtn::core::TIME_SECOND_TICK);
-	}
+	storage.store(b);
+	dtn::core::TimeEvent::raise(dtn::utils::Clock::getTime() + 3600, dtn::core::TIME_SECOND_TICK);
+
+	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+	esl.join();
+
 	storage.terminate();
 }
 
@@ -212,8 +215,11 @@ void SimpleBundleStorageTest::completeTest(dtn::core::SimpleBundleStorage &stora
 	b._source = dtn::data::EID("dtn://node-two/foo");
 
 	storage.store(b);
-	::sleep(2);
-	CPPUNIT_ASSERT_EQUAL((unsigned int)0, storage.count());
+
+	dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+	esl.join();
+
+	CPPUNIT_ASSERT_EQUAL((unsigned int)1, storage.count());
 
 	storage.terminate();
 	core.terminate();
