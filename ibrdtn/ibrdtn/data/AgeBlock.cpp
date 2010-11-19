@@ -20,6 +20,9 @@ namespace dtn
 		 : dtn::data::Block(AgeBlock::BLOCK_TYPE)
 		{
 			_time.start();
+
+			// set the replicate in every fragment bit
+			set(REPLICATE_IN_EVERY_FRAGMENT, true);
 		}
 
 		AgeBlock::~AgeBlock()
