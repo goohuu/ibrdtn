@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <iostream>
 #include <fstream>
+#include <cstring>
+#include <cerrno>
 
 namespace dtn
 {
@@ -481,27 +483,27 @@ namespace dtn
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b )
-		 :  _count(1), _state(HOLDER_MEMORY), _bundle(b)
+		 :  _count(1), _state(HOLDER_MEMORY), _bundle(b), _deleted(false)
 		{
 			dtn::data::DefaultSerializer s(std::cout);
 			_size = s.getLength(_bundle);
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const ibrcommon::File &file )
-		 : _count(1), _state(HOLDER_STORED), _bundle(), _container(file)
+		 : _count(1), _state(HOLDER_STORED), _bundle(), _container(file), _deleted(false)
 		{
 			_size = file.size();
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size )
-		 : _count(1), _state_lock(ibrcommon::Mutex::MUTEX_NORMAL), _state(HOLDER_PENDING), _bundle(b), _container(workdir), _size(size)
+		 : _count(1), _state_lock(ibrcommon::Mutex::MUTEX_NORMAL), _state(HOLDER_PENDING), _bundle(b), _workdir(workdir), _size(size), _deleted(false)
 		{
 		}
 
 		SimpleBundleStorage::BundleContainer::Holder::~Holder()
 		{
 			ibrcommon::MutexLock l(_state_lock);
-			if ((_state == HOLDER_DELETED) && (_container.exists()))
+			if (_deleted && (_container.exists()))
 			{
 				_container.remove();
 			}
@@ -517,7 +519,7 @@ namespace dtn
 			// the state must be protected with a mutex
 			{
 				ibrcommon::MutexLock l(_state_lock);
-				if (_state == HOLDER_DELETED)
+				if (_deleted)
 				{
 					throw dtn::SerializationFailedException("bundle deleted");
 				}
@@ -556,7 +558,7 @@ namespace dtn
 		void SimpleBundleStorage::BundleContainer::Holder::remove()
 		{
 			ibrcommon::MutexLock l(_state_lock);
-			_state = HOLDER_DELETED;
+			_deleted = true;
 		}
 
 		void SimpleBundleStorage::BundleContainer::Holder::invokeStore()
@@ -568,15 +570,19 @@ namespace dtn
 			}
 
 			try {
-				ibrcommon::TemporaryFile tmp(_container, "bundle");
-				ibrcommon::locked_ofstream ostream(_container, ios_base::out | ios_base::trunc);
-				std::ostream &out = (*ostream);
+				ibrcommon::TemporaryFile tmp(_workdir, "bundle");
+				std::ofstream ostream(tmp.getPath().c_str(), ios::out | ios::trunc);
+				std::ostream &out = ostream;
 				size_t stream_size = 0;
 				size_t bundle_size = 0;
 
 				try {
 					// check for failed stream
-					if (ostream.fail()) throw ibrcommon::IOException("unable to open file " + tmp.getPath());
+					if (ostream.fail())
+					{
+						std::stringstream errmsg; errmsg << "unable to open file " << tmp.getPath() << " [" << std::strerror(errno) << "]";
+						throw ibrcommon::IOException(errmsg.str());
+					}
 
 					dtn::data::DefaultSerializer s(out);
 					bundle_size = s.getLength(_bundle);

@@ -207,8 +207,7 @@ namespace dtn
 					{
 						HOLDER_MEMORY = 0,
 						HOLDER_PENDING = 1,
-						HOLDER_STORED = 2,
-						HOLDER_DELETED = 3
+						HOLDER_STORED = 2
 					};
 
 					ibrcommon::Mutex _state_lock;
@@ -216,8 +215,10 @@ namespace dtn
 
 					dtn::data::Bundle _bundle;
 					ibrcommon::File _container;
+					ibrcommon::File _workdir;
 
 					size_t _size;
+					bool _deleted;
 				};
 
 			private:
