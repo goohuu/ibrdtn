@@ -69,7 +69,7 @@ namespace dtn
 				// use the AgeBlock to verify the age
 				try {
 					const dtn::data::AgeBlock &agebl = b.getBlock<const dtn::data::AgeBlock>();
-					return (b._lifetime >= agebl.getAge());
+					return (b._lifetime < agebl.getAge());
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 			}
 
