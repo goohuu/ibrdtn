@@ -86,19 +86,11 @@ namespace dtn
 			// if the quality of time is zero, then never expire a bundle
 			if (Clock::quality == 0) return false;
 
-			if (lifetime > 0)
-			{
-				// calculate sigma based on the quality of time and the original lifetime
-				size_t sigma = lifetime * (1 - Clock::quality);
+			// calculate sigma based on the quality of time and the original lifetime
+			size_t sigma = lifetime * (1 - Clock::quality);
 
-				// expiration adjusted by quality of time
-				if ( Clock::getTime() > (timestamp + sigma)) return true;
-			}
-			else
-			{
-				// expiration based on the timestamp only
-				if ( Clock::getTime() > timestamp) return true;
-			}
+			// expiration adjusted by quality of time
+			if ( Clock::getTime() > (timestamp + lifetime + sigma)) return true;
 
 			return false;
 		}
