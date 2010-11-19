@@ -8,19 +8,19 @@
 #include "ibrdtn/data/PrimaryBlock.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/utils/Clock.h"
+#include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {
 	namespace data
 	{
 		size_t PrimaryBlock::__sequencenumber = 0;
+		ibrcommon::Mutex PrimaryBlock::__sequence_lock;
 
 		PrimaryBlock::PrimaryBlock()
 		 : _procflags(0), _timestamp(0), _sequencenumber(0), _lifetime(3600), _fragmentoffset(0), _appdatalength(0)
 		{
-			_timestamp = dtn::utils::Clock::getTime();
-			_sequencenumber = __sequencenumber;
-			__sequencenumber++;
+			relabel();
 		}
 
 		PrimaryBlock::~PrimaryBlock()
@@ -101,7 +101,16 @@ namespace dtn
 
 		void PrimaryBlock::relabel()
 		{
-			_timestamp = dtn::utils::Clock::getTime();
+			if (dtn::utils::Clock::badclock)
+			{
+				_timestamp = 0;
+			}
+			else
+			{
+				_timestamp = dtn::utils::Clock::getTime();
+			}
+
+			ibrcommon::MutexLock l(__sequence_lock);
 			_sequencenumber = __sequencenumber;
 			__sequencenumber++;
 		}

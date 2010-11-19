@@ -4,6 +4,7 @@
 #include "core/BundleExpiredEvent.h"
 #include "core/BundleEvent.h"
 
+#include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
@@ -539,6 +540,15 @@ namespace dtn
 			}
 
 			ostream.close();
+
+			try {
+				dtn::data::AgeBlock &agebl = bundle.getBlock<dtn::data::AgeBlock>();
+
+				// modify the AgeBlock with the age of the file
+				time_t age = _container.lastaccess() - _container.lastmodify();
+
+				agebl.addAge(age);
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 			return bundle;
 		}

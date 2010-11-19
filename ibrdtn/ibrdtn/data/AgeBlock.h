@@ -39,6 +39,16 @@ namespace dtn
 
 			size_t getAge() const;
 
+			/**
+			 * set the age
+			 */
+			void setAge(size_t value);
+
+			/**
+			 * add a value to the age
+			 */
+			void addAge(size_t value);
+
 		private:
 			dtn::data::SDNV _age;
 			ibrcommon::TimeMeasurement _time;

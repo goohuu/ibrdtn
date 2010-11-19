@@ -38,6 +38,7 @@ namespace dtn
 			dtn::data::EID custodian;
 			size_t appdatalength;
 			size_t procflags;
+			size_t expiretime;
 		};
 	}
 }

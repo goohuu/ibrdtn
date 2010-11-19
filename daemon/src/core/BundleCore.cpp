@@ -214,13 +214,6 @@ namespace dtn
 					throw dtn::data::Validator::RejectedException("bundle is not local");
 				}
 			}
-
-			// check if the bundle is expired
-			if (p.isExpired())
-			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: bundle has expired (" << p.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
-				throw dtn::data::Validator::RejectedException("bundle is expired");
-			}
 		}
 
 		void BundleCore::validate(const dtn::data::Block&, const size_t size) const throw (dtn::data::Validator::RejectedException)
@@ -242,7 +235,7 @@ namespace dtn
 			}
 		}
 
-		void BundleCore::validate(const dtn::data::Bundle&) const throw (dtn::data::Validator::RejectedException)
+		void BundleCore::validate(const dtn::data::Bundle &b) const throw (dtn::data::Validator::RejectedException)
 		{
 			/*
 			 *
@@ -253,6 +246,13 @@ namespace dtn
 			 * throw dtn::data::DefaultDeserializer::RejectedException();
 			 *
 			 */
+
+			// check if the bundle is expired
+			if (dtn::utils::Clock::isExpired(b))
+			{
+				IBRCOMMON_LOGGER(warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("bundle is expired");
+			}
 		}
 
 		const std::string BundleCore::getName() const

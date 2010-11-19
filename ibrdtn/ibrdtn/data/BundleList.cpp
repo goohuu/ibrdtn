@@ -109,7 +109,7 @@ namespace dtn
 		}
 
 		BundleList::ExpiringBundle::ExpiringBundle(const MetaBundle &b)
-		 : bundle(b), expiretime(dtn::utils::Clock::getExpireTime(b.getTimestamp(), b.lifetime))
+		 : bundle(b), expiretime(b.expiretime)
 		{ }
 
 		BundleList::ExpiringBundle::~ExpiringBundle()

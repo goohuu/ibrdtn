@@ -193,8 +193,8 @@ namespace dtn
 					if (bundle._reportto == clienteid) bundle._reportto = _eid;
 					if (bundle._custodian == clienteid) bundle._custodian = _eid;
 
-					// if the clock is bad, add a ageblock
-					if (dtn::utils::Clock::quality == 0)
+					// if the timestamp is not set, add a ageblock
+					if (bundle._timestamp == 0)
 					{
 						// check for ageblock
 						try {

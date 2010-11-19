@@ -1,10 +1,13 @@
 #include "config.h"
 #include "Configuration.h"
-#include "ibrdtn/utils/Utils.h"
-#include "core/Node.h"
-#include "ibrcommon/net/NetInterface.h"
-#include <ibrcommon/Logger.h>
 #include "net/DiscoveryAnnouncement.h"
+#include "core/Node.h"
+
+#include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/utils/Clock.h>
+
+#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/Logger.h>
 
 using namespace dtn::net;
 using namespace dtn::core;
@@ -132,6 +135,11 @@ namespace dtn
 					_disco._enabled = false;
 				}
 
+				if (arg == "--badclock")
+				{
+					dtn::utils::Clock::badclock = true;
+				}
+
 				if (arg == "-d")
 				{
 					_debug._enabled = true;
@@ -154,6 +162,7 @@ namespace dtn
 						std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
 						std::cout << " --noapi         disable API module" << std::endl;
 						std::cout << " --nodiscovery   disable discovery module" << std::endl;
+						std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
 						exit(0);
 				}
 			}

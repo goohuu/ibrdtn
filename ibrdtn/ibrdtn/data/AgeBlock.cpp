@@ -33,6 +33,16 @@ namespace dtn
 			return _age.getValue() + time.getSeconds();
 		}
 
+		void AgeBlock::addAge(size_t value)
+		{
+			_age += value;
+		}
+
+		void AgeBlock::setAge(size_t value)
+		{
+			_age = value;
+		}
+
 		size_t AgeBlock::getLength() const
 		{
 			return _age.getLength();

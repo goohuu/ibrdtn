@@ -11,6 +11,7 @@
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Serializer.h"
+#include <ibrcommon/thread/Mutex.h>
 #include <string>
 #include <iostream>
 
@@ -54,7 +55,12 @@ namespace dtn
 			PrimaryBlock();
 			virtual ~PrimaryBlock();
 
-			bool isExpired() const;
+			/**
+			 * This method is deprecated because it does not recognize the AgeBlock
+			 * as alternative age verification.
+			 */
+			bool isExpired() const __attribute__ ((deprecated));
+
 			std::string toString() const;
 
 			void set(FLAGS flag, bool value);
@@ -83,6 +89,7 @@ namespace dtn
 			EID _custodian;
 
 		private:
+			static ibrcommon::Mutex __sequence_lock;
 			static size_t __sequencenumber;
 		};
 	}

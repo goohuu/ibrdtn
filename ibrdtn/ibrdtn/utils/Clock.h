@@ -9,6 +9,7 @@
 #define CLOCK_H_
 
 #include <sys/types.h>
+#include "ibrdtn/data/Bundle.h"
 
 namespace dtn
 {
@@ -22,9 +23,21 @@ namespace dtn
 
 			static size_t getTime();
 
-			static bool isExpired(size_t timestamp, size_t lifetime = 0);
+			static bool isExpired(const dtn::data::Bundle &b);
 
-			static size_t getExpireTime(size_t timestamp, size_t lifetime);
+			/**
+			 * This method is deprecated because it does not recognize the AgeBlock
+			 * as alternative age verification.
+			 */
+			static bool isExpired(size_t timestamp, size_t lifetime = 0) __attribute__ ((deprecated));
+
+			static size_t getExpireTime(const dtn::data::Bundle &b);
+
+			/**
+			 * This method is deprecated because it does not recognize the AgeBlock
+			 * as alternative age verification.
+			 */
+			static size_t getExpireTime(size_t timestamp, size_t lifetime) __attribute__ ((deprecated));
 
 			static int timezone;
 
@@ -36,6 +49,17 @@ namespace dtn
 			 * an abstract knowledge about the quality of time.
 			 */
 			static float quality;
+
+			/**
+			 * If set to true, all time based functions assume a bad clock and try to use other mechanisms
+			 * to detect expiration.
+			 */
+			static bool badclock;
+
+		private:
+			static bool __isExpired(size_t timestamp, size_t lifetime = 0);
+			static size_t __getExpireTime(size_t timestamp, size_t lifetime);
+
 		};
 	}
 }
