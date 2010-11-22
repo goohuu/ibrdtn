@@ -15,13 +15,14 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 #include "src/core/SimpleBundleStorage.h"
+#include "src/core/MemoryBundleStorage.h"
 
 #ifndef SIMPLEBUNDLESTORAGETEST_HH
 #define SIMPLEBUNDLESTORAGETEST_HH
 class SimpleBundleStorageTest : public CppUnit::TestFixture {
 	private:
-		void completeTest(dtn::core::SimpleBundleStorage &storage);
-		void concurrentStoreGet(dtn::core::SimpleBundleStorage &storage);
+		void completeTest(dtn::core::BundleStorage &storage);
+		void concurrentStoreGet(dtn::core::BundleStorage &storage);
 
 	public:
 		/*=== BEGIN tests for class 'SimpleBundleStorage' ===*/

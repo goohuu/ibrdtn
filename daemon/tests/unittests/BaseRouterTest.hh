@@ -14,13 +14,13 @@
  
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
-#include "src/core/SimpleBundleStorage.h"
+#include "src/core/MemoryBundleStorage.h"
 
 #ifndef BASEROUTERTEST_HH
 #define BASEROUTERTEST_HH
 class BaseRouterTest : public CppUnit::TestFixture {
 	private:
-		dtn::core::SimpleBundleStorage _storage;
+		dtn::core::MemoryBundleStorage _storage;
 
 	public:
 		/*=== BEGIN tests for class 'BaseRouter' ===*/

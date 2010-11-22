@@ -24,6 +24,7 @@
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrdtn/data/PayloadBlock.h>
+#include <src/Component.h>
 
 
 CPPUNIT_TEST_SUITE_REGISTRATION(SimpleBundleStorageTest);
@@ -34,22 +35,22 @@ CPPUNIT_TEST_SUITE_REGISTRATION(SimpleBundleStorageTest);
 void SimpleBundleStorageTest::testGetList()
 {
 	/* test signature () */
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
-	CPPUNIT_ASSERT_EQUAL((size_t)0, storage.getList().size());
+	CPPUNIT_ASSERT_EQUAL((unsigned int)0, storage.count());
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((size_t)1, storage.getList().size());
+	CPPUNIT_ASSERT_EQUAL((unsigned int)1, storage.count());
 }
 
 void SimpleBundleStorageTest::testRemove()
 {
 	/* test signature (const dtn::data::BundleID &id) */
 	/* test signature (const ibrcommon::BloomFilter &filter) */
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
@@ -67,7 +68,7 @@ void SimpleBundleStorageTest::testRemove()
 void SimpleBundleStorageTest::testClear()
 {
 	/* test signature () */
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
@@ -85,7 +86,7 @@ void SimpleBundleStorageTest::testClear()
 void SimpleBundleStorageTest::testEmpty()
 {
 	/* test signature () */
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
@@ -103,7 +104,7 @@ void SimpleBundleStorageTest::testEmpty()
 void SimpleBundleStorageTest::testCount()
 {
 	/* test signature () */
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
@@ -117,7 +118,7 @@ void SimpleBundleStorageTest::testCount()
 void SimpleBundleStorageTest::testSize()
 {
 	/* test signature () const */
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	dtn::data::Bundle b;
 	b._source = dtn::data::EID("dtn://node-one/test");
 
@@ -131,7 +132,7 @@ void SimpleBundleStorageTest::testSize()
 void SimpleBundleStorageTest::testReleaseCustody()
 {
 	/* test signature (dtn::data::BundleID &bundle) */
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	dtn::data::BundleID id;
 	storage.releaseCustody(id);
 }
@@ -141,7 +142,7 @@ void SimpleBundleStorageTest::testRaiseEvent()
 	ibrtest::EventSwitchLoop esl; esl.start();
 
 		/* test signature (const Event *evt) */
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	dtn::data::EID eid("dtn://node-one/test");
 	dtn::data::Bundle b;
 	b._lifetime = 60;
@@ -170,7 +171,7 @@ void SimpleBundleStorageTest::tearDown()
 
 void SimpleBundleStorageTest::testMemoryTest()
 {
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	completeTest(storage);
 }
 
@@ -186,7 +187,7 @@ void SimpleBundleStorageTest::testDiskTest()
 
 void SimpleBundleStorageTest::testConcurrentMemory()
 {
-	dtn::core::SimpleBundleStorage storage;
+	dtn::core::MemoryBundleStorage storage;
 	concurrentStoreGet(storage);
 }
 
@@ -200,14 +201,18 @@ void SimpleBundleStorageTest::testConcurrentDisk()
 	concurrentStoreGet(storage);
 }
 
-void SimpleBundleStorageTest::completeTest(dtn::core::SimpleBundleStorage &storage)
+void SimpleBundleStorageTest::completeTest(dtn::core::BundleStorage &storage)
 {
 	ibrtest::EventSwitchLoop esl;
 	dtn::core::BundleCore &core = dtn::core::BundleCore::getInstance();
 	esl.start();
 	core.initialize();
-	storage.initialize();
-	storage.startup();
+
+	try {
+		dtn::daemon::Component &component = dynamic_cast<dtn::daemon::Component&>(storage);
+		component.initialize();
+		component.startup();
+	} catch (const std::bad_cast&) { };
 
 	dtn::data::EID eid("dtn://node-one/test");
 	dtn::data::Bundle b;
@@ -221,16 +226,20 @@ void SimpleBundleStorageTest::completeTest(dtn::core::SimpleBundleStorage &stora
 
 	CPPUNIT_ASSERT_EQUAL((unsigned int)1, storage.count());
 
-	storage.terminate();
+	try {
+		dtn::daemon::Component &component = dynamic_cast<dtn::daemon::Component&>(storage);
+		component.terminate();
+	} catch (const std::bad_cast&) { };
+
 	core.terminate();
 }
 
-void SimpleBundleStorageTest::concurrentStoreGet(dtn::core::SimpleBundleStorage &storage)
+void SimpleBundleStorageTest::concurrentStoreGet(dtn::core::BundleStorage &storage)
 {
 	class StoreProcess : public ibrcommon::JoinableThread
 	{
 	public:
-		StoreProcess(dtn::core::SimpleBundleStorage &storage, std::list<dtn::data::Bundle> &list)
+		StoreProcess(dtn::core::BundleStorage &storage, std::list<dtn::data::Bundle> &list)
 		: _storage(storage), _list(list)
 		{ };
 
@@ -250,7 +259,7 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::core::SimpleBundleStorage 
 		}
 
 	private:
-		dtn::core::SimpleBundleStorage &_storage;
+		dtn::core::BundleStorage &_storage;
 		std::list<dtn::data::Bundle> &_list;
 	};
 
@@ -260,8 +269,12 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::core::SimpleBundleStorage 
 	// startup all services
 	esl.start();
 	core.initialize();
-	storage.initialize();
-	storage.startup();
+
+	try {
+		dtn::daemon::Component &component = dynamic_cast<dtn::daemon::Component&>(storage);
+		component.initialize();
+		component.startup();
+	} catch (const std::bad_cast&) { };
 
 	// create some bundles
 	std::list<dtn::data::Bundle> list1, list2;
@@ -302,7 +315,11 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::core::SimpleBundleStorage 
 	storage.clear();
 
 	// shutdown all services
-	storage.terminate();
+	try {
+		dtn::daemon::Component &component = dynamic_cast<dtn::daemon::Component&>(storage);
+		component.terminate();
+	} catch (const std::bad_cast&) { };
+
 	core.terminate();
 }
 
