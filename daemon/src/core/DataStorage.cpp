@@ -15,6 +15,14 @@ namespace dtn
 {
 	namespace core
 	{
+		DataStorage::Hash::Hash()
+		 : value("this-hash-value-is-empty")
+		{}
+
+		DataStorage::Hash::Hash(const std::string &key)
+		 : value(DataStorage::Hash::hash(key))
+		{ }
+
 		DataStorage::Hash::Hash(const DataStorage::Container &container)
 		 : value(DataStorage::Hash::hash(container.getKey()))
 		{ };
@@ -43,10 +51,10 @@ namespace dtn
 		}
 
 		DataStorage::istream::istream(ibrcommon::Mutex &mutex, const ibrcommon::File &file)
-		 : _stream(NULL), _file(file), _lock(mutex)
+		 : ibrcommon::File(file), _stream(NULL), _lock(mutex)
 		{
 			_lock.enter();
-			_stream = new std::ifstream(file.getPath().c_str(), ios_base::in | ios_base::binary);
+			_stream = new std::ifstream(getPath().c_str(), ios_base::in | ios_base::binary);
 		};
 
 		DataStorage::istream::~istream()
@@ -110,9 +118,13 @@ namespace dtn
 
 			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); iter++)
 			{
-				DataStorage::Hash hash(*iter);
-				DataStorage::istream stream(_global_mutex, *iter);
-				_callback.iterateDataStorage(hash, stream);
+				if (!(*iter).isSystem())
+				{
+					DataStorage::Hash hash(*iter);
+					DataStorage::istream stream(_global_mutex, *iter);
+
+					_callback.iterateDataStorage(hash, stream);
+				}
 			}
 		}
 
@@ -142,6 +154,12 @@ namespace dtn
 			_tasks.push( new RemoveDataTask(hash) );
 		}
 
+		bool DataStorage::__cancellation()
+		{
+			_tasks.abort();
+			return true;
+		}
+
 		void DataStorage::run()
 		{
 			try {
@@ -163,8 +181,8 @@ namespace dtn
 							}
 
 							_callback.eventDataStorageStored(store.hash);
-						} catch (const ibrcommon::Exception&) {
-							_callback.eventDataStorageStoreFailed(store.hash);
+						} catch (const ibrcommon::Exception &ex) {
+							_callback.eventDataStorageStoreFailed(store.hash, ex);
 						}
 					} catch (const std::bad_cast&) {
 
@@ -184,8 +202,8 @@ namespace dtn
 								destination.remove();
 							}
 							_callback.eventDataStorageRemoved(remove.hash);
-						} catch (const ibrcommon::Exception&) {
-							_callback.eventDataStorageRemoveFailed(remove.hash);
+						} catch (const ibrcommon::Exception &ex) {
+							_callback.eventDataStorageRemoveFailed(remove.hash, ex);
 						}
 					} catch (const std::bad_cast&) {
 

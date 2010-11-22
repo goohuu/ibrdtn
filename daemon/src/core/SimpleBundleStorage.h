@@ -7,6 +7,8 @@
 #include "core/Node.h"
 #include "core/EventReceiver.h"
 
+#include "core/DataStorage.h"
+
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/thread/AtomicCounter.h>
 #include <ibrcommon/thread/Mutex.h>
@@ -17,6 +19,7 @@
 #include <ibrcommon/thread/Queue.h>
 
 #include <set>
+#include <map>
 
 using namespace dtn::data;
 
@@ -27,21 +30,9 @@ namespace dtn
 		/**
 		 * This storage holds all bundles and fragments in the system memory.
 		 */
-		class SimpleBundleStorage : public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent, private dtn::data::BundleList
+		class SimpleBundleStorage : public DataStorage::Callback, public BundleStorage, public EventReceiver, public dtn::daemon::IntegratedComponent, private dtn::data::BundleList
 		{
-			class Task
-			{
-			public:
-				virtual ~Task() {};
-				virtual void run(SimpleBundleStorage &storage) = 0;
-			};
-
 		public:
-			/**
-			 * Constructor
-			 */
-			SimpleBundleStorage(size_t maxsize = 0);
-
 			/**
 			 * Constructor
 			 */
@@ -138,139 +129,41 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
-			/**
-			 * Invoke the expiration process
-			 * @param timestamp
-			 */
-			void invokeExpiration(const size_t timestamp);
+			virtual void eventDataStorageStored(const dtn::core::DataStorage::Hash &hash);
+			virtual void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash &hash, const ibrcommon::Exception&);
+			virtual void eventDataStorageRemoved(const dtn::core::DataStorage::Hash &hash);
+			virtual void eventDataStorageRemoveFailed(const dtn::core::DataStorage::Hash &hash, const ibrcommon::Exception&);
+			virtual void iterateDataStorage(const dtn::core::DataStorage::Hash &hash, dtn::core::DataStorage::istream &stream);
 
 		protected:
 			virtual void componentUp();
-			virtual void componentRun();
 			virtual void componentDown();
-
-			bool __cancellation();
-
 			virtual void eventBundleExpired(const ExpiringBundle &b);
 
 		private:
-			enum RunMode
-			{
-				MODE_NONPERSISTENT = 0,
-				MODE_PERSISTENT = 1
-			};
-
-			class BundleContainer : public dtn::data::MetaBundle
+			class BundleContainer : public DataStorage::Container
 			{
 			public:
 				BundleContainer(const dtn::data::Bundle &b);
-				BundleContainer(const ibrcommon::File &file);
-				BundleContainer(const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size);
-				~BundleContainer();
+				virtual ~BundleContainer();
 
-				bool operator<(const BundleContainer& other) const;
-
-				size_t size() const;
-
-				dtn::data::Bundle get() const;
-
-				BundleContainer& operator= (const BundleContainer &right);
-				BundleContainer(const BundleContainer& right);
-
-				void invokeStore();
-
-				void remove();
-
-			protected:
-				class Holder
-				{
-				public:
-					Holder( const dtn::data::Bundle &b );
-					Holder( const ibrcommon::File &file );
-					Holder( const dtn::data::Bundle &b, const ibrcommon::File &workdir, const size_t size );
-					~Holder();
-
-					size_t size() const;
-
-					void invokeStore();
-
-					dtn::data::Bundle getBundle();
-
-					void remove();
-
-					unsigned _count;
-
-					ibrcommon::Mutex lock;
-
-				private:
-					enum STATE
-					{
-						HOLDER_MEMORY = 0,
-						HOLDER_PENDING = 1,
-						HOLDER_STORED = 2
-					};
-
-					ibrcommon::Mutex _state_lock;
-					STATE _state;
-
-					dtn::data::Bundle _bundle;
-					ibrcommon::File _container;
-					ibrcommon::File _workdir;
-
-					size_t _size;
-					bool _deleted;
-				};
+				std::string getKey() const;
+				std::ostream& serialize(std::ostream &stream);
 
 			private:
-				void down();
-				Holder *_holder;
+				const dtn::data::Bundle _bundle;
 			};
 
-			class TaskStoreBundle : public Task
-			{
-			public:
-				TaskStoreBundle(const SimpleBundleStorage::BundleContainer&, size_t retry = 0);
-				~TaskStoreBundle();
-				virtual void run(SimpleBundleStorage &storage);
+			dtn::data::Bundle __get(const dtn::data::MetaBundle&);
 
-			private:
-				SimpleBundleStorage::BundleContainer _container;
-				size_t _retry;
-			};
+			// This object manage data stored on disk
+			DataStorage _datastore;
 
-			class TaskRemoveBundle : public Task
-			{
-			public:
-				TaskRemoveBundle(const SimpleBundleStorage::BundleContainer&);
-				~TaskRemoveBundle();
-				virtual void run(SimpleBundleStorage &storage);
-
-			private:
-				SimpleBundleStorage::BundleContainer _container;
-			};
-
-			class TaskExpireBundles : public Task
-			{
-			public:
-				TaskExpireBundles(const size_t &timestamp);
-				~TaskExpireBundles();
-				virtual void run(SimpleBundleStorage &storage);
-
-			private:
-				const size_t _timestamp;
-			};
-
-			void load(const ibrcommon::File &file);
-
-			bool _running;
-
-			ibrcommon::Queue<Task*> _tasks;
-
-			std::set<BundleContainer> _bundles;
 			ibrcommon::Mutex _bundleslock;
+			std::map<DataStorage::Hash, dtn::data::Bundle> _pending_bundles;
+			std::map<dtn::data::MetaBundle, DataStorage::Hash> _stored_bundles;
 
-			ibrcommon::File _workdir;
-			RunMode _mode;
+			std::map<dtn::data::MetaBundle, size_t> _bundle_size;
 
 			size_t _maxsize;
 			size_t _currentsize;

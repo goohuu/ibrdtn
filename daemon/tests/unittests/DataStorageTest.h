@@ -36,9 +36,9 @@ private:
 		virtual ~DataCallbackDummy() {};
 
 		void eventDataStorageStored(const dtn::core::DataStorage::Hash&) {};
-		void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&) {};
+		void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception&) {};
 		void eventDataStorageRemoved(const dtn::core::DataStorage::Hash&) {};
-		void eventDataStorageRemoveFailed(const dtn::core::DataStorage::Hash&) {};
+		void eventDataStorageRemoveFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception&) {};
 		void iterateDataStorage(const dtn::core::DataStorage::Hash&, dtn::core::DataStorage::istream&) {};
 	};
 };

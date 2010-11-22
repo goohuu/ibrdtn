@@ -11,6 +11,7 @@
 #include "core/BundleCore.h"
 #include "core/EventSwitch.h"
 #include "core/BundleStorage.h"
+#include "core/MemoryBundleStorage.h"
 #include "core/SimpleBundleStorage.h"
 
 #include "core/Node.h"
@@ -210,7 +211,7 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 		} catch (Configuration::ParameterNotSetException ex) {
 			IBRCOMMON_LOGGER(info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
 
-			dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(conf.getLimit("storage"));
+			dtn::core::MemoryBundleStorage *sbs = new dtn::core::MemoryBundleStorage(conf.getLimit("storage"));
 			components.push_back(sbs);
 			storage = sbs;
 		}

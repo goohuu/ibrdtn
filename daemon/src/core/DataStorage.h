@@ -41,6 +41,8 @@ namespace dtn
 			class Hash
 			{
 			public:
+				Hash();
+				Hash(const std::string &key);
 				Hash(const DataStorage::Container &container);
 				Hash(const ibrcommon::File &file);
 				virtual ~Hash();
@@ -48,13 +50,13 @@ namespace dtn
 				bool operator==(const Hash &other) const;
 				bool operator<(const Hash &other) const;
 
-				const std::string value;
+				std::string value;
 
 			private:
 				static std::string hash(const std::string &value);
 			};
 
-			class istream
+			class istream : public ibrcommon::File
 			{
 			public:
 				istream(ibrcommon::Mutex &mutex, const ibrcommon::File &file);
@@ -63,7 +65,6 @@ namespace dtn
 
 			private:
 				std::ifstream *_stream;
-				ibrcommon::File _file;
 				ibrcommon::Mutex &_lock;
 			};
 
@@ -71,9 +72,9 @@ namespace dtn
 			{
 			public:
 				virtual void eventDataStorageStored(const Hash &hash) = 0;
-				virtual void eventDataStorageStoreFailed(const Hash &hash) = 0;
+				virtual void eventDataStorageStoreFailed(const Hash &hash, const ibrcommon::Exception&) = 0;
 				virtual void eventDataStorageRemoved(const Hash &hash) = 0;
-				virtual void eventDataStorageRemoveFailed(const Hash &hash) = 0;
+				virtual void eventDataStorageRemoveFailed(const Hash &hash, const ibrcommon::Exception&) = 0;
 				virtual void iterateDataStorage(const Hash &hash, DataStorage::istream &stream) = 0;
 			};
 
@@ -88,6 +89,7 @@ namespace dtn
 
 		protected:
 			void run();
+			bool __cancellation();
 
 		private:
 			class Task

@@ -63,9 +63,9 @@ void DataStorageTest::testStoreTest()
 			_cond.signal(true);
 		};
 
-		void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&) {};
+		void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception&) {};
 		void eventDataStorageRemoved(const dtn::core::DataStorage::Hash&) {};
-		void eventDataStorageRemoveFailed(const dtn::core::DataStorage::Hash&) {};
+		void eventDataStorageRemoveFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception&) {};
 		void iterateDataStorage(const dtn::core::DataStorage::Hash&, dtn::core::DataStorage::istream&) {};
 
 		bool stored;
@@ -136,7 +136,7 @@ void DataStorageTest::testRemoveTest()
 			_cond.signal(true);
 		};
 
-		void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&) {};
+		void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception&) {};
 		void eventDataStorageRemoved(const dtn::core::DataStorage::Hash&)
 		{
 			ibrcommon::MutexLock l(_cond);
@@ -144,7 +144,7 @@ void DataStorageTest::testRemoveTest()
 			_cond.signal(true);
 		};
 
-		void eventDataStorageRemoveFailed(const dtn::core::DataStorage::Hash&) {};
+		void eventDataStorageRemoveFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception&) {};
 		void iterateDataStorage(const dtn::core::DataStorage::Hash&, dtn::core::DataStorage::istream&) {};
 
 		bool stored;
