@@ -33,6 +33,8 @@ core_SOURCES =	AbstractWorker.cpp \
 				NodeEvent.cpp \
 				NodeEvent.h \
 				Node.h \
+				MemoryBundleStorage.h \
+				MemoryBundleStorage.cpp \
 				SimpleBundleStorage.cpp \
 				SimpleBundleStorage.h \
 				StatusReportGenerator.cpp \
