@@ -57,9 +57,7 @@ namespace dtn
 			class istream
 			{
 			public:
-				istream(const istream &other);
 				istream(ibrcommon::Mutex &mutex, const ibrcommon::File &file);
-				istream(ibrcommon::Mutex &mutex, const ibrcommon::File &file, bool dummy);
 				virtual ~istream();
 				std::istream& operator*();
 

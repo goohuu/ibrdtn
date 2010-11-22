@@ -49,11 +49,6 @@ namespace dtn
 			_stream = new std::ifstream(file.getPath().c_str(), ios_base::in | ios_base::binary);
 		};
 
-		DataStorage::istream::istream(ibrcommon::Mutex &mutex, const ibrcommon::File &file, bool)
-		 : _stream(NULL), _file(file), _lock(mutex)
-		{
-		}
-
 		DataStorage::istream::~istream()
 		{
 			if (_stream != NULL)
@@ -62,13 +57,6 @@ namespace dtn
 				_lock.leave();
 			}
 		};
-
-		DataStorage::istream::istream(const istream &other)
-		 : _file(other._file), _lock(other._lock)
-		{
-			_lock.enter();
-			_stream = new std::ifstream(_file.getPath().c_str(), ios_base::in | ios_base::binary);
-		}
 
 		std::istream& DataStorage::istream::operator*()
 		{ return *_stream; }
@@ -102,6 +90,17 @@ namespace dtn
 		{
 			_tasks.abort();
 			join();
+
+			// delete all task objects
+			try {
+				while (true)
+				{
+					Task *t = _tasks.getnpop(false);
+					delete t;
+				}
+			} catch (const ibrcommon::QueueUnblockedException&) {
+				// exit
+			}
 		}
 
 		void DataStorage::iterateAll()
@@ -135,8 +134,7 @@ namespace dtn
 				throw DataNotAvailableException();
 			}
 
-			// create a dummy, this object will lock if it gets copied
-			return DataStorage::istream(_global_mutex, file, true);
+			return DataStorage::istream(_global_mutex, file);
 		}
 
 		void DataStorage::remove(const DataStorage::Hash &hash)
@@ -156,8 +154,15 @@ namespace dtn
 
 						try {
 							ibrcommon::File destination = _path.get(store.hash.value);
-							std::ofstream stream(destination.getPath().c_str(), ios_base::out | ios_base::binary);
-							store.container->serialize(stream);
+
+							{
+								ibrcommon::MutexLock l(_global_mutex);
+								std::ofstream stream(destination.getPath().c_str(), ios_base::out | ios_base::binary | ios_base::trunc);
+								store.container->serialize(stream);
+								stream.close();
+							}
+
+							_callback.eventDataStorageStored(store.hash);
 						} catch (const ibrcommon::Exception&) {
 							_callback.eventDataStorageStoreFailed(store.hash);
 						}
@@ -170,11 +175,15 @@ namespace dtn
 
 						try {
 							ibrcommon::File destination = _path.get(remove.hash.value);
-							if (!destination.exists())
 							{
-								throw DataNotAvailableException();
+								ibrcommon::MutexLock l(_global_mutex);
+								if (!destination.exists())
+								{
+									throw DataNotAvailableException();
+								}
+								destination.remove();
 							}
-							destination.remove();
+							_callback.eventDataStorageRemoved(remove.hash);
 						} catch (const ibrcommon::Exception&) {
 							_callback.eventDataStorageRemoveFailed(remove.hash);
 						}
