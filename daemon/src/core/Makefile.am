@@ -38,7 +38,9 @@ core_SOURCES =	AbstractWorker.cpp \
 				StatusReportGenerator.cpp \
 				StatusReportGenerator.h \
 				TimeEvent.cpp \
-				TimeEvent.h
+				TimeEvent.h \
+				DataStorage.h \
+				DataStorage.cpp
 				
 if SQLITE
 core_SOURCES += SQLiteConfigure.h SQLiteConfigure.cpp SQLiteBundleStorage.h SQLiteBundleStorage.cpp
