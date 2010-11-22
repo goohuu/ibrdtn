@@ -3,7 +3,8 @@ noinst_HEADERS = \
 	BundleSummaryTest.hh \
 	ConfigurationTest.hh \
 	BaseRouterTest.hh \
-	SimpleBundleStorageTest.hh
+	SimpleBundleStorageTest.hh \
+	DataStorageTest.h
 	
 #	UDPConvergenceLayerTest.hh \
 #	SQLiteBundleStorageTest.hh \
@@ -59,7 +60,8 @@ unittest_SOURCES = \
 	BundleSummaryTest.cpp \
 	BaseRouterTest.cpp \
 	ConfigurationTest.cpp \
-	SimpleBundleStorageTest.cpp
+	SimpleBundleStorageTest.cpp \
+	DataStorageTest.cpp
 	
 #	UDPConvergenceLayerTest.cpp \
 #	SQLiteBundleStorageTest.cpp \

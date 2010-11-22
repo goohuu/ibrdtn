@@ -31,10 +31,17 @@ namespace dtn
 				{ };
 			};
 
+			class Container
+			{
+			public:
+				virtual std::string getKey() const = 0;
+				virtual std::ostream& serialize(std::ostream &stream) = 0;
+			};
+
 			class Hash
 			{
 			public:
-				Hash(const std::string &value);
+				Hash(const DataStorage::Container &container);
 				Hash(const ibrcommon::File &file);
 				virtual ~Hash();
 
@@ -42,14 +49,9 @@ namespace dtn
 				bool operator<(const Hash &other) const;
 
 				const std::string value;
-			};
 
-			class Container
-			{
-			public:
-				Container() {};
-				virtual ~Container() = 0;
-				virtual std::ostream& serialize(std::ostream &stream) = 0;
+			private:
+				static std::string hash(const std::string &value);
 			};
 
 			class istream
@@ -74,7 +76,7 @@ namespace dtn
 				virtual void eventDataStorageStoreFailed(const Hash &hash) = 0;
 				virtual void eventDataStorageRemoved(const Hash &hash) = 0;
 				virtual void eventDataStorageRemoveFailed(const Hash &hash) = 0;
-				virtual void iterateDataStorage(const Hash &hash, DataStorage::istream &stream);
+				virtual void iterateDataStorage(const Hash &hash, DataStorage::istream &stream) = 0;
 			};
 
 			DataStorage(Callback &callback, const ibrcommon::File &path, bool initialize = false);

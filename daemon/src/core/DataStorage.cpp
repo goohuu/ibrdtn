@@ -7,13 +7,18 @@
 
 #include "core/DataStorage.h"
 #include <typeinfo>
+#include <sstream>
+#include <iomanip>
 #include <list>
 
 namespace dtn
 {
 	namespace core
 	{
-		DataStorage::Hash::Hash(const std::string &v) : value(v) {};
+		DataStorage::Hash::Hash(const DataStorage::Container &container)
+		 : value(DataStorage::Hash::hash(container.getKey()))
+		{ };
+
 		DataStorage::Hash::Hash(const ibrcommon::File &file) : value(file.getBasename()) {};
 		DataStorage::Hash::~Hash() {};
 
@@ -25,6 +30,16 @@ namespace dtn
 		bool DataStorage::Hash::operator<(const DataStorage::Hash &other) const
 		{
 			return (value < other.value);
+		}
+
+		std::string DataStorage::Hash::hash(const std::string &value)
+		{
+			std::stringstream ss;
+			for (std::string::const_iterator iter = value.begin(); iter != value.end(); iter++)
+			{
+				ss << std::hex << std::setw( 2 ) << std::setfill( '0' ) << (int)(*iter);
+			}
+			return ss.str();
 		}
 
 		DataStorage::istream::istream(ibrcommon::Mutex &mutex, const ibrcommon::File &file)
@@ -70,10 +85,9 @@ namespace dtn
 					std::list<ibrcommon::File> files;
 					_path.getFiles(files);
 
-					for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); iter++)
+					for (std::list<ibrcommon::File>::iterator iter = files.begin(); iter != files.end(); iter++)
 					{
-						//(*iter).remove(true);
-						std::cout << "removing file " << (*iter).getPath() << std::endl;
+						(*iter).remove(true);
 					}
 				}
 				else
@@ -106,8 +120,7 @@ namespace dtn
 		const DataStorage::Hash DataStorage::store(DataStorage::Container *data)
 		{
 			// create a corresponding hash
-			DataStorage::Hash hash("12345");
-
+			DataStorage::Hash hash(*data);
 			_tasks.push( new StoreDataTask(hash, data) );
 
 			return hash;
