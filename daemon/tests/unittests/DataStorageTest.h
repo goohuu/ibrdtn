@@ -18,6 +18,7 @@ public:
 	void testHashTest();
 	void testStoreTest();
 	void testRemoveTest();
+	void testStressTest();
 
 	void setUp();
 	void tearDown();
@@ -26,6 +27,7 @@ public:
 	CPPUNIT_TEST(testHashTest);
 	CPPUNIT_TEST(testStoreTest);
 	CPPUNIT_TEST(testRemoveTest);
+	CPPUNIT_TEST(testStressTest);
 	CPPUNIT_TEST_SUITE_END();
 
 private:
