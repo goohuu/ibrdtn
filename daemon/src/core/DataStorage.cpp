@@ -11,6 +11,13 @@
 #include <iomanip>
 #include <list>
 
+#include <string.h>
+#include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <cerrno>
+
 namespace dtn
 {
 	namespace core
@@ -175,7 +182,15 @@ namespace dtn
 
 							{
 								ibrcommon::MutexLock l(_global_mutex);
-								std::ofstream stream(destination.getPath().c_str(), ios_base::out | ios_base::binary | ios_base::trunc);
+								std::ofstream stream(destination.getPath().c_str(), ios::out | ios::binary | ios::trunc);
+
+								// check the streams health
+								if (!stream.good())
+								{
+									std::stringstream ss; ss << "unable to open filestream [" << std::strerror(errno) << "]";
+									throw ibrcommon::IOException(ss.str());
+								}
+
 								store.container->serialize(stream);
 								stream.close();
 							}
