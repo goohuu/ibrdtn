@@ -126,7 +126,10 @@ void SimpleBundleStorageTest::testSize()
 
 	storage.store(b);
 
-	CPPUNIT_ASSERT_EQUAL((size_t)91, storage.size());
+	std::stringstream ss;
+	dtn::data::DefaultSerializer(ss) << b;
+
+	CPPUNIT_ASSERT_EQUAL((size_t)ss.str().length(), storage.size());
 }
 
 void SimpleBundleStorageTest::testReleaseCustody()
