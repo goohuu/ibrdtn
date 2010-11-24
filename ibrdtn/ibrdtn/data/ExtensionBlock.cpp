@@ -36,7 +36,7 @@ namespace dtn
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
-			return blobref.getSize();
+			return io.size();
 		}
 
 		std::ostream& ExtensionBlock::serialize(std::ostream &stream) const
@@ -45,7 +45,7 @@ namespace dtn
 			ibrcommon::BLOB::iostream io = blobref.iostream();
 
 			try {
-				ibrcommon::BLOB::copy(stream, *io, blobref.getSize());
+				ibrcommon::BLOB::copy(stream, *io, io.size());
 			} catch (const ibrcommon::IOException &ex) {
 				throw dtn::SerializationFailedException(ex.what());
 			}
@@ -59,7 +59,7 @@ namespace dtn
 			ibrcommon::BLOB::iostream io = _blobref.iostream();
 
 			// clear the blob
-			_blobref.clear();
+			io.clear();
 
 			// check if the blob is ready
 			if (!(*io).good()) throw dtn::SerializationFailedException("could not open BLOB for payload");

@@ -319,7 +319,7 @@ int main(int argc, char *argv[])
 						{
 							ibrcommon::BLOB::Reference blob = response.getData();
 							blob.iostream()->read((char *)(&reply_seq),4 );
-							payload_size = blob.getSize();
+							payload_size = blob.iostream().size();
 						}
 
 						std::cout << payload_size << " bytes from " << response.getSource().getString() << ": seq=" << reply_seq << " ttl=" << response.getLifetime() << " time=" << tm << std::endl;

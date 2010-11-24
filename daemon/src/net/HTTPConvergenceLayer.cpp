@@ -72,11 +72,12 @@ namespace dtn
 
 				ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
 				{
-					ibrcommon::MutexLock reflock(ref);
-					dtn::data::DefaultSerializer(*ref) << bundle;
+					ibrcommon::BLOB::iostream io = ref.iostream();
+					dtn::data::DefaultSerializer(*io) << bundle;
 				}
 
-				size_t length = ref.getSize();
+				ibrcommon::BLOB::iostream io = ref.iostream();
+				size_t length = io.size();
 				CURLcode res;
 
 				CURL *curl = curl_easy_init();
@@ -96,14 +97,13 @@ namespace dtn
 					curl_easy_setopt(curl, CURLOPT_URL, _server.c_str());
 
 					/* now specify which file to upload */
-					curl_easy_setopt(curl, CURLOPT_READDATA, &(*ref));
+					curl_easy_setopt(curl, CURLOPT_READDATA, &(*io));
 
 					/* provide the size of the upload, we specicially typecast the value
 					   to curl_off_t since we must be sure to use the correct data size */
 					curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
 									 (curl_off_t)length);
 
-					ibrcommon::MutexLock reflock(ref);
 					/* Now run off and do what you've been told! */
 					res = curl_easy_perform(curl);
 
@@ -136,6 +136,8 @@ namespace dtn
 			while (true)
 			{
 				ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+				ibrcommon::BLOB::iostream io = ref.iostream();
+
 				CURL *curl = curl_easy_init();
 
 				if(curl)
@@ -149,7 +151,7 @@ namespace dtn
 					curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, HTTPConvergenceLayer_callback_write);
 
 					/* now specify which file to upload */
-					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &(*ref));
+					curl_easy_setopt(curl, CURLOPT_WRITEDATA, &(*io));
 
 					{
 						ibrcommon::MutexLock reflock(ref);
@@ -160,9 +162,8 @@ namespace dtn
 					curl_easy_cleanup(curl);
 
 					try {
-						ibrcommon::MutexLock reflock(ref);
 						dtn::data::Bundle bundle;
-						dtn::data::DefaultDeserializer(*ref) >> bundle;
+						dtn::data::DefaultDeserializer(*io) >> bundle;
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle);

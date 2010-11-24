@@ -6,10 +6,19 @@
  */
 
 #include "DataStorageTest.h"
+#include <ibrdtn/data/Bundle.h>
+#include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/thread/Conditional.h>
 #include <map>
+
+#include <string.h>
+#include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <cstring>
+#include <cerrno>
 
 CPPUNIT_TEST_SUITE_REGISTRATION(DataStorageTest);
 
@@ -208,7 +217,7 @@ void DataStorageTest::testStressTest()
 		void wait(int value)
 		{
 			ibrcommon::MutexLock l(_cond);
-			if (stored == value) return;
+			if ((stored + failed) == value) return;
 			_cond.wait();
 		}
 
@@ -220,9 +229,12 @@ void DataStorageTest::testStressTest()
 			_cond.signal(true);
 		};
 
-		void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception&)
+		void eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception &ex)
 		{
-			std::cout << "store failed" << std::endl;
+			ibrcommon::MutexLock l(_cond);
+			std::cout << "store failed: " << ex.what() << std::endl;
+			failed++;
+			_cond.signal(true);
 		};
 		void eventDataStorageRemoved(const dtn::core::DataStorage::Hash&) {};
 		void eventDataStorageRemoveFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception&)
@@ -232,6 +244,7 @@ void DataStorageTest::testStressTest()
 		void iterateDataStorage(const dtn::core::DataStorage::Hash&, dtn::core::DataStorage::istream&) {};
 
 		int stored;
+		int failed;
 		ibrcommon::Conditional _cond;
 		std::list<dtn::core::DataStorage::Hash> &_data;
 	};
@@ -253,10 +266,45 @@ void DataStorageTest::testStressTest()
 
 		std::ostream& serialize(std::ostream &stream)
 		{
-			// write some test data into the blob
-			for (unsigned int j = 0; j < _bytes; j++)
+			dtn::data::Bundle fake;
+			fake._source = dtn::data::EID("dtn://test1/fake");
+			fake._destination = dtn::data::EID("dtn://test/fake");
+
+			ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
+
 			{
-					stream << _data;
+				ibrcommon::BLOB::iostream io = ref.iostream();
+
+				// write some test data into the blob
+				for (unsigned int j = 0; j < _bytes; j++)
+				{
+						(*io) << _data;
+				}
+			}
+
+			fake.push_back(ref);
+
+			// get an serializer for bundles
+			dtn::data::DefaultSerializer s(stream);
+
+			// length of the bundle
+			unsigned int size = s.getLength(fake);
+
+			// serialize the bundle
+			s << fake; stream.flush();
+
+			// check the streams health
+			if (!stream.good())
+			{
+				std::stringstream ss; ss << "Output stream went bad [" << std::strerror(errno) << "]";
+				throw dtn::SerializationFailedException(ss.str());
+			}
+
+			// get the write position
+			if (size > stream.tellp())
+			{
+				std::stringstream ss; ss << "Not all data were written [" << stream.tellp() << " of " << size << " bytes]";
+				throw dtn::SerializationFailedException(ss.str());
 			}
 
 			return stream;
@@ -264,7 +312,7 @@ void DataStorageTest::testStressTest()
 
 		size_t _id;
 		size_t _bytes;
-		const std::string &_data;
+		const std::string _data;
 	};
 
 	std::list<dtn::core::DataStorage::Hash> _data;
@@ -282,7 +330,7 @@ void DataStorageTest::testStressTest()
 
 	for (int i = 0; i < num_of_sizes; i++)
 	{
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < 100; j++)
 		{
 			dtn::core::DataStorage::Hash h = storage.store(new DataContainer(id, sizes[i], testdata));
 			_datavolume[h] = sizes[i];
@@ -290,31 +338,33 @@ void DataStorageTest::testStressTest()
 		}
 	}
 
-	callback.wait(num_of_sizes * 10);
+	callback.wait(num_of_sizes * 100);
 
 	// now check all files
-	for (std::list<dtn::core::DataStorage::Hash>::const_iterator iter = _data.begin();
-			iter != _data.end(); iter++)
-	{
-		const dtn::core::DataStorage::Hash &h = (*iter);
-		size_t size = _datavolume[h];
+	CPPUNIT_ASSERT_EQUAL(0, callback.failed);
 
-		dtn::core::DataStorage::istream stream = storage.retrieve(h);
-
-		for (unsigned int i = 0; i < size; i++)
-		{
-			for (unsigned int k = 0; k < testdata.length(); k++)
-			{
-				char v = (*stream).get();
-				char e = testdata.c_str()[k];
-				if (e != v)
-				{
-					std::cerr << "ERROR: wrong letter found in stream. " << " expected: " << e << ", found: " << v << std::endl;
-					CPPUNIT_ASSERT_EQUAL(e, v);
-				}
-			}
-		}
-	}
+//	for (std::list<dtn::core::DataStorage::Hash>::const_iterator iter = _data.begin();
+//			iter != _data.end(); iter++)
+//	{
+//		const dtn::core::DataStorage::Hash &h = (*iter);
+//		size_t size = _datavolume[h];
+//
+//		dtn::core::DataStorage::istream stream = storage.retrieve(h);
+//
+//		for (unsigned int i = 0; i < size; i++)
+//		{
+//			for (unsigned int k = 0; k < testdata.length(); k++)
+//			{
+//				char v = (*stream).get();
+//				char e = testdata.c_str()[k];
+//				if (e != v)
+//				{
+//					std::cerr << "ERROR: wrong letter found in stream. " << " expected: " << e << ", found: " << v << std::endl;
+//					CPPUNIT_ASSERT_EQUAL(e, v);
+//				}
+//			}
+//		}
+//	}
 }
 
 void DataStorageTest::setUp()

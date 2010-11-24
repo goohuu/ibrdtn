@@ -287,10 +287,7 @@ void SimpleBundleStorageTest::concurrentStoreGet(dtn::core::BundleStorage &stora
 		ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
 		dtn::data::PayloadBlock &payload = b.push_back(ref);
 
-		{
-			ibrcommon::MutexLock l(ref);
-			(*ref) << "Hallo Welt" << std::endl;
-		}
+		(*ref.iostream()) << "Hallo Welt" << std::endl;
 
 		if ((i % 3) == 0) list1.push_back(b); else list2.push_back(b);
 	}
@@ -346,10 +343,7 @@ void SimpleBundleStorageTest::testDiskRestore()
 			ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
 			dtn::data::PayloadBlock &payload = b.push_back(ref);
 
-			{
-				ibrcommon::MutexLock l(ref);
-				(*ref) << "Hallo Welt" << std::endl;
-			}
+			(*ref.iostream()) << "Hallo Welt" << std::endl;
 
 			storage.store(b);
 		}

@@ -176,7 +176,7 @@ class CAPIGateway : public dtn::api::Client
 		}
 
 		void receive_async(dtn::api::Bundle &b) {
-			int32_t len=b.getData().getSize();
+			int32_t len=b.getData().iostream().size();
 			//cout << "You probably wouldn't believe it but I received " << len << " bytes stuff " << endl;
 			if (len < 0 || len > 65536 ) {  //todo: set tx_buffer size
 				cout << "Ignoring bundle" << endl;
@@ -194,7 +194,7 @@ class CAPIGateway : public dtn::api::Client
 		void receive_sync(dtn::api::Bundle &b) {
 			uint32_t chunksize=KBYTE(64);
 			char *buffer=(char *)malloc(chunksize);
-			uint32_t len=b.getData().getSize();
+			uint32_t len=b.getData().iostream().size();
 			uint32_t offset=0;
 			if (buffer == NULL) {
 				cout << "C_API: receive_sync(): Can't allocate buffer " << endl;
