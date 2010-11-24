@@ -390,8 +390,24 @@ namespace dtn
 
 		void SimpleBundleStorage::eventBundleExpired(const ExpiringBundle &b)
 		{
-			// remove the bundle
-			remove(b.bundle);
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = begin(); iter != end(); iter++)
+			{
+				if ((*iter) == b.bundle)
+				{
+					// remove item in the bundlelist
+					dtn::data::MetaBundle meta = (*iter);
+
+					// remove it from the bundle list
+					dtn::data::BundleList::remove(meta);
+
+					DataStorage::Hash hash(meta.toString());
+
+					// create a background task for removing the bundle
+					_datastore.remove(hash);
+
+					break;
+				}
+			}
 
 			// raise bundle event
 			dtn::core::BundleEvent::raise( b.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::LIFETIME_EXPIRED);
@@ -427,7 +443,30 @@ namespace dtn
 
 		std::ostream& SimpleBundleStorage::BundleContainer::serialize(std::ostream &stream)
 		{
-			dtn::data::DefaultSerializer s(stream); s << _bundle;
+			// get an serializer for bundles
+			dtn::data::DefaultSerializer s(stream);
+
+			// length of the bundle
+			unsigned int size = s.getLength(_bundle);
+
+			// serialize the bundle
+			s << _bundle; stream.flush();
+
+			// check the streams health
+			if (!stream.good())
+			{
+				std::stringstream ss; ss << "Output stream went bad [" << std::strerror(errno) << "]";
+				throw dtn::SerializationFailedException(ss.str());
+			}
+
+			// get the write position
+			if (size > stream.tellp())
+			{
+				std::stringstream ss; ss << "Not all data were written [" << stream.tellp() << " of " << size << " bytes]";
+				throw dtn::SerializationFailedException(ss.str());
+			}
+
+			// return the stream, this allows stacking
 			return stream;
 		}
 	}
