@@ -194,10 +194,7 @@ int main(int argc, char *argv[])
 					ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
 
 					// copy cin to a BLOB
-					{
-						ibrcommon::MutexLock l(ref);
-						(*ref) << cin.rdbuf();
-					}
+					(*ref.iostream()) << cin.rdbuf();
 
 					for(int u=0; u<copies; u++){
 						dtn::api::BLOBBundle b(file_destination, ref);

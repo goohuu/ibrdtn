@@ -35,17 +35,17 @@ namespace dtn
 		size_t ExtensionBlock::getLength() const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
-			ibrcommon::MutexLock l(blobref);
+			ibrcommon::BLOB::iostream io = blobref.iostream();
 			return blobref.getSize();
 		}
 
 		std::ostream& ExtensionBlock::serialize(std::ostream &stream) const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
-			ibrcommon::MutexLock l(blobref);
+			ibrcommon::BLOB::iostream io = blobref.iostream();
 
 			try {
-				ibrcommon::BLOB::copy(stream, *blobref, blobref.getSize());
+				ibrcommon::BLOB::copy(stream, *io, blobref.getSize());
 			} catch (const ibrcommon::IOException &ex) {
 				throw dtn::SerializationFailedException(ex.what());
 			}
@@ -56,16 +56,16 @@ namespace dtn
 		std::istream& ExtensionBlock::deserialize(std::istream &stream)
 		{
 			// lock the BLOB
-			ibrcommon::MutexLock l(_blobref);
+			ibrcommon::BLOB::iostream io = _blobref.iostream();
 
 			// clear the blob
 			_blobref.clear();
 
 			// check if the blob is ready
-			if (!(*_blobref).good()) throw dtn::SerializationFailedException("could not open BLOB for payload");
+			if (!(*io).good()) throw dtn::SerializationFailedException("could not open BLOB for payload");
 
 			try {
-				ibrcommon::BLOB::copy(*_blobref, stream, _blocksize);
+				ibrcommon::BLOB::copy(*io, stream, _blocksize);
 			} catch (const ibrcommon::IOException &ex) {
 				throw dtn::SerializationFailedException(ex.what());
 			}

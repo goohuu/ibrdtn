@@ -450,11 +450,8 @@ namespace dtn
 
 							// access the payload to get the first byte
 							char admfield;
-							{
-								ibrcommon::BLOB::Reference ref = block.getBLOB();
-								ibrcommon::MutexLock l(ref);
-								(*ref).get(admfield);
-							}
+							ibrcommon::BLOB::Reference ref = block.getBLOB();
+							ref.iostream()->get(admfield);
 
 							// write the block into a temporary stream
 							stringstream ss;
@@ -771,11 +768,8 @@ namespace dtn
 
 						// access the payload to get the first byte
 						char admfield;
-						{
-							ibrcommon::BLOB::Reference ref = block.getBLOB();
-							ibrcommon::MutexLock l(ref);
-							(*ref).get(admfield);
-						}
+						ibrcommon::BLOB::Reference ref = block.getBLOB();
+						ref.iostream()->get(admfield);
 
 						// remove the temporary block
 						_bundle.remove(block);

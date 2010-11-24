@@ -182,8 +182,7 @@ int main(int argc, char** argv)
 				try {
 					std::fstream out(file.getPath().c_str(), ios::out|ios::binary|ios::trunc);
 					out.exceptions(std::ios::badbit | std::ios::eofbit);
-					ibrcommon::MutexLock l(ref);
-					out << (*ref).rdbuf();
+					out << ref.iostream()->rdbuf();
 					out.close();
 
 					// call the script

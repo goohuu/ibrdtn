@@ -164,8 +164,10 @@ class TUN2BundleGateway : public dtn::api::Client
 		void received(dtn::api::Bundle &b)
 		{
 			ibrcommon::BLOB::Reference ref = b.getData();
+			ibrcommon::BLOB::iostream stream = ref.iostream();
 			char data[65536];
-			size_t ret = (*ref).readsome(data, sizeof(data));
+			stream->read(data, sizeof(data));
+			size_t ret = stream->gcount();
 			if (::write(_fd, data, ret) < 0)
 			{
 				std::cerr << "error while writing" << std::endl;
@@ -239,7 +241,7 @@ int main(int argc, char *argv[])
 		ibrcommon::BLOB::Reference blob = ibrcommon::StringBLOB::create();
 
 		// add the data
-		(*blob).write(data, ret);
+		blob.iostream()->write(data, ret);
 
 		// create a new bundle
 		dtn::api::BLOBBundle b(dtn::data::EID(argv[4]), blob);

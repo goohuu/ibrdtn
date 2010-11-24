@@ -57,23 +57,22 @@ namespace dtn
 					(c._bundle._source != obj._source) )
 				throw ibrcommon::Exception("This fragment does not belongs to the others.");
 
-			ibrcommon::MutexLock l(c._blob);
-			(*c._blob).seekp(obj._fragmentoffset);
+			ibrcommon::BLOB::iostream stream = c._blob.iostream();
+			(*stream).seekp(obj._fragmentoffset);
 
 			dtn::data::PayloadBlock &p = obj.getBlock<dtn::data::PayloadBlock>();
 
 			ibrcommon::BLOB::Reference ref = p.getBLOB();
-			ibrcommon::MutexLock reflock(ref);
+			ibrcommon::BLOB::iostream s = ref.iostream();
 
 			size_t ret = 0;
-			istream &s = (*ref);
-			s.seekg(0);
+			s->seekg(0);
 
-			while (!s.eof())
+			while (!s->eof())
 			{
 				char buf;
-				s.get(buf);
-				(*c._blob).put(buf);
+				s->get(buf);
+				stream->put(buf);
 				ret++;
 			}
 

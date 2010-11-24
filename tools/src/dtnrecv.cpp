@@ -160,8 +160,7 @@ int main(int argc, char *argv[])
 			// write the data to output
 			if (_stdout)
 			{
-				ibrcommon::MutexLock l(ref);
-				cout << (*ref).rdbuf();
+				cout << ref.iostream()->rdbuf();
 			}
 			else
 			{
@@ -169,8 +168,7 @@ int main(int argc, char *argv[])
 				try {
 					std::cout << "Bundle received (" << (h + 1) << ")." << endl;
 
-					ibrcommon::MutexLock l(ref);
-					file << (*ref).rdbuf();
+					file << ref.iostream()->rdbuf();
 				} catch (ios_base::failure ex) {
 
 				}

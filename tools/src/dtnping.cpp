@@ -97,8 +97,7 @@ class EchoClient : public dtn::api::Client
 		void checkReply(dtn::api::Bundle &bundle) {
 			size_t reply_seq = 0;
 			ibrcommon::BLOB::Reference blob = bundle.getData();
-			ibrcommon::MutexLock l(blob);
-			(*blob).read((char *)(&reply_seq),4 );
+			blob.iostream()->read((char *)(&reply_seq),4 );
 
 			if (reply_seq != seq) {
 				std::stringstream ss;
@@ -319,8 +318,7 @@ int main(int argc, char *argv[])
 
 						{
 							ibrcommon::BLOB::Reference blob = response.getData();
-							ibrcommon::MutexLock l(blob);
-							(*blob).read((char *)(&reply_seq),4 );
+							blob.iostream()->read((char *)(&reply_seq),4 );
 							payload_size = blob.getSize();
 						}
 

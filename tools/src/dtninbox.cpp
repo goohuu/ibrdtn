@@ -147,10 +147,7 @@ int main(int argc, char** argv)
                 ostream stream(&extractor);
 
                 // write the payload to the extractor
-                {
-                	ibrcommon::MutexLock l(ref);
-                	stream << (*ref).rdbuf();
-                }
+               	stream << ref.iostream()->rdbuf();
 
                 // flush the stream
                 stream.flush();

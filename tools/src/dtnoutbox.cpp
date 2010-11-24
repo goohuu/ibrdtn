@@ -179,10 +179,7 @@ int main(int argc, char** argv)
             	ibrcommon::BLOB::Reference blob = ibrcommon::TmpFileBLOB::create();
 
     			// stream the content of "tar" to the payload block
-    			{
-    				ibrcommon::MutexLock l(blob);
-    				(*blob) << stream.rdbuf();
-    			}
+    			(*blob.iostream()) << stream.rdbuf();
 
             	// create a new bundle
     			dtn::data::EID destination = EID(conf["destination"]);
