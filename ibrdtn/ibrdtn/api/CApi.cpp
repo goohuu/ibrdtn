@@ -52,7 +52,7 @@ class CAPIGateway : public dtn::api::Client
 			dtn::data::PayloadBlock &payload = b.push_back<dtn::data::PayloadBlock>();
 
 			// add the data
-			(*payload.getBLOB()).write(data, length);
+			(*payload.getBLOB().iostream()).write(data, length);
 
 			// transmit the packet
 			dtn::data::DefaultSerializer(*this) << b;
@@ -99,7 +99,7 @@ class CAPIGateway : public dtn::api::Client
 			dtn::data::PayloadBlock &payload = b.push_back<dtn::data::PayloadBlock>();
 
 			// add the data
-			(*payload.getBLOB()).write(tx_buffer, tx_buffer_position); //+1 is wrong =?!?
+			(*payload.getBLOB().iostream()).write(tx_buffer, tx_buffer_position); //+1 is wrong =?!?
 
 			// transmit the packet
 			dtn::data::DefaultSerializer(*this) << b;
@@ -184,7 +184,7 @@ class CAPIGateway : public dtn::api::Client
 				return;
 			}
 			recvd=malloc(len);
-			(*b.getData()).read((char *)recvd, len);
+			(*b.getData().iostream()).read((char *)recvd, len);
 			recv_mutex.enter();
 			process_bundle(recvd,len);
 			recv_mutex.leave();
@@ -204,7 +204,7 @@ class CAPIGateway : public dtn::api::Client
 			while(len != 0) {
 				if (len <= chunksize) {
 					//cout << "Write " << len << endl;
-					(*b.getData()).read(buffer, len);
+					(*b.getData().iostream()).read(buffer, len);
 					if ( ::write(sync_pipe[1],buffer,len) < 0 )
 					{
 						std::cerr << "error while writing" << std::endl;
@@ -213,7 +213,7 @@ class CAPIGateway : public dtn::api::Client
 				}
 				else {
 					//cout << "Write " << chunksize << endl;
-					(*b.getData()).read(buffer, chunksize);
+					(*b.getData().iostream()).read(buffer, chunksize);
 					offset+=chunksize; len-=chunksize;
 					if ( ::write(sync_pipe[1],buffer,chunksize) < 0 )
 					{

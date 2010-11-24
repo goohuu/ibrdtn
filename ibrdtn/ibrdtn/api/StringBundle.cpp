@@ -25,9 +25,9 @@ namespace dtn
 		void StringBundle::append(string data)
 		{
 			ibrcommon::BLOB::Reference ref = _payload.getBLOB();
-			ibrcommon::MutexLock l(ref);
-			(*ref).seekp(0, ios::end);
-			(*ref) << data;
+			ibrcommon::BLOB::iostream stream = ref.iostream();
+			(*stream).seekp(0, ios::end);
+			(*stream) << data;
 		}
 	}
 }
