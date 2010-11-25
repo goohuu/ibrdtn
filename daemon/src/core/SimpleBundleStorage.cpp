@@ -394,11 +394,8 @@ namespace dtn
 			{
 				if ((*iter) == b.bundle)
 				{
-					// remove item in the bundlelist
-					dtn::data::MetaBundle meta = (*iter);
-
-					// remove it from the bundle list
-					dtn::data::BundleList::remove(meta);
+					// remove the bundle
+					const dtn::data::MetaBundle &meta = (*iter);
 
 					DataStorage::Hash hash(meta.toString());
 
