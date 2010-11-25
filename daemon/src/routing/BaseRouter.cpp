@@ -174,6 +174,9 @@ namespace dtn
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
 
+				// drop bundles to the NULL-destination
+				if (received.bundle._destination == EID("dtn:null")) return;
+
 				// Store incoming bundles into the storage
 				try {
 					if (received.fromlocal)
