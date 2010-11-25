@@ -34,6 +34,7 @@ namespace dtn
 			class Container
 			{
 			public:
+				virtual ~Container() = 0;
 				virtual std::string getKey() const = 0;
 				virtual std::ostream& serialize(std::ostream &stream) = 0;
 			};
@@ -95,18 +96,14 @@ namespace dtn
 			class Task
 			{
 			public:
-				virtual ~Task() {};
+				virtual ~Task() = 0;
 			};
 
 			class StoreDataTask : public Task
 			{
 			public:
-				StoreDataTask(const Hash &h, Container *c)
-				 : hash(h), container(c) {};
-
-				virtual ~StoreDataTask() {
-					delete container;
-				};
+				StoreDataTask(const Hash &h, Container *c);
+				virtual ~StoreDataTask();
 
 				const Hash hash;
 				Container *container;
@@ -115,8 +112,8 @@ namespace dtn
 			class RemoveDataTask : public Task
 			{
 			public:
-				RemoveDataTask(const Hash &h) : hash(h) {};
-				virtual ~RemoveDataTask() {};
+				RemoveDataTask(const Hash &h);
+				virtual ~RemoveDataTask();
 
 				const Hash hash;
 			};

@@ -230,5 +230,24 @@ namespace dtn
 				// exit
 			}
 		}
+
+		DataStorage::Container::~Container() {};
+		DataStorage::Task::~Task() {};
+
+		DataStorage::StoreDataTask::StoreDataTask(const Hash &h, Container *c)
+		 : hash(h), container(c)
+		{}
+
+		DataStorage::StoreDataTask::~StoreDataTask()
+		{
+			delete container;
+		}
+
+		DataStorage::RemoveDataTask::RemoveDataTask(const Hash &h) : hash(h)
+		{}
+
+		DataStorage::RemoveDataTask::~RemoveDataTask()
+		{
+		}
 	}
 }
