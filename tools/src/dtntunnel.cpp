@@ -178,7 +178,7 @@ class TUN2BundleGateway : public dtn::api::Client
 };
 
 bool m_running = true;
-int tunnel_fd = 0;
+int tunnel_fd = -1;
 
 void term(int signal)
 {
@@ -186,6 +186,7 @@ void term(int signal)
 	{
 		m_running = false;
 		::close(tunnel_fd);
+		tunnel_fd = -1;
 	}
 }
 
@@ -254,6 +255,7 @@ int main(int argc, char *argv[])
 	gateway.close();
 
 	::close(tunnel_fd);
+	tunnel_fd = -1;
 
 	return 0;
 }
