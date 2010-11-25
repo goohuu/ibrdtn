@@ -70,6 +70,10 @@ void TestStreamConnection::connectionUpDown()
 
 	class testclient : public ibrcommon::JoinableThread, dtn::streams::StreamConnection::Callback
 	{
+	private:
+		ibrcommon::tcpclient &_client;
+		dtn::streams::StreamConnection _stream;
+
 	public:
 		testclient(ibrcommon::tcpclient &client) : _client(client), _stream(*this, _client)
 		{ }
@@ -126,6 +130,7 @@ void TestStreamConnection::connectionUpDown()
 		void close()
 		{
 			_stream.shutdown();
+			stop();
 		}
 
 	protected:
@@ -138,10 +143,6 @@ void TestStreamConnection::connectionUpDown()
 //				std::cout << "client: bundle received" << std::endl;
 			}
 		}
-
-	private:
-		ibrcommon::tcpclient &_client;
-		dtn::streams::StreamConnection _stream;
 	};
 
 	ibrcommon::NetInterface net("lo");
@@ -149,9 +150,9 @@ void TestStreamConnection::connectionUpDown()
 	testserver srv(net, 1234); srv.start();
 
 	ibrcommon::tcpclient conn("127.0.0.1", 1234);
-	testclient cl(conn); cl.start();
-
+	testclient cl(conn);
 	cl.handshake();
+	cl.start();
 
 	for (int i = 0; i < 2000; i++)
 	{
