@@ -37,7 +37,7 @@ namespace testsuite{
 
 namespace core {
 
-class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public ibrcommon::JoinableThread
+class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent
 {
 	enum SQL_TABLES
 	{
@@ -264,7 +264,9 @@ public:
 	void raiseEvent(const Event *evt);
 
 protected:
-	void run(void);
+	virtual void componentRun();
+	virtual void componentUp();
+	virtual void componentDown();
 	bool __cancellation();
 
 private:

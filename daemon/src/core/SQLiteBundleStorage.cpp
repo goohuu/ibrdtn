@@ -1761,7 +1761,7 @@ namespace core {
 		} catch (const std::bad_cast&) { }
 	}
 
-	void SQLiteBundleStorage::run(void)
+	void SQLiteBundleStorage::componentRun()
 	{
 		ibrcommon::MutexLock l(timeeventConditional);
 
@@ -1771,6 +1771,9 @@ namespace core {
 			timeeventConditional.wait();
 		}
 	}
+
+	void SQLiteBundleStorage::componentUp() {};
+	void SQLiteBundleStorage::componentDown() {};
 
 	bool SQLiteBundleStorage::__cancellation()
 	{

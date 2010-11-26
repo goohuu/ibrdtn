@@ -242,24 +242,32 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 			{
 				case Configuration::NetConfig::NETWORK_UDP:
 				{
-					UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net.interface, net.port );
-					core.addConvergenceLayer(udpcl);
-					components.push_back(udpcl);
-					if (ipnd != NULL) ipnd->addService(udpcl);
+					try {
+						UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net.interface, net.port );
+						core.addConvergenceLayer(udpcl);
+						components.push_back(udpcl);
+						if (ipnd != NULL) ipnd->addService(udpcl);
 
-					IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 
 					break;
 				}
 
 				case Configuration::NetConfig::NETWORK_TCP:
 				{
-					TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net.interface, net.port );
-					core.addConvergenceLayer(tcpcl);
-					components.push_back(tcpcl);
-					if (ipnd != NULL) ipnd->addService(tcpcl);
+					try {
+						TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net.interface, net.port );
+						core.addConvergenceLayer(tcpcl);
+						components.push_back(tcpcl);
+						if (ipnd != NULL) ipnd->addService(tcpcl);
 
-					IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 
 					break;
 				}
@@ -267,11 +275,15 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 #ifdef HAVE_LIBCURL
 				case Configuration::NetConfig::NETWORK_HTTP:
 				{
-					HTTPConvergenceLayer *httpcl = new HTTPConvergenceLayer( net.address );
-					core.addConvergenceLayer(httpcl);
-					components.push_back(httpcl);
+					try {
+						HTTPConvergenceLayer *httpcl = new HTTPConvergenceLayer( net.address );
+						core.addConvergenceLayer(httpcl);
+						components.push_back(httpcl);
 
-					IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.address << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.address << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER(error) << "Failed to add HTTP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 					break;
 				}
 #endif
@@ -279,12 +291,16 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 #ifdef HAVE_LOWPAN_SUPPORT
 				case Configuration::NetConfig::NETWORK_LOWPAN:
 				{
-					LOWPANConvergenceLayer *lowpancl = new LOWPANConvergenceLayer( net.interface, net.port );
-					core.addConvergenceLayer(lowpancl);
-					components.push_back(lowpancl);
-					if (ipnd != NULL) ipnd->addService(lowpancl);
+					try {
+						LOWPANConvergenceLayer *lowpancl = new LOWPANConvergenceLayer( net.interface, net.port );
+						core.addConvergenceLayer(lowpancl);
+						components.push_back(lowpancl);
+						if (ipnd != NULL) ipnd->addService(lowpancl);
 
-					IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 
 					break;
 				}
@@ -293,10 +309,8 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 				default:
 					break;
 			}
-		} catch (ibrcommon::SocketException ex) {
-			IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.getAddress() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			throw ex;
+		} catch (const std::exception &ex) {
+			IBRCOMMON_LOGGER(error) << "Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 }
