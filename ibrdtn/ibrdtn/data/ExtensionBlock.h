@@ -9,7 +9,8 @@
 #define EXTENSIONBLOCK_H_
 
 #include "ibrdtn/data/Block.h"
-#include "ibrcommon/data/BLOB.h"
+#include <ibrcommon/data/BLOB.h>
+#include <map>
 
 namespace dtn
 {
@@ -18,6 +19,23 @@ namespace dtn
 		class ExtensionBlock : public Block
 		{
 		public:
+			class Factory
+			{
+			public:
+				virtual dtn::data::Block* create() = 0;
+
+				static Factory& get(char type) throw (ibrcommon::Exception);
+
+			protected:
+				Factory(char type);
+				virtual ~Factory();
+
+			private:
+				static std::map<char, Factory*>& map();
+
+				char _type;
+			};
+
 			ExtensionBlock();
 			ExtensionBlock(ibrcommon::BLOB::Reference ref);
 			virtual ~ExtensionBlock();

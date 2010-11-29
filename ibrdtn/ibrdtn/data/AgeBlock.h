@@ -7,7 +7,7 @@
 
 #include <ibrdtn/data/Block.h>
 #include <ibrdtn/data/SDNV.h>
-#include <ibrdtn/data/ExtensionBlockFactory.h>
+#include <ibrdtn/data/ExtensionBlock.h>
 #include <ibrcommon/TimeMeasurement.h>
 
 #ifndef AGEBLOCK_H_
@@ -20,10 +20,10 @@ namespace dtn
 		class AgeBlock : public dtn::data::Block
 		{
 		public:
-			class Factory : public dtn::data::ExtensionBlockFactory
+			class Factory : public dtn::data::ExtensionBlock::Factory
 			{
 			public:
-				Factory() : dtn::data::ExtensionBlockFactory(AgeBlock::BLOCK_TYPE) {};
+				Factory() : dtn::data::ExtensionBlock::Factory(AgeBlock::BLOCK_TYPE) {};
 				virtual ~Factory() {};
 				virtual dtn::data::Block* create();
 			};

@@ -19,7 +19,7 @@
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/BundleString.h>
 #include <ibrdtn/data/BundleList.h>
-#include <ibrdtn/data/ExtensionBlockFactory.h>
+#include <ibrdtn/data/ExtensionBlock.h>
 
 #include <ibrcommon/thread/Queue.h>
 
@@ -48,10 +48,10 @@ namespace dtn
 			class EpidemicExtensionBlock : public dtn::data::Block
 			{
 			public:
-				class Factory : public dtn::data::ExtensionBlockFactory
+				class Factory : public dtn::data::ExtensionBlock::Factory
 				{
 				public:
-					Factory() : dtn::data::ExtensionBlockFactory(EpidemicExtensionBlock::BLOCK_TYPE) {};
+					Factory() : dtn::data::ExtensionBlock::Factory(EpidemicExtensionBlock::BLOCK_TYPE) {};
 					virtual ~Factory() {};
 					virtual dtn::data::Block* create();
 				};

@@ -7,12 +7,45 @@
 
 #include "ibrdtn/data/ExtensionBlock.h"
 #include "ibrdtn/data/Exceptions.h"
+#include "ibrdtn/data/ExtensionBlock.h"
 #include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {
 	namespace data
 	{
+		std::map<char, ExtensionBlock::Factory*>& ExtensionBlock::Factory::map()
+		{
+			static std::map<char, Factory*> _factories;
+			return _factories;
+		}
+
+		ExtensionBlock::Factory& ExtensionBlock::Factory::get(char type) throw (ibrcommon::Exception)
+		{
+			std::map<char, Factory*>& factories = map();
+			std::map<char, ExtensionBlock::Factory*>::iterator iter = factories.find(type);
+
+			if (iter != factories.end())
+			{
+				return *(iter->second);
+			}
+
+			throw ibrcommon::Exception("Factory not available");
+		}
+
+		ExtensionBlock::Factory::Factory(char type)
+		 : _type(type)
+		{
+			std::map<char, Factory*>& factories = map();
+			factories[type] = this;
+		}
+
+		ExtensionBlock::Factory::~Factory()
+		{
+			std::map<char, Factory*>& factories = map();
+			factories.erase(_type);
+		}
+
 		ExtensionBlock::ExtensionBlock()
 		 : Block(0), _blobref(ibrcommon::TmpFileBLOB::create())
 		{

@@ -9,7 +9,6 @@
 #include "ibrdtn/data/Exceptions.h"
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
-#include <cassert>
 
 namespace dtn
 {

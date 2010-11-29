@@ -8,8 +8,6 @@
 #include "ibrdtn/data/Bundle.h"
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
-#include "ibrdtn/data/ExtensionBlock.h"
-#include "ibrdtn/data/ExtensionBlockFactory.h"
 #include "ibrdtn/data/Serializer.h"
 #include "ibrdtn/data/AgeBlock.h"
 
@@ -17,12 +15,6 @@ namespace dtn
 {
 	namespace data
 	{
-		std::map<char, ExtensionBlockFactory*>& Bundle::getExtensionBlockFactories()
-		{
-			static std::map<char, ExtensionBlockFactory*> factories;
-			return factories;
-		}
-
 		Bundle::Bundle()
 		{
 			// if the timestamp is not set, add a ageblock
@@ -179,7 +171,11 @@ namespace dtn
 		{
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(block != NULL);
+#endif
+
 			_blocks.insert(block, &before);
 			return (*tmpblock);
 		}
@@ -188,7 +184,11 @@ namespace dtn
 		{
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(block != NULL);
+#endif
+
 			_blocks.push_front(block);
 			return (*tmpblock);
 		}
@@ -197,15 +197,23 @@ namespace dtn
 		{
 			dtn::data::PayloadBlock *tmpblock = new dtn::data::PayloadBlock(ref);
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(block != NULL);
+#endif
+
 			_blocks.push_back(block);
 			return (*tmpblock);
 		}
 
-		dtn::data::Block& Bundle::push_back(dtn::data::ExtensionBlockFactory &factory)
+		dtn::data::Block& Bundle::push_back(dtn::data::ExtensionBlock::Factory &factory)
 		{
 			dtn::data::Block *block = factory.create();
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(block != NULL);
+#endif
+
 			_blocks.push_back(block);
 			return (*block);
 		}

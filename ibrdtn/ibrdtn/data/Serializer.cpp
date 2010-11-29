@@ -5,10 +5,12 @@
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
-#include "ibrdtn/data/ExtensionBlockFactory.h"
 #include "ibrcommon/refcnt_ptr.h"
 #include <list>
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
+#endif
 
 namespace dtn
 {
@@ -218,8 +220,10 @@ namespace dtn
 			_stream << obj._blocktype;
 			_stream << dtn::data::SDNV(obj._procflags);
 
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
 			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+#endif
 
 			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
 			{
@@ -380,8 +384,10 @@ namespace dtn
 			len += sizeof(obj._blocktype);
 			len += dtn::data::SDNV(obj._procflags).getLength();
 
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
 			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+#endif
 
 			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
 			{
@@ -502,18 +508,15 @@ namespace dtn
 					default:
 					{
 						// get a extension block factory
-						std::map<char, ExtensionBlockFactory*> &factories = dtn::data::Bundle::getExtensionBlockFactories();
-						std::map<char, ExtensionBlockFactory*>::iterator iter = factories.find(block_type);
+						try {
+							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
 
-						if (iter != factories.end())
-						{
-							ExtensionBlockFactory &f = (*iter->second);
 							dtn::data::Block &block = obj.push_back(f);
 							(*this) >> block;
 							lastblock = block.get(Block::LAST_BLOCK);
-						}
-						else
-						{
+
+						} catch (const ibrcommon::Exception &ex) {
+
 							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
 							(*this) >> block;
 							lastblock = block.get(Block::LAST_BLOCK);
@@ -681,8 +684,10 @@ namespace dtn
 			_stream << obj._blocktype;
 			_stream << dtn::data::SDNV(obj._procflags);
 
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
 			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+#endif
 
 			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
 			{
@@ -710,8 +715,10 @@ namespace dtn
 			len += sizeof(obj._blocktype);
 			len += dtn::data::SDNV(obj._procflags).getLength();
 
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
 			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+#endif
 
 			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
 			{
@@ -813,17 +820,11 @@ namespace dtn
 				default:
 				{
 					// get a extension block factory
-					std::map<char, ExtensionBlockFactory*> &factories = dtn::data::Bundle::getExtensionBlockFactories();
-					std::map<char, ExtensionBlockFactory*>::iterator iter = factories.find(block_type);
-
-					if (iter != factories.end())
-					{
-						ExtensionBlockFactory &f = (*iter->second);
+					try {
+						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
 						dtn::data::Block &block = _bundle.push_back(f);
 						(*this) >> block;
-					}
-					else
-					{
+					} catch (const ibrcommon::Exception &ex) {
 						dtn::data::ExtensionBlock &block = _bundle.push_back<dtn::data::ExtensionBlock>();
 						(*this) >> block;
 					}

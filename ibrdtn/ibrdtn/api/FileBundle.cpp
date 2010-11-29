@@ -9,7 +9,6 @@
 #include "ibrdtn/api/FileBundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrcommon/data/BLOB.h"
-#include <cassert>
 
 namespace dtn
 {

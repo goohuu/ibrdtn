@@ -106,7 +106,7 @@ namespace dtn
 		{
 			for (int i = 0; i < argc; i++)
 			{
-				std::string arg = argv[i];
+				std::string arg(argv[i]);
 
 				if (arg == "-c" && argc > i)
 				{

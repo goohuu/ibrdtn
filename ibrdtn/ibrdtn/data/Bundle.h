@@ -16,9 +16,12 @@
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/StatusReportBlock.h"
+#include "ibrdtn/data/ExtensionBlock.h"
 #include "ibrcommon/refcnt_ptr.h"
 #include <ostream>
+#ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
+#endif
 #include <set>
 #include <map>
 #include <typeinfo>
@@ -27,16 +30,12 @@ namespace dtn
 {
 	namespace data
 	{
-		class ExtensionBlockFactory;
-
 		class Bundle : public PrimaryBlock
 		{
 			friend class DefaultSerializer;
 			friend class DefaultDeserializer;
 
 		public:
-			static std::map<char, ExtensionBlockFactory*>& getExtensionBlockFactories();
-
 			class NoSuchBlockFoundException : public ibrcommon::Exception
 			{
 				public:
@@ -106,7 +105,7 @@ namespace dtn
 			dtn::data::PayloadBlock& push_back(ibrcommon::BLOB::Reference &ref);
 			dtn::data::PayloadBlock& insert(const dtn::data::Block &before, ibrcommon::BLOB::Reference &ref);
 
-			dtn::data::Block& push_back(dtn::data::ExtensionBlockFactory &factory);
+			dtn::data::Block& push_back(dtn::data::ExtensionBlock::Factory &factory);
 
 			void remove(const dtn::data::Block &block);
 			void clearBlocks();
@@ -283,7 +282,11 @@ namespace dtn
 		{
 			T *tmpblock = new T();
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(block != NULL);
+#endif
+
 			_blocks.push_front(block);
 			return (*tmpblock);
 		}
@@ -293,7 +296,11 @@ namespace dtn
 		{
 			T *tmpblock = new T();
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(block != NULL);
+#endif
+
 			_blocks.push_back(block);
 			return (*tmpblock);
 		}
@@ -303,7 +310,11 @@ namespace dtn
 		{
 			T *tmpblock = new T(*this);
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(block != NULL);
+#endif
+
 			_blocks.insert(block, &before);
 			return (*tmpblock);
 		}
