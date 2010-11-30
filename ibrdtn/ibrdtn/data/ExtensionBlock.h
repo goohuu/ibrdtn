@@ -31,8 +31,6 @@ namespace dtn
 				virtual ~Factory();
 
 			private:
-				static std::map<char, Factory*>& map();
-
 				char _type;
 			};
 
@@ -45,6 +43,25 @@ namespace dtn
 			virtual size_t getLength() const;
 			virtual std::ostream &serialize(std::ostream &stream) const;
 			virtual std::istream &deserialize(std::istream &stream);
+
+		protected:
+			class FactoryList
+			{
+			public:
+				FactoryList();
+				virtual ~FactoryList();
+
+				Factory& get(char type) throw (ibrcommon::Exception);
+				void add(char type, Factory *f) throw (ibrcommon::Exception);
+				void remove(char type);
+
+				static void initialize();
+
+			private:
+				std::map<char, Factory*> fmap;
+			};
+
+			static FactoryList *factories;
 
 		private:
 			ibrcommon::BLOB::Reference _blobref;

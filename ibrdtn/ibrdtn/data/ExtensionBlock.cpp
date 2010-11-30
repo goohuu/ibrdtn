@@ -14,18 +14,30 @@ namespace dtn
 {
 	namespace data
 	{
-		std::map<char, ExtensionBlock::Factory*>& ExtensionBlock::Factory::map()
+		ExtensionBlock::FactoryList *ExtensionBlock::factories = NULL;
+
+		ExtensionBlock::FactoryList::FactoryList()
+		{ }
+
+		ExtensionBlock::FactoryList::~FactoryList()
+		{ }
+
+		void ExtensionBlock::FactoryList::initialize()
 		{
-			static std::map<char, Factory*> _factories;
-			return _factories;
+			static ibrcommon::Mutex mutex;
+			ibrcommon::MutexLock l(mutex);
+
+			if (ExtensionBlock::factories == NULL)
+			{
+				ExtensionBlock::factories = new ExtensionBlock::FactoryList();
+			}
 		}
 
-		ExtensionBlock::Factory& ExtensionBlock::Factory::get(char type) throw (ibrcommon::Exception)
+		ExtensionBlock::Factory& ExtensionBlock::FactoryList::get(const char type) throw (ibrcommon::Exception)
 		{
-			std::map<char, Factory*>& factories = map();
-			std::map<char, ExtensionBlock::Factory*>::iterator iter = factories.find(type);
+			std::map<char, ExtensionBlock::Factory*>::iterator iter = fmap.find(type);
 
-			if (iter != factories.end())
+			if (iter != fmap.end())
 			{
 				return *(iter->second);
 			}
@@ -33,17 +45,37 @@ namespace dtn
 			throw ibrcommon::Exception("Factory not available");
 		}
 
+		void ExtensionBlock::FactoryList::add(const char type, Factory *f) throw (ibrcommon::Exception)
+		{
+			try {
+				get(type);
+				throw ibrcommon::Exception("extension block type already taken");
+			} catch (const ibrcommon::Exception&) {
+				fmap[type] = f;
+			}
+		}
+
+		void ExtensionBlock::FactoryList::remove(const char type)
+		{
+			fmap.erase(type);
+		}
+
 		ExtensionBlock::Factory::Factory(char type)
 		 : _type(type)
 		{
-			std::map<char, Factory*>& factories = map();
-			factories[type] = this;
+			ExtensionBlock::FactoryList::initialize();
+			ExtensionBlock::factories->add(type, this);
 		}
 
 		ExtensionBlock::Factory::~Factory()
 		{
-			std::map<char, Factory*>& factories = map();
-			factories.erase(_type);
+			ExtensionBlock::factories->remove(_type);
+		}
+
+		ExtensionBlock::Factory& ExtensionBlock::Factory::get(char type) throw (ibrcommon::Exception)
+		{
+			ExtensionBlock::FactoryList::initialize();
+			return ExtensionBlock::factories->get(type);
 		}
 
 		ExtensionBlock::ExtensionBlock()
