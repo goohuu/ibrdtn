@@ -36,12 +36,6 @@ namespace dtn
 			join();
 		}
 
-		bool Client::AsyncReceiver::__cancellation()
-		{
-			// return false, to signal that further cancel (the hardway) is needed
-			return false;
-		}
-
 		void Client::AsyncReceiver::run()
 		{
 			try {
@@ -70,13 +64,8 @@ namespace dtn
 			}
 		}
 
-		Client::Client(COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _connected(false), _receiver(*this)
-		{
-		}
-
-		Client::Client(string app, ibrcommon::tcpstream &stream)
-		  : StreamConnection(*this, stream), _stream(stream), _mode(MODE_BIDIRECTIONAL), _app(app), _connected(false), _receiver(*this)
+		Client::Client(const std::string &app, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode)
+		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _receiver(*this)
 		{
 		}
 
@@ -116,40 +105,13 @@ namespace dtn
 			}
 		}
 
-		bool Client::isConnected()
-		{
-			return _connected;
-		}
-
 		void Client::close()
 		{
 			shutdown(StreamConnection::CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
 		}
 
-		void Client::received(const StreamContactHeader&)
-		{
-			_connected = true;
-		}
-
-		void Client::eventTimeout()
-		{
-		}
-
-		void Client::eventShutdown(StreamConnection::ConnectionShutdownCases csc)
-		{
-		}
-
-		void Client::eventConnectionUp(const StreamContactHeader&)
-		{
-		}
-
-		void Client::eventError()
-		{
-		}
-
 		void Client::eventConnectionDown()
 		{
-			_connected = false;
 			_inqueue.abort();
 
 			try {
@@ -157,16 +119,6 @@ namespace dtn
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client::eventConnectionDown: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
-		}
-
-		void Client::eventBundleRefused()
-		{
-
-		}
-
-		void Client::eventBundleForwarded()
-		{
-
 		}
 
 		void Client::eventBundleAck(size_t ack)
@@ -182,7 +134,7 @@ namespace dtn
 			}
 		}
 
-		dtn::api::Bundle Client::getBundle(size_t timeout)
+		dtn::api::Bundle Client::getBundle(size_t timeout) throw (ConnectionException)
 		{
 			try {
 				return _inqueue.getnpop(true, timeout * 1000);
