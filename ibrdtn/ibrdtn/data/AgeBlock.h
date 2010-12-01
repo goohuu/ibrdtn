@@ -57,7 +57,7 @@ namespace dtn
 		/**
 		 * This creates a static block factory
 		 */
-		static AgeBlock::AgeBlock::Factory __AgeBlockFactory__;
+		static AgeBlock::Factory __AgeBlockFactory__;
 	}
 }
 

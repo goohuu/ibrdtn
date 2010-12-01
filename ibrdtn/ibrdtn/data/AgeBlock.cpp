@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "AgeBlock.h"
+#include "ibrdtn/data/AgeBlock.h"
 
 namespace dtn
 {
@@ -13,7 +13,7 @@ namespace dtn
 	{
 		dtn::data::Block* AgeBlock::Factory::create()
 		{
-			return new AgeBlock::AgeBlock();
+			return new AgeBlock();
 		}
 
 		AgeBlock::AgeBlock()
