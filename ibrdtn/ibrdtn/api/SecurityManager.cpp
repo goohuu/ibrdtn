@@ -24,13 +24,11 @@ namespace dtn
 		{
 		}
 
-
-		void SecurityManager::initialize(std::string, std::string, std::string)
+		void SecurityManager::initialize(const std::string&, const std::string&, const std::string&)
 		{
-
 		}
 
-		void SecurityManager::setDefault(Bundle::BUNDLE_SECURITY s)
+		void SecurityManager::setDefault(const Bundle::BUNDLE_SECURITY s)
 		{
 			SecurityManager::_default = s;
 		}
@@ -40,7 +38,7 @@ namespace dtn
 			return SecurityManager::_default;
 		}
 
-		bool SecurityManager::validate(dtn::api::Bundle)
+		bool SecurityManager::validate(const dtn::api::Bundle&)
 		{
 			return false;
 		}

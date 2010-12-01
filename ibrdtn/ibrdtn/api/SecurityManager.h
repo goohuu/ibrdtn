@@ -22,12 +22,12 @@ namespace dtn
 			/**
 			 * Set the keys for encryption and signing.
 			 */
-			static void initialize(string privKey, string pubKey, string ca);
+			static void initialize(const std::string &privKey, const std::string &pubKey, const std::string &ca);
 
 			/**
 			 * Set the default security for new bundles.
 			 */
-			static void setDefault(Bundle::BUNDLE_SECURITY s);
+			static void setDefault(const Bundle::BUNDLE_SECURITY s);
 
 			/**
 			 * Get the default security for new bundles.
@@ -37,7 +37,7 @@ namespace dtn
 			/**
 			 * Check the security blocks of a bundle
 			 */
-			static bool validate(dtn::api::Bundle b);
+			static bool validate(const dtn::api::Bundle &b);
 
 		private:
 			/**
@@ -51,7 +51,6 @@ namespace dtn
 			SecurityManager(SecurityManager&) {};
 
 			static Bundle::BUNDLE_SECURITY _default;
-
 		};
 	}
 }
