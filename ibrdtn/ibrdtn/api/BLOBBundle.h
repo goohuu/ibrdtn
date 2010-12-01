@@ -10,7 +10,7 @@
 
 #include "ibrdtn/api/Bundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrcommon/data/BLOB.h"
+#include <ibrcommon/data/BLOB.h>
 #include <iostream>
 
 namespace dtn
@@ -18,24 +18,21 @@ namespace dtn
 	namespace api
 	{
 		/**
-		 * This class could be used to send string data through the
-		 * bundle protocol.
+		 * This type of bundle contains a predefined BLOB object, which is part of the
+		 * ibrcommon library. The data in the BLOB is transmitted as payload of the bundle.
 		 */
 		class BLOBBundle : public Bundle
 		{
 		public:
 			/**
-			 * Constructor need a destination.
+			 * Construct a new BLOBBundle with an destination and a reference to a BLOB object.
 			 */
 			BLOBBundle(dtn::data::EID destination, ibrcommon::BLOB::Reference &ref);
 
 			/**
-			 * Destruktor.
+			 * Destructor of the BLOBBundle.
 			 */
 			virtual ~BLOBBundle();
-
-		private:
-			dtn::data::PayloadBlock *_payload;
 		};
 	}
 }

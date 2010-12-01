@@ -15,7 +15,6 @@ namespace dtn
 	namespace api
 	{
 		Bundle::Bundle()
-		 : _priority(PRIO_MEDIUM)
 		{
 			_security = SecurityManager::getDefault();
 			setPriority(PRIO_MEDIUM);
@@ -23,23 +22,12 @@ namespace dtn
 			_b._source = dtn::data::EID("api:me");
 		}
 
-		Bundle::Bundle(dtn::data::Bundle &b)
-		 : _b(b), _priority(PRIO_MEDIUM)
+		Bundle::Bundle(const dtn::data::Bundle &b)
+		 : _b(b)
 		{
-			// read priority
-			if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT1)
-			{
-				_priority = PRIO_MEDIUM;
-			}
-			else
-			{
-				if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2) _priority = PRIO_HIGH;
-				else _priority = PRIO_LOW;
-			}
 		}
 
-		Bundle::Bundle(dtn::data::EID destination)
-		 : _priority(PRIO_MEDIUM)
+		Bundle::Bundle(const dtn::data::EID &destination)
 		{
 			_b._destination = destination;
 			_security = SecurityManager::getDefault();
@@ -52,15 +40,12 @@ namespace dtn
 
 		void Bundle::setLifetime(unsigned int lifetime)
 		{
-			_lifetime = lifetime;
-
-			// set the lifetime
-			_b._lifetime = _lifetime;
+			_b._lifetime = lifetime;
 		}
 
-		unsigned int Bundle::getLifetime()
+		unsigned int Bundle::getLifetime() const
 		{
-			return _lifetime;
+			return _b._lifetime;
 		}
 
 		void Bundle::requestDeliveredReport()
@@ -83,17 +68,28 @@ namespace dtn
 			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION, true);
 		}
 
-		Bundle::BUNDLE_PRIORITY Bundle::getPriority()
+		Bundle::BUNDLE_PRIORITY Bundle::getPriority() const
 		{
-			return _priority;
+			// If none of the priority bit are set, then the priority is LOW. bit1 = 1 and
+			// bit2 = 0 indicated an MEDIUM priority and both bits set leads to a HIGH
+			// priority.
+			if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT1)
+			{
+					if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2)
+					{
+						return PRIO_HIGH;
+					}
+
+					return PRIO_MEDIUM;
+			}
+
+			return PRIO_LOW;
 		}
 
 		void Bundle::setPriority(Bundle::BUNDLE_PRIORITY p)
 		{
-			_priority = p;
-
 			// set the priority to the real bundle
-			switch (_priority)
+			switch (p)
 			{
 			case PRIO_LOW:
 				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT1);
@@ -112,10 +108,14 @@ namespace dtn
 			}
 		}
 
-
-		dtn::data::EID Bundle::getDestination()
+		void Bundle::setDestination(const dtn::data::EID &eid, const bool singleton)
 		{
-			return _b._destination;
+			if (singleton)
+				_b._procflags |= ~(dtn::data::Bundle::DESTINATION_IS_SINGLETON);
+			else
+				_b._procflags &= ~(dtn::data::Bundle::DESTINATION_IS_SINGLETON);
+
+			_b._destination = eid;
 		}
 
 		void Bundle::setReportTo(const dtn::data::EID &eid)
@@ -123,12 +123,27 @@ namespace dtn
 			_b._reportto = eid;
 		}
 
-		dtn::data::EID Bundle::getSource()
+		dtn::data::EID Bundle::getReportTo() const
+		{
+			return _b._reportto;
+		}
+
+		dtn::data::EID Bundle::getDestination() const
+		{
+			return _b._destination;
+		}
+
+		dtn::data::EID Bundle::getSource() const
 		{
 			return _b._source;
 		}
 
-		ibrcommon::BLOB::Reference Bundle::getData()
+		dtn::data::EID Bundle::getCustodian() const
+		{
+			return _b._custodian;
+		}
+
+		ibrcommon::BLOB::Reference Bundle::getData() throw (dtn::MissingObjectException)
 		{
 			try {
 				dtn::data::PayloadBlock &p = _b.getBlock<dtn::data::PayloadBlock>();
@@ -149,4 +164,3 @@ namespace dtn
 		}
 	}
 }
-
