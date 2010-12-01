@@ -176,7 +176,7 @@ int main(int argc, char *argv[])
 
 		try {
 			// Initiate a client for synchronous receiving
-			dtn::api::Client client(dtn::api::Client::MODE_SENDONLY, file_source, conn);
+			dtn::api::Client client(file_source, conn, dtn::api::Client::MODE_SENDONLY);
 
 			// Connect to the server. Actually, this function initiate the
 			// stream protocol by starting the thread and sending the contact header.

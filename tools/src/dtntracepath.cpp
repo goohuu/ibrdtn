@@ -20,7 +20,7 @@ class Tracer : public dtn::api::Client
 {
 	public:
 		Tracer(dtn::api::Client::COMMUNICATION_MODE mode, string app, ibrcommon::tcpstream &stream)
-		 : dtn::api::Client(mode, app, stream), _stream(stream)
+		 : dtn::api::Client(app, stream, mode), _stream(stream)
 		{
 		}
 

@@ -23,7 +23,7 @@ class EchoClient : public dtn::api::Client
 {
 	public:
 		EchoClient(dtn::api::Client::COMMUNICATION_MODE mode, string app,  ibrcommon::tcpstream &stream)
-		 : dtn::api::Client(mode, app, stream), _stream(stream)
+		 : dtn::api::Client(app, stream, mode), _stream(stream)
 		{
 			seq=0;
 		}
