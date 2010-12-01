@@ -8,24 +8,22 @@
 #include "ibrdtn/config.h"
 #include "ibrdtn/api/StringBundle.h"
 
-
 namespace dtn
 {
 	namespace api
 	{
-		StringBundle::StringBundle(dtn::data::EID destination)
-		 : Bundle(destination), _payload(_b.push_back<dtn::data::PayloadBlock>())
+		StringBundle::StringBundle(const dtn::data::EID &destination)
+		 : Bundle(destination), _ref(ibrcommon::StringBLOB::create())
 		{
+			_b.push_back(_ref);
 		}
 
 		StringBundle::~StringBundle()
-		{
-		}
+		{ }
 
-		void StringBundle::append(string data)
+		void StringBundle::append(const std::string &data)
 		{
-			ibrcommon::BLOB::Reference ref = _payload.getBLOB();
-			ibrcommon::BLOB::iostream stream = ref.iostream();
+			ibrcommon::BLOB::iostream stream = _ref.iostream();
 			(*stream).seekp(0, ios::end);
 			(*stream) << data;
 		}

@@ -9,7 +9,7 @@
 #define FILEBUNDLE_H_
 
 #include "ibrdtn/api/Bundle.h"
-#include <iostream>
+#include <ibrcommon/data/File.h>
 
 namespace dtn
 {
@@ -17,26 +17,24 @@ namespace dtn
 	{
 		/**
 		 * This class could be used to send whole files through the
-		 * bundle protocol.
+		 * bundle protocol. The file is not copied before sending and thus it
+		 * has to be available until the hole bundle is sent to the daemon.
 		 */
 		class FileBundle : public dtn::api::Bundle
 		{
 		public:
 			/**
-			 * Constructor need a destination and a file stream.
+			 * Constructor of the FileBundle object. It needs a destination and
+			 * a file object which points to an existing file.
+			 * @param destination The destination EID for the bundle.
+			 * @param file The file to send.
 			 */
-			//FileBundle(dtn::data::EID destination, std::fstream &file);
-
-			FileBundle(dtn::data::EID destination, string filename);
+			FileBundle(const dtn::data::EID &destination, const ibrcommon::File &file);
 
 			/**
-			 * Destruktor.
+			 * Destructor of the FileBundle object.
 			 */
 			virtual ~FileBundle();
-
-		private:
-			//std::fstream &_file;
-			std::string _filename;
 		};
 	}
 }

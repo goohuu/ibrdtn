@@ -8,19 +8,19 @@
 #include "ibrdtn/config.h"
 #include "ibrdtn/api/FileBundle.h"
 #include "ibrdtn/data/PayloadBlock.h"
-#include "ibrcommon/data/BLOB.h"
+#include <ibrcommon/data/BLOB.h>
 
 namespace dtn
 {
 	namespace api
 	{
-		FileBundle::FileBundle(dtn::data::EID destination, string filename)
-		 : Bundle(destination), _filename(filename)
+		FileBundle::FileBundle(const dtn::data::EID &destination, const ibrcommon::File &file)
+		 : Bundle(destination)
 		{
 			// create a reference out of the given file
-			ibrcommon::BLOB::Reference ref = ibrcommon::FileBLOB::create(_filename);
+			ibrcommon::BLOB::Reference ref = ibrcommon::FileBLOB::create(file);
 
-			// create a memory based payload block.
+			// create a new payload block with this reference.
 			_b.push_back(ref);
 		}
 

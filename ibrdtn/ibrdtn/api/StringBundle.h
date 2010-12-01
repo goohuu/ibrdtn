@@ -9,37 +9,39 @@
 #define STRINGBUNDLE_H_
 
 #include "ibrdtn/api/Bundle.h"
-#include "ibrdtn/data/PayloadBlock.h"
-#include <iostream>
+#include <ibrcommon/data/BLOB.h>
 
 namespace dtn
 {
 	namespace api
 	{
 		/**
-		 * This class could be used to send string data through the
-		 * bundle protocol.
+		 * This class could be used to send small string data (all have to fit into
+		 * the system RAM) through the bundle protocol.
 		 */
-		class StringBundle : public Bundle
+		class StringBundle : public dtn::api::Bundle
 		{
 		public:
 			/**
-			 * Constructor need a destination.
+			 * Constructor of the StringBundle object. It just needs a destination
+			 * as parameter.
+			 * @param destination The desired destination of the bundle.
 			 */
-			StringBundle(dtn::data::EID destination);
+			StringBundle(const dtn::data::EID &destination);
 
 			/**
-			 * Destruktor.
+			 * Destricutor of the StringBundle object.
 			 */
 			virtual ~StringBundle();
 
 			/**
-			 * Append a string to the data block.
+			 * Append a string to the payload.
 			 */
-			void append(string data);
+			void append(const std::string &data);
 
 		private:
-			dtn::data::PayloadBlock &_payload;
+			// reference to the BLOB where all data is stored until transmission
+			ibrcommon::BLOB::Reference _ref;
 		};
 	}
 }
