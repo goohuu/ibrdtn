@@ -184,38 +184,32 @@ namespace dtn
 				dtn::data::EID eid = completed.getPeer();
 				dtn::data::MetaBundle meta = completed.getBundle();
 
+				// lock the list of bloom filters
+				ibrcommon::MutexLock l(_list_mutex);
+				NeighborDatabase::NeighborEntry &entry = _neighbors.get(eid);
+
+				// release resources for transmission
+				entry.releaseTransfer();
+
 				// delete the bundle in the storage if
 				if ( EID(eid.getNodeEID()) == EID(meta.destination.getNodeEID()) )
 				{
-					try {
-						// bundle has been delivered to its destination
-						// delete it from our storage
-						getRouter()->getStorage().remove(meta);
+					if (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)
+					{
+						try {
+							// bundle has been delivered to its destination
+							// delete it from our storage
+							getRouter()->getStorage().remove(meta);
 
-						IBRCOMMON_LOGGER_DEBUG(15) << "bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-						// add it to the purge vector
-						_purge_vector.add(meta);
-					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-
+							// add it to the purge vector
+							_purge_vector.add(meta);
+						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 					}
-
-					// lock the list of bloom filters
-					ibrcommon::MutexLock l(_list_mutex);
-					NeighborDatabase::NeighborEntry &entry = _neighbors.get(eid);
-
-					// release resources for transmission
-					entry.releaseTransfer();
 				}
 				else
 				{
-					// add the transferred bundle to the bloomfilter of the receiver
-					ibrcommon::MutexLock l(_list_mutex);
-					NeighborDatabase::NeighborEntry &entry = _neighbors.get(eid);
-
-					// release resources for transmission
-					entry.releaseTransfer();
-
 					ibrcommon::BloomFilter &bf = entry._filter;
 					bf.insert(meta.toString());
 
