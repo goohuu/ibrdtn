@@ -5,7 +5,7 @@
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
-#include "ibrcommon/refcnt_ptr.h"
+#include <ibrcommon/refcnt_ptr.h>
 #include <list>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -604,7 +604,7 @@ namespace dtn
 			return (*this);
 		}
 
-		Deserializer&  DefaultDeserializer::operator >>(dtn::data::Block& obj)
+		Deserializer& DefaultDeserializer::operator >>(dtn::data::Block& obj)
 		{
 			dtn::data::SDNV procflags_sdnv;
 			_stream.get(obj._blocktype);
@@ -644,7 +644,7 @@ namespace dtn
 
 			// read the payload of the block
 			obj.deserialize(_stream);
-			
+
 			return (*this);
 		}
 
