@@ -254,7 +254,7 @@ namespace dtn
 			RSA * rsa = NULL;
 			Configuration& conf = Configuration::getInstance();
 			std::string key("");
-			if (dtn::data::EID(node.getNodeEID()) != SecurityManager::getInstance().get_our_name())
+			if (dtn::data::EID(node.getNodeEID()) != dtn::core::BundleCore::local)
 				key = conf.getPublicKey(node, type);
 			else
 				key = conf.getPrivateAndPublicKey(type).second;

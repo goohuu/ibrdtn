@@ -417,7 +417,7 @@ namespace dtn
 			return status_ok;
 		}
 
-		bool SecurityManager::check_bab(Bundle& bundle)
+		bool SecurityManager::check_bab(dtn::data::Bundle& bundle)
 		{
 			bool status_ok = false;
 
@@ -437,7 +437,7 @@ namespace dtn
 				if (key == "")
 					continue;
 
-				dtn::security::BundleAuthenticationBlock bab_verify(reinterpret_cast<unsigned char const *>(key.c_str()), key.size(), get_our_name(), node);
+				dtn::security::BundleAuthenticationBlock bab_verify(reinterpret_cast<unsigned char const *>(key.c_str()), key.size(), dtn::core::BundleCore::local, node);
 				status_ok = bab_verify.verify(bundle) == 1;
 				if (status_ok)
 					bab_verify.removeAllBundleAuthenticationBlocks(bundle);
@@ -446,7 +446,7 @@ namespace dtn
 			return status_ok;
 		}
 
-		bool SecurityManager::check_pcb(Bundle& bundle, const dtn::security::PayloadConfidentialBlock& pcb)
+		bool SecurityManager::check_pcb(dtn::data::Bundle& bundle, const dtn::security::PayloadConfidentialBlock& pcb)
 		{
 			bool status_ok = true;
 			// look for the right PCB-factory
@@ -455,7 +455,7 @@ namespace dtn
 #ifdef __DEVELOPMENT_ASSERTIONS__
 				assert(getPrivateKey(dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK) != 0);
 #endif
-				dtn::security::PayloadConfidentialBlock pcb_decrypt(getPrivateKey(dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK), get_our_name());
+				dtn::security::PayloadConfidentialBlock pcb_decrypt(getPrivateKey(dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK), dtn::core::BundleCore::local);
 				status_ok = pcb_decrypt.decrypt(bundle);
 			}
 			if (status_ok)
@@ -463,7 +463,7 @@ namespace dtn
 			return status_ok;
 		}
 
-		bool SecurityManager::check_pib(Bundle& bundle, const dtn::security::PayloadIntegrityBlock& pib)
+		bool SecurityManager::check_pib(dtn::data::Bundle& bundle, const dtn::security::PayloadIntegrityBlock& pib)
 		{
 			// take every pib and look if we have a public key, the block could have
 			// the needed keys attached to it and the KeyServerWorker will store them
@@ -476,8 +476,8 @@ namespace dtn
 				RSA * rsa = getPublicKey(dtn::security::SecurityBlock::getSecuritySource(bundle, **it), dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK);
 				if (rsa != 0)
 				{
-					dtn::security::PayloadIntegrityBlock pib_verify(rsa, get_our_name(), dtn::security::SecurityBlock::getSecuritySource(bundle, **it));
-					if (dtn::security::SecurityBlock::isSecurityDestination(bundle, **it, get_our_name()))
+					dtn::security::PayloadIntegrityBlock pib_verify(rsa, dtn::core::BundleCore::local, dtn::security::SecurityBlock::getSecuritySource(bundle, **it));
+					if (dtn::security::SecurityBlock::isSecurityDestination(bundle, **it, dtn::core::BundleCore::local))
 						status_ok = (pib_verify.verifyAndRemoveMatchingBlock(bundle) > 0);
 					else
 					{
@@ -489,7 +489,7 @@ namespace dtn
 				}
 				else
 				{
-					if (dtn::security::SecurityBlock::isSecurityDestination(bundle, **it, get_our_name()))
+					if (dtn::security::SecurityBlock::isSecurityDestination(bundle, **it, dtn::core::BundleCore::local))
 						status_ok = false;
 				}
 			}
@@ -506,7 +506,7 @@ namespace dtn
 #ifdef __DEVELOPMENT_ASSERTIONS__
 				assert(getPrivateKey(dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK) != 0);
 #endif
-				dtn::security::ExtensionSecurityBlock esb_decrypt(getPrivateKey(dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK), get_our_name());
+				dtn::security::ExtensionSecurityBlock esb_decrypt(getPrivateKey(dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK), dtn::core::BundleCore::local);
 				status_ok = esb_decrypt.decryptBlock(bundle);
 				if (status_ok)
 					IBRCOMMON_LOGGER_ex(notice) << "Block from " << bundle._source.getString() << " successfully decrypted using ExtensionSecurityBlock" << IBRCOMMON_LOGGER_ENDL;
@@ -519,7 +519,7 @@ namespace dtn
 		{
 			dtn::security::KeyBlock& kb = bundle.push_back<dtn::security::KeyBlock>();
 			kb.addKey(getPublicKey(SecurityBlock::PAYLOAD_INTEGRITY_BLOCK));
-			kb.setTarget(get_our_name());
+			kb.setTarget(dtn::core::BundleCore::local);
 		}
 
 		int SecurityManager::outgoing_asymmetric(dtn::data::Bundle& bundle, const dtn::data::EID& origin)
@@ -559,7 +559,7 @@ namespace dtn
 						assert(getPrivateKey(it->getType()) != 0);
 #endif
 						IBRCOMMON_LOGGER_ex(notice) << "Adding a PayloadIntegrityBlock to a bundle with destination " << bundle._destination.getString() << IBRCOMMON_LOGGER_ENDL;
-						dtn::security::PayloadIntegrityBlock pib(getPrivateKey(it->getType()), get_our_name());
+						dtn::security::PayloadIntegrityBlock pib(getPrivateKey(it->getType()), dtn::core::BundleCore::local);
 						pib.addHash(bundle);
 						addKeyBlocksForPIB(bundle);
 						break;
@@ -573,7 +573,7 @@ namespace dtn
 						RSA * rsa = getPublicKey(*target_it, it->getType());
 
 						// here would be the place to add more keys to the PCB
-						dtn::security::PayloadConfidentialBlock pcb(rsa, get_our_name(), *target_it);
+						dtn::security::PayloadConfidentialBlock pcb(rsa, dtn::core::BundleCore::local, *target_it);
 						target_it++;
 						for (; target_it != it->getTargets().end(); target_it++)
 						{
@@ -610,7 +610,7 @@ namespace dtn
 			std::string key = getSymmetricKey(next_hop, dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK);
 			if (key.size() > 0)
 			{
-				dtn::security::BundleAuthenticationBlock bab(reinterpret_cast<unsigned char const *>(key.c_str()), key.size(), get_our_name(), next_hop);
+				dtn::security::BundleAuthenticationBlock bab(reinterpret_cast<unsigned char const *>(key.c_str()), key.size(), dtn::core::BundleCore::local, next_hop);
 				bab.addMAC(bundle);
 			}
 			return 0;
@@ -705,22 +705,15 @@ namespace dtn
 			for (std::list <const dtn::security::KeyBlock* >::iterator it = kbs.begin(); it != kbs.end(); it++)
 			{
 				dtn::security::KeyBlock const * kb = *it;
-				if (kb->getSecurityBlockType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK && kb->getTarget() == get_our_name())
+				if (kb->getSecurityBlockType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK && kb->getTarget() == dtn::core::BundleCore::local)
 					bundle.remove(*kb);
 			}
 
 			// TODO add later the ca and sub-ca
 			dtn::security::KeyBlock& kb = bundle.push_back<dtn::security::KeyBlock>();
 			kb.setSecurityBlockType(SecurityBlock::PAYLOAD_INTEGRITY_BLOCK);
-			kb.setTarget(get_our_name());
+			kb.setTarget(dtn::core::BundleCore::local);
 			kb.addKey(getPublicKey(SecurityBlock::PAYLOAD_INTEGRITY_BLOCK));
-		}
-
-		dtn::data::EID SecurityManager::get_our_name() const
-		{
-			std::string nodename = dtn::daemon::Configuration::getInstance().getNodename();
-			dtn::data::EID our_name(nodename);
-			return our_name.getNodeEID();
 		}
 
 		Configuration::SecurityRule SecurityManager::getRule(const dtn::data::EID& eid) const

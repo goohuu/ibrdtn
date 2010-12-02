@@ -152,10 +152,6 @@ namespace dtn
 				*/
 				static std::string loadKey(std::map<dtn::data::EID, std::string>&, const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
 
-				/**
-				Reads from configuration our name and converts it into an EID
-				*/
-				dtn::data::EID get_our_name() const;
 			protected:
 				/**
 				need a list of nodes, their security blocks type and the key
