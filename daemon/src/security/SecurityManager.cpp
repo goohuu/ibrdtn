@@ -1,4 +1,5 @@
 #include "security/SecurityManager.h"
+#include "security/SecurityKeyManager.h"
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
 #include <ibrcommon/Logger.h>
@@ -100,47 +101,47 @@ namespace dtn
 			}
 		}
 
-		RSA * SecurityManager::loadKey(std::map <dtn::data::EID, RSA* >& map, const dtn::data::EID& eid, SecurityBlock::BLOCK_TYPES bt)
-		{
-			RSA * rsa = 0;
-			std::map <dtn::data::EID, RSA* >::iterator it = map.find(eid.getNodeEID());
-			if (it == map.end())
-			{
-				std::string key = dtn::daemon::Configuration::getInstance().getSecurity().getPublicKey(eid.getNodeEID(), bt);
-				if (key.size() > 0)
-				{
-					SecurityManager::read_public_key(key, &rsa);
-					map[eid.getNodeEID()] = rsa;
-				}
-			}
-			else
-				rsa = it->second;
-			return rsa;
-		}
+//		RSA * SecurityManager::loadKey(std::map <dtn::data::EID, RSA* >& map, const dtn::data::EID& eid, SecurityBlock::BLOCK_TYPES bt)
+//		{
+//			RSA * rsa = 0;
+//			std::map <dtn::data::EID, RSA* >::iterator it = map.find(eid.getNodeEID());
+//			if (it == map.end())
+//			{
+//				std::string key = dtn::daemon::Configuration::getInstance().getSecurity().getPublicKey(eid.getNodeEID(), bt);
+//				if (key.size() > 0)
+//				{
+//					SecurityManager::read_public_key(key, &rsa);
+//					map[eid.getNodeEID()] = rsa;
+//				}
+//			}
+//			else
+//				rsa = it->second;
+//			return rsa;
+//		}
 
-		RSA * SecurityManager::loadKey_public(RSA ** rsa, SecurityBlock::BLOCK_TYPES bt)
-		{
-			if (*rsa == NULL)
-			{
-				std::pair<std::string, std::string> keys = dtn::daemon::Configuration::getInstance().getSecurity().getPrivateAndPublicKey(bt);
-				if (keys.first.size() > 0)
-					read_public_key(keys.second, rsa);
-			}
-
-			return *rsa;
-		}
-
-		RSA* SecurityManager::loadKey(RSA ** rsa, SecurityBlock::BLOCK_TYPES bt)
-		{
-			if (*rsa == NULL)
-			{
-				std::pair<std::string, std::string> keys = dtn::daemon::Configuration::getInstance().getSecurity().getPrivateAndPublicKey(bt);
-				if (keys.first.size() > 0)
-					read_private_key(keys.first, rsa);
-			}
-
-			return *rsa;
-		}
+//		RSA * SecurityManager::loadKey_public(RSA ** rsa, SecurityBlock::BLOCK_TYPES bt)
+//		{
+//			if (*rsa == NULL)
+//			{
+//				std::pair<std::string, std::string> keys = dtn::daemon::Configuration::getInstance().getSecurity().getPrivateAndPublicKey(bt);
+//				if (keys.first.size() > 0)
+//					read_public_key(keys.second, rsa);
+//			}
+//
+//			return *rsa;
+//		}
+//
+//		RSA* SecurityManager::loadKey(RSA ** rsa, SecurityBlock::BLOCK_TYPES bt)
+//		{
+//			if (*rsa == NULL)
+//			{
+//				std::pair<std::string, std::string> keys = dtn::daemon::Configuration::getInstance().getSecurity().getPrivateAndPublicKey(bt);
+//				if (keys.first.size() > 0)
+//					read_private_key(keys.first, rsa);
+//			}
+//
+//			return *rsa;
+//		}
 
 		std::string SecurityManager::readSymmetricKey(const std::string& file)
 		{
@@ -170,19 +171,19 @@ namespace dtn
 
 		std::string SecurityManager::loadKey(std::map<dtn::data::EID, std::string>& map, const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt)
 		{
-			std::string key("");
-			std::map<dtn::data::EID, std::string>::iterator it = map.find(node.getNodeEID());
-			if (it == map.end())
-			{
-				std::string keypath = dtn::daemon::Configuration::getInstance().getSecurity().getPublicKey(node.getNodeEID(), bt);
-				if (keypath.size() == 0)
-					return key;
-				key = readSymmetricKey(keypath);
-				map[node.getNodeEID()] = key;
-			}
-			else
-				key = it->second;
-			return key;
+//			std::string key("");
+//			std::map<dtn::data::EID, std::string>::iterator it = map.find(node.getNodeEID());
+//			if (it == map.end())
+//			{
+//				std::string keypath = dtn::daemon::Configuration::getInstance().getSecurity().getPublicKey(node.getNodeEID(), bt);
+//				if (keypath.size() == 0)
+//					return key;
+//				key = readSymmetricKey(keypath);
+//				map[node.getNodeEID()] = key;
+//			}
+//			else
+//				key = it->second;
+//			return key;
 		}
 
 		RSA * SecurityManager::getPublicKey(const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt)
@@ -213,7 +214,7 @@ namespace dtn
 					break;
 				}
 			}
-			return loadKey(*map, node.getNodeEID(), bt);
+			//return loadKey(*map, node.getNodeEID(), bt);
 		}
 
 		RSA * SecurityManager::getPublicKey(SecurityBlock::BLOCK_TYPES bt)
@@ -237,7 +238,7 @@ namespace dtn
 					break;
 			}
 
-			return loadKey_public(&rsa, bt);
+			//return loadKey_public(&rsa, bt);
 		}
 
 		RSA * SecurityManager::getPrivateKey(SecurityBlock::BLOCK_TYPES bt)
@@ -268,7 +269,7 @@ namespace dtn
 					break;
 				}
 			}
-			return loadKey(&rsa, bt);
+			//return loadKey(&rsa, bt);
 		}
 
 		std::string SecurityManager::getSymmetricKey(const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt)
@@ -298,14 +299,14 @@ namespace dtn
 
 			for (std::set<EID>::const_iterator it = neighbors.begin(); it != neighbors.end(); it++)
 			{
-				std::string key = conf.getPublicKey(*it, dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK);
-				if (key == "")
-				{
-					KeyBlock kb;
-					kb.setTarget(*it);
-					kb.setSecurityBlockType(SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK);
-					needed_keys.push_back(kb);
-				}
+//				std::string key = conf.getPublicKey(*it, dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK);
+//				if (key == "")
+//				{
+//					KeyBlock kb;
+//					kb.setTarget(*it);
+//					kb.setSecurityBlockType(SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK);
+//					needed_keys.push_back(kb);
+//				}
 			}
 
 			return needed_keys;
@@ -326,15 +327,15 @@ namespace dtn
 				const std::list<dtn::data::EID>& targets = it->getTargets();
 				for (std::list<dtn::data::EID>::const_iterator target_it = targets.begin(); target_it != targets.end(); target_it++)
 				{
-					// look if a key is present
-					if (conf.getPublicKey(*target_it, it->getType()) == "")
-					{
-						KeyBlock kb;
-						kb.setTarget(*target_it);
-						kb.setSecurityBlockType(it->getType());
-						needed_keys.push_back(kb);
-						KeyRequestEvent::raise(*target_it, it->getType());
-					}
+//					// look if a key is present
+//					if (conf.getPublicKey(*target_it, it->getType()) == "")
+//					{
+//						KeyBlock kb;
+//						kb.setTarget(*target_it);
+//						kb.setSecurityBlockType(it->getType());
+//						needed_keys.push_back(kb);
+//						KeyRequestEvent::raise(*target_it, it->getType());
+//					}
 				}
 			}
 			return needed_keys;
@@ -683,22 +684,24 @@ namespace dtn
 			std::list<const dtn::security::KeyBlock*> blocks = bundle.getBlocks<dtn::security::KeyBlock>();
 			for (std::list<const dtn::security::KeyBlock*>::iterator it = blocks.begin(); it != blocks.end(); it++)
 			{
+				const dtn::security::KeyBlock &keyblock = *(*it);
+
 				// carries the block a key?
-				if ((*it)->getKey() == "")
+				if (keyblock.getKey() == "")
 					continue;
 
 				// look if the key is already there
-				std::string old_key(conf.getPublicKey((*it)->getTarget(), (*it)->getSecurityBlockType()));
-
-				// save new key
-				if (!conf.storeKey((*it)->getTarget(), (*it)->getSecurityBlockType(), (*it)->getKey()))
+				if (SecurityKeyManager::getInstance().hasKey(keyblock.getTarget(), SecurityKeyManager::KEY_PUBLIC))
+				{
+					// should we update the key?
 					continue;
+				}
 
-				// delete old key or call newkeyReceived()
-				if (old_key.size() > 0)
-					deleteKey((*it)->getTarget(), (*it)->getSecurityBlockType());
-				else
-					newKeyReceived((*it)->getTarget(), (*it)->getSecurityBlockType());
+				// store the key
+				SecurityKeyManager::getInstance().store(keyblock.getTarget(), keyblock.getKey(), SecurityKeyManager::KEY_PUBLIC);
+
+				// and call newKeyReceived
+				newKeyReceived((*it)->getTarget(), (*it)->getSecurityBlockType());
 			}
 		}
 
@@ -733,7 +736,7 @@ namespace dtn
 			return it;
 		}
 
-		void SecurityManager::addKeyBlocksForPIB(Bundle& bundle)
+		void SecurityManager::addKeyBlocksForPIB(dtn::data::Bundle& bundle)
 		{
 			// check if the keyblock is already present
 			std::list <const dtn::security::KeyBlock* > kbs = bundle.getBlocks<dtn::security::KeyBlock>();
@@ -764,6 +767,5 @@ namespace dtn
 
 			return the_rule;
 		}
-
 	}
 }

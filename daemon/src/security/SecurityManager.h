@@ -181,33 +181,33 @@ namespace dtn
 				*/
 				void clearKeys();
 
-				/**
-				Loads a key from the Configuration (from the disk) into map, if it is
-				not there.
-				@param map a map of nodes and their keys
-				@param eid the eid of a node
-				@param bt the blocktype of the key
-				@return a pointer to the key or NULL if none exists
-				*/
-				static RSA * loadKey(std::map <dtn::data::EID, RSA* >&, const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
-
-				/**
-				 * If rsa is null the public key will be loaded from disk and
-				 * initializes rsa with this key. If there is no key rsa will be NULL.
-				 * @param rsa the key to be initialized if needed
-				 * @param bt the blocktype of the key
-				 * @return the RSA object if a key exists or NULL
-				 */
-				static RSA * loadKey_public(RSA ** rsa, SecurityBlock::BLOCK_TYPES bt);
-
-				/**
-				Loads a private key from the disk if it is not initialized and returns a
-				pointer to it, if it is not there NULL will be returned.
-				@param rsa a pointer to the pointer where the rsa object is stored
-				@param bt the blocktype of the key
-				@return a pointer to the key or NULL if none exists
-				*/
-				static RSA * loadKey(RSA **, dtn::security::SecurityBlock::BLOCK_TYPES);
+//				/**
+//				Loads a key from the Configuration (from the disk) into map, if it is
+//				not there.
+//				@param map a map of nodes and their keys
+//				@param eid the eid of a node
+//				@param bt the blocktype of the key
+//				@return a pointer to the key or NULL if none exists
+//				*/
+//				static RSA * loadKey(std::map <dtn::data::EID, RSA* >&, const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
+//
+//				/**
+//				 * If rsa is null the public key will be loaded from disk and
+//				 * initializes rsa with this key. If there is no key rsa will be NULL.
+//				 * @param rsa the key to be initialized if needed
+//				 * @param bt the blocktype of the key
+//				 * @return the RSA object if a key exists or NULL
+//				 */
+//				static RSA * loadKey_public(RSA ** rsa, SecurityBlock::BLOCK_TYPES bt);
+//
+//				/**
+//				Loads a private key from the disk if it is not initialized and returns a
+//				pointer to it, if it is not there NULL will be returned.
+//				@param rsa a pointer to the pointer where the rsa object is stored
+//				@param bt the blocktype of the key
+//				@return a pointer to the key or NULL if none exists
+//				*/
+//				static RSA * loadKey(RSA **, dtn::security::SecurityBlock::BLOCK_TYPES);
 
 				/**
 				Reads a symmetric key from a file. If from the file cannot be read ""

@@ -1,6 +1,7 @@
 #include "security/KeyServerWorker.h"
 #include "Configuration.h"
 #include "security/SecurityManager.h"
+#include "security/SecurityKeyManager.h"
 #include "core/BundleCore.h"
 #include <ibrdtn/security/KeyBlock.h>
 #include <ibrcommon/Logger.h>
@@ -198,7 +199,7 @@ namespace dtn
 					return;
 				}
 				// look if the key is not already present
-				if (dtn::daemon::Configuration::getInstance().getSecurity().getPublicKey(krevt->getEID(), krevt->getBlockType()) != "")
+				if (SecurityKeyManager::getInstance().hasKey(krevt->getEID(), SecurityKeyManager::KEY_PUBLIC))
 				{
 					IBRCOMMON_LOGGER_ex(notice) << "Key already present. Node: " << krevt->getEID().getString() << " with SecurityBlockType " << krevt->getBlockType() << IBRCOMMON_LOGGER_ENDL;
 					return;
@@ -252,14 +253,10 @@ namespace dtn
 		RSA * KeyServerWorker::findPublicKey(const dtn::data::EID node, dtn::security::SecurityBlock::BLOCK_TYPES type)
 		{
 			RSA * rsa = NULL;
-			const dtn::daemon::Configuration::Security& conf = dtn::daemon::Configuration::getInstance().getSecurity();
-			std::string key("");
-			if (dtn::data::EID(node.getNodeEID()) != dtn::core::BundleCore::local)
-				key = conf.getPublicKey(node, type);
-			else
-				key = conf.getPrivateAndPublicKey(type).second;
-			if (key.size() > 0)
-				SecurityManager::read_public_key(key, &rsa);
+			SecurityKeyManager::SecurityKey key = SecurityKeyManager::getInstance().get(node.getNodeEID(), SecurityKeyManager::KEY_PUBLIC);
+
+			if (key.data.size() > 0)
+				SecurityManager::read_public_key(key.data, &rsa);
 
 			return rsa;
 		}

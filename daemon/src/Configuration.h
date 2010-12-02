@@ -368,107 +368,100 @@ namespace dtn
 				*/
 				std::list<dtn::security::SecurityRule> getSecurityRules() const;
 
-				/**
-				Modifies the configuration according to the rule. It can be to add or to
-				remove a security rule.
-				@param rule the rule, which rules us
-				@return true if a rule has been removed or added, false if nothing
-				happened
-				*/
-				bool takeRule(const dtn::security::RuleBlock&);
-
-				/**
-				Returns a reference to the internal ConfigFile object, which manages the
-				keys and their values. It also supports reading from and writing to files.
-				@return the internal used ConfigFile object
-				*/
-				const ibrcommon::ConfigFile& getConfigFile() const;
-
-				/**
-				 Takes a string and replaces every occurence of target with replacement             *
-				 @param string the string to be modified
-				 @param target the part of the string, which shall be replaced
-				 @param replacement string, which shall be inserted into the position of target
-				 @return the new string
-				 */
-				std::string findAndReplace(std::string string, char * target, char * replacement) const;
-
-				/**
-				Creates a filename of the public key of a node with blocktype
-				@param target the name of the node
-				@param type the type of the security block
-				@return the filename of the public key
-				*/
-				std::string getFileNamePublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const;
-
-				/**
-				Returns the filepath of a public key, if it exists or "" if none exists.
-				@param eid the name of the node
-				@param bt the kind of the security block
-				@return the filepath of the public key
-				*/
-				std::string getPublicKey(const dtn::data::EID&, dtn::security::SecurityBlock::BLOCK_TYPES) const;
-
-				/**
-				Takes a filename of a public key and recreates the EID from it
-				@param file the file which should be parsed
-				@return the EID which was created from the file name
-				*/
-				dtn::data::EID createEIDFromFilename(const std::string&) const;
-
-				/**
-				Returns the path to the configuration directory
-				@return the path to the configuration
-				*/
-				std::string getConfigurationDirectory() const;
-
-				/**
-				Creates the path of a public key of a node with blocktype
-				@param target the name of the node
-				@param type the type of the security block
-				@return the filepath of the public key
-				*/
-				std::string getFilePathPublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const;
-
-				/**
-				Saves a key in the key storage.
-				@param target node to which this key belongs to
-				@param type the type of SecurityBlocks to which this key belongs to
-				@param key the key to be saved. It must be in DER format.
-				@return true if the key has been added, false if not
-				*/
-				bool storeKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type, const std::string& key);
-
-				/**
-				Deletes a key from the key storage.
-				@param target node to which this key belongs to
-				@param type the type of SecurityBlocks to which this key belongs to
-				@return true if a key has been deleted, false if not
-				*/
-				bool deleteKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type);
-
-				/**
-				 Searches for the private and public key of a security block
-				 @param type the type of the security block
-				 @return a pair with the filepath of the private key in the first position
-				 and the public key in the second position for the given blocktype
-				 */
-				std::pair<std::string, std::string> getPrivateAndPublicKey(SecurityBlock::BLOCK_TYPES type) const;
+//				/**
+//				Modifies the configuration according to the rule. It can be to add or to
+//				remove a security rule.
+//				@param rule the rule, which rules us
+//				@return true if a rule has been removed or added, false if nothing
+//				happened
+//				*/
+//				bool takeRule(const dtn::security::RuleBlock&);
+//
+//				/**
+//				 Takes a string and replaces every occurence of target with replacement             *
+//				 @param string the string to be modified
+//				 @param target the part of the string, which shall be replaced
+//				 @param replacement string, which shall be inserted into the position of target
+//				 @return the new string
+//				 */
+//				std::string findAndReplace(std::string string, char * target, char * replacement) const;
+//
+//				/**
+//				Creates a filename of the public key of a node with blocktype
+//				@param target the name of the node
+//				@param type the type of the security block
+//				@return the filename of the public key
+//				*/
+//				std::string getFileNamePublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const;
+//
+//				/**
+//				Returns the filepath of a public key, if it exists or "" if none exists.
+//				@param eid the name of the node
+//				@param bt the kind of the security block
+//				@return the filepath of the public key
+//				*/
+//				std::string getPublicKey(const dtn::data::EID&, dtn::security::SecurityBlock::BLOCK_TYPES) const;
+//
+//				/**
+//				Takes a filename of a public key and recreates the EID from it
+//				@param file the file which should be parsed
+//				@return the EID which was created from the file name
+//				*/
+//				dtn::data::EID createEIDFromFilename(const std::string&) const;
+//
+//				/**
+//				Returns the path to the configuration directory
+//				@return the path to the configuration
+//				*/
+//				std::string getConfigurationDirectory() const;
+//
+//				/**
+//				Creates the path of a public key of a node with blocktype
+//				@param target the name of the node
+//				@param type the type of the security block
+//				@return the filepath of the public key
+//				*/
+//				std::string getFilePathPublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const;
+//
+//				/**
+//				Saves a key in the key storage.
+//				@param target node to which this key belongs to
+//				@param type the type of SecurityBlocks to which this key belongs to
+//				@param key the key to be saved. It must be in DER format.
+//				@return true if the key has been added, false if not
+//				*/
+//				bool storeKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type, const std::string& key);
+//
+//				/**
+//				Deletes a key from the key storage.
+//				@param target node to which this key belongs to
+//				@param type the type of SecurityBlocks to which this key belongs to
+//				@return true if a key has been deleted, false if not
+//				*/
+//				bool deleteKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type);
+//
+//				/**
+//				 Searches for the private and public key of a security block
+//				 @param type the type of the security block
+//				 @return a pair with the filepath of the private key in the first position
+//				 and the public key in the second position for the given blocktype
+//				 */
+//				std::pair<std::string, std::string> getPrivateAndPublicKey(SecurityBlock::BLOCK_TYPES type) const;
 
 			private:
-				/**
-				Adds the given Rule to the security rules
-				@param rule the rule to be parsed and added
-				@return true if the rule has been added, false if not
-				*/
-				bool addSecurityRuleToConfiguration(const dtn::security::RuleBlock&);
-
-				/**
-				Removes the given Rule from the security rules
-				@param rule the rule to be removed
-				@return false if no rule was removed, true if a rule was removed
-				*/
-				bool removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock&);
+//				/**
+//				Adds the given Rule to the security rules
+//				@param rule the rule to be parsed and added
+//				@return true if the rule has been added, false if not
+//				*/
+//				bool addSecurityRuleToConfiguration(const dtn::security::RuleBlock&);
+//
+//				/**
+//				Removes the given Rule from the security rules
+//				@param rule the rule to be removed
+//				@return false if no rule was removed, true if a rule was removed
+//				*/
+//				bool removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock&);
 
 				std::list<std::string> _rules;
 #endif

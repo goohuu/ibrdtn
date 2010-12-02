@@ -91,6 +91,9 @@ namespace dtn
 		Configuration::Network::Network()
 		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false) {};
 
+		Configuration::Security::Security()
+		{};
+
 		Configuration::Discovery::~Discovery() {};
 		Configuration::Statistic::~Statistic() {};
 		Configuration::Debug::~Debug() {};
@@ -240,10 +243,6 @@ namespace dtn
 		}
 
 		void Configuration::Debug::load(const ibrcommon::ConfigFile&)
-		{
-		}
-
-		void Configuration::Security::load(const ibrcommon::ConfigFile&)
 		{
 		}
 
@@ -629,7 +628,7 @@ namespace dtn
 			return 0;
 		}
 
-		Configuration::Security::Security()
+		void Configuration::Security::load(const ibrcommon::ConfigFile &conf)
 		{
 #ifdef WITH_BUNDLE_SECURITY
 			// load rules
@@ -640,10 +639,10 @@ namespace dtn
 			std::string _prefix(_sec_route_prefix);
 			_prefix.append("0");
 
-			while ( _conf.keyExists(_prefix) )
+			while ( conf.keyExists(_prefix) )
 			{
-				std::string route(_conf.read<string>(_prefix));
-				rules.push_back(route);
+				std::string route(conf.read<string>(_prefix));
+				_rules.push_back(route);
 
 				count++;
 
@@ -666,288 +665,284 @@ namespace dtn
 		}
 
 #ifdef WITH_BUNDLE_SECURITY
-		list< string > Configuration::Security::getSecurityRules_string() const
+		std::list< std::string > Configuration::Security::getSecurityRules_string() const
 		{
 			return _rules;
 		}
 
 		std::list<dtn::security::SecurityRule> Configuration::Security::getSecurityRules() const
 		{
-			for (std::list<std::string>::iterator it = _rules.begin(); it != _rules.end(); it++)
-				rules.push_back(SecurityRule(*it));
+			std::list<SecurityRule> rules;
+			for (std::list<std::string>::const_iterator it = _rules.begin(); it != _rules.end(); it++)
+				rules.push_back(dtn::security::SecurityRule(*it));
 
 			return rules;
 		}
 
-		bool Configuration::Security::takeRule(const dtn::security::RuleBlock& rule)
-		{
-			bool result = false;
-			switch (rule.getAction())
-			{
-				case dtn::security::RuleBlock::ADD:
-					result = addSecurityRuleToConfiguration(rule);
-					break;
-				case dtn::security::RuleBlock::REMOVE:
-					result = removeSecurityRuleFromConfiguration(rule);
-					break;
-			}
-
-			if (result)
-			{
-				// write the new configuration
-				std::string newconf(_filename);
-				newconf.append("~");
-				std::ofstream out(newconf.c_str());
-				if( !out ) throw ibrcommon::ConfigFile::file_not_found( newconf );
-				out << _conf;
-
-				std::rename(newconf.c_str(), _filename.c_str());
-
-				// reload rules
-				SecurityManager::getInstance().readRoutingTable();
-			}
-
-			return result;
-		}
-
-		const ibrcommon::ConfigFile& Configuration::Security::getConfigFile() const
-		{
-			return _conf;
-		}
-
-		std::string Configuration::Security::findAndReplace(std::string string, char * target, char * replacement) const
-		{
-			std::string target_string(target);
-
-			size_t pos = string.find(target_string);
-			while (pos != std::string::npos)
-			{
-				string.replace(pos, target_string.size(), replacement);
-				pos = string.find(target_string);
-			}
-
-			return string;
-		}
-
-		std::string Configuration::Security::getFileNamePublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const
-		{
-			// name format is:
-			// node_scheme + '_' + node_ssp + '_' + type_name + "_pubkey.pem"
-			std::string type_name;
-			switch (type)
-			{
-				case dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
-					type_name = _bab_prefix;
-					break;
-				case dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
-					type_name = _pib_prefix;
-					break;
-				case dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
-					type_name = _pcb_prefix;
-					break;
-				case dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK:
-					type_name = _esb_prefix;
-					break;
-			}
-			std::string filename("");
-			filename.append(target.getScheme())
-				.append(_deliminiter)
-				.append(findAndReplace(target.getNode(), "/", ""))
-				.append(_deliminiter)
-				.append(type_name);
-			if (type != dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK)
-				filename.append(_pubkey_ending);
-			return filename;
-		}
-
-		std::string Configuration::Security::getPublicKey(const dtn::data::EID& eid, dtn::security::SecurityBlock::BLOCK_TYPES bt) const
-		{
-			std::string key(getFilePathPublicKey(eid, bt));
-
-			struct stat stFileInfo;
-			int intStat;
-
-			// Attempt to get the file attributes
-			intStat = stat(key.c_str(),&stFileInfo);
-			if(intStat != 0)
-			{
-				// We were not able to get the file attributes.
-				// This may mean that we don't have permission to
-				// access the folder which contains this file. If you
-				// need to do that level of checking, lookup the
-				// return values of stat which will give you
-				// more details on why stat failed.
-				key = "";
-			}
-
-			return key;
-		}
-
-		dtn::data::EID Configuration::Security::createEIDFromFilename(const std::string& file) const
-		{
-			// first chars until '_' are the scheme, the next chars until '_' are the
-			// ssp
-			size_t scheme_pos = file.find(_deliminiter);
-			size_t ssp_pos = file.find(_deliminiter, scheme_pos+1);
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(scheme_pos != std::string::npos && ssp_pos != std::string::npos);
-#endif
-
-			std::string scheme(file.substr(0, scheme_pos));
-			std::string ssp(std::string("//").append(file.substr(scheme_pos+1, ssp_pos - scheme_pos - 1)));
-
-			return dtn::data::EID(scheme, ssp);
-		}
-
-		string Configuration::Security::getConfigurationDirectory() const
-		{
-			std::string filepath("");
-			size_t pos = _filename.rfind('/');
-			if (pos != std::string::npos)
-				filepath.append(_filename.substr(0, pos+1));
-			return filepath;
-		}
-
-		std::string Configuration::Security::getFilePathPublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const
-		{
-			return getConfigurationDirectory().append(getFileNamePublicKey(target, type));
-		}
-
-		bool Configuration::Security::storeKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type, const std::string& key)
-		{
-			// read key
-			RSA * rsa_key = dtn::security::KeyBlock::createRSA(key);
-
-			// save as PEM
-			std::string filename(getFilePathPublicKey(target, type));
-			FILE * file = fopen(filename.c_str(), "w");
-			if (file == NULL)
-				return false;
-			PEM_write_RSA_PUBKEY(file, rsa_key);
-			fclose(file);
-
-			RSA_free(rsa_key);
-			return true;
-		}
-
-		bool Configuration::Security::deleteKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type)
-		{
-			std::string filename(getFilePathPublicKey(target, type));
-			if (remove(filename.c_str()) == 0)
-				return true;
-			else
-			{
-				std::string error("Error deleting a key ");
-				error.append(filename);
-				perror(error.c_str());
-				return false;
-			}
-		}
-
-		std::pair<std::string, std::string> Configuration::Security::getPrivateAndPublicKey(SecurityBlock::BLOCK_TYPES type) const
-		{
-			std::string prefix;
-			switch (type)
-			{
-				case SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
-					prefix = _bab_prefix;
-					break;
-				case SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
-					prefix = _pib_prefix;
-					break;
-				case SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
-					prefix = _pcb_prefix;
-					break;
-				case SecurityBlock::EXTENSION_SECURITY_BLOCK:
-					prefix = _esb_prefix;
-					break;
-			}
-
-			// initial prefix
-			std::string _prefix(prefix);
-			_prefix.append("0");
-			if ( _conf.keyExists(_prefix + _private_postfix) )
-			{
-				std::string private_key(_conf.read<string>(_prefix + _private_postfix));
-				std::string public_key(_conf.read<string>(_prefix + _public_postfix));
-
-				if (private_key != "")
-					private_key = getConfigurationDirectory().append(private_key);
-				if (public_key != "")
-					public_key= getConfigurationDirectory().append(public_key);
-
-				return std::pair<string, string>(private_key, public_key);
-			}
-			else
-				return std::pair<string, string>("", "");
-		}
-
-		bool Configuration::Security::addSecurityRuleToConfiguration(const dtn::security::RuleBlock& rule)
-		{
-			std::string rule_string = rule.getRule();
-			dtn::security::RuleBlock::Directions dir = rule.getDirection();
-
-			SecurityRule sec_rule(rule_string);
-			// test if parsing was successfully
-			if (sec_rule.getRules().size() == 0)
-				return false;
-
-			// get the right number of this rule
-			// read the node count
-			int count = 0;
-
-			// initial prefix
-			std::string _prefix(_sec_route_prefix);
-			_prefix.append("0");
-
-			while ( _conf.keyExists(_prefix) )
-			{
-				count++;
-				std::stringstream prefix_stream;
-				prefix_stream << _sec_route_prefix << count;
-				_prefix = prefix_stream.str();
-			}
-
-			// place the new rule, after the other rules in the configuration
-			_conf.add<std::string>(_prefix, rule_string);
-			return true;
-		}
-
-		bool Configuration::Security::removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock& rule)
-		{
-			std::string rule_string = rule.getRule();
-			dtn::security::RuleBlock::Directions dir = rule.getDirection();
-
-			// look after this rule in the config
-			// read the node count
-			int count = 0;
-
-			// initial prefix
-			std::string _prefix(_sec_route_prefix);
-			_prefix.append("0");
-
-			while ( _conf.keyExists(_prefix) )
-			{
-				std::string rule_from_config = _conf.read<string>(_prefix);
-				if (rule_from_config == rule_string)
-					break;
-
-				count++;
-				std::stringstream prefix_stream;
-				prefix_stream << _sec_route_prefix << count;
-				_prefix = prefix_stream.str();
-			}
-
-			// test if rule was found
-			if (!_conf.keyExists(_prefix))
-				return false;
-			else
-			{
-				_conf.remove(_prefix);
-				return true;
-			}
-		}
+//		bool Configuration::Security::takeRule(const dtn::security::RuleBlock& rule)
+//		{
+//			bool result = false;
+//			switch (rule.getAction())
+//			{
+//				case dtn::security::RuleBlock::ADD:
+//					result = addSecurityRuleToConfiguration(rule);
+//					break;
+//				case dtn::security::RuleBlock::REMOVE:
+//					result = removeSecurityRuleFromConfiguration(rule);
+//					break;
+//			}
+//
+//			if (result)
+//			{
+//				// write the new configuration
+//				std::string newconf(_filename);
+//				newconf.append("~");
+//				std::ofstream out(newconf.c_str());
+//				if( !out ) throw ibrcommon::ConfigFile::file_not_found( newconf );
+//				out << _conf;
+//
+//				std::rename(newconf.c_str(), _filename.c_str());
+//
+//				// reload rules
+//				SecurityManager::getInstance().readRoutingTable();
+//			}
+//
+//			return result;
+//		}
+//
+//		std::string Configuration::Security::findAndReplace(std::string string, char * target, char * replacement) const
+//		{
+//			std::string target_string(target);
+//
+//			size_t pos = string.find(target_string);
+//			while (pos != std::string::npos)
+//			{
+//				string.replace(pos, target_string.size(), replacement);
+//				pos = string.find(target_string);
+//			}
+//
+//			return string;
+//		}
+//
+//		std::string Configuration::Security::getFileNamePublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const
+//		{
+//			// name format is:
+//			// node_scheme + '_' + node_ssp + '_' + type_name + "_pubkey.pem"
+//			std::string type_name;
+//			switch (type)
+//			{
+//				case dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
+//					type_name = _bab_prefix;
+//					break;
+//				case dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
+//					type_name = _pib_prefix;
+//					break;
+//				case dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
+//					type_name = _pcb_prefix;
+//					break;
+//				case dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK:
+//					type_name = _esb_prefix;
+//					break;
+//			}
+//			std::string filename("");
+//			filename.append(target.getScheme())
+//				.append(_deliminiter)
+//				.append(findAndReplace(target.getNode(), "/", ""))
+//				.append(_deliminiter)
+//				.append(type_name);
+//			if (type != dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK)
+//				filename.append(_pubkey_ending);
+//			return filename;
+//		}
+//
+//		std::string Configuration::Security::getPublicKey(const dtn::data::EID& eid, dtn::security::SecurityBlock::BLOCK_TYPES bt) const
+//		{
+//			std::string key(getFilePathPublicKey(eid, bt));
+//
+//			struct stat stFileInfo;
+//			int intStat;
+//
+//			// Attempt to get the file attributes
+//			intStat = stat(key.c_str(),&stFileInfo);
+//			if(intStat != 0)
+//			{
+//				// We were not able to get the file attributes.
+//				// This may mean that we don't have permission to
+//				// access the folder which contains this file. If you
+//				// need to do that level of checking, lookup the
+//				// return values of stat which will give you
+//				// more details on why stat failed.
+//				key = "";
+//			}
+//
+//			return key;
+//		}
+//
+//		dtn::data::EID Configuration::Security::createEIDFromFilename(const std::string& file) const
+//		{
+//			// first chars until '_' are the scheme, the next chars until '_' are the
+//			// ssp
+//			size_t scheme_pos = file.find(_deliminiter);
+//			size_t ssp_pos = file.find(_deliminiter, scheme_pos+1);
+//
+//#ifdef __DEVELOPMENT_ASSERTIONS__
+//			assert(scheme_pos != std::string::npos && ssp_pos != std::string::npos);
+//#endif
+//
+//			std::string scheme(file.substr(0, scheme_pos));
+//			std::string ssp(std::string("//").append(file.substr(scheme_pos+1, ssp_pos - scheme_pos - 1)));
+//
+//			return dtn::data::EID(scheme, ssp);
+//		}
+//
+//		string Configuration::Security::getConfigurationDirectory() const
+//		{
+//			std::string filepath("");
+//			size_t pos = _filename.rfind('/');
+//			if (pos != std::string::npos)
+//				filepath.append(_filename.substr(0, pos+1));
+//			return filepath;
+//		}
+//
+//		std::string Configuration::Security::getFilePathPublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const
+//		{
+//			return getConfigurationDirectory().append(getFileNamePublicKey(target, type));
+//		}
+//
+//		bool Configuration::Security::storeKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type, const std::string& key)
+//		{
+//			// read key
+//			RSA * rsa_key = dtn::security::KeyBlock::createRSA(key);
+//
+//			// save as PEM
+//			std::string filename(getFilePathPublicKey(target, type));
+//			FILE * file = fopen(filename.c_str(), "w");
+//			if (file == NULL)
+//				return false;
+//			PEM_write_RSA_PUBKEY(file, rsa_key);
+//			fclose(file);
+//
+//			RSA_free(rsa_key);
+//			return true;
+//		}
+//
+//		bool Configuration::Security::deleteKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type)
+//		{
+//			std::string filename(getFilePathPublicKey(target, type));
+//			if (remove(filename.c_str()) == 0)
+//				return true;
+//			else
+//			{
+//				std::string error("Error deleting a key ");
+//				error.append(filename);
+//				perror(error.c_str());
+//				return false;
+//			}
+//		}
+//
+//		std::pair<std::string, std::string> Configuration::Security::getPrivateAndPublicKey(SecurityBlock::BLOCK_TYPES type) const
+//		{
+//			std::string prefix;
+//			switch (type)
+//			{
+//				case SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
+//					prefix = _bab_prefix;
+//					break;
+//				case SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
+//					prefix = _pib_prefix;
+//					break;
+//				case SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
+//					prefix = _pcb_prefix;
+//					break;
+//				case SecurityBlock::EXTENSION_SECURITY_BLOCK:
+//					prefix = _esb_prefix;
+//					break;
+//			}
+//
+//			// initial prefix
+//			std::string _prefix(prefix);
+//			_prefix.append("0");
+//			if ( _conf.keyExists(_prefix + _private_postfix) )
+//			{
+//				std::string private_key(_conf.read<string>(_prefix + _private_postfix));
+//				std::string public_key(_conf.read<string>(_prefix + _public_postfix));
+//
+//				if (private_key != "")
+//					private_key = getConfigurationDirectory().append(private_key);
+//				if (public_key != "")
+//					public_key= getConfigurationDirectory().append(public_key);
+//
+//				return std::pair<string, string>(private_key, public_key);
+//			}
+//			else
+//				return std::pair<string, string>("", "");
+//		}
+//
+//		bool Configuration::Security::addSecurityRuleToConfiguration(const dtn::security::RuleBlock& rule)
+//		{
+//			std::string rule_string = rule.getRule();
+//			dtn::security::RuleBlock::Directions dir = rule.getDirection();
+//
+//			SecurityRule sec_rule(rule_string);
+//			// test if parsing was successfully
+//			if (sec_rule.getRules().size() == 0)
+//				return false;
+//
+//			// get the right number of this rule
+//			// read the node count
+//			int count = 0;
+//
+//			// initial prefix
+//			std::string _prefix(_sec_route_prefix);
+//			_prefix.append("0");
+//
+//			while ( _conf.keyExists(_prefix) )
+//			{
+//				count++;
+//				std::stringstream prefix_stream;
+//				prefix_stream << _sec_route_prefix << count;
+//				_prefix = prefix_stream.str();
+//			}
+//
+//			// place the new rule, after the other rules in the configuration
+//			_conf.add<std::string>(_prefix, rule_string);
+//			return true;
+//		}
+//
+//		bool Configuration::Security::removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock& rule)
+//		{
+//			std::string rule_string = rule.getRule();
+//			dtn::security::RuleBlock::Directions dir = rule.getDirection();
+//
+//			// look after this rule in the config
+//			// read the node count
+//			int count = 0;
+//
+//			// initial prefix
+//			std::string _prefix(_sec_route_prefix);
+//			_prefix.append("0");
+//
+//			while ( _conf.keyExists(_prefix) )
+//			{
+//				std::string rule_from_config = _conf.read<string>(_prefix);
+//				if (rule_from_config == rule_string)
+//					break;
+//
+//				count++;
+//				std::stringstream prefix_stream;
+//				prefix_stream << _sec_route_prefix << count;
+//				_prefix = prefix_stream.str();
+//			}
+//
+//			// test if rule was found
+//			if (!_conf.keyExists(_prefix))
+//				return false;
+//			else
+//			{
+//				_conf.remove(_prefix);
+//				return true;
+//			}
+//		}
 #endif
 
 		bool Configuration::Logger::quiet() const

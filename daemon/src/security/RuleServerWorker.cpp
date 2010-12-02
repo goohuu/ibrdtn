@@ -23,7 +23,8 @@ namespace dtn
 			std::list<dtn::security::RuleBlock const *> rbs = b.getBlocks<dtn::security::RuleBlock>();
 			for (std::list<dtn::security::RuleBlock const *>::iterator it = rbs.begin(); it != rbs.end(); it++)
 			{
-				conf.takeRule(**it);
+				// TODO: store/process rules
+				//conf.takeRule(**it);
 			}
 			
 			if (rbs.size() == 0)
