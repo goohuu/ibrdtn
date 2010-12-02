@@ -472,6 +472,7 @@ namespace dtn
 			const Configuration::Logger& getLogger() const;
 			const Configuration::Network& getNetwork() const;
 
+#ifdef WITH_BUNDLE_SECURITY
 			/**
 			 Reads all security rules from the configuration.
 			 @return a list of all security rules found in the configuration, but
@@ -572,6 +573,7 @@ namespace dtn
 			 and the public key in the second position for the given blocktype
 			 */
 			std::pair<std::string, std::string> getPrivateAndPublicKey(SecurityBlock::BLOCK_TYPES type) const;
+#endif
 
 		private:
 			ibrcommon::ConfigFile _conf;
@@ -581,9 +583,10 @@ namespace dtn
 			Configuration::Logger _logger;
 			Configuration::Network _network;
 
-			string _filename;
+			std::string _filename;
 			bool _doapi;
 
+#ifdef WITH_BUNDLE_SECURITY
 			/**
 			Adds the given Rule to the security rules
 			@param rule the rule to be parsed and added
@@ -597,6 +600,7 @@ namespace dtn
 			@return false if no rule was removed, true if a rule was removed
 			*/
 			bool removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock&);
+#endif
 		};
 	}
 }

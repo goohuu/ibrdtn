@@ -118,6 +118,26 @@ AM_CONDITIONAL(SQLITE, test x$use_sqlite = xyes)
 AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)
 
 dnl -----------------------------------------------
+dnl optional parameter: DTN security support
+dnl -----------------------------------------------
+
+AC_ARG_WITH(dtnsec,
+	AS_HELP_STRING([--with-dtnsec], [build with DTNSEC support
+		@<:@default=no@:>@]),
+	[
+	if test "x$with_dtnsec" = "xyes"; then
+		AC_CHECK_HEADERS([ibrcommon/ssl/AES128Stream.h ibrcommon/ssl/RSASHA256Stream.h])
+		AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
+	else
+		with_dtnsec="no"
+	fi
+	],[
+	with_dtnsec="no"
+])
+
+AM_CONDITIONAL(DTNSEC, test x$with_dtnsec = xyes)
+
+dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 
