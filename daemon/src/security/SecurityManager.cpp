@@ -49,6 +49,11 @@ namespace dtn
 			bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
 		}
 
+		void SecurityManager::fastverify(const dtn::data::Bundle &bundle) const throw (VerificationFailedException)
+		{
+			// TODO: do a fast verify without manipulating the bundle
+		}
+
 		void SecurityManager::decrypt(dtn::data::Bundle &bundle) const throw (DecryptException, KeyMissingException)
 		{
 			// TODO: check if the bundle has to be decrypted, return when not

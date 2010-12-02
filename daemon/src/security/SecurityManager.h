@@ -84,9 +84,15 @@ namespace dtn
 
 				/**
 				 * This method verifies the bundle.
-				 * @param bundle
+				 * @param bundle The bundle to verify.
 				 */
 				void verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
+
+				/**
+				 * This method do a fast verify with the bundle. It do not change anything in it.
+				 * @param bundle The bundle to verify.
+				 */
+				void fastverify(const dtn::data::Bundle &bundle) const throw (VerificationFailedException);
 
 				/**
 				 * This method decrypts encrypted payload of a bundle.

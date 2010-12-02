@@ -259,15 +259,14 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
-#ifdef WITH_BUNDLE_SECURITY_DISABLED
+#ifdef WITH_BUNDLE_SECURITY
 			// lets see if signatures and hashes are correct and it decrypts if needed
 			// the const_cast is dangerous, but in BundleReceivedEvent::raise() bundle was not const, so I think it will be ok
-			if (!dtn::security::SecurityManager::getInstance().incoming(b))
-			{
-				IBRCOMMON_LOGGER(warning) << "bundle rejected: security checks failed (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+			try {
+				dtn::security::SecurityManager::getInstance().fastverify(b);
+			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
+				IBRCOMMON_LOGGER(notice) << "bundle rejected: security checks failed: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("security checks failed");
-
-				return;
 			}
 #endif
 		}
