@@ -20,7 +20,11 @@ namespace dtn
 			BundleString(std::string value);
 			BundleString();
 			virtual ~BundleString();
-
+			
+			/**
+			 * This method returns the length of the full encoded bundle string.
+			 * @return The length of the full encoded bundle string
+			 */
 			size_t getLength() const;
 
 		private:

@@ -1,6 +1,6 @@
 ## Source directory
 
-SUBDIRS = api data streams utils
+SUBDIRS = api data streams utils security
 
 noinst_HEADERS = config.h
 
@@ -15,5 +15,5 @@ AM_LDFLAGS = @ibrcommon_LIBS@
 
 lib_LTLIBRARIES= libibrdtn.la
 libibrdtn_la_SOURCES= $(h_sources) $(cc_sources)
-libibrdtn_la_LIBADD= api/libapi.la data/libdata.la streams/libstreams.la utils/libutils.la
+libibrdtn_la_LIBADD= api/libapi.la data/libdata.la streams/libstreams.la utils/libutils.la security/libsecurity.la
 libibrdtn_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)

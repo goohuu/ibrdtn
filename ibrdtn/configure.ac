@@ -104,6 +104,7 @@ AC_CONFIG_FILES([Makefile \
 	ibrdtn/data/Makefile \
 	ibrdtn/streams/Makefile \
 	ibrdtn/utils/Makefile \
+	ibrdtn/security/Makefile \
 	tests/Makefile])
 	
 AC_OUTPUT
