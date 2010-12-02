@@ -51,6 +51,12 @@
 #include "StatisticLogger.h"
 #include "Component.h"
 
+#ifdef WITH_BUNDLE_SECURITY
+#include "SecurityManager.h"
+#include "RuleServerWorker.h"
+#include "KeyServerWorker.h"
+#endif
+
 #include <csignal>
 #include <sys/types.h>
 #include <syslog.h>
@@ -427,6 +433,11 @@ int main(int argc, char *argv[])
 	// create the base router
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
+#ifdef WITH_BUNDLE_SECURITY
+	// read configuration of the security class
+	dtn::daemon::SecurityManager::getInstance().readRoutingTable();
+#endif
+
 	// add routing extensions
 	switch (conf.getNetwork().getRoutingExtension())
 	{
@@ -578,6 +589,14 @@ int main(int argc, char *argv[])
 
 	// add DevNull module
 	DevNull devnull;
+
+#ifdef WITH_BUNDLE_SECURITY
+	// for key distribution
+	KeyServerWorker keyserver;
+
+	// receiving and sending new rules
+	RuleServerWorker rs;
+#endif
 
 	// announce static nodes, create a list of static nodes
 	list<Node> static_nodes = conf.getNetwork().getStaticNodes();

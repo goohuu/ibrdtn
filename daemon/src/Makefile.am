@@ -42,6 +42,12 @@ daemon_SOURCES =  ApiServer.cpp \
 				StatisticLogger.h \
 				StatisticLogger.cpp
 
+
+if DTNSEC
+daemon_SOURCES += SecurityManager.h SecurityManager.cpp KeyServerWorker.h \
+	KeyServerWorker.cpp RuleServerWorker.h RuleServerWorker.cpp
+endif
+
 noinst_LTLIBRARIES = libdaemon.la
 libdaemon_la_SOURCES= $(daemon_SOURCES)
 libdaemon_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la

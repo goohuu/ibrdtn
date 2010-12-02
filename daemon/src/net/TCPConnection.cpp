@@ -25,6 +25,10 @@
 #include <iostream>
 #include <iomanip>
 
+#ifdef WITH_BUNDLE_SECURITY
+#include <SecurityManager.h>
+#endif
+
 namespace dtn
 {
 	namespace net
@@ -362,8 +366,16 @@ namespace dtn
 						dtn::data::BundleID _current_transfer = getnpop(true, _keepalive_timeout);
 
 						try {
+#ifdef WITH_BUNDLE_SECURITY
+							// read the bundle out of the storage
+							dtn::data::Bundle bundle = storage.get(_current_transfer);
+
+							// Apply BundleAuthenticationBlocks, if keys are present
+							dtn::daemon::SecurityManager::getInstance().outgoing_p2p(EID(_connection.getNode().getURI()), bundle);
+#else
 							// read the bundle out of the storage
 							const dtn::data::Bundle bundle = storage.get(_current_transfer);
+#endif
 
 							// enable cancellation during transmission
 							ibrcommon::Thread::CancelProtector cprotect(true);

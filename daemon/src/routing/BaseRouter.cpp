@@ -23,6 +23,10 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
 
+#ifdef WITH_BUNDLE_SECURITY
+#include "SecurityManager.h"
+#endif
+
 namespace dtn
 {
 	namespace routing
@@ -179,6 +183,16 @@ namespace dtn
 
 				// Store incoming bundles into the storage
 				try {
+#ifdef WITH_BUNDLE_SECURITY
+					// lets see if signatures and hashes are correct and it decrypts if needed
+					// the const_cast is dangerous, but in BundleReceivedEvent::raise() bundle was not const, so I think it will be ok
+					if (!dtn::daemon::SecurityManager::getInstance().incoming(const_cast<dtn::data::Bundle&>(received.bundle)))
+					{
+						IBRCOMMON_LOGGER(notice) << "Security checks failed, bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+						return;
+					}
+#endif
+
 					if (received.fromlocal)
 					{
 						// store the bundle into a storage module
@@ -199,8 +213,14 @@ namespace dtn
 						// set the bundle as known
 						setKnown(received.bundle);
 
+#ifdef WITH_BUNDLE_SECURITY
+						// so lange das senden des QueueBundleEvent verzögern, bis alle schlüssel zum verschicken da sind
+						// outgoing in 2 Teile zeilen, eines für symmetrische und eines für asymmetrische verschlüsselung
+						dtn::daemon::SecurityManager::getInstance().outgoing_asymmetric(const_cast<dtn::data::Bundle&>(received.bundle), received.peer);
+#else
 						// raise the queued event to notify all receivers about the new bundle
 						QueueBundleEvent::raise(received.bundle, received.peer);
+#endif
 					}
 
 					// finally create a bundle received event
@@ -228,7 +248,11 @@ namespace dtn
 					_storage.store(generated.bundle);
 
 					// raise the queued event to notify all receivers about the new bundle
-					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
+#ifdef WITH_BUNDLE_SECURITY
+					dtn::daemon::SecurityManager::getInstance().outgoing_asymmetric(const_cast<dtn::data::Bundle&>(generated.bundle), dtn::core::BundleCore::local);
+#else
+ 					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
+#endif
 
 				} catch (ibrcommon::IOException ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
