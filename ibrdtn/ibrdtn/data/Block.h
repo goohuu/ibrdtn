@@ -15,11 +15,16 @@
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/Serializer.h"
 #include <ibrcommon/Exceptions.h>
-
-#include <string>
+#include <list>
 
 namespace dtn
 {
+	namespace security
+	{
+		class StrictSerializer;
+		class MutualSerializer;
+	}
+
 	namespace data
 	{
 		class Bundle;
@@ -28,6 +33,8 @@ namespace dtn
 		{
 			friend class Bundle;
 			friend class DefaultSerializer;
+			friend class dtn::security::StrictSerializer;
+			friend class dtn::security::MutualSerializer;
 			friend class DefaultDeserializer;
 			friend class SeparateSerializer;
 			friend class SeparateDeserializer;
@@ -57,20 +64,65 @@ namespace dtn
 		protected:
 			/**
 			 * The constructor of this class is protected to prevent instantiation of this abstract class.
-			 * @param bundle
-			 * @param blocktype
-			 * @return
+			 * @param blocktype The type of the block.
 			 */
 			Block(char blocktype);
-			char _blocktype;
-			size_t _blocksize;
-			std::list<dtn::data::EID> _eids;
 
+			/**
+			 * Return the length of the payload, if this were an abstract block. It is
+			 * the length put in the third field, after block type and processing flags.
+			 */
 			virtual size_t getLength() const = 0;
+
+			/**
+			 * Return by default the same length as getLength(). But if the length of
+			 * normal and mutable serialization differ, this function has to be
+			 * overridden
+			 * @return the size of the payload in mutable serialization
+			 */
+			virtual size_t getLength_mutable() const
+			{
+				return getLength();
+			}
+
+			/**
+			 * Serialize the derived block payload.
+			 * @param stream A output stream to serialize into.
+			 * @return The same reference as given with the stream parameter.
+			 */
 			virtual std::ostream &serialize(std::ostream &stream) const = 0;
+
+			/**
+			 * By default this function does nothing else than serialize(std::ostream&).
+			 * Children have to implement it in their own way if different treatment for
+			 * serialization is needed.
+			 * @param stream the stream in which should be written
+			 * @param mutual if true the mode is mutual
+			 * @return the same stream as the input stream
+			 */
+			virtual std::ostream& serialize(std::ostream& stream, const bool&) const
+			{
+				return serialize(stream);
+			}
+
+			/**
+			 * Deserialize the derived block payload.
+			 * @param stream A input stream to deserialize from.
+			 * @return The same reference as given with the stream parameter.
+			 */
 			virtual std::istream &deserialize(std::istream &stream) = 0;
 
+			// block type of this block
+			char _blocktype;
+
+			// block size of the block, this is used by the serializer to store the deserialized value
+			size_t _blocksize;
+
+			// the list of EID references embedded in this block
+			std::list<dtn::data::EID> _eids;
+
 		private:
+			// block processing flags
 			size_t _procflags;
 		};
 	}

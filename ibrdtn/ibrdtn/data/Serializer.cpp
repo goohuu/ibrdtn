@@ -609,7 +609,9 @@ namespace dtn
 			dtn::data::SDNV procflags_sdnv;
 			_stream.get(obj._blocktype);
 			_stream >> procflags_sdnv;
-			obj._procflags = procflags_sdnv.getValue();
+
+			// set the processing flags but do not overwrite the lastblock bit
+			obj._procflags = procflags_sdnv.getValue() & (~(dtn::data::Block::LAST_BLOCK) | obj._procflags);
 
 			// read EIDs
 			if ( obj._procflags & dtn::data::Block::BLOCK_CONTAINS_EIDS)

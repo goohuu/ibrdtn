@@ -8,6 +8,7 @@
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/SDNV.h"
 #include "ibrdtn/data/Exceptions.h"
+#include "ibrdtn/data/Bundle.h"
 #include <map>
 #include <stdexcept>
 #include <string.h>
@@ -23,9 +24,30 @@ namespace data
 	{
 	}
 
+	/**
+	 * create a dictionary with all EID of the given bundle
+	 */
+	Dictionary::Dictionary(const dtn::data::Bundle &bundle)
+	{
+		// rebuild the dictionary
+		add(bundle._destination);
+		add(bundle._source);
+		add(bundle._reportto);
+		add(bundle._custodian);
+
+		// add EID of all secondary blocks
+		const std::list<const dtn::data::Block*> list = bundle.getBlocks();
+
+		for (std::list<const dtn::data::Block*>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+		{
+			const Block &b = (*(*iter));
+			add( b.getEIDList() );
+		}
+	}
+
 	Dictionary::Dictionary(const Dictionary &d)
 	{
-		_bytestream << d._bytestream.rdbuf();
+		this->operator=(d);
 	}
 
 	/**

@@ -217,6 +217,18 @@ namespace dtn
 			_blocks.push_back(block);
 			return (*block);
 		}
+		
+		Block& Bundle::insert(dtn::data::ExtensionBlock::Factory& factory, const dtn::data::Block& before)
+		{
+			dtn::data::Block *block = factory.create();
+			
+#ifdef __DEVELOPMENT_ASSERTIONS__
+			assert(block != NULL);
+#endif
+
+			_blocks.insert(block, &before);
+			return (*block);
+		}
 
 		string Bundle::toString() const
 		{

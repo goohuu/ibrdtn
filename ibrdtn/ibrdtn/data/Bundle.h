@@ -28,12 +28,20 @@
 
 namespace dtn
 {
+	namespace security
+	{
+		class StrictSerializer;
+		class MutualSerializer;
+	}
+
 	namespace data
 	{
 		class Bundle : public PrimaryBlock
 		{
 			friend class DefaultSerializer;
 			friend class DefaultDeserializer;
+			friend class dtn::security::StrictSerializer;
+			friend class dtn::security::MutualSerializer;
 
 		public:
 			class NoSuchBlockFoundException : public ibrcommon::Exception
@@ -48,6 +56,8 @@ namespace dtn
 			{
 				friend class DefaultSerializer;
 				friend class DefaultDeserializer;
+				friend class dtn::security::StrictSerializer;
+				friend class dtn::security::MutualSerializer;
 
 			public:
 				BlockList();
@@ -106,6 +116,7 @@ namespace dtn
 			dtn::data::PayloadBlock& insert(const dtn::data::Block &before, ibrcommon::BLOB::Reference &ref);
 
 			dtn::data::Block& push_back(dtn::data::ExtensionBlock::Factory &factory);
+			dtn::data::Block& insert(dtn::data::ExtensionBlock::Factory &factory, const dtn::data::Block &before);
 
 			void remove(const dtn::data::Block &block);
 			void clearBlocks();
@@ -308,7 +319,7 @@ namespace dtn
 		template<class T>
 		T& Bundle::insert(const dtn::data::Block &before)
 		{
-			T *tmpblock = new T(*this);
+			T *tmpblock = new T();
 			dtn::data::Block *block = dynamic_cast<dtn::data::Block*>(tmpblock);
 
 #ifdef __DEVELOPMENT_ASSERTIONS__

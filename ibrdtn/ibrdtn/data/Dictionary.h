@@ -21,6 +21,8 @@ namespace dtn
 {
 	namespace data
 	{
+		class Bundle;
+
 		class Dictionary
 		{
 		public:
@@ -28,6 +30,11 @@ namespace dtn
 			 * create a empty dictionary
 			 */
 			Dictionary();
+
+			/**
+			 * create a dictionary with all EID of the given bundle
+			 */
+			Dictionary(const dtn::data::Bundle &bundle);
 
 			/**
 			 * copy constructor
