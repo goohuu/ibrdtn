@@ -224,8 +224,10 @@ namespace dtn
 
 					// finally create a bundle received event
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
+#ifdef WITH_BUNDLE_SECURITY
 				} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
 					IBRCOMMON_LOGGER(notice) << "Security checks failed, bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+#endif
 				} catch (const ibrcommon::IOException &ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (const dtn::core::BundleStorage::StorageSizeExeededException &ex) {

@@ -10,7 +10,9 @@
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleGeneratedEvent.h"
+#ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
+#endif
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
