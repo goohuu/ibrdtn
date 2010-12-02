@@ -1,3 +1,4 @@
+#include "config.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "routing/RequeueBundleEvent.h"
@@ -16,6 +17,10 @@
 #include <iostream>
 #include <typeinfo>
 #include <stdint.h>
+
+#ifdef WITH_BUNDLE_SECURITY
+#include "security/SecurityManager.h"
+#endif
 
 using namespace dtn::data;
 using namespace dtn::utils;
@@ -253,6 +258,18 @@ namespace dtn
 				IBRCOMMON_LOGGER(warning) << "bundle rejected: bundle has expired (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
+
+#ifdef WITH_BUNDLE_SECURITY_DISABLED
+			// lets see if signatures and hashes are correct and it decrypts if needed
+			// the const_cast is dangerous, but in BundleReceivedEvent::raise() bundle was not const, so I think it will be ok
+			if (!dtn::security::SecurityManager::getInstance().incoming(b))
+			{
+				IBRCOMMON_LOGGER(warning) << "bundle rejected: security checks failed (" << b.toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("security checks failed");
+
+				return;
+			}
+#endif
 		}
 
 		const std::string BundleCore::getName() const

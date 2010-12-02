@@ -27,7 +27,7 @@
 #include <iomanip>
 
 #ifdef WITH_BUNDLE_SECURITY
-#include <SecurityManager.h>
+#include "security/SecurityManager.h"
 #endif
 
 namespace dtn
@@ -372,7 +372,7 @@ namespace dtn
 							dtn::data::Bundle bundle = storage.get(_current_transfer);
 
 							// Apply BundleAuthenticationBlocks, if keys are present
-							dtn::daemon::SecurityManager::getInstance().outgoing_p2p(EID(_connection.getNode().getURI()), bundle);
+							dtn::security::SecurityManager::getInstance().outgoing_p2p(EID(_connection.getNode().getURI()), bundle);
 #else
 							// read the bundle out of the storage
 							const dtn::data::Bundle bundle = storage.get(_current_transfer);

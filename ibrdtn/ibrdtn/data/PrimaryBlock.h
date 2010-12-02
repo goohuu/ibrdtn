@@ -49,7 +49,12 @@ namespace dtn
 				REQUEST_REPORT_OF_BUNDLE_DELIVERY = 1 << 0x11,
 				REQUEST_REPORT_OF_BUNDLE_DELETION = 1 << 0x12,
 				STATUS_REPORT_REQUEST_19 = 1 << 0x13,
-				STATUS_REPORT_REQUEST_20 = 1 << 0x14
+				STATUS_REPORT_REQUEST_20 = 1 << 0x14,
+
+				// DTNSEC FLAGS (these are customized flags and not written down in any draft)
+				DTNSEC_REQUEST_SIGN = 1 << 0x1A,
+				DTNSEC_REQUEST_ENCRYPT = 1 << 0x1B,
+				DTNSEC_STATUS_VERIFIED = 1 << 0x1C
 			};
 
 			PrimaryBlock();

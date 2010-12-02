@@ -16,6 +16,10 @@ AM_CPPFLAGS += @SQLITE_CFLAGS@
 AM_LDFLAGS += @SQLITE_LIBS@
 endif
 
+if DTNSEC
+SUBDIRS += security
+endif
+
 INCLUDES = -I@top_srcdir@/src
 
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
@@ -42,15 +46,13 @@ daemon_SOURCES =  ApiServer.cpp \
 				StatisticLogger.h \
 				StatisticLogger.cpp
 
-
-if DTNSEC
-daemon_SOURCES += SecurityManager.h SecurityManager.cpp KeyServerWorker.h \
-	KeyServerWorker.cpp RuleServerWorker.h RuleServerWorker.cpp
-endif
-
 noinst_LTLIBRARIES = libdaemon.la
 libdaemon_la_SOURCES= $(daemon_SOURCES)
 libdaemon_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la
+
+if DTNSEC
+libdaemon_la_LIBADD += security/libsecurity.la
+endif
 
 dtnd_SOURCES = Main.cpp
 dtnd_LDADD = libdaemon.la

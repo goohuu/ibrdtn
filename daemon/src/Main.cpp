@@ -52,9 +52,9 @@
 #include "Component.h"
 
 #ifdef WITH_BUNDLE_SECURITY
-#include "SecurityManager.h"
-#include "RuleServerWorker.h"
-#include "KeyServerWorker.h"
+#include "security/SecurityManager.h"
+#include "security/RuleServerWorker.h"
+#include "security/KeyServerWorker.h"
 #endif
 
 #include <csignal>
@@ -435,7 +435,7 @@ int main(int argc, char *argv[])
 
 #ifdef WITH_BUNDLE_SECURITY
 	// read configuration of the security class
-	dtn::daemon::SecurityManager::getInstance().readRoutingTable();
+	dtn::security::SecurityManager::getInstance().readRoutingTable();
 #endif
 
 	// add routing extensions

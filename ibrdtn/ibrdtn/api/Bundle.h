@@ -27,21 +27,6 @@ namespace dtn
 		{
 		public:
 			/**
-			 * Define the Bundle Security Mode
-			 * SEC_OFF no security actions will be taken
-			 * SEC_SIGNED the bundle will be signed before leaving
-			 * SEC_ENCRYPTED the bundle will be encrypted before leaving
-			 * SEC_ENC_SIGNED the bundle will be singed and encrypted before leaving
-			 */
-			enum BUNDLE_SECURITY
-			{
-				SEC_OFF = 0,
-				SEC_SIGNED = 1,
-				SEC_ENCRYPTED = 2,
-				SEC_ENC_SIGNED = 3
-			};
-
-			/**
 			 * Define the Bundle Priorities
 			 * PRIO_LOW low priority for this bundle
 			 * PRIO_MEDIUM medium priority for this bundle
@@ -69,18 +54,6 @@ namespace dtn
 			 * Destructor
 			 */
 			virtual ~Bundle();
-
-			/**
-			 * Set the security parameters for this bundle.
-			 * @param s Security parameter to set.
-			 */
-			void setSecurity(BUNDLE_SECURITY s);
-
-			/**
-			 * Returns the security parameters for this bundle.
-			 * @return The security parameter of this bundle.
-			 */
-			BUNDLE_SECURITY getSecurity() const;
 
 			/**
 			 * Set the lifetime of a bundle.
@@ -118,6 +91,26 @@ namespace dtn
 			 * This triggers an reception report on each receiving bundle daemon.
 			 */
 			void requestReceptionReport();
+
+			/**
+			 * Set the request encryption bit in the bundle processing flags.
+			 * The right after the bundle is transferred to the daemon, it will
+			 * be encrypted if keys are available.
+			 */
+			void requestEncryption();
+
+			/**
+			 * Set the request signed bit in the bundle processing flags.
+			 * The right after the bundle is transferred to the daemon, it will
+			 * be signed if keys are available.
+			 */
+			void requestSigned();
+
+			/**
+			 * Return the state of the verified bit. This is set, if the daemon
+			 * has verified the signature of this bundle successfully.
+			 */
+			bool statusVerified();
 
 			/**
 			 * Set the priority for this bundle.
@@ -244,9 +237,6 @@ namespace dtn
 
 			// base bundle object
 			dtn::data::Bundle _b;
-
-			// member variable containing security options for this bundle
-			BUNDLE_SECURITY _security;
 		};
 	}
 }

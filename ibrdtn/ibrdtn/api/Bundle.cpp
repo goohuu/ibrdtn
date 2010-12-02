@@ -6,7 +6,6 @@
  */
 
 #include "ibrdtn/api/Bundle.h"
-#include "ibrdtn/api/SecurityManager.h"
 #include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/Exceptions.h"
 
@@ -16,7 +15,6 @@ namespace dtn
 	{
 		Bundle::Bundle()
 		{
-			_security = SecurityManager::getDefault();
 			setPriority(PRIO_MEDIUM);
 
 			_b._source = dtn::data::EID("api:me");
@@ -30,7 +28,6 @@ namespace dtn
 		Bundle::Bundle(const dtn::data::EID &destination)
 		{
 			_b._destination = destination;
-			_security = SecurityManager::getDefault();
 			setPriority(PRIO_MEDIUM);
 		}
 
@@ -66,6 +63,21 @@ namespace dtn
 		void Bundle::requestReceptionReport()
 		{
 			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION, true);
+		}
+
+		void Bundle::requestEncryption()
+		{
+			_b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, true);
+		}
+
+		void Bundle::requestSigned()
+		{
+			_b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
+		}
+
+		bool Bundle::statusVerified()
+		{
+			return _b.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED);
 		}
 
 		Bundle::BUNDLE_PRIORITY Bundle::getPriority() const

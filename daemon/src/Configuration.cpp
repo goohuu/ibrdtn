@@ -20,7 +20,7 @@ using namespace dtn::utils;
 using namespace ibrcommon;
 
 #ifdef WITH_BUNDLE_SECURITY
-#include "SecurityManager.h"
+#include "security/SecurityManager.h"
 #include <ibrdtn/security/SecurityBlock.h>
 #include <ibrdtn/security/KeyBlock.h>
 #include <openssl/err.h>

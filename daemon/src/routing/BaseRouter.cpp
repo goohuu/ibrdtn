@@ -25,7 +25,7 @@
 #include <ibrcommon/thread/MutexLock.h>
 
 #ifdef WITH_BUNDLE_SECURITY
-#include "SecurityManager.h"
+#include "security/SecurityManager.h"
 #endif
 
 namespace dtn
@@ -184,16 +184,6 @@ namespace dtn
 
 				// Store incoming bundles into the storage
 				try {
-#ifdef WITH_BUNDLE_SECURITY
-					// lets see if signatures and hashes are correct and it decrypts if needed
-					// the const_cast is dangerous, but in BundleReceivedEvent::raise() bundle was not const, so I think it will be ok
-					if (!dtn::daemon::SecurityManager::getInstance().incoming(const_cast<dtn::data::Bundle&>(received.bundle)))
-					{
-						IBRCOMMON_LOGGER(notice) << "Security checks failed, bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-						return;
-					}
-#endif
-
 					if (received.fromlocal)
 					{
 						// store the bundle into a storage module
@@ -208,28 +198,37 @@ namespace dtn
 					// if the bundle is not known
 					else if (!isKnown(received.bundle))
 					{
+#ifdef WITH_BUNDLE_SECURITY
+						// security methods modifies the bundle, thus we need a copy of it
+						dtn::data::Bundle bundle = received.bundle;
+
+						// lets see if signatures and hashes are correct and it decrypts if needed
+						dtn::security::SecurityManager::getInstance().verify(bundle);
+
+						// store the bundle into a storage module
+						_storage.store(bundle);
+
+//						// so lange das senden des QueueBundleEvent verzögern, bis alle schlüssel zum verschicken da sind
+//						// outgoing in 2 Teile zeilen, eines für symmetrische und eines für asymmetrische verschlüsselung
+//						dtn::security::SecurityManager::getInstance().outgoing_asymmetric(bundle, received.peer);
+#else
 						// store the bundle into a storage module
 						_storage.store(received.bundle);
-
+#endif
 						// set the bundle as known
 						setKnown(received.bundle);
 
-#ifdef WITH_BUNDLE_SECURITY
-						// so lange das senden des QueueBundleEvent verzögern, bis alle schlüssel zum verschicken da sind
-						// outgoing in 2 Teile zeilen, eines für symmetrische und eines für asymmetrische verschlüsselung
-						dtn::daemon::SecurityManager::getInstance().outgoing_asymmetric(const_cast<dtn::data::Bundle&>(received.bundle), received.peer);
-#else
 						// raise the queued event to notify all receivers about the new bundle
 						QueueBundleEvent::raise(received.bundle, received.peer);
-#endif
 					}
 
 					// finally create a bundle received event
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_RECEIVED);
-
-				} catch (ibrcommon::IOException ex) {
+				} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
+					IBRCOMMON_LOGGER(notice) << "Security checks failed, bundle will be dropped: " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				} catch (const ibrcommon::IOException &ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-				} catch (dtn::core::BundleStorage::StorageSizeExeededException ex) {
+				} catch (const dtn::core::BundleStorage::StorageSizeExeededException &ex) {
 					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
@@ -250,7 +249,7 @@ namespace dtn
 
 					// raise the queued event to notify all receivers about the new bundle
 #ifdef WITH_BUNDLE_SECURITY
-					dtn::daemon::SecurityManager::getInstance().outgoing_asymmetric(const_cast<dtn::data::Bundle&>(generated.bundle), dtn::core::BundleCore::local);
+					dtn::security::SecurityManager::getInstance().outgoing_asymmetric(const_cast<dtn::data::Bundle&>(generated.bundle), dtn::core::BundleCore::local);
 #else
  					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
 #endif

@@ -18,6 +18,10 @@
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/utils/Clock.h>
 
+#ifdef WITH_BUNDLE_SECURITY
+#include "security/SecurityManager.h"
+#endif
+
 using namespace dtn::data;
 using namespace dtn::streams;
 using namespace dtn::core;
@@ -205,6 +209,26 @@ namespace dtn
 						}
 					}
 
+#ifdef WITH_BUNDLE_SECURITY
+					// if the sign bit is set, then try to sign the bundle
+					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN)
+					{
+						try {
+							dtn::security::SecurityManager::getInstance().sign(bundle);
+						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+							// sign requested, but no key is available
+							IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+
+					// if the encrypt bit is set, then let the security manager prepare encryption
+					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT)
+					{
+						// we need the public key of the recipient later on, so we start a prefetch request now
+						dtn::security::SecurityManager::getInstance().prefetchKey(bundle._destination);
+					}
+#endif
+
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local, bundle, true);
 
@@ -279,6 +303,19 @@ namespace dtn
 				while (true)
 				{
 					dtn::data::Bundle bundle = getnpop(true);
+
+#ifdef WITH_BUNDLE_SECURITY
+					// try to decrypt the bundle
+					try {
+						dtn::security::SecurityManager::getInstance().decrypt(bundle);
+					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+						// decrypt needed, but no key is available
+						IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+					} catch (const dtn::security::SecurityManager::DecryptException &ex) {
+						// decrypt failed
+						IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+#endif
 
 					// enable cancellation during transmission
 					ibrcommon::Thread::CancelProtector cprotect(true);

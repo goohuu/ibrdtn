@@ -5,10 +5,12 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "core/AbstractWorker.h"
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleGeneratedEvent.h"
+#include "security/SecurityManager.h"
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
@@ -63,6 +65,7 @@ namespace dtn
 					try {
 						b = storage.get( _worker._eid );
 						storage.remove(b);
+						prepareBundle(b);
 						_worker.callbackBundleReceived(b);
 					}
 					catch (dtn::core::BundleStorage::NoBundleFoundException ex)
@@ -70,6 +73,7 @@ namespace dtn
 						dtn::data::BundleID id = _receive_bundles.getnpop(true);
 
 						try {
+							prepareBundle(b);
 							_worker.callbackBundleReceived( storage.get( id ) );
 							storage.remove( id );
 						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) { };
@@ -89,6 +93,22 @@ namespace dtn
 
 			// return true, to signal that no further cancel (the hardway) is needed
 			return true;
+		}
+
+		void AbstractWorker::AbstractWorkerAsync::prepareBundle(dtn::data::Bundle &bundle) const
+		{
+#ifdef WITH_BUNDLE_SECURITY
+			// try to decrypt the bundle
+			try {
+				dtn::security::SecurityManager::getInstance().decrypt(bundle);
+			} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+				// decrypt needed, but no key is available
+				IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+			} catch (const dtn::security::SecurityManager::DecryptException &ex) {
+				// decrypt failed
+				IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+#endif
 		}
 
 		AbstractWorker::AbstractWorker() : _thread(*this)
