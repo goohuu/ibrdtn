@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"

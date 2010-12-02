@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "routing/BaseRouter.h"
 #include "core/BundleCore.h"
 

@@ -8,7 +8,6 @@
 #ifndef BUNDLE_H_
 #define BUNDLE_H_
 
-
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/PrimaryBlock.h"
 #include "ibrdtn/data/Block.h"
@@ -28,13 +27,11 @@
 
 namespace dtn
 {
-#ifdef WITH_BUNDLE_SECURITY
 	namespace security
 	{
 		class StrictSerializer;
 		class MutualSerializer;
 	}
-#endif
 
 	namespace data
 	{
@@ -42,10 +39,8 @@ namespace dtn
 		{
 			friend class DefaultSerializer;
 			friend class DefaultDeserializer;
-#ifdef WITH_BUNDLE_SECURITY
 			friend class dtn::security::StrictSerializer;
 			friend class dtn::security::MutualSerializer;
-#endif
 
 		public:
 			class NoSuchBlockFoundException : public ibrcommon::Exception
@@ -60,10 +55,8 @@ namespace dtn
 			{
 				friend class DefaultSerializer;
 				friend class DefaultDeserializer;
-#ifdef WITH_BUNDLE_SECURITY
 				friend class dtn::security::StrictSerializer;
 				friend class dtn::security::MutualSerializer;
-#endif
 
 			public:
 				BlockList();

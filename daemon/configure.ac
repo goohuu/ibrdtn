@@ -10,7 +10,7 @@ AM_INIT_AUTOMAKE
 LT_INIT
 AM_PATH_CPPUNIT(1.9.6)
 
-AC_CONFIG_HEADER([src/config.h])
+AC_CONFIG_HEADER([src/config.h:src/dtnsec.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE
 
@@ -127,6 +127,7 @@ AC_ARG_WITH(dtnsec,
 	[
 	if test "x$with_dtnsec" = "xyes"; then
 		AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
+		CPPFLAGS+=" -DWITH_BUNDLE_SECURITY"
 	else
 		with_dtnsec="no"
 	fi

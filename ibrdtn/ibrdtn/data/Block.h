@@ -8,7 +8,6 @@
 #ifndef BLOCK_H_
 #define BLOCK_H_
 
-
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Exceptions.h"
 #include "ibrdtn/data/SDNV.h"
@@ -19,14 +18,11 @@
 
 namespace dtn
 {
-
-#ifdef WITH_BUNDLE_SECURITY
 	namespace security
 	{
 		class StrictSerializer;
 		class MutualSerializer;
 	}
-#endif
 
 	namespace data
 	{
@@ -36,10 +32,8 @@ namespace dtn
 		{
 			friend class Bundle;
 			friend class DefaultSerializer;
-#ifdef WITH_BUNDLE_SECURITY
 			friend class dtn::security::StrictSerializer;
 			friend class dtn::security::MutualSerializer;
-#endif
 			friend class DefaultDeserializer;
 			friend class SeparateSerializer;
 			friend class SeparateDeserializer;
@@ -79,7 +73,6 @@ namespace dtn
 			 */
 			virtual size_t getLength() const = 0;
 
-#ifdef WITH_BUNDLE_SECURITY
 			/**
 			 * Return by default the same length as getLength(). But if the length of
 			 * normal and mutable serialization differ, this function has to be
@@ -90,7 +83,6 @@ namespace dtn
 			{
 				return getLength();
 			}
-#endif
 
 			/**
 			 * Serialize the derived block payload.
@@ -99,7 +91,6 @@ namespace dtn
 			 */
 			virtual std::ostream &serialize(std::ostream &stream) const = 0;
 
-#ifdef WITH_BUNDLE_SECURITY
 			/**
 			 * By default this function does nothing else than serialize(std::ostream&).
 			 * Children have to implement it in their own way if different treatment for
@@ -112,7 +103,6 @@ namespace dtn
 			{
 				return serialize(stream);
 			}
-#endif
 
 			/**
 			 * Deserialize the derived block payload.

@@ -5,7 +5,6 @@
  *      Author: morgenro
  */
 
-#include "config.h"
 #include "core/BundleEvent.h"
 
 namespace dtn
