@@ -11,7 +11,9 @@ security_SOURCES =	\
 	RuleServerWorker.h \
 	RuleServerWorker.cpp \
 	SecurityKeyManager.h \
-	SecurityKeyManager.cpp
+	SecurityKeyManager.cpp \
+	SecurityRule.h \
+	SecurityRule.cpp
 				
 noinst_LTLIBRARIES = libsecurity.la
 libsecurity_la_SOURCES= $(security_SOURCES)

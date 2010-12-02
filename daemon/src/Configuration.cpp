@@ -21,6 +21,7 @@ using namespace ibrcommon;
 
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
+#include "security/SecurityRule.h"
 #include <ibrdtn/security/SecurityBlock.h>
 #include <ibrdtn/security/KeyBlock.h>
 #include <openssl/err.h>
@@ -56,95 +57,6 @@ namespace dtn
 		Configuration::NetConfig::~NetConfig()
 		{
 		}
-
-#ifdef WITH_BUNDLE_SECURITY
-		Configuration::SecurityRule::SecurityRule()
-		 : _destination(dtn::data::EID())
-		{
-		}
-
-		Configuration::SecurityRule::SecurityRule(const std::string& rule)
-		{
-			std::list<std::string> tokens = tokenize(rule, ';');
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(tokens.size() >= 2);
-#endif
-
-			std::list<std::string>::iterator it = tokens.begin();
-			_destination = dtn::data::EID(*it);
-			it++;
-
-			for (; it != tokens.end(); it++)
-			{
-				if (*it == "PIB" || *it == "pib")
-					_rules.push_back(RuleToken(SecurityBlock::PAYLOAD_INTEGRITY_BLOCK));
-				else if (it->substr(0,3) == "PCB" || it->substr(0,3) == "pcb")
-				{
-					std::list<std::string> targets = tokenize(*it, '|');
-					std::list<dtn::data::EID> eid_targets;
-					std::list<std::string>::iterator target_it = targets.begin();
-					target_it++;
-					for (;target_it != targets.end(); target_it++)
-						eid_targets.push_back(dtn::data::EID(*target_it));
-					_rules.push_back(RuleToken(SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK, eid_targets));
-				}
-				else if (it->substr(0,3) == "ESB" || it->substr(0,3) == "esb")
-					_rules.push_back(RuleToken(SecurityBlock::EXTENSION_SECURITY_BLOCK));
-			}
-		}
-
-		Configuration::SecurityRule::SecurityRule(const dtn::daemon::Configuration::SecurityRule& rule)
-		{
-			*this = rule;
-		}
-
-		Configuration::SecurityRule::~SecurityRule()
-		{
-		}
-
-		Configuration::SecurityRule& Configuration::SecurityRule::operator=(const dtn::daemon::Configuration::SecurityRule& rule)
-		{
-			_destination = rule._destination;
-			_rules.clear();
-			for (std::list<dtn::daemon::Configuration::SecurityRule::RuleToken >::const_iterator it = rule._rules.begin(); it != rule._rules.end(); it++)
-			{
-				_rules.push_back(*it);
-			}
-			return *this;
-		}
-
-		EID Configuration::SecurityRule::getDestination()
-		{
-			return _destination;
-		}
-
-		const std::list< Configuration::SecurityRule::RuleToken >& Configuration::SecurityRule::getRules() const
-		{
-			return _rules;
-		}
-
-		list< string > Configuration::SecurityRule::tokenize(const std::string& string, const char deliminiter)
-		{
-			size_t pos = 0;
-			std::list<std::string> tokens;
-			while (pos != std::string::npos)
-			{
-				size_t next_pos = string.find(deliminiter, pos);
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-				assert(string[next_pos] == deliminiter || next_pos == std::string::npos);
-#endif
-
-				tokens.push_back(string.substr(pos, next_pos-pos));
-
-				pos = next_pos;
-				if (pos != std::string::npos)
-					pos++;
-			}
-			return tokens;
-		}
-#endif
 
 		std::string Configuration::version()
 		{
@@ -208,6 +120,11 @@ namespace dtn
 		const Configuration::Network& Configuration::getNetwork() const
 		{
 			return _network;
+		}
+
+		Configuration::Security& Configuration::getSecurity()
+		{
+			return _security;
 		}
 
 		Configuration& Configuration::getInstance()
@@ -292,9 +209,7 @@ namespace dtn
 			try {
 				// load main configuration
 				_conf = ibrcommon::ConfigFile(filename);
-#ifdef WITH_BUNDLE_SECURITY
 				_filename = filename;
-#endif
 
 				IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::ConfigFile::file_not_found ex) {
@@ -308,6 +223,7 @@ namespace dtn
 			_debug.load(_conf);
 			_logger.load(_conf);
 			_network.load(_conf);
+			_security.load(_conf);
 		}
 
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
@@ -324,6 +240,10 @@ namespace dtn
 		}
 
 		void Configuration::Debug::load(const ibrcommon::ConfigFile&)
+		{
+		}
+
+		void Configuration::Security::load(const ibrcommon::ConfigFile&)
 		{
 		}
 
@@ -709,11 +629,10 @@ namespace dtn
 			return 0;
 		}
 
-#ifdef WITH_BUNDLE_SECURITY
-		list< string > Configuration::getSecurityRules_string() const
+		Configuration::Security::Security()
 		{
-			std::list<std::string> rules;
-
+#ifdef WITH_BUNDLE_SECURITY
+			// load rules
 			// read the node count
 			int count = 0;
 
@@ -732,22 +651,35 @@ namespace dtn
 				prefix_stream << _sec_route_prefix << count;
 				_prefix = prefix_stream.str();
 			}
+#endif
+		};
 
-			return rules;
+		Configuration::Security::~Security() {};
+
+		bool Configuration::Security::enabled() const
+		{
+#ifdef WITH_BUNDLE_SECURITY
+			return true;
+#else
+			return false;
+#endif
 		}
 
-		std::list<Configuration::SecurityRule> Configuration::getSecurityRules() const
+#ifdef WITH_BUNDLE_SECURITY
+		list< string > Configuration::Security::getSecurityRules_string() const
 		{
-			std::list<SecurityRule> rules;
-			std::list<std::string> rule_string = getSecurityRules_string();
+			return _rules;
+		}
 
-			for (std::list<std::string>::iterator it = rule_string.begin(); it != rule_string.end(); it++)
+		std::list<dtn::security::SecurityRule> Configuration::Security::getSecurityRules() const
+		{
+			for (std::list<std::string>::iterator it = _rules.begin(); it != _rules.end(); it++)
 				rules.push_back(SecurityRule(*it));
 
 			return rules;
 		}
 
-		bool Configuration::takeRule(const dtn::security::RuleBlock& rule)
+		bool Configuration::Security::takeRule(const dtn::security::RuleBlock& rule)
 		{
 			bool result = false;
 			switch (rule.getAction())
@@ -778,12 +710,12 @@ namespace dtn
 			return result;
 		}
 
-		const ibrcommon::ConfigFile& Configuration::getConfigFile() const
+		const ibrcommon::ConfigFile& Configuration::Security::getConfigFile() const
 		{
 			return _conf;
 		}
 
-		std::string Configuration::findAndReplace(std::string string, char * target, char * replacement) const
+		std::string Configuration::Security::findAndReplace(std::string string, char * target, char * replacement) const
 		{
 			std::string target_string(target);
 
@@ -797,7 +729,7 @@ namespace dtn
 			return string;
 		}
 
-		std::string Configuration::getFileNamePublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const
+		std::string Configuration::Security::getFileNamePublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const
 		{
 			// name format is:
 			// node_scheme + '_' + node_ssp + '_' + type_name + "_pubkey.pem"
@@ -828,7 +760,7 @@ namespace dtn
 			return filename;
 		}
 
-		std::string Configuration::getPublicKey(const dtn::data::EID& eid, dtn::security::SecurityBlock::BLOCK_TYPES bt) const
+		std::string Configuration::Security::getPublicKey(const dtn::data::EID& eid, dtn::security::SecurityBlock::BLOCK_TYPES bt) const
 		{
 			std::string key(getFilePathPublicKey(eid, bt));
 
@@ -851,7 +783,7 @@ namespace dtn
 			return key;
 		}
 
-		dtn::data::EID Configuration::createEIDFromFilename(const std::string& file) const
+		dtn::data::EID Configuration::Security::createEIDFromFilename(const std::string& file) const
 		{
 			// first chars until '_' are the scheme, the next chars until '_' are the
 			// ssp
@@ -868,7 +800,7 @@ namespace dtn
 			return dtn::data::EID(scheme, ssp);
 		}
 
-		string dtn::daemon::Configuration::getConfigurationDirectory() const
+		string Configuration::Security::getConfigurationDirectory() const
 		{
 			std::string filepath("");
 			size_t pos = _filename.rfind('/');
@@ -877,12 +809,12 @@ namespace dtn
 			return filepath;
 		}
 
-		std::string Configuration::getFilePathPublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const
+		std::string Configuration::Security::getFilePathPublicKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type) const
 		{
 			return getConfigurationDirectory().append(getFileNamePublicKey(target, type));
 		}
 
-		bool Configuration::storeKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type, const std::string& key)
+		bool Configuration::Security::storeKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type, const std::string& key)
 		{
 			// read key
 			RSA * rsa_key = dtn::security::KeyBlock::createRSA(key);
@@ -899,7 +831,7 @@ namespace dtn
 			return true;
 		}
 
-		bool Configuration::deleteKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type)
+		bool Configuration::Security::deleteKey(dtn::data::EID target, SecurityBlock::BLOCK_TYPES type)
 		{
 			std::string filename(getFilePathPublicKey(target, type));
 			if (remove(filename.c_str()) == 0)
@@ -913,7 +845,7 @@ namespace dtn
 			}
 		}
 
-		std::pair<std::string, std::string> Configuration::getPrivateAndPublicKey(SecurityBlock::BLOCK_TYPES type) const
+		std::pair<std::string, std::string> Configuration::Security::getPrivateAndPublicKey(SecurityBlock::BLOCK_TYPES type) const
 		{
 			std::string prefix;
 			switch (type)
@@ -951,7 +883,7 @@ namespace dtn
 				return std::pair<string, string>("", "");
 		}
 
-		bool Configuration::addSecurityRuleToConfiguration(const dtn::security::RuleBlock& rule)
+		bool Configuration::Security::addSecurityRuleToConfiguration(const dtn::security::RuleBlock& rule)
 		{
 			std::string rule_string = rule.getRule();
 			dtn::security::RuleBlock::Directions dir = rule.getDirection();
@@ -982,7 +914,7 @@ namespace dtn
 			return true;
 		}
 
-		bool Configuration::removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock& rule)
+		bool Configuration::Security::removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock& rule)
 		{
 			std::string rule_string = rule.getRule();
 			dtn::security::RuleBlock::Directions dir = rule.getDirection();

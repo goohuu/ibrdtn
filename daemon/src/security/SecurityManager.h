@@ -2,16 +2,17 @@
 #define _SECURITY_MANAGER_H_
 
 #include "Configuration.h"
-#include "ibrdtn/data/EID.h"
-#include "ibrdtn/data/Bundle.h"
-#include "ibrdtn/security/BundleAuthenticationBlock.h"
-#include "ibrdtn/security/PayloadIntegrityBlock.h"
-#include "ibrdtn/security/PayloadConfidentialBlock.h"
-#include "ibrdtn/security/ExtensionSecurityBlock.h"
 #include "security/KeyServerWorker.h"
+#include "security/SecurityRule.h"
 
-#include <map>
+#include <ibrdtn/data/EID.h>
+#include <ibrdtn/data/Bundle.h>
+#include <ibrdtn/security/BundleAuthenticationBlock.h>
+#include <ibrdtn/security/PayloadIntegrityBlock.h>
+#include <ibrdtn/security/PayloadConfidentialBlock.h>
+#include <ibrdtn/security/ExtensionSecurityBlock.h>
 #include <ibrdtn/security/KeyBlock.h>
+#include <map>
 
 namespace dtn
 {
@@ -382,7 +383,7 @@ namespace dtn
 				 * @param eid the eid of the destination
 				 * @return the rule, which shall be applied
 				 */
-				dtn::daemon::Configuration::SecurityRule getRule(const dtn::data::EID&) const;
+				SecurityRule getRule(const dtn::data::EID&) const;
 
 				std::list<dtn::security::KeyBlock> getListOfNeededSymmetricKeys(const dtn::data::Bundle&) const;
 
@@ -410,7 +411,7 @@ namespace dtn
 				std::map<dtn::data::EID, RSA *> _pcb_node_key_send;
 				std::map<dtn::data::EID, RSA *> _esb_node_key_send;
 
-				std::map<dtn::data::EID, dtn::daemon::Configuration::SecurityRule> _security_rules_routing;
+				std::map<dtn::data::EID, SecurityRule> _security_rules_routing;
 
 				/** stores each bundle with its needed keys for later sending */
 				std::map<dtn::data::BundleID, std::list<dtn::security::KeyBlock> > _pending_keys;

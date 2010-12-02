@@ -106,7 +106,7 @@ namespace dtn
 			std::map <dtn::data::EID, RSA* >::iterator it = map.find(eid.getNodeEID());
 			if (it == map.end())
 			{
-				std::string key = dtn::daemon::Configuration::getInstance().getPublicKey(eid.getNodeEID(), bt);
+				std::string key = dtn::daemon::Configuration::getInstance().getSecurity().getPublicKey(eid.getNodeEID(), bt);
 				if (key.size() > 0)
 				{
 					SecurityManager::read_public_key(key, &rsa);
@@ -122,7 +122,7 @@ namespace dtn
 		{
 			if (*rsa == NULL)
 			{
-				std::pair<std::string, std::string> keys = dtn::daemon::Configuration::getInstance().getPrivateAndPublicKey(bt);
+				std::pair<std::string, std::string> keys = dtn::daemon::Configuration::getInstance().getSecurity().getPrivateAndPublicKey(bt);
 				if (keys.first.size() > 0)
 					read_public_key(keys.second, rsa);
 			}
@@ -134,7 +134,7 @@ namespace dtn
 		{
 			if (*rsa == NULL)
 			{
-				std::pair<std::string, std::string> keys = dtn::daemon::Configuration::getInstance().getPrivateAndPublicKey(bt);
+				std::pair<std::string, std::string> keys = dtn::daemon::Configuration::getInstance().getSecurity().getPrivateAndPublicKey(bt);
 				if (keys.first.size() > 0)
 					read_private_key(keys.first, rsa);
 			}
@@ -174,7 +174,7 @@ namespace dtn
 			std::map<dtn::data::EID, std::string>::iterator it = map.find(node.getNodeEID());
 			if (it == map.end())
 			{
-				std::string keypath = dtn::daemon::Configuration::getInstance().getPublicKey(node.getNodeEID(), bt);
+				std::string keypath = dtn::daemon::Configuration::getInstance().getSecurity().getPublicKey(node.getNodeEID(), bt);
 				if (keypath.size() == 0)
 					return key;
 				key = readSymmetricKey(keypath);
@@ -288,7 +288,7 @@ namespace dtn
 
 		std::list< KeyBlock > SecurityManager::getListOfNeededSymmetricKeys(const dtn::data::Bundle& bundle) const
 		{
-			dtn::daemon::Configuration& conf = dtn::daemon::Configuration::getInstance();
+			const dtn::daemon::Configuration::Security& conf = dtn::daemon::Configuration::getInstance().getSecurity();
 			std::list<KeyBlock> needed_keys;
 
 			std::set<EID> neighbors;
@@ -316,12 +316,12 @@ namespace dtn
 			// iterate over all tokens of a rule and check if all needed public keys
 			// are present. if one is missing return false and request all missing
 			// keys.
-			dtn::daemon::Configuration& conf = dtn::daemon::Configuration::getInstance();
+			const dtn::daemon::Configuration::Security& conf = dtn::daemon::Configuration::getInstance().getSecurity();
 			std::list<KeyBlock> needed_keys;
 
 			// asymmetric keys
-			std::list<dtn::daemon::Configuration::SecurityRule::RuleToken> rules = getRule(bundle._destination.getNodeEID()).getRules();
-			for (std::list<dtn::daemon::Configuration::SecurityRule::RuleToken>::iterator it = rules.begin(); it != rules.end(); it++)
+			std::list<dtn::security::SecurityRule::RuleToken> rules = getRule(bundle._destination.getNodeEID()).getRules();
+			for (std::list<dtn::security::SecurityRule::RuleToken>::iterator it = rules.begin(); it != rules.end(); it++)
 			{
 				const std::list<dtn::data::EID>& targets = it->getTargets();
 				for (std::list<dtn::data::EID>::const_iterator target_it = targets.begin(); target_it != targets.end(); target_it++)
@@ -358,9 +358,9 @@ namespace dtn
 
 		void SecurityManager::readRoutingTable()
 		{
-			std::list<dtn::daemon::Configuration::SecurityRule> rules = dtn::daemon::Configuration::getInstance().getSecurityRules();
+			std::list<dtn::security::SecurityRule> rules = dtn::daemon::Configuration::getInstance().getSecurity().getSecurityRules();
 			_security_rules_routing.clear();
-			for (std::list<dtn::daemon::Configuration::SecurityRule>::iterator it = rules.begin(); it != rules.end(); it++)
+			for (std::list<dtn::security::SecurityRule>::iterator it = rules.begin(); it != rules.end(); it++)
 				_security_rules_routing[it->getDestination()] = *it;
 		}
 
@@ -582,9 +582,9 @@ namespace dtn
 			// knows next hop and the destination, needs to be enough
 			// 1. PCB/PIB/ESB
 
-			dtn::daemon::Configuration::SecurityRule rule = getRule(bundle._destination.getNodeEID());
-			const std::list<dtn::daemon::Configuration::SecurityRule::RuleToken>& rules = rule.getRules();
-			for (std::list<dtn::daemon::Configuration::SecurityRule::RuleToken>::const_iterator it = rules.begin(); it != rules.end() && !is_keyserver; it++)
+			dtn::security::SecurityRule rule = getRule(bundle._destination.getNodeEID());
+			const std::list<dtn::security::SecurityRule::RuleToken>& rules = rule.getRules();
+			for (std::list<dtn::security::SecurityRule::RuleToken>::const_iterator it = rules.begin(); it != rules.end() && !is_keyserver; it++)
 			{
 				switch (it->getType())
 				{
@@ -679,7 +679,7 @@ namespace dtn
 
 		void SecurityManager::lookForKeys(const dtn::data::Bundle& bundle)
 		{
-			dtn::daemon::Configuration& conf = dtn::daemon::Configuration::getInstance();
+			dtn::daemon::Configuration::Security& conf = dtn::daemon::Configuration::getInstance().getSecurity();
 			std::list<const dtn::security::KeyBlock*> blocks = bundle.getBlocks<dtn::security::KeyBlock>();
 			for (std::list<const dtn::security::KeyBlock*>::iterator it = blocks.begin(); it != blocks.end(); it++)
 			{
@@ -751,14 +751,14 @@ namespace dtn
 			kb.addKey(getPublicKey(SecurityBlock::PAYLOAD_INTEGRITY_BLOCK));
 		}
 
-		dtn::daemon::Configuration::SecurityRule SecurityManager::getRule(const dtn::data::EID& eid) const
+		dtn::security::SecurityRule SecurityManager::getRule(const dtn::data::EID& eid) const
 		{
 			// TODO asyncronous loading
 			// at the moment we do nothing complex, just return the static rule from
 			// the configuration
 			// longest prefix matching would be possible
-			dtn::daemon::Configuration::SecurityRule the_rule;
-			std::map<dtn::data::EID, dtn::daemon::Configuration::SecurityRule>::const_iterator rule = _security_rules_routing.find(eid.getNodeEID());
+			dtn::security::SecurityRule the_rule;
+			std::map<dtn::data::EID, dtn::security::SecurityRule>::const_iterator rule = _security_rules_routing.find(eid.getNodeEID());
 			if (rule != _security_rules_routing.end())
 				the_rule = rule->second;
 

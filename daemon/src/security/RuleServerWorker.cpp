@@ -18,7 +18,7 @@ namespace dtn
 
 		void RuleServerWorker::callbackBundleReceived(const Bundle &b)
 		{
-			dtn::daemon::Configuration& conf = dtn::daemon::Configuration::getInstance();
+			dtn::daemon::Configuration::Security& conf = dtn::daemon::Configuration::getInstance().getSecurity();
 			// if a RuleBlock is in this bundle, this is a rule for us
 			std::list<dtn::security::RuleBlock const *> rbs = b.getBlocks<dtn::security::RuleBlock>();
 			for (std::list<dtn::security::RuleBlock const *>::iterator it = rbs.begin(); it != rbs.end(); it++)
