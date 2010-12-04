@@ -92,6 +92,7 @@ namespace dtn
 		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false) {};
 
 		Configuration::Security::Security()
+		 : _enabled(false)
 		{};
 
 		Configuration::Discovery::~Discovery() {};
@@ -125,7 +126,7 @@ namespace dtn
 			return _network;
 		}
 
-		Configuration::Security& Configuration::getSecurity()
+		const Configuration::Security& Configuration::getSecurity() const
 		{
 			return _security;
 		}
@@ -631,6 +632,34 @@ namespace dtn
 		void Configuration::Security::load(const ibrcommon::ConfigFile &conf)
 		{
 #ifdef WITH_BUNDLE_SECURITY
+			// enable security if the security path is set
+			try {
+				_path = conf.read<std::string>("security_path");
+
+				if (!_path.exists())
+				{
+					ibrcommon::File::createDirectory(_path);
+				}
+
+				_enabled = true;
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+				return;
+			}
+
+			// load level
+			_level = Level(conf.read<int>("security_level", 0));
+
+			// load CA path
+			try {
+				_ca = conf.read<std::string>("security_ca");
+
+				if (!_ca.exists())
+				{
+					IBRCOMMON_LOGGER(warning) << "CA file " << _ca.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+				}
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+			}
+
 			// load rules
 			// read the node count
 			int count = 0;
@@ -657,26 +686,28 @@ namespace dtn
 
 		bool Configuration::Security::enabled() const
 		{
-#ifdef WITH_BUNDLE_SECURITY
-			return true;
-#else
-			return false;
-#endif
+			return _enabled;
 		}
 
 #ifdef WITH_BUNDLE_SECURITY
-		std::list< std::string > Configuration::Security::getSecurityRules_string() const
+		const ibrcommon::File& Configuration::Security::getPath() const
+		{
+			return _path;
+		}
+
+		const ibrcommon::File& Configuration::Security::getCA() const
+		{
+			return _ca;
+		}
+
+		Configuration::Security::Level Configuration::Security::getLevel() const
+		{
+			return _level;
+		}
+
+		const std::list<dtn::security::SecurityRule>& Configuration::Security::getSecurityRules() const
 		{
 			return _rules;
-		}
-
-		std::list<dtn::security::SecurityRule> Configuration::Security::getSecurityRules() const
-		{
-			std::list<SecurityRule> rules;
-			for (std::list<std::string>::const_iterator it = _rules.begin(); it != _rules.end(); it++)
-				rules.push_back(dtn::security::SecurityRule(*it));
-
-			return rules;
 		}
 
 //		bool Configuration::Security::takeRule(const dtn::security::RuleBlock& rule)

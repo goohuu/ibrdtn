@@ -210,6 +210,24 @@ namespace dtn
 					}
 
 #ifdef WITH_BUNDLE_SECURITY
+//					// if the encrypt bit is set, then let the security manager prepare encryption
+//					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT)
+//					{
+//						// we need the public key of the recipient later on, so we start a prefetch request now
+//						dtn::security::SecurityManager::getInstance().prefetchKey(bundle._destination);
+//					}
+
+					// if the encrypt bit is set, then try to encrypt the bundle
+					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT)
+					{
+						try {
+							dtn::security::SecurityManager::getInstance().encrypt(bundle);
+						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+							// sign requested, but no key is available
+							IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+
 					// if the sign bit is set, then try to sign the bundle
 					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN)
 					{
@@ -219,13 +237,6 @@ namespace dtn
 							// sign requested, but no key is available
 							IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
 						}
-					}
-
-					// if the encrypt bit is set, then let the security manager prepare encryption
-					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT)
-					{
-						// we need the public key of the recipient later on, so we start a prefetch request now
-						dtn::security::SecurityManager::getInstance().prefetchKey(bundle._destination);
 					}
 #endif
 

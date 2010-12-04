@@ -6,6 +6,7 @@
  */
 
 #include "security/SecurityKeyManager.h"
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
@@ -29,7 +30,7 @@ namespace dtn
 
 		void SecurityKeyManager::initialize(const ibrcommon::File &path)
 		{
-
+			IBRCOMMON_LOGGER(info) << "security key manager initialized; path: " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void SecurityKeyManager::prefetchKey(const dtn::data::EID &ref, const KeyType type)

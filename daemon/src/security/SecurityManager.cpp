@@ -35,16 +35,19 @@ namespace dtn
 		void SecurityManager::sign(dtn::data::Bundle &bundle) const throw (KeyMissingException)
 		{
 			// TODO: implement sign process
+			IBRCOMMON_LOGGER_DEBUG(10) << "sign bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void SecurityManager::prefetchKey(const dtn::data::EID &eid)
 		{
 			// TODO: implement key prefetch procedure
+			IBRCOMMON_LOGGER_DEBUG(10) << "prefetch key for: " << eid.getString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void SecurityManager::verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
 			// TODO: remove signature blocks, if possible
+			IBRCOMMON_LOGGER_DEBUG(10) << "verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// set the verify bit, after verification
 			bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
@@ -53,6 +56,21 @@ namespace dtn
 		void SecurityManager::fastverify(const dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
 			// TODO: do a fast verify without manipulating the bundle
+			const dtn::daemon::Configuration::Security &secconf = dtn::daemon::Configuration::getInstance().getSecurity();
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
+			{
+				// check if the bundle is encrypted and throw an exception if not
+				//throw VerificationFailedException("Bundle is not encrypted");
+				IBRCOMMON_LOGGER_DEBUG(10) << "encryption required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
+			{
+				// check if the bundle is signed and throw an exception if not
+				//throw VerificationFailedException("Bundle is not signed");
+				IBRCOMMON_LOGGER_DEBUG(10) << "signature required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		void SecurityManager::decrypt(dtn::data::Bundle &bundle) const throw (DecryptException, KeyMissingException)
@@ -60,11 +78,17 @@ namespace dtn
 			// TODO: check if the bundle has to be decrypted, return when not
 
 			// TODO: decrypt
+
+			IBRCOMMON_LOGGER_DEBUG(10) << "decrypt bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+			bundle.set(dtn::data::Bundle::DTNSEC_STATUS_CONFIDENTIAL, true);
 		}
 
 		void SecurityManager::encrypt(dtn::data::Bundle &bundle) const throw (EncryptException, KeyMissingException)
 		{
 			// TODO: encrypt the bundle
+
+			IBRCOMMON_LOGGER_DEBUG(10) << "encrypt bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void SecurityManager::deleteKey(const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt)
@@ -317,7 +341,6 @@ namespace dtn
 			// iterate over all tokens of a rule and check if all needed public keys
 			// are present. if one is missing return false and request all missing
 			// keys.
-			const dtn::daemon::Configuration::Security& conf = dtn::daemon::Configuration::getInstance().getSecurity();
 			std::list<KeyBlock> needed_keys;
 
 			// asymmetric keys
@@ -359,9 +382,9 @@ namespace dtn
 
 		void SecurityManager::readRoutingTable()
 		{
-			std::list<dtn::security::SecurityRule> rules = dtn::daemon::Configuration::getInstance().getSecurity().getSecurityRules();
+			const std::list<dtn::security::SecurityRule> rules = dtn::daemon::Configuration::getInstance().getSecurity().getSecurityRules();
 			_security_rules_routing.clear();
-			for (std::list<dtn::security::SecurityRule>::iterator it = rules.begin(); it != rules.end(); it++)
+			for (std::list<dtn::security::SecurityRule>::const_iterator it = rules.begin(); it != rules.end(); it++)
 				_security_rules_routing[it->getDestination()] = *it;
 		}
 
@@ -680,7 +703,6 @@ namespace dtn
 
 		void SecurityManager::lookForKeys(const dtn::data::Bundle& bundle)
 		{
-			dtn::daemon::Configuration::Security& conf = dtn::daemon::Configuration::getInstance().getSecurity();
 			std::list<const dtn::security::KeyBlock*> blocks = bundle.getBlocks<dtn::security::KeyBlock>();
 			for (std::list<const dtn::security::KeyBlock*>::iterator it = blocks.begin(); it != blocks.end(); it++)
 			{

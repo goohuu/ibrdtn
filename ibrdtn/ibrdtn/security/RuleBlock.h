@@ -53,7 +53,7 @@ namespace dtn
 				 Sets the rule, which is transported
 				 @param rule the rule to be transported
 				 */
-				void setRule(std::string&);
+				void setRule(const std::string&);
 
 				/**
 				 Sets the rule, which is transported

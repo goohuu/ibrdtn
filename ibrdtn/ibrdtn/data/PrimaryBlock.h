@@ -54,7 +54,8 @@ namespace dtn
 				// DTNSEC FLAGS (these are customized flags and not written down in any draft)
 				DTNSEC_REQUEST_SIGN = 1 << 0x1A,
 				DTNSEC_REQUEST_ENCRYPT = 1 << 0x1B,
-				DTNSEC_STATUS_VERIFIED = 1 << 0x1C
+				DTNSEC_STATUS_VERIFIED = 1 << 0x1C,
+				DTNSEC_STATUS_CONFIDENTIAL = 1 << 0x1D
 			};
 
 			PrimaryBlock();

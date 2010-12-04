@@ -84,25 +84,32 @@ namespace dtn
 				void prefetchKey(const dtn::data::EID &eid);
 
 				/**
-				 * This method verifies the bundle.
+				 * This method verifies the bundle and removes all auth or integrity block
+				 * if they could validated.
 				 * @param bundle The bundle to verify.
 				 */
 				void verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
 
 				/**
 				 * This method do a fast verify with the bundle. It do not change anything in it.
+				 * A missing key should not lead to an exception, because this method is
+				 * called on each received and we need to support multihop without key
+				 * knowledge too.
 				 * @param bundle The bundle to verify.
 				 */
 				void fastverify(const dtn::data::Bundle &bundle) const throw (VerificationFailedException);
 
 				/**
-				 * This method decrypts encrypted payload of a bundle.
+				 * This method decrypts encrypted payload of a bundle. It is necessary to
+				 * remove all integrity or auth block before the payload can decrypted.
 				 * @param bundle
 				 */
 				void decrypt(dtn::data::Bundle &bundle) const throw (DecryptException, KeyMissingException);
 
 				/**
 				 * This method encrypts the payload of a given bundle.
+				 * If the bundle already contains integrity or auth block a EcryptException
+				 * is thrown.
 				 * @param bundle
 				 */
 				void encrypt(dtn::data::Bundle &bundle) const throw (EncryptException, KeyMissingException);

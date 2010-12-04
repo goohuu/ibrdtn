@@ -202,7 +202,7 @@ namespace dtn
 						// security methods modifies the bundle, thus we need a copy of it
 						dtn::data::Bundle bundle = received.bundle;
 
-						// lets see if signatures and hashes are correct and it decrypts if needed
+						// lets see if signatures and hashes are correct and remove them if possible
 						dtn::security::SecurityManager::getInstance().verify(bundle);
 
 						// store the bundle into a storage module

@@ -53,6 +53,7 @@
 
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
+#include "security/SecurityKeyManager.h"
 #include "security/RuleServerWorker.h"
 #include "security/KeyServerWorker.h"
 #endif
@@ -373,6 +374,11 @@ int main(int argc, char *argv[])
 
 	// set global vars
 	setGlobalVars(conf);
+
+#ifdef WITH_BUNDLE_SECURITY
+	// initialize the key manager for the security extensions
+	dtn::security::SecurityKeyManager::getInstance().initialize( conf.getSecurity().getPath() );
+#endif
 
 	// list of components
 	std::list< dtn::daemon::Component* > components;

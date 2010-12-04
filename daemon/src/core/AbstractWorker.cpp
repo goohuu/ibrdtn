@@ -75,8 +75,9 @@ namespace dtn
 						dtn::data::BundleID id = _receive_bundles.getnpop(true);
 
 						try {
+							dtn::data::Bundle b = storage.get( id );
 							prepareBundle(b);
-							_worker.callbackBundleReceived( storage.get( id ) );
+							_worker.callbackBundleReceived( b );
 							storage.remove( id );
 						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) { };
 					}

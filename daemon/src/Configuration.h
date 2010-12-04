@@ -354,19 +354,24 @@ namespace dtn
 				bool enabled() const;
 
 #ifdef WITH_BUNDLE_SECURITY
-				/**
-				 Reads all security rules from the configuration.
-				 @return a list of all security rules found in the configuration, but
-				 instead of parsing each rule and creating a RuleBlock just the string of
-				 the rule from the configuration is returned.
-				 */
-				std::list<std::string> getSecurityRules_string() const;
+				enum Level
+				{
+					SECURITY_LEVEL_NONE = 0,
+					SECURITY_LEVEL_SIGNED = 1,
+					SECURITY_LEVEL_ENCRYPTED = 2
+				};
+
+				Level getLevel() const;
+
+				const ibrcommon::File& getPath() const;
+
+				const ibrcommon::File& getCA() const;
 
 				/**
 				Reads all security rules from the configuration.
 				@return a list of all security rules found in the configuration
 				*/
-				std::list<dtn::security::SecurityRule> getSecurityRules() const;
+				const std::list<dtn::security::SecurityRule>& getSecurityRules() const;
 
 //				/**
 //				Modifies the configuration according to the rule. It can be to add or to
@@ -463,7 +468,11 @@ namespace dtn
 //				*/
 //				bool removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock&);
 
-				std::list<std::string> _rules;
+				bool _enabled;
+				ibrcommon::File _path;
+				std::list<dtn::security::SecurityRule> _rules;
+				Level _level;
+				ibrcommon::File _ca;
 #endif
 			};
 
@@ -472,9 +481,7 @@ namespace dtn
 			const Configuration::Debug& getDebug() const;
 			const Configuration::Logger& getLogger() const;
 			const Configuration::Network& getNetwork() const;
-
-			// TODO: this should be const!!!
-			Configuration::Security& getSecurity();
+			const Configuration::Security& getSecurity() const;
 
 		private:
 			ibrcommon::ConfigFile _conf;

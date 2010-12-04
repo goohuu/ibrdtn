@@ -19,7 +19,7 @@ namespace dtn
 		{
 		}
 
-		void RuleBlock::setRule(std::string& rule)
+		void RuleBlock::setRule(const std::string& rule)
 		{
 			_rule = dtn::data::BundleString(rule);
 		}

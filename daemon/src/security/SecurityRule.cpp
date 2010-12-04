@@ -17,6 +17,7 @@ namespace dtn
 		}
 
 		SecurityRule::SecurityRule(const std::string& rule)
+		 : _rule_string(rule)
 		{
 			std::list<std::string> tokens = tokenize(rule, ';');
 
@@ -67,7 +68,7 @@ namespace dtn
 			return *this;
 		}
 
-		dtn::data::EID SecurityRule::getDestination()
+		const dtn::data::EID& SecurityRule::getDestination() const
 		{
 			return _destination;
 		}
@@ -75,6 +76,11 @@ namespace dtn
 		const std::list< SecurityRule::RuleToken >& SecurityRule::getRules() const
 		{
 			return _rules;
+		}
+
+		const std::string SecurityRule::getString() const
+		{
+			return _rule_string;
 		}
 
 		std::list< string > SecurityRule::tokenize(const std::string& string, const char deliminiter)

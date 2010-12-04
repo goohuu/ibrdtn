@@ -115,7 +115,7 @@ namespace dtn
 			/**
 			@return the name of the destination node
 			*/
-			dtn::data::EID getDestination();
+			const dtn::data::EID& getDestination() const;
 
 			/**
 			@return a list of the rules, which shall be followed, before sending
@@ -132,11 +132,15 @@ namespace dtn
 			*/
 			static std::list<std::string> tokenize(const std::string& string, const char deliminiter);
 
+			const std::string getString() const;
+
 		protected:
 			/** the target node of the bundle */
 			dtn::data::EID _destination;
 			/** the list of rules, which shall be applied to a bundle targeting _destination */
 			std::list<RuleToken> _rules;
+
+			const std::string _rule_string;
 		};
 	}
 }

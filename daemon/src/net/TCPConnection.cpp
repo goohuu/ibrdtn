@@ -367,15 +367,25 @@ namespace dtn
 						dtn::data::BundleID _current_transfer = getnpop(true, _keepalive_timeout);
 
 						try {
-#ifdef WITH_BUNDLE_SECURITY
 							// read the bundle out of the storage
 							dtn::data::Bundle bundle = storage.get(_current_transfer);
 
-							// Apply BundleAuthenticationBlocks, if keys are present
-							dtn::security::SecurityManager::getInstance().outgoing_p2p(EID(_connection.getNode().getURI()), bundle);
-#else
-							// read the bundle out of the storage
-							const dtn::data::Bundle bundle = storage.get(_current_transfer);
+#ifdef WITH_BUNDLE_SECURITY
+//							// Apply BundleAuthenticationBlocks, if keys are present
+//							dtn::security::SecurityManager::getInstance().outgoing_p2p(EID(_connection.getNode().getURI()), bundle);
+
+							const dtn::daemon::Configuration::Security::Level seclevel =
+									dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
+
+							if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
+							{
+								try {
+									dtn::security::SecurityManager::getInstance().sign(bundle);
+								} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+									// sign requested, but no key is available
+									IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+								}
+							}
 #endif
 
 							// enable cancellation during transmission
