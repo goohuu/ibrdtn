@@ -345,6 +345,9 @@ namespace dtn
 			class Security : public Configuration::Extension
 			{
 				friend class Configuration;
+			private:
+				bool _enabled;
+
 			protected:
 				Security();
 				~Security();
@@ -468,7 +471,6 @@ namespace dtn
 //				*/
 //				bool removeSecurityRuleFromConfiguration(const dtn::security::RuleBlock&);
 
-				bool _enabled;
 				ibrcommon::File _path;
 				std::list<dtn::security::SecurityRule> _rules;
 				Level _level;
