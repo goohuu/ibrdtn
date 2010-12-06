@@ -30,6 +30,7 @@ namespace dtn
 			~MetaBundle();
 
 			int getPriority() const;
+			bool get(dtn::data::PrimaryBlock::FLAGS flag) const;
 
 			dtn::data::DTNTime received;
 			size_t lifetime;

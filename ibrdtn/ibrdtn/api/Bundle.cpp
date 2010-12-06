@@ -85,9 +85,9 @@ namespace dtn
 			// If none of the priority bit are set, then the priority is LOW. bit1 = 1 and
 			// bit2 = 0 indicated an MEDIUM priority and both bits set leads to a HIGH
 			// priority.
-			if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT1)
+			if (_b.get(dtn::data::Bundle::PRIORITY_BIT1))
 			{
-					if (_b._procflags & dtn::data::Bundle::PRIORITY_BIT2)
+					if (_b.get(dtn::data::Bundle::PRIORITY_BIT2))
 					{
 						return PRIO_HIGH;
 					}
@@ -104,18 +104,18 @@ namespace dtn
 			switch (p)
 			{
 			case PRIO_LOW:
-				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT1);
-				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT2);
+				_b.set(dtn::data::Bundle::PRIORITY_BIT1, false);
+				_b.set(dtn::data::Bundle::PRIORITY_BIT2, false);
 				break;
 
 			case PRIO_HIGH:
-				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT1);
-				_b._procflags |= dtn::data::Bundle::PRIORITY_BIT2;
+				_b.set(dtn::data::Bundle::PRIORITY_BIT1, false);
+				_b.set(dtn::data::Bundle::PRIORITY_BIT2, true);
 				break;
 
 			case PRIO_MEDIUM:
-				_b._procflags |= dtn::data::Bundle::PRIORITY_BIT1;
-				_b._procflags &= ~(dtn::data::Bundle::PRIORITY_BIT2);
+				_b.set(dtn::data::Bundle::PRIORITY_BIT1, true);
+				_b.set(dtn::data::Bundle::PRIORITY_BIT2, false);
 				break;
 			}
 		}
@@ -123,9 +123,9 @@ namespace dtn
 		void Bundle::setDestination(const dtn::data::EID &eid, const bool singleton)
 		{
 			if (singleton)
-				_b._procflags |= ~(dtn::data::Bundle::DESTINATION_IS_SINGLETON);
+				_b.set(dtn::data::Bundle::DESTINATION_IS_SINGLETON, true);
 			else
-				_b._procflags &= ~(dtn::data::Bundle::DESTINATION_IS_SINGLETON);
+				_b.set(dtn::data::Bundle::DESTINATION_IS_SINGLETON, false);
 
 			_b._destination = eid;
 		}

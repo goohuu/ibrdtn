@@ -109,10 +109,10 @@ namespace dtn
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
 #endif
 
-			if (obj._procflags & dtn::data::Block::BLOCK_CONTAINS_EIDS)
+			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
 					MutualSerializer::write_mutable(_stream, *it);
 
@@ -171,10 +171,10 @@ namespace dtn
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
 #endif
 
-			if (obj._procflags & dtn::data::Block::BLOCK_CONTAINS_EIDS)
+			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
 					len += it->getString().size();
 

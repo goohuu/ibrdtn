@@ -55,7 +55,7 @@ namespace dtn
 			if (other._sequencenumber != _sequencenumber) return false;
 			if (other._source != _source) return false;
 
-			if (other._procflags & PrimaryBlock::FRAGMENT)
+			if (other.get(PrimaryBlock::FRAGMENT))
 			{
 				if (!get(PrimaryBlock::FRAGMENT)) return false;
 

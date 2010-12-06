@@ -21,7 +21,7 @@ namespace dtn
 
 		BundleID::BundleID(const dtn::data::Bundle &b)
 		: source(b._source), timestamp(b._timestamp), sequencenumber(b._sequencenumber),
-		fragment(b._procflags & dtn::data::Bundle::FRAGMENT), offset(b._fragmentoffset)
+		fragment(b.get(dtn::data::Bundle::FRAGMENT)), offset(b._fragmentoffset)
 		{
 		}
 

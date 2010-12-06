@@ -98,7 +98,7 @@ namespace dtn
 		void CustodySignalBlock::setMatch(const Bundle& other)
 		{
 			// set bundle parameter
-			if (other._procflags & Bundle::FRAGMENT)
+			if (other.get(Bundle::FRAGMENT))
 			{
 				_fragment_offset = other._fragmentoffset;
 				_fragment_length = other._appdatalength;
@@ -118,7 +118,7 @@ namespace dtn
 			if (_source != other._source) return false;
 
 			// set bundle parameter
-			if (other._procflags & Bundle::FRAGMENT)
+			if (other.get(Bundle::FRAGMENT))
 			{
 				if (!(_admfield & 1)) return false;
 				if (_fragment_offset != other._fragmentoffset) return false;

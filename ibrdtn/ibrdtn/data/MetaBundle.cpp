@@ -53,6 +53,11 @@ namespace dtn
 				else return -1;
 			}
 		}
+
+		bool MetaBundle::get(dtn::data::PrimaryBlock::FLAGS flag) const
+		{
+			return (procflags & flag);
+		}
 	}
 }
 

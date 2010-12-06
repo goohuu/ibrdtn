@@ -38,7 +38,7 @@ namespace dtn
 		{
 			if (bundle._custodian == EID()) return;
 
-			if (bundle._procflags & Bundle::CUSTODY_REQUESTED)
+			if (bundle.get(Bundle::CUSTODY_REQUESTED))
 			{
 				// we are the new custodian for this bundle
 				bundle._custodian = dtn::core::BundleCore::local;
@@ -70,7 +70,7 @@ namespace dtn
 		{
 			if (bundle._custodian == EID()) return;
 
-			if (bundle._procflags & Bundle::CUSTODY_REQUESTED)
+			if (bundle.get(Bundle::CUSTODY_REQUESTED))
 			{
 				// create a new bundle
 				Bundle b;

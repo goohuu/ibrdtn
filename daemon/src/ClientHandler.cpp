@@ -218,10 +218,12 @@ namespace dtn
 //					}
 
 					// if the encrypt bit is set, then try to encrypt the bundle
-					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT)
+					if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
 					{
 						try {
 							dtn::security::SecurityManager::getInstance().encrypt(bundle);
+
+							bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
 						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 							// sign requested, but no key is available
 							IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
@@ -229,10 +231,12 @@ namespace dtn
 					}
 
 					// if the sign bit is set, then try to sign the bundle
-					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN)
+					if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
 					{
 						try {
 							dtn::security::SecurityManager::getInstance().sign(bundle);
+
+							bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
 						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 							// sign requested, but no key is available
 							IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;

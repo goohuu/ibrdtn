@@ -20,7 +20,7 @@ namespace dtn
 		 : _bundle(b), _blob(ref)
 		{
 			// check if the given bundle is a fragment
-			if (!(_bundle._procflags & dtn::data::Bundle::FRAGMENT))
+			if (!(_bundle.get(dtn::data::Bundle::FRAGMENT)))
 			{
 				throw ibrcommon::Exception("This bundle is not a fragment!");
 			}
@@ -29,7 +29,7 @@ namespace dtn
 			_bundle.clearBlocks();
 
 			// mark the copy as non-fragment
-			_bundle._procflags &= ~(dtn::data::Bundle::FRAGMENT);
+			_bundle.set(dtn::data::Bundle::FRAGMENT, false);
 
 			// add a new payloadblock
 			_bundle.push_back(_blob);

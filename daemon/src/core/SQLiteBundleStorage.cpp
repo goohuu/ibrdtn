@@ -1095,7 +1095,7 @@ namespace core {
 
 	void SQLiteBundleStorage::store(const dtn::data::Bundle &bundle){
 		bool local = bundle._destination.getNodeEID() == BundleCore::local.getNodeEID();
-		if(bundle._procflags & dtn::data::Bundle::FRAGMENT && local){
+		if(bundle.get(dtn::data::Bundle::FRAGMENT) && local){
 			// ToDo: evt eine abfrage ob genügend platz für das Gesamte Bundle vorhanden ist. if(bundle._appdatalength <= )
 			storeFragment(bundle);
 			return;
@@ -1107,7 +1107,7 @@ namespace core {
 
 		destination = bundle._destination.getString();
 		stream_bundleid  << "[" << bundle._timestamp << "." << bundle._sequencenumber;
-		if (bundle._procflags & dtn::data::Bundle::FRAGMENT)
+		if (bundle.get(dtn::data::Bundle::FRAGMENT))
 		{
 			stream_bundleid << "." << bundle._fragmentoffset;
 		}

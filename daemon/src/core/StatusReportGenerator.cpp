@@ -35,7 +35,7 @@ namespace dtn
 			// create a new statusreport block
 			StatusReportBlock &report = bundle.push_back<StatusReportBlock>();
 
-			bundle._procflags |= dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD;
+			bundle.set(dtn::data::PrimaryBlock::APPDATA_IS_ADMRECORD, true);
 
 			// get the flags and set the status flag
 			report._status |= type;
@@ -75,7 +75,7 @@ namespace dtn
 			bundle._destination = b.reportto;
 
 			// set bundle parameter
-			if (b.procflags & Bundle::FRAGMENT)
+			if (b.get(Bundle::FRAGMENT))
 			{
 				report._fragment_offset = b.offset;
 				report._fragment_length = b.appdatalength;
@@ -100,35 +100,35 @@ namespace dtn
 				switch (bundleevent->getAction())
 				{
 				case BUNDLE_RECEIVED:
-					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION )
+					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION))
 					{
 						createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent->getReason());
 
 					}
 					break;
 				case BUNDLE_DELETED:
-					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION )
+					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_DELETION))
 					{
 						createStatusReport(b, StatusReportBlock::DELETION_OF_BUNDLE, bundleevent->getReason());
 					}
 					break;
 
 				case BUNDLE_FORWARDED:
-					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING )
+					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_FORWARDING))
 					{
 						createStatusReport(b, StatusReportBlock::FORWARDING_OF_BUNDLE, bundleevent->getReason());
 					}
 					break;
 
 				case BUNDLE_DELIVERED:
-					if ( b.procflags & Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY )
+					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_DELIVERY))
 					{
 						createStatusReport(b, StatusReportBlock::DELIVERY_OF_BUNDLE, bundleevent->getReason());
 					}
 					break;
 
 				case BUNDLE_CUSTODY_ACCEPTED:
-					if ( b.procflags & Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE )
+					if ( b.get(Bundle::REQUEST_REPORT_OF_CUSTODY_ACCEPTANCE))
 					{
 						createStatusReport(b, StatusReportBlock::CUSTODY_ACCEPTANCE_OF_BUNDLE, bundleevent->getReason());
 					}

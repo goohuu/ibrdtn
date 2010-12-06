@@ -174,7 +174,7 @@ namespace dtn
 				len += primaryheader[i].getLength();
 			}
 
-			if (obj._procflags & dtn::data::Bundle::FRAGMENT)
+			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
 				primaryheader[12] = SDNV(obj._fragmentoffset);
 				primaryheader[13] = SDNV(obj._appdatalength);
@@ -206,7 +206,7 @@ namespace dtn
 				_stream << _dictionary;
 			}
 
-			if (obj._procflags & dtn::data::Bundle::FRAGMENT)
+			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
 				_stream << primaryheader[12]; // FRAGMENTATION_OFFSET
 				_stream << primaryheader[13]; // APPLICATION_DATA_LENGTH
@@ -222,10 +222,10 @@ namespace dtn
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
 #endif
 
-			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
+			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				_stream << SDNV(obj._eids.size());
 				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
@@ -363,7 +363,7 @@ namespace dtn
 				len += _dictionary.getSize();
 			}
 
-			if (obj._procflags & dtn::data::Bundle::FRAGMENT)
+			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
 				primaryheader[12] = SDNV(obj._fragmentoffset);
 				primaryheader[13] = SDNV(obj._appdatalength);
@@ -386,10 +386,10 @@ namespace dtn
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
 #endif
 
-			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
+			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				len += dtn::data::SDNV(obj._eids.size()).getLength();
 				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
@@ -446,7 +446,7 @@ namespace dtn
 
 					case dtn::data::PayloadBlock::BLOCK_TYPE:
 					{
-						if (obj._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
+						if (obj.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
 						{
 							// create a temporary block
 							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
@@ -589,7 +589,7 @@ namespace dtn
 			}
 
 			// fragmentation?
-			if (obj._procflags & dtn::data::Bundle::FRAGMENT)
+			if (obj.get(dtn::data::Bundle::FRAGMENT))
 			{
 				_stream >> tmpsdnv;
 				obj._fragmentoffset = tmpsdnv.getValue();
@@ -614,7 +614,7 @@ namespace dtn
 			obj._procflags = procflags_sdnv.getValue() & (~(dtn::data::Block::LAST_BLOCK) | obj._procflags);
 
 			// read EIDs
-			if ( obj._procflags & dtn::data::Block::BLOCK_CONTAINS_EIDS)
+			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
 				SDNV eidcount;
 				_stream >> eidcount;
@@ -688,10 +688,10 @@ namespace dtn
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
 #endif
 
-			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
+			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				_stream << SDNV(obj._eids.size());
 				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
@@ -719,10 +719,10 @@ namespace dtn
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!(obj._procflags & Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
 #endif
 
-			if (obj._procflags & Block::BLOCK_CONTAINS_EIDS)
+			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
 			{
 				len += dtn::data::SDNV(obj._eids.size()).getLength();
 				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
@@ -764,7 +764,7 @@ namespace dtn
 
 				case dtn::data::PayloadBlock::BLOCK_TYPE:
 				{
-					if (_bundle._procflags & dtn::data::Bundle::APPDATA_IS_ADMRECORD)
+					if (_bundle.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
 					{
 						// create a temporary block
 						dtn::data::ExtensionBlock &block = _bundle.push_back<dtn::data::ExtensionBlock>();
@@ -843,7 +843,7 @@ namespace dtn
 			obj._procflags = procflags_sdnv.getValue();
 
 			// read EIDs
-			if ( obj._procflags & dtn::data::Block::BLOCK_CONTAINS_EIDS)
+			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 			{
 				SDNV eidcount;
 				_stream >> eidcount;
