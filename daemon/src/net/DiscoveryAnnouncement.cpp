@@ -160,6 +160,7 @@ namespace dtn
 
 				case DiscoveryAnnouncement::DTND_IPDISCOVERY:
 				{
+					u_int8_t cl_type = 1;
 					char zero = '\0';
 					u_int8_t interval = 10;
 					// u_int32_t inet_addr;
@@ -170,7 +171,7 @@ namespace dtn
 					u_int16_t length = htons(12 + eid.length() + add_zeros);
 
 
-					stream << (unsigned char)DiscoveryAnnouncement::DTND_IPDISCOVERY;
+					stream << (unsigned char)cl_type;
 					stream.write((char*)&interval, 1);
 					stream.write((char*)&length, 2);
 
@@ -206,16 +207,18 @@ namespace dtn
 
 		std::istream &operator>>(std::istream &stream, DiscoveryAnnouncement &announcement)
 		{
-			unsigned char version = stream.get();
+			unsigned char version = 0;
 
 			// do we running DTN2 compatibility mode?
 			if (announcement._version == DiscoveryAnnouncement::DTND_IPDISCOVERY)
 			{
-				// read disco messages with version 1 as IPDiscovery (DTN2)
-				if (version == DiscoveryAnnouncement::DISCO_VERSION_00)
-				{
-					version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
-				}
+				// set version to IPDiscovery (DTN2)
+				version = DiscoveryAnnouncement::DTND_IPDISCOVERY;
+			}
+			else
+			{
+				// read IPND version of the frame
+				version = stream.get();
 			}
 
 			switch (version)
@@ -320,14 +323,16 @@ namespace dtn
 
 			case DiscoveryAnnouncement::DTND_IPDISCOVERY:
 			{
+				u_int8_t cl_type;
 				u_int8_t interval;
 				u_int16_t length;
 				u_int32_t inet_addr;
 				u_int16_t inet_port;
 				u_int16_t eid_len;
 
-				IBRCOMMON_LOGGER_DEBUG(15) << "beacon version 0 received" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(15) << "beacon IPDiscovery (DTN2) frame received" << IBRCOMMON_LOGGER_ENDL;
 
+				stream.read((char*)&cl_type, 1);
 				stream.read((char*)&interval, 1);
 				stream.read((char*)&length, 2);
 				stream.read((char*)&inet_addr, 4);

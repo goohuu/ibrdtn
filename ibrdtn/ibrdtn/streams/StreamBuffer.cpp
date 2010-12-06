@@ -424,11 +424,12 @@ namespace dtn
 					if (get(STREAM_REJECT))
 					{
 						// send NACK on bundle reject
+						if (get(STREAM_NACK_SUPPORT))
 						{
 							ibrcommon::MutexLock l(_sendlock);
 							if (!_stream.good()) throw StreamErrorException("stream went bad");
 
-							// send a SHUTDOWN message
+							// send a REFUSE message
 							_stream << StreamDataSegment(StreamDataSegment::MSG_REFUSE_BUNDLE) << std::flush;
 						}
 
@@ -497,6 +498,7 @@ namespace dtn
 							if (get(STREAM_REJECT))
 							{
 								// send NACK on bundle reject
+								if (get(STREAM_NACK_SUPPORT))
 								{
 									// lock for sending
 									ibrcommon::MutexLock l(_sendlock);
