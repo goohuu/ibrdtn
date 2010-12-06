@@ -71,8 +71,8 @@ namespace dtn
 				throw dtn::SerializationFailedException(ex.what());
 			}
 
-			// set block not processed bit
-			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, true);
+			// set block not processed bit to false
+			set(dtn::data::Block::FORWARDED_WITHOUT_PROCESSED, false);
 
 			return stream;
 		}
