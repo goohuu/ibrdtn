@@ -49,7 +49,7 @@ void TestSerializer::serializer_separate01(void)
 	dtn::data::SeparateDeserializer(ss1, b2).readBlock();
 	dtn::data::SeparateDeserializer(ss2, b2).readBlock();
 
-	assert( b2.getBlocks().size() == b.getBlocks().size() );
+	CPPUNIT_ASSERT_EQUAL( b2.getBlocks().size(), b.getBlocks().size() );
 }
 
 void TestSerializer::serializer_cbhe01(void)
@@ -76,10 +76,10 @@ void TestSerializer::serializer_cbhe01(void)
 	ss.clear(); ss.seekp(0); ss.seekg(0);
 	dtn::data::DefaultDeserializer(ss) >> b2;
 
-	assert( b._source == b2._source );
-	assert( b._destination == b2._destination );
-	assert( b._reportto == b2._reportto );
-	assert( b._custodian == b2._custodian );
+	CPPUNIT_ASSERT( b._source == b2._source );
+	CPPUNIT_ASSERT( b._destination == b2._destination );
+	CPPUNIT_ASSERT( b._reportto == b2._reportto );
+	CPPUNIT_ASSERT( b._custodian == b2._custodian );
 }
 
 void TestSerializer::serializer_cbhe02(void)
@@ -104,5 +104,21 @@ void TestSerializer::serializer_cbhe02(void)
 	std::stringstream ss;
 	dtn::data::DefaultSerializer(ss) << b;
 
-	assert( ss.str().length() == 33);
+	CPPUNIT_ASSERT_EQUAL((size_t)33, ss.str().length());
+}
+
+void TestSerializer::serializer_bundle_length(void)
+{
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://node1/app1");
+	b._destination = dtn::data::EID("dtn://node2/app2");
+	b._lifetime = 3600;
+	b._timestamp = 12345678;
+	b._sequencenumber = 1234;
+
+	std::stringstream ss;
+	dtn::data::DefaultSerializer ds(ss);
+	ds << b;
+
+	CPPUNIT_ASSERT_EQUAL(ds.getLength(b), ss.str().length());
 }
