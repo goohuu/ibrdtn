@@ -43,7 +43,7 @@ config 'daemon' 'storage'
 #
 config 'daemon' 'statistic'
 	# types: stdout | syslog | plain | csv | stat | udp
-	option type			stdout
+	option type			stat
 	option interval		2
 	option file			/tmp/ibrdtn.stats
 #	option address		127.0.0.1
