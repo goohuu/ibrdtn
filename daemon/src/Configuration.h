@@ -46,6 +46,7 @@ namespace dtn
 
 				NetConfig(std::string name, NetType type, const std::string &address, int port, bool discovery = true);
 				NetConfig(std::string name, NetType type, const ibrcommon::NetInterface &iface, int port, bool discovery = true);
+				NetConfig(std::string name, NetType type, int port, bool discovery = true);
 				~NetConfig();
 
 				std::string name;

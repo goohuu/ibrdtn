@@ -54,6 +54,11 @@ namespace dtn
 		{
 		}
 
+		Configuration::NetConfig::NetConfig(std::string n, NetType t, int p, bool d)
+		 : name(n), type(t), interface(), port(p), discovery(d)
+		{
+		}
+
 		Configuration::NetConfig::~NetConfig()
 		{
 		}
@@ -439,12 +444,18 @@ namespace dtn
 
 						default:
 						{
-							Configuration::NetConfig::NetConfig nc(netname, type,
-									ibrcommon::NetInterface(conf.read<std::string>(key_interface, "lo")),
-									conf.read<unsigned int>(key_port, 4556),
-									conf.read<std::string>(key_discovery, "yes") == "yes");
+							unsigned int port = conf.read<unsigned int>(key_port, 4556);
+							bool discovery = (conf.read<std::string>(key_discovery, "yes") == "yes");
 
-							_interfaces.push_back(nc);
+							try {
+								ibrcommon::NetInterface interface(conf.read<std::string>(key_interface));
+								Configuration::NetConfig::NetConfig nc(netname, type, interface, port, discovery);
+								_interfaces.push_back(nc);
+							} catch (ConfigFile::key_not_found ex) {
+								Configuration::NetConfig::NetConfig nc(netname, type, port, discovery);
+								_interfaces.push_back(nc);
+							}
+
 							break;
 						}
 					}

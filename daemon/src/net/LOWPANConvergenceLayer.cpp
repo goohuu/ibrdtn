@@ -60,7 +60,7 @@ namespace dtn
 		{
 			name = "lowpancl";
 
-			stringstream service; service << "short address=" << _net.getAddress() << ";panid=" << _panid << ";";
+			stringstream service; service << "short address=" << _net.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ";panid=" << _panid << ";";
 			params = service.str();
 		}
 
@@ -151,7 +151,7 @@ namespace dtn
 
 				}
 			} catch (ibrcommon::lowpansocket::SocketException ex) {
-				IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << _net.getAddress() << ":" << _panid << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << _net.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ":" << _panid << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
