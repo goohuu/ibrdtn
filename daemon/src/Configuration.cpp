@@ -50,7 +50,7 @@ namespace dtn
 		}
 
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &a, int p, bool d)
-		 : name(n), type(t), interface("lo"), address(a), port(p), discovery(d)
+		 : name(n), type(t), interface(ibrcommon::NetSocket::NETSOCKET_INET), address(a), port(p), discovery(d)
 		{
 		}
 
@@ -94,7 +94,7 @@ namespace dtn
 		 : _quiet(false), _options(0) {};
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false) {};
+		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo", ibrcommon::NetSocket::NETSOCKET_INET), _use_default_net(false) {};
 
 		Configuration::Security::Security()
 		 : _enabled(false)
@@ -155,7 +155,7 @@ namespace dtn
 
 				if (arg == "-i" && argc > i)
 				{
-						_network._default_net = ibrcommon::NetInterface(argv[i + 1]);
+						_network._default_net = ibrcommon::NetInterface(argv[i + 1], ibrcommon::NetSocket::NETSOCKET_INET);
 						_network._use_default_net = true;
 				}
 
@@ -318,7 +318,7 @@ namespace dtn
 		Configuration::NetConfig Configuration::getAPIInterface()
 		{
 //			try {
-				return Configuration::NetConfig("local", Configuration::NetConfig::NETWORK_TCP, ibrcommon::NetInterface("lo"), 4550);
+				return Configuration::NetConfig("local", Configuration::NetConfig::NETWORK_TCP, ibrcommon::NetInterface("lo", ibrcommon::NetSocket::NETSOCKET_INET), 4550);
 //			} catch (const ConfigFile::key_not_found&) {
 //				throw ParameterNotSetException();
 //			}
@@ -421,6 +421,7 @@ namespace dtn
 					std::string key_interface = "net_" + netname + "_interface";
 					std::string key_address = "net_" + netname + "_address";
 					std::string key_discovery = "net_" + netname + "_discovery";
+					std::string key_family = "net_" + netname + "_family";
 
 					std::string type_name = conf.read<string>(key_type, "tcp");
 					Configuration::NetConfig::NetType type = Configuration::NetConfig::NETWORK_UNKNOWN;
@@ -446,13 +447,32 @@ namespace dtn
 						{
 							unsigned int port = conf.read<unsigned int>(key_port, 4556);
 							bool discovery = (conf.read<std::string>(key_discovery, "yes") == "yes");
+							ibrcommon::NetSocket::Family f;
 
 							try {
-								ibrcommon::NetInterface interface(conf.read<std::string>(key_interface));
+								switch (conf.read<int>(key_family))
+								{
+								case 6:
+									f = ibrcommon::NetSocket::NETSOCKET_INET6;
+									break;
+
+								case 4:
+								default:
+									f = ibrcommon::NetSocket::NETSOCKET_INET;
+									break;
+								}
+
+							} catch (const ConfigFile::key_not_found &ex) {
+								f = ibrcommon::NetSocket::NETSOCKET_INET;
+							}
+
+							try {
+								ibrcommon::NetInterface interface(conf.read<std::string>(key_interface), f);
 								Configuration::NetConfig::NetConfig nc(netname, type, interface, port, discovery);
 								_interfaces.push_back(nc);
 							} catch (ConfigFile::key_not_found ex) {
-								Configuration::NetConfig::NetConfig nc(netname, type, port, discovery);
+								ibrcommon::NetInterface interface(f);
+								Configuration::NetConfig::NetConfig nc(netname, type, interface, port, discovery);
 								_interfaces.push_back(nc);
 							}
 

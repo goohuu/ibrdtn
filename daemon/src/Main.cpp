@@ -255,7 +255,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						components.push_back(udpcl);
 						if (ipnd != NULL) ipnd->addService(udpcl);
 
-						IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.interface.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.interface.getAddress().toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
@@ -271,7 +271,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						components.push_back(tcpcl);
 						if (ipnd != NULL) ipnd->addService(tcpcl);
 
-						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.getAddress().toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
@@ -304,7 +304,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						components.push_back(lowpancl);
 						if (ipnd != NULL) ipnd->addService(lowpancl);
 
-						IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.interface.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.interface.getAddress().toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
@@ -514,9 +514,9 @@ int main(int argc, char *argv[])
 			try {
 				// instance a API server, first create a socket
 				components.push_back( new ApiServer(lo.interface, lo.port) );
-				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.interface.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.interface.getAddress().toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
 			} catch (ibrcommon::SocketException ex) {
-				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.getAddress().toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
 		}

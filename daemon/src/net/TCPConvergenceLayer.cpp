@@ -64,7 +64,7 @@ namespace dtn
 		{
 			name = "tcpcl";
 
-			stringstream service; service << "ip=" << _net.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ";port=" << _port << ";";
+			stringstream service; service << "ip=" << _net.getAddress().str() << ";port=" << _port << ";";
 			params = service.str();
 		}
 

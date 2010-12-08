@@ -68,7 +68,7 @@ namespace dtn
 		{
 			name = "udpcl";
 
-			stringstream service; service << "ip=" << _net.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ";port=" << _port << ";";
+			stringstream service; service << "ip=" << _net.getAddress().str() << ";port=" << _port << ";";
 			params = service.str();
 		}
 
@@ -203,7 +203,7 @@ namespace dtn
 				}
 
 			} catch (ibrcommon::udpsocket::SocketException ex) {
-				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.getAddress(ibrcommon::NetAddress::NETADDR_IP).toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.getAddress().toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
