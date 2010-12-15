@@ -376,8 +376,11 @@ int main(int argc, char *argv[])
 	setGlobalVars(conf);
 
 #ifdef WITH_BUNDLE_SECURITY
-	// initialize the key manager for the security extensions
-	dtn::security::SecurityKeyManager::getInstance().initialize( conf.getSecurity().getPath() );
+	if (conf.getSecurity().enabled())
+	{
+		// initialize the key manager for the security extensions
+		dtn::security::SecurityKeyManager::getInstance().initialize( conf.getSecurity().getPath() );
+	}
 #endif
 
 	// list of components
@@ -440,8 +443,11 @@ int main(int argc, char *argv[])
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
 #ifdef WITH_BUNDLE_SECURITY
-	// read configuration of the security class
-	dtn::security::SecurityManager::getInstance().readRoutingTable();
+	if (conf.getSecurity().enabled())
+	{
+		// read configuration of the security class
+		dtn::security::SecurityManager::getInstance().readRoutingTable();
+	}
 #endif
 
 	// add routing extensions
