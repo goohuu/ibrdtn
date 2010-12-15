@@ -188,36 +188,31 @@ namespace dtn
 				ibrcommon::MutexLock l(_list_mutex);
 				NeighborDatabase::NeighborEntry &entry = _neighbors.get(eid);
 
+				// delete the bundle in the storage if
+				if (( EID(eid.getNodeEID()) == EID(meta.destination.getNodeEID()) ) && (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+				{
+					try {
+						// bundle has been delivered to its destination
+						// delete it from our storage
+						getRouter()->getStorage().remove(meta);
+
+						IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+
+						// add it to the purge vector
+						_purge_vector.add(meta);
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
+				}
+
+				ibrcommon::BloomFilter &bf = entry._filter;
+				bf.insert(meta.toString());
+
+				if (IBRCOMMON_LOGGER_LEVEL >= 40)
+				{
+					IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
+				}
+
 				// release resources for transmission
 				entry.releaseTransfer();
-
-				// delete the bundle in the storage if
-				if ( EID(eid.getNodeEID()) == EID(meta.destination.getNodeEID()) )
-				{
-					if (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON)
-					{
-						try {
-							// bundle has been delivered to its destination
-							// delete it from our storage
-							getRouter()->getStorage().remove(meta);
-
-							IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
-
-							// add it to the purge vector
-							_purge_vector.add(meta);
-						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
-					}
-				}
-				else
-				{
-					ibrcommon::BloomFilter &bf = entry._filter;
-					bf.insert(meta.toString());
-
-					if (IBRCOMMON_LOGGER_LEVEL >= 40)
-					{
-						IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
 
 				// transfer the next bundle to this destination
 				_taskqueue.push( new SearchNextBundleTask( eid ) );
@@ -342,7 +337,7 @@ namespace dtn
 									} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 										// if the bloomfilter query returns no bundle, then query for the
 										// direct node EID
-										const dtn::data::BundleID b = storage.getByDestination(task.eid, false);
+										const dtn::data::BundleID b = storage.getByDestination(task.eid, false, true);
 										router.transferTo(task.eid, b);
 									}
 								}
@@ -350,7 +345,7 @@ namespace dtn
 								{
 									// the neighbor does not seems to support epidemic routing
 									// only forward bundles with him as destination
-									const dtn::data::BundleID b = storage.getByDestination(task.eid, false);
+									const dtn::data::BundleID b = storage.getByDestination(task.eid, false, true);
 									router.transferTo(task.eid, b);
 								}
 							} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {

@@ -27,7 +27,7 @@ namespace dtn
 
 		Bundle::Bundle(const dtn::data::EID &destination)
 		{
-			_b._destination = destination;
+			setDestination(destination);
 			setPriority(PRIO_MEDIUM);
 		}
 

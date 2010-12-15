@@ -129,7 +129,7 @@ public:
 	 * @param exact
 	 * @return
 	 */
-	const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false);
+	const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false, bool singleton = true);
 
 	/**
 	 * Returns a bundle ID which is not in the bloomfilter, but in the storage

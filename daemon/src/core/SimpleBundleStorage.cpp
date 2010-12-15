@@ -220,7 +220,7 @@ namespace dtn
 			throw BundleStorage::NoBundleFoundException();
 		}
 
-		const dtn::data::MetaBundle SimpleBundleStorage::getByDestination(const dtn::data::EID &eid, bool exact)
+		const dtn::data::MetaBundle SimpleBundleStorage::getByDestination(const dtn::data::EID &eid, bool exact, bool singleton)
 		{
 			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: get bundle for " << eid.getString() << IBRCOMMON_LOGGER_ENDL;
 			
@@ -230,20 +230,23 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = (*iter);
 
 				try {
+					// if singleton destination is requested and bundle destination is not a singleton continue ...
+					if (singleton && !(meta.procflags & dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) continue;
+
+					// exact match of destination is requested
 					if (exact)
 					{
-						if (meta.destination == eid)
-						{
-							return __get(meta);
-						}
+						// continue if destination does not match exactly
+						if (meta.destination != eid) continue;
 					}
 					else
 					{
-						if (meta.destination.getNodeEID() == eid.getNodeEID())
-						{
-							return __get(meta);
-						}
+						// continue if destination node name does not match
+						if (meta.destination.getNodeEID() != eid.getNodeEID()) continue;
 					}
+
+					// return the current bundle
+					return __get(meta);
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER_DEBUG(10) << "InvalidDataException on bundle get: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}

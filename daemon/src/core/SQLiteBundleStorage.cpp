@@ -717,7 +717,7 @@ namespace core {
 		return bundle;
 	}
 
-	const dtn::data::MetaBundle SQLiteBundleStorage::getByDestination(const dtn::data::EID &eid, bool exact)
+	const dtn::data::MetaBundle SQLiteBundleStorage::getByDestination(const dtn::data::EID &eid, bool exact, bool singleton)
 	{
 		int err;
 		size_t procflag;

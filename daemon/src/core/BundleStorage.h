@@ -80,7 +80,7 @@ namespace dtn
 			 * @param exact
 			 * @return
 			 */
-			virtual const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false) = 0;
+			virtual const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false, bool singleton = true) = 0;
 
 			/**
 			 * Returns a bundle ID which is not in the bloomfilter, but in the storage
