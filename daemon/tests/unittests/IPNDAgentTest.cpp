@@ -24,7 +24,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION(IPNDAgentTest);
 /*=== BEGIN tests for class 'IPNDAgent' ===*/
 void IPNDAgentTest::testBind()
 {
-	/* test signature (const ibrcommon::NetInterface &net) */
+	/* test signature (const ibrcommon::vinterface &net) */
 	CPPUNIT_FAIL("not implemented");
 }
 

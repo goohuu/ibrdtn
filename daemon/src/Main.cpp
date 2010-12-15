@@ -3,7 +3,7 @@
 #include <ibrcommon/data/BLOB.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/AutoDelete.h>
-#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/net/vinterface.h>
 #include "ibrcommon/Logger.h"
 #include <ibrdtn/utils/Clock.h>
 #include <list>
@@ -255,7 +255,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						components.push_back(udpcl);
 						if (ipnd != NULL) ipnd->addService(udpcl);
 
-						IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.interface.getAddress().toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "UDP ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
@@ -271,7 +271,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						components.push_back(tcpcl);
 						if (ipnd != NULL) ipnd->addService(tcpcl);
 
-						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.getAddress().toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
@@ -283,13 +283,13 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 				case Configuration::NetConfig::NETWORK_HTTP:
 				{
 					try {
-						HTTPConvergenceLayer *httpcl = new HTTPConvergenceLayer( net.address );
+						HTTPConvergenceLayer *httpcl = new HTTPConvergenceLayer( net.url );
 						core.addConvergenceLayer(httpcl);
 						components.push_back(httpcl);
 
-						IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.address << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.address.get() << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add HTTP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(error) << "Failed to add HTTP ConvergenceLayer, Server: " << net.address.get() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}
@@ -304,7 +304,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						components.push_back(lowpancl);
 						if (ipnd != NULL) ipnd->addService(lowpancl);
 
-						IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.interface.getAddress().toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "LOWPAN ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
@@ -414,7 +414,7 @@ int main(int argc, char *argv[])
 		}
 
 		// collect all interfaces of convergence layer instances
-		std::set<ibrcommon::NetInterface> interfaces;
+		std::set<ibrcommon::vinterface> interfaces;
 
 		const std::list<Configuration::NetConfig> &nets = conf.getNetwork().getInterfaces();
 		for (std::list<Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
@@ -423,7 +423,7 @@ int main(int argc, char *argv[])
 			interfaces.insert(net.interface);
 		}
 
-		for (std::set<ibrcommon::NetInterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
+		for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
 		{
 			// add interfaces to discovery
 			ipnd->bind(*iter);
@@ -503,7 +503,7 @@ int main(int argc, char *argv[])
 				// use unix domain sockets for API
 				components.push_back( new ApiServer(socket) );
 				IBRCOMMON_LOGGER(info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
-			} catch (ibrcommon::SocketException ex) {
+			} catch (const ibrcommon::vsocket_exception&) {
 				IBRCOMMON_LOGGER(error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
@@ -514,9 +514,9 @@ int main(int argc, char *argv[])
 			try {
 				// instance a API server, first create a socket
 				components.push_back( new ApiServer(lo.interface, lo.port) );
-				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.interface.getAddress().toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
-			} catch (ibrcommon::SocketException ex) {
-				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.getAddress().toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.interface.toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::vsocket_exception&) {
+				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 				exit(-1);
 			}
 		}

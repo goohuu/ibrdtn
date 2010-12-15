@@ -58,7 +58,7 @@ namespace dtn
 			if (_provider != NULL) _provider->update(_service_name, _service_parameters);
 		}
 
-		bool DiscoveryService::onInterface(const ibrcommon::NetInterface &net) const
+		bool DiscoveryService::onInterface(const ibrcommon::vinterface &net) const
 		{
 			if (_provider != NULL)
 			{

@@ -11,7 +11,7 @@
 #include "Component.h"
 #include "ClientHandler.h"
 #include "ibrcommon/net/tcpserver.h"
-#include "ibrcommon/net/NetInterface.h"
+#include <ibrcommon/net/vinterface.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/Queue.h>
 
@@ -26,7 +26,7 @@ namespace dtn
 		{
 		public:
 			ApiServer(const ibrcommon::File &socket);
-			ApiServer(ibrcommon::NetInterface net, int port = 4550);
+			ApiServer(const ibrcommon::vinterface &net, int port = 4550);
 			virtual ~ApiServer();
 
 			/**

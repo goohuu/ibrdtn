@@ -8,7 +8,7 @@
 #include "net/TCPConvergenceLayer.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
-#include "ibrcommon/net/NetInterface.h"
+#include <ibrcommon/net/vinterface.h>
 #include "net/ConnectionEvent.h"
 #include <ibrcommon/thread/MutexLock.h>
 #include "routing/RequeueBundleEvent.h"
@@ -31,7 +31,7 @@ namespace dtn
 		 */
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		TCPConvergenceLayer::TCPConvergenceLayer(ibrcommon::NetInterface net, int port)
+		TCPConvergenceLayer::TCPConvergenceLayer(const ibrcommon::vinterface &net, int port)
 		 : _net(net), _port(port), _server(net, port)
 		{
 		}
@@ -63,12 +63,11 @@ namespace dtn
 		void TCPConvergenceLayer::update(std::string &name, std::string &params)
 		{
 			name = "tcpcl";
-
-			stringstream service; service << "ip=" << _net.getAddress().str() << ";port=" << _port << ";";
+			stringstream service; service << "ip=" << _net.getAddresses().front().get() << ";port=" << _port << ";";
 			params = service.str();
 		}
 
-		bool TCPConvergenceLayer::onInterface(const ibrcommon::NetInterface &net) const
+		bool TCPConvergenceLayer::onInterface(const ibrcommon::vinterface &net) const
 		{
 			if (_net == net) return true;
 			return false;
@@ -128,13 +127,13 @@ namespace dtn
 				conn->initialize();
 
 				conn->queue(job._bundle);
-			} catch (ibrcommon::SocketException ex) {
+			} catch (const ibrcommon::vsocket_exception&) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 			}
 		}
 
-		TCPConvergenceLayer::Server::Server(ibrcommon::NetInterface net, int port)
+		TCPConvergenceLayer::Server::Server(const ibrcommon::vinterface &net, int port)
 		 : dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>(), _tcpsrv(net, port)
 		{
 			bindEvent(NodeEvent::className);

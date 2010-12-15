@@ -18,7 +18,7 @@
 
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryAnnouncement.h"
-#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/udpsocket.h>
 #include <list>
 #include <map>
@@ -35,7 +35,7 @@ namespace dtn
 			IPNDAgent(int port, std::string address);
 			virtual ~IPNDAgent();
 
-			void bind(const ibrcommon::NetInterface &net);
+			void bind(const ibrcommon::vinterface &net);
 
 			/**
 			 * @see Component::getName()
@@ -54,8 +54,8 @@ namespace dtn
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
 			ibrcommon::udpsocket *_socket;
-			std::string _destination;
-			std::list<ibrcommon::NetInterface> _interfaces;
+			ibrcommon::vaddress _destination;
+			std::list<ibrcommon::vinterface> _interfaces;
 
 			std::map<std::string, ibrcommon::udpsocket* > _sockets;
 			int _port;

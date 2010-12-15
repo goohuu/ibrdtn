@@ -5,7 +5,7 @@
 #include "net/ConvergenceLayer.h"
 #include "ibrcommon/Exceptions.h"
 #include "net/DiscoveryServiceProvider.h"
-#include "ibrcommon/net/NetInterface.h"
+#include <ibrcommon/net/vinterface.h>
 #include "ibrcommon/net/lowpansocket.h"
 
 using namespace dtn::data;
@@ -20,12 +20,12 @@ namespace dtn
 		class LOWPANConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider
 		{
 		public:
-			LOWPANConvergenceLayer(ibrcommon::NetInterface net, int panid, bool broadcast = false, unsigned int mtu = 127);
+			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool broadcast = false, unsigned int mtu = 127);
 
 			virtual ~LOWPANConvergenceLayer();
 
 			virtual void update(std::string &name, std::string &data);
-			virtual bool onInterface(const ibrcommon::NetInterface &net) const;
+			virtual bool onInterface(const ibrcommon::vinterface &net) const;
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -47,7 +47,7 @@ namespace dtn
 		private:
 			ibrcommon::lowpansocket *_socket;
 
-			ibrcommon::NetInterface _net;
+			ibrcommon::vinterface _net;
 			int _panid;
 			int m_socket;
 

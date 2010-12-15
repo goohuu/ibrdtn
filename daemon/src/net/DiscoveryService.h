@@ -9,7 +9,7 @@
 #define DISCOVERYSERVICE_H_
 
 #include <net/DiscoveryServiceProvider.h>
-#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/net/vinterface.h>
 #include <stdlib.h>
 #include <iostream>
 
@@ -35,7 +35,7 @@ namespace dtn
 			 */
 			void update();
 
-			bool onInterface(const ibrcommon::NetInterface &net) const;
+			bool onInterface(const ibrcommon::vinterface &net) const;
 
 		protected:
 			std::string _service_name;

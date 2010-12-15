@@ -40,7 +40,7 @@ namespace dtn
 	{
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::NetInterface net, int port, bool broadcast, unsigned int mtu)
+		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, bool broadcast, unsigned int mtu)
 			: _socket(NULL), _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
 			if (broadcast)
@@ -68,11 +68,11 @@ namespace dtn
 		{
 			name = "udpcl";
 
-			stringstream service; service << "ip=" << _net.getAddress().str() << ";port=" << _port << ";";
+			stringstream service; service << "ip=" << _net.getAddresses().front().get() << ";port=" << _port << ";";
 			params = service.str();
 		}
 
-		bool UDPConvergenceLayer::onInterface(const ibrcommon::NetInterface &net) const
+		bool UDPConvergenceLayer::onInterface(const ibrcommon::vinterface &net) const
 		{
 			if (_net == net) return true;
 			return false;
@@ -203,7 +203,7 @@ namespace dtn
 				}
 
 			} catch (ibrcommon::udpsocket::SocketException ex) {
-				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.getAddress().toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}

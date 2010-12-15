@@ -39,7 +39,7 @@ namespace dtn
 	{
 		const int LOWPANConvergenceLayer::DEFAULT_PANID = 0x780;
 
-		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::NetInterface net, int panid, bool, unsigned int mtu)
+		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool, unsigned int mtu)
 			: _socket(NULL), _net(net), _panid(panid), m_maxmsgsize(mtu), _running(false)
 		{
 			_socket = new ibrcommon::UnicastSocketLowpan();
@@ -60,11 +60,11 @@ namespace dtn
 		{
 			name = "lowpancl";
 
-			stringstream service; service << "short address=" << _net.getAddress().str() << ";panid=" << _panid << ";";
+			stringstream service; service << "short address=" << _net.getAddresses().front().get() << ";panid=" << _panid << ";";
 			params = service.str();
 		}
 
-		bool LOWPANConvergenceLayer::onInterface(const ibrcommon::NetInterface &net) const
+		bool LOWPANConvergenceLayer::onInterface(const ibrcommon::vinterface &net) const
 		{
 			if (_net == net) return true;
 			return false;
@@ -151,7 +151,7 @@ namespace dtn
 
 				}
 			} catch (ibrcommon::lowpansocket::SocketException ex) {
-				IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << _net.getAddress().toString() << ":" << _panid << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << _net.toString() << ":" << _panid << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 		}

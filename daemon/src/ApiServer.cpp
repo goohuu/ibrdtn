@@ -28,7 +28,7 @@ namespace dtn
 		{
 		}
 
-		ApiServer::ApiServer(ibrcommon::NetInterface net, int port)
+		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
 		 : _tcpsrv(net, port), _dist()
 		{
 		}

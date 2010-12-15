@@ -8,7 +8,7 @@
 #ifndef _DISCOVERYSERVICEPROVIDER_H
 #define	_DISCOVERYSERVICEPROVIDER_H
 
-#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/net/vinterface.h>
 #include <string>
 
 namespace dtn
@@ -25,7 +25,7 @@ namespace dtn
 			 */
 			virtual void update(std::string &name, std::string &data) = 0;
 
-			virtual bool onInterface(const ibrcommon::NetInterface&) const
+			virtual bool onInterface(const ibrcommon::vinterface&) const
 			{
 				return true;
 			}

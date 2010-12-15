@@ -174,7 +174,7 @@ void TCPConvergenceLayerTest::testUpdate()
 
 void TCPConvergenceLayerTest::testOnInterface()
 {
-	/* test signature (const ibrcommon::NetInterface &net) const */
+	/* test signature (const ibrcommon::vinterface &net) const */
 	CPPUNIT_FAIL("not implemented");
 }
 

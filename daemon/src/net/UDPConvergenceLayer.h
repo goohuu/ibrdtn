@@ -3,10 +3,10 @@
 
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
-#include "ibrcommon/Exceptions.h"
+#include <ibrcommon/Exceptions.h>
 #include "net/DiscoveryServiceProvider.h"
-#include "ibrcommon/net/NetInterface.h"
-#include "ibrcommon/net/udpsocket.h"
+#include <ibrcommon/net/vinterface.h>
+#include <ibrcommon/net/udpsocket.h>
 
 using namespace dtn::data;
 
@@ -29,7 +29,7 @@ namespace dtn
 			 * @param[in] broadcast If true, the broadcast feature for this socket is enabled.
 			 * @param[in] mtu The maximum bundle size.
 			 */
-			UDPConvergenceLayer(ibrcommon::NetInterface net, int port, bool broadcast = false, unsigned int mtu = 1280);
+			UDPConvergenceLayer(ibrcommon::vinterface net, int port, bool broadcast = false, unsigned int mtu = 1280);
 
 			/**
 			 * Desktruktor
@@ -37,7 +37,7 @@ namespace dtn
 			virtual ~UDPConvergenceLayer();
 
 			virtual void update(std::string &name, std::string &data);
-			virtual bool onInterface(const ibrcommon::NetInterface &net) const;
+			virtual bool onInterface(const ibrcommon::vinterface &net) const;
 
 			dtn::core::Node::Protocol getDiscoveryProtocol() const;
 
@@ -59,7 +59,7 @@ namespace dtn
 		private:
 			ibrcommon::udpsocket *_socket;
 
-			ibrcommon::NetInterface _net;
+			ibrcommon::vinterface _net;
 			int _port;
 			int m_socket;
 

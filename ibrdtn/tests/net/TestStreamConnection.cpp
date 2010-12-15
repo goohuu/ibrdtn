@@ -32,7 +32,7 @@ void TestStreamConnection::connectionUpDown()
 	{
 	public:
 		testserver(ibrcommon::File &file) : ibrcommon::tcpserver(file), recv_bundles(0) {};
-		testserver(ibrcommon::NetInterface net, int port) : ibrcommon::tcpserver(net, port), recv_bundles(0) {};
+		testserver(ibrcommon::vinterface net, int port) : ibrcommon::tcpserver(net, port), recv_bundles(0) {};
 		virtual ~testserver() { join(); };
 
 		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) {};
@@ -145,7 +145,7 @@ void TestStreamConnection::connectionUpDown()
 		}
 	};
 
-	ibrcommon::NetInterface net("lo");
+	ibrcommon::vinterface net("lo");
 	ibrcommon::File socket("/tmp/testsuite.sock");
 	testserver srv(net, 1234); srv.start();
 

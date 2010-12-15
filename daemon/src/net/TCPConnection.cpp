@@ -20,7 +20,7 @@
 #include "routing/RequeueBundleEvent.h"
 
 #include <ibrcommon/TimeMeasurement.h>
-#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/Logger.h>
 
 #include <iostream>

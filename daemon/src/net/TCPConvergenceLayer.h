@@ -27,7 +27,7 @@
 
 #include <ibrcommon/net/tcpserver.h>
 #include <ibrcommon/net/tcpstream.h>
-#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/net/vinterface.h>
 
 #include <memory>
 #include <ibrcommon/thread/Queue.h>
@@ -149,7 +149,7 @@ namespace dtn
 			class Server : public dtn::net::GenericServer<TCPConvergenceLayer::TCPConnection>, public dtn::core::EventReceiver
 			{
 			public:
-				Server(ibrcommon::NetInterface net, int port);
+				Server(const ibrcommon::vinterface &net, int port);
 				virtual ~Server();
 
 				/**
@@ -202,7 +202,7 @@ namespace dtn
 			 * @param[in] bind_addr The address to bind.
 			 * @param[in] port The port to use.
 			 */
-			TCPConvergenceLayer(ibrcommon::NetInterface net, int port);
+			TCPConvergenceLayer(const ibrcommon::vinterface &net, int port);
 
 			/**
 			 * Destructor
@@ -219,7 +219,7 @@ namespace dtn
 			 * this method updates the given values
 			 */
 			void update(std::string &name, std::string &data);
-			bool onInterface(const ibrcommon::NetInterface &net) const;
+			bool onInterface(const ibrcommon::vinterface &net) const;
 
 			/**
 			 * Queue a new transmission job for this convergence layer.
@@ -236,7 +236,7 @@ namespace dtn
 			static const int DEFAULT_PORT;
 			bool _running;
 
-			ibrcommon::NetInterface _net;
+			ibrcommon::vinterface _net;
 			int _port;
 			TCPConvergenceLayer::Server _server;
 		};

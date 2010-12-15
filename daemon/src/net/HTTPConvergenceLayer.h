@@ -11,7 +11,8 @@
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
 #include <ibrcommon/Exceptions.h>
-#include <ibrcommon/net/NetInterface.h>
+#include <ibrcommon/net/vinterface.h>
+#include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <iostream>
 

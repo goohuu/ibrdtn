@@ -4,13 +4,13 @@
 #include "ibrcommon/data/ConfigFile.h"
 #include "core/Node.h"
 #include "routing/StaticRoutingExtension.h"
-#include "ibrcommon/Exceptions.h"
-#include "ibrcommon/net/NetInterface.h"
+#include <ibrcommon/Exceptions.h>
+#include <ibrcommon/net/vinterface.h>
 
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityRule.h"
-#include "ibrdtn/security/RuleBlock.h"
-#include "ibrdtn/security/SecurityBlock.h"
+#include <ibrdtn/security/RuleBlock.h>
+#include <ibrdtn/security/SecurityBlock.h>
 using namespace dtn::security;
 #endif
 
@@ -44,15 +44,17 @@ namespace dtn
 					NETWORK_LOWPAN = 4
 				};
 
-				NetConfig(std::string name, NetType type, const std::string &address, int port, bool discovery = true);
-				NetConfig(std::string name, NetType type, const ibrcommon::NetInterface &iface, int port, bool discovery = true);
+				NetConfig(std::string name, NetType type, const std::string &url, bool discovery = true);
+				NetConfig(std::string name, NetType type, const ibrcommon::vaddress &address, int port, bool discovery = true);
+				NetConfig(std::string name, NetType type, const ibrcommon::vinterface &iface, int port, bool discovery = true);
 				NetConfig(std::string name, NetType type, int port, bool discovery = true);
 				~NetConfig();
 
 				std::string name;
 				NetType type;
-				ibrcommon::NetInterface interface;
-				std::string address;
+				std::string url;
+				ibrcommon::vinterface interface;
+				ibrcommon::vaddress address;
 				int port;
 				bool discovery;
 			};
@@ -302,7 +304,7 @@ namespace dtn
 				bool _forwarding;
 				bool _tcp_nodelay;
 				size_t _tcp_chunksize;
-				ibrcommon::NetInterface _default_net;
+				ibrcommon::vinterface _default_net;
 				bool _use_default_net;
 
 			public:

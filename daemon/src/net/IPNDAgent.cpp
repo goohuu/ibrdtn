@@ -21,9 +21,9 @@ namespace dtn
 	namespace net
 	{
 		IPNDAgent::IPNDAgent(int port, std::string address)
-		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()), _version(DiscoveryAnnouncement::DISCO_VERSION_01), _socket(NULL), _destination(address), _port(port)
+		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()), _version(DiscoveryAnnouncement::DISCO_VERSION_01), _socket(NULL), _destination(ibrcommon::vaddress::VADDRESS_INET, address), _port(port)
 		{
-			if (ibrcommon::MulticastSocket::isMulticast(_destination))
+			if (_destination.isMulticast())
 			{
 				IBRCOMMON_LOGGER(info) << "DiscoveryAgent: multicast mode " << address << ":" << port << IBRCOMMON_LOGGER_ENDL;
 				_socket = new ibrcommon::MulticastSocket();
@@ -56,7 +56,7 @@ namespace dtn
 			delete _socket;
 		}
 
-		void IPNDAgent::bind(const ibrcommon::NetInterface &net)
+		void IPNDAgent::bind(const ibrcommon::vinterface &net)
 		{
 			IBRCOMMON_LOGGER(info) << "DiscoveryAgent: bind to interface " << net.toString() << IBRCOMMON_LOGGER_ENDL;
 			_interfaces.push_back(net);
@@ -90,7 +90,7 @@ namespace dtn
 					}
 				}
 
-				ibrcommon::udpsocket::peer p = _socket->getPeer(_destination, _port);
+				ibrcommon::udpsocket::peer p = _socket->getPeer(_destination.get(), _port);
 
 				// send announcement
 				send(p, announcement);
@@ -98,9 +98,9 @@ namespace dtn
 				return;
 			}
 
-			for (std::list<ibrcommon::NetInterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
+			for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
 			{
-				const ibrcommon::NetInterface &iface = (*it_iface);
+				const ibrcommon::vinterface &iface = (*it_iface);
 
 				// clear all services
 				announcement.clearServices();
@@ -125,7 +125,7 @@ namespace dtn
 					sock = _socket;
 				}
 
-				ibrcommon::udpsocket::peer p = sock->getPeer(_destination, _port);
+				ibrcommon::udpsocket::peer p = sock->getPeer(_destination.get(), _port);
 
 				// send announcement
 				send(p, announcement);
@@ -146,9 +146,9 @@ namespace dtn
 				}
 				else
 				{
-					for (std::list<ibrcommon::NetInterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
+					for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 					{
-						const ibrcommon::NetInterface &net = (*iter);
+						const ibrcommon::vinterface &net = (*iter);
 
 						if (_sockets.empty())
 						{
@@ -171,7 +171,7 @@ namespace dtn
 
 			try {
 				ibrcommon::BroadcastSocket &sock = dynamic_cast<ibrcommon::BroadcastSocket&>(*_socket);
-				sock.bind(_port);
+				sock.bind(_port, ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET6));
 			} catch (std::bad_cast) {
 
 			}
