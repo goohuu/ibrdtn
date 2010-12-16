@@ -15,7 +15,6 @@
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/net/tcpclient.h>
 #include <streambuf>
-#include <signal.h>
 
 #include <functional>
 #include <list>
@@ -229,7 +228,6 @@ namespace dtn
 		{
 			_tcpsrv.shutdown();
 			_tcpsrv.close();
-			Thread::kill(SIGTERM);
 		}
 
 		TCPConvergenceLayer::Server::Connection::Connection(TCPConvergenceLayer::TCPConnection *conn, const dtn::core::Node &node, const bool &active)

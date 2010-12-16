@@ -16,6 +16,7 @@
 #include <ibrcommon/thread/Queue.h>
 #include <list>
 #include <algorithm>
+#include <signal.h>
 
 namespace dtn
 {
@@ -117,6 +118,7 @@ namespace dtn
 				}
 
 				shutdown();
+				Thread::kill(SIG_UNBLOCK);
 			}
 
 			ibrcommon::Mutex _lock;

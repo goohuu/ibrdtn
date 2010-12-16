@@ -85,7 +85,7 @@ namespace dtn
 			_dist.stop();
 			_tcpsrv.shutdown();
 			_tcpsrv.close();
-			Thread::kill(SIGTERM);
+			Thread::kill(SIG_UNBLOCK);
 		}
 
 		void ApiServer::connectionUp(ClientHandler *obj)
