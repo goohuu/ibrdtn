@@ -118,7 +118,7 @@ namespace dtn
 				}
 
 				shutdown();
-				Thread::kill(SIG_UNBLOCK);
+				Thread::kill(SIGPOLL);
 			}
 
 			ibrcommon::Mutex _lock;
