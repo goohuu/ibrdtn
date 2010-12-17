@@ -150,19 +150,21 @@ namespace dtn
 					{
 						const ibrcommon::vinterface &net = (*iter);
 
-						if (_sockets.empty())
-						{
-							_sockets[net.toString()] = _socket;
-							sock.setInterface(net);
-						}
-						else
-						{
-							ibrcommon::MulticastSocket *newsock = new ibrcommon::MulticastSocket();
-							newsock->setInterface(net);
-							_sockets[net.toString()] = newsock;
-						}
+						try {
+							if (_sockets.empty())
+							{
+								_sockets[net.toString()] = _socket;
+								sock.setInterface(net);
+							}
+							else
+							{
+								ibrcommon::MulticastSocket *newsock = new ibrcommon::MulticastSocket();
+								newsock->setInterface(net);
+								_sockets[net.toString()] = newsock;
+							}
 
-						sock.joinGroup(_destination, (*iter));
+							sock.joinGroup(_destination, (*iter));
+						} catch (const ibrcommon::vinterface::interface_not_set&) {};
 					}
 				}
 			} catch (std::bad_cast) {
@@ -171,7 +173,7 @@ namespace dtn
 
 			try {
 				ibrcommon::BroadcastSocket &sock = dynamic_cast<ibrcommon::BroadcastSocket&>(*_socket);
-				sock.bind(_port, ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET6));
+				sock.bind(_port, ibrcommon::vaddress());
 			} catch (std::bad_cast) {
 
 			}
