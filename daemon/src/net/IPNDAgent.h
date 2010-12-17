@@ -57,7 +57,6 @@ namespace dtn
 			ibrcommon::vaddress _destination;
 			std::list<ibrcommon::vinterface> _interfaces;
 
-			std::map<std::string, ibrcommon::udpsocket* > _sockets;
 			int _port;
 		};
 	}

@@ -68,7 +68,7 @@ namespace dtn
 				std::list<ibrcommon::vaddress> list = _net.getAddresses();
 				if (!list.empty())
 				{
-					 service << "short address=" << list.front().get() << ";panid=" << _panid << ";";
+					 service << "short address=" << list.front().get(false) << ";panid=" << _panid << ";";
 				}
 				else
 				{

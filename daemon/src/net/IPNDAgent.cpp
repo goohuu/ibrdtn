@@ -74,62 +74,25 @@ namespace dtn
 		void IPNDAgent::sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services)
 		{
 			DiscoveryAnnouncement announcement(_version, dtn::core::BundleCore::local);
+			ibrcommon::MulticastSocket &sock = dynamic_cast<ibrcommon::MulticastSocket&>(*_socket);
 
 			// set sequencenumber
 			announcement.setSequencenumber(sn);
 
-			if (_sockets.empty())
+			if (!_config.shortbeacon())
 			{
-				if (!_config.shortbeacon())
+				// add services
+				for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
 				{
-					// add services
-					for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
-					{
-						const DiscoveryService &service = (*iter);
-						announcement.addService(service);
-					}
+					const DiscoveryService &service = (*iter);
+					announcement.addService(service);
 				}
-
-				ibrcommon::udpsocket::peer p = _socket->getPeer(_destination.get(), _port);
-
-				// send announcement
-				send(p, announcement);
-
-				return;
 			}
-
-			for (std::list<ibrcommon::vinterface>::const_iterator it_iface = _interfaces.begin(); it_iface != _interfaces.end(); it_iface++)
-			{
-				const ibrcommon::vinterface &iface = (*it_iface);
-
-				// clear all services
-				announcement.clearServices();
-
-				if (!_config.shortbeacon())
-				{
-					// add services
-					for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
-					{
-						const DiscoveryService &service = (*iter);
-						if (service.onInterface(iface))
-						{
-							announcement.addService(service);
-						}
-					}
-				}
-
-				ibrcommon::udpsocket *sock = _sockets[iface.toString()];
-
-				if (sock == NULL)
-				{
-					sock = _socket;
-				}
-
-				ibrcommon::udpsocket::peer p = sock->getPeer(_destination.get(), _port);
-
-				// send announcement
-				send(p, announcement);
-			}
+			
+			ibrcommon::udpsocket::peer p = _socket->getPeer(_destination.get(), _port);
+			
+			// send announcement
+			send(p, announcement);
 		}
 
 		void IPNDAgent::componentUp()
@@ -148,22 +111,9 @@ namespace dtn
 				{
 					for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 					{
-						const ibrcommon::vinterface &net = (*iter);
-
 						try {
-							if (_sockets.empty())
-							{
-								_sockets[net.toString()] = _socket;
-								sock.setInterface(net);
-							}
-							else
-							{
-								ibrcommon::MulticastSocket *newsock = new ibrcommon::MulticastSocket();
-								newsock->setInterface(net);
-								_sockets[net.toString()] = newsock;
-							}
-
-							sock.joinGroup(_destination, (*iter));
+							const ibrcommon::vinterface &net = (*iter);
+							sock.joinGroup(_destination, net);
 						} catch (const ibrcommon::vinterface::interface_not_set&) {
 							sock.joinGroup(_destination);
 						};

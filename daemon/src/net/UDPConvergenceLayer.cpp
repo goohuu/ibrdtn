@@ -76,7 +76,7 @@ namespace dtn
 				std::list<ibrcommon::vaddress> list = _net.getAddresses();
 				if (!list.empty())
 				{
-					 service << "ip=" << list.front().get() << ";port=" << _port << ";";
+					 service << "ip=" << list.front().get(false) << ";port=" << _port << ";";
 				}
 				else
 				{
