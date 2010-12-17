@@ -164,7 +164,9 @@ namespace dtn
 							}
 
 							sock.joinGroup(_destination, (*iter));
-						} catch (const ibrcommon::vinterface::interface_not_set&) {};
+						} catch (const ibrcommon::vinterface::interface_not_set&) {
+							sock.joinGroup(_destination);
+						};
 					}
 				}
 			} catch (std::bad_cast) {
