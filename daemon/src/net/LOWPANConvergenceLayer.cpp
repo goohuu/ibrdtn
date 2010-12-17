@@ -5,6 +5,8 @@
 #include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include <ibrcommon/net/UnicastSocketLowpan.h>
+#include <ibrcommon/net/vaddress.h>
+#include <ibrcommon/net/vinterface.h>
 #include "core/BundleCore.h"
 
 #include <ibrcommon/data/BLOB.h>
@@ -29,6 +31,7 @@
 #include <limits.h>
 
 #include <iostream>
+#include <list>
 
 
 using namespace dtn::data;
@@ -59,8 +62,22 @@ namespace dtn
 		void LOWPANConvergenceLayer::update(std::string &name, std::string &params)
 		{
 			name = "lowpancl";
+			stringstream service;
 
-			stringstream service; service << "short address=" << _net.getAddresses().front().get() << ";panid=" << _panid << ";";
+			try {
+				std::list<ibrcommon::vaddress> list = _net.getAddresses();
+				if (!list.empty())
+				{
+					 service << "short address=" << list.front().get() << ";panid=" << _panid << ";";
+				}
+				else
+				{
+					service << "panid=" << _panid << ";";
+				}
+			} catch (const ibrcommon::vinterface::interface_not_set&) {
+				service << "panid=" << _panid << ";";
+			};
+
 			params = service.str();
 		}
 

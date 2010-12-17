@@ -63,7 +63,22 @@ namespace dtn
 		void TCPConvergenceLayer::update(std::string &name, std::string &params)
 		{
 			name = "tcpcl";
-			stringstream service; service << "ip=" << _net.getAddresses().front().get() << ";port=" << _port << ";";
+			stringstream service;
+
+			try {
+				std::list<vaddress> list = _net.getAddresses();
+				if (!list.empty())
+				{
+					 service << "ip=" << list.front().get() << ";port=" << _port << ";";
+				}
+				else
+				{
+					service << "port=" << _port << ";";
+				}
+			} catch (const ibrcommon::vinterface::interface_not_set&) {
+				service << "port=" << _port << ";";
+			};
+
 			params = service.str();
 		}
 

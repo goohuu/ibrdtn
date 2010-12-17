@@ -16,7 +16,6 @@
 #include <ibrcommon/thread/Queue.h>
 #include <list>
 #include <algorithm>
-#include <signal.h>
 
 namespace dtn
 {
@@ -80,6 +79,9 @@ namespace dtn
 
 			void componentRun()
 			{
+				// enable interruption in this thread
+				Thread::enable_interruption();
+
 				try {
 					while (true)
 					{
@@ -118,7 +120,7 @@ namespace dtn
 				}
 
 				shutdown();
-				Thread::kill(SIGPOLL);
+				Thread::interrupt();
 			}
 
 			ibrcommon::Mutex _lock;

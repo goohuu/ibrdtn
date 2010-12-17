@@ -13,7 +13,6 @@
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <algorithm>
-#include <signal.h>
 
 using namespace dtn::data;
 using namespace dtn::core;
@@ -56,6 +55,9 @@ namespace dtn
 
 		void ApiServer::componentRun()
 		{
+			// enable interruption in this thread
+			Thread::enable_interruption();
+
 			try {
 				while (true)
 				{
@@ -85,7 +87,7 @@ namespace dtn
 			_dist.stop();
 			_tcpsrv.shutdown();
 			_tcpsrv.close();
-			Thread::kill(SIGPOLL);
+			Thread::interrupt();
 		}
 
 		void ApiServer::connectionUp(ClientHandler *obj)

@@ -6,6 +6,8 @@
 #include "routing/RequeueBundleEvent.h"
 #include <ibrcommon/net/UnicastSocket.h>
 #include <ibrcommon/net/BroadcastSocket.h>
+#include <ibrcommon/net/vaddress.h>
+#include <ibrcommon/net/vinterface.h>
 #include "core/BundleCore.h"
 
 #include <ibrcommon/data/BLOB.h>
@@ -30,6 +32,7 @@
 #include <limits.h>
 
 #include <iostream>
+#include <list>
 
 
 using namespace dtn::data;
@@ -67,8 +70,22 @@ namespace dtn
 		void UDPConvergenceLayer::update(std::string &name, std::string &params)
 		{
 			name = "udpcl";
+			stringstream service;
 
-			stringstream service; service << "ip=" << _net.getAddresses().front().get() << ";port=" << _port << ";";
+			try {
+				std::list<ibrcommon::vaddress> list = _net.getAddresses();
+				if (!list.empty())
+				{
+					 service << "ip=" << list.front().get() << ";port=" << _port << ";";
+				}
+				else
+				{
+					service << "port=" << _port << ";";
+				}
+			} catch (const ibrcommon::vinterface::interface_not_set&) {
+				service << "port=" << _port << ";";
+			};
+
 			params = service.str();
 		}
 

@@ -331,6 +331,9 @@ int main(int argc, char *argv[])
 	signal(SIGUSR1, sighandler);
 	signal(SIGUSR2, sighandler);
 
+	// prevent "I/O possible" message from being displayed
+	signal(SIGIO, sighandler);
+
 	// create a configuration
 	Configuration &conf = Configuration::getInstance();
 
