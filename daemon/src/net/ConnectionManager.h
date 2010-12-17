@@ -62,6 +62,8 @@ namespace dtn
 				};
 			};
 
+			void open(const dtn::core::Node &node);
+
 			void queue(const ConvergenceLayer::Job &job);
 
 			/**
@@ -87,7 +89,7 @@ namespace dtn
 			 * trigger for periodical discovery of nodes
 			 * @param node
 			 */
-			void discovered(dtn::core::Node &node);
+			void discovered(const dtn::core::Node &node);
 
 			/**
 			 * checks for timed out nodes

@@ -72,12 +72,24 @@ namespace dtn
 		{
 			try {
 				const NodeEvent &nodeevent = dynamic_cast<const NodeEvent&>(*evt);
+				const Node &n = nodeevent.getNode();
 
-				Node n = nodeevent.getNode();
-
-				if (nodeevent.getAction() == NODE_INFO_UPDATED)
+				switch (nodeevent.getAction())
 				{
-					discovered(n);
+					case NODE_INFO_UPDATED:
+						discovered(n);
+						break;
+
+					case NODE_AVAILABLE:
+						if (n.doConnectImmediately())
+						{
+							// open the connection immediately
+							open(n);
+						}
+						break;
+
+					default:
+						break;
 				}
 			} catch (std::bad_cast) { }
 
@@ -155,7 +167,7 @@ namespace dtn
 			_cl.insert( cl );
 		}
 
-		void ConnectionManager::discovered(dtn::core::Node &node)
+		void ConnectionManager::discovered(const dtn::core::Node &node)
 		{
 			// ignore messages of ourself
 			if (EID(node.getURI()) == dtn::core::BundleCore::local) return;
@@ -200,6 +212,29 @@ namespace dtn
 					_discovered_nodes.insert(n);
 				}
 			}
+		}
+
+		void ConnectionManager::open(const dtn::core::Node &node)
+		{
+			if ((node.getProtocol() == Node::CONN_UNDEFINED) || (node.getProtocol() == Node::CONN_UNSUPPORTED))
+				throw ConnectionNotAvailableException();
+
+			ibrcommon::MutexLock l(_cl_lock);
+
+			// search for the right cl
+			for (std::set<ConvergenceLayer*>::iterator iter = _cl.begin(); iter != _cl.end(); iter++)
+			{
+				ConvergenceLayer *cl = (*iter);
+				if (node.getProtocol() == cl->getDiscoveryProtocol())
+				{
+					cl->open(node);
+
+					// stop here, we queued the bundle already
+					return;
+				}
+			}
+
+			throw ConnectionNotAvailableException();
 		}
 
 		void ConnectionManager::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)

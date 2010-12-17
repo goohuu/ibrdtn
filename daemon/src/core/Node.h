@@ -146,7 +146,11 @@ namespace dtn
 
 			std::string toString() const;
 
+			bool doConnectImmediately() const;
+			void setConnectImmediately(bool val);
+
 		private:
+			bool _connect_immediately;
 			std::string _address;
 			std::string _description;
 			dtn::data::EID _id;

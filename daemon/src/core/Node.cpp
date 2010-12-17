@@ -11,12 +11,12 @@ namespace dtn
 	namespace core
 	{
 		Node::Node(Node::Type type, unsigned int rtt)
-		: _address(), _description(), _id("dtn:none"), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(CONN_UNDEFINED)
+		: _connect_immediately(false), _address(), _description(), _id("dtn:none"), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(CONN_UNDEFINED)
 		{
 		}
 
 		Node::Node(dtn::data::EID id, Node::Protocol proto, Node::Type type, unsigned int rtt)
-		: _address(), _description(), _id(id), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(proto)
+		: _connect_immediately(false), _address(), _description(), _id(id), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(proto)
 		{
 
 		}
@@ -180,6 +180,16 @@ namespace dtn
 		{
 			std::stringstream ss; ss << getURI() << " (" << Node::getTypeName(getType()) << ", " << Node::getProtocolName(getProtocol()) << ", " << getAddress() << ", " << getPort() << ")";
 			return ss.str();
+		}
+
+		bool Node::doConnectImmediately() const
+		{
+			return _connect_immediately;
+		}
+
+		void Node::setConnectImmediately(bool val)
+		{
+			_connect_immediately = val;
 		}
 	}
 }

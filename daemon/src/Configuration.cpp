@@ -374,6 +374,7 @@ namespace dtn
 				n.setAddress( conf.read<std::string>(prefix + "address", "127.0.0.1") );
 				n.setPort( conf.read<unsigned int>(prefix + "port", 4556) );
 				n.setURI( conf.read<std::string>(prefix + "uri", "dtn:none") );
+				n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
 
 				std::string protocol = conf.read<std::string>(prefix + "proto", "tcp");
 				if (protocol == "tcp") n.setProtocol(Node::CONN_TCPIP);

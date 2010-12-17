@@ -19,6 +19,7 @@
 #include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 
+#include <ibrcommon/net/tcpclient.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/Logger.h>
@@ -52,6 +53,14 @@ namespace dtn
 			stream->enableLinger(10);
 			stream->enableKeepalive();
 			_node.setProtocol(Node::CONN_TCPIP);
+		}
+
+		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout)
+		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv), ibrcommon::DetachedThread(),
+		   _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
+		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0)
+		{
+			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
 		TCPConvergenceLayer::TCPConnection::~TCPConnection()
@@ -212,6 +221,26 @@ namespace dtn
 
 		void TCPConvergenceLayer::TCPConnection::run()
 		{
+			// try to connect to the other side
+			try {
+				ibrcommon::tcpclient &client = dynamic_cast<ibrcommon::tcpclient&>(*_tcpstream);
+				client.open(_node.getAddress(), _node.getPort());
+
+				if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
+				{
+					_tcpstream->enableNoDelay();
+				}
+
+				_tcpstream->enableLinger(10);
+				_tcpstream->enableKeepalive();
+				_node.setProtocol(Node::CONN_TCPIP);
+			} catch (const ibrcommon::tcpclient::SocketException&) {
+				// error on open, requeue all bundles in the queue
+				IBRCOMMON_LOGGER(warning) << "connection to " << _node.getURI() << " (" << _node.getAddress() << ":" << _node.getPort() << ") failed" << IBRCOMMON_LOGGER_ENDL;
+				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+				return;
+			} catch (const bad_cast&) { };
+
 			try {
 				// do the handshake
 				char flags = 0;

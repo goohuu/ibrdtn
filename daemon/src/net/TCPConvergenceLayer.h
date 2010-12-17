@@ -49,6 +49,7 @@ namespace dtn
 			{
 			public:
 				TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout = 10);
+				TCPConnection(GenericServer<TCPConnection> &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout = 10);
 
 				virtual ~TCPConnection();
 
@@ -158,6 +159,8 @@ namespace dtn
 				 */
 				void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
 
+				void open(const dtn::core::Node &n);
+
 				/**
 				 * handler for events
 				 */
@@ -226,6 +229,8 @@ namespace dtn
 			 * @param job
 			 */
 			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
+
+			void open(const dtn::core::Node &n);
 
 			/**
 			 * @see Component::getName()

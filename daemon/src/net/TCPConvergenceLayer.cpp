@@ -93,9 +93,49 @@ namespace dtn
 			_server.queue(n, job);
 		}
 
+		void TCPConvergenceLayer::open(const dtn::core::Node &n)
+		{
+			_server.open(n);
+		}
+
 		const std::string TCPConvergenceLayer::getName() const
 		{
 			return "TCPConvergenceLayer";
+		}
+
+		void TCPConvergenceLayer::Server::open(const dtn::core::Node &n)
+		{
+			{
+				// search for an existing connection
+				ibrcommon::MutexLock l(_lock);
+
+				for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				{
+					TCPConvergenceLayer::Server::Connection &conn = (*iter);
+
+					if (conn.match(EID(n.getURI())))
+					{
+						return;
+					}
+				}
+			}
+
+			// create a connection
+			TCPConnection *conn = new TCPConnection((GenericServer<TCPConnection>&)*this, n, dtn::core::BundleCore::local, 10);
+
+			// raise setup event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
+
+			ibrcommon::MutexLock l(_lock);
+
+			// add connection as pending
+			_connections.push_back( Connection( conn, n ) );
+
+			// add the connection to the connection list
+			add(conn);
+
+			// start the ClientHandler (service)
+			conn->initialize();
 		}
 
 		void TCPConvergenceLayer::Server::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
@@ -121,31 +161,24 @@ namespace dtn
 				}
 			}
 
-			try {
-				// create a connection
-				ibrcommon::tcpstream* stream = new ibrcommon::tcpclient(n.getAddress(), n.getPort());
+			// create a connection
+			TCPConnection *conn = new TCPConnection((GenericServer<TCPConnection>&)*this, n, dtn::core::BundleCore::local, 10);
 
-				TCPConnection *conn = new TCPConnection((GenericServer<TCPConnection>&)*this, stream, dtn::core::BundleCore::local, 10);
+			// raise setup event
+			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
 
-				// raise setup event
-				ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
+			ibrcommon::MutexLock l(_lock);
 
-				ibrcommon::MutexLock l(_lock);
+			// add connection as pending
+			_connections.push_back( Connection( conn, n ) );
 
-				// add connection as pending
-				_connections.push_back( Connection( conn, n ) );
+			// add the connection to the connection list
+			add(conn);
 
-				// add the connection to the connection list
-				add(conn);
+			// start the ClientHandler (service)
+			conn->initialize();
 
-				// start the ClientHandler (service)
-				conn->initialize();
-
-				conn->queue(job._bundle);
-			} catch (const ibrcommon::vsocket_exception&) {
-				// signal interruption of the transfer
-				dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-			}
+			conn->queue(job._bundle);
 		}
 
 		TCPConvergenceLayer::Server::Server(const ibrcommon::vinterface &net, int port)

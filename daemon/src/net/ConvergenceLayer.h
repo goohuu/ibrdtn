@@ -36,6 +36,12 @@ namespace dtn
 			virtual dtn::core::Node::Protocol getDiscoveryProtocol() const = 0;
 
 			virtual void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job) = 0;
+
+			/**
+			 * This method opens a connection proactive.
+			 * @param n
+			 */
+			virtual void open(const dtn::core::Node&) {};
 		};
 	}
 }
