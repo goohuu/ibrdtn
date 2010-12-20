@@ -416,7 +416,7 @@ int main(int argc, char *argv[])
 		try {
 			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscovery().address() );
 		} catch (Configuration::ParameterNotFoundException ex) {
-			ipnd = new dtn::net::IPNDAgent( disco_port, "255.255.255.255" );
+			ipnd = new dtn::net::IPNDAgent( disco_port, ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, "255.255.255.255") );
 		}
 
 		// collect all interfaces of convergence layer instances

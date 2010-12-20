@@ -29,7 +29,7 @@ namespace dtn
 			 * @param[in] broadcast If true, the broadcast feature for this socket is enabled.
 			 * @param[in] mtu The maximum bundle size.
 			 */
-			UDPConvergenceLayer(ibrcommon::vinterface net, int port, bool broadcast = false, unsigned int mtu = 1280);
+			UDPConvergenceLayer(ibrcommon::vinterface net, int port, unsigned int mtu = 1280);
 
 			/**
 			 * Desktruktor

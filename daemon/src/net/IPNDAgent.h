@@ -20,6 +20,7 @@
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/udpsocket.h>
+#include <ibrcommon/net/vsocket.h>
 #include <list>
 #include <map>
 
@@ -32,7 +33,7 @@ namespace dtn
 		class IPNDAgent : public DiscoveryAgent
 		{
 		public:
-			IPNDAgent(int port, std::string address);
+			IPNDAgent(int port, const ibrcommon::vaddress &address);
 			virtual ~IPNDAgent();
 
 			void bind(const ibrcommon::vinterface &net);
@@ -50,10 +51,10 @@ namespace dtn
 			bool __cancellation();
 
 		private:
-			void send(ibrcommon::udpsocket::peer &p, const DiscoveryAnnouncement &announcement);
+			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr, const unsigned int port);
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
-			ibrcommon::udpsocket *_socket;
+			ibrcommon::vsocket _socket;
 			ibrcommon::vaddress _destination;
 			std::list<ibrcommon::vinterface> _interfaces;
 

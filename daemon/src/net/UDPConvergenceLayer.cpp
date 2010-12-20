@@ -5,7 +5,6 @@
 #include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include <ibrcommon/net/UnicastSocket.h>
-#include <ibrcommon/net/BroadcastSocket.h>
 #include <ibrcommon/net/vaddress.h>
 #include <ibrcommon/net/vinterface.h>
 #include "core/BundleCore.h"
@@ -43,17 +42,10 @@ namespace dtn
 	{
 		const int UDPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, bool broadcast, unsigned int mtu)
+		UDPConvergenceLayer::UDPConvergenceLayer(ibrcommon::vinterface net, int port, unsigned int mtu)
 			: _socket(NULL), _net(net), _port(port), m_maxmsgsize(mtu), _running(false)
 		{
-			if (broadcast)
-			{
-				_socket = new ibrcommon::BroadcastSocket();
-			}
-			else
-			{
-				_socket = new ibrcommon::UnicastSocket();
-			}
+			_socket = new ibrcommon::UnicastSocket();
 		}
 
 		UDPConvergenceLayer::~UDPConvergenceLayer()
@@ -73,7 +65,7 @@ namespace dtn
 			stringstream service;
 
 			try {
-				std::list<ibrcommon::vaddress> list = _net.getAddresses();
+				std::list<ibrcommon::vaddress> list = _net.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
 				if (!list.empty())
 				{
 					 service << "ip=" << list.front().get(false) << ";port=" << _port << ";";
@@ -211,14 +203,6 @@ namespace dtn
 				} catch (std::bad_cast) {
 
 				}
-
-				try {
-					ibrcommon::BroadcastSocket &sock = dynamic_cast<ibrcommon::BroadcastSocket&>(*_socket);
-					sock.bind(_port, _net);
-				} catch (std::bad_cast) {
-
-				}
-
 			} catch (ibrcommon::udpsocket::SocketException ex) {
 				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

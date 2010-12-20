@@ -301,10 +301,11 @@ namespace dtn
 			return _interfaces;
 		}
 
-		std::string Configuration::Discovery::address() const throw (ParameterNotFoundException)
+		const ibrcommon::vaddress Configuration::Discovery::address() const throw (ParameterNotFoundException)
 		{
 			try {
-				return Configuration::getInstance()._conf.read<string>("discovery_address");
+				return ibrcommon::vaddress( ibrcommon::vaddress::VADDRESS_INET,
+						Configuration::getInstance()._conf.read<string>("discovery_address"));
 			} catch (ConfigFile::key_not_found ex) {
 				throw ParameterNotFoundException();
 			}

@@ -66,7 +66,7 @@ namespace dtn
 			stringstream service;
 
 			try {
-				std::list<vaddress> list = _net.getAddresses();
+				std::list<vaddress> list = _net.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
 				if (!list.empty())
 				{
 					 service << "ip=" << list.front().get(false) << ";port=" << _port << ";";
