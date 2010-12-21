@@ -200,7 +200,7 @@ namespace dtn
 
 					try {
 						ss >> announce;
-						//received(announce);
+						received(announce);
 					} catch (dtn::InvalidDataException ex) {
 					} catch (ibrcommon::IOException ex) {
 					}
