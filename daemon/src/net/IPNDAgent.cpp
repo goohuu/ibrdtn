@@ -127,57 +127,29 @@ namespace dtn
 		{
 			DiscoveryAgent::componentUp();
 
-			try {
-				// if no interface is set, bind on ALL interfaces
-				if (_interfaces.empty())
+			// only if the destination is a multicast address
+			if (_destination.isMulticast())
+			{
+				// bind on the multicast address
+				_socket.bind(_destination, _port, SOCK_DGRAM);
+
+				// get all FD of IPv4 sockets matching this interface
+				std::list<int> fds = _socket.get(ibrcommon::vaddress::VADDRESS_INET);
+
+				// iterate through all socket FD
+				for (std::list<int>::const_iterator iter = fds.begin();
+						iter != fds.end(); iter++)
 				{
-					throw ibrcommon::vinterface::interface_not_set();
+					// enable multicasting on the socket
+					ibrcommon::MulticastSocket ms(*iter);
+					ms.joinGroup(_destination);
 				}
-
-				// iterate through all interfaces
-				for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
-				{
-					const ibrcommon::vinterface &iface = *iter;
-
-					// bind on the interface
-					_socket.bind(iface, _port, SOCK_DGRAM);
-
-					// only if the destination is a multicast address
-					if (_destination.isMulticast())
-					{
-						// get all FD of IPv4 sockets matching this interface
-						std::list<int> fds = _socket.get(iface, ibrcommon::vaddress::VADDRESS_INET);
-
-						// iterate through all socket FD
-						for (std::list<int>::const_iterator iter = fds.begin();
-								iter != fds.end(); iter++)
-						{
-							// enable multicasting on the socket
-							ibrcommon::MulticastSocket ms(*iter);
-							ms.joinGroup(_destination, iface);
-						}
-					}
-				}
-			} catch (const ibrcommon::vinterface::interface_not_set&) {
-				// we have no interface set. bind on ALL interfaces with ZERO address
-				_socket.bind(_port, SOCK_DGRAM);
-
-				// only if the destination is a multicast address
-				if (_destination.isMulticast())
-				{
-					// get all FD of IPv4 sockets
-					std::list<int> fds = _socket.get(ibrcommon::vaddress::VADDRESS_INET);
-
-					// iterate through all socket FD
-					for (std::list<int>::const_iterator iter = fds.begin();
-							iter != fds.end(); iter++)
-					{
-						// enable multicasting on the socket
-						ibrcommon::MulticastSocket ms(*iter);
-						ms.joinGroup(_destination);
-					}
-				}
-			};
+			}
+			else
+			{
+				// bind on ALL interfaces
+				_socket.bind(_destination, _port, SOCK_DGRAM);
+			}
 		}
 
 		void IPNDAgent::componentDown()
