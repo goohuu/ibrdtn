@@ -150,6 +150,13 @@ namespace dtn
 				// bind on ALL interfaces
 				_socket.bind(_destination, _port, SOCK_DGRAM);
 			}
+
+			// create one socket for each interface
+			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
+			{
+				const ibrcommon::vinterface &iface = *iter;
+				_socket.bind(iface, 0, SOCK_DGRAM);
+			}
 		}
 
 		void IPNDAgent::componentDown()
