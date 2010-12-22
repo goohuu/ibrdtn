@@ -19,7 +19,6 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 				DiscoveryService.cpp \
 				DiscoveryService.h \
 				DiscoveryServiceProvider.h \
-				GenericServer.h \
 				IPNDAgent.cpp \
 				IPNDAgent.h \
 				Neighbor.cpp \

@@ -132,6 +132,15 @@ namespace dtn
 			return _id.getString();
 		}
 
+		void Node::setEID(const dtn::data::EID &id)
+		{
+			_id = id;
+		}
+
+		const dtn::data::EID& Node::getEID() const
+		{
+			return _id;
+		}
 
 		void Node::setTimeout(int timeout)
 		{

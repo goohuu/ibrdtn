@@ -111,6 +111,18 @@ namespace dtn
 			std::string getURI() const;
 
 			/**
+			 * Set the EID of this Node
+			 * @param id The EID to set.
+			 */
+			void setEID(const dtn::data::EID &id);
+
+			/**
+			 * Return the EID of this node.
+			 * @return The EID of this node.
+			 */
+			const dtn::data::EID& getEID() const;
+
+			/**
 			 * Set the timeout of the node. This is only relevant if the node is of type
 			 * FLOATING. The node get expired if the timeout if count to zero.
 			 * @param timeout The timeout in seconds.

@@ -38,10 +38,9 @@ namespace dtn
 		/*
 		 * class TCPConnection
 		 */
-		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout)
-		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv), ibrcommon::DetachedThread(),
-		   _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
-		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0)
+		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout)
+		 : _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
+		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv)
 		{
 			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
 
@@ -55,43 +54,42 @@ namespace dtn
 			_node.setProtocol(Node::CONN_TCPIP);
 		}
 
-		TCPConvergenceLayer::TCPConnection::TCPConnection(GenericServer<TCPConnection> &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout)
-		 : GenericConnection<TCPConvergenceLayer::TCPConnection>((GenericServer<TCPConvergenceLayer::TCPConnection>&)tcpsrv), ibrcommon::DetachedThread(),
-		   _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
-		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0)
+		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout)
+		 : _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
+		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv)
 		{
 			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
-		TCPConvergenceLayer::TCPConnection::~TCPConnection()
+		TCPConnection::~TCPConnection()
 		{
 		}
 
-		void TCPConvergenceLayer::TCPConnection::queue(const dtn::data::BundleID &bundle)
+		void TCPConnection::queue(const dtn::data::BundleID &bundle)
 		{
 			_sender.push(bundle);
 		}
 
-		const StreamContactHeader TCPConvergenceLayer::TCPConnection::getHeader() const
+		const StreamContactHeader& TCPConnection::getHeader() const
 		{
 			return _peer;
 		}
 
-		const dtn::core::Node& TCPConvergenceLayer::TCPConnection::getNode() const
+		const dtn::core::Node& TCPConnection::getNode() const
 		{
 			return _node;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::rejectTransmission()
+		void TCPConnection::rejectTransmission()
 		{
 			_stream.reject();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventShutdown(StreamConnection::ConnectionShutdownCases)
+		void TCPConnection::eventShutdown(StreamConnection::ConnectionShutdownCases)
 		{
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventTimeout()
+		void TCPConnection::eventTimeout()
 		{
 			// event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_TIMEOUT, _node);
@@ -100,21 +98,21 @@ namespace dtn
 			this->stop();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventError()
+		void TCPConnection::eventError()
 		{
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventConnectionUp(const StreamContactHeader &header)
+		void TCPConnection::eventConnectionUp(const StreamContactHeader &header)
 		{
 			_peer = header;
-			_node.setURI(header._localeid.getString());
+			_node.setEID(header._localeid);
 			_keepalive_timeout = header._keepalive * 1000;
 
 			// raise up event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventConnectionDown()
+		void TCPConnection::eventConnectionDown()
 		{
 			IBRCOMMON_LOGGER_DEBUG(40) << "TCPConnection::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
@@ -132,7 +130,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventBundleRefused()
+		void TCPConnection::eventBundleRefused()
 		{
 			try {
 				const dtn::data::BundleID bundle = _sentqueue.getnpop();
@@ -149,7 +147,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventBundleForwarded()
+		void TCPConnection::eventBundleForwarded()
 		{
 			try {
 				const dtn::data::MetaBundle bundle = _sentqueue.getnpop();
@@ -168,12 +166,12 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventBundleAck(size_t ack)
+		void TCPConnection::eventBundleAck(size_t ack)
 		{
 			_lastack = ack;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::initialize()
+		void TCPConnection::initialize()
 		{
 			// start the receiver for incoming bundles + handshake
 			try {
@@ -183,7 +181,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::shutdown()
+		void TCPConnection::shutdown()
 		{
 			// shutdown
 			_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
@@ -196,7 +194,7 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::finally()
+		void TCPConnection::finally()
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
 
@@ -211,15 +209,14 @@ namespace dtn
 			} catch (const std::exception&) { };
 
 			try {
-				ibrcommon::MutexLock l(_server.mutex());
-				_server.remove(this);
+				_callback.connectionDown(this);
 			} catch (const ibrcommon::MutexException&) { };
 
 			// clear the queue
 			clearQueue();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::run()
+		void TCPConnection::run()
 		{
 			// try to connect to the other side
 			try {
@@ -302,7 +299,7 @@ namespace dtn
 		}
 
 
-		TCPConvergenceLayer::TCPConnection& operator>>(TCPConvergenceLayer::TCPConnection &conn, dtn::data::Bundle &bundle)
+		TCPConnection& operator>>(TCPConnection &conn, dtn::data::Bundle &bundle)
 		{
 			std::iostream &stream = conn._stream;
 
@@ -313,7 +310,7 @@ namespace dtn
 			return conn;
 		}
 
-		TCPConvergenceLayer::TCPConnection& operator<<(TCPConvergenceLayer::TCPConnection &conn, const dtn::data::Bundle &bundle)
+		TCPConnection& operator<<(TCPConnection &conn, const dtn::data::Bundle &bundle)
 		{
 			// prepare a measurement
 			ibrcommon::TimeMeasurement m;
@@ -360,17 +357,17 @@ namespace dtn
 			return conn;
 		}
 
-		TCPConvergenceLayer::TCPConnection::Sender::Sender(TCPConnection &connection, size_t &keepalive_timeout)
+		TCPConnection::Sender::Sender(TCPConnection &connection, size_t &keepalive_timeout)
 		 : _abort(false), _connection(connection), _keepalive_timeout(keepalive_timeout)
 		{
 		}
 
-		TCPConvergenceLayer::TCPConnection::Sender::~Sender()
+		TCPConnection::Sender::~Sender()
 		{
 			join();
 		}
 
-		bool TCPConvergenceLayer::TCPConnection::Sender::__cancellation()
+		bool TCPConnection::Sender::__cancellation()
 		{
 			// cancel the main thread in here
 			_abort = true;
@@ -380,7 +377,7 @@ namespace dtn
 			return false;
 		}
 
-		void TCPConvergenceLayer::TCPConnection::Sender::run()
+		void TCPConnection::Sender::run()
 		{
 			// The queue is not cancel-safe with uclibc, so we need to
 			// disable cancel here
@@ -458,7 +455,7 @@ namespace dtn
 			_connection.stop();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::clearQueue()
+		void TCPConnection::clearQueue()
 		{
 			try {
 				while (true)
@@ -485,18 +482,34 @@ namespace dtn
 			}
 		}
 
-		void TCPConvergenceLayer::TCPConnection::keepalive()
+		void TCPConnection::keepalive()
 		{
 			_stream.keepalive();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::Sender::finally()
+		void TCPConnection::Sender::finally()
 		{
 			// notify the aborted transfer of the last bundle
 			if (_current_transfer != dtn::data::BundleID())
 			{
 				TransferAbortedEvent::raise(EID(_connection._node.getURI()), _current_transfer, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			}
+		}
+
+		bool TCPConnection::match(const dtn::core::Node &n) const
+		{
+			return (_node == n);
+		}
+
+		bool TCPConnection::match(const dtn::data::EID &destination) const
+		{
+			return (_node.getURI() == destination.getNodeEID());
+		}
+
+		bool TCPConnection::match(const NodeEvent &evt) const
+		{
+			const dtn::core::Node &n = evt.getNode();
+			return match(n);
 		}
 	}
 }
