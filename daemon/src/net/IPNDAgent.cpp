@@ -155,7 +155,10 @@ namespace dtn
 			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 			{
 				const ibrcommon::vinterface &iface = *iter;
-				_socket.bind(iface, 0, SOCK_DGRAM);
+				if (!iface.empty())
+				{
+					_socket.bind(iface, 0, SOCK_DGRAM);
+				}
 			}
 		}
 

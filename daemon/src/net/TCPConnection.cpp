@@ -87,7 +87,7 @@ namespace dtn
 			_stream.reject();
 		}
 
-		void TCPConvergenceLayer::TCPConnection::eventShutdown(StreamConnection::ConnectionShutdownCases csc)
+		void TCPConvergenceLayer::TCPConnection::eventShutdown(StreamConnection::ConnectionShutdownCases)
 		{
 		}
 
