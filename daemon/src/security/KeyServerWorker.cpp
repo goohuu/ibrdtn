@@ -96,6 +96,8 @@ namespace dtn
 					IBRCOMMON_LOGGER_ex(notice) << "Responding with key for " << keyblock.getTarget().getString() << " with Securityblocktype " << keyblock.getSecurityBlockType() << " to " << b._source.getString() << IBRCOMMON_LOGGER_ENDL;
 					dtn::data::Bundle response;
 					response._source = _eid;
+
+					response.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 					response._destination = b._source;
 					dtn::security::KeyBlock& kb = response.push_back<dtn::security::KeyBlock>();
 					kb.setTarget(keyblock.getTarget());
@@ -117,6 +119,7 @@ namespace dtn
 					_requests_from_other_nodes.push_back(BundleID(b));
 					Bundle bundle;
 					bundle._source = _eid;
+					bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 					bundle._destination = b._source;
 					KeyBlock& kb = bundle.push_back<KeyBlock>();
 					kb.setTarget(keyblock.getTarget());
@@ -143,6 +146,7 @@ namespace dtn
 				{
 					Bundle bundle;
 					bundle._source = _eid;
+					bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 					bundle._destination = b._source;
 					KeyBlock& kb = bundle.push_back<KeyBlock>();
 					kb.setTarget(keyblock.getTarget());
@@ -232,6 +236,7 @@ namespace dtn
 			for (std::set<Node>::iterator it = _neighbors.begin(); it != _neighbors.end(); it++)
 			{
 				IBRCOMMON_LOGGER_ex(notice) << "Sending keyrequest to " << it->getURI() << IBRCOMMON_LOGGER_ENDL;
+				request.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 				request._destination = dtn::data::EID(it->getURI().append(KeyServerWorker::getSuffix()));
 				transmit(request);
 			}

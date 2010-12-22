@@ -32,6 +32,7 @@ namespace dtn
 				// no rule? this is a rule request and we send our rules
 				dtn::data::Bundle bundle;
 				bundle._source = _eid;
+				bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 				bundle._destination = b._source;
 				const std::list<SecurityRule> rules = conf.getSecurityRules();
 				for (std::list<SecurityRule>::const_iterator it = rules.begin(); it != rules.end(); it++)

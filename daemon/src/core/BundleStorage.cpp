@@ -55,6 +55,7 @@ namespace dtn
 				// set accepted
 				signal._status |= 1;
 
+				b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 				b._destination = bundle._custodian;
 				b._source = dtn::core::BundleCore::local;
 

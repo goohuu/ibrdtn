@@ -18,7 +18,7 @@ namespace dtn
 		 *
 		 * The application suffix to the node eid is /debugger.
 		 */
-		class Debugger : AbstractWorker
+		class Debugger : public AbstractWorker
 		{
 			public:
 				Debugger()

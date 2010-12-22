@@ -17,7 +17,7 @@ namespace dtn
 {
 	namespace daemon
 	{
-		class DevNull : AbstractWorker
+		class DevNull : public AbstractWorker
 		{
 		public:
 			DevNull()

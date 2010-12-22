@@ -8,7 +8,6 @@
 #ifndef CLIENTHANDLER_H_
 #define CLIENTHANDLER_H_
 
-#include "core/AbstractWorker.h"
 #include "ibrdtn/streams/StreamConnection.h"
 #include "ibrdtn/streams/StreamContactHeader.h"
 #include "ibrcommon/net/tcpstream.h"
