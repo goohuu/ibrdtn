@@ -148,6 +148,7 @@ namespace dtn
 				if (conn.match(EID(n.getURI())))
 				{
 					(*conn).queue(job._bundle);
+					return;
 				}
 			}
 
