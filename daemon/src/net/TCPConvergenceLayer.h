@@ -159,7 +159,7 @@ namespace dtn
 				 */
 				void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
 
-				void open(const dtn::core::Node &n);
+				TCPConnection& open(const dtn::core::Node &n);
 
 				/**
 				 * handler for events

@@ -103,20 +103,18 @@ namespace dtn
 			return "TCPConvergenceLayer";
 		}
 
-		void TCPConvergenceLayer::Server::open(const dtn::core::Node &n)
+		TCPConvergenceLayer::TCPConnection& TCPConvergenceLayer::Server::open(const dtn::core::Node &n)
 		{
+			// search for an existing connection
+			ibrcommon::MutexLock l(_lock);
+
+			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
-				// search for an existing connection
-				ibrcommon::MutexLock l(_lock);
+				TCPConvergenceLayer::Server::Connection &conn = (*iter);
 
-				for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				if (conn.match(EID(n.getURI())))
 				{
-					TCPConvergenceLayer::Server::Connection &conn = (*iter);
-
-					if (conn.match(EID(n.getURI())))
-					{
-						return;
-					}
+					return (*conn);
 				}
 			}
 
@@ -126,8 +124,6 @@ namespace dtn
 			// raise setup event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
 
-			ibrcommon::MutexLock l(_lock);
-
 			// add connection as pending
 			_connections.push_back( Connection( conn, n ) );
 
@@ -136,28 +132,22 @@ namespace dtn
 
 			// start the ClientHandler (service)
 			conn->initialize();
+
+			return *conn;
 		}
 
 		void TCPConvergenceLayer::Server::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
 		{
+			// search for an existing connection
+			ibrcommon::MutexLock l(_lock);
+
+			for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
-				// search for an existing connection
-				ibrcommon::MutexLock l(_lock);
+				TCPConvergenceLayer::Server::Connection &conn = (*iter);
 
-				for (std::list<TCPConvergenceLayer::Server::Connection>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				if (conn.match(EID(n.getURI())))
 				{
-					TCPConvergenceLayer::Server::Connection &conn = (*iter);
-
-					if (conn.match(job._destination))
-					{
-						if (!conn._active)
-						{
-							IBRCOMMON_LOGGER(warning) << "putting bundle on pending connection" << IBRCOMMON_LOGGER_ENDL;
-						}
-
-						(*conn).queue(job._bundle);
-						return;
-					}
+					(*conn).queue(job._bundle);
 				}
 			}
 
@@ -166,8 +156,6 @@ namespace dtn
 
 			// raise setup event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
-
-			ibrcommon::MutexLock l(_lock);
 
 			// add connection as pending
 			_connections.push_back( Connection( conn, n ) );
@@ -178,6 +166,7 @@ namespace dtn
 			// start the ClientHandler (service)
 			conn->initialize();
 
+			// queue the bundle
 			conn->queue(job._bundle);
 		}
 
