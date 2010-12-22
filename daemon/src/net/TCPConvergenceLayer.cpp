@@ -246,15 +246,10 @@ namespace dtn
 		TCPConvergenceLayer::TCPConnection* TCPConvergenceLayer::Server::accept()
 		{
 			// wait for incoming connections
-			TCPConnection *conn = new TCPConnection(*this, _tcpsrv.accept(), dtn::core::BundleCore::local, 10);
-			{
-				ibrcommon::MutexLock l(_lock);
+			tcpstream *stream = _tcpsrv.accept();
 
-				// add connection as pending
-				_connections.push_back( Connection( conn, conn->getNode() ) );
-			}
-
-			return conn;
+			// create a new TCPConnection and return the pointer
+			return new TCPConnection(*this, stream, dtn::core::BundleCore::local, 10);
 		}
 
 		void TCPConvergenceLayer::Server::listen()

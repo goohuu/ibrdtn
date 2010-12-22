@@ -1,3 +1,21 @@
+2010-12-22
+--------------------------------------------------------
+ * libnl is no longer mandatory
+ * full IPv6 for inter-daemon connections
+ * asynchronous connection setup
+ * DTN2 compatibility fix for discovery
+ * Bind on any interface is possible now 
+ * Fix for epidemic/default routing mix
+
+2010-11-25
+--------------------------------------------------------
+ * Bugfix: TCP streams closes other filedescriptors
+     Bad error with persistent bundle storage.
+
+2010-11-19
+--------------------------------------------------------
+ * AgeBlock support and age tracking (draft-irtf-dtnrg-bundle-age-block-01)
+
 2010-11-11
 --------------------------------------------------------
  * Release 0.4.3 (beta)
