@@ -48,7 +48,7 @@ namespace dtn
 				NetConfig(std::string name, NetType type, const ibrcommon::vaddress &address, int port, bool discovery = true);
 				NetConfig(std::string name, NetType type, const ibrcommon::vinterface &iface, int port, bool discovery = true);
 				NetConfig(std::string name, NetType type, int port, bool discovery = true);
-				~NetConfig();
+				virtual ~NetConfig();
 
 				std::string name;
 				NetType type;
@@ -167,7 +167,7 @@ namespace dtn
 				friend class Configuration;
 			protected:
 				Discovery();
-				~Discovery();
+				virtual ~Discovery();
 				void load(const ibrcommon::ConfigFile &conf);
 
 				bool _enabled;
@@ -188,7 +188,7 @@ namespace dtn
 				friend class Configuration;
 			protected:
 				Statistic();
-				~Statistic();
+				virtual ~Statistic();
 				void load(const ibrcommon::ConfigFile &conf);
 
 			public:
@@ -228,7 +228,7 @@ namespace dtn
 				friend class Configuration;
 			protected:
 				Debug();
-				~Debug();
+				virtual ~Debug();
 				void load(const ibrcommon::ConfigFile &conf);
 
 				bool _enabled;
@@ -259,7 +259,7 @@ namespace dtn
 				friend class Configuration;
 			protected:
 				Logger();
-				~Logger();
+				virtual ~Logger();
 				void load(const ibrcommon::ConfigFile &conf);
 
 				bool _quiet;
@@ -294,7 +294,7 @@ namespace dtn
 				friend class Configuration;
 			protected:
 				Network();
-				~Network();
+				virtual ~Network();
 				void load(const ibrcommon::ConfigFile &conf);
 
 				std::list<dtn::routing::StaticRoutingExtension::StaticRoute> _static_routes;
@@ -353,7 +353,7 @@ namespace dtn
 
 			protected:
 				Security();
-				~Security();
+				virtual ~Security();
 				void load(const ibrcommon::ConfigFile &conf);
 
 			public:

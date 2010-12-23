@@ -25,7 +25,7 @@ namespace dtn
 		{
 		public:
 			NeighborRoutingExtension();
-			~NeighborRoutingExtension();
+			virtual ~NeighborRoutingExtension();
 
 			void notify(const dtn::core::Event *evt);
 

@@ -49,7 +49,7 @@ namespace dtn
 			public:
 				NeighborEntry();
 				NeighborEntry(const dtn::data::EID &eid);
-				~NeighborEntry();
+				virtual ~NeighborEntry();
 
 				void updateLastSeen();
 				void updateBundles(const ibrcommon::BloomFilter &bf);

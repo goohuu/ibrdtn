@@ -19,7 +19,7 @@ namespace dtn
 		{
 		public:
 			BundleList();
-			~BundleList();
+			virtual ~BundleList();
 
 			virtual void add(const dtn::data::MetaBundle &bundle);
 			virtual void remove(const dtn::data::MetaBundle &bundle);
@@ -36,7 +36,7 @@ namespace dtn
 			{
 			public:
 				ExpiringBundle(const MetaBundle &b);
-				~ExpiringBundle();
+				virtual ~ExpiringBundle();
 
 				bool operator!=(const ExpiringBundle& other) const;
 				bool operator==(const ExpiringBundle& other) const;

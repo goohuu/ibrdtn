@@ -27,7 +27,7 @@ namespace dtn
 				CONNECTION_TIMEOUT = 3
 			};
 
-			~ConnectionEvent();
+			virtual ~ConnectionEvent();
 
 			const string getName() const;
 

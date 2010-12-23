@@ -37,7 +37,7 @@ namespace dtn
 
 		public:
 			EpidemicRoutingExtension();
-			~EpidemicRoutingExtension();
+			virtual ~EpidemicRoutingExtension();
 
 			void notify(const dtn::core::Event *evt);
 
@@ -59,7 +59,7 @@ namespace dtn
 				static const char BLOCK_TYPE = 201;
 
 				EpidemicExtensionBlock();
-				~EpidemicExtensionBlock();
+				virtual ~EpidemicExtensionBlock();
 
 				void set(dtn::data::SDNV value);
 				dtn::data::SDNV get() const;

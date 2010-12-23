@@ -66,7 +66,7 @@ namespace dtn
 		{
 		public:
 			AcceptValidator();
-			~AcceptValidator();
+			virtual ~AcceptValidator();
 
 			virtual void validate(const dtn::data::PrimaryBlock&) const throw (RejectedException);
 			virtual void validate(const dtn::data::Block&, const size_t) const throw (RejectedException);

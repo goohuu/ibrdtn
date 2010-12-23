@@ -34,7 +34,7 @@ private:
 	{
 	public:
 		DerivedBundleList();
-		~DerivedBundleList();
+		virtual ~DerivedBundleList();
 
 		void eventBundleExpired(const ExpiringBundle &b);
 

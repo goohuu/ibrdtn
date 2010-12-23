@@ -20,7 +20,7 @@ namespace dtn
 		{
 		public:
 			StatusReportGenerator();
-			~StatusReportGenerator();
+			virtual ~StatusReportGenerator();
 
 			void raiseEvent(const Event *evt);
 

@@ -37,7 +37,7 @@ namespace dtn
 			};
 
 			StaticRoutingExtension(list<StaticRoutingExtension::StaticRoute> routes);
-			~StaticRoutingExtension();
+			virtual ~StaticRoutingExtension();
 
 			void notify(const dtn::core::Event *evt);
 

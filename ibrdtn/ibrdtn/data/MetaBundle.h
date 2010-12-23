@@ -27,7 +27,7 @@ namespace dtn
 					const dtn::data::EID custodian = dtn::data::EID(), const size_t appdatalength = 0, const size_t procflags = 0);
 
 			MetaBundle(const dtn::data::Bundle &b);
-			~MetaBundle();
+			virtual ~MetaBundle();
 
 			int getPriority() const;
 			bool get(dtn::data::PrimaryBlock::FLAGS flag) const;

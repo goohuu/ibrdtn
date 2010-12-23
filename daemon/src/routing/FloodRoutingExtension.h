@@ -32,7 +32,7 @@ namespace dtn
 		{
 		public:
 			FloodRoutingExtension();
-			~FloodRoutingExtension();
+			virtual ~FloodRoutingExtension();
 
 			void notify(const dtn::core::Event *evt);
 

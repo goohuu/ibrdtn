@@ -56,7 +56,7 @@ namespace dtn
 			{
 			public:
 				ProcessBundleTask(const dtn::data::MetaBundle&);
-				~ProcessBundleTask();
+				virtual ~ProcessBundleTask();
 				const dtn::data::MetaBundle bundle;
 			};
 
@@ -64,7 +64,7 @@ namespace dtn
 			{
 			public:
 				TransferBundleTask(const dtn::data::BundleID&, const size_t id);
-				~TransferBundleTask();
+				virtual ~TransferBundleTask();
 				const dtn::data::BundleID bundle;
 				const size_t id;
 			};
@@ -73,7 +73,7 @@ namespace dtn
 			{
 			public:
 				QueryBundleTask(const size_t id);
-				~QueryBundleTask();
+				virtual ~QueryBundleTask();
 				const size_t id;
 			};
 
@@ -81,7 +81,7 @@ namespace dtn
 			{
 			public:
 				RemoveBundleTask(const dtn::data::BundleID&);
-				~RemoveBundleTask();
+				virtual ~RemoveBundleTask();
 				const dtn::data::BundleID bundle;
 			};
 
@@ -89,7 +89,7 @@ namespace dtn
 			{
 			public:
 				Distributor();
-				~Distributor();
+				virtual ~Distributor();
 
 				void add(ClientHandler *obj);
 				void remove(ClientHandler *obj);

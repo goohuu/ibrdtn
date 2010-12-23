@@ -22,7 +22,7 @@ namespace dtn
 			{
 			public:
 				Container(dtn::data::Bundle &b, ibrcommon::BLOB::Reference &ref);
-				~Container();
+				virtual ~Container();
 				bool isComplete();
 
 				Bundle getBundle();

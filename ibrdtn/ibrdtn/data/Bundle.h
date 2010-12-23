@@ -60,7 +60,7 @@ namespace dtn
 
 			public:
 				BlockList();
-				~BlockList();
+				virtual ~BlockList();
 
 				void push_front(Block *block);
 				void push_back(Block *block);
