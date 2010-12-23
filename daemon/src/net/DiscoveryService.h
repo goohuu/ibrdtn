@@ -33,9 +33,7 @@ namespace dtn
 			/**
 			 * updates the values of the service block
 			 */
-			void update();
-
-			bool onInterface(const ibrcommon::vinterface &net) const;
+			void update(const ibrcommon::vinterface &net);
 
 		protected:
 			std::string _service_name;

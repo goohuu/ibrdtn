@@ -59,8 +59,10 @@ namespace dtn
 			return dtn::core::Node::CONN_UDPIP;
 		}
 
-		void UDPConvergenceLayer::update(std::string &name, std::string &params)
+		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
+			if (iface == _net) throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+
 			name = "udpcl";
 			stringstream service;
 
@@ -79,12 +81,6 @@ namespace dtn
 			};
 
 			params = service.str();
-		}
-
-		bool UDPConvergenceLayer::onInterface(const ibrcommon::vinterface &net) const
-		{
-			if (_net == net) return true;
-			return false;
 		}
 
 		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)

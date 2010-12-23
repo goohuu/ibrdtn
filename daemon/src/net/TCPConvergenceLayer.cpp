@@ -31,8 +31,7 @@ namespace dtn
 		 */
 		const int TCPConvergenceLayer::DEFAULT_PORT = 4556;
 
-		TCPConvergenceLayer::TCPConvergenceLayer(const ibrcommon::vinterface &net, int port)
-		 : _net(net), _port(port), _tcpsrv(net, port)
+		TCPConvergenceLayer::TCPConvergenceLayer()
 		{
 			bindEvent(NodeEvent::className);
 		}
@@ -43,37 +42,51 @@ namespace dtn
 			join();
 		}
 
+		void TCPConvergenceLayer::bind(const ibrcommon::vinterface &net, int port)
+		{
+			_interfaces.push_back(net);
+			_tcpsrv.bind(net, port);
+			_portmap[net] = port;
+		}
+
 		dtn::core::Node::Protocol TCPConvergenceLayer::getDiscoveryProtocol() const
 		{
 			return Node::CONN_TCPIP;
 		}
 
-		void TCPConvergenceLayer::update(std::string &name, std::string &params)
+		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
 			name = "tcpcl";
 			stringstream service;
 
-			try {
-				std::list<vaddress> list = _net.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
-				if (!list.empty())
-				{
-					 service << "ip=" << list.front().get(false) << ";port=" << _port << ";";
-				}
-				else
-				{
-					service << "port=" << _port << ";";
-				}
-			} catch (const ibrcommon::vinterface::interface_not_set&) {
-				service << "port=" << _port << ";";
-			};
+			// TODO: get the main address of this host, if no interface is specified
 
-			params = service.str();
-		}
+			// search for the matching interface
+			for (std::list<ibrcommon::vinterface>::const_iterator it = _interfaces.begin(); it != _interfaces.end(); it++)
+			{
+				const ibrcommon::vinterface &interface = *it;
+				if (interface == iface)
+				{
+					try {
+						// get all addresses of this interface
+						std::list<vaddress> list = interface.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
 
-		bool TCPConvergenceLayer::onInterface(const ibrcommon::vinterface &net) const
-		{
-			if (_net == net) return true;
-			return false;
+						// if no address is returned... (goto catch block)
+						if (list.empty()) throw ibrcommon::Exception("no address found");
+
+						// fill in the ip address
+						service << "ip=" << list.front().get(false) << ";port=" << _portmap[iface] << ";";
+					} catch (const ibrcommon::Exception&) {
+						// ... set the port only
+						service << "port=" << _portmap[iface] << ";";
+					};
+
+					params = service.str();
+					return;
+				}
+			}
+
+			throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
 		}
 
 		const std::string TCPConvergenceLayer::getName() const
@@ -234,7 +247,8 @@ namespace dtn
 
 		void TCPConvergenceLayer::componentUp()
 		{
-			// server is listening on constuctor call
+			// listen on the socket, max. 5 concurrent awaiting connections
+			_tcpsrv.listen(5);
 		}
 
 		void TCPConvergenceLayer::componentDown()

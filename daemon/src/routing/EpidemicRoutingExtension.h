@@ -41,7 +41,10 @@ namespace dtn
 
 			void notify(const dtn::core::Event *evt);
 
-			void update(std::string &name, std::string &data);
+			/**
+			 * this method updates the given values
+			 */
+			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 			virtual void stopExtension();
 

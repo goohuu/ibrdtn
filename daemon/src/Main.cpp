@@ -239,6 +239,9 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 	// get the configuration of the convergence layers
 	const std::list<Configuration::NetConfig> &nets = conf.getNetwork().getInterfaces();
 
+	// local cl map
+	std::map<Configuration::NetConfig::NetType, dtn::net::ConvergenceLayer*> _cl_map;
+
 	// create the convergence layers
  	for (std::list<Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 	{
@@ -265,15 +268,29 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 
 				case Configuration::NetConfig::NETWORK_TCP:
 				{
-					try {
-						TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer( net.interface, net.port );
-						core.addConvergenceLayer(tcpcl);
-						components.push_back(tcpcl);
-						if (ipnd != NULL) ipnd->addService(tcpcl);
+					// look for an earlier instance of
+					std::map<Configuration::NetConfig::NetType, dtn::net::ConvergenceLayer*>::iterator it = _cl_map.find(net.type);
 
-						IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
-					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					if (it == _cl_map.end())
+					{
+						try {
+							TCPConvergenceLayer *tcpcl = new TCPConvergenceLayer();
+							tcpcl->bind(net.interface, net.port);
+
+							core.addConvergenceLayer(tcpcl);
+							components.push_back(tcpcl);
+							if (ipnd != NULL) ipnd->addService(tcpcl);
+							_cl_map[net.type] = tcpcl;
+							IBRCOMMON_LOGGER(info) << "TCP ConvergenceLayer added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+						} catch (const ibrcommon::Exception &ex) {
+							IBRCOMMON_LOGGER(error) << "Failed to add TCP ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+					else
+					{
+						ConvergenceLayer *cl = it->second;
+						TCPConvergenceLayer &tcpcl = dynamic_cast<TCPConvergenceLayer&>(*(cl));
+						tcpcl.bind(net.interface, net.port);
 					}
 
 					break;

@@ -78,7 +78,7 @@ namespace dtn
 			_taskqueue.abort();
 		}
 
-		void EpidemicRoutingExtension::update(std::string &name, std::string &data)
+		void EpidemicRoutingExtension::update(const ibrcommon::vinterface&, std::string &name, std::string &data) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
 			name = "epidemic";
 			data = "version=1";

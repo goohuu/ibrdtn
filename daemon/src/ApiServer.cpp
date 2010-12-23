@@ -24,13 +24,13 @@ namespace dtn
 	namespace daemon
 	{
 		ApiServer::ApiServer(const ibrcommon::File &socket)
-		 : _tcpsrv(socket), _dist(), _next_connection_id(1)
+		 : _tcpsrv(socket), _next_connection_id(1)
 		{
 		}
 
 		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
-		 : _tcpsrv(net, port), _dist()
 		{
+			_tcpsrv.bind(net, port);
 		}
 
 		ApiServer::~ApiServer()
@@ -46,6 +46,8 @@ namespace dtn
 
 		void ApiServer::componentUp()
 		{
+			_tcpsrv.listen(5);
+
 			try {
 				_dist.start();
 			} catch (const ibrcommon::ThreadException &ex) {

@@ -59,8 +59,10 @@ namespace dtn
 			return dtn::core::Node::CONN_ZIGBEE; // FIXME CONN_LOWPAN instead?
 		}
 
-		void LOWPANConvergenceLayer::update(std::string &name, std::string &params)
+		void LOWPANConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
+			if (iface == _net) throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+
 			name = "lowpancl";
 			stringstream service;
 
@@ -79,12 +81,6 @@ namespace dtn
 			};
 
 			params = service.str();
-		}
-
-		bool LOWPANConvergenceLayer::onInterface(const ibrcommon::vinterface &net) const
-		{
-			if (_net == net) return true;
-			return false;
 		}
 
 		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)

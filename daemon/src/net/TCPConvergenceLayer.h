@@ -182,12 +182,19 @@ namespace dtn
 			 * @param[in] bind_addr The address to bind.
 			 * @param[in] port The port to use.
 			 */
-			TCPConvergenceLayer(const ibrcommon::vinterface &net, int port);
+			TCPConvergenceLayer();
 
 			/**
 			 * Destructor
 			 */
 			virtual ~TCPConvergenceLayer();
+
+			/**
+			 * Bind on a interface
+			 * @param net
+			 * @param port
+			 */
+			void bind(const ibrcommon::vinterface &net, int port);
 
 			/**
 			 * handler for events
@@ -221,8 +228,7 @@ namespace dtn
 			/**
 			 * this method updates the given values
 			 */
-			void update(std::string &name, std::string &data);
-			bool onInterface(const ibrcommon::vinterface &net) const;
+			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 		protected:
 			bool __cancellation();
@@ -248,13 +254,12 @@ namespace dtn
 			static const int DEFAULT_PORT;
 			bool _running;
 
-			ibrcommon::vinterface _net;
-			int _port;
-
 			ibrcommon::tcpserver _tcpsrv;
 
 			ibrcommon::Mutex _connections_lock;
 			std::list<TCPConnection*> _connections;
+			std::list<ibrcommon::vinterface> _interfaces;
+			std::map<ibrcommon::vinterface, unsigned int> _portmap;
 		};
 	}
 }

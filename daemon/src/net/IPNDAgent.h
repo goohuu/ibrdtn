@@ -44,7 +44,7 @@ namespace dtn
 			virtual const std::string getName() const;
 
 		protected:
-			void sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services);
+			void sendAnnoucement(const u_int16_t &sn, std::list<DiscoveryService> &services);
 			virtual void componentRun();
 			virtual void componentUp();
 			virtual void componentDown();

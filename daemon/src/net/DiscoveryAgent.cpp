@@ -122,12 +122,6 @@ namespace dtn
 			// check if announcements are enabled
 			if (_config.announce())
 			{
-				// update all services
-				for (std::list<DiscoveryService>::iterator iter = _services.begin(); iter != _services.end(); iter++)
-				{
-					(*iter).update();
-				}
-
 				sendAnnoucement(_sn, _services);
 
 				// increment sequencenumber

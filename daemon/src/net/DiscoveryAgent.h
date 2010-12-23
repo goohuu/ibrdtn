@@ -44,7 +44,7 @@ namespace dtn
 			virtual void componentUp();
 			virtual void componentDown();
 			virtual void componentRun() = 0;
-			virtual void sendAnnoucement(const u_int16_t &sn, const std::list<DiscoveryService> &services) = 0;
+			virtual void sendAnnoucement(const u_int16_t &sn, std::list<DiscoveryService> &services) = 0;
 
 			const dtn::daemon::Configuration::Discovery &_config;
 

@@ -18,17 +18,23 @@ namespace dtn
 		class DiscoveryServiceProvider
 		{
 		public:
+			class NoServiceHereException : public ibrcommon::Exception
+			{
+			public:
+				NoServiceHereException(string what = "No service available.") throw() : ibrcommon::Exception(what)
+				{
+				};
+
+				virtual ~NoServiceHereException() throw() {};
+			};
+
 			/**
 			 * Updates an discovery service block with current values
 			 * @param name
 			 * @param data
 			 */
-			virtual void update(std::string &name, std::string &data) = 0;
-
-			virtual bool onInterface(const ibrcommon::vinterface&) const
-			{
-				return true;
-			}
+			virtual void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data)
+				throw(NoServiceHereException) = 0;
 		};
 	}
 }
