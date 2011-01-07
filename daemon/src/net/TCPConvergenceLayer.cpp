@@ -14,6 +14,7 @@
 #include "routing/RequeueBundleEvent.h"
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/net/tcpclient.h>
+#include <ibrcommon/Logger.h>
 #include <streambuf>
 
 #include <functional>
@@ -136,6 +137,8 @@ namespace dtn
 				if (conn.match(n))
 				{
 					conn.queue(job._bundle);
+					IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an existing tcp connection (" << conn.getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
+
 					return;
 				}
 			}
@@ -154,6 +157,8 @@ namespace dtn
 
 			// queue the bundle
 			conn->queue(job._bundle);
+
+			IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an new tcp connection (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void TCPConvergenceLayer::raiseEvent(const Event *evt)
@@ -193,6 +198,7 @@ namespace dtn
 			}
 
 			_connections.push_back( conn );
+			IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection added (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void TCPConvergenceLayer::connectionDown(TCPConnection *conn)
@@ -203,6 +209,7 @@ namespace dtn
 				if (conn == (*iter))
 				{
 					_connections.erase(iter);
+					IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection removed (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 			}
