@@ -48,7 +48,7 @@ namespace dtn
 				@param we the EID of this node
 				@param partner the EID of the corresponding node of the key
 				*/
-				BundleAuthenticationBlock(const unsigned char * const hkey, const size_t size, const dtn::data::EID& we, const dtn::data::EID partner);
+				BundleAuthenticationBlock(const unsigned char * const hkey, const size_t size);
 
 				/**
 				This creates the BundleAuthenticationBlock in the factory fashion for 
@@ -61,7 +61,7 @@ namespace dtn
 				@param we the EID of this node
 				@param partners the EIDs of the corresponding nodes of the keys
 				*/
-				BundleAuthenticationBlock(const std::list< std::pair<const unsigned char * const, const size_t> > keys, const dtn::data::EID& we, const std::list<dtn::data::EID> partners);
+				BundleAuthenticationBlock(const std::list< std::pair<const unsigned char * const, const size_t> > keys);
 
 				/**
 				Deletes all keys, which were used for calculating the MACs

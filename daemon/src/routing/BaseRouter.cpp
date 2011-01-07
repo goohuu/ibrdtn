@@ -250,12 +250,7 @@ namespace dtn
 					_storage.store(generated.bundle);
 
 					// raise the queued event to notify all receivers about the new bundle
-#ifdef WITH_BUNDLE_SECURITY
-					dtn::security::SecurityManager::getInstance().outgoing_asymmetric(const_cast<dtn::data::Bundle&>(generated.bundle), dtn::core::BundleCore::local);
-#else
  					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
-#endif
-
 				} catch (ibrcommon::IOException ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				} catch (dtn::core::BundleStorage::StorageSizeExeededException ex) {

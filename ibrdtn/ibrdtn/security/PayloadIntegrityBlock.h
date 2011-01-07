@@ -41,7 +41,7 @@ namespace dtn
 				@param we the id of this node
 				@param partner the id of the node, which signed the bundle
 				*/
-				PayloadIntegrityBlock(RSA * hkey, const dtn::data::EID& we, const dtn::data::EID& partner = dtn::data::EID());
+				PayloadIntegrityBlock(RSA * hkey);
 				
 				
 				/** frees the internal PKEY object, without deleting the rsa object 
@@ -53,7 +53,7 @@ namespace dtn
 				given in the constructor after the primary block.
 				@param bundle the bundle to be hashed and signed
 				*/
-				void addHash(dtn::data::Bundle &bundle) const;
+				void addHash(dtn::data::Bundle &bundle, const dtn::data::EID& source, const dtn::data::EID& destination) const;
 
 				/**
 				Tests if the bundles signatures is correct. There might be multiple PIBs

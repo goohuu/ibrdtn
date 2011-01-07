@@ -114,73 +114,55 @@ namespace dtn
 				 */
 				void encrypt(dtn::data::Bundle &bundle) const throw (EncryptException, KeyMissingException);
 
-				/**
-				If a Bundle is received, based on source and destination the
-				BundleAuthenticationBlocks and PayloadIntegrityBlocks are
-				checked and removed on validation. If this is the security
-				destination of the SecurityDestination PayloadConfidentialBlocks
-				and ExtensionSecurityBlocks these will be decrypted. If
-				everything is ok true will be returned, otherwise false.
-				@param bundle the bundle to be checked or decrypted
-				@return true if hashes and signs verify and decryption if
-				attempted succeeds, false otherwise
-				*/
-				bool incoming(dtn::data::Bundle&);
+//				/**
+//				If a Bundle is received, based on source and destination the
+//				BundleAuthenticationBlocks and PayloadIntegrityBlocks are
+//				checked and removed on validation. If this is the security
+//				destination of the SecurityDestination PayloadConfidentialBlocks
+//				and ExtensionSecurityBlocks these will be decrypted. If
+//				everything is ok true will be returned, otherwise false.
+//				@param bundle the bundle to be checked or decrypted
+//				@return true if hashes and signs verify and decryption if
+//				attempted succeeds, false otherwise
+//				*/
+//				bool incoming(dtn::data::Bundle&);
+//
+//				int outgoing_asymmetric(dtn::data::Bundle&, const dtn::data::EID&);
+//
+//				int outgoing_asymmetric(dtn::data::BundleID&);
+//
+//				/**
+//				Applies PayloadIntegrityBlock,
+//				PayloadConfidentialBlocks or ExtensionSecurityBlock to the
+//				bundle based on policy before it will be send.
+//				@param bundle the bundle to which BAB, PIB, PCB or ESB will be
+//				applied to
+//				@return 0 if all is ok, 1 if the bundle cannot be sent, because of
+//				missing public keys
+//				*/
+//				int outgoing_asymmetric(dtn::data::Bundle&);
+//
+//				/**
+//				 * Applies BundleAuthenticationBlocks to the Bundle
+//				 */
+//				int outgoing_p2p(const dtn::data::EID, dtn::data::Bundle&);
 
-				int outgoing_asymmetric(dtn::data::Bundle&, const dtn::data::EID&);
+//				/**
+//				 * Checks if all required information needed to send the bundle is
+//				 * present. If keys are missing, they are requested from the network.
+//				 */
+//				bool isReadyToSend(const dtn::data::BundleID&);
 
-				int outgoing_asymmetric(dtn::data::BundleID&);
+//				/**
+//				 * Checks if all required information needed to send the bundle is
+//				 * present. If keys are missing, they are requested from the network.
+//				 */
+//				bool isReadyToSend(const dtn::data::Bundle&);
 
-				/**
-				Applies PayloadIntegrityBlock,
-				PayloadConfidentialBlocks or ExtensionSecurityBlock to the
-				bundle based on policy before it will be send.
-				@param bundle the bundle to which BAB, PIB, PCB or ESB will be
-				applied to
-				@return 0 if all is ok, 1 if the bundle cannot be sent, because of
-				missing public keys
-				*/
-				int outgoing_asymmetric(dtn::data::Bundle&);
-
-				/**
-				 * Applies BundleAuthenticationBlocks to the Bundle
-				 */
-				int outgoing_p2p(const dtn::data::EID, dtn::data::Bundle&);
-
-				/**
-				 * Checks if all required information needed to send the bundle is
-				 * present. If keys are missing, they are requested from the network.
-				 */
-				bool isReadyToSend(const dtn::data::BundleID&);
-
-				/**
-				 * Checks if all required information needed to send the bundle is
-				 * present. If keys are missing, they are requested from the network.
-				 */
-				bool isReadyToSend(const dtn::data::Bundle&);
-
-				/**
-				Reads all security rules from the configuration
-				*/
-				void readRoutingTable();
-
-				/**
-				Reads a private key into rsa
-				@param filename the file where the key is stored
-				@param rsa the rsa file
-				@return zero if all is ok, something different from zero when something
-				failed
-				*/
-				static int read_private_key(const std::string& filename, RSA ** rsa);
-
-				/**
-				Reads a public key into rsa
-				@param filename the file where the key is stored
-				@param rsa the rsa file
-				@return zero if all is ok, something different from zero when something
-				failed
-				*/
-				static int read_public_key(const std::string& filename, RSA ** rsa);
+//				/**
+//				Reads all security rules from the configuration
+//				*/
+//				void readRoutingTable();
 
 				/**
 				Deletes the lists and maps with the private and public keys. This is
@@ -216,23 +198,24 @@ namespace dtn
 //				*/
 //				static RSA * loadKey(RSA **, dtn::security::SecurityBlock::BLOCK_TYPES);
 
-				/**
-				Reads a symmetric key from a file. If from the file cannot be read ""
-				will be returned.
-				@param file the file to read from
-				@return the key read from the file
-				*/
-				static std::string readSymmetricKey(const std::string&);
+//				/**
+//				Reads a symmetric key from a file. If from the file cannot be read ""
+//				will be returned.
+//				@param file the file to read from
+//				@return the key read from the file
+//				*/
+//				static std::string readSymmetricKey(const std::string&);
 
-				/**
-				Loads a symmetric key from map if it there. If not it reads the key from
-				disk and stores it into map.
-				@param map a map containing nodes and their keys
-				@param node the name of the node corresponding to the key
-				@param bt the block type of the key
-				@return the key or "" if none exists
-				*/
-				static std::string loadKey(std::map<dtn::data::EID, std::string>&, const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
+//				/**
+//				Loads a symmetric key from map if it there. If not it reads the key from
+//				disk and stores it into map.
+//				@param map a map containing nodes and their keys
+//				@param node the name of the node corresponding to the key
+//				@param bt the block type of the key
+//				@return the key or "" if none exists
+//				*/
+//				static std::string loadKey(std::map<dtn::data::EID, std::string>&, const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
+//				static std::string loadKey(const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
 
 			protected:
 				/**
@@ -243,14 +226,14 @@ namespace dtn
 
 				virtual ~SecurityManager();
 
-				/**
-				 * Deletes a public foreign key for a specific node and block type from
-				 * this instance. It will remain on disk/flash. Nothing worse will
-				 * happen, if the key was not initialized.
-				 * @param node the name of the node
-				 * @param bt the block type of the key
-				 */
-				void deleteKey(const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
+//				/**
+//				 * Deletes a public foreign key for a specific node and block type from
+//				 * this instance. It will remain on disk/flash. Nothing worse will
+//				 * happen, if the key was not initialized.
+//				 * @param node the name of the node
+//				 * @param bt the block type of the key
+//				 */
+//				void deleteKey(const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
 
 				/**
 				Returns the associated RSA object with node and block type. When doing
@@ -277,11 +260,11 @@ namespace dtn
 				*/
 				RSA * getPrivateKey(dtn::security::SecurityBlock::BLOCK_TYPES);
 
-				/**
-				Returns the symmetric key for the given security block and node.
-				@return the symmetric key or "" if none exists
-				*/
-				std::string getSymmetricKey(const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt);
+//				/**
+//				Returns the symmetric key for the given security block and node.
+//				@return the symmetric key or "" if none exists
+//				*/
+//				std::string getSymmetricKey(const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt);
 
 				/**
 				Check if we are the security_destination of some block
@@ -350,22 +333,22 @@ namespace dtn
 				 */
 				void addKeysForVerfication(dtn::data::Bundle&);
 
-				/**
-				 * Looks inside a bundle for stored keys and saves them locally or
-				 * updates old keys, if they are authenticated or similar. If a new key
-				 * arrived and will be stored newkeyReceived() will be called, which
-				 * looks after bundles with pending keys
-				 * @param bundle the bundle to be searched for keys
-				 */
-				void lookForKeys(const dtn::data::Bundle&);
+//				/**
+//				 * Looks inside a bundle for stored keys and saves them locally or
+//				 * updates old keys, if they are authenticated or similar. If a new key
+//				 * arrived and will be stored newkeyReceived() will be called, which
+//				 * looks after bundles with pending keys
+//				 * @param bundle the bundle to be searched for keys
+//				 */
+//				void lookForKeys(const dtn::data::Bundle&);
 
-				/**
-				 * Looks after bundles with pending keys. If a bundle is ready to send,
-				 * an event will be generated, or something else.
-				 * @param node the name of the owner of the public key
-				 * @param bt the block type for which the key shall be used for
-				 */
-				void newKeyReceived(const dtn::data::EID&, dtn::security::SecurityBlock::BLOCK_TYPES);
+//				/**
+//				 * Looks after bundles with pending keys. If a bundle is ready to send,
+//				 * an event will be generated, or something else.
+//				 * @param node the name of the owner of the public key
+//				 * @param bt the block type for which the key shall be used for
+//				 */
+//				void newKeyReceived(const dtn::data::EID&, dtn::security::SecurityBlock::BLOCK_TYPES);
 
 				/**
 				 * Searches in kbs if the key specified by node and bt is needed and
@@ -438,7 +421,7 @@ namespace dtn
 			for (typename std::list<T const *>::const_iterator it = blocks.begin(); it != blocks.end(); it++)
 			{
 				dtn::data::EID our_id = dtn::data::EID(dtn::daemon::Configuration::getInstance().getNodename());
-				if (dtn::security::SecurityBlock::isSecurityDestination(bundle, **it, our_id))
+				if ((**it).isSecurityDestination(bundle, our_id))
 					return true;
 			}
 			return false;

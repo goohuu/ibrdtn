@@ -77,16 +77,16 @@ using namespace dtn::net;
  */
 
 // logging options
-unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
+const unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
 
 // error filter
-unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
+const unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
 
 // logging filter, everything but debug, err and crit
-unsigned int logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
+const unsigned int logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
 
 // syslog filter, everything but DEBUG and NOTICE
-unsigned int logsys = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
+const unsigned int logsys = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
 
 // debug off by default
 bool _debug = false;
@@ -396,10 +396,12 @@ int main(int argc, char *argv[])
 	setGlobalVars(conf);
 
 #ifdef WITH_BUNDLE_SECURITY
-	if (conf.getSecurity().enabled())
+	const dtn::daemon::Configuration::Security &sec = conf.getSecurity();
+
+	if (sec.enabled())
 	{
 		// initialize the key manager for the security extensions
-		dtn::security::SecurityKeyManager::getInstance().initialize( conf.getSecurity().getPath() );
+		dtn::security::SecurityKeyManager::getInstance().initialize( sec.getPath(), sec.getCA(), sec.getKey() );
 	}
 #endif
 
@@ -462,13 +464,13 @@ int main(int argc, char *argv[])
 	// create the base router
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
-#ifdef WITH_BUNDLE_SECURITY
-	if (conf.getSecurity().enabled())
-	{
-		// read configuration of the security class
-		dtn::security::SecurityManager::getInstance().readRoutingTable();
-	}
-#endif
+//#ifdef WITH_BUNDLE_SECURITY
+//	if (sec.enabled())
+//	{
+//		// read configuration of the security class
+//		dtn::security::SecurityManager::getInstance().readRoutingTable();
+//	}
+//#endif
 
 	// add routing extensions
 	switch (conf.getNetwork().getRoutingExtension())

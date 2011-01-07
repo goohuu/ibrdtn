@@ -373,6 +373,8 @@ namespace dtn
 
 				const ibrcommon::File& getCA() const;
 
+				const ibrcommon::File& getKey() const;
+
 				/**
 				Reads all security rules from the configuration.
 				@return a list of all security rules found in the configuration
@@ -478,6 +480,7 @@ namespace dtn
 				std::list<dtn::security::SecurityRule> _rules;
 				Level _level;
 				ibrcommon::File _ca;
+				ibrcommon::File _key;
 #endif
 			};
 

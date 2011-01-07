@@ -8,12 +8,15 @@
 #ifndef SECURITYKEYMANAGER_H_
 #define SECURITYKEYMANAGER_H_
 
+#include <ibrdtn/security/SecurityKey.h>
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/DTNTime.h>
 #include <ibrdtn/data/BundleString.h>
 #include <ibrdtn/data/SDNV.h>
 #include <ibrcommon/data/File.h>
 #include <iostream>
+
+#include <openssl/rsa.h>
 
 namespace dtn
 {
@@ -22,14 +25,6 @@ namespace dtn
 		class SecurityKeyManager
 		{
 		public:
-			enum KeyType
-			{
-				KEY_UNSPEC = 0,
-				KEY_SHARED = 1,
-				KEY_PRIVATE = 2,
-				KEY_PUBLIC = 3
-			};
-
 			class KeyNotFoundException : public ibrcommon::Exception
 			{
 			public:
@@ -39,75 +34,44 @@ namespace dtn
 				virtual ~KeyNotFoundException() throw() {};
 			};
 
-			class SecurityKey
-			{
-			public:
-				SecurityKey() {}
-				virtual ~SecurityKey() {};
-
-				// key type
-				KeyType type;
-
-				// referencing EID of this key
-				dtn::data::EID reference;
-
-				// last update time
-				dtn::data::DTNTime lastupdate;
-
-				// key data
-				std::string data;
-
-				friend std::ostream &operator<<(std::ostream &stream, const SecurityKey &key)
-				{
-					// key type
-					stream << dtn::data::SDNV(key.type);
-
-					// EID reference
-					stream << dtn::data::BundleString(key.reference.getString());
-
-					// timestamp of last update
-					stream << key.lastupdate;
-
-					// key data
-					stream << dtn::data::BundleString(key.data);
-
-					// To support concatenation of streaming calls, we return the reference to the output stream.
-					return stream;
-				}
-
-				friend std::istream &operator>>(std::istream &stream, SecurityKey &key)
-				{
-					// key type
-					dtn::data::SDNV sdnv_type; stream >> sdnv_type;
-					key.type = KeyType(sdnv_type.getValue());
-
-					// EID reference
-					dtn::data::BundleString eid_reference; stream >> eid_reference;
-					key.reference = dtn::data::EID(eid_reference);
-
-					// timestamp of last update
-					stream >> key.lastupdate;
-
-					// key data
-					dtn::data::BundleString data_string; stream >> data_string;
-					key.data = data_string;
-
-					// To support concatenation of streaming calls, we return the reference to the input stream.
-					return stream;
-				}
-			};
-
 			static SecurityKeyManager& getInstance();
 
-			SecurityKeyManager();
 			virtual ~SecurityKeyManager();
-			void initialize(const ibrcommon::File &path);
+			void initialize(const ibrcommon::File &path, const ibrcommon::File &ca, const ibrcommon::File &key);
 
-			void prefetchKey(const dtn::data::EID &ref, const KeyType type = KEY_UNSPEC);
+			void prefetchKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC);
 
-			bool hasKey(const dtn::data::EID &ref, const KeyType type = KEY_UNSPEC) const;
-			SecurityKeyManager::SecurityKey get(const dtn::data::EID &ref, const KeyType type = KEY_UNSPEC) const throw (SecurityKeyManager::KeyNotFoundException);
-			void store(const dtn::data::EID &ref, const std::string &data, const KeyType type = KEY_UNSPEC);
+			bool hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const;
+			dtn::security::SecurityKey get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC) const throw (SecurityKeyManager::KeyNotFoundException);
+			void store(const dtn::data::EID &ref, const std::string &data, const dtn::security::SecurityKey::KeyType type = dtn::security::SecurityKey::KEY_UNSPEC);
+
+		private:
+			SecurityKeyManager();
+
+			/**
+			Reads a private key into rsa
+			@param filename the file where the key is stored
+			@param rsa the rsa file
+			@return zero if all is ok, something different from zero when something
+			failed
+			*/
+			static int read_private_key(const ibrcommon::File &file, RSA ** rsa);
+
+			/**
+			Reads a public key into rsa
+			@param filename the file where the key is stored
+			@param rsa the rsa file
+			@return zero if all is ok, something different from zero when something
+			failed
+			*/
+			static int read_public_key(const ibrcommon::File &file, RSA ** rsa);
+
+
+			static const std::string hash(const dtn::data::EID &eid);
+
+			ibrcommon::File _path;
+			ibrcommon::File _ca;
+			ibrcommon::File _key;
 		};
 	}
 }

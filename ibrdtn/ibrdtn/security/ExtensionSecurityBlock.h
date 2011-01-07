@@ -49,7 +49,7 @@ namespace dtn
 				@param partner the EID of the node with the private key, if a public key
 				is used
 				*/
-				ExtensionSecurityBlock(RSA * long_key, const dtn::data::EID& we, const dtn::data::EID& partner = dtn::data::EID());
+				ExtensionSecurityBlock(RSA * long_key);
 
 				/** does nothing */
 				virtual ~ExtensionSecurityBlock();
@@ -61,7 +61,7 @@ namespace dtn
 				@param bundle the bundle to which block belongs
 				@param block the to be encrypted block
 				*/
-				void encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block * const block) const;
+				void encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block * const block, const dtn::data::EID& source, const dtn::data::EID& destination) const;
 
 				/**
 				Encrypts and encapsulates two or more blocks into two or more
@@ -71,7 +71,7 @@ namespace dtn
 				@param bundle the bundle to which the blocks belong
 				@param blocks the to be encrypted blocks
 				*/
-				void encryptBlock(dtn::data::Bundle& bundle, const std::list<dtn::data::Block const *>& blocks) const;
+				void encryptBlock(dtn::data::Bundle& bundle, const std::list<dtn::data::Block const *>& blocks, const dtn::data::EID& source, const dtn::data::EID& destination) const;
 
 				/**
 				Decrypts all Blocks in this bundle, for which we have the matching key. 

@@ -664,13 +664,24 @@ namespace dtn
 			// load level
 			_level = Level(conf.read<int>("security_level", 0));
 
-			// load CA path
+			// load CA file
 			try {
 				_ca = conf.read<std::string>("security_ca");
 
 				if (!_ca.exists())
 				{
 					IBRCOMMON_LOGGER(warning) << "CA file " << _ca.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+				}
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+			}
+
+			// load KEY file
+			try {
+				_ca = conf.read<std::string>("security_key");
+
+				if (!_ca.exists())
+				{
+					IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 			}
@@ -713,6 +724,11 @@ namespace dtn
 		const ibrcommon::File& Configuration::Security::getCA() const
 		{
 			return _ca;
+		}
+
+		const ibrcommon::File& Configuration::Security::getKey() const
+		{
+			return _key;
 		}
 
 		Configuration::Security::Level Configuration::Security::getLevel() const

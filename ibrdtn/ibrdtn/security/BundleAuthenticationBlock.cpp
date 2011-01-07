@@ -23,21 +23,21 @@ namespace dtn
 		{
 		}
 
-		BundleAuthenticationBlock::BundleAuthenticationBlock(const unsigned char * const hkey, const size_t size, const dtn::data::EID& we, const dtn::data::EID partner)
-		 : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK, we), _keys(), _partners()
+		BundleAuthenticationBlock::BundleAuthenticationBlock(const unsigned char * const hkey, const size_t size)
+		 : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK), _keys(), _partners()
 		{
-			addKey(hkey, size, partner);
+//			addKey(hkey, size, partner);
 		}
 
-		BundleAuthenticationBlock::BundleAuthenticationBlock(const list< std::pair<const unsigned char * const, const size_t> > keys, const dtn::data::EID& we, const std::list<dtn::data::EID> partners)
-		 : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK, we), _keys(), _partners()
+		BundleAuthenticationBlock::BundleAuthenticationBlock(const list< std::pair<const unsigned char * const, const size_t> > keys)
+		 : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK), _keys(), _partners()
 		{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(keys.size() == partners.size());
 #endif
-			std::list<dtn::data::EID>::const_iterator e_it = partners.begin();
-			for (std::list< std::pair<const unsigned char * const, const size_t> >::const_iterator it = keys.begin(); it != keys.end(); it++, e_it++)
-				addKey(it->first, it->second, e_it->getNodeEID());
+//			std::list<dtn::data::EID>::const_iterator e_it = partners.begin();
+//			for (std::list< std::pair<const unsigned char * const, const size_t> >::const_iterator it = keys.begin(); it != keys.end(); it++, e_it++)
+//				addKey(it->first, it->second, e_it->getNodeEID());
 		}
 
 		BundleAuthenticationBlock::~BundleAuthenticationBlock()
@@ -70,7 +70,7 @@ namespace dtn
 				BundleAuthenticationBlock& bab_end = bundle.push_back<BundleAuthenticationBlock>();
 
 				// set source and destination
-				setSourceAndDestination(bundle, bab_begin, &(*it));
+//				setSourceAndDestination(bundle, bab_begin, &(*it));
 
 				u_int64_t correlator = createCorrelatorValue(bundle);
 				bab_ends.push_back(&bab_end);
@@ -144,7 +144,7 @@ namespace dtn
 			// get the blocks, with which the key should match
 			std::list<u_int64_t> good_correlators;
 			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end() && !((*it)->_ciphersuite_flags & CONTAINS_SECURITY_RESULT); it++)
-				if (SecurityBlock::isSecuritySource(bundle, **it, partner) && (*it)->_ciphersuite_flags & CONTAINS_CORRELATOR && (*it)->_ciphersuite_id == SecurityBlock::BAB_HMAC)
+				if ((**it).isSecuritySource(bundle, partner) && (*it)->_ciphersuite_flags & CONTAINS_CORRELATOR && (*it)->_ciphersuite_id == SecurityBlock::BAB_HMAC)
 					good_correlators.push_back((**it)._correlator);
 
 			std::string our_hash_string = calcMAC(bundle, key.first, key.second);

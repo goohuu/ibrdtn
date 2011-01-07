@@ -227,6 +227,8 @@ namespace dtn
 						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 							// sign requested, but no key is available
 							IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::security::SecurityManager::EncryptException&) {
+							IBRCOMMON_LOGGER(warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
 						}
 					}
 

@@ -25,8 +25,8 @@ namespace dtn
 		{
 		}
 
-		PayloadIntegrityBlock::PayloadIntegrityBlock(RSA * hkey, const dtn::data::EID& we, const dtn::data::EID& partner)
-		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK, we, partner), key_size(-1)
+		PayloadIntegrityBlock::PayloadIntegrityBlock(RSA * hkey)
+		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK), key_size(-1)
 		{
 			pkey = EVP_PKEY_new();
 			if (pkey == NULL)
@@ -78,7 +78,7 @@ namespace dtn
 			return size;
 		}
 
-		void PayloadIntegrityBlock::addHash(dtn::data::Bundle &bundle) const
+		void PayloadIntegrityBlock::addHash(dtn::data::Bundle &bundle, const dtn::data::EID& source, const dtn::data::EID& destination) const
 		{
 			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "entering ..." << IBRCOMMON_LOGGER_ENDL;
 			// if key is invalid do nothing
@@ -101,7 +101,9 @@ namespace dtn
 				addFragmentRange(pib._ciphersuite_params, bundle._fragmentoffset, blobref.operator*());
 			}
 
-			setSourceAndDestination(bundle, pib);
+			// set the source and destination address of the new block
+			if (source != bundle._source) pib.setSecuritySource( source );
+			if (destination != bundle._destination) pib.setSecurityDestination( destination );
 
 			pib.setKeySize(getSecurityResultSize());
 //			pib.setCiphersuiteId(SecurityBlock::PIB_RSA_SHA256);
@@ -133,16 +135,16 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "checking block" << IBRCOMMON_LOGGER_ENDL;
 
-			// check if we have the public key of the security source, or this bundle is adressed to us
-			if (use_eid && !(SecurityBlock::isSecuritySource(bundle, *sb, _partner_node) || SecurityBlock::isSecurityDestination(bundle, *sb, _our_id)))
-				return 0;
-			// check the correct algorithm
-			if (sb->_ciphersuite_id != SecurityBlock::PIB_RSA_SHA256)
-				return 0;
-
-			ibrcommon::RSASHA256Stream rs2s(pkey, true);
-			dtn::security::MutualSerializer(rs2s).serialize_mutable(bundle, sb);
-			return rs2s.getVerification(SecurityBlock::getTLVs(sb->_security_result, SecurityBlock::integrity_signature).begin().operator*());
+//			// check if we have the public key of the security source, or this bundle is adressed to us
+//			if (use_eid && !((*sb).isSecuritySource(bundle, _partner_node) || (*sb).isSecurityDestination(bundle, _our_id)))
+//				return 0;
+//			// check the correct algorithm
+//			if (sb->_ciphersuite_id != SecurityBlock::PIB_RSA_SHA256)
+//				return 0;
+//
+//			ibrcommon::RSASHA256Stream rs2s(pkey, true);
+//			dtn::security::MutualSerializer(rs2s).serialize_mutable(bundle, sb);
+//			return rs2s.getVerification(SecurityBlock::getTLVs(sb->_security_result, SecurityBlock::integrity_signature).begin().operator*());
 		}
 
 		signed char PayloadIntegrityBlock::verify(const dtn::data::Bundle &bundle) const

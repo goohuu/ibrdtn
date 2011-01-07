@@ -26,13 +26,13 @@ namespace dtn
 	namespace security
 	{
 		SecurityBlock::SecurityBlock(const dtn::security::SecurityBlock::BLOCK_TYPES type, const dtn::security::SecurityBlock::CIPHERSUITE_IDS id)
-		: Block(static_cast<char>(type)), _ciphersuite_id(static_cast<char>(id)), _ciphersuite_flags(0), _correlator(0), ignore_security_result(false)
+		: Block(type), _ciphersuite_id(id), _ciphersuite_flags(0), _correlator(0), ignore_security_result(false)
 		{
 
 		}
 
-		SecurityBlock::SecurityBlock(const dtn::security::SecurityBlock::BLOCK_TYPES type, const dtn::data::EID& we, const dtn::data::EID& partner)
-		: Block(static_cast<char>(type)), _ciphersuite_flags(0), _correlator(0), ignore_security_result(false), _our_id(we.getNodeEID()), _partner_node(partner.getNodeEID())
+		SecurityBlock::SecurityBlock(const dtn::security::SecurityBlock::BLOCK_TYPES type)
+		: Block(type), _ciphersuite_flags(0), _correlator(0), ignore_security_result(false)
 		{
 
 		}
@@ -44,31 +44,43 @@ namespace dtn
 		const dtn::data::EID SecurityBlock::getSecuritySource() const
 		{
 			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+			{
 				return _eids.front();
+			}
 			else
+			{
 				return dtn::data::EID();
+			}
 		}
 
 		const dtn::data::EID SecurityBlock::getSecurityDestination() const
 		{
-			bool contains_source = this->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE,
-				contains_destination = this->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION;
-			if (!contains_destination)
-				return dtn::data::EID();
-			else
-				if (!contains_source)
-					return _eids.front();
-				else
+			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
+			{
+				if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+				{
+					size_t eidcount = _eids.size();
 					return *(++_eids.begin());
+				}
+				else
+				{
+					return _eids.front();
+				}
+			}
+			else
+			{
+				return dtn::data::EID();
+			}
 		}
 
 		void SecurityBlock::setSecuritySource(const dtn::data::EID &source)
 		{
-			bool contains_source = this->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE;
-
 			// the first EID must be the source and the second the destination
-			if (contains_source)
+			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+			{
 				_eids.pop_front();
+			}
+
 			_eids.push_front(source.getNodeEID());
 
 			set(Block::BLOCK_CONTAINS_EIDS, true);
@@ -81,40 +93,38 @@ namespace dtn
 
 		void SecurityBlock::setSecurityDestination(const dtn::data::EID &destination)
 		{
-			bool contains_source = this->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE;
-			bool contains_destination = this->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION;
-
 			std::list<dtn::data::EID>::iterator it = _eids.begin();
-			if (contains_source)
+
+			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+			{
 				it++;
+			}
 
-			_eids.insert(it, destination.getNodeEID());
-
-			if (contains_destination)
-				_eids.erase(it);
-
-			set(Block::BLOCK_CONTAINS_EIDS, true);
-			this->_ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_DESTINATION;
+			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
+			{
+				(*it) = destination.getNodeEID();
+			}
+			else
+			{
+				_eids.insert(it, destination.getNodeEID());
+				set(Block::BLOCK_CONTAINS_EIDS, true);
+				this->_ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_DESTINATION;
+			}
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(getSecurityDestination() == destination.getNodeEID());
 #endif
 		}
 
-		void SecurityBlock::setSourceAndDestination(const dtn::data::Bundle& bundle, SecurityBlock& sb, dtn::data::EID const * dest) const
-		{
-			// set source and destination
-			if (bundle._source != _our_id.getNodeEID() && _our_id != dtn::data::EID())
-				sb.setSecuritySource(_our_id.getNodeEID());
-
-			dtn::data::EID to_be_dest = _partner_node;
-
-			if (dest != NULL)
-				to_be_dest = *dest;
-
-			if (bundle._destination != to_be_dest.getNodeEID() && to_be_dest != dtn::data::EID())
-				sb.setSecurityDestination(to_be_dest.getNodeEID());
-		}
+//		void SecurityBlock::setSourceAndDestination(const dtn::data::Bundle& bundle, SecurityBlock& sb, const dtn::data::EID& dest) const
+//		{
+//			// set source and destination
+//			if (bundle._source != _our_id.getNodeEID() && _our_id != dtn::data::EID())
+//				sb.setSecuritySource(_our_id.getNodeEID());
+//
+//			if (bundle._destination != dest.getNodeEID() && dest != dtn::data::EID())
+//				sb.setSecurityDestination(dest.getNodeEID());
+//		}
 
 		void SecurityBlock::setCiphersuiteId(const CIPHERSUITE_IDS id)
 		{
@@ -127,7 +137,7 @@ namespace dtn
 			_ciphersuite_flags |= SecurityBlock::CONTAINS_CORRELATOR;
 		}
 
-		bool SecurityBlock::isCorrelatorPresent(const dtn::data::Bundle& bundle, const u_int64_t correlator) const
+		bool SecurityBlock::isCorrelatorPresent(const dtn::data::Bundle& bundle, const u_int64_t correlator)
 		{
 			std::list<const dtn::data::Block *> blocks = bundle.getBlocks();
 			bool return_val = false;
@@ -143,7 +153,7 @@ namespace dtn
 			return return_val;
 		}
 
-		u_int64_t SecurityBlock::createCorrelatorValue(const dtn::data::Bundle& bundle) const
+		u_int64_t SecurityBlock::createCorrelatorValue(const dtn::data::Bundle& bundle)
 		{
 			u_int64_t corr = random();
 			while (isCorrelatorPresent(bundle, corr))
@@ -389,7 +399,7 @@ namespace dtn
 			return tlvs;
 		}
 
-		void SecurityBlock::createSaltAndKey(u_int32_t& salt, unsigned char* key, size_t key_size) const
+		void SecurityBlock::createSaltAndKey(u_int32_t& salt, unsigned char* key, size_t key_size)
 		{
 
 			if (!RAND_bytes(reinterpret_cast<unsigned char *>(&salt), sizeof(u_int32_t)))
@@ -404,7 +414,7 @@ namespace dtn
 			}
 		}
 
-		void SecurityBlock::addKey(std::string& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa) const
+		void SecurityBlock::addKey(std::string& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa)
 		{
 			// encrypt the ephemeral key and place it in _ciphersuite_params
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -420,7 +430,7 @@ namespace dtn
 			SecurityBlock::addTLV(security_parameter, SecurityBlock::key_information, std::string(reinterpret_cast<char *>(encrypted_key), encrypted_key_len));
 		}
 
-		bool SecurityBlock::getKey(const std::string& security_parameter, unsigned char * key, size_t key_size, RSA * rsa) const
+		bool SecurityBlock::getKey(const std::string& security_parameter, unsigned char * key, size_t key_size, RSA * rsa)
 		{
 			std::string key_string(SecurityBlock::getTLVs(security_parameter, SecurityBlock::key_information).begin().operator*());
 			// get key, convert with reinterpret_cast
@@ -442,7 +452,7 @@ namespace dtn
 			return true;
 		}
 
-		void SecurityBlock::copyEID(const Block& from, Block& to, size_t skip) const
+		void SecurityBlock::copyEID(const Block& from, Block& to, size_t skip)
 		{
 			// take eid list, getEIDList() is broken
 			std::list<dtn::data::EID> their_eids = from.getEIDList();
@@ -458,14 +468,14 @@ namespace dtn
 				to.addEID(*it);
 		}
 
-		void SecurityBlock::addSalt(string& security_parameters, u_int32_t salt) const
+		void SecurityBlock::addSalt(string& security_parameters, u_int32_t salt)
 		{
 			std::stringstream salt_stream;
 			salt_stream << salt;
 			SecurityBlock::addTLV(security_parameters, SecurityBlock::salt, salt_stream.str().size(), salt_stream.str().c_str());
 		}
 
-		u_int32_t SecurityBlock::getSalt(const std::string& security_parameters) const
+		u_int32_t SecurityBlock::getSalt(const std::string& security_parameters)
 		{
 			// get salt, convert with stringstream
 			std::string salt_string(SecurityBlock::getTLVs(security_parameters, SecurityBlock::salt).begin().operator*());
@@ -476,7 +486,7 @@ namespace dtn
 			return salt;
 		}
 
-		bool SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, dtn::security::SecurityBlock const * block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]) const
+		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, dtn::security::SecurityBlock const * block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
 			// get iv, convert with reinterpret_cast
 			std::string iv_string(SecurityBlock::getTLVs(block->_ciphersuite_params, SecurityBlock::initialization_vector).begin().operator*());
@@ -494,7 +504,7 @@ namespace dtn
 			decrypt << data_tag_string << std::flush;
 
 			if (!decrypt.isTagGood())
-				return false;
+				throw ibrcommon::Exception("decryption of block failed - tag is bad");
 
 			// deserialize block
 			dtn::data::DefaultDeserializer ddser(plaintext);
@@ -542,11 +552,9 @@ namespace dtn
 			}
 
 			bundle.remove(*block);
-
-			return true;
 		}
 
-		void SecurityBlock::addFragmentRange(string& ciphersuite_params, size_t fragmentoffset, std::istream& stream) const
+		void SecurityBlock::addFragmentRange(string& ciphersuite_params, size_t fragmentoffset, std::istream& stream)
 		{
 			stream.seekg(0, ios_base::end);
 			std::streampos end = stream.tellg();
@@ -564,27 +572,27 @@ namespace dtn
 			SecurityBlock::addTLV(ciphersuite_params, SecurityBlock::fragment_range, used, off_range);
 		}
 
-		bool SecurityBlock::isSecuritySource(const dtn::data::Bundle& bundle, const dtn::security::SecurityBlock& sb, const dtn::data::EID& eid)
+		bool SecurityBlock::isSecuritySource(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
-			return SecurityBlock::getSecuritySource(bundle, sb) == eid.getNodeEID();
+			return getSecuritySource(bundle) == eid.getNodeEID();
 		}
 
-		bool SecurityBlock::isSecurityDestination(const dtn::data::Bundle& bundle, const dtn::security::SecurityBlock& sb, const dtn::data::EID& eid)
+		bool SecurityBlock::isSecurityDestination(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
-			return SecurityBlock::getSecurityDestination(bundle, sb) == eid.getNodeEID();
+			return getSecurityDestination(bundle) == eid.getNodeEID();
 		}
 		
-		dtn::data::EID SecurityBlock::getSecuritySource(const dtn::data::Bundle& bundle, const dtn::security::SecurityBlock& sb)
+		const dtn::data::EID SecurityBlock::getSecuritySource(const dtn::data::Bundle& bundle) const
 		{
-			dtn::data::EID source = sb.getSecuritySource();
+			dtn::data::EID source = getSecuritySource();
 			if (source == dtn::data::EID())
 				source = bundle._source.getNodeEID();
 			return source;
 		}
 
-		dtn::data::EID SecurityBlock::getSecurityDestination(const dtn::data::Bundle& bundle, const dtn::security::SecurityBlock& sb)
+		const dtn::data::EID SecurityBlock::getSecurityDestination(const dtn::data::Bundle& bundle) const
 		{
-			dtn::data::EID destination = sb.getSecurityDestination();
+			dtn::data::EID destination = getSecurityDestination();
 			if (destination == dtn::data::EID())
 				destination = bundle._destination.getNodeEID();
 			return destination;

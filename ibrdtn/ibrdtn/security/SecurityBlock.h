@@ -177,38 +177,32 @@ namespace dtn
 			/**
 			Checks if the given EID is a security source for the given block
 			@param bundle the bundle to which the block belongs to
-			@param block the security block of which the security source shall be 
-			tested
 			@param eid the eid of the source
 			@return true if eid is the security source, false if not
 			*/
-			static bool isSecuritySource(const dtn::data::Bundle&, const dtn::security::SecurityBlock&, const dtn::data::EID&);
+			bool isSecuritySource(const dtn::data::Bundle&, const dtn::data::EID&) const;
 			
 			/**
 			Checks if the given EID is a security destination for the given block
 			@param bundle the bundle to which the block belongs to
-			@param block the security block of which the destination source shall be
-			tested
 			@param eid the eid of the destination
 			@return true if eid is the security destination, false if not
 			*/
-			static bool isSecurityDestination(const dtn::data::Bundle&, const dtn::security::SecurityBlock&, const dtn::data::EID&);
+			bool isSecurityDestination(const dtn::data::Bundle&, const dtn::data::EID&) const;
 			
 			/**
 			Returns the security source of a given block
 			@param bundle the bundle to which the block belongs to
-			@param sb the security block with the interesting security source
 			@return the security source
 			*/
-			static dtn::data::EID getSecuritySource(const dtn::data::Bundle&, const dtn::security::SecurityBlock&);
+			const dtn::data::EID getSecuritySource(const dtn::data::Bundle&) const;
 			
 			/**
 			Returns the security destination of a given block
 			@param bundle the bundle to which the block belongs to
-			@param sb the security block with the interesting security destination
 			@return the security destination
 			*/
-			static dtn::data::EID getSecurityDestination(const dtn::data::Bundle&, const dtn::security::SecurityBlock&);
+			const dtn::data::EID getSecurityDestination(const dtn::data::Bundle&) const;
 
 			protected:
 				/** the ciphersuite id tells what type of encryption, signature or MAC 
@@ -231,20 +225,20 @@ namespace dtn
 				into the stream */
 				mutable bool ignore_security_result;
 
-				/** the EID of this node */
-				dtn::data::EID _our_id;
-				/** the EID of the node with the other part of the key */
-				dtn::data::EID _partner_node;
+//				/** the EID of this node */
+//				dtn::data::EID _our_id;
+//				/** the EID of the node with the other part of the key */
+//				dtn::data::EID _partner_node;
 
-				/**
-				Sets security source and security destination of a given security block in
-				a given bundle. if the destination of the bundle and dest are the same,
-				dest will not be set.
-				@param bundle the bundle to which the block belongs to
-				@param sb the security block of which source and destination shall be set
-				@param dest the destination to which the other part of key belongs to
-				*/
-				void setSourceAndDestination(const dtn::data::Bundle& bundle, SecurityBlock& sb, dtn::data::EID const * dest = 0) const;
+//				/**
+//				Sets security source and security destination of a given security block in
+//				a given bundle. if the destination of the bundle and dest are the same,
+//				dest will not be set.
+//				@param bundle the bundle to which the block belongs to
+//				@param sb the security block of which source and destination shall be set
+//				@param dest the destination to which the other part of key belongs to
+//				*/
+//				void setSourceAndDestination(const dtn::data::Bundle& bundle, SecurityBlock& sb, const dtn::data::EID& dest = dtn::data::EID()) const;
 
 				/**
 				Creates an empty SecurityBlock. This is only needed by children, which add
@@ -258,10 +252,8 @@ namespace dtn
 				Creates a factory with a partner. If partner is empty, this must be a
 				instance with a private key or a BundleAuthenticationBlock.
 				@param type type of child block
-				@param we our EID
-				@param partner EID of the block with the private key.
 				*/
-				SecurityBlock(const SecurityBlock::BLOCK_TYPES type, const dtn::data::EID& we, const dtn::data::EID& partner = dtn::data::EID());
+				SecurityBlock(const SecurityBlock::BLOCK_TYPES type);
 
 				/**
 				Sets the ciphersuite id
@@ -281,7 +273,7 @@ namespace dtn
 				@param correlator the correlator to be tested for uniqueness
 				@return false if correlator is unique, true otherwise
 				*/
-				bool isCorrelatorPresent(const dtn::data::Bundle &bundle, const u_int64_t correlator) const;
+				static bool isCorrelatorPresent(const dtn::data::Bundle &bundle, const u_int64_t correlator);
 
 				/**
 				Creates a unique correlatorvalue for bundle
@@ -289,7 +281,7 @@ namespace dtn
 				created
 				@return a unique correlator
 				*/
-				u_int64_t createCorrelatorValue(const dtn::data::Bundle &bundle) const;
+				static u_int64_t createCorrelatorValue(const dtn::data::Bundle &bundle);
 
 				/**
 				Tells the block if its security result shall be ommitted
@@ -321,7 +313,7 @@ namespace dtn
 				@param key pointer to key
 				@param key_size size of key
 				*/
-				void createSaltAndKey(u_int32_t& salt, unsigned char * key, size_t key_size) const;
+				static void createSaltAndKey(u_int32_t& salt, unsigned char * key, size_t key_size);
 
 				/**
 				Adds a key as a TLV to a string. The key is encrypted using the public 
@@ -333,7 +325,7 @@ namespace dtn
 				@param rsa object containing the public key for encryption of the
 				symmetric key
 				*/
-				void addKey(std::string& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa) const;
+				static void addKey(std::string& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa);
 
 				/**
 				Reads a symmetric key TLV object from a string.
@@ -344,20 +336,20 @@ namespace dtn
 				symmetric key
 				@return true if the key has been successfully decrypted
 				*/
-				bool getKey(const std::string& security_parameter, unsigned char * key, size_t key_size, RSA * rsa) const;
+				static bool getKey(const std::string& security_parameter, unsigned char * key, size_t key_size, RSA * rsa);
 
 				/**
 				Adds a salt TLV object to a string.
 				@param security_parameters the string
 				@param salt the salt which shall be added
 				*/
-				void addSalt(std::string& security_parameters, u_int32_t salt) const;
+				static void addSalt(std::string& security_parameters, u_int32_t salt);
 
 				/**
 				Reads a salt TLV from a string containing TLVs
 				@param security_parameters string containing TLVs
 				*/
-				u_int32_t getSalt(const std::string& security_parameters) const;
+				static u_int32_t getSalt(const std::string& security_parameters);
 
 				/**
 				Copys all EIDs from one block to another and skips the first skip EIDs
@@ -365,7 +357,7 @@ namespace dtn
 				@param to destination of the EIDs
 				@param skip how much EIDs should be skipped at the beginning
 				*/
-				void copyEID(const dtn::data::Block& from, dtn::data::Block& to, size_t skip = 0) const;
+				static void copyEID(const dtn::data::Block& from, dtn::data::Block& to, size_t skip = 0);
 
 				/**
 				Encrypts a Block. The used initialisation vector will be written into the
@@ -381,7 +373,7 @@ namespace dtn
 				@return the Security Block which replaced block
 				*/
 				template <class T>
-				T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block*const block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]) const;
+				static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block*const block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 				/**
 				Decrypts the block which is held in the SecurityBlock replaces it.
@@ -394,14 +386,14 @@ namespace dtn
 				@param ephemeral_key the key
 				@return true if tag verification succeeded, false if not
 				*/
-				bool decryptBlock(dtn::data::Bundle& bundle, dtn::security::SecurityBlock const * block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]) const;
+				static void decryptBlock(dtn::data::Bundle& bundle, dtn::security::SecurityBlock const * block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 				/**
 				Calculates the Size of the stream and adds a fragment range item to ciphersuite_params
 				@param ciphersuite_params the string which will get a fragment range TLV added
 				@param stream the stream which size will be calculated
 				*/
-				void addFragmentRange(string& ciphersuite_params, size_t fragmentoffset, std::istream& stream) const;
+				static void addFragmentRange(string& ciphersuite_params, size_t fragmentoffset, std::istream& stream);
 
 			private:
 				/** not implemented */
@@ -411,7 +403,7 @@ namespace dtn
 		};
 
 		template <class T>
-		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block*const block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]) const
+		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block*const block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
 			// insert ESB, block can be removed after encryption, because bundle will destroy it
 			T& esb = bundle.insert<T>(*block);
