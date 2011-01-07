@@ -2,6 +2,7 @@
 #define BUNDLE_AUTHENTICATION_BLOCK_H_
 
 #include "ibrdtn/security/SecurityBlock.h"
+#include "ibrdtn/security/SecurityKey.h"
 #include "ibrdtn/data/ExtensionBlock.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/Bundle.h"
@@ -38,77 +39,38 @@ namespace dtn
 				static const char BLOCK_TYPE = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK;
 
 				/**
-				This creates the BundleAuthenticationBlock in the factory fashion for 
-				signing bundles. The parameters we and partner are used to set security
-				source and destination correctly so the verifieing node can pick the 
-				right key.
-				@param hkey key used for creating the HMAC. This class uses and manages
-				a copy of it, so you are free to reuse or destroy it.
-				@param size size of the key
-				@param we the EID of this node
-				@param partner the EID of the corresponding node of the key
-				*/
-				BundleAuthenticationBlock(const unsigned char * const hkey, const size_t size);
-
-				/**
-				This creates the BundleAuthenticationBlock in the factory fashion for 
-				signing bundles. The parameters we and partners are used to set security
-				source and destination correctly so the verifieing node can pick the 
-				right key. As many keys as needed can be given to this constructor, but
-				pay attention, that there is an equal number of partners.
-				@param keys keys and their size used for creating the HMAC. Each key is copied, so you
-				are free to reuse or destroy them.
-				@param we the EID of this node
-				@param partners the EIDs of the corresponding nodes of the keys
-				*/
-				BundleAuthenticationBlock(const std::list< std::pair<const unsigned char * const, const size_t> > keys);
-
-				/**
 				Deletes all keys, which were used for calculating the MACs
 				*/
 				virtual ~BundleAuthenticationBlock();
 
 				/**
-				Adds a key to the factory. To the key allways belongs a partner.
-				@param hkey key used for creating the HMAC. This class uses and manages
-				a copy of it, so you are free to reuse or destroy it.
-				@param size size of the key
-				@param partner the EID of the corresponding node of the key
-				*/
-				void addKey(const unsigned char * const hkey, const size_t size, const dtn::data::EID partner);
+				 * sign a given bundle
+				 * @param bundle
+				 * @param key
+				 */
+				static void sign(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key);
 
 				/**
-				Factory method to add a MAC to the bundle. The added BAB blocks will be 
-				the first after the primary block and the last block. The last block 
-				contains the MAC.
-				@param bundle the bundle which will get a BAB pair
-				*/
-				void addMAC(dtn::data::Bundle &bundle) const;
+				 * Tests if the bundles MAC is correct. There might be multiple BABs inside
+				 * the bundle, which may be tested.
+				 * None of these BABs will be removed.
+				 * @param bundle
+				 * @param key
+				 */
+				static void verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (ibrcommon::Exception);
 
 				/**
-				Tests if the bundles MAC is correct. There might be multiple BABs inside
-				the bundle, which may be tested and the result will be 1 if one matches.
-				None of these BABs will be removed.
-				@param bundle the bundle to be checked
-				@return -1 if an error occured, 0 if the signature does not match, 1 if
-				the signature matches
-				*/
-				signed char verify(const dtn::data::Bundle &bundle) const;
+				 * strips verified BABs off the bundle
+				 * @param bundle the bundle, which shall be cleaned from babs
+				 * @param key
+				 */
+				static void strip(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key);
 
 				/**
-				Removes all BundleAuthenticationBlocks from the bundle, which MACs 
-				verify the bundle. It returns the number of BundleAuthenticationBlocks,
-				which were not removed.
-				@param bundle the bundle to be verified
-				@return the number of non removed blocks
-				*/
-				int verifyAndRemoveMatchingBlocks(dtn::data::Bundle& bundle) const;
-
-				/**
-				Removes all BundleAuthenticationBlocks from a bundle
-				@param bundle the bundle, which shall be cleaned from babs
-				*/
-				static void removeAllBundleAuthenticationBlocks(dtn::data::Bundle& bundle);
+				 * strip all BABs off the bundle
+				 * @param bundle the bundle, which shall be cleaned from babs
+				 */
+				static void strip(dtn::data::Bundle &bundle);
 
 			protected:
 				/**
@@ -130,7 +92,7 @@ namespace dtn
 				@param correlator the correlator which shall be used
 				@return a string containing the MAC
 				*/
-				std::string calcMAC(const dtn::data::Bundle& bundle, const unsigned char * const key, const size_t key_size, const bool with_correlator = false, const u_int64_t correlator = 0) const;
+				static std::string calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator = false, const u_int64_t correlator = 0);
 
 				/**
 				Tries to verify the bundle using the given key. If a BAB-pair is found,
@@ -143,7 +105,7 @@ namespace dtn
 				the matching pair. otherwise the first is false, if there was no
 				matching
 				*/
-				std::pair<bool,u_int64_t> verify(const dtn::data::Bundle &bundle, std::pair<const unsigned char * const, const size_t> key, const dtn::data::EID& partner) const;
+				static void verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, u_int64_t &correlator) throw (ibrcommon::Exception);
 
 				/**
 				Returns the size of the security result field. This is used for strict 
@@ -151,18 +113,6 @@ namespace dtn
 				form, but the security result is excluded or unknown.
 				*/
 				virtual size_t getSecurityResultSize() const;
-			private:
-				/**
-				A list of keys and their size. The keys are copied at the destructor and
-				will be deleted by the destructor.
-				*/
-				std::list<std::pair<const unsigned char * const, const size_t> > _keys;
-				
-				/**
-				A list of EIDs which belong to the keys.
-				TODO It would have been better to bundle this with the _keys member
-				*/
-				std::list<dtn::data::EID> _partners;
 		};
 
 		/**

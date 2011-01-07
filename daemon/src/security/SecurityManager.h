@@ -164,11 +164,11 @@ namespace dtn
 //				*/
 //				void readRoutingTable();
 
-				/**
-				Deletes the lists and maps with the private and public keys. This is
-				needed if the keys are reread.
-				*/
-				void clearKeys();
+//				/**
+//				Deletes the lists and maps with the private and public keys. This is
+//				needed if the keys are reread.
+//				*/
+//				void clearKeys();
 
 //				/**
 //				Loads a key from the Configuration (from the disk) into map, if it is
@@ -235,30 +235,30 @@ namespace dtn
 //				 */
 //				void deleteKey(const dtn::data::EID&, SecurityBlock::BLOCK_TYPES);
 
-				/**
-				Returns the associated RSA object with node and block type. When doing
-				this and you must be sure, that the key is present, you can check this
-				with isReadyToSend().
-				@param node the name of the owner of the public key
-				@param bt the block type for which the key shall be used for
-				@return a pointer to the RSA object, which represents the key. do not
-				delete it. If no key can be found NULL will be returned.
-				*/
-				RSA * getPublicKey(const dtn::data::EID&, dtn::security::SecurityBlock::BLOCK_TYPES);
-
-				/**
-				 * Returns our public key for the given block type.
-				 * @param bt the block type of the key
-				 * @return the RSA object for this block type
-				 */
-				RSA * getPublicKey(dtn::security::SecurityBlock::BLOCK_TYPES);
-
-				/**
-				Return the private key of the block type bt.
-				@param bt the block type of the key
-				@return a pointer to the private key for the block type
-				*/
-				RSA * getPrivateKey(dtn::security::SecurityBlock::BLOCK_TYPES);
+//				/**
+//				Returns the associated RSA object with node and block type. When doing
+//				this and you must be sure, that the key is present, you can check this
+//				with isReadyToSend().
+//				@param node the name of the owner of the public key
+//				@param bt the block type for which the key shall be used for
+//				@return a pointer to the RSA object, which represents the key. do not
+//				delete it. If no key can be found NULL will be returned.
+//				*/
+//				RSA * getPublicKey(const dtn::data::EID&, dtn::security::SecurityBlock::BLOCK_TYPES);
+//
+//				/**
+//				 * Returns our public key for the given block type.
+//				 * @param bt the block type of the key
+//				 * @return the RSA object for this block type
+//				 */
+//				RSA * getPublicKey(dtn::security::SecurityBlock::BLOCK_TYPES);
+//
+//				/**
+//				Return the private key of the block type bt.
+//				@param bt the block type of the key
+//				@return a pointer to the private key for the block type
+//				*/
+//				RSA * getPrivateKey(dtn::security::SecurityBlock::BLOCK_TYPES);
 
 //				/**
 //				Returns the symmetric key for the given security block and node.
@@ -294,13 +294,6 @@ namespace dtn
 				*/
 				template<class T>
 				bool contains_block_for_us_source(const dtn::data::Bundle& bundle, const std::list<dtn::data::EID>& eids) const;
-
-				/**
-				Tests if a BAB, which we are able to check, verifies correctly.
-				@param bundle the complete bundle with all blocks
-				@return true if everything is ok
-				*/
-				bool check_bab(dtn::data::Bundle& bundle);
 
 				/**
 				Tests if a PCB, which we are able to decrypt, verifies correctly.

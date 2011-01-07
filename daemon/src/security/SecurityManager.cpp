@@ -29,33 +29,73 @@ namespace dtn
 
 		SecurityManager::~SecurityManager()
 		{
-			clearKeys();
 		}
 
 		void SecurityManager::sign(dtn::data::Bundle &bundle) const throw (KeyMissingException)
 		{
-			// TODO: implement sign process
 			IBRCOMMON_LOGGER_DEBUG(10) << "sign bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+			try {
+				// try to load the local key
+				const SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_SHARED);
+
+				// sign the bundle with BABs
+				dtn::security::BundleAuthenticationBlock::sign(bundle, key);
+			} catch (const SecurityKeyManager::KeyNotFoundException &ex) {
+				throw KeyMissingException(ex.what());
+			}
 		}
 
 		void SecurityManager::prefetchKey(const dtn::data::EID &eid)
 		{
-			// TODO: implement key prefetch procedure
 			IBRCOMMON_LOGGER_DEBUG(10) << "prefetch key for: " << eid.getString() << IBRCOMMON_LOGGER_ENDL;
+
+			// prefetch the key for this EID
+			SecurityKeyManager::getInstance().prefetchKey(eid, SecurityKey::KEY_PUBLIC);
 		}
 
 		void SecurityManager::verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
-			// TODO: remove signature blocks, if possible
+			// remove signature blocks, if possible
 			IBRCOMMON_LOGGER_DEBUG(10) << "verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
-			// set the verify bit, after verification
-			bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
+			// get all BABs of this bundle
+			std::list <const dtn::security::BundleAuthenticationBlock* > babs = bundle.getBlocks<dtn::security::BundleAuthenticationBlock>();
+
+			for (std::list <const dtn::security::BundleAuthenticationBlock* >::iterator it = babs.begin(); it != babs.end(); it++)
+			{
+				const dtn::security::BundleAuthenticationBlock& bab = (**it);
+
+				// look for the right BAB-factory
+				dtn::data::EID node = bab.getSecuritySource(bundle);
+
+				try {
+					// try to load the key of the BAB
+					const SecurityKey key = SecurityKeyManager::getInstance().get(node, SecurityKey::KEY_PUBLIC);
+
+					// verify the bundle
+					dtn::security::BundleAuthenticationBlock::verify(bundle, key);
+
+					// strip all BAB of this bundle
+					dtn::security::BundleAuthenticationBlock::strip(bundle);
+
+					// set the verify bit, after verification
+					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
+
+					// at least one BAB has been authenticated, we're done!
+					break;
+				} catch (const SecurityKeyManager::KeyNotFoundException&) {
+					// no key for this node found
+				} catch (const ibrcommon::Exception &ex) {
+					// verification failed
+					throw SecurityManager::VerificationFailedException(ex.what());
+				}
+			}
 		}
 
 		void SecurityManager::fastverify(const dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
-			// TODO: do a fast verify without manipulating the bundle
+			// do a fast verify without manipulating the bundle
 			const dtn::daemon::Configuration::Security &secconf = dtn::daemon::Configuration::getInstance().getSecurity();
 
 			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_ENCRYPTED)
@@ -63,6 +103,9 @@ namespace dtn
 				// check if the bundle is encrypted and throw an exception if not
 				//throw VerificationFailedException("Bundle is not encrypted");
 				IBRCOMMON_LOGGER_DEBUG(10) << "encryption required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+				const std::list<const dtn::security::PayloadConfidentialBlock* > pcbs = bundle.getBlocks<dtn::security::PayloadConfidentialBlock>();
+				if (pcbs.size() == 0) throw VerificationFailedException("No PCB available!");
 			}
 
 			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
@@ -70,6 +113,9 @@ namespace dtn
 				// check if the bundle is signed and throw an exception if not
 				//throw VerificationFailedException("Bundle is not signed");
 				IBRCOMMON_LOGGER_DEBUG(10) << "signature required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+				const std::list<const dtn::security::BundleAuthenticationBlock* > babs = bundle.getBlocks<dtn::security::BundleAuthenticationBlock>();
+				if (babs.size() == 0) throw VerificationFailedException("No BAB available!");
 			}
 		}
 
@@ -235,91 +281,91 @@ namespace dtn
 //			return key.data;
 //		}
 
-		RSA * SecurityManager::getPublicKey(const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt)
-		{
-			std::map <dtn::data::EID, RSA* > * map = 0;
-			switch (bt)
-			{
-				case dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
-				{
-#ifdef __DEVELOPMENT_ASSERTIONS__
-					assert(false);
-#endif
-					break;
-				}
-				case dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
-				{
-					map = &_pib_node_key_recv;
-					break;
-				}
-				case dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
-				{
-					map = &_pcb_node_key_send;
-					break;
-				}
-				case dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK:
-				{
-					map = &_esb_node_key_send;
-					break;
-				}
-			}
-			//return loadKey(node.getNodeEID(), bt);
-		}
-
-		RSA * SecurityManager::getPublicKey(SecurityBlock::BLOCK_TYPES bt)
-		{
-			RSA * rsa = 0;
-			switch (bt)
-			{
-				case dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
-#ifdef __DEVELOPMENT_ASSERTIONS__
-					assert(false);
-#endif
-					break;
-				case dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
-					rsa = _pib_public_key;
-					break;
-				case dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
-					rsa = _pcb_public_key;
-					break;
-				case dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK:
-					rsa = _esb_public_key;
-					break;
-			}
-
-			//return loadKey_public(&rsa, bt);
-		}
-
-		RSA * SecurityManager::getPrivateKey(SecurityBlock::BLOCK_TYPES bt)
-		{
-			RSA * rsa = 0;
-			switch (bt)
-			{
-				case dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
-				{
-#ifdef __DEVELOPMENT_ASSERTIONS__
-					assert(false);
-#endif
-					break;
-				}
-				case dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
-				{
-					rsa = _pib_node_key_send;
-					break;
-				}
-				case dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
-				{
-					rsa = _pcb_node_key_recv;
-					break;
-				}
-				case dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK:
-				{
-					rsa = _esb_node_key_recv;
-					break;
-				}
-			}
-			//return loadKey(&rsa, bt);
-		}
+//		RSA * SecurityManager::getPublicKey(const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt)
+//		{
+//			std::map <dtn::data::EID, RSA* > * map = 0;
+//			switch (bt)
+//			{
+//				case dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
+//				{
+//#ifdef __DEVELOPMENT_ASSERTIONS__
+//					assert(false);
+//#endif
+//					break;
+//				}
+//				case dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
+//				{
+//					map = &_pib_node_key_recv;
+//					break;
+//				}
+//				case dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
+//				{
+//					map = &_pcb_node_key_send;
+//					break;
+//				}
+//				case dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK:
+//				{
+//					map = &_esb_node_key_send;
+//					break;
+//				}
+//			}
+//			//return loadKey(node.getNodeEID(), bt);
+//		}
+//
+//		RSA * SecurityManager::getPublicKey(SecurityBlock::BLOCK_TYPES bt)
+//		{
+//			RSA * rsa = 0;
+//			switch (bt)
+//			{
+//				case dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
+//#ifdef __DEVELOPMENT_ASSERTIONS__
+//					assert(false);
+//#endif
+//					break;
+//				case dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
+//					rsa = _pib_public_key;
+//					break;
+//				case dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
+//					rsa = _pcb_public_key;
+//					break;
+//				case dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK:
+//					rsa = _esb_public_key;
+//					break;
+//			}
+//
+//			//return loadKey_public(&rsa, bt);
+//		}
+//
+//		RSA * SecurityManager::getPrivateKey(SecurityBlock::BLOCK_TYPES bt)
+//		{
+//			RSA * rsa = 0;
+//			switch (bt)
+//			{
+//				case dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK:
+//				{
+//#ifdef __DEVELOPMENT_ASSERTIONS__
+//					assert(false);
+//#endif
+//					break;
+//				}
+//				case dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK:
+//				{
+//					rsa = _pib_node_key_send;
+//					break;
+//				}
+//				case dtn::security::SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK:
+//				{
+//					rsa = _pcb_node_key_recv;
+//					break;
+//				}
+//				case dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK:
+//				{
+//					rsa = _esb_node_key_recv;
+//					break;
+//				}
+//			}
+//			//return loadKey(&rsa, bt);
+//		}
 
 //		std::string SecurityManager::getSymmetricKey(const dtn::data::EID& node, SecurityBlock::BLOCK_TYPES bt)
 //		{
@@ -469,36 +515,6 @@ namespace dtn
 //			return status_ok;
 //		}
 
-		bool SecurityManager::check_bab(dtn::data::Bundle& bundle)
-		{
-			bool status_ok = false;
-
-			std::list <const dtn::security::BundleAuthenticationBlock* > babs = bundle.getBlocks<dtn::security::BundleAuthenticationBlock>();
-
-			if (babs.size() == 0 && !_accept_only_bab)
-				return true;
-
-			for (std::list <const dtn::security::BundleAuthenticationBlock* >::iterator it = babs.begin(); it != babs.end() && !status_ok; it++)
-			{
-				const dtn::security::BundleAuthenticationBlock& bab = **it;
-				// look for the right BAB-factory
-				dtn::data::EID node = bab.getSecuritySource(bundle);
-				std::string key;
-//				std::string key = loadKey(node, dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK);
-
-				// no node found
-				if (key == "")
-					continue;
-
-				dtn::security::BundleAuthenticationBlock bab_verify(reinterpret_cast<unsigned char const *>(key.c_str()), key.size()); //, dtn::core::BundleCore::local, node);
-				status_ok = bab_verify.verify(bundle) == 1;
-				if (status_ok)
-					bab_verify.removeAllBundleAuthenticationBlocks(bundle);
-			}
-
-			return status_ok;
-		}
-
 		bool SecurityManager::check_pcb(dtn::data::Bundle& bundle, const dtn::security::PayloadConfidentialBlock& pcb)
 		{
 			// look for the right PCB-factory
@@ -530,7 +546,8 @@ namespace dtn
 			std::list<dtn::security::PayloadIntegrityBlock const *> pibs = bundle.getBlocks<dtn::security::PayloadIntegrityBlock>();
 			for (std::list<dtn::security::PayloadIntegrityBlock const *>::iterator it = pibs.begin(); it != pibs.end() && status_ok; it++)
 			{
-				RSA * rsa = getPublicKey((**it).getSecuritySource(bundle), dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK);
+				const SecurityKey key = SecurityKeyManager::getInstance().get((**it).getSecuritySource(bundle), SecurityKey::KEY_PUBLIC);
+				RSA * rsa = key.getRSA();
 				if (rsa != 0)
 				{
 					dtn::security::PayloadIntegrityBlock pib_verify(rsa); //, dtn::core::BundleCore::local, (**it).getSecuritySource(bundle));
@@ -563,7 +580,8 @@ namespace dtn
 #ifdef __DEVELOPMENT_ASSERTIONS__
 				assert(getPrivateKey(dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK) != 0);
 #endif
-				dtn::security::ExtensionSecurityBlock esb_decrypt(getPrivateKey(dtn::security::SecurityBlock::EXTENSION_SECURITY_BLOCK)); //, dtn::core::BundleCore::local);
+				const SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PRIVATE);
+				dtn::security::ExtensionSecurityBlock esb_decrypt(key.getRSA()); //, dtn::core::BundleCore::local);
 				status_ok = esb_decrypt.decryptBlock(bundle);
 				if (status_ok)
 					IBRCOMMON_LOGGER_ex(notice) << "Block from " << bundle._source.getString() << " successfully decrypted using ExtensionSecurityBlock" << IBRCOMMON_LOGGER_ENDL;
@@ -575,7 +593,8 @@ namespace dtn
 		void SecurityManager::addKeysForVerfication(Bundle& bundle)
 		{
 			dtn::security::KeyBlock& kb = bundle.push_back<dtn::security::KeyBlock>();
-			kb.addKey(getPublicKey(SecurityBlock::PAYLOAD_INTEGRITY_BLOCK));
+			const SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PUBLIC);
+			kb.addKey(key.getRSA());
 			kb.setTarget(dtn::core::BundleCore::local);
 		}
 
@@ -673,31 +692,31 @@ namespace dtn
 //			return 0;
 //		}
 
-		void delete_rsa(std::map<dtn::data::EID, RSA *>& eid_rsa)
-		{
-			for (std::map<dtn::data::EID, RSA *>::iterator it = eid_rsa.begin(); it != eid_rsa.end(); it++)
-			{
-				RSA_free(it->second);
-				it->second = NULL;
-			}
-			eid_rsa.clear();
-		}
+//		void delete_rsa(std::map<dtn::data::EID, RSA *>& eid_rsa)
+//		{
+//			for (std::map<dtn::data::EID, RSA *>::iterator it = eid_rsa.begin(); it != eid_rsa.end(); it++)
+//			{
+//				RSA_free(it->second);
+//				it->second = NULL;
+//			}
+//			eid_rsa.clear();
+//		}
 
-		void SecurityManager::clearKeys()
-		{
-			// bab
-			_bab_node_key.clear();
-
-			// private keys
-			RSA_free(_pib_node_key_send);
-			RSA_free(_pcb_node_key_recv);
-			RSA_free(_esb_node_key_recv);
-
-			// public keys
-			delete_rsa(_pib_node_key_recv);
-			delete_rsa(_pcb_node_key_send);
-			delete_rsa(_esb_node_key_send);
-		}
+//		void SecurityManager::clearKeys()
+//		{
+//			// bab
+//			_bab_node_key.clear();
+//
+//			// private keys
+//			RSA_free(_pib_node_key_send);
+//			RSA_free(_pcb_node_key_recv);
+//			RSA_free(_esb_node_key_recv);
+//
+//			// public keys
+//			delete_rsa(_pib_node_key_recv);
+//			delete_rsa(_pcb_node_key_send);
+//			delete_rsa(_esb_node_key_send);
+//		}
 
 //		void SecurityManager::lookForKeys(const dtn::data::Bundle& bundle)
 //		{
@@ -771,7 +790,9 @@ namespace dtn
 			dtn::security::KeyBlock& kb = bundle.push_back<dtn::security::KeyBlock>();
 			kb.setSecurityBlockType(SecurityBlock::PAYLOAD_INTEGRITY_BLOCK);
 			kb.setTarget(dtn::core::BundleCore::local);
-			kb.addKey(getPublicKey(SecurityBlock::PAYLOAD_INTEGRITY_BLOCK));
+
+			const SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PUBLIC);
+			kb.addKey(key.getRSA());
 		}
 
 		dtn::security::SecurityRule SecurityManager::getRule(const dtn::data::EID& eid) const

@@ -45,13 +45,12 @@ namespace dtn
 			// last update time
 			dtn::data::DTNTime lastupdate;
 
-			// key data
-//			std::string data;
-
 			// key file
 			ibrcommon::File file;
 
 			RSA* getRSA() const;
+
+			const std::string getData() const;
 
 			static void free(RSA* key);
 

@@ -25,6 +25,116 @@ namespace dtn
 {
 	namespace security
 	{
+		const std::string SecurityBlock::TLVList::toString() const
+		{
+			std::stringstream ss;
+
+			for (std::set<TLV>::const_iterator iter = begin(); iter != end(); iter++)
+			{
+				ss << (*iter);
+			}
+
+			return ss.str();
+		}
+
+		size_t SecurityBlock::TLVList::getLength() const
+		{
+			std::stringstream ss;
+
+			for (std::set<SecurityBlock::TLV>::const_iterator iter = begin(); iter != end(); iter++)
+			{
+				ss << (*iter);
+			}
+
+			return ss.str().length();
+		}
+
+		const std::string SecurityBlock::TLVList::get(char type) const
+		{
+			for (std::set<SecurityBlock::TLV>::const_iterator iter = begin(); iter != end(); iter++)
+			{
+				if ((*iter).getType() == type)
+				{
+					return (*iter).getValue();
+				}
+			}
+		}
+
+		void SecurityBlock::TLVList::add(char type, std::string value)
+		{
+			insert(SecurityBlock::TLV(type, value));
+		}
+
+		void SecurityBlock::TLVList::remove(char type)
+		{
+			erase(SecurityBlock::TLV(type, ""));
+		}
+
+		const std::string SecurityBlock::TLV::getValue() const
+		{
+			return _value;
+		}
+
+		char SecurityBlock::TLV::getType() const
+		{
+			return _type;
+		}
+
+		std::ostream& operator<<(std::ostream &stream, const SecurityBlock::TLVList &tlvlist)
+		{
+			dtn::data::SDNV length(tlvlist.getLength());
+			stream << length;
+
+			for (std::set<SecurityBlock::TLV>::const_iterator iter = tlvlist.begin(); iter != tlvlist.end(); iter++)
+			{
+				stream << (*iter);
+			}
+			return stream;
+		}
+
+		std::istream& operator>>(std::istream &stream, SecurityBlock::TLVList &tlvlist)
+		{
+			dtn::data::SDNV length;
+			stream >> length;
+
+			char data[length.getValue()];
+			stream.read(data, length.getValue());
+
+			std::stringstream ss; ss.write(data, length.getValue());
+
+			while (!ss.eof())
+			{
+				SecurityBlock::TLV tlv;
+				ss >> tlv;
+				tlvlist.insert(tlv);
+			}
+			return stream;
+		}
+
+		bool SecurityBlock::TLV::operator<(const SecurityBlock::TLV &tlv) const
+		{
+			return (_type < tlv._type);
+		}
+
+		bool SecurityBlock::TLV::operator==(const SecurityBlock::TLV &tlv) const
+		{
+			return (_type == tlv._type);
+		}
+
+		std::ostream& operator<<(std::ostream &stream, const SecurityBlock::TLV &tlv)
+		{
+			stream.put(tlv._type);
+			stream << tlv._value;
+			return stream;
+		}
+
+		std::istream& operator>>(std::istream &stream, SecurityBlock::TLV &tlv)
+		{
+			stream.get(tlv._type);
+			stream >> tlv._value;
+			return stream;
+		}
+
 		SecurityBlock::SecurityBlock(const dtn::security::SecurityBlock::BLOCK_TYPES type, const dtn::security::SecurityBlock::CIPHERSUITE_IDS id)
 		: Block(type), _ciphersuite_id(id), _ciphersuite_flags(0), _correlator(0), ignore_security_result(false)
 		{
@@ -115,16 +225,6 @@ namespace dtn
 			assert(getSecurityDestination() == destination.getNodeEID());
 #endif
 		}
-
-//		void SecurityBlock::setSourceAndDestination(const dtn::data::Bundle& bundle, SecurityBlock& sb, const dtn::data::EID& dest) const
-//		{
-//			// set source and destination
-//			if (bundle._source != _our_id.getNodeEID() && _our_id != dtn::data::EID())
-//				sb.setSecuritySource(_our_id.getNodeEID());
-//
-//			if (bundle._destination != dest.getNodeEID() && dest != dtn::data::EID())
-//				sb.setSecurityDestination(dest.getNodeEID());
-//		}
 
 		void SecurityBlock::setCiphersuiteId(const CIPHERSUITE_IDS id)
 		{
@@ -285,8 +385,9 @@ namespace dtn
 
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
-				MutualSerializer::write_mutable(stream, dtn::data::SDNV(_ciphersuite_params.length()));
-				stream.write(static_cast<std::string>(_ciphersuite_params).c_str(),_ciphersuite_params.length());
+				std::string params = _ciphersuite_params.toString();
+				MutualSerializer::write_mutable(stream, dtn::data::SDNV(params.length()));
+				stream << params;
 			}
 
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
@@ -295,8 +396,9 @@ namespace dtn
 					MutualSerializer::write_mutable(stream, dtn::data::SDNV(getSecurityResultSize()));
 				else
 				{
+					std::string result = _security_result.toString();
 					MutualSerializer::write_mutable(stream, dtn::data::SDNV(getSecurityResultSize()));
-					stream.write(_security_result.c_str(), getSecurityResultSize());
+					stream.write(result.c_str(), result.length());
 				}
 			}
 
@@ -306,97 +408,9 @@ namespace dtn
 		size_t SecurityBlock::getSecurityResultSize() const
 		{
 #ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(_security_result.size() != 0);
+			assert(_security_result.getLength() != 0);
 #endif
-			return _security_result.size();
-		}
-
-		size_t SecurityBlock::addTLV(std::string& string, const char type, const size_t length, const char * const value)
-		{
-			char sdnv[dtn::data::SDNV::MAX_LENGTH];
-			size_t copied = dtn::data::SDNV(length).encode(sdnv, dtn::data::SDNV::MAX_LENGTH);
-
-			string.append(&type, sizeof(char)).append(sdnv, copied).append(value, length);
-
-			return sizeof(char)+copied+length;
-		}
-
-		size_t SecurityBlock::addTLV(std::string& string, const char type, const std::string& len_val)
-		{
-			return addTLV(string, type, len_val.size(), len_val.c_str());
-		}
-
-		inline signed char getTLVType(const std::string& string, size_t& pos)
-		{
-			return string[pos++];
-		}
-
-		inline u_int64_t getTLVLength(const std::string& string, size_t& pos)
-		{
-			char sdnv_raw[dtn::data::SDNV::MAX_LENGTH];
-			size_t copied = 0;
-			while ((sdnv_raw[copied++] = string[pos++]) & 0x80) ;
-			dtn::data::SDNV sdnv;
-			sdnv.decode(sdnv_raw, copied);
-			return sdnv.getValue();
-		}
-
-		inline std::string getTLVValue(const std::string& string, size_t& pos, u_int64_t length)
-		{
-			return string.substr(pos, length);
-		}
-
-		size_t SecurityBlock::removeTLV(std::string& string, const char type)
-		{
-			std::list<std::pair<const size_t, const char * const> > tlvs;
-			for (size_t i = 0; i < string.size();)
-			{
-				size_t blockstart = i;
-				// get type
-				signed char tlvtype = getTLVType(string, i);
-
-				// get length
-				u_int64_t length = getTLVLength(string, i);
-
-				i += length;
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
- 				assert(i <= string.size());
-#endif
-
-				// see if it is the TLV to be removed
-				if (type == tlvtype)
-				{
-					string.erase(blockstart, i-blockstart);
-					return i - blockstart;
-				}
-			}
-			return 0;
-		}
-
-		const std::list<std::string> SecurityBlock::getTLVs(const std::string& string, const char type)
-		{
-			std::list<std::string> tlvs;
-			for (size_t i = 0; i < string.size();)
-			{
-				// get type
-				signed char tlvtype = getTLVType(string, i);
-
-				// get length
-				u_int64_t length = getTLVLength(string, i);
-
-				// see if type is ok
-				if (type == tlvtype)
-					// read TLV
-					tlvs.push_back(getTLVValue(string, i, length));
-
-				i += length;
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-				assert(i <= string.size());
-#endif
-			}
-			return tlvs;
+			return _security_result.getLength();
 		}
 
 		void SecurityBlock::createSaltAndKey(u_int32_t& salt, unsigned char* key, size_t key_size)
@@ -414,7 +428,7 @@ namespace dtn
 			}
 		}
 
-		void SecurityBlock::addKey(std::string& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa)
+		void SecurityBlock::addKey(TLVList& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa)
 		{
 			// encrypt the ephemeral key and place it in _ciphersuite_params
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -427,12 +441,12 @@ namespace dtn
 				IBRCOMMON_LOGGER_ex(critical) << "failed to encrypt the symmetric AES key" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
-			SecurityBlock::addTLV(security_parameter, SecurityBlock::key_information, std::string(reinterpret_cast<char *>(encrypted_key), encrypted_key_len));
+			security_parameter.add(SecurityBlock::key_information, std::string(reinterpret_cast<char *>(encrypted_key), encrypted_key_len));
 		}
 
-		bool SecurityBlock::getKey(const std::string& security_parameter, unsigned char * key, size_t key_size, RSA * rsa)
+		bool SecurityBlock::getKey(const TLVList& security_parameter, unsigned char * key, size_t key_size, RSA * rsa)
 		{
-			std::string key_string(SecurityBlock::getTLVs(security_parameter, SecurityBlock::key_information).begin().operator*());
+			std::string key_string = security_parameter.get(SecurityBlock::key_information);
 			// get key, convert with reinterpret_cast
 			unsigned char const * encrypted_key = reinterpret_cast<unsigned char const *>(key_string.c_str());
 			unsigned char the_key[RSA_size(rsa)];
@@ -468,17 +482,17 @@ namespace dtn
 				to.addEID(*it);
 		}
 
-		void SecurityBlock::addSalt(string& security_parameters, u_int32_t salt)
+		void SecurityBlock::addSalt(TLVList& security_parameters, u_int32_t salt)
 		{
 			std::stringstream salt_stream;
 			salt_stream << salt;
-			SecurityBlock::addTLV(security_parameters, SecurityBlock::salt, salt_stream.str().size(), salt_stream.str().c_str());
+			security_parameters.add(SecurityBlock::salt, salt_stream.str());
 		}
 
-		u_int32_t SecurityBlock::getSalt(const std::string& security_parameters)
+		u_int32_t SecurityBlock::getSalt(const TLVList& security_parameters)
 		{
 			// get salt, convert with stringstream
-			std::string salt_string(SecurityBlock::getTLVs(security_parameters, SecurityBlock::salt).begin().operator*());
+			std::string salt_string = security_parameters.get(SecurityBlock::salt);
 			std::stringstream salt_stream;
 			salt_stream << salt_string;
 			u_int32_t salt;
@@ -489,11 +503,11 @@ namespace dtn
 		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, dtn::security::SecurityBlock const * block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
 			// get iv, convert with reinterpret_cast
-			std::string iv_string(SecurityBlock::getTLVs(block->_ciphersuite_params, SecurityBlock::initialization_vector).begin().operator*());
+			std::string iv_string(block->_ciphersuite_params.get(SecurityBlock::initialization_vector));
 			unsigned char const * iv = reinterpret_cast<unsigned char const *>(iv_string.c_str());
 
 			// get data and tag, the last tag_len bytes are the tag. cut them of and reinterpret_cast
-			std::string data_tag_string(SecurityBlock::getTLVs(block->_security_result, SecurityBlock::encapsulated_block).begin().operator*());
+			std::string data_tag_string(block->_security_result.get(SecurityBlock::encapsulated_block));
 			std::string tag_string(data_tag_string.substr(data_tag_string.size() - ibrcommon::AES128Stream::tag_len, ibrcommon::AES128Stream::tag_len));
 			unsigned char const * tag = reinterpret_cast<unsigned char const *>(tag_string.c_str());
 			data_tag_string.resize(data_tag_string.size() - ibrcommon::AES128Stream::tag_len);
@@ -554,7 +568,7 @@ namespace dtn
 			bundle.remove(*block);
 		}
 
-		void SecurityBlock::addFragmentRange(string& ciphersuite_params, size_t fragmentoffset, std::istream& stream)
+		void SecurityBlock::addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, std::istream& stream)
 		{
 			stream.seekg(0, ios_base::end);
 			std::streampos end = stream.tellg();
@@ -565,11 +579,10 @@ namespace dtn
 			dtn::data::SDNV offset(fragmentoffset);
 			dtn::data::SDNV range_sdnv(range);
 
-			char off_range[2*dtn::data::SDNV::MAX_LENGTH];
-			size_t used = offset.encode(off_range, 2*dtn::data::SDNV::MAX_LENGTH);
-			used += range_sdnv.encode(off_range + used, 2*dtn::data::SDNV::MAX_LENGTH - used);
+			std::stringstream ss;
+			ss << offset << range_sdnv;
 
-			SecurityBlock::addTLV(ciphersuite_params, SecurityBlock::fragment_range, used, off_range);
+			ciphersuite_params.add(SecurityBlock::fragment_range, ss.str());
 		}
 
 		bool SecurityBlock::isSecuritySource(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const

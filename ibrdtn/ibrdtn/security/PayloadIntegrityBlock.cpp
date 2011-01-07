@@ -109,7 +109,7 @@ namespace dtn
 //			pib.setCiphersuiteId(SecurityBlock::PIB_RSA_SHA256);
 			pib._ciphersuite_flags |= CONTAINS_SECURITY_RESULT;
 			std::string sign = calcHash(bundle, pib);
-			SecurityBlock::addTLV(pib._security_result, SecurityBlock::integrity_signature, sign.size(), sign.c_str());
+			pib._security_result.add(SecurityBlock::integrity_signature, sign);
 		}
 
 		const std::string PayloadIntegrityBlock::calcHash(const dtn::data::Bundle &bundle, PayloadIntegrityBlock& ignore) const

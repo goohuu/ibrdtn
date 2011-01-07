@@ -77,6 +77,45 @@ namespace dtn
 				ESB_RSA_AES128_EXT = 0x004
 			};
 
+			class TLV
+			{
+			public:
+				TLV() : _type(0) {};
+				TLV(char type, std::string value)
+				 : _type(type), _value(value)
+				{ }
+
+				bool operator<(const TLV &tlv) const;
+				bool operator==(const TLV &tlv) const;
+
+				const std::string getValue() const;
+				char getType() const;
+
+				friend std::ostream& operator<<(std::ostream &stream, const TLV &tlv);
+				friend std::istream& operator>>(std::istream &stream, TLV &tlv);
+
+			private:
+				char _type;
+				dtn::data::BundleString _value;
+			};
+
+			class TLVList : public std::set<TLV>
+			{
+			public:
+				TLVList() {};
+				virtual ~TLVList() {};
+
+				friend std::ostream& operator<<(std::ostream &stream, const TLVList &tlvlist);
+				friend std::istream& operator>>(std::istream &stream, TLVList &tlvlist);
+
+				const std::string get(char type) const;
+				void add(char type, std::string value);
+				void remove(char type);
+
+				const std::string toString() const;
+				size_t getLength() const;
+			};
+
 			/** does nothing */
 			virtual ~SecurityBlock() = 0;
 
@@ -115,41 +154,6 @@ namespace dtn
 			@param stream the stream to read from
 			*/
 			virtual std::istream &deserialize(std::istream &stream);
-
-			/**
-			Adds a TLV at the end of string
-			@param string the string, to which the TLV shall be added
-			@param type byte indicating the type
-			@param length length of the value field
-			@param value the actual data
-			@return the number of bytes which were added
-			*/
-			static size_t addTLV(std::string& string, const char type, const size_t length, const char * const value);
-
-			/**
-			Adds a TLV at the end of string
-			@param string the string, to which the TLV shall be added
-			@param type byte indicating the type
-			@param len_value a string which contains the actual data
-			@return the number of bytes which were added
-			*/
-			static size_t addTLV(std::string& string, const char type, const std::string& len_val);
-
-			/**
-			Removes the first occuring TLV of type type.
-			@param string a string of TLVs from which a TLV of type shall be removed
-			@param type the type of the TLV to be removed
-			@return number of removed bytes
-			*/
-			static size_t removeTLV(std::string& string, const char type);
-
-			/**
-			gets all TLVs of a certain type from a string
-			@param string the TLVs containing string
-			@param type type of the TLVs
-			@return a list of the values of all TLV object of type type
-			*/
-			static const std::list<std::string> getTLVs(const std::string& string, const char type);
 
 			/**
 			Returns the Security source of a SecurityBlock or dtn:none if none exists
@@ -217,28 +221,14 @@ namespace dtn
 
 				/** you can find e.g. key information, tags, salts, 
 				initialization_vectors stored als TLVs here */
-				dtn::data::BundleString _ciphersuite_params;
+				TLVList _ciphersuite_params;
+
 				/** you can find encrypted blocks, signatures or MACs here */
-				dtn::data::BundleString _security_result;
+				TLVList _security_result;
 
 				/** set to true if only the length of security_result shall be written 
 				into the stream */
 				mutable bool ignore_security_result;
-
-//				/** the EID of this node */
-//				dtn::data::EID _our_id;
-//				/** the EID of the node with the other part of the key */
-//				dtn::data::EID _partner_node;
-
-//				/**
-//				Sets security source and security destination of a given security block in
-//				a given bundle. if the destination of the bundle and dest are the same,
-//				dest will not be set.
-//				@param bundle the bundle to which the block belongs to
-//				@param sb the security block of which source and destination shall be set
-//				@param dest the destination to which the other part of key belongs to
-//				*/
-//				void setSourceAndDestination(const dtn::data::Bundle& bundle, SecurityBlock& sb, const dtn::data::EID& dest = dtn::data::EID()) const;
 
 				/**
 				Creates an empty SecurityBlock. This is only needed by children, which add
@@ -325,7 +315,7 @@ namespace dtn
 				@param rsa object containing the public key for encryption of the
 				symmetric key
 				*/
-				static void addKey(std::string& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa);
+				static void addKey(TLVList& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa);
 
 				/**
 				Reads a symmetric key TLV object from a string.
@@ -336,20 +326,20 @@ namespace dtn
 				symmetric key
 				@return true if the key has been successfully decrypted
 				*/
-				static bool getKey(const std::string& security_parameter, unsigned char * key, size_t key_size, RSA * rsa);
+				static bool getKey(const TLVList& security_parameter, unsigned char * key, size_t key_size, RSA * rsa);
 
 				/**
 				Adds a salt TLV object to a string.
 				@param security_parameters the string
 				@param salt the salt which shall be added
 				*/
-				static void addSalt(std::string& security_parameters, u_int32_t salt);
+				static void addSalt(TLVList& security_parameters, u_int32_t salt);
 
 				/**
 				Reads a salt TLV from a string containing TLVs
 				@param security_parameters string containing TLVs
 				*/
-				static u_int32_t getSalt(const std::string& security_parameters);
+				static u_int32_t getSalt(const TLVList& security_parameters);
 
 				/**
 				Copys all EIDs from one block to another and skips the first skip EIDs
@@ -393,7 +383,7 @@ namespace dtn
 				@param ciphersuite_params the string which will get a fragment range TLV added
 				@param stream the stream which size will be calculated
 				*/
-				static void addFragmentRange(string& ciphersuite_params, size_t fragmentoffset, std::istream& stream);
+				static void addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, std::istream& stream);
 
 			private:
 				/** not implemented */
@@ -421,9 +411,12 @@ namespace dtn
 			// append tag at the end of the ciphertext
 			ss.write(reinterpret_cast<const char *>(encrypt.getTag()), ibrcommon::AES128Stream::tag_len);
 
-			SecurityBlock::addTLV(esb._security_result, SecurityBlock::encapsulated_block, ss.str().size(), ss.str().c_str());
+			esb._security_result.add(SecurityBlock::encapsulated_block, ss.str());
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
-			SecurityBlock::addTLV(esb._ciphersuite_params, SecurityBlock::initialization_vector, ibrcommon::AES128Stream::iv_len, reinterpret_cast<const char *>(encrypt.getIV()));
+
+			std::string iv(reinterpret_cast<const char *>(encrypt.getIV()), ibrcommon::AES128Stream::iv_len);
+			esb._ciphersuite_params.add(SecurityBlock::initialization_vector, iv);
+
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
 			bundle.remove(*block);

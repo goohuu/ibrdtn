@@ -7,6 +7,8 @@
 
 #include "ibrdtn/security/SecurityKey.h"
 #include <ibrcommon/Logger.h>
+#include <fstream>
+#include <sstream>
 
 #include <openssl/pem.h>
 #include <openssl/err.h>
@@ -24,6 +26,18 @@ namespace dtn
 		void SecurityKey::free(RSA* key)
 		{
 			RSA_free(key);
+		}
+
+		const std::string SecurityKey::getData() const
+		{
+			std::ifstream stream(file.getPath().c_str(), ios::in);
+			std::stringstream ss;
+
+			ss << stream.rdbuf();
+
+			stream.close();
+
+			return ss.str();
 		}
 
 		RSA* SecurityKey::getRSA() const

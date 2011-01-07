@@ -4,6 +4,7 @@
 #include "ibrcommon/ssl/HMacStream.h"
 #include <ibrcommon/Logger.h>
 #include <cstring>
+#include <set>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -19,160 +20,129 @@ namespace dtn
 		}
 
 		BundleAuthenticationBlock::BundleAuthenticationBlock()
-		 : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK, BAB_HMAC), _keys(), _partners()
+		 : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK, BAB_HMAC)
 		{
-		}
-
-		BundleAuthenticationBlock::BundleAuthenticationBlock(const unsigned char * const hkey, const size_t size)
-		 : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK), _keys(), _partners()
-		{
-//			addKey(hkey, size, partner);
-		}
-
-		BundleAuthenticationBlock::BundleAuthenticationBlock(const list< std::pair<const unsigned char * const, const size_t> > keys)
-		 : SecurityBlock(BUNDLE_AUTHENTICATION_BLOCK), _keys(), _partners()
-		{
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(keys.size() == partners.size());
-#endif
-//			std::list<dtn::data::EID>::const_iterator e_it = partners.begin();
-//			for (std::list< std::pair<const unsigned char * const, const size_t> >::const_iterator it = keys.begin(); it != keys.end(); it++, e_it++)
-//				addKey(it->first, it->second, e_it->getNodeEID());
 		}
 
 		BundleAuthenticationBlock::~BundleAuthenticationBlock()
 		{
-			for (std::list< std::pair<const unsigned char * const, const size_t> >::const_iterator it = _keys.begin(); it != _keys.end(); it++)
-				delete [] it->first;
 		}
 
-		void BundleAuthenticationBlock::addKey(const unsigned char * const hkey, const size_t size, const dtn::data::EID partner)
+		void BundleAuthenticationBlock::sign(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key)
 		{
-			unsigned char * key = new unsigned char[size];
-			for (unsigned int i = 0; i < size; i++)
-				key[i] = hkey[i];
-// 			std::pair<const unsigned char *, const size_t> key_size(key, size);
-// 			_keys.push_back(key_size);
-				_keys.push_back(std::pair<const unsigned char *, const size_t>(key, size));
+			BundleAuthenticationBlock& bab_begin = bundle.push_front<BundleAuthenticationBlock>();
 
-// 			dtn::data::EID * partner_ptr = new dtn::data::EID(partner);
-// 			_partners.push_back(*partner_ptr);
-			_partners.push_back(partner.getNodeEID());
+			// set security source
+			if (key.reference != bundle._source) bab_begin.setSecuritySource( key.reference );
+
+			u_int64_t correlator = createCorrelatorValue(bundle);
+			bab_begin.setCorrelator(correlator);
+			bab_begin.setCiphersuiteId(BAB_HMAC);
+
+			BundleAuthenticationBlock& bab_end = bundle.push_back<BundleAuthenticationBlock>();
+			std::string sizehash_hash = calcMAC(bundle, key);
+			bab_end._security_result.add(SecurityBlock::integrity_signature, sizehash_hash);
+
+			bab_end.setCorrelator(correlator);
+			bab_end._ciphersuite_flags |= CONTAINS_SECURITY_RESULT;
 		}
 
-		void BundleAuthenticationBlock::addMAC(dtn::data::Bundle& bundle) const
+		void BundleAuthenticationBlock::verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (ibrcommon::Exception)
 		{
-			// adding all bab pairs to the bundle
-			std::list<BundleAuthenticationBlock *> bab_ends;
-			for (std::list<dtn::data::EID>::const_iterator it = _partners.begin(); it != _partners.end(); it++)
-			{
-				BundleAuthenticationBlock& bab_begin = bundle.push_front<BundleAuthenticationBlock>();
-				BundleAuthenticationBlock& bab_end = bundle.push_back<BundleAuthenticationBlock>();
+			// store the correlator of the verified BABs
+			u_int64_t correlator;
 
-				// set source and destination
-//				setSourceAndDestination(bundle, bab_begin, &(*it));
-
-				u_int64_t correlator = createCorrelatorValue(bundle);
-				bab_ends.push_back(&bab_end);
-				bab_begin.setCorrelator(correlator);
-// 				bab_begin.setCiphersuiteId(BAB_HMAC);
-				bab_end.setCorrelator(correlator);
-				bab_end._ciphersuite_flags |= CONTAINS_SECURITY_RESULT;
-			}
-
-			// calculating each hash
-			std::list<std::pair<const unsigned char * const, const size_t> >::const_iterator it_keys = _keys.begin();
-			for (std::list<BundleAuthenticationBlock *>::iterator it = bab_ends.begin(); it != bab_ends.end(); it++, it_keys++)
-			{
-				std::string sizehash_hash = calcMAC(bundle, it_keys->first, it_keys->second);
-				SecurityBlock::addTLV((*it)->_security_result, SecurityBlock::integrity_signature, sizehash_hash.size(), sizehash_hash.c_str());
-			}
+			// verify the babs of the bundle
+			verify(bundle, key, correlator);
 		}
 
-		signed char BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle) const
+		void BundleAuthenticationBlock::strip(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key)
 		{
-			std::list<dtn::data::EID>::const_iterator ids = _partners.begin();
-			for (std::list<std::pair<const unsigned char * const, const size_t> >::const_iterator it_keys = _keys.begin(); it_keys != _keys.end(); it_keys++, ids++)
-				if (verify(bundle, *it_keys, *ids).first)
-					return 1;
+			// store the correlator of the verified BABs
+			u_int64_t correlator;
 
-			return 0;
-		}
+			// verify the babs of the bundle
+			verify(bundle, key, correlator);
 
-		int BundleAuthenticationBlock::verifyAndRemoveMatchingBlocks(dtn::data::Bundle& bundle) const
-		{
-			// collect matching correlators, needs to be done first, because removing
-			// the blocks would invalidate other babs
-			std::list<u_int64_t> correlators;
-			std::list<dtn::data::EID>::const_iterator it_partner = _partners.begin();
-			for (std::list<std::pair<const unsigned char * const, const size_t> >::const_iterator it_keys = _keys.begin(); it_keys != _keys.end(); it_keys++, it_partner++)
-			{
-				std::pair<bool, u_int64_t> result = verify(bundle, *it_keys, *it_partner);
-				if (result.first)
-					correlators.push_back(result.second);
-			}
+			// get the list of BABs
+			const std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
 
-			int unremoved_blocks = 0;
-			std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
 			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
 			{
-				bool removed = false;
-				for (std::list<u_int64_t>::iterator cor_it = correlators.begin(); cor_it != correlators.end(); cor_it++)
-					if ((*it)->_ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR && (*it)->_correlator == *cor_it)
-					{
-						removed = true;
-						bundle.remove(*(*it));
-					}
-				if (!removed)
-					unremoved_blocks++;
+				const BundleAuthenticationBlock &bab = (**it);
+
+				// if the correlator is already authenticated, then remove the BAB
+				if ((bab._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && (bab._correlator == correlator))
+				{
+					bundle.remove(bab);
+				}
 			}
-			return unremoved_blocks;
 		}
 
-		void BundleAuthenticationBlock::removeAllBundleAuthenticationBlocks(dtn::data::Bundle& bundle)
+		void BundleAuthenticationBlock::strip(dtn::data::Bundle& bundle)
 		{
 			// blocks of a certain type
-			std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
+			const std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
+
 			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
+			{
 				bundle.remove(*(*it));
+			}
 		}
 
-		std::pair<bool,u_int64_t> BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, std::pair<const unsigned char * const, const size_t> key, const dtn::data::EID& partner) const
+		void BundleAuthenticationBlock::verify(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, u_int64_t &correlator) throw (ibrcommon::Exception)
 		{
 			std::list<const BundleAuthenticationBlock *> babs = bundle.getBlocks<BundleAuthenticationBlock>();
 
 			// get the blocks, with which the key should match
-			std::list<u_int64_t> good_correlators;
-			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end() && !((*it)->_ciphersuite_flags & CONTAINS_SECURITY_RESULT); it++)
-				if ((**it).isSecuritySource(bundle, partner) && (*it)->_ciphersuite_flags & CONTAINS_CORRELATOR && (*it)->_ciphersuite_id == SecurityBlock::BAB_HMAC)
-					good_correlators.push_back((**it)._correlator);
+			std::set<u_int64_t> correlators;
 
-			std::string our_hash_string = calcMAC(bundle, key.first, key.second);
+			// calculate the MAC of this bundle
+			std::string our_hash_string = calcMAC(bundle, key);
+
 			for (std::list<const BundleAuthenticationBlock *>::const_iterator it = babs.begin(); it != babs.end(); it++)
 			{
-				if (!((*it)->_ciphersuite_flags & CONTAINS_SECURITY_RESULT) || !((*it)->_ciphersuite_flags & CONTAINS_CORRELATOR))
-					continue;
+				const BundleAuthenticationBlock &bab = (**it);
 
-				bool result = false;
-				for (std::list<u_int64_t>::const_iterator cit = good_correlators.begin(); cit != good_correlators.end() && !result; cit++)
-					result = *cit == (*it)->_correlator;
-				if (!result)
-					continue;
+				// the bab contains a security result
+				if (bab._ciphersuite_flags & CONTAINS_SECURITY_RESULT)
+				{
+					// is this correlator known?
+					if (correlators.find(bab._correlator) == correlators.end()) continue;
 
-				std::string their_hash = SecurityBlock::getTLVs( (*it)->_security_result, SecurityBlock::integrity_signature).begin().operator*();
-				if (our_hash_string.compare(their_hash) == 0) {
-					// hash matched
-					return std::pair<bool, u_int64_t>(true, (*it)->_correlator);
+					std::string bab_result = bab._security_result.get(SecurityBlock::integrity_signature);
+					if (our_hash_string == bab_result)
+					{
+						// hash matched
+						correlator = bab._correlator;
+						return;
+					}
+
+					IBRCOMMON_LOGGER_DEBUG(15) << "security: mac (" << bab_result << ") does not match to " << our_hash_string << IBRCOMMON_LOGGER_ENDL;
+				}
+				// bab contains no security result but a correlator
+				else if (bab._ciphersuite_flags &  CONTAINS_CORRELATOR)
+				{
+					// currently we only support BAB_HMAC mechanism
+					if (bab._ciphersuite_id != SecurityBlock::BAB_HMAC) continue;
+
+					// skip this BAB if the security source do not match the key
+					if (!bab.isSecuritySource(bundle, key.reference)) continue;
+
+					// remember it for later check
+					correlators.insert(bab._correlator);
 				}
 			}
-			return std::pair<bool, u_int64_t>(false, 0);
+
+			throw ibrcommon::Exception("verification failed");
 		}
 
-		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const unsigned char * const key, const size_t key_size, const bool with_correlator, const u_int64_t correlator) const
+		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator, const u_int64_t correlator)
 		{
 			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "Generating hash" << IBRCOMMON_LOGGER_ENDL;
 
-			ibrcommon::HMacStream hms(key, key_size);
+			std::string hmac_key = key.getData();
+			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), hmac_key.length());
 			dtn::security::StrictSerializer(hms).serialize_strict(bundle, BUNDLE_AUTHENTICATION_BLOCK, with_correlator, correlator);
 
 			return ibrcommon::HashStream::extract(hms);

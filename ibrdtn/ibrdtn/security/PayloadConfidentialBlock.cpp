@@ -77,8 +77,11 @@ namespace dtn
 			addKey(pcb._ciphersuite_params, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes, rsa_key);
 			long_key.free(rsa_key);
 
-			SecurityBlock::addTLV(pcb._ciphersuite_params, SecurityBlock::initialization_vector, ibrcommon::AES128Stream::iv_len, reinterpret_cast<char const *>(encrypt.getIV()));
-			SecurityBlock::addTLV(pcb._security_result, SecurityBlock::integrity_signature, ibrcommon::AES128Stream::tag_len, reinterpret_cast<char const *>(encrypt.getTag()));
+			std::string iv(reinterpret_cast<char const *>(encrypt.getIV()), ibrcommon::AES128Stream::iv_len);
+			pcb._ciphersuite_params.add(SecurityBlock::initialization_vector, iv);
+
+			std::string tag(reinterpret_cast<char const *>(encrypt.getTag()), ibrcommon::AES128Stream::tag_len);
+			pcb._security_result.add(SecurityBlock::integrity_signature, tag);
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
 			// encrypt payload - END
@@ -192,13 +195,13 @@ namespace dtn
 			PayloadConfidentialBlock& pcb = bundle.getBlock<PayloadConfidentialBlock>();
 			dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
 
-			std::string iv_string = SecurityBlock::getTLVs(pcb._ciphersuite_params, SecurityBlock::initialization_vector).begin().operator*();
+			std::string iv_string = pcb._ciphersuite_params.get(SecurityBlock::initialization_vector);
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(iv_string.size() == ibrcommon::AES128Stream::iv_len);
 #endif
 			unsigned char const * iv = reinterpret_cast<unsigned char const *>(iv_string.c_str());
 
-			std::string tag_string = SecurityBlock::getTLVs(pcb._security_result, SecurityBlock::integrity_signature).begin().operator*();
+			std::string tag_string = pcb._security_result.get(SecurityBlock::integrity_signature);
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(tag_string.size() == ibrcommon::AES128Stream::tag_len);
 #endif

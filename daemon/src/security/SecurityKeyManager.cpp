@@ -63,19 +63,46 @@ namespace dtn
 
 		dtn::security::SecurityKey SecurityKeyManager::get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const throw (SecurityKeyManager::KeyNotFoundException)
 		{
-			const ibrcommon::File keyfile = _path.get(hash(ref.getNodeEID()) + ".pem");
-
-			if (!keyfile.exists())
-			{
-				IBRCOMMON_LOGGER(warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
-				throw SecurityKeyManager::KeyNotFoundException();
-			}
-
 			dtn::security::SecurityKey keydata;
-			keydata.file = keyfile;
-			keydata.type = type;
-			keydata.lastupdate = keyfile.lastmodify();
 			keydata.reference = ref;
+			keydata.type = type;
+
+			switch (type)
+			{
+				case SecurityKey::KEY_SHARED:
+				{
+					// read a symmetric key required for BAB signing
+					const ibrcommon::File keyfile = _path.get(hash(ref.getNodeEID()) + ".mac");
+
+					if (!keyfile.exists())
+					{
+						IBRCOMMON_LOGGER(warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
+						throw SecurityKeyManager::KeyNotFoundException();
+					}
+
+					keydata.file = keyfile;
+					keydata.lastupdate = keyfile.lastmodify();
+					break;
+				}
+
+				case SecurityKey::KEY_UNSPEC:
+				case SecurityKey::KEY_PUBLIC:
+				case SecurityKey::KEY_PRIVATE:
+				{
+					const ibrcommon::File keyfile = _path.get(hash(ref.getNodeEID()) + ".pem");
+
+					if (!keyfile.exists())
+					{
+						IBRCOMMON_LOGGER(warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
+						throw SecurityKeyManager::KeyNotFoundException();
+					}
+
+
+					keydata.file = keyfile;
+					keydata.lastupdate = keyfile.lastmodify();
+					break;
+				}
+			}
 
 			return keydata;
 		}
