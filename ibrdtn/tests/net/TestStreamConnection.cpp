@@ -32,7 +32,11 @@ void TestStreamConnection::connectionUpDown()
 	{
 	public:
 		testserver(ibrcommon::File &file) : ibrcommon::tcpserver(file), recv_bundles(0) {};
-		testserver(ibrcommon::vinterface net, int port) : ibrcommon::tcpserver(net, port), recv_bundles(0) {};
+		testserver(const ibrcommon::vinterface &net, int port) : ibrcommon::tcpserver(), recv_bundles(0)
+		{
+			bind(net, port);
+		};
+
 		virtual ~testserver() { join(); };
 
 		void eventShutdown(dtn::streams::StreamConnection::ConnectionShutdownCases csc) {};

@@ -39,17 +39,23 @@ namespace dtn
 
 		size_t SecurityBlock::TLVList::getLength() const
 		{
-			std::stringstream ss;
+			size_t len = getPayloadLength();
+			return len;
+		}
+
+		size_t SecurityBlock::TLVList::getPayloadLength() const
+		{
+			size_t len = 0;
 
 			for (std::set<SecurityBlock::TLV>::const_iterator iter = begin(); iter != end(); iter++)
 			{
-				ss << (*iter);
+				len += (*iter).getLength();
 			}
 
-			return ss.str().length();
+			return len;
 		}
 
-		const std::string SecurityBlock::TLVList::get(char type) const
+		const std::string SecurityBlock::TLVList::get(SecurityBlock::TLV_TYPES type) const
 		{
 			for (std::set<SecurityBlock::TLV>::const_iterator iter = begin(); iter != end(); iter++)
 			{
@@ -58,14 +64,16 @@ namespace dtn
 					return (*iter).getValue();
 				}
 			}
+
+			throw ibrcommon::Exception("element not found");
 		}
 
-		void SecurityBlock::TLVList::add(char type, std::string value)
+		void SecurityBlock::TLVList::add(SecurityBlock::TLV_TYPES type, std::string value)
 		{
 			insert(SecurityBlock::TLV(type, value));
 		}
 
-		void SecurityBlock::TLVList::remove(char type)
+		void SecurityBlock::TLVList::remove(SecurityBlock::TLV_TYPES type)
 		{
 			erase(SecurityBlock::TLV(type, ""));
 		}
@@ -75,14 +83,19 @@ namespace dtn
 			return _value;
 		}
 
-		char SecurityBlock::TLV::getType() const
+		SecurityBlock::TLV_TYPES SecurityBlock::TLV::getType() const
 		{
 			return _type;
 		}
 
+		size_t SecurityBlock::TLV::getLength() const
+		{
+			return _value.getLength() + sizeof(char);
+		}
+
 		std::ostream& operator<<(std::ostream &stream, const SecurityBlock::TLVList &tlvlist)
 		{
-			dtn::data::SDNV length(tlvlist.getLength());
+			dtn::data::SDNV length(tlvlist.getPayloadLength());
 			stream << length;
 
 			for (std::set<SecurityBlock::TLV>::const_iterator iter = tlvlist.begin(); iter != tlvlist.end(); iter++)
@@ -96,18 +109,16 @@ namespace dtn
 		{
 			dtn::data::SDNV length;
 			stream >> length;
+			size_t read_length = 0;
 
-			char data[length.getValue()];
-			stream.read(data, length.getValue());
-
-			std::stringstream ss; ss.write(data, length.getValue());
-
-			while (!ss.eof())
+			while (read_length < length.getValue())
 			{
 				SecurityBlock::TLV tlv;
-				ss >> tlv;
+				stream >> tlv;
 				tlvlist.insert(tlv);
+				read_length += tlv.getLength();
 			}
+
 			return stream;
 		}
 
@@ -123,14 +134,15 @@ namespace dtn
 
 		std::ostream& operator<<(std::ostream &stream, const SecurityBlock::TLV &tlv)
 		{
-			stream.put(tlv._type);
+			stream.put((char)tlv._type);
 			stream << tlv._value;
 			return stream;
 		}
 
 		std::istream& operator>>(std::istream &stream, SecurityBlock::TLV &tlv)
 		{
-			stream.get(tlv._type);
+			char tlv_type;
+			stream.get(tlv_type); tlv._type = SecurityBlock::TLV_TYPES(tlv_type);
 			stream >> tlv._value;
 			return stream;
 		}
@@ -169,7 +181,6 @@ namespace dtn
 			{
 				if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
 				{
-					size_t eidcount = _eids.size();
 					return *(++_eids.begin());
 				}
 				else
@@ -267,11 +278,20 @@ namespace dtn
 				+ dtn::data::SDNV::getLength(_ciphersuite_flags);
 
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
+			{
 				length += dtn::data::SDNV::getLength(_correlator);
+			}
+
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
+			{
 				length += _ciphersuite_params.getLength();
+			}
+
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
-				length += dtn::data::SDNV::getLength(getSecurityResultSize()) + getSecurityResultSize();
+			{
+				const dtn::data::SDNV size(getSecurityResultSize());
+				length += size.getLength() + size.getValue();
+			}
 
 			return length;
 		}
@@ -280,11 +300,16 @@ namespace dtn
 		{
 			// ciphersuite_id
 			size_t length = MutualSerializer::sdnv_size;
+
 			// ciphersuite_flags
 			length += MutualSerializer::sdnv_size;
+
 			// correlator
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
+			{
 				length += MutualSerializer::sdnv_size;
+			}
+
 			// ciphersuite parameters
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
@@ -293,7 +318,9 @@ namespace dtn
 			}
 			// security result
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
+			{
 				length += MutualSerializer::sdnv_size + getSecurityResultSize();
+			}
 
 			return length;
 		}
@@ -303,16 +330,25 @@ namespace dtn
 			stream << dtn::data::SDNV(_ciphersuite_id) << dtn::data::SDNV(_ciphersuite_flags);
 
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
+			{
 				stream << dtn::data::SDNV(_correlator);
+			}
+
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
+			{
 				stream << _ciphersuite_params;
+			}
 
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
 			{
 				if (ignore_security_result)
+				{
 					stream << dtn::data::SDNV(getSecurityResultSize());
+				}
 				else
+				{
 					stream << _security_result;
+				}
 			}
 
 			return stream;

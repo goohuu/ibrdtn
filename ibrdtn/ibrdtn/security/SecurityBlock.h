@@ -48,6 +48,7 @@ namespace dtn
 			security result */
 			enum TLV_TYPES
 			{
+				not_set = 0,
 				initialization_vector = 1,
 				key_information = 3,
 				fragment_range = 4,
@@ -80,8 +81,8 @@ namespace dtn
 			class TLV
 			{
 			public:
-				TLV() : _type(0) {};
-				TLV(char type, std::string value)
+				TLV() : _type(not_set) {};
+				TLV(TLV_TYPES type, std::string value)
 				 : _type(type), _value(value)
 				{ }
 
@@ -89,13 +90,14 @@ namespace dtn
 				bool operator==(const TLV &tlv) const;
 
 				const std::string getValue() const;
-				char getType() const;
+				TLV_TYPES getType() const;
+				size_t getLength() const;
 
 				friend std::ostream& operator<<(std::ostream &stream, const TLV &tlv);
 				friend std::istream& operator>>(std::istream &stream, TLV &tlv);
 
 			private:
-				char _type;
+				TLV_TYPES _type;
 				dtn::data::BundleString _value;
 			};
 
@@ -108,12 +110,15 @@ namespace dtn
 				friend std::ostream& operator<<(std::ostream &stream, const TLVList &tlvlist);
 				friend std::istream& operator>>(std::istream &stream, TLVList &tlvlist);
 
-				const std::string get(char type) const;
-				void add(char type, std::string value);
-				void remove(char type);
+				const std::string get(TLV_TYPES type) const;
+				void add(TLV_TYPES type, std::string value);
+				void remove(TLV_TYPES type);
 
 				const std::string toString() const;
 				size_t getLength() const;
+
+			private:
+				size_t getPayloadLength() const;
 			};
 
 			/** does nothing */

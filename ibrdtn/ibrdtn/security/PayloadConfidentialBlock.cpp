@@ -57,8 +57,8 @@ namespace dtn
 			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
 
 			// set the source and destination address of the new block
-			if (source != bundle._source) pcb.setSecuritySource( source );
-			if (long_key.reference != bundle._destination) pcb.setSecurityDestination( long_key.reference );
+			if (source != bundle._source.getNodeEID()) pcb.setSecuritySource( source );
+			if (long_key.reference != bundle._destination.getNodeEID()) pcb.setSecurityDestination( long_key.reference );
 
 			// set replicate in every fragment to true
 			pcb.set(REPLICATE_IN_EVERY_FRAGMENT, true);

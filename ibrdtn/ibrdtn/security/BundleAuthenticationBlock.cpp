@@ -33,7 +33,7 @@ namespace dtn
 			BundleAuthenticationBlock& bab_begin = bundle.push_front<BundleAuthenticationBlock>();
 
 			// set security source
-			if (key.reference != bundle._source) bab_begin.setSecuritySource( key.reference );
+			if (key.reference != bundle._source.getNodeEID()) bab_begin.setSecuritySource( key.reference );
 
 			u_int64_t correlator = createCorrelatorValue(bundle);
 			bab_begin.setCorrelator(correlator);

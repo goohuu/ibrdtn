@@ -67,11 +67,11 @@ namespace dtn
 				const dtn::security::BundleAuthenticationBlock& bab = (**it);
 
 				// look for the right BAB-factory
-				dtn::data::EID node = bab.getSecuritySource(bundle);
+				const dtn::data::EID node = bab.getSecuritySource(bundle);
 
 				try {
 					// try to load the key of the BAB
-					const SecurityKey key = SecurityKeyManager::getInstance().get(node, SecurityKey::KEY_PUBLIC);
+					const SecurityKey key = SecurityKeyManager::getInstance().get(node, SecurityKey::KEY_SHARED);
 
 					// verify the bundle
 					dtn::security::BundleAuthenticationBlock::verify(bundle, key);

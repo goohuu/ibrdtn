@@ -48,9 +48,9 @@ namespace dtn
 			// key file
 			ibrcommon::File file;
 
-			RSA* getRSA() const;
+			virtual RSA* getRSA() const;
 
-			const std::string getData() const;
+			virtual const std::string getData() const;
 
 			static void free(RSA* key);
 
