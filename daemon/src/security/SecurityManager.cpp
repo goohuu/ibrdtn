@@ -31,16 +31,31 @@ namespace dtn
 		{
 		}
 
-		void SecurityManager::sign(dtn::data::Bundle &bundle) const throw (KeyMissingException)
+		void SecurityManager::auth(dtn::data::Bundle &bundle) const throw (KeyMissingException)
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "sign bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "auth bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			try {
 				// try to load the local key
 				const SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_SHARED);
 
 				// sign the bundle with BABs
-				dtn::security::BundleAuthenticationBlock::sign(bundle, key);
+				dtn::security::BundleAuthenticationBlock::auth(bundle, key);
+			} catch (const SecurityKeyManager::KeyNotFoundException &ex) {
+				throw KeyMissingException(ex.what());
+			}
+		}
+
+		void SecurityManager::sign(dtn::data::Bundle &bundle) const throw (KeyMissingException)
+		{
+			IBRCOMMON_LOGGER_DEBUG(10) << "sign bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+			try {
+				// try to load the local key
+				const SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PRIVATE);
+
+				// sign the bundle with PIB
+				dtn::security::PayloadIntegrityBlock::sign(bundle, key, bundle._destination.getNodeEID());
 			} catch (const SecurityKeyManager::KeyNotFoundException &ex) {
 				throw KeyMissingException(ex.what());
 			}
@@ -56,8 +71,60 @@ namespace dtn
 
 		void SecurityManager::verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
 		{
-			// remove signature blocks, if possible
-			IBRCOMMON_LOGGER_DEBUG(10) << "verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+			verifyBAB(bundle);
+			verifyPIB(bundle);
+		}
+
+		void SecurityManager::verifyPIB(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
+		{
+			IBRCOMMON_LOGGER_DEBUG(10) << "verify signed bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+
+			// get all PIBs of this bundle
+			std::list<dtn::security::PayloadIntegrityBlock const *> pibs = bundle.getBlocks<dtn::security::PayloadIntegrityBlock>();
+
+			for (std::list<dtn::security::PayloadIntegrityBlock const *>::iterator it = pibs.begin(); it != pibs.end(); it++)
+			{
+				const dtn::security::PayloadIntegrityBlock& pib = (**it);
+
+				try {
+					const SecurityKey key = SecurityKeyManager::getInstance().get(pib.getSecuritySource(bundle), SecurityKey::KEY_PUBLIC);
+
+					if (pib.isSecurityDestination(bundle, dtn::core::BundleCore::local))
+					{
+						try {
+							dtn::security::PayloadIntegrityBlock::strip(bundle, key);
+
+							// set the verify bit, after verification
+							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Bundle from " << bundle._source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
+							return;
+						} catch (const ibrcommon::Exception&) {
+							throw VerificationFailedException();
+						}
+					}
+					else
+					{
+						try {
+							dtn::security::PayloadIntegrityBlock::verify(bundle, key);
+
+							// set the verify bit, after verification
+							bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
+
+							IBRCOMMON_LOGGER_DEBUG(5) << "Bundle from " << bundle._source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
+						} catch (const ibrcommon::Exception&) {
+							throw VerificationFailedException();
+						}
+					}
+				} catch (const ibrcommon::Exception&) {
+					// key not found?
+				}
+			}
+		}
+
+		void SecurityManager::verifyBAB(dtn::data::Bundle &bundle) const throw (VerificationFailedException)
+		{
+			IBRCOMMON_LOGGER_DEBUG(10) << "verify authenticated bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// get all BABs of this bundle
 			std::list <const dtn::security::BundleAuthenticationBlock* > babs = bundle.getBlocks<dtn::security::BundleAuthenticationBlock>();
@@ -80,7 +147,7 @@ namespace dtn
 					dtn::security::BundleAuthenticationBlock::strip(bundle);
 
 					// set the verify bit, after verification
-					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_VERIFIED, true);
+					bundle.set(dtn::data::Bundle::DTNSEC_STATUS_AUTHENTICATED, true);
 
 					// at least one BAB has been authenticated, we're done!
 					break;
@@ -108,11 +175,11 @@ namespace dtn
 				if (pcbs.size() == 0) throw VerificationFailedException("No PCB available!");
 			}
 
-			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
+			if (secconf.getLevel() & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
 			{
 				// check if the bundle is signed and throw an exception if not
 				//throw VerificationFailedException("Bundle is not signed");
-				IBRCOMMON_LOGGER_DEBUG(10) << "signature required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << "authentication required, verify bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 				const std::list<const dtn::security::BundleAuthenticationBlock* > babs = bundle.getBlocks<dtn::security::BundleAuthenticationBlock>();
 				if (babs.size() == 0) throw VerificationFailedException("No BAB available!");
@@ -538,37 +605,7 @@ namespace dtn
 
 		bool SecurityManager::check_pib(dtn::data::Bundle& bundle, const dtn::security::PayloadIntegrityBlock& pib)
 		{
-			// take every pib and look if we have a public key, the block could have
-			// the needed keys attached to it and the KeyServerWorker will store them
-			bool status_ok = true;
-			bool verified = false;
 
-			std::list<dtn::security::PayloadIntegrityBlock const *> pibs = bundle.getBlocks<dtn::security::PayloadIntegrityBlock>();
-			for (std::list<dtn::security::PayloadIntegrityBlock const *>::iterator it = pibs.begin(); it != pibs.end() && status_ok; it++)
-			{
-				const SecurityKey key = SecurityKeyManager::getInstance().get((**it).getSecuritySource(bundle), SecurityKey::KEY_PUBLIC);
-				RSA * rsa = key.getRSA();
-				if (rsa != 0)
-				{
-					dtn::security::PayloadIntegrityBlock pib_verify(rsa); //, dtn::core::BundleCore::local, (**it).getSecuritySource(bundle));
-					if ((**it).isSecurityDestination(bundle, dtn::core::BundleCore::local))
-						status_ok = (pib_verify.verifyAndRemoveMatchingBlock(bundle) > 0);
-					else
-					{
-						if (!verified)
-							status_ok = verified = pib_verify.verify(bundle);
-					}
-					if (status_ok)
-						IBRCOMMON_LOGGER_ex(notice) << "Bundle from " << bundle._source.getString() << " successfully verified using PayloadIntegrityBlock" << IBRCOMMON_LOGGER_ENDL;
-				}
-				else
-				{
-					if ((**it).isSecurityDestination(bundle, dtn::core::BundleCore::local))
-						status_ok = false;
-				}
-			}
-
-			return status_ok;
 		}
 
 		bool SecurityManager::check_esb(Bundle& bundle)

@@ -44,11 +44,11 @@ namespace dtn
 				virtual ~BundleAuthenticationBlock();
 
 				/**
-				 * sign a given bundle
+				 * authenticate a given bundle
 				 * @param bundle
 				 * @param key
 				 */
-				static void sign(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key);
+				static void auth(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key);
 
 				/**
 				 * Tests if the bundles MAC is correct. There might be multiple BABs inside

@@ -75,6 +75,7 @@ namespace dtn
 				 * @param bundle A bundle to sign.
 				 */
 				void sign(dtn::data::Bundle &bundle) const throw (KeyMissingException);
+				void auth(dtn::data::Bundle &bundle) const throw (KeyMissingException);
 
 				/**
 				 * This method should be called early as possible. It triggers a procedure to
@@ -89,6 +90,8 @@ namespace dtn
 				 * @param bundle The bundle to verify.
 				 */
 				void verify(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
+				void verifyBAB(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
+				void verifyPIB(dtn::data::Bundle &bundle) const throw (VerificationFailedException);
 
 				/**
 				 * This method do a fast verify with the bundle. It do not change anything in it.

@@ -363,7 +363,7 @@ namespace dtn
 				enum Level
 				{
 					SECURITY_LEVEL_NONE = 0,
-					SECURITY_LEVEL_SIGNED = 1,
+					SECURITY_LEVEL_AUTHENTICATED = 1,
 					SECURITY_LEVEL_ENCRYPTED = 2
 				};
 

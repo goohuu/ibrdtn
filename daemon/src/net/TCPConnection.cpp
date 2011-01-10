@@ -403,10 +403,10 @@ namespace dtn
 							const dtn::daemon::Configuration::Security::Level seclevel =
 									dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
 
-							if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_SIGNED)
+							if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
 							{
 								try {
-									dtn::security::SecurityManager::getInstance().sign(bundle);
+									dtn::security::SecurityManager::getInstance().auth(bundle);
 								} catch (const dtn::security::SecurityManager::KeyMissingException&) {
 									// sign requested, but no key is available
 									IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;

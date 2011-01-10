@@ -50,9 +50,12 @@ namespace dtn
 
 			virtual RSA* getRSA() const;
 
+			virtual EVP_PKEY* getEVP() const;
+
 			virtual const std::string getData() const;
 
 			static void free(RSA* key);
+			static void free(EVP_PKEY* key);
 
 			friend std::ostream &operator<<(std::ostream &stream, const SecurityKey &key)
 			{

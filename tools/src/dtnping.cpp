@@ -54,7 +54,7 @@ class EchoClient : public dtn::api::Client
 			throw ibrcommon::Exception("timeout is set to zero");
 		}
 
-		void echo(EID destination, int size, int lifetime, bool encryption = false)
+		void echo(EID destination, int size, int lifetime, bool encryption = false, bool sign = false)
 		{
 			lastdestination=destination.getString();
 			seq++;
@@ -64,6 +64,9 @@ class EchoClient : public dtn::api::Client
 
 			// enable encryption if requested
 			if (encryption) b.requestEncryption();
+
+			// enable signature if requested
+			if (sign) b.requestSigned();
 
 			// set lifetime
 			b.setLifetime(lifetime);
@@ -134,6 +137,7 @@ void print_help()
 	cout << " --count X       send X echo in a row" << endl;
 	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 30" << endl;
 	cout << " --encrypt       request encryption on the bundle layer" << endl;
+	cout << " --sign          request signature on the bundle layer" << endl;
 	cout << " -U <socket>     use UNIX domain sockets" << endl;
 }
 
@@ -185,7 +189,8 @@ int main(int argc, char *argv[])
 	size_t count = 0;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
 	ibrcommon::File unixdomain;
-	bool encryption = false;
+	bool bundle_encryption = false;
+	bool bundle_signed = false;
 
 	if (argc == 1)
 	{
@@ -206,7 +211,12 @@ int main(int argc, char *argv[])
 
 		else if (arg == "--encrypt")
 		{
-			encryption = true;
+			bundle_encryption = true;
+		}
+
+		else if (arg == "--sign")
+		{
+			bundle_signed = true;
 		}
 
 		else if (arg == "--nowait")
@@ -307,7 +317,7 @@ int main(int argc, char *argv[])
 				tm.start();
 
 				// Call out a ECHO
-				client.echo( _addr, ping_size, lifetime, encryption );
+				client.echo( _addr, ping_size, lifetime, bundle_encryption, bundle_signed );
 				_transmitted++;
 			
 				if (wait_for_reply)

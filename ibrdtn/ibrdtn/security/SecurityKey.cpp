@@ -28,6 +28,11 @@ namespace dtn
 			RSA_free(key);
 		}
 
+		void SecurityKey::free(EVP_PKEY* key)
+		{
+			EVP_PKEY_free(key);
+		}
+
 		const std::string SecurityKey::getData() const
 		{
 			std::ifstream stream(file.getPath().c_str(), ios::in);
@@ -48,7 +53,37 @@ namespace dtn
 				return getPrivateRSA();
 			case KEY_PUBLIC:
 				return getPublicRSA();
+			default:
+				return NULL;
 			}
+		}
+
+		EVP_PKEY* SecurityKey::getEVP() const
+		{
+			EVP_PKEY* ret = EVP_PKEY_new();
+			FILE * pkey_file = fopen(file.getPath().c_str(), "r");
+
+			switch (type)
+			{
+				case KEY_PRIVATE:
+				{
+					ret = PEM_read_PrivateKey(pkey_file, &ret, NULL, NULL);
+					break;
+				}
+
+				case KEY_PUBLIC:
+				{
+					ret = PEM_read_PUBKEY(pkey_file, &ret, NULL, NULL);
+					break;
+				}
+
+				default:
+					ret = NULL;
+					break;
+			}
+
+			fclose(pkey_file);
+			return ret;
 		}
 
 		RSA* SecurityKey::getPrivateRSA() const

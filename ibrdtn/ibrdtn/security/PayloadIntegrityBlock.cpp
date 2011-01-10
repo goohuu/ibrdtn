@@ -21,73 +21,22 @@ namespace dtn
 		}
 
 		PayloadIntegrityBlock::PayloadIntegrityBlock()
-		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK, PIB_RSA_SHA256), pkey(0), key_size(-1)
+		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK, PIB_RSA_SHA256) //, pkey(0), key_size(-1)
 		{
-		}
-
-		PayloadIntegrityBlock::PayloadIntegrityBlock(RSA * hkey)
-		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK), key_size(-1)
-		{
-			pkey = EVP_PKEY_new();
-			if (pkey == NULL)
-			{
-				IBRCOMMON_LOGGER_ex(critical) << "failed to create the key object" << IBRCOMMON_LOGGER_ENDL;
-				ERR_print_errors_fp(stderr);
-#ifdef __DEVELOPMENT_ASSERTIONS__
-				assert(pkey != NULL);
-#endif
-			}
-			// statt assign set1 benutzen, damit hkey nicht gelöscht wird
-			// http://www.openssl.org/docs/crypto/EVP_PKEY_set1_RSA.html
-			if (!EVP_PKEY_set1_RSA(pkey, hkey))
-			{
-				IBRCOMMON_LOGGER_ex(critical) << "failed to set RSA key" << IBRCOMMON_LOGGER_ENDL;
-				ERR_print_errors_fp(stderr);
-				EVP_PKEY_free(pkey);
-				pkey = 0;
-			}
 		}
 
 		PayloadIntegrityBlock::~PayloadIntegrityBlock()
 		{
-			EVP_PKEY_free(pkey);
 		}
 
 		size_t PayloadIntegrityBlock::getSecurityResultSize() const
 		{
-			size_t size = 0;
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(EVP_PKEY_size(pkey) > 0 || key_size > 0 || _security_result.size() > 0);
-#endif
-
-			if (EVP_PKEY_size(pkey) <= 0 && key_size <= 0)
-				key_size = _security_result.size();
-
-			// size of integrity_signature
-			if (EVP_PKEY_size(pkey) > 0)
-			{
-				size += EVP_PKEY_size(pkey);
-				// size of integrity_signature length
-				size += dtn::data::SDNV::getLength(EVP_PKEY_size(pkey));
-				// TLV type
-				size++;
-			}
-			else
-				size = key_size;
-
-			return size;
+			if (key_size <= 0) return _security_result.size();
+			return key_size;
 		}
 
-		void PayloadIntegrityBlock::addHash(dtn::data::Bundle &bundle, const dtn::data::EID& source, const dtn::data::EID& destination) const
+		void PayloadIntegrityBlock::sign(dtn::data::Bundle &bundle, const SecurityKey &key, const dtn::data::EID& destination)
 		{
-			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "entering ..." << IBRCOMMON_LOGGER_ENDL;
-			// if key is invalid do nothing
-			if (pkey == NULL)
-			{
-				IBRCOMMON_LOGGER_ex(critical) << "trying to sign without a key, aborting" << IBRCOMMON_LOGGER_ENDL;
-				return;
-			}
-
 			PayloadIntegrityBlock& pib = bundle.push_front<PayloadIntegrityBlock>();
 			pib.set(REPLICATE_IN_EVERY_FRAGMENT, true);
 
@@ -96,30 +45,29 @@ namespace dtn
 			{
 				dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
 				ibrcommon::BLOB::Reference blobref = plb.getBLOB();
-				
-				ibrcommon::MutexLock ml(blobref);
-				addFragmentRange(pib._ciphersuite_params, bundle._fragmentoffset, blobref.operator*());
+				ibrcommon::BLOB::iostream stream = blobref.iostream();
+				addFragmentRange(pib._ciphersuite_params, bundle._fragmentoffset, *stream);
 			}
 
 			// set the source and destination address of the new block
-			if (source != bundle._source) pib.setSecuritySource( source );
-			if (destination != bundle._destination) pib.setSecurityDestination( destination );
+			if (key.reference != bundle._source.getNodeEID()) pib.setSecuritySource( key.reference );
+			if (destination != bundle._destination.getNodeEID()) pib.setSecurityDestination( destination );
 
-			pib.setKeySize(getSecurityResultSize());
-//			pib.setCiphersuiteId(SecurityBlock::PIB_RSA_SHA256);
+			pib.setKeySize(key);
+			pib.setCiphersuiteId(SecurityBlock::PIB_RSA_SHA256);
 			pib._ciphersuite_flags |= CONTAINS_SECURITY_RESULT;
-			std::string sign = calcHash(bundle, pib);
+			std::string sign = calcHash(bundle, key, pib);
 			pib._security_result.add(SecurityBlock::integrity_signature, sign);
 		}
 
-		const std::string PayloadIntegrityBlock::calcHash(const dtn::data::Bundle &bundle, PayloadIntegrityBlock& ignore) const
+		const std::string PayloadIntegrityBlock::calcHash(const dtn::data::Bundle &bundle, const SecurityKey &key, PayloadIntegrityBlock& ignore)
 		{
-			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) <<  "entering ..." << IBRCOMMON_LOGGER_ENDL;
-
+			EVP_PKEY *pkey = key.getEVP();
 			ibrcommon::RSASHA256Stream rs2s(pkey);
 			dtn::security::MutualSerializer(rs2s).serialize_mutable(bundle, &ignore);
 			int return_code = rs2s.getSign().first;
 			std::string sign_string = rs2s.getSign().second;
+			SecurityKey::free(pkey);
 
 			if (return_code)
 				return sign_string;
@@ -131,86 +79,112 @@ namespace dtn
 			}
 		}
 
-		int PayloadIntegrityBlock::testBlock(const dtn::data::Bundle& bundle, dtn::security::PayloadIntegrityBlock const * sb, const bool use_eid) const
+		void PayloadIntegrityBlock::verify(const dtn::data::Bundle& bundle, const SecurityKey &key, const PayloadIntegrityBlock &sb, const bool use_eid)
 		{
-			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "checking block" << IBRCOMMON_LOGGER_ENDL;
+			// check if we have the public key of the security source
+			if (use_eid)
+			{
+				if (!sb.isSecuritySource(bundle, key.reference))
+				{
+					throw ibrcommon::Exception("key not match the security source");
+				}
+			}
 
-//			// check if we have the public key of the security source, or this bundle is adressed to us
-//			if (use_eid && !((*sb).isSecuritySource(bundle, _partner_node) || (*sb).isSecurityDestination(bundle, _our_id)))
-//				return 0;
-//			// check the correct algorithm
-//			if (sb->_ciphersuite_id != SecurityBlock::PIB_RSA_SHA256)
-//				return 0;
-//
-//			ibrcommon::RSASHA256Stream rs2s(pkey, true);
-//			dtn::security::MutualSerializer(rs2s).serialize_mutable(bundle, sb);
-//			return rs2s.getVerification(SecurityBlock::getTLVs(sb->_security_result, SecurityBlock::integrity_signature).begin().operator*());
+			// check the correct algorithm
+			if (sb._ciphersuite_id != SecurityBlock::PIB_RSA_SHA256)
+			{
+				throw ibrcommon::Exception("can not verify the PIB because of an invalid algorithm");
+			}
+
+			EVP_PKEY *pkey = key.getEVP();
+			ibrcommon::RSASHA256Stream rs2s(pkey, true);
+			dtn::security::MutualSerializer(rs2s).serialize_mutable(bundle, &sb);
+			int ret = rs2s.getVerification(sb._security_result.get(SecurityBlock::integrity_signature));
+			SecurityKey::free(pkey);
+
+			if (ret == 0)
+			{
+				throw ibrcommon::Exception("verification failed");
+			}
+			else if (ret < 0)
+			{
+				throw ibrcommon::Exception("verification error");
+			}
 		}
 
-		signed char PayloadIntegrityBlock::verify(const dtn::data::Bundle &bundle) const
+		void PayloadIntegrityBlock::verify(const dtn::data::Bundle &bundle, const SecurityKey &key)
 		{
-			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "entering ..." << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "searching our PIB" << IBRCOMMON_LOGGER_ENDL;
 			// iterate over all PIBs to find the right one
 			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
 
 			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it!=pibs.end(); it++)
 			{
-				int return_code = testBlock(bundle, *it);
-				// return if we got an error or are successful
-				if (return_code)
-					return return_code;
+				verify(bundle, key, **it);
 			}
-			return 0;
 		}
 
-		void PayloadIntegrityBlock::setKeySize(int new_size) const
+		void PayloadIntegrityBlock::setKeySize(const SecurityKey &key)
 		{
-			key_size = new_size;
-		}
+			EVP_PKEY *pkey = key.getEVP();
 
-		bool PayloadIntegrityBlock::verifyAndRemoveTopBlock(dtn::data::Bundle& bundle) const
-		{
-			PayloadIntegrityBlock& pib = bundle.getBlock<PayloadIntegrityBlock>();
-			if (testBlock(bundle, &pib) == 1)
+			if (EVP_PKEY_size(pkey) <= 0 && key_size <= 0)
+				key_size = _security_result.size();
+
+			// size of integrity_signature
+			if (EVP_PKEY_size(pkey) > 0)
 			{
-				bundle.remove(pib);
-				return true;
+				key_size = EVP_PKEY_size(pkey);
+				// size of integrity_signature length
+				key_size += dtn::data::SDNV::getLength(EVP_PKEY_size(pkey));
+				// TLV type
+				key_size++;
 			}
-			else
-				return false;
+
+			SecurityKey::free(pkey);
 		}
 
-		int PayloadIntegrityBlock::verifyAndRemoveMatchingBlock(dtn::data::Bundle& bundle) const
+		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle, const SecurityKey &key, const bool all)
 		{
 			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
-			int deleted_blocks = 0;
 			const PayloadIntegrityBlock * valid = NULL;
+
 			// search for valid PIB
 			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it != pibs.end() && !valid; it++)
-				// return if we got an error or are successful
-				if (testBlock(bundle, *it) == 1)
-				{
-					valid = *it;
-					deleted_blocks++;
-				}
-
-			// delete all pibs up to and including valid
-			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); valid && it != pibs.end() && *it != valid; it++)
 			{
-				deleted_blocks++;
-				bundle.remove(*(*it));
+				const PayloadIntegrityBlock &pib = (**it);
+
+				// check if the PIB is valid
+				try {
+					verify(bundle, key, pib);
+
+					// found an valid PIB, remove it
+					bundle.remove(pib);
+
+					// remove all previous pibs if all = true
+					if (all && (it != pibs.begin()))
+					{
+						// move the iterator one backward
+						for (it--; it != pibs.begin(); it--)
+						{
+							bundle.remove(**it);
+						}
+
+						// remove the first PIB too
+						bundle.remove(**it);
+					}
+
+					return;
+				} catch (const ibrcommon::Exception&) { };
 			}
-			if (valid)
-				bundle.remove(*valid);
-			return deleted_blocks;
 		}
 
-		void PayloadIntegrityBlock::removeAllPayloadIntegrityBlocks(dtn::data::Bundle& bundle) const
+		void PayloadIntegrityBlock::strip(dtn::data::Bundle& bundle)
 		{
 			std::list<const PayloadIntegrityBlock *> pibs = bundle.getBlocks<PayloadIntegrityBlock>();
 			for (std::list<const PayloadIntegrityBlock *>::const_iterator it = pibs.begin(); it != pibs.end(); it++)
+			{
 				bundle.remove(*(*it));
+			}
 		}
 	}
 }

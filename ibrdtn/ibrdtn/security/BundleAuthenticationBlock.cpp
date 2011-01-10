@@ -28,7 +28,7 @@ namespace dtn
 		{
 		}
 
-		void BundleAuthenticationBlock::sign(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key)
+		void BundleAuthenticationBlock::auth(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key)
 		{
 			BundleAuthenticationBlock& bab_begin = bundle.push_front<BundleAuthenticationBlock>();
 
@@ -139,8 +139,6 @@ namespace dtn
 
 		std::string BundleAuthenticationBlock::calcMAC(const dtn::data::Bundle& bundle, const dtn::security::SecurityKey &key, const bool with_correlator, const u_int64_t correlator)
 		{
-			IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "Generating hash" << IBRCOMMON_LOGGER_ENDL;
-
 			std::string hmac_key = key.getData();
 			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), hmac_key.length());
 			dtn::security::StrictSerializer(hms).serialize_strict(bundle, BUNDLE_AUTHENTICATION_BLOCK, with_correlator, correlator);
