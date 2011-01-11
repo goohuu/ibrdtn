@@ -22,7 +22,7 @@
 void print_help()
 {
 	std::cout << "-- dtnconvert (IBR-DTN) --" << std::endl;
-	std::cout << "Syntax: dtnconvert [options] <infile> <outfile>"  << std::endl;
+	std::cout << "Syntax: dtnconvert [options]"  << std::endl;
 	std::cout << std::endl;
 	std::cout << "* parameters *" << std::endl;
 	std::cout << " -h        display this text" << std::endl;
