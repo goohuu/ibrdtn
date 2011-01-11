@@ -63,7 +63,11 @@ namespace dtn
 		{
 			EVP_PKEY *pkey = key.getEVP();
 			ibrcommon::RSASHA256Stream rs2s(pkey);
-			dtn::security::MutualSerializer(rs2s).serialize_mutable(bundle, &ignore);
+
+			// serialize the bundle in the mutable form
+			dtn::security::MutualSerializer ms(rs2s, &ignore);
+			ms << bundle;
+
 			int return_code = rs2s.getSign().first;
 			std::string sign_string = rs2s.getSign().second;
 			SecurityKey::free(pkey);
@@ -97,7 +101,11 @@ namespace dtn
 
 			EVP_PKEY *pkey = key.getEVP();
 			ibrcommon::RSASHA256Stream rs2s(pkey, true);
-			dtn::security::MutualSerializer(rs2s).serialize_mutable(bundle, &sb);
+
+			// serialize the bundle in the mutable form
+			dtn::security::MutualSerializer ms(rs2s, &sb);
+			ms << bundle;
+
 			int ret = rs2s.getVerification(sb._security_result.get(SecurityBlock::integrity_signature));
 			SecurityKey::free(pkey);
 

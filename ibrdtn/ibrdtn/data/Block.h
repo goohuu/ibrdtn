@@ -74,21 +74,9 @@ namespace dtn
 			virtual size_t getLength() const = 0;
 
 			/**
-			 * Return by default the same length as getLength(). But if the length of
-			 * normal and mutable serialization differ, this function has to be
-			 * overridden
-			 * @return the size of the payload in mutable serialization
+			 * Return the length of the payload in strict format
 			 */
-			virtual size_t getLength_mutable() const;
-
 			virtual size_t getLength_strict() const;
-
-			/**
-			Canonicalizes the block into the stream.
-			@param stream the stream to be written into
-			@return the same stream as the parameter for chaining
-			*/
-			virtual std::ostream &serialize_mutable(std::ostream &stream) const;
 
 			/**
 			Serialize the block in a strict way. Dynamic fields are set to the last deserialized value.

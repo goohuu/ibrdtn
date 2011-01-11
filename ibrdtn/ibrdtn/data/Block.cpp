@@ -54,16 +54,6 @@ namespace dtn
 			return (_procflags & flag);
 		}
 
-		size_t Block::getLength_mutable() const
-		{
-			return getLength();
-		}
-
-		std::ostream& Block::serialize_mutable(std::ostream &stream) const
-		{
-			return serialize(stream);
-		}
-
 		size_t Block::getLength_strict() const
 		{
 			return getLength();

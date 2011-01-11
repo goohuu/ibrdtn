@@ -2,6 +2,7 @@
 #define __MUTUAL_SERIALIZER_H__
 
 #include "ibrdtn/data/Serializer.h"
+#include "ibrdtn/security/SecurityBlock.h"
 #include "ibrdtn/data/SDNV.h"
 #include <sys/types.h>
 
@@ -19,7 +20,7 @@ namespace dtn
 		the payload block, the PayloadIntegrityBlock and the 
 		PayloadConfidentialBlock.
 		*/
-		class MutualSerializer : public dtn::data::Serializer
+		class MutualSerializer : public dtn::data::DefaultSerializer
 		{
 			public:
 				/**
@@ -32,29 +33,10 @@ namespace dtn
 				@param stream the stream in which the mutable canonical form will be 
 				written into
 				*/
-				MutualSerializer(std::ostream& stream);
+				MutualSerializer(std::ostream& stream, const dtn::data::Block *ignore = NULL);
 				
 				/** does nothing */
 				virtual ~MutualSerializer();
-				
-				/**
-				Serializes the given bundle into the stream, which was given at the 
-				constructor in to mutable canonical form.
-				@param obj the bundle which shall be serialized into the mutable 
-				canonical form.
-				@param ignore a pointer to the block, which security result shall be ignored
-				@return a reference to this instance
-				*/
-				virtual MutualSerializer& serialize_mutable(const dtn::data::Bundle &obj, const dtn::security::SecurityBlock * ignore);
-				
-				/**
-				Serializes the given bundle into the stream, which was given at the 
-				constructor in to mutable canonical form. The security result of no 
-				block will be ignored.
-				@param obj
-				@return a reference to this instance
-				*/
-				virtual MutualSerializer &operator<<(const dtn::data::Bundle &obj);
 				
 				/**
 				Serializes the primary block in mutable canonical form. The usual rules 
@@ -63,7 +45,7 @@ namespace dtn
 				set to zero during this operation.
 				@return a reference to this instance
 				*/
-				virtual MutualSerializer &operator<<(const dtn::data::PrimaryBlock &obj);
+				virtual Serializer &operator<<(const dtn::data::PrimaryBlock &obj);
 				
 				/**
 				Serializes the block in mutable canonical form. The usual rules 
@@ -72,7 +54,7 @@ namespace dtn
 				set to zero during this operation.
 				@return a reference to this instance
 				*/
-				virtual MutualSerializer &operator<<(const dtn::data::Block &obj);
+				virtual Serializer &operator<<(const dtn::data::Block &obj);
 				
 				/**
 				Not implemented. This is only required by the interface.
@@ -99,7 +81,7 @@ namespace dtn
 				@param value the value to be written in network byte order
 				@return the stream in which shall be written
 				*/
-				static std::ostream& write_mutable(std::ostream& stream, const u_int32_t value);
+				virtual Serializer &operator<<(const u_int32_t value);
 				
 				/**
 				Writes an EID to a stream in mutable form.
@@ -107,7 +89,7 @@ namespace dtn
 				@param value the EID which shall be written
 				@return the stream in which shall be written
 				*/
-				static std::ostream& write_mutable(std::ostream& stream, const dtn::data::EID& value);
+				virtual Serializer &operator<<(const dtn::data::EID& value);
 				
 				/**
 				Writes a SDNV to a stream in mutable form.
@@ -115,12 +97,18 @@ namespace dtn
 				@param value the SDNV which shall be written
 				@return the stream in which shall be written
 				*/
-				static std::ostream& write_mutable(std::ostream& stream, const dtn::data::SDNV& value);
+				virtual Serializer &operator<<(const dtn::data::SDNV& value);
+
+				/**
+				 * Serialize a list of type-length-value entries.
+				 * @param list
+				 * @return
+				 */
+				virtual Serializer &operator<<(const dtn::security::SecurityBlock::TLVList& list);
 
 			private:
-				/** the stream which is given at the constructor and in which the 
-				serialized bundle will be written into */
-				std::ostream& _stream;
+				const dtn::data::Block *_ignore;
+				bool _ignore_previous_bundles;
 		};
 	}
 }

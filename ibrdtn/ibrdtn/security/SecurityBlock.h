@@ -211,179 +211,179 @@ namespace dtn
 			*/
 			const dtn::data::EID getSecurityDestination(const dtn::data::Bundle&) const;
 
-			protected:
-				/** the ciphersuite id tells what type of encryption, signature or MAC 
-				is used */
-				u_int64_t _ciphersuite_id;
-				/** the ciphersuite flags tell if security result or parameters are 
-				used, if the security destination or source is set and if a correlator 
-				is used */
-				u_int64_t _ciphersuite_flags;
-				/** a correlator binds several security blocks in a bundle together */
-				u_int64_t _correlator;
+		protected:
+			/** the ciphersuite id tells what type of encryption, signature or MAC
+			is used */
+			u_int64_t _ciphersuite_id;
+			/** the ciphersuite flags tell if security result or parameters are
+			used, if the security destination or source is set and if a correlator
+			is used */
+			u_int64_t _ciphersuite_flags;
+			/** a correlator binds several security blocks in a bundle together */
+			u_int64_t _correlator;
 
-				/** you can find e.g. key information, tags, salts, 
-				initialization_vectors stored als TLVs here */
-				TLVList _ciphersuite_params;
+			/** you can find e.g. key information, tags, salts,
+			initialization_vectors stored als TLVs here */
+			TLVList _ciphersuite_params;
 
-				/** you can find encrypted blocks, signatures or MACs here */
-				TLVList _security_result;
+			/** you can find encrypted blocks, signatures or MACs here */
+			TLVList _security_result;
 
-				/**
-				Creates an empty SecurityBlock. This is only needed by children, which add
-				blocks to bundles in a factory
-				@param type type of child block
-				@param id the ciphersuite
-				*/
-				SecurityBlock(const SecurityBlock::BLOCK_TYPES type, const CIPHERSUITE_IDS id);
+			/**
+			Creates an empty SecurityBlock. This is only needed by children, which add
+			blocks to bundles in a factory
+			@param type type of child block
+			@param id the ciphersuite
+			*/
+			SecurityBlock(const SecurityBlock::BLOCK_TYPES type, const CIPHERSUITE_IDS id);
 
-				/**
-				Creates a factory with a partner. If partner is empty, this must be a
-				instance with a private key or a BundleAuthenticationBlock.
-				@param type type of child block
-				*/
-				SecurityBlock(const SecurityBlock::BLOCK_TYPES type);
+			/**
+			Creates a factory with a partner. If partner is empty, this must be a
+			instance with a private key or a BundleAuthenticationBlock.
+			@param type type of child block
+			*/
+			SecurityBlock(const SecurityBlock::BLOCK_TYPES type);
 
-				/**
-				Sets the ciphersuite id
-				@param id ciphersuite id
-				*/
-				void setCiphersuiteId(const CIPHERSUITE_IDS id);
+			/**
+			Sets the ciphersuite id
+			@param id ciphersuite id
+			*/
+			void setCiphersuiteId(const CIPHERSUITE_IDS id);
 
-				/**
-				Sets the correlator
-				@param corr correlator value
-				*/
-				void setCorrelator(const u_int64_t corr);
+			/**
+			Sets the correlator
+			@param corr correlator value
+			*/
+			void setCorrelator(const u_int64_t corr);
 
-				/**
-				Checks if the given correlator value is used in the bundle
-				@param bundle the bundle in which shall be searched for correlators
-				@param correlator the correlator to be tested for uniqueness
-				@return false if correlator is unique, true otherwise
-				*/
-				static bool isCorrelatorPresent(const dtn::data::Bundle &bundle, const u_int64_t correlator);
+			/**
+			Checks if the given correlator value is used in the bundle
+			@param bundle the bundle in which shall be searched for correlators
+			@param correlator the correlator to be tested for uniqueness
+			@return false if correlator is unique, true otherwise
+			*/
+			static bool isCorrelatorPresent(const dtn::data::Bundle &bundle, const u_int64_t correlator);
 
-				/**
-				Creates a unique correlatorvalue for bundle
-				@param bundle the bundle for which a new unique correlator shall be 
-				created
-				@return a unique correlator
-				*/
-				static u_int64_t createCorrelatorValue(const dtn::data::Bundle &bundle);
+			/**
+			Creates a unique correlatorvalue for bundle
+			@param bundle the bundle for which a new unique correlator shall be
+			created
+			@return a unique correlator
+			*/
+			static u_int64_t createCorrelatorValue(const dtn::data::Bundle &bundle);
 
-				/**
-				Canonicalizes the block into the stream.
-				@param stream the stream to be written into
-				@return the same stream as the parameter for chaining
-				*/
-				virtual std::ostream &serialize_mutable(std::ostream &stream) const;
-				virtual std::ostream &serialize_mutable_without_security_result(std::ostream &stream) const;
+			/**
+			Canonicalizes the block into the stream.
+			@param stream the stream to be written into
+			@return the same stream as the parameter for chaining
+			*/
+			virtual dtn::security::MutualSerializer &serialize_mutable(dtn::security::MutualSerializer &serializer) const;
+			virtual dtn::security::MutualSerializer &serialize_mutable_without_security_result(dtn::security::MutualSerializer &serializer) const;
 
-				/**
-				Returns the size of the security result if it would be serialized, even 
-				if it is empty. This is needed for canonicalisation. If it is empty this
-				will be zero. There is no way to know how big will a payload be in 
-				advance. Children have to override it for the canonicalisation forms if 
-				nessessary (especial BundleAuthenticationBlock and 
-				PayloadIntegrityBlock).
-				@return the size of the serialized security result
-				*/
-				virtual size_t getSecurityResultSize() const;
+			/**
+			Returns the size of the security result if it would be serialized, even
+			if it is empty. This is needed for canonicalisation. If it is empty this
+			will be zero. There is no way to know how big will a payload be in
+			advance. Children have to override it for the canonicalisation forms if
+			nessessary (especial BundleAuthenticationBlock and
+			PayloadIntegrityBlock).
+			@return the size of the serialized security result
+			*/
+			virtual size_t getSecurityResultSize() const;
 
-				/**
-				Fills salt and key with random numbers.
-				@param salt reference to salt
-				@param key pointer to key
-				@param key_size size of key
-				*/
-				static void createSaltAndKey(u_int32_t& salt, unsigned char * key, size_t key_size);
+			/**
+			Fills salt and key with random numbers.
+			@param salt reference to salt
+			@param key pointer to key
+			@param key_size size of key
+			*/
+			static void createSaltAndKey(u_int32_t& salt, unsigned char * key, size_t key_size);
 
-				/**
-				Adds a key as a TLV to a string. The key is encrypted using the public 
-				key provided in the rsa object.
-				@param security_parameter the string object which gets the TLV appended
-				which contains the encrypted key
-				@param key the plaintext key
-				@param key_size the size of the plaintext key
-				@param rsa object containing the public key for encryption of the
-				symmetric key
-				*/
-				static void addKey(TLVList& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa);
+			/**
+			Adds a key as a TLV to a string. The key is encrypted using the public
+			key provided in the rsa object.
+			@param security_parameter the string object which gets the TLV appended
+			which contains the encrypted key
+			@param key the plaintext key
+			@param key_size the size of the plaintext key
+			@param rsa object containing the public key for encryption of the
+			symmetric key
+			*/
+			static void addKey(TLVList& security_parameter, unsigned char const * const key, size_t key_size, RSA * rsa);
 
-				/**
-				Reads a symmetric key TLV object from a string.
-				@param securiy_parameter the TLVs containing string
-				@param key pointer to an array to which the key will be written
-				@param key_size size of the array
-				@param rsa object containing the private key for decryption of the
-				symmetric key
-				@return true if the key has been successfully decrypted
-				*/
-				static bool getKey(const TLVList& security_parameter, unsigned char * key, size_t key_size, RSA * rsa);
+			/**
+			Reads a symmetric key TLV object from a string.
+			@param securiy_parameter the TLVs containing string
+			@param key pointer to an array to which the key will be written
+			@param key_size size of the array
+			@param rsa object containing the private key for decryption of the
+			symmetric key
+			@return true if the key has been successfully decrypted
+			*/
+			static bool getKey(const TLVList& security_parameter, unsigned char * key, size_t key_size, RSA * rsa);
 
-				/**
-				Adds a salt TLV object to a string.
-				@param security_parameters the string
-				@param salt the salt which shall be added
-				*/
-				static void addSalt(TLVList& security_parameters, u_int32_t salt);
+			/**
+			Adds a salt TLV object to a string.
+			@param security_parameters the string
+			@param salt the salt which shall be added
+			*/
+			static void addSalt(TLVList& security_parameters, u_int32_t salt);
 
-				/**
-				Reads a salt TLV from a string containing TLVs
-				@param security_parameters string containing TLVs
-				*/
-				static u_int32_t getSalt(const TLVList& security_parameters);
+			/**
+			Reads a salt TLV from a string containing TLVs
+			@param security_parameters string containing TLVs
+			*/
+			static u_int32_t getSalt(const TLVList& security_parameters);
 
-				/**
-				Copys all EIDs from one block to another and skips the first skip EIDs
-				@param from source of the EIDs
-				@param to destination of the EIDs
-				@param skip how much EIDs should be skipped at the beginning
-				*/
-				static void copyEID(const dtn::data::Block& from, dtn::data::Block& to, size_t skip = 0);
+			/**
+			Copys all EIDs from one block to another and skips the first skip EIDs
+			@param from source of the EIDs
+			@param to destination of the EIDs
+			@param skip how much EIDs should be skipped at the beginning
+			*/
+			static void copyEID(const dtn::data::Block& from, dtn::data::Block& to, size_t skip = 0);
 
-				/**
-				Encrypts a Block. The used initialisation vector will be written into the
-				security parameters of the new SecurityBlock. The ciphertext will have the
-				tag appended and be written into security result. The flags that this
-				block contains ciphersuite parameters and security result will be set.
-				If this is the first block, don't forget to add the key and salt to its
-				security parameters.
-				@param bundle the bundle which contains block
-				@param block the block which shall be encrypted and encapsulated
-				@param salt the salt to be used
-				@param ephemeral_key the key to be used
-				@return the Security Block which replaced block
-				*/
-				template <class T>
-				static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
+			/**
+			Encrypts a Block. The used initialisation vector will be written into the
+			security parameters of the new SecurityBlock. The ciphertext will have the
+			tag appended and be written into security result. The flags that this
+			block contains ciphersuite parameters and security result will be set.
+			If this is the first block, don't forget to add the key and salt to its
+			security parameters.
+			@param bundle the bundle which contains block
+			@param block the block which shall be encrypted and encapsulated
+			@param salt the salt to be used
+			@param ephemeral_key the key to be used
+			@return the Security Block which replaced block
+			*/
+			template <class T>
+			static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
-				/**
-				Decrypts the block which is held in the SecurityBlock replaces it.
-				The ciphertext is only substituted and the old block reconstructed if 
-				tag verification succeeds.
-				@param bundle the bundle which contains block
-				@param block the security block with an encrypted block in its security
-				result
-				@param salt the salt
-				@param ephemeral_key the key
-				@return true if tag verification succeeded, false if not
-				*/
-				static void decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
+			/**
+			Decrypts the block which is held in the SecurityBlock replaces it.
+			The ciphertext is only substituted and the old block reconstructed if
+			tag verification succeeds.
+			@param bundle the bundle which contains block
+			@param block the security block with an encrypted block in its security
+			result
+			@param salt the salt
+			@param ephemeral_key the key
+			@return true if tag verification succeeded, false if not
+			*/
+			static void decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
-				/**
-				Calculates the Size of the stream and adds a fragment range item to ciphersuite_params
-				@param ciphersuite_params the string which will get a fragment range TLV added
-				@param stream the stream which size will be calculated
-				*/
-				static void addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, std::istream& stream);
+			/**
+			Calculates the Size of the stream and adds a fragment range item to ciphersuite_params
+			@param ciphersuite_params the string which will get a fragment range TLV added
+			@param stream the stream which size will be calculated
+			*/
+			static void addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, std::istream& stream);
 
-			private:
-				/** not implemented */
-				SecurityBlock(const SecurityBlock&);
-				/** not implemented */
-				SecurityBlock& operator=(const SecurityBlock&);
+		private:
+			/** not implemented */
+			SecurityBlock(const SecurityBlock&);
+			/** not implemented */
+			SecurityBlock& operator=(const SecurityBlock&);
 		};
 
 		template <class T>

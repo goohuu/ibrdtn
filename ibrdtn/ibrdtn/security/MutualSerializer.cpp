@@ -24,8 +24,8 @@ namespace dtn
 {
 	namespace security
 	{
-		MutualSerializer::MutualSerializer(std::ostream& stream)
-		 : _stream(stream)
+		MutualSerializer::MutualSerializer(std::ostream& stream, const dtn::data::Block *ignore)
+		 : dtn::data::DefaultSerializer(stream), _ignore(ignore), _ignore_previous_bundles(ignore != NULL)
 		 {
 		 }
 
@@ -33,75 +33,59 @@ namespace dtn
 		{
 		}
 
-		MutualSerializer& MutualSerializer::serialize_mutable(const dtn::data::Bundle& obj, const SecurityBlock * ignore)
+		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
 		{
-			// serialize the primary block
-			(*this) << (dtn::data::PrimaryBlock&)obj;
+			// we want to ignore all block before "ignore"
+			if (_ignore != NULL) _ignore_previous_bundles = true;
 
-			// serialize all secondary blocks
-			std::list<refcnt_ptr<dtn::data::Block> > list = obj._blocks._blocks;
-
-			std::list<refcnt_ptr<dtn::data::Block> >::const_iterator iter = list.begin();
-
-			if (ignore)
-			{
-				IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "ignored security result block type: " << static_cast<int>(ignore->getType()) << IBRCOMMON_LOGGER_ENDL;
-				// skip all blocks until ignore is reached
-				while (&(*(*iter)) != ignore && iter != list.end())
-					iter++;
-			}
-
-			for (; iter != list.end(); iter++)
-			{
-				const dtn::data::Block &b = (*(*iter));
-
-				// only take payload related blocks
-				if (b.getType() == dtn::data::PayloadBlock::BLOCK_TYPE
-					|| b.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK
-					|| b.getType() == SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK)
-					(*this) << b;
-			}
-
-			return (*this);
-		}
-
-		MutualSerializer& MutualSerializer::operator<<(const dtn::data::Bundle &obj)
-		{
-			return serialize_mutable(obj, 0);
-		}
-
-		MutualSerializer& MutualSerializer::operator<<(const dtn::data::PrimaryBlock &obj)
-		{
 			// write unpacked primary block
 			// bundle version
 			_stream << dtn::data::BUNDLE_VERSION;
+
 			// processing flags
-			MutualSerializer::write_mutable(_stream, dtn::data::SDNV(obj._procflags & 0x0000000007C1BE));
+			(*this) << dtn::data::SDNV(obj._procflags & 0x0000000007C1BE);
 
 			// length of header
-			MutualSerializer::write_mutable(_stream, dtn::data::SDNV(getLength(obj)));
+			(*this) << dtn::data::SDNV(getLength(obj));
 
-			// dest id
-			MutualSerializer::write_mutable(_stream, obj._destination);
-			// source id
-			MutualSerializer::write_mutable(_stream, obj._source);
-			// report to id
-			MutualSerializer::write_mutable(_stream, obj._reportto);
+			// dest, source, report to id
+			(*this) << obj._destination;
+			(*this) << obj._source;
+			(*this) << obj._reportto;
 
 			// timestamp
-			MutualSerializer::write_mutable(_stream, dtn::data::SDNV(obj._timestamp));
-			MutualSerializer::write_mutable(_stream, dtn::data::SDNV(obj._sequencenumber));
+			(*this) << dtn::data::SDNV(obj._timestamp);
+			(*this) << dtn::data::SDNV(obj._sequencenumber);
 
 			// lifetime
-			MutualSerializer::write_mutable(_stream, dtn::data::SDNV(obj._lifetime));
+			(*this) << dtn::data::SDNV(obj._lifetime);
 
 			return *this;
 		}
 
-		MutualSerializer& MutualSerializer::operator<<(const dtn::data::Block &obj)
+		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::Block &obj)
 		{
+			// do we ignore the current block?
+			if (_ignore_previous_bundles && (&obj != _ignore))
+			{
+				return *this;
+			}
+			else
+			{
+				// process all following bundles
+				_ignore_previous_bundles = false;
+			}
+
+			// only take payload related blocks
+			if (obj.getType() != dtn::data::PayloadBlock::BLOCK_TYPE
+				&& obj.getType() != SecurityBlock::PAYLOAD_INTEGRITY_BLOCK
+				&& obj.getType() != SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK)
+			{
+				return *this;
+			}
+
 			_stream << obj._blocktype;
-			MutualSerializer::write_mutable(_stream, dtn::data::SDNV(obj._procflags & 0x0000000000000077));
+			(*this) << dtn::data::SDNV(obj._procflags & 0x0000000000000077);
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
@@ -110,21 +94,24 @@ namespace dtn
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
 				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
-					MutualSerializer::write_mutable(_stream, *it);
-
-			// write size of the payload in the block
-			MutualSerializer::write_mutable(_stream, dtn::data::SDNV(obj.getLength_mutable()));
+					(*this) << (*it);
 
 			try {
 				const dtn::security::SecurityBlock &sb = dynamic_cast<const dtn::security::SecurityBlock&>(obj);
 				
 				if ( (sb.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK) || (sb.getType() == SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK) )
 				{
-					sb.serialize_mutable_without_security_result(_stream);
+					// write size of the payload in the block
+					(*this) << dtn::data::SDNV(sb.getLength_mutable());
+
+					sb.serialize_mutable_without_security_result(*this);
 				}
 			} catch (const std::bad_cast&) {
+				// write size of the payload in the block
+				(*this) << dtn::data::SDNV(obj.getLength());
+
 				// write the payload of the block
-				obj.serialize_mutable(_stream);
+				obj.serialize(_stream);
 			};
 
 			return (*this);
@@ -185,47 +172,50 @@ namespace dtn
 
 			// size-field of the size of the payload in the block
 			len += sdnv_size;
-			// size of the payload
-			len += obj.getLength_mutable();
+
+			try {
+				const dtn::security::SecurityBlock &sb = dynamic_cast<const dtn::security::SecurityBlock&>(obj);
+
+				// add size of the payload in the block
+				len += sb.getLength_mutable();
+			} catch (const std::bad_cast&) {
+				// add size of the payload in the block
+				len += obj.getLength();
+			};
 
 			return len;
 		}
 
 
-		std::ostream& MutualSerializer::write_mutable(std::ostream& stream, const u_int32_t value)
+		dtn::data::Serializer& MutualSerializer::operator<<(const u_int32_t value)
 		{
 			u_int32_t be = htonl(value);
-			if (!stream)
-				std::cerr << "Could not write to Stream\n";
-			else
-				stream.write(reinterpret_cast<char*>(&be), sizeof(u_int32_t));
-			return stream;
+			_stream.write(reinterpret_cast<char*>(&be), sizeof(u_int32_t));
+			return *this;
 		}
 
-		std::ostream& MutualSerializer::write_mutable(std::ostream& stream, const dtn::data::EID& value)
+		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::EID& value)
 		{
-			if (!stream)
-				std::cerr << "Could not write to Stream\n";
-			else
-			{
-				MutualSerializer::write_mutable(stream, value.getString().size());
-				stream.write(value.getString().c_str(), value.getString().size());
-			}
-			return stream;
+			dtn::data::BundleString bs(value.getString());
+			_stream << bs;
+
+			return *this;
 		}
 
-		std::ostream& MutualSerializer::write_mutable(std::ostream& stream, const dtn::data::SDNV& value)
+		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::SDNV& value)
 		{
 			// endianess muahahaha ...
 			// and now we are gcc centric, even older versions work
 			u_int64_t be = _ibrdtn_htobe64(value.getValue());
-			if (!stream)
-				std::cerr << "Could not write to Stream\n";
-			else
-			{
-				stream.write(reinterpret_cast<char*>(&be), sizeof(u_int64_t));
-			}
-			return stream;
+			_stream.write(reinterpret_cast<char*>(&be), sizeof(u_int64_t));
+			return *this;
+		}
+
+		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::security::SecurityBlock::TLVList& list)
+		{
+			(*this) << dtn::data::SDNV(list.getLength());
+			_stream << list.toString();
+			return *this;
 		}
 	}
 }
