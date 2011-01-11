@@ -368,11 +368,14 @@ namespace dtn
 
 				const ibrcommon::File& getKey() const;
 
+				const ibrcommon::File& getBABDefaultKey() const;
+
 			private:
 				ibrcommon::File _path;
 				Level _level;
 				ibrcommon::File _ca;
 				ibrcommon::File _key;
+				ibrcommon::File _bab_default_key;
 #endif
 			};
 

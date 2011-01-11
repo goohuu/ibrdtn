@@ -24,12 +24,15 @@ void print_help()
 	cout << " <dst>         set the destination eid (e.g. dtn://node/filetransfer)" << endl;
 	cout << " <filename>    the file to transfer" << endl;
 	cout << "* optional parameters *" << endl;
-	cout << " -h|--help       display this text" << endl;
-	cout << " --src <name>    set the source application name (e.g. filetransfer)" << endl;
-	cout << " -p <0..2>       set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
-	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 3600" << endl;
-	cout << " -U <socket>     use UNIX domain sockets" << endl;
-	cout << " -n <copies>			create <copies> bundle copies" << endl;
+	cout << " -h|--help     display this text" << endl;
+	cout << " --src <name>  set the source application name (e.g. filetransfer)" << endl;
+	cout << " -p <0..2>     set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
+	cout << " --lifetime <seconds>" << endl;
+	cout << "               set the lifetime of outgoing bundles; default: 3600" << endl;
+	cout << " -U <socket>   use UNIX domain sockets" << endl;
+	cout << " -n <copies>   create <copies> bundle copies" << endl;
+	cout << " --encrypt     request encryption on the bundle layer" << endl;
+	cout << " --sign        request signature on the bundle layer" << endl;
 
 }
 
@@ -44,6 +47,8 @@ int main(int argc, char *argv[])
 	ibrcommon::File unixdomain;
 	int priority = 1;
 	int copies = 1;
+	bool bundle_encryption = false;
+	bool bundle_signed = false;
 
 //	ibrcommon::Logger::setVerbosity(99);
 //	ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL);
@@ -61,6 +66,15 @@ int main(int argc, char *argv[])
 			{
 				print_help();
 				return 0;
+			}
+			else if (arg == "--encrypt")
+			{
+				bundle_encryption = true;
+			}
+
+			else if (arg == "--sign")
+			{
+				bundle_signed = true;
 			}
 			else if (arg == "--src" && argc > i)
 			{
@@ -199,6 +213,12 @@ int main(int argc, char *argv[])
 					for(int u=0; u<copies; u++){
 						dtn::api::BLOBBundle b(file_destination, ref);
 
+						// enable encryption if requested
+						if (bundle_encryption) b.requestEncryption();
+
+						// enable signature if requested
+						if (bundle_signed) b.requestSigned();
+
 						// set the lifetime
 						b.setLifetime(lifetime);
 
@@ -221,6 +241,12 @@ int main(int argc, char *argv[])
 					for(int u=0; u<copies; u++){
 						// create a bundle from the file
 						dtn::api::FileBundle b(file_destination, filename);
+
+						// enable encryption if requested
+						if (bundle_encryption) b.requestEncryption();
+
+						// enable signature if requested
+						if (bundle_signed) b.requestSigned();
 
 						// set the lifetime
 						b.setLifetime(lifetime);

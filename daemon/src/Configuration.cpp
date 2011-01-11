@@ -660,7 +660,18 @@ namespace dtn
 
 				if (!_ca.exists())
 				{
-					IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(warning) << "KEY file " << _ca.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+				}
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+			}
+
+			// load KEY file
+			try {
+				_bab_default_key = conf.read<std::string>("security_bab_default_key");
+
+				if (!_bab_default_key.exists())
+				{
+					IBRCOMMON_LOGGER(warning) << "KEY file " << _bab_default_key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
 				}
 			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 			}
@@ -693,6 +704,11 @@ namespace dtn
 		Configuration::Security::Level Configuration::Security::getLevel() const
 		{
 			return _level;
+		}
+
+		const ibrcommon::File& Configuration::Security::getBABDefaultKey() const
+		{
+			return _bab_default_key;
 		}
 #endif
 

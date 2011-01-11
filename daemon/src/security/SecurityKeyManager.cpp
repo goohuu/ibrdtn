@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "Configuration.h"
 #include "security/SecurityKeyManager.h"
 #include <ibrcommon/Logger.h>
 #include <sstream>
@@ -77,6 +78,17 @@ namespace dtn
 					if (!keyfile.exists())
 					{
 						IBRCOMMON_LOGGER(warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
+
+						// get the default shared key
+						const ibrcommon::File default_key = dtn::daemon::Configuration::getInstance().getSecurity().getBABDefaultKey();
+
+						if (default_key.exists())
+						{
+							keydata.file = default_key;
+							keydata.lastupdate = default_key.lastmodify();
+							break;
+						}
+
 						throw SecurityKeyManager::KeyNotFoundException();
 					}
 
