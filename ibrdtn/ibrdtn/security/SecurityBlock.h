@@ -368,7 +368,7 @@ namespace dtn
 				@return the Security Block which replaced block
 				*/
 				template <class T>
-				static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block*const block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
+				static T& encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 				/**
 				Decrypts the block which is held in the SecurityBlock replaces it.
@@ -381,7 +381,7 @@ namespace dtn
 				@param ephemeral_key the key
 				@return true if tag verification succeeded, false if not
 				*/
-				static void decryptBlock(dtn::data::Bundle& bundle, dtn::security::SecurityBlock const * block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
+				static void decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes]);
 
 				/**
 				Calculates the Size of the stream and adds a fragment range item to ciphersuite_params
@@ -398,19 +398,19 @@ namespace dtn
 		};
 
 		template <class T>
-		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block*const block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
+		T& SecurityBlock::encryptBlock(dtn::data::Bundle& bundle, const dtn::data::Block &block, u_int32_t salt, const unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
 			// insert ESB, block can be removed after encryption, because bundle will destroy it
-			T& esb = bundle.insert<T>(*block);
+			T& esb = bundle.insert<T>(block);
 
 			// take eid list
-			copyEID(*block, esb);
+			copyEID(block, esb);
 
 			std::stringstream ss;
 			ibrcommon::AES128Stream encrypt(ibrcommon::AES128Stream::ENCRYPT , ss, ephemeral_key, salt);
 			dtn::data::Dictionary dict(bundle);
 			dtn::data::DefaultSerializer dser(encrypt, dict);
-			dser << *block;
+			dser << block;
 			encrypt << std::flush;
 
 			// append tag at the end of the ciphertext
@@ -424,7 +424,7 @@ namespace dtn
 
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
-			bundle.remove(*block);
+			bundle.remove(block);
 
 			return esb;
 		}

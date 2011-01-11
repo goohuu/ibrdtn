@@ -1,7 +1,7 @@
 ## sub directory
 
-h_sources = SecurityBlock.h BundleAuthenticationBlock.h PayloadIntegrityBlock.h MutualSerializer.h StrictSerializer.h PayloadConfidentialBlock.h ExtensionSecurityBlock.h KeyBlock.h RuleBlock.h SecurityKey.h
-cc_sources = SecurityBlock.cpp BundleAuthenticationBlock.cpp PayloadIntegrityBlock.cpp MutualSerializer.cpp StrictSerializer.cpp PayloadConfidentialBlock.cpp ExtensionSecurityBlock.cpp KeyBlock.cpp RuleBlock.cpp SecurityKey.cpp
+h_sources = SecurityBlock.h BundleAuthenticationBlock.h PayloadIntegrityBlock.h MutualSerializer.h StrictSerializer.h PayloadConfidentialBlock.h ExtensionSecurityBlock.h SecurityKey.h
+cc_sources = SecurityBlock.cpp BundleAuthenticationBlock.cpp PayloadIntegrityBlock.cpp MutualSerializer.cpp StrictSerializer.cpp PayloadConfidentialBlock.cpp ExtensionSecurityBlock.cpp SecurityKey.cpp
 
 #Install the headers in a versioned directory
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/security

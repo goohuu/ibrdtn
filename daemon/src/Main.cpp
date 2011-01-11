@@ -54,8 +54,6 @@
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
 #include "security/SecurityKeyManager.h"
-#include "security/RuleServerWorker.h"
-#include "security/KeyServerWorker.h"
 #endif
 
 #include <csignal>
@@ -623,14 +621,6 @@ int main(int argc, char *argv[])
 
 	// add DevNull module
 	DevNull devnull;
-
-#ifdef WITH_BUNDLE_SECURITY
-	// for key distribution
-	KeyServerWorker keyserver;
-
-	// receiving and sending new rules
-	RuleServerWorker rs;
-#endif
 
 	// announce static nodes, create a list of static nodes
 	list<Node> static_nodes = conf.getNetwork().getStaticNodes();

@@ -536,14 +536,14 @@ namespace dtn
 			return salt;
 		}
 
-		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, dtn::security::SecurityBlock const * block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
+		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
 			// get iv, convert with reinterpret_cast
-			std::string iv_string(block->_ciphersuite_params.get(SecurityBlock::initialization_vector));
+			std::string iv_string(block._ciphersuite_params.get(SecurityBlock::initialization_vector));
 			unsigned char const * iv = reinterpret_cast<unsigned char const *>(iv_string.c_str());
 
 			// get data and tag, the last tag_len bytes are the tag. cut them of and reinterpret_cast
-			std::string data_tag_string(block->_security_result.get(SecurityBlock::encapsulated_block));
+			std::string data_tag_string(block._security_result.get(SecurityBlock::encapsulated_block));
 			std::string tag_string(data_tag_string.substr(data_tag_string.size() - ibrcommon::AES128Stream::tag_len, ibrcommon::AES128Stream::tag_len));
 			unsigned char const * tag = reinterpret_cast<unsigned char const *>(tag_string.c_str());
 			data_tag_string.resize(data_tag_string.size() - ibrcommon::AES128Stream::tag_len);
@@ -563,14 +563,14 @@ namespace dtn
 			char block_type = plaintext.peek();
 			if (dtn::data::PayloadBlock::BLOCK_TYPE)
 			{
-				dtn::data::PayloadBlock &plaintext_block = bundle.insert<dtn::data::PayloadBlock>(*block);
+				dtn::data::PayloadBlock &plaintext_block = bundle.insert<dtn::data::PayloadBlock>(block);
 				ddser >> plaintext_block;
 			}
 			else
 			{
 				try {
 					dtn::data::ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
-					dtn::data::Block &plaintext_block = bundle.insert(f, *block);
+					dtn::data::Block &plaintext_block = bundle.insert(f, block);
 					ddser >> plaintext_block;
 
 					plaintext_block.getEIDList().clear();
@@ -578,14 +578,14 @@ namespace dtn
 					// copy eids
 					// remove security_source and destination
 					size_t skip = 0;
-					if (block->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
+					if (block._ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
 						skip++;
-					if (block->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+					if (block._ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
 						skip++;
 					copyEID(plaintext_block, plaintext_block, skip);
 
 				} catch (const ibrcommon::Exception &ex) {
-					dtn::data::ExtensionBlock &plaintext_block = bundle.insert<dtn::data::ExtensionBlock>(*block);
+					dtn::data::ExtensionBlock &plaintext_block = bundle.insert<dtn::data::ExtensionBlock>(block);
 					ddser >> plaintext_block;
 
 					plaintext_block.getEIDList().clear();
@@ -593,15 +593,15 @@ namespace dtn
 					// copy eids
 					// remove security_source and destination
 					size_t skip = 0;
-					if (block->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
+					if (block._ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
 						skip++;
-					if (block->_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+					if (block._ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
 						skip++;
 					copyEID(plaintext_block, plaintext_block, skip);
 				}
 			}
 
-			bundle.remove(*block);
+			bundle.remove(block);
 		}
 
 		void SecurityBlock::addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, std::istream& stream)

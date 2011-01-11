@@ -6,7 +6,6 @@
 #include <openssl/err.h>
 #include <openssl/rsa.h>
 #include <ibrcommon/thread/MutexLock.h>
-#include <ibrcommon/ssl/AES128Stream.h>
 #include <ibrcommon/Logger.h>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -93,11 +92,11 @@ namespace dtn
 				pcb.setCorrelator(correlator);
 
 			// encrypt PCBs and PIBs
-			for (std::list<PayloadConfidentialBlock const *>::const_iterator it = pcbs.begin(); it != pcbs.end(); it++)
-				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, *it, salt, ephemeral_key).setCorrelator(correlator);
+			for (std::list<const PayloadConfidentialBlock*>::const_iterator it = pcbs.begin(); it != pcbs.end(); it++)
+				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, (dtn::data::Block&)**it, salt, ephemeral_key).setCorrelator(correlator);
 
-			for (std::list<PayloadIntegrityBlock const *>::const_iterator it = pibs.begin(); it != pibs.end(); it++)
-				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, *it, salt, ephemeral_key).setCorrelator(correlator);
+			for (std::list<const PayloadIntegrityBlock*>::const_iterator it = pibs.begin(); it != pibs.end(); it++)
+				SecurityBlock::encryptBlock<PayloadConfidentialBlock>(bundle, (dtn::data::Block&)**it, salt, ephemeral_key).setCorrelator(correlator);
 		}
 
 		void PayloadConfidentialBlock::decrypt(dtn::data::Bundle& bundle, const dtn::security::SecurityKey &long_key)
@@ -155,7 +154,7 @@ namespace dtn
 							{
 								// try to decrypt the block
 								try {
-									decryptBlock(bundle, *it, salt, key);
+									decryptBlock(bundle, (dtn::security::SecurityBlock&)**it, salt, key);
 								} catch (const ibrcommon::Exception&) {
 									IBRCOMMON_LOGGER_ex(critical) << "tag verfication failed, when no matching key is found the block will be deleted" << IBRCOMMON_LOGGER_ENDL;
 

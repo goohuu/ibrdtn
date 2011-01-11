@@ -68,9 +68,6 @@ namespace dtn
 				// timestamp of last update
 				stream << key.lastupdate;
 
-//				// key data
-//				stream << dtn::data::BundleString(key.data);
-
 				// To support concatenation of streaming calls, we return the reference to the output stream.
 				return stream;
 			}
@@ -87,10 +84,6 @@ namespace dtn
 
 				// timestamp of last update
 				stream >> key.lastupdate;
-
-				// key data
-//				dtn::data::BundleString data_string; stream >> data_string;
-//				key.data = data_string;
 
 				// To support concatenation of streaming calls, we return the reference to the input stream.
 				return stream;
