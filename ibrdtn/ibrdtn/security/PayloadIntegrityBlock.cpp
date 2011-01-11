@@ -100,6 +100,8 @@ namespace dtn
 			}
 
 			EVP_PKEY *pkey = key.getEVP();
+			if (pkey == NULL) throw ibrcommon::Exception("verification error");
+
 			ibrcommon::RSASHA256Stream rs2s(pkey, true);
 
 			// serialize the bundle in the mutable form

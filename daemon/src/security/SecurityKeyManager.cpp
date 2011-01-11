@@ -77,8 +77,6 @@ namespace dtn
 
 					if (!keyfile.exists())
 					{
-						IBRCOMMON_LOGGER(warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
-
 						// get the default shared key
 						const ibrcommon::File default_key = dtn::daemon::Configuration::getInstance().getSecurity().getBABDefaultKey();
 
@@ -89,6 +87,7 @@ namespace dtn
 							break;
 						}
 
+						IBRCOMMON_LOGGER(warning) << "Key file for " << ref.getString() << " (" << keyfile.getPath() << ") not found" << IBRCOMMON_LOGGER_ENDL;
 						throw SecurityKeyManager::KeyNotFoundException();
 					}
 
