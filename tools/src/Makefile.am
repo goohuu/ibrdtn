@@ -8,7 +8,7 @@ INCLUDES = -I@top_srcdir@/src
 
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
 # the previous manual Makefile
-bin_PROGRAMS = dtnping dtninbox dtnoutbox dtnrecv dtnsend dtntracepath dtntrigger
+bin_PROGRAMS = dtnping dtninbox dtnoutbox dtnrecv dtnsend dtntracepath dtntrigger dtnconvert
 sbin_PROGRAMS = dtntunnel
 dtnping_SOURCES = dtnping.cpp
 dtninbox_SOURCES = dtninbox.cpp
@@ -18,3 +18,4 @@ dtnsend_SOURCES = dtnsend.cpp
 dtntunnel_SOURCES = dtntunnel.cpp
 dtntracepath_SOURCES = dtntracepath.cpp
 dtntrigger_SOURCES = dtntrigger.cpp
+dtnconvert_SOURCES = dtnconvert.cpp
