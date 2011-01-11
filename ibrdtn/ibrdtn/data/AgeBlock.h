@@ -37,9 +37,6 @@ namespace dtn
 			virtual std::ostream &serialize(std::ostream &stream) const;
 			virtual std::istream &deserialize(std::istream &stream);
 
-			virtual std::ostream &serialize_mutable(std::ostream &stream) const;
-			virtual size_t getLength_mutable() const;
-
 			virtual std::ostream &serialize_strict(std::ostream &stream) const;
 			virtual size_t getLength_strict() const;
 
