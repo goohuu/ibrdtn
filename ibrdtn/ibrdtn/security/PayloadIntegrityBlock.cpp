@@ -21,7 +21,7 @@ namespace dtn
 		}
 
 		PayloadIntegrityBlock::PayloadIntegrityBlock()
-		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK, PIB_RSA_SHA256) //, pkey(0), key_size(-1)
+		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK, PIB_RSA_SHA256), key_size(0)
 		{
 		}
 
@@ -31,7 +31,6 @@ namespace dtn
 
 		size_t PayloadIntegrityBlock::getSecurityResultSize() const
 		{
-			if (key_size <= 0) return _security_result.size();
 			return key_size;
 		}
 
@@ -185,6 +184,17 @@ namespace dtn
 			{
 				bundle.remove(*(*it));
 			}
+		}
+
+		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream)
+		{
+			// deserialize the SecurityBlock
+			SecurityBlock::deserialize(stream);
+
+			// set the key size locally
+			key_size = _security_result.getLength();
+
+			return stream;
 		}
 	}
 }

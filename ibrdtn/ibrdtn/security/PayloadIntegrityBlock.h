@@ -69,6 +69,12 @@ namespace dtn
 				*/
 				static void strip(dtn::data::Bundle& bundle);
 
+				/**
+				Parses the PayloadIntegrityBlock from a Stream
+				@param stream the stream to read from
+				*/
+				virtual std::istream &deserialize(std::istream &stream);
+
 			protected:
 				/**
 				Constructs an empty PayloadIntegrityBlock in order for adding it to a 
