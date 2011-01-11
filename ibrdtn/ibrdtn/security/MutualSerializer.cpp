@@ -46,7 +46,6 @@ namespace dtn
 			if (ignore)
 			{
 				IBRCOMMON_LOGGER_DEBUG_ex(ibrcommon::Logger::LOGGER_DEBUG) << "ignored security result block type: " << static_cast<int>(ignore->getType()) << IBRCOMMON_LOGGER_ENDL;
-				ignore->set_ignore_security_result(true);
 				// skip all blocks until ignore is reached
 				while (&(*(*iter)) != ignore && iter != list.end())
 					iter++;
@@ -62,9 +61,6 @@ namespace dtn
 					|| b.getType() == SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK)
 					(*this) << b;
 			}
-
-			if (ignore)
-				ignore->set_ignore_security_result(false);
 
 			return (*this);
 		}
@@ -119,13 +115,22 @@ namespace dtn
 			// write size of the payload in the block
 			MutualSerializer::write_mutable(_stream, dtn::data::SDNV(obj.getLength_mutable()));
 
-			// write the payload of the block
-			obj.serialize(_stream, true);
+			try {
+				const dtn::security::SecurityBlock &sb = dynamic_cast<const dtn::security::SecurityBlock&>(obj);
+				
+				if ( (sb.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK) || (sb.getType() == SecurityBlock::PAYLOAD_CONFIDENTIAL_BLOCK) )
+				{
+					sb.serialize_mutable_without_security_result(_stream);
+				}
+			} catch (const std::bad_cast&) {
+				// write the payload of the block
+				obj.serialize_mutable(_stream);
+			};
 
 			return (*this);
 		}
 
-		size_t MutualSerializer::getLength(const dtn::data::Bundle &obj)
+		size_t MutualSerializer::getLength(const dtn::data::Bundle&)
 		{
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			assert(false);

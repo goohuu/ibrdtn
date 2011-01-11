@@ -63,5 +63,29 @@ namespace dtn
 			_time.start();
 			return stream;
 		}
+
+		size_t AgeBlock::getLength_mutable() const
+		{
+			return 1;
+		}
+
+		std::ostream& AgeBlock::serialize_mutable(std::ostream &stream) const
+		{
+			// we have to ignore the age field, because this is very dynamic data
+			stream << (char)0;
+			return stream;
+		}
+
+		size_t AgeBlock::getLength_strict() const
+		{
+			return 1;
+		}
+
+		std::ostream& AgeBlock::serialize_strict(std::ostream &stream) const
+		{
+			// we have to ignore the age field, because this is very dynamic data
+			stream << (char)0;
+			return stream;
+		}
 	}
 }

@@ -108,7 +108,6 @@ namespace dtn
 			bool isCompressable(const dtn::data::Bundle &obj) const;
 			std::ostream &_stream;
 
-		private:
 			Dictionary _dictionary;
 			bool _compressable;
 		};

@@ -118,7 +118,7 @@ namespace dtn
 						return;
 					}
 
-					IBRCOMMON_LOGGER_DEBUG(15) << "security: mac (" << bab_result << ") does not match to " << our_hash_string << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(15) << "security mac does not match" << IBRCOMMON_LOGGER_ENDL;
 				}
 				// bab contains no security result but a correlator
 				else if (bab._ciphersuite_flags &  CONTAINS_CORRELATOR)
@@ -141,7 +141,8 @@ namespace dtn
 		{
 			std::string hmac_key = key.getData();
 			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), hmac_key.length());
-			dtn::security::StrictSerializer(hms).serialize_strict(bundle, BUNDLE_AUTHENTICATION_BLOCK, with_correlator, correlator);
+			dtn::security::StrictSerializer ss(hms, BUNDLE_AUTHENTICATION_BLOCK, with_correlator, correlator);
+			ss << bundle;
 
 			return ibrcommon::HashStream::extract(hms);
 		}

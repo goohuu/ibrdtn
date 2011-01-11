@@ -8,8 +8,8 @@ namespace dtn
 {
 	namespace security
 	{
-		StrictSerializer::StrictSerializer(std::ostream& stream)
-		 : DefaultSerializer(stream)
+		StrictSerializer::StrictSerializer(std::ostream& stream, const dtn::security::SecurityBlock::BLOCK_TYPES type, const bool with_correlator, const u_int64_t correlator)
+		 : DefaultSerializer(stream), _block_type(type), _with_correlator(with_correlator), _correlator(correlator)
 		{
 		}
 
@@ -17,39 +17,26 @@ namespace dtn
 		{
 		}
 
-		StrictSerializer& StrictSerializer::serialize_strict(const dtn::data::Bundle& bundle, const dtn::security::SecurityBlock::BLOCK_TYPES type, const bool with_correlator, const u_int64_t correlator)
+		dtn::data::Serializer& StrictSerializer::operator<<(const dtn::data::Bundle& bundle)
 		{
-			if (type == dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK)
-			{
-				std::list<const BundleAuthenticationBlock*> babs = bundle.getBlocks<BundleAuthenticationBlock>();
-				for (std::list<const BundleAuthenticationBlock*>::const_iterator it = babs.begin(); it != babs.end(); it++)
-					(*it)->set_ignore_security_result(true);
-			}
-			else if (type == dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK)
-			{
-				std::list<const PayloadIntegrityBlock*> babs = bundle.getBlocks<PayloadIntegrityBlock>();
-				for (std::list<const PayloadIntegrityBlock*>::const_iterator it = babs.begin(); it != babs.end(); it++)
-					(*it)->set_ignore_security_result(true);
-			}
-
 			// rebuild the dictionary
 			rebuildDictionary(bundle);
 
 			// serialize the primary block
-			(*this) << static_cast<const dtn::data::PrimaryBlock&>(bundle);
+			(dtn::data::DefaultSerializer&)(*this) << static_cast<const dtn::data::PrimaryBlock&>(bundle);
 
 			// serialize all secondary blocks
 			std::list<refcnt_ptr<dtn::data::Block> > list = bundle._blocks._blocks;
 			std::list<refcnt_ptr<dtn::data::Block> >::const_iterator iter = list.begin();
 
 			// skip all blocks before the correlator
-			for (; with_correlator && iter != list.end(); iter++)
+			for (; _with_correlator && iter != list.end(); iter++)
 			{
 				const dtn::data::Block &b = (*(*iter));
 				if (b.getType() == SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK || b.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK)
 				{
 					const dtn::security::SecurityBlock& sb = dynamic_cast<const dtn::security::SecurityBlock&>(*(*iter));
-					if ((sb._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && sb._correlator == correlator)
+					if ((sb._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && sb._correlator == _correlator)
 						break;
 				}
 			}
@@ -65,29 +52,57 @@ namespace dtn
 				const dtn::data::Block &b = (*(*iter));
 				(*this) << b;
 
-				// until the block with the second correlator is reached
-				if (with_correlator && (b.getType() == SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK) || (b.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK))
-				{
-					const dtn::security::SecurityBlock& sb = dynamic_cast<const dtn::security::SecurityBlock&>(*(*iter));
-					if ((sb._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && sb._correlator == correlator)
-						break;
-				}
-			}
+				try {
+					const dtn::security::SecurityBlock &sb = dynamic_cast<const dtn::security::SecurityBlock&>(b);
 
-			if (type == dtn::security::SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK)
-			{
-				std::list<const BundleAuthenticationBlock*> babs = bundle.getBlocks<BundleAuthenticationBlock>();
-				for (std::list<const BundleAuthenticationBlock*>::const_iterator it = babs.begin(); it != babs.end(); it++)
-					(*it)->set_ignore_security_result(false);
-			}
-			else if (type == dtn::security::SecurityBlock::PAYLOAD_INTEGRITY_BLOCK)
-			{
-				std::list<const PayloadIntegrityBlock*> babs = bundle.getBlocks<PayloadIntegrityBlock>();
-				for (std::list<const PayloadIntegrityBlock*>::const_iterator it = babs.begin(); it != babs.end(); it++)
-					(*it)->set_ignore_security_result(false);
+					if ( (sb.getType() == SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK) || (sb.getType() == SecurityBlock::PAYLOAD_INTEGRITY_BLOCK) )
+					{
+						// until the block with the second correlator is reached
+						if (_with_correlator && (sb._ciphersuite_flags & SecurityBlock::CONTAINS_CORRELATOR) && sb._correlator == _correlator) break;
+					}
+				} catch (const std::bad_cast&) { };
 			}
 
 			return *this;
+		}
+
+		dtn::data::Serializer& StrictSerializer::operator<<(const dtn::data::Block &obj)
+		{
+			_stream << obj._blocktype;
+			_stream << dtn::data::SDNV(obj._procflags);
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
+			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+#endif
+
+			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
+			{
+				_stream << dtn::data::SDNV(obj._eids.size());
+				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				{
+					pair<size_t, size_t> offsets;
+
+					if (_compressable)
+					{
+						offsets = (*it).getCompressed();
+					}
+					else
+					{
+						offsets = _dictionary.getRef(*it);
+					}
+
+					_stream << dtn::data::SDNV(offsets.first);
+					_stream << dtn::data::SDNV(offsets.second);
+				}
+			}
+
+			// write size of the payload in the block
+			_stream << dtn::data::SDNV(obj.getLength_strict());
+
+			obj.serialize_strict(_stream);
+
+			return (*this);
 		}
 	}
 }

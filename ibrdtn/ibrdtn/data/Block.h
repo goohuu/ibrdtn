@@ -79,10 +79,23 @@ namespace dtn
 			 * overridden
 			 * @return the size of the payload in mutable serialization
 			 */
-			virtual size_t getLength_mutable() const
-			{
-				return getLength();
-			}
+			virtual size_t getLength_mutable() const;
+
+			virtual size_t getLength_strict() const;
+
+			/**
+			Canonicalizes the block into the stream.
+			@param stream the stream to be written into
+			@return the same stream as the parameter for chaining
+			*/
+			virtual std::ostream &serialize_mutable(std::ostream &stream) const;
+
+			/**
+			Serialize the block in a strict way. Dynamic fields are set to the last deserialized value.
+			@param stream the stream to be written into
+			@return the same stream as the parameter for chaining
+			*/
+			virtual std::ostream &serialize_strict(std::ostream &stream) const;
 
 			/**
 			 * Serialize the derived block payload.
@@ -90,19 +103,6 @@ namespace dtn
 			 * @return The same reference as given with the stream parameter.
 			 */
 			virtual std::ostream &serialize(std::ostream &stream) const = 0;
-
-			/**
-			 * By default this function does nothing else than serialize(std::ostream&).
-			 * Children have to implement it in their own way if different treatment for
-			 * serialization is needed.
-			 * @param stream the stream in which should be written
-			 * @param mutual if true the mode is mutual
-			 * @return the same stream as the input stream
-			 */
-			virtual std::ostream& serialize(std::ostream& stream, const bool&) const
-			{
-				return serialize(stream);
-			}
 
 			/**
 			 * Deserialize the derived block payload.

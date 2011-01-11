@@ -148,13 +148,13 @@ namespace dtn
 		}
 
 		SecurityBlock::SecurityBlock(const dtn::security::SecurityBlock::BLOCK_TYPES type, const dtn::security::SecurityBlock::CIPHERSUITE_IDS id)
-		: Block(type), _ciphersuite_id(id), _ciphersuite_flags(0), _correlator(0), ignore_security_result(false)
+		: Block(type), _ciphersuite_id(id), _ciphersuite_flags(0), _correlator(0)
 		{
 
 		}
 
 		SecurityBlock::SecurityBlock(const dtn::security::SecurityBlock::BLOCK_TYPES type)
-		: Block(type), _ciphersuite_flags(0), _correlator(0), ignore_security_result(false)
+		: Block(type), _ciphersuite_flags(0), _correlator(0)
 		{
 
 		}
@@ -341,25 +341,32 @@ namespace dtn
 
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
 			{
-				if (ignore_security_result)
-				{
-					stream << dtn::data::SDNV(getSecurityResultSize());
-				}
-				else
-				{
-					stream << _security_result;
-				}
+				stream << _security_result;
 			}
 
 			return stream;
 		}
 
-		ostream& SecurityBlock::serialize(ostream& stream, const bool mutual) const
+		std::ostream& SecurityBlock::serialize_strict(std::ostream &stream) const
 		{
-			if (mutual)
-				return serialize_mutual(stream);
-			else
-				return serialize(stream);
+			stream << dtn::data::SDNV(_ciphersuite_id) << dtn::data::SDNV(_ciphersuite_flags);
+
+			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
+			{
+				stream << dtn::data::SDNV(_correlator);
+			}
+
+			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
+			{
+				stream << _ciphersuite_params;
+			}
+
+			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
+			{
+				stream << dtn::data::SDNV(getSecurityResultSize());
+			}
+
+			return stream;
 		}
 
 		std::istream& SecurityBlock::deserialize(std::istream &stream)
@@ -406,12 +413,7 @@ namespace dtn
 			return stream;
 		}
 
-		void SecurityBlock::set_ignore_security_result(const bool value) const
-		{
-			ignore_security_result = value;
-		}
-
-		std::ostream& SecurityBlock::serialize_mutual(std::ostream &stream) const
+		std::ostream& SecurityBlock::serialize_mutable(std::ostream &stream) const
 		{
 			MutualSerializer::write_mutable(stream, dtn::data::SDNV(_ciphersuite_id));
 			MutualSerializer::write_mutable(stream, dtn::data::SDNV(_ciphersuite_flags));
@@ -428,14 +430,32 @@ namespace dtn
 
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
 			{
-				if (ignore_security_result)
-					MutualSerializer::write_mutable(stream, dtn::data::SDNV(getSecurityResultSize()));
-				else
-				{
-					std::string result = _security_result.toString();
-					MutualSerializer::write_mutable(stream, dtn::data::SDNV(getSecurityResultSize()));
-					stream.write(result.c_str(), result.length());
-				}
+				std::string result = _security_result.toString();
+				MutualSerializer::write_mutable(stream, dtn::data::SDNV(getSecurityResultSize()));
+				stream.write(result.c_str(), result.length());
+			}
+
+			return stream;
+		}
+
+		std::ostream& SecurityBlock::serialize_mutable_without_security_result(std::ostream &stream) const
+		{
+			MutualSerializer::write_mutable(stream, dtn::data::SDNV(_ciphersuite_id));
+			MutualSerializer::write_mutable(stream, dtn::data::SDNV(_ciphersuite_flags));
+
+			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
+				MutualSerializer::write_mutable(stream, dtn::data::SDNV(_ciphersuite_flags));
+
+			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
+			{
+				std::string params = _ciphersuite_params.toString();
+				MutualSerializer::write_mutable(stream, dtn::data::SDNV(params.length()));
+				stream << params;
+			}
+
+			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
+			{
+				MutualSerializer::write_mutable(stream, dtn::data::SDNV(getSecurityResultSize()));
 			}
 
 			return stream;

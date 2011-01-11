@@ -22,7 +22,7 @@ namespace dtn
 				/**
 				Constructs a StrictSerializer, which will stream into stream
 				*/
-				StrictSerializer(std::ostream& stream);
+				StrictSerializer(std::ostream& stream, const SecurityBlock::BLOCK_TYPES type = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK, const bool with_correlator = false, const u_int64_t correlator = 0);
 
 				/** does nothing */
 				virtual ~StrictSerializer();
@@ -37,7 +37,14 @@ namespace dtn
 				@param correlator the used correlator
 				@return a reference to this instance
 				*/
-				StrictSerializer& serialize_strict(const dtn::data::Bundle& bundle, const SecurityBlock::BLOCK_TYPES type = SecurityBlock::BUNDLE_AUTHENTICATION_BLOCK, const bool with_correlator = false, const u_int64_t correlator = 0);
+				virtual dtn::data::Serializer &operator<<(const dtn::data::Bundle &obj);
+
+				virtual dtn::data::Serializer &operator<<(const dtn::data::Block &obj);
+
+			private:
+				const dtn::security::SecurityBlock::BLOCK_TYPES _block_type;
+				const bool _with_correlator;
+				const u_int64_t _correlator;
 		};
 	}
 }

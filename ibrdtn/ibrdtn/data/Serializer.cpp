@@ -423,6 +423,10 @@ namespace dtn
 
 		Deserializer& DefaultDeserializer::operator >>(dtn::data::Bundle& obj)
 		{
+			// clear all blocks
+			obj.clearBlocks();
+
+			// read the primary block
 			(*this) >> (PrimaryBlock&)obj;
 
 			// read until the last block

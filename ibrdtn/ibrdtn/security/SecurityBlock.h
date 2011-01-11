@@ -145,14 +145,12 @@ namespace dtn
 			virtual std::ostream &serialize(std::ostream &stream) const;
 
 			/**
-			By default this function does nothing else than serialize(std::ostream&).
-			Children have to implement it in their own way if different treatment for
-			serialization is needed.
-			@param stream the stream in which should be written
-			@param mutual if true the mode is mutual
-			@return the same stream as the input stream
-			*/
-			virtual std::ostream& serialize(std::ostream& stream, const bool mutual) const;
+			 * Serializes this block in a strict form. That skips all dynamic field like
+			 * the security result.
+			 * @param stream
+			 * @return
+			 */
+			virtual std::ostream &serialize_strict(std::ostream &stream) const;
 
 			/**
 			Parses the SecurityBlock from a Stream
@@ -231,10 +229,6 @@ namespace dtn
 				/** you can find encrypted blocks, signatures or MACs here */
 				TLVList _security_result;
 
-				/** set to true if only the length of security_result shall be written 
-				into the stream */
-				mutable bool ignore_security_result;
-
 				/**
 				Creates an empty SecurityBlock. This is only needed by children, which add
 				blocks to bundles in a factory
@@ -279,17 +273,12 @@ namespace dtn
 				static u_int64_t createCorrelatorValue(const dtn::data::Bundle &bundle);
 
 				/**
-				Tells the block if its security result shall be ommitted
-				@param value if true the security_result will be ignored
-				*/
-				void set_ignore_security_result(const bool value) const;
-
-				/**
 				Canonicalizes the block into the stream.
 				@param stream the stream to be written into
 				@return the same stream as the parameter for chaining
 				*/
-				std::ostream &serialize_mutual(std::ostream &stream) const;
+				virtual std::ostream &serialize_mutable(std::ostream &stream) const;
+				virtual std::ostream &serialize_mutable_without_security_result(std::ostream &stream) const;
 
 				/**
 				Returns the size of the security result if it would be serialized, even 
