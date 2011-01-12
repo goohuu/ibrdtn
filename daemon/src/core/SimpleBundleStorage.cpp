@@ -77,7 +77,7 @@ namespace dtn
 		{
 			try {
 				dtn::data::Bundle bundle;
-				dtn::data::DefaultDeserializer ds(*stream, dtn::core::BundleCore::getInstance());
+				dtn::data::DefaultDeserializer ds(*stream);
 
 				// load a bundle into the storage
 				ds >> bundle;
@@ -125,7 +125,7 @@ namespace dtn
 
 				// load the bundle from file
 				try {
-					dtn::data::DefaultDeserializer(*stream, dtn::core::BundleCore::getInstance()) >> bundle;
+					dtn::data::DefaultDeserializer(*stream) >> bundle;
 				} catch (const std::exception &ex) {
 					throw dtn::SerializationFailedException("bundle get failed: " + std::string(ex.what()));
 				}
