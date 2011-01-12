@@ -100,7 +100,7 @@ namespace dtn
 				 */
 				void raiseEvent(const dtn::core::Event *evt);
 
-				ibrcommon::Mutex _lock;
+				ibrcommon::Conditional _connections_cond;
 				std::list<ClientHandler*> _connections;
 
 			protected:
@@ -112,6 +112,9 @@ namespace dtn
 				bool __cancellation();
 
 				ibrcommon::Queue<ApiServer::Task*> _tasks;
+
+			private:
+				void closeAll();
 			};
 
 			ibrcommon::tcpserver _tcpsrv;

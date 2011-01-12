@@ -216,7 +216,7 @@ namespace dtn
 			clearQueue();
 		}
 
-		void TCPConnection::run()
+		void TCPConnection::setup()
 		{
 			// try to connect to the other side
 			try {
@@ -235,9 +235,12 @@ namespace dtn
 				// error on open, requeue all bundles in the queue
 				IBRCOMMON_LOGGER(warning) << "connection to " << _node.getURI() << " (" << _node.getAddress() << ":" << _node.getPort() << ") failed" << IBRCOMMON_LOGGER_ENDL;
 				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
-				return;
+				throw;
 			} catch (const bad_cast&) { };
+		}
 
+		void TCPConnection::run()
+		{
 			try {
 				// do the handshake
 				char flags = 0;

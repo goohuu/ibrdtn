@@ -98,7 +98,7 @@ namespace dtn
 		void TCPConvergenceLayer::open(const dtn::core::Node &n)
 		{
 			// search for an existing connection
-			ibrcommon::MutexLock l(_connections_lock);
+			ibrcommon::MutexLock l(_connections_cond);
 
 			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
@@ -122,13 +122,16 @@ namespace dtn
 			// start the ClientHandler (service)
 			conn->initialize();
 
+			// signal that there is a new connection
+			_connections_cond.signal(true);
+
 			return;
 		}
 
 		void TCPConvergenceLayer::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
 		{
 			// search for an existing connection
-			ibrcommon::MutexLock l(_connections_lock);
+			ibrcommon::MutexLock l(_connections_cond);
 
 			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
@@ -158,6 +161,9 @@ namespace dtn
 			// queue the bundle
 			conn->queue(job._bundle);
 
+			// signal that there is a new connection
+			_connections_cond.signal(true);
+
 			IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an new tcp connection (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
 		}
 
@@ -170,7 +176,7 @@ namespace dtn
 				if (node->getAction() == NODE_UNAVAILABLE)
 				{
 					// search for an existing connection
-					ibrcommon::MutexLock l(_connections_lock);
+					ibrcommon::MutexLock l(_connections_cond);
 					for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 					{
 						TCPConnection &conn = *(*iter);
@@ -187,7 +193,7 @@ namespace dtn
 
 		void TCPConvergenceLayer::connectionUp(TCPConnection *conn)
 		{
-			ibrcommon::MutexLock l(_connections_lock);
+			ibrcommon::MutexLock l(_connections_cond);
 			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
 				if (conn == (*iter))
@@ -198,18 +204,25 @@ namespace dtn
 			}
 
 			_connections.push_back( conn );
+
+			// signal that there is a new connection
+			_connections_cond.signal(true);
+
 			IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection added (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void TCPConvergenceLayer::connectionDown(TCPConnection *conn)
 		{
-			ibrcommon::MutexLock l(_connections_lock);
+			ibrcommon::MutexLock l(_connections_cond);
 			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
 				if (conn == (*iter))
 				{
 					_connections.erase(iter);
 					IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection removed (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
+
+					// signal that there is a connection less
+					_connections_cond.signal(true);
 					return;
 				}
 			}
@@ -252,6 +265,19 @@ namespace dtn
 			return true;
 		}
 
+		void TCPConvergenceLayer::closeAll()
+		{
+			// search for an existing connection
+			ibrcommon::MutexLock l(_connections_cond);
+			for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			{
+				TCPConnection &conn = *(*iter);
+
+				// close the connection immediately
+				conn.shutdown();
+			}
+		}
+
 		void TCPConvergenceLayer::componentUp()
 		{
 			// listen on the socket, max. 5 concurrent awaiting connections
@@ -260,21 +286,20 @@ namespace dtn
 
 		void TCPConvergenceLayer::componentDown()
 		{
-			while (true)
-			{
-				TCPConnection* client = NULL;
-				{
-					ibrcommon::MutexLock l(_connections_lock);
-					if (_connections.empty()) break;
-					client = _connections.front();
-					_connections.remove(client);
-				}
-
-				client->shutdown();
-			}
-
+			// shutdown the TCP server
 			_tcpsrv.shutdown();
 			_tcpsrv.close();
+
+			// close all active connections
+			closeAll();
+
+			// wait until all tcp connections are down
+			{
+				ibrcommon::MutexLock l(_connections_cond);
+				while (_connections.size() > 0) _connections_cond.wait();
+			}
+
+			// interrupt the select thread
 			Thread::interrupt();
 		}
 	}

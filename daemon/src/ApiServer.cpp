@@ -120,16 +120,18 @@ namespace dtn
 		void ApiServer::Distributor::add(ClientHandler *obj)
 		{
 			{
-				ibrcommon::MutexLock l(_lock);
+				ibrcommon::MutexLock l(_connections_cond);
 				_connections.push_back(obj);
+				_connections_cond.signal(true);
 			}
 			_tasks.push(new QueryBundleTask(obj->id));
 		}
 
 		void ApiServer::Distributor::remove(ClientHandler *obj)
 		{
-			ibrcommon::MutexLock l(_lock);
+			ibrcommon::MutexLock l(_connections_cond);
 			_connections.erase( std::remove( _connections.begin(), _connections.end(), obj), _connections.end() );
+			_connections_cond.signal(true);
 		}
 
 		bool ApiServer::Distributor::__cancellation()
@@ -163,7 +165,7 @@ namespace dtn
 							BundleStorage &storage = BundleCore::getInstance().getStorage();
 
 							// lock the connection list
-							ibrcommon::MutexLock l(_lock);
+							ibrcommon::MutexLock l(_connections_cond);
 
 							for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 							{
@@ -203,7 +205,7 @@ namespace dtn
 							IBRCOMMON_LOGGER_DEBUG(60) << "ProcessBundleTask: " << pbt.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 							// search for all receiver of this bundle
-							ibrcommon::MutexLock l(_lock);
+							ibrcommon::MutexLock l(_connections_cond);
 							bool deleteIt = false;
 
 							for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
@@ -233,7 +235,7 @@ namespace dtn
 							BundleStorage &storage = BundleCore::getInstance().getStorage();
 
 							// search for all receiver of this bundle
-							ibrcommon::MutexLock l(_lock);
+							ibrcommon::MutexLock l(_connections_cond);
 
 							for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 							{
@@ -296,17 +298,23 @@ namespace dtn
 
 		void ApiServer::Distributor::shutdown()
 		{
-			while (true)
-			{
-				ClientHandler *client = NULL;
-				{
-					ibrcommon::MutexLock l(_lock);
-					if (_connections.empty()) break;
-					client = _connections.front();
-					_connections.remove(client);
-				}
+			closeAll();
 
-				client->shutdown();
+			// wait until all client connections are down
+			ibrcommon::MutexLock l(_connections_cond);
+			while (_connections.size() > 0) _connections_cond.wait();
+		}
+
+		void ApiServer::Distributor::closeAll()
+		{
+			// search for an existing connection
+			ibrcommon::MutexLock l(_connections_cond);
+			for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+			{
+				ClientHandler &conn = *(*iter);
+
+				// close the connection immediately
+				conn.shutdown();
 			}
 		}
 

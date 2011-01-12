@@ -122,6 +122,7 @@ namespace dtn
 		protected:
 			void rejectTransmission();
 
+			void setup();
 			void run();
 			void finally();
 
@@ -239,6 +240,11 @@ namespace dtn
 
 		private:
 			/**
+			 * closes all active tcp connections
+			 */
+			void closeAll();
+
+			/**
 			 * Add a connection to the connection list.
 			 * @param conn
 			 */
@@ -256,7 +262,7 @@ namespace dtn
 
 			ibrcommon::tcpserver _tcpsrv;
 
-			ibrcommon::Mutex _connections_lock;
+			ibrcommon::Conditional _connections_cond;
 			std::list<TCPConnection*> _connections;
 			std::list<ibrcommon::vinterface> _interfaces;
 			std::map<ibrcommon::vinterface, unsigned int> _portmap;
