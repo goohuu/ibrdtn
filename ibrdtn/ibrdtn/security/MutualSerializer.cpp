@@ -89,7 +89,7 @@ namespace dtn
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
@@ -163,7 +163,7 @@ namespace dtn
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
-			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+			assert(!obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
 #endif
 
 			if (obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
