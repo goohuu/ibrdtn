@@ -77,11 +77,11 @@ namespace dtn
 			long_key.free(rsa_key);
 
 			std::string iv(reinterpret_cast<char const *>(encrypt.getIV()), ibrcommon::AES128Stream::iv_len);
-			pcb._ciphersuite_params.add(SecurityBlock::initialization_vector, iv);
+			pcb._ciphersuite_params.set(SecurityBlock::initialization_vector, iv);
+			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
 			std::string tag(reinterpret_cast<char const *>(encrypt.getTag()), ibrcommon::AES128Stream::tag_len);
-			pcb._security_result.add(SecurityBlock::integrity_signature, tag);
-			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
+			pcb._security_result.set(SecurityBlock::integrity_signature, tag);
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
 			// encrypt payload - END
 

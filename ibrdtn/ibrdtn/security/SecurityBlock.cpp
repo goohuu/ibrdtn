@@ -68,9 +68,12 @@ namespace dtn
 			throw ibrcommon::Exception("element not found");
 		}
 
-		void SecurityBlock::TLVList::add(SecurityBlock::TLV_TYPES type, std::string value)
+		void SecurityBlock::TLVList::set(SecurityBlock::TLV_TYPES type, std::string value)
 		{
-			insert(SecurityBlock::TLV(type, value));
+			SecurityBlock::TLV tlv(type, value);
+
+			erase(tlv);
+			insert(tlv);
 		}
 
 		void SecurityBlock::TLVList::remove(SecurityBlock::TLV_TYPES type)
@@ -284,7 +287,8 @@ namespace dtn
 
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
-				length += _ciphersuite_params.getLength();
+				const dtn::data::SDNV size(_ciphersuite_params.getLength());
+				length += size.getLength() + size.getValue();
 			}
 
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
@@ -314,7 +318,7 @@ namespace dtn
 			if (_ciphersuite_flags & CONTAINS_CIPHERSUITE_PARAMS)
 			{
 				length += MutualSerializer::sdnv_size;
-				length += _ciphersuite_params.size();
+				length += _ciphersuite_params.getLength();
 			}
 			// security result
 			if (_ciphersuite_flags & CONTAINS_SECURITY_RESULT)
@@ -398,7 +402,7 @@ namespace dtn
 			{
 				stream >> _ciphersuite_params;
 #ifdef __DEVELOPMENT_ASSERTIONS__
-				assert(_ciphersuite_params.size() > 0);
+				assert(_ciphersuite_params.getLength() > 0);
 #endif
 			}
 
@@ -406,7 +410,7 @@ namespace dtn
 			{
  				stream >> _security_result;
 #ifdef __DEVELOPMENT_ASSERTIONS__
-				assert(_security_result.size() > 0);
+				assert(_security_result.getLength() > 0);
 #endif
 			}
 
@@ -491,7 +495,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_ex(critical) << "failed to encrypt the symmetric AES key" << IBRCOMMON_LOGGER_ENDL;
 				ERR_print_errors_fp(stderr);
 			}
-			security_parameter.add(SecurityBlock::key_information, std::string(reinterpret_cast<char *>(encrypted_key), encrypted_key_len));
+			security_parameter.set(SecurityBlock::key_information, std::string(reinterpret_cast<char *>(encrypted_key), encrypted_key_len));
 		}
 
 		bool SecurityBlock::getKey(const TLVList& security_parameter, unsigned char * key, size_t key_size, RSA * rsa)
@@ -536,7 +540,7 @@ namespace dtn
 		{
 			std::stringstream salt_stream;
 			salt_stream << salt;
-			security_parameters.add(SecurityBlock::salt, salt_stream.str());
+			security_parameters.set(SecurityBlock::salt, salt_stream.str());
 		}
 
 		u_int32_t SecurityBlock::getSalt(const TLVList& security_parameters)
@@ -632,7 +636,7 @@ namespace dtn
 			std::stringstream ss;
 			ss << offset << range_sdnv;
 
-			ciphersuite_params.add(SecurityBlock::fragment_range, ss.str());
+			ciphersuite_params.set(SecurityBlock::fragment_range, ss.str());
 		}
 
 		bool SecurityBlock::isSecuritySource(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const

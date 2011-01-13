@@ -93,7 +93,7 @@ namespace dtn
 				/** If the PIB does not know the size of the sign in advance, this
 				member can be set, so the size of the security result can be calculated
 				correctly */
-				int key_size;
+				int result_size;
 
 				/**
 				Calculates a signature using the PIB-RSA-SHA256 algorithm.
@@ -122,7 +122,7 @@ namespace dtn
 				@param new_size the new size of the sign, which will be stored in
 				_security_result
 				*/
-				void setKeySize(const SecurityKey &key);
+				void setResultSize(const SecurityKey &key);
 		};
 
 		/**

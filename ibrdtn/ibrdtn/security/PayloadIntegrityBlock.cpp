@@ -21,7 +21,7 @@ namespace dtn
 		}
 
 		PayloadIntegrityBlock::PayloadIntegrityBlock()
-		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK, PIB_RSA_SHA256), key_size(0)
+		 : SecurityBlock(PAYLOAD_INTEGRITY_BLOCK, PIB_RSA_SHA256), result_size(0)
 		{
 		}
 
@@ -31,7 +31,12 @@ namespace dtn
 
 		size_t PayloadIntegrityBlock::getSecurityResultSize() const
 		{
-			return key_size;
+			if (result_size > 0)
+			{
+				return result_size;
+			}
+
+			return SecurityBlock::getSecurityResultSize();
 		}
 
 		void PayloadIntegrityBlock::sign(dtn::data::Bundle &bundle, const SecurityKey &key, const dtn::data::EID& destination)
@@ -52,11 +57,11 @@ namespace dtn
 			if (key.reference != bundle._source.getNodeEID()) pib.setSecuritySource( key.reference );
 			if (destination != bundle._destination.getNodeEID()) pib.setSecurityDestination( destination );
 
-			pib.setKeySize(key);
+			pib.setResultSize(key);
 			pib.setCiphersuiteId(SecurityBlock::PIB_RSA_SHA256);
 			pib._ciphersuite_flags |= CONTAINS_SECURITY_RESULT;
 			std::string sign = calcHash(bundle, key, pib);
-			pib._security_result.add(SecurityBlock::integrity_signature, sign);
+			pib._security_result.set(SecurityBlock::integrity_signature, sign);
 		}
 
 		const std::string PayloadIntegrityBlock::calcHash(const dtn::data::Bundle &bundle, const SecurityKey &key, PayloadIntegrityBlock& ignore)
@@ -132,21 +137,22 @@ namespace dtn
 			}
 		}
 
-		void PayloadIntegrityBlock::setKeySize(const SecurityKey &key)
+		void PayloadIntegrityBlock::setResultSize(const SecurityKey &key)
 		{
 			EVP_PKEY *pkey = key.getEVP();
 
-			if (EVP_PKEY_size(pkey) <= 0 && key_size <= 0)
-				key_size = _security_result.size();
-
 			// size of integrity_signature
-			if (EVP_PKEY_size(pkey) > 0)
+			if ((result_size = EVP_PKEY_size(pkey)) > 0)
 			{
-				key_size = EVP_PKEY_size(pkey);
-				// size of integrity_signature length
-				key_size += dtn::data::SDNV::getLength(EVP_PKEY_size(pkey));
-				// TLV type
-				key_size++;
+				// sdnv length
+				result_size += dtn::data::SDNV(result_size).getLength();
+
+				// type
+				result_size++;
+			}
+			else
+			{
+				result_size = _security_result.getLength();
 			}
 
 			SecurityKey::free(pkey);
@@ -202,7 +208,7 @@ namespace dtn
 			SecurityBlock::deserialize(stream);
 
 			// set the key size locally
-			key_size = _security_result.getLength();
+			result_size = _security_result.getLength();
 
 			return stream;
 		}

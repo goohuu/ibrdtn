@@ -111,7 +111,7 @@ namespace dtn
 				friend std::istream& operator>>(std::istream &stream, TLVList &tlvlist);
 
 				const std::string get(TLV_TYPES type) const;
-				void add(TLV_TYPES type, std::string value);
+				void set(TLV_TYPES type, std::string value);
 				void remove(TLV_TYPES type);
 
 				const std::string toString() const;
@@ -405,11 +405,11 @@ namespace dtn
 			// append tag at the end of the ciphertext
 			ss.write(reinterpret_cast<const char *>(encrypt.getTag()), ibrcommon::AES128Stream::tag_len);
 
-			esb._security_result.add(SecurityBlock::encapsulated_block, ss.str());
+			esb._security_result.set(SecurityBlock::encapsulated_block, ss.str());
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
 
 			std::string iv(reinterpret_cast<const char *>(encrypt.getIV()), ibrcommon::AES128Stream::iv_len);
-			esb._ciphersuite_params.add(SecurityBlock::initialization_vector, iv);
+			esb._ciphersuite_params.set(SecurityBlock::initialization_vector, iv);
 
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
