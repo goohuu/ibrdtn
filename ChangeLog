@@ -1,3 +1,12 @@
+2011-01-14
+--------------------------------------------------------
+ * Bundle Security Protocol
+ * Some special uClibc related fixes
+
+2010-12-23
+--------------------------------------------------------
+ * Better handling of the same convergence layer on multiple interfaces
+
 2010-12-22
 --------------------------------------------------------
  * libnl is no longer mandatory
