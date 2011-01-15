@@ -29,12 +29,9 @@
 #include <list>
 #include <set>
 
+class SQLiteBundleStorageTest;
 
 namespace dtn {
-namespace testsuite{
-	class SQLiteBundleStorageTestSuite;
-}
-
 namespace core {
 
 class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent
@@ -42,18 +39,17 @@ class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public dt
 	enum SQL_TABLES
 	{
 		SQL_TABLE_BUNDLE = 0,
-		SQL_TABLE_FRAGMENT = 1,
-		SQL_TABLE_BLOCK = 2,
-		SQL_TABLE_ROUTING = 3,
-		SQL_TABLE_BUNDLE_ROUTING_INFO = 4,
-		SQL_TABLE_NODE_ROUTING_INFO = 5,
-		SQL_TABLE_END = 6
+		SQL_TABLE_BLOCK = 1,
+		SQL_TABLE_ROUTING = 2,
+		SQL_TABLE_BUNDLE_ROUTING_INFO = 3,
+		SQL_TABLE_NODE_ROUTING_INFO = 4,
+		SQL_TABLE_END = 5
 	};
 
 	static const std::string _tables[SQL_TABLE_END];
 
 public:
-	friend class testsuite::SQLiteBundleStorageTestSuite;
+	friend class ::SQLiteBundleStorageTest;
 
 	class SQLiteQuerryException : public ibrcommon::Exception
 	{
@@ -80,7 +76,7 @@ public:
 	 * @param Dateiname der Datenbank
 	 * @param maximale Größe der Datenbank
 	 */
-	SQLiteBundleStorage(const ibrcommon::File &dbPath, const string &dbFile, const int &size);
+	SQLiteBundleStorage(const ibrcommon::File &path, const string &dbFile, const int &size);
 
 	/**
 	 * destructor
@@ -277,11 +273,6 @@ private:
 		BOTH_FRAGMENTS 	= 2
 	};
 
-	enum Appurtenant{
-		BUNDLE = 0,
-		FRAGMENT = 1
-	};
-
 	void executeQuerry(sqlite3_stmt *statement);
 
 	void executeQuerry(sqlite3_stmt *statement, list<string> &result);
@@ -322,7 +313,7 @@ private:
 	 * @param Bundle which blocks should be saved
 	 * @return The total number of bytes which were stored or -1 indicating an error.
 	 */
-	int storeBlocks(const data::Bundle &Bundle, int appurtenant);
+	int storeBlocks(const data::Bundle &Bundle);
 
 	/**
 	 * Remove all bundles which match this filter
@@ -349,9 +340,9 @@ private:
 	 */
 	void consistenceCheck();
 
-	void checkFragments(set<string> &blockFiles, set<string> &fragmentFiles);
+	void checkFragments(set<string> &payloadFiles);
 
-	void checkBundles(set<string> &blockFiles, set<string> &fragmentFiles);
+	void checkBundles(set<string> &blockFiles);
 
 	/**
 	 * updates the nextExpiredTime. The calling function has to have the databaselock.
@@ -380,16 +371,12 @@ private:
 	list<string> deleteList;
 
 	sqlite3_stmt *getBundleTTL;
-	sqlite3_stmt *getFragmentTTL;
 	sqlite3_stmt *deleteBundleTTL;
-	sqlite3_stmt *deleteFragementTTL;
 	sqlite3_stmt *getBundleByDestination;
 	sqlite3_stmt *getBundleByID;
 	sqlite3_stmt *getFragements;
 	sqlite3_stmt *store_Bundle;
-	sqlite3_stmt *store_Fragment;
 	sqlite3_stmt *clearBundles;
-	sqlite3_stmt *clearFragments;
 	sqlite3_stmt *clearBlocks;
 	sqlite3_stmt *clearRouting;
 	sqlite3_stmt *clearNodeRouting;
@@ -397,7 +384,6 @@ private:
 	sqlite3_stmt *vacuum;
 	sqlite3_stmt *getROWID;
 	sqlite3_stmt *removeBundle;
-	sqlite3_stmt *removeFragments;
 	sqlite3_stmt *getBlocksByID;
 	sqlite3_stmt *storeBlock;
 	sqlite3_stmt *getBundlesBySize;
@@ -416,7 +402,8 @@ private:
 	sqlite3_stmt *getNodeRouting;
 	sqlite3_stmt *removeNodeRouting;
 	sqlite3_stmt *getnextExpiredBundle;
-	sqlite3_stmt *getnextExpiredFragment;
+	sqlite3_stmt *deleteBundle;
+	sqlite3_stmt *getBundle;
 
 };
 
