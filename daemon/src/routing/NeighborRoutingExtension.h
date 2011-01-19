@@ -52,6 +52,7 @@ namespace dtn
 			 */
 			void remove(const dtn::data::BundleID &id);
 
+			void route(const dtn::data::BundleID &id, const dtn::data::EID &destination);
 			void route(const dtn::data::MetaBundle &meta);
 
 			std::list<dtn::core::Node> _neighbors;

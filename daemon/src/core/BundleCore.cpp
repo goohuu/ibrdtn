@@ -103,13 +103,13 @@ namespace dtn
 		{
 			try {
 				_connectionmanager.queue(destination, bundle);
-			} catch (dtn::net::NeighborNotAvailableException ex) {
+			} catch (const dtn::net::NeighborNotAvailableException &ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
-			} catch (dtn::net::ConnectionNotAvailableException ex) {
+			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
-			} catch (ibrcommon::Exception) {
+			} catch (const ibrcommon::Exception&) {
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
 			}
 		}

@@ -143,11 +143,8 @@ namespace dtn
 					case dtn::net::TransferAbortedEvent::REASON_RETRY_LIMIT_REACHED:
 					case dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN:
 					{
-						ibrcommon::MutexLock l(_stored_bundles_lock);
-						// get the queue for this destination
-						std::queue<dtn::data::BundleID> &q = _stored_bundles[eid];
-						q.push(id);
-
+						// try to route this bundle again
+						route(id, eid);
 						break;
 					}
 
@@ -157,7 +154,7 @@ namespace dtn
 						ibrcommon::MutexLock l(_stored_bundles_lock);
 						if ( _stored_bundles.find(eid) != _stored_bundles.end() )
 						{
-							// if a bundle is delivered remove it from _stored_bundles
+							// if a bundle is refused or deleted, remove it from _stored_bundles
 							remove(id);
 						}
 
@@ -214,28 +211,25 @@ namespace dtn
 			} catch (std::bad_cast ex) { };
 		}
 
+		void NeighborRoutingExtension::route(const dtn::data::BundleID &id, const dtn::data::EID &dest)
+		{
+			if 	( isNeighbor( dest ) )
+			{
+				getRouter()->transferTo( dest, id );
+				return;
+			}
+
+			// get the queue for this destination
+			std::queue<dtn::data::BundleID> &q = _stored_bundles[dest];
+
+			// remember the bundle id for later delivery
+			q.push( id );
+		}
+
 		void NeighborRoutingExtension::route(const dtn::data::MetaBundle &meta)
 		{
-			try {
-				// get the destination node
-				dtn::data::EID dest = meta.destination.getNodeEID();
-
-				if 	( isNeighbor( dest ) )
-				{
-					getRouter()->transferTo( dest, meta );
-					return;
-				}
-
-				// get the queue for this destination
-				std::queue<dtn::data::BundleID> &q = _stored_bundles[dest];
-
-				// remember the bundle id for later delivery
-				q.push( meta );
-
-			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-				// the connection to the node is not possible
-				IBRCOMMON_LOGGER(warning) << "bundle forward aborted: connection to host not available" << IBRCOMMON_LOGGER_ENDL;
-			}
+			// route the bundle to the destination
+			route(meta, meta.destination.getNodeEID());
 		}
 
 		bool NeighborRoutingExtension::isNeighbor(const dtn::data::EID &eid) const
