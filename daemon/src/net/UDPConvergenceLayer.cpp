@@ -141,14 +141,14 @@ namespace dtn
 				serializer << bundle;
 				string data = ss.str();
 
-				// get a udp peer
-				ibrcommon::udpsocket::peer p = _socket->getPeer(node.getAddress(), node.getPort());
+				// get the address of the node
+				ibrcommon::vaddress addr(node.getAddress());
 
 				// set write lock
 				ibrcommon::MutexLock l(m_writelock);
 
 				// send converted line back to client.
-				int ret = p.send(data.c_str(), data.length());
+				int ret = _socket->send(addr, node.getPort(), data.c_str(), data.length());
 
 				if (ret == -1)
 				{

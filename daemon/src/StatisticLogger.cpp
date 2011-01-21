@@ -67,6 +67,7 @@ namespace dtn
 			if (_type == LOGGER_UDP)
 			{
 				_sock = new ibrcommon::UnicastSocket();
+				_sock->bind();
 			}
 		}
 
@@ -266,8 +267,8 @@ namespace dtn
 			ss << std::flush;
 
 			std::string data = ss.str();
-			ibrcommon::udpsocket::peer p = socket.getPeer(_address, _port);
-			p.send(data.c_str(), data.length());
+			ibrcommon::vaddress addr(_address);
+			socket.send(addr, _port, data.c_str(), data.length());
 		}
 
 		const std::string StatisticLogger::getName() const
