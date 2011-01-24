@@ -5,7 +5,7 @@
  *      Author: morgenro
  */
 
-#include "routing/FloodRoutingExtension.h"
+#include "routing/flooding/FloodRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"

@@ -92,7 +92,7 @@ namespace dtn
 			NeighborDatabase::NeighborEntry& get(const dtn::data::EID &eid);
 
 		private:
-			std::map<dtn::data::EID, NeighborDatabase::NeighborEntry> _entries;
+			std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* > _entries;
 		};
 	}
 }

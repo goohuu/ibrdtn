@@ -22,8 +22,8 @@
 #include "routing/BaseRouter.h"
 #include "routing/StaticRoutingExtension.h"
 #include "routing/NeighborRoutingExtension.h"
-#include "routing/EpidemicRoutingExtension.h"
-#include "routing/FloodRoutingExtension.h"
+#include "routing/epidemic/EpidemicRoutingExtension.h"
+#include "routing/flooding/FloodRoutingExtension.h"
 #include "routing/RetransmissionExtension.h"
 
 #include "net/UDPConvergenceLayer.h"
@@ -478,6 +478,9 @@ int main(int argc, char *argv[])
 		IBRCOMMON_LOGGER(info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		dtn::routing::FloodRoutingExtension *flooding = new dtn::routing::FloodRoutingExtension();
 		router->addExtension( flooding );
+
+		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
+		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
 		router->addExtension( new dtn::routing::RetransmissionExtension() );
 		break;
 	}
@@ -487,6 +490,9 @@ int main(int argc, char *argv[])
 		IBRCOMMON_LOGGER(info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		dtn::routing::EpidemicRoutingExtension *epidemic = new dtn::routing::EpidemicRoutingExtension();
 		router->addExtension( epidemic );
+
+		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
+		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
 		router->addExtension( new dtn::routing::RetransmissionExtension() );
 		if (ipnd != NULL) ipnd->addService(epidemic);
 		break;
@@ -496,6 +502,7 @@ int main(int argc, char *argv[])
 		IBRCOMMON_LOGGER(info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
 		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
+		router->addExtension( new dtn::routing::RetransmissionExtension() );
 		break;
 	}
 

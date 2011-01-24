@@ -54,17 +54,23 @@ namespace dtn
 
 		NeighborDatabase::~NeighborDatabase()
 		{
+			std::set<dtn::data::EID> ret;
+
+			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* >::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			{
+				delete (*iter).second;
+			}
 		}
 
 		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid)
 		{
 			if (_entries.find(eid) == _entries.end())
 			{
-				NeighborEntry entry(eid);
+				NeighborEntry *entry = new NeighborEntry(eid);
 				_entries[eid] = entry;
 			}
 
-			return _entries[eid];
+			return (*_entries[eid]);
 		}
 
 		void NeighborDatabase::updateBundles(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf)
@@ -97,9 +103,9 @@ namespace dtn
 		{
 			std::set<dtn::data::EID> ret;
 
-			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry>::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* >::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
 			{
-				if ((*iter).second._available)
+				if ((*iter).second->_available)
 				{
 					ret.insert((*iter).first);
 				}

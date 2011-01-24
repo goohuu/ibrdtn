@@ -146,6 +146,8 @@ AC_CONFIG_FILES([Makefile \
 	src/core/Makefile \
 	src/net/Makefile \
 	src/routing/Makefile \
+	src/routing/epidemic/Makefile \
+	src/routing/flooding/Makefile \
 	src/security/Makefile \
 	doc/Makefile \
 	man/Makefile \
