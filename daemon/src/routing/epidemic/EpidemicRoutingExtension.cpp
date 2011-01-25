@@ -156,9 +156,9 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				size_t limit() const { return 10; };
+				virtual size_t limit() const { return 10; };
 
-				bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
 					if (_blacklist.find(meta.destination) != _blacklist.end())
 					{

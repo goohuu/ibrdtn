@@ -83,8 +83,6 @@ namespace dtn
 				 */
 				void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id);
 
-				virtual void callback(CALLBACK_ACTION action, const dtn::data::EID &peer, const dtn::data::BundleID &id) { };
-
 			protected:
 				BaseRouter& operator*();
 

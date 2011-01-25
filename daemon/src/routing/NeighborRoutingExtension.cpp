@@ -53,17 +53,17 @@ namespace dtn
 			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
 			{
 			public:
-				BundleFilter(const dtn::data::EID &destination, const std::set<dtn::data::BundleID> blacklist)
+				BundleFilter(const dtn::data::EID &destination, const std::set<dtn::data::BundleID> &blacklist)
 				 : _destination(destination), _blacklist(blacklist)
 				{};
 
 				virtual ~BundleFilter() {};
 
-				size_t limit() const { return 10; };
+				virtual size_t limit() const { return 10; };
 
-				bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
-					if (_destination.getNodeEID() == meta.destination.getNodeEID())
+					if (_destination.getNodeEID() != meta.destination.getNodeEID())
 					{
 						return false;
 					}
@@ -100,21 +100,23 @@ namespace dtn
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
 						NeighborDatabase &db = (**this).getNeighborDB();
 
-						ibrcommon::MutexLock l(db);
-						NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
-
 						try {
 							ibrcommon::MutexLock l(_transfer_id_lock);
 
 							// create a new bundle filter
-							BundleFilter filter(entry._eid, _transfer_ids);
+							BundleFilter filter(task.eid, _transfer_ids);
 
 							// query an unknown bundle from the storage, the list contains max. 10 items.
 							const std::list<dtn::data::MetaBundle> list = storage.get(filter);
 
+							IBRCOMMON_LOGGER_DEBUG(5) << "got " << list.size() << " items to transfer to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+
 							// send the bundles as long as we have resources
 							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 							{
+								ibrcommon::MutexLock l(db);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+
 								// acquire resources for transmission
 								entry.acquireTransfer();
 

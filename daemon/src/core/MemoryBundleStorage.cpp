@@ -143,7 +143,7 @@ namespace dtn
 			// we have to iterate through all bundles
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (std::set<dtn::data::Bundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			for (std::set<dtn::data::Bundle>::const_iterator iter = _bundles.begin(); (iter != _bundles.end()) && (result.size() < cb.limit()); iter++)
 			{
 				const dtn::data::Bundle &bundle = (*iter);
 

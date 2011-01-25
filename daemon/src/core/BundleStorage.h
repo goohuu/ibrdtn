@@ -57,7 +57,7 @@ namespace dtn
 				 * Limit the number of selected items.
 				 * @return The limit as number of items.
 				 */
-				size_t limit() const { return 1; };
+				virtual size_t limit() const { return 1; };
 
 				/**
 				 * This method is called by the storage to determine if one bundle
@@ -65,7 +65,7 @@ namespace dtn
 				 * @param id The bundle id of the bundle to select.
 				 * @return True, if the bundle should be added to the set.
 				 */
-				bool shouldAdd(const dtn::data::MetaBundle &id) const {};
+				virtual bool shouldAdd(const dtn::data::MetaBundle&) const { return false; };
 			};
 
 			/**
