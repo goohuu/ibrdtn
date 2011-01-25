@@ -12,6 +12,7 @@
 #include "routing/NeighborDatabase.h"
 #include "core/Node.h"
 
+#include <ibrdtn/data/BundleList.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include "ibrdtn/data/EID.h"
 #include <ibrcommon/thread/Queue.h>
@@ -80,6 +81,17 @@ namespace dtn
 				const dtn::data::MetaBundle meta;
 			};
 
+			class ExpireTask : public Task
+			{
+			public:
+				ExpireTask(const size_t timestamp);
+				virtual ~ExpireTask();
+
+				virtual std::string toString();
+
+				const size_t timestamp;
+			};
+
 			/**
 			 * hold queued tasks for later processing
 			 */
@@ -88,8 +100,8 @@ namespace dtn
 			/**
 			 * contains a set of bundle ids in transfer
 			 */
-			ibrcommon::Mutex _transfer_id_lock;
-			std::set<dtn::data::BundleID> _transfer_ids;
+			ibrcommon::Mutex _transfer_list_lock;
+			dtn::data::BundleList _transfer_list;
 		};
 	}
 }
