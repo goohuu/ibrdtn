@@ -262,31 +262,11 @@ namespace dtn
 			}
 
 			try {
-				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
-
-				const dtn::data::EID &dest = queued.bundle.destination;
-
-				if ( (dest.getNodeEID() == BundleCore::local.getNodeEID()) && dest.hasApplication() )
-				{
-					// if the bundle is for a local application, do not forward it to routing modules
-					return;
-				}
-
-				// jump to jumppoint distribute to distribute the event to all submodules
-				goto distribute;
-
-			} catch (std::bad_cast) {
-			}
-
-			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
 				ibrcommon::MutexLock l(_known_bundles_lock);
 				_known_bundles.expire(time.getTimestamp());
 			} catch (std::bad_cast) {
 			}
-
-			// jumppoint to distribute the events
-			distribute:
 
 			// notify all underlying extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
