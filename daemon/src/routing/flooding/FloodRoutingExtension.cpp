@@ -176,7 +176,7 @@ namespace dtn
 						// TODO: generate a "delete" message for routing algorithm
 
 						// delete it from our storage
-						getRouter()->getStorage().remove(meta);
+						(**this).getStorage().remove(meta);
 
 						IBRCOMMON_LOGGER_DEBUG(15) << "bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -236,8 +236,8 @@ namespace dtn
 
 							ibrcommon::MutexLock l(_list_mutex);
 							ibrcommon::BloomFilter &bf = _neighbors.get(task.eid)._filter;
-							const dtn::data::BundleID b = getRouter()->getStorage().getByFilter(bf);
-							getRouter()->transferTo(task.eid, b);
+							const dtn::data::BundleID b = (**this).getStorage().getByFilter(bf);
+							transferTo(task.eid, b);
 
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 						} catch (std::bad_cast) { };

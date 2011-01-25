@@ -9,14 +9,18 @@
 #define BASEROUTER_H_
 
 #include "Component.h"
-#include "ibrdtn/data/DTNTime.h"
-#include "ibrdtn/data/BundleID.h"
+#include "routing/NeighborDatabase.h"
+#include "routing/BundleSummary.h"
 #include "core/EventReceiver.h"
 #include "core/BundleStorage.h"
-#include "ibrcommon/thread/Thread.h"
-#include "ibrcommon/thread/Conditional.h"
+
+#include <ibrdtn/data/DTNTime.h>
+#include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/MetaBundle.h>
-#include "routing/BundleSummary.h"
+
+#include <ibrcommon/thread/Thread.h>
+#include <ibrcommon/thread/Conditional.h>
+
 
 namespace dtn
 {
@@ -63,8 +67,26 @@ namespace dtn
 
 				virtual void notify(const dtn::core::Event *evt) = 0;
 
+				enum CALLBACK_ACTION
+				{
+					ROUTE_CALLBACK_FORWARDED = 0,
+					ROUTE_CALLBACK_ABORTED = 1,
+					ROUTE_CALLBACK_REJECTED = 2,
+					ROUTE_CALLBACK_DELETED = 3
+				};
+
+				/**
+				 * Transfer one bundle to another node.
+				 * @throw BundleNotFoundException if the bundle do not exist.
+				 * @param destination The EID of the other node.
+				 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
+				 */
+				void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id);
+
+				virtual void callback(CALLBACK_ACTION action, const dtn::data::EID &peer, const dtn::data::BundleID &id) { };
+
 			protected:
-				BaseRouter *getRouter();
+				BaseRouter& operator*();
 
 			private:
 				friend class BaseRouter;
@@ -116,14 +138,6 @@ namespace dtn
 			void addExtension(BaseRouter::Extension *extension);
 
 			/**
-			 * Transfer one bundle to another node.
-			 * @throw BundleNotFoundException if the bundle do not exist.
-			 * @param destination The EID of the other node.
-			 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
-			 */
-			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id);
-
-			/**
 			 * method to receive new events from the EventSwitch
 			 */
 			void raiseEvent(const dtn::core::Event *evt);
@@ -157,6 +171,8 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+			NeighborDatabase& getNeighborDB();
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();
@@ -167,6 +183,8 @@ namespace dtn
 
 			dtn::core::BundleStorage &_storage;
 			std::list<BaseRouter::Extension*> _extensions;
+
+			NeighborDatabase _neighbor_database;
 		};
 	}
 }

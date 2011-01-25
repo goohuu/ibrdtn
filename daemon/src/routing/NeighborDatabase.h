@@ -66,7 +66,6 @@ namespace dtn
 				size_t _filter_age;
 				size_t _lastseen;
 				size_t _lastupdate;
-				bool _available;
 
 				void acquireTransfer() throw (NoMoreTransfersAvailable);
 				void releaseTransfer();

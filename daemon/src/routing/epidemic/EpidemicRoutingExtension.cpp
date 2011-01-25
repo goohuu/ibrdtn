@@ -90,12 +90,7 @@ namespace dtn
 
 				if (nodeevent.getAction() == NODE_AVAILABLE)
 				{
-					_taskqueue.push( new QuerySummaryVectorTask( n.getURI() ) );
-				}
-				else if (nodeevent.getAction() == NODE_UNAVAILABLE)
-				{
-					ibrcommon::MutexLock l(_neighbors);
-					_neighbors.remove( n.getURI() );
+					_taskqueue.push( new QuerySummaryVectorTask( n.getEID() ) );
 				}
 
 				return;
@@ -108,9 +103,11 @@ namespace dtn
 				const dtn::data::BundleID &id = aborted.getBundleID();
 
 				try {
+					NeighborDatabase &db = (**this).getNeighborDB();
+
 					// lock the list of neighbors
-					ibrcommon::MutexLock l(_neighbors);
-					NeighborDatabase::NeighborEntry &entry = _neighbors.get(eid);
+					ibrcommon::MutexLock l(db);
+					NeighborDatabase::NeighborEntry &entry = db.get(eid);
 					entry.releaseTransfer();
 
 					if (aborted.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
@@ -186,8 +183,7 @@ namespace dtn
 				const ibrcommon::BloomFilter &_filter;
 			};
 
-			dtn::routing::BaseRouter &router = (*getRouter());
-			dtn::core::BundleStorage &storage = router.getStorage();
+			dtn::core::BundleStorage &storage = (**this).getStorage();
 
 			while (true)
 			{
@@ -221,14 +217,13 @@ namespace dtn
 						 */
 						try {
 							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
+							NeighborDatabase &db = (**this).getNeighborDB();
 
-							ibrcommon::MutexLock l(_neighbors);
-							NeighborDatabase::NeighborEntry &entry = _neighbors.get(task.eid);
+							ibrcommon::MutexLock l(db);
+							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							try {
-								// acquire resources for transmission
-								entry.acquireTransfer();
-
+							// if the node has been updates at least once...
+							if (entry._lastupdate != 0) try {
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -244,15 +239,12 @@ namespace dtn
 								// send the bundles as long as we have resources
 								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 								{
-									// transfer the bundle to the neighbor
-									router.transferTo(task.eid, *iter);
-
-									// acquire more resources for the next transmission
+									// acquire resources for transmission
 									entry.acquireTransfer();
+
+									// transfer the bundle to the neighbor
+									transferTo(task.eid, *iter);
 								}
-							} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-								// no bundle found, release resources
-								entry.releaseTransfer();
 							} catch (const NeighborDatabase::NoMoreTransfersAvailable&) { };
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 						} catch (std::bad_cast) { };
@@ -262,10 +254,11 @@ namespace dtn
 						 */
 						try {
 							TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
+							NeighborDatabase &db = (**this).getNeighborDB();
 
 							// lock the list of bloom filters
-							ibrcommon::MutexLock l(_neighbors);
-							NeighborDatabase::NeighborEntry &entry = _neighbors.get(task.peer);
+							ibrcommon::MutexLock l(db);
+							NeighborDatabase::NeighborEntry &entry = db.get(task.peer);
 							entry.releaseTransfer();
 
 							ibrcommon::BloomFilter &bf = entry._filter;
@@ -276,14 +269,10 @@ namespace dtn
 								IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
 							}
 
-							// delete the bundle in the storage if
+							// add this bundle to the purge vector if it is delivered to its destination
 							if (( EID(task.peer.getNodeEID()) == EID(task.meta.destination.getNodeEID()) ) && (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 							{
 								try {
-									// bundle has been delivered to its destination
-									// delete it from our storage
-									storage.remove(task.meta);
-
 									IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
 									// add it to the purge vector
@@ -316,6 +305,16 @@ namespace dtn
 							}
 							else
 							{
+								// prevent loops:
+								// add this bundle to the summary vector of the sending peer
+								NeighborDatabase &db = (**this).getNeighborDB();
+								{
+									// lock the list of bloom filters
+									ibrcommon::MutexLock l(db);
+									NeighborDatabase::NeighborEntry &entry = db.get(task.origin);
+									entry._filter.insert( task.bundle.toString() );
+								}
+
 								// new bundles trigger a recheck for all neighbors
 								const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
 
@@ -472,7 +471,7 @@ namespace dtn
 				response_ecm.type = EpidemicControlMessage::ECM_RESPONSE;
 
 				// add own summary vector to the message
-				const SummaryVector vec = getRouter()->getSummaryVector();
+				const SummaryVector vec = (**this).getSummaryVector();
 				response_ecm.setSummaryVector(vec);
 
 				// add own purge vector to the message
@@ -520,8 +519,9 @@ namespace dtn
 					 * the EID of the sender of this bundle.
 					 */
 					{
-						ibrcommon::MutexLock l(_neighbors);
-						_neighbors.updateBundles(bundle._source, filter);
+						NeighborDatabase &db = (**this).getNeighborDB();
+						ibrcommon::MutexLock l(db);
+						db.updateBundles(bundle._source.getNodeEID(), filter);
 					}
 
 					// trigger the search-for-next-bundle procedure
@@ -533,19 +533,20 @@ namespace dtn
 					// get the purge vector (bloomfilter) of this ECM
 					const ibrcommon::BloomFilter &purge = ecm.getPurgeVector().getBloomFilter();
 
-					dtn::routing::BaseRouter &router = (*getRouter());
-					dtn::core::BundleStorage &storage = router.getStorage();
+					dtn::core::BundleStorage &storage = (**this).getStorage();
 
-					while (true)
-					{
-						// delete bundles in the purge vector
-						const dtn::data::MetaBundle meta = storage.remove(purge);
+					try {
+						while (true)
+						{
+							// delete bundles in the purge vector
+							const dtn::data::MetaBundle meta = storage.remove(purge);
 
-						IBRCOMMON_LOGGER_DEBUG(15) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+							IBRCOMMON_LOGGER_DEBUG(15) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-						// add this bundle to the own purge vector
-						_purge_vector.add(meta);
-					}
+							// add this bundle to the own purge vector
+							_purge_vector.add(meta);
+						}
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 				}
 			}
 		}

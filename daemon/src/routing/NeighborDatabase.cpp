@@ -13,11 +13,10 @@ namespace dtn
 	namespace routing
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
-		 : _eid(), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _available(false), _transfer_semaphore(5), _transfer_max(5)
-		{};
+		 : _eid(), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _transfer_semaphore(5), _transfer_max(5)		{};
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &eid)
-		 : _eid(eid), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _available(false), _transfer_semaphore(5), _transfer_max(5)
+		 : _eid(eid), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _transfer_semaphore(5), _transfer_max(5)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
@@ -39,6 +38,8 @@ namespace dtn
 			ibrcommon::MutexLock l(_transfer_lock);
 			if (_transfer_semaphore == 0) throw NoMoreTransfersAvailable();
 			_transfer_semaphore--;
+
+			std::cout << "acquire transfer (" << _transfer_semaphore << " left)" << std::endl;
 		}
 
 		void NeighborDatabase::NeighborEntry::releaseTransfer()
@@ -46,6 +47,8 @@ namespace dtn
 			ibrcommon::MutexLock l(_transfer_lock);
 			if (_transfer_semaphore >= _transfer_max) return;
 			_transfer_semaphore++;
+
+			std::cout << "release transfer (" << _transfer_semaphore << " left)" << std::endl;
 		}
 
 		NeighborDatabase::NeighborDatabase()
@@ -103,34 +106,5 @@ namespace dtn
 		{
 			_entries.erase(eid);
 		}
-
-//		void NeighborDatabase::setAvailable(const dtn::data::EID &eid)
-//		{
-//			NeighborEntry &entry = get(eid);
-//			entry.updateLastSeen();
-//			entry._available = true;
-//		}
-//
-//		void NeighborDatabase::setUnavailable(const dtn::data::EID &eid)
-//		{
-//			NeighborEntry &entry = get(eid);
-//			entry.updateLastSeen();
-//			entry._available = false;
-//		}
-//
-//		const std::set<dtn::data::EID> NeighborDatabase::getAvailable() const
-//		{
-//			std::set<dtn::data::EID> ret;
-//
-//			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* >::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
-//			{
-//				if ((*iter).second->_available)
-//				{
-//					ret.insert((*iter).first);
-//				}
-//			}
-//
-//			return ret;
-//		}
 	}
 }

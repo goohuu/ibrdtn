@@ -22,7 +22,7 @@ namespace dtn
 		{
 			try {
 				// scan for bundles in the storage
-				dtn::core::SimpleBundleStorage &storage = dynamic_cast<dtn::core::SimpleBundleStorage&>(getRouter()->getStorage());
+				dtn::core::SimpleBundleStorage &storage = dynamic_cast<dtn::core::SimpleBundleStorage&>((**this).getStorage());
 
 				std::list<dtn::data::BundleID> list = storage.getList();
 
@@ -62,7 +62,7 @@ namespace dtn
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 				try {
 					// delete bundle in storage
-					dtn::core::BundleStorage &storage = getRouter()->getStorage();
+					dtn::core::BundleStorage &storage = (**this).getStorage();
 
 					storage.remove(completed.getBundle());
 				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
@@ -88,7 +88,7 @@ namespace dtn
 					dtn::data::EID target = dtn::data::EID(route.getDestination());
 
 					// Yes, make transmit it now!
-					getRouter()->transferTo( target, meta);
+					transferTo( target, meta);
 					return;
 				}
 			}

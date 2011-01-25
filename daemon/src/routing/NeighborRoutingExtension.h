@@ -9,9 +9,11 @@
 #define NEIGHBORROUTINGEXTENSION_H_
 
 #include "routing/BaseRouter.h"
+#include "routing/NeighborDatabase.h"
+#include "core/Node.h"
+
 #include <ibrdtn/data/MetaBundle.h>
 #include "ibrdtn/data/EID.h"
-#include "core/Node.h"
 #include <ibrcommon/thread/Queue.h>
 #include <list>
 #include <map>
@@ -36,30 +38,58 @@ namespace dtn
 			bool __cancellation();
 
 		private:
-			/**
-			 * Determinate if a node with a specific EID exists currently in
-			 * the neighborhood.
-			 * @param eid The eid of the searched node.
-			 * @return True, if the node exists, otherwise it returns false.
-			 */
-			bool isNeighbor(const dtn::data::EID &eid) const;
+			class Task
+			{
+			public:
+				virtual ~Task() {};
+				virtual std::string toString() = 0;
+			};
+
+			class SearchNextBundleTask : public Task
+			{
+			public:
+				SearchNextBundleTask(const dtn::data::EID &eid);
+				virtual ~SearchNextBundleTask();
+
+				virtual std::string toString();
+
+				const dtn::data::EID eid;
+			};
+
+			class ProcessBundleTask : public Task
+			{
+			public:
+				ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &origin);
+				virtual ~ProcessBundleTask();
+
+				virtual std::string toString();
+
+				const dtn::data::MetaBundle bundle;
+				const dtn::data::EID origin;
+			};
+
+			class TransferCompletedTask : public Task
+			{
+			public:
+				TransferCompletedTask(const dtn::data::EID &eid, const dtn::data::MetaBundle &meta);
+				virtual ~TransferCompletedTask();
+
+				virtual std::string toString();
+
+				const dtn::data::EID peer;
+				const dtn::data::MetaBundle meta;
+			};
 
 			/**
-			 * Remove a bundle from local lists.
-			 * this is necessary if a bundle is expired or another routing
-			 * module has delivered the bundle.
-			 * @param id
+			 * hold queued tasks for later processing
 			 */
-			void remove(const dtn::data::BundleID &id);
+			ibrcommon::Queue<NeighborRoutingExtension::Task* > _taskqueue;
 
-			void route(const dtn::data::BundleID &id, const dtn::data::EID &destination);
-			void route(const dtn::data::MetaBundle &meta);
-
-			std::list<dtn::core::Node> _neighbors;
-
-			ibrcommon::Mutex _stored_bundles_lock;
-			std::map<dtn::data::EID, std::queue<dtn::data::BundleID> > _stored_bundles;
-			ibrcommon::Queue<dtn::data::EID> _available;
+			/**
+			 * contains a set of bundle ids in transfer
+			 */
+			ibrcommon::Mutex _transfer_id_lock;
+			std::set<dtn::data::BundleID> _transfer_ids;
 		};
 	}
 }

@@ -38,7 +38,7 @@ namespace dtn
 					if ( data.getTimestamp() <= time.getTimestamp() )
 					{
 						// retransmit the bundle
-						getRouter()->transferTo(data.destination, data);
+						transferTo(data.destination, data);
 
 						// remove the item off the queue
 						_queue.pop();

@@ -130,11 +130,6 @@ namespace dtn
 			dtn::routing::BundleSummary _purge_vector;
 
 			/**
-			 * stores information about neighbors
-			 */
-			dtn::routing::NeighborDatabase _neighbors;
-
-			/**
 			 * hold queued tasks for later processing
 			 */
 			ibrcommon::Queue<EpidemicRoutingExtension::Task* > _taskqueue;

@@ -54,9 +54,20 @@ namespace dtn
 		BaseRouter::Extension::~Extension()
 		{ }
 
-		BaseRouter* BaseRouter::Extension::getRouter()
+		BaseRouter& BaseRouter::Extension::operator*()
 		{
-			return _router;
+			return *_router;
+		}
+
+		/**
+		 * Transfer one bundle to another node.
+		 * @throw BundleNotFoundException if the bundle do not exist.
+		 * @param destination The EID of the other node.
+		 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
+		 */
+		void BaseRouter::Extension::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id)
+		{
+			dtn::core::BundleCore::getInstance().transferTo(destination, id);
 		}
 
 		/**
@@ -161,21 +172,52 @@ namespace dtn
 		}
 
 		/**
-		 * Transfer one bundle to another node.
-		 * @throw BundleNotFoundException if the bundle do not exist.
-		 * @param destination The EID of the other node.
-		 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
-		 */
-		void BaseRouter::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id)
-		{
-			dtn::core::BundleCore::getInstance().transferTo(destination, id);
-		}
-
-		/**
 		 * method to receive new events from the EventSwitch
 		 */
 		void BaseRouter::raiseEvent(const dtn::core::Event *evt)
 		{
+			// If a new neighbor comes available, send him a request for the summary vector
+			// If a neighbor went away we can free the stored database
+			try {
+				const dtn::core::NodeEvent &event = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+
+				if (event.getAction() == NODE_AVAILABLE)
+				{
+					ibrcommon::MutexLock l(_neighbor_database);
+					_neighbor_database.create( event.getNode().getEID() );
+				}
+				else if (event.getAction() == NODE_UNAVAILABLE)
+				{
+					ibrcommon::MutexLock l(_neighbor_database);
+					_neighbor_database.remove( event.getNode().getEID() );
+				}
+			} catch (std::bad_cast ex) { };
+
+			try {
+				const dtn::net::TransferCompletedEvent &event = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+
+				// if a tranfer is completed, then release the transfer resource of the peer
+				try {
+					// lock the list of neighbors
+					ibrcommon::MutexLock l(_neighbor_database);
+					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
+					entry.releaseTransfer();
+				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+
+			} catch (std::bad_cast ex) { };
+
+			try {
+				const dtn::net::TransferAbortedEvent &event = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+
+				// if a tranfer is aborted, then release the transfer resource of the peer
+				try {
+					// lock the list of neighbors
+					ibrcommon::MutexLock l(_neighbor_database);
+					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
+					entry.releaseTransfer();
+				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+			} catch (std::bad_cast ex) { };
+
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
 
@@ -312,6 +354,11 @@ namespace dtn
 		const std::string BaseRouter::getName() const
 		{
 			return "BaseRouter";
+		}
+
+		NeighborDatabase& BaseRouter::getNeighborDB()
+		{
+			return _neighbor_database;
 		}
 	}
 }
