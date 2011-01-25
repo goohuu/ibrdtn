@@ -62,7 +62,7 @@ namespace dtn
 			}
 		}
 
-		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid)
+		NeighborDatabase::NeighborEntry& NeighborDatabase::create(const dtn::data::EID &eid)
 		{
 			if (_entries.find(eid) == _entries.end())
 			{
@@ -73,45 +73,64 @@ namespace dtn
 			return (*_entries[eid]);
 		}
 
+		NeighborDatabase::NeighborEntry& NeighborDatabase::get(const dtn::data::EID &eid) throw (NeighborNotAvailableException)
+		{
+			if (_entries.find(eid) == _entries.end())
+			{
+				throw NeighborNotAvailableException();
+			}
+
+			return (*_entries[eid]);
+		}
+
 		void NeighborDatabase::updateBundles(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf)
 		{
-			NeighborEntry &entry = get(eid);
+			NeighborEntry &entry = create(eid);
 			entry.updateBundles(bf);
 		}
 
 		bool NeighborDatabase::knowBundle(const dtn::data::EID &eid, const dtn::data::BundleID &bundle) throw (BloomfilterNotAvailableException)
 		{
-			NeighborEntry &entry = get(eid);
-			return entry._filter.contains(bundle.toString());
-		}
-
-		void NeighborDatabase::setAvailable(const dtn::data::EID &eid)
-		{
-			NeighborEntry &entry = get(eid);
-			entry.updateLastSeen();
-			entry._available = true;
-		}
-
-		void NeighborDatabase::setUnavailable(const dtn::data::EID &eid)
-		{
-			NeighborEntry &entry = get(eid);
-			entry.updateLastSeen();
-			entry._available = false;
-		}
-
-		const std::set<dtn::data::EID> NeighborDatabase::getAvailable() const
-		{
-			std::set<dtn::data::EID> ret;
-
-			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* >::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
-			{
-				if ((*iter).second->_available)
-				{
-					ret.insert((*iter).first);
-				}
+			try {
+				NeighborEntry &entry = get(eid);
+				return entry._filter.contains(bundle.toString());
+			} catch (const NeighborNotAvailableException&) {
+				throw BloomfilterNotAvailableException(eid);
 			}
-
-			return ret;
 		}
+
+		void NeighborDatabase::remove(const dtn::data::EID &eid)
+		{
+			_entries.erase(eid);
+		}
+
+//		void NeighborDatabase::setAvailable(const dtn::data::EID &eid)
+//		{
+//			NeighborEntry &entry = get(eid);
+//			entry.updateLastSeen();
+//			entry._available = true;
+//		}
+//
+//		void NeighborDatabase::setUnavailable(const dtn::data::EID &eid)
+//		{
+//			NeighborEntry &entry = get(eid);
+//			entry.updateLastSeen();
+//			entry._available = false;
+//		}
+//
+//		const std::set<dtn::data::EID> NeighborDatabase::getAvailable() const
+//		{
+//			std::set<dtn::data::EID> ret;
+//
+//			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* >::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+//			{
+//				if ((*iter).second->_available)
+//				{
+//					ret.insert((*iter).first);
+//				}
+//			}
+//
+//			return ret;
+//		}
 	}
 }

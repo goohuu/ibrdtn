@@ -57,6 +57,12 @@ namespace dtn
 			 */
 			virtual const dtn::data::MetaBundle getByFilter(const ibrcommon::BloomFilter &filter);
 
+
+			/**
+			 * @see BundleStorage::get(const BundleFilterCallback &cb)
+			 */
+			virtual const std::list<dtn::data::MetaBundle> get(const BundleFilterCallback &cb);
+
 			/**
 			 * This method deletes a specific bundle in the storage.
 			 * No reports will be generated here.

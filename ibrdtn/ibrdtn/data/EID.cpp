@@ -92,7 +92,7 @@ namespace dtn
 			return !((*this) == other);
 		}
 
-		EID EID::operator+(string suffix)
+		EID EID::operator+(string suffix) const
 		{
 			return EID(getString() + suffix);
 		}

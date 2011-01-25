@@ -23,7 +23,7 @@ namespace dtn
 		 * This includes the last timestamp on which a neighbor was seen, the bundles
 		 * this neighbors has received (bloomfilter with age).
 		 */
-		class NeighborDatabase
+		class NeighborDatabase : public ibrcommon::Mutex
 		{
 		public:
 			class BloomfilterNotAvailableException : public ibrcommon::Exception
@@ -42,6 +42,13 @@ namespace dtn
 			public:
 				NoMoreTransfersAvailable() : ibrcommon::Exception("No more transfers allowed.") { };
 				virtual ~NoMoreTransfersAvailable() throw () { };
+			};
+
+			class NeighborNotAvailableException : public ibrcommon::Exception
+			{
+			public:
+				NeighborNotAvailableException() : ibrcommon::Exception("Entry for this neighbor not found.") { };
+				virtual ~NeighborNotAvailableException() throw () { };
 			};
 
 			class NeighborEntry
@@ -84,12 +91,10 @@ namespace dtn
 			 */
 			bool knowBundle(const dtn::data::EID &eid, const dtn::data::BundleID &bundle) throw (BloomfilterNotAvailableException);
 
-			void setAvailable(const dtn::data::EID &eid);
-			void setUnavailable(const dtn::data::EID &eid);
+			NeighborDatabase::NeighborEntry& get(const dtn::data::EID &eid) throw (NeighborNotAvailableException);
+			NeighborDatabase::NeighborEntry& create(const dtn::data::EID &eid);
 
-			const std::set<dtn::data::EID> getAvailable() const;
-
-			NeighborDatabase::NeighborEntry& get(const dtn::data::EID &eid);
+			void remove(const dtn::data::EID &eid);
 
 		private:
 			std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* > _entries;

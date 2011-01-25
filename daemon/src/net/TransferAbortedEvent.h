@@ -40,8 +40,8 @@ namespace dtn
 			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const AbortReason reason = REASON_UNDEFINED);
 			static void raise(const dtn::data::EID &peer, const dtn::data::BundleID &id, const AbortReason reason = REASON_UNDEFINED);
 
-			dtn::data::EID getPeer() const;
-			dtn::data::BundleID getBundleID() const;
+			const dtn::data::EID& getPeer() const;
+			const dtn::data::BundleID& getBundleID() const;
 
 			const AbortReason reason;
 

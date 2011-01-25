@@ -532,6 +532,11 @@ namespace core {
 		return bundle;
 	}
 
+	const std::list<dtn::data::MetaBundle> SQLiteBundleStorage::get(const BundleFilterCallback &cb)
+	{
+		throw std::string("not-implemented");
+	}
+
 	const dtn::data::MetaBundle SQLiteBundleStorage::getByDestination(const dtn::data::EID &eid, bool exact, bool singleton)
 	{
 		int err;

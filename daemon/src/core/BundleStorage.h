@@ -48,6 +48,26 @@ namespace dtn
 				};
 			};
 
+			class BundleFilterCallback
+			{
+			public:
+				virtual ~BundleFilterCallback() {};
+
+				/**
+				 * Limit the number of selected items.
+				 * @return The limit as number of items.
+				 */
+				size_t limit() const { return 1; };
+
+				/**
+				 * This method is called by the storage to determine if one bundle
+				 * should added to a set or not.
+				 * @param id The bundle id of the bundle to select.
+				 * @return True, if the bundle should be added to the set.
+				 */
+				bool shouldAdd(const dtn::data::MetaBundle &id) const {};
+			};
+
 			/**
 			 * destructor
 			 */
@@ -88,6 +108,14 @@ namespace dtn
 			 * @return
 			 */
 			virtual const dtn::data::MetaBundle getByFilter(const ibrcommon::BloomFilter &filter) = 0;
+
+			/**
+			 * Query the database for a number of bundles. The bundles are selected with the BundleFilterCallback
+			 * class which is to implement by the user of this method.
+			 * @param cb The instance of the callback filter class.
+			 * @return A list of bundles.
+			 */
+			virtual const std::list<dtn::data::MetaBundle> get(const BundleFilterCallback &cb) = 0;
 
 			/**
 			 * This method deletes a specific bundle in the storage.

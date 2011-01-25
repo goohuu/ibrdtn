@@ -135,6 +135,11 @@ public:
 	const dtn::data::MetaBundle getByFilter(const ibrcommon::BloomFilter &filter);
 
 	/**
+	 * @see BundleStorage::get(const BundleFilterCallback &cb)
+	 */
+	const std::list<dtn::data::MetaBundle> get(const BundleFilterCallback &cb);
+
+	/**
 	 * Returns the routinginformation stored for a specific Bundle.
 	 * @param ID to the Bundle
 	 */

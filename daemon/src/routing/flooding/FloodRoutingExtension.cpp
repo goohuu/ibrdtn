@@ -92,7 +92,7 @@ namespace dtn
 					case NODE_AVAILABLE:
 					{
 						ibrcommon::MutexLock l(_list_mutex);
-						_neighbors.setAvailable(eid);
+//						_neighbors.setAvailable(eid);
 
 						_taskqueue.push( new SearchNextBundleTask( eid ) );
 					}
@@ -101,7 +101,7 @@ namespace dtn
 					case NODE_UNAVAILABLE:
 					{
 						ibrcommon::MutexLock l(_list_mutex);
-						_neighbors.setUnavailable(eid);
+//						_neighbors.setUnavailable(eid);
 					}
 					break;
 
@@ -249,7 +249,7 @@ namespace dtn
 							// trigger transmission for all neighbors
 							std::set<dtn::data::EID> list;
 							{
-								list = _neighbors.getAvailable();
+//								list = _neighbors.getAvailable();
 							}
 
 							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)

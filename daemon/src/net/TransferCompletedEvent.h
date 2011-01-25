@@ -29,8 +29,8 @@ namespace dtn
 
 			static void raise(const dtn::data::EID peer, const dtn::data::MetaBundle &bundle);
 
-			dtn::data::EID getPeer() const;
-			dtn::data::MetaBundle getBundle() const;
+			const dtn::data::EID& getPeer() const;
+			const dtn::data::MetaBundle& getBundle() const;
 
 		private:
 			dtn::data::EID _peer;

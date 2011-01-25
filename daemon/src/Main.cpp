@@ -462,14 +462,6 @@ int main(int argc, char *argv[])
 	// create the base router
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
-//#ifdef WITH_BUNDLE_SECURITY
-//	if (sec.enabled())
-//	{
-//		// read configuration of the security class
-//		dtn::security::SecurityManager::getInstance().readRoutingTable();
-//	}
-//#endif
-
 	// add routing extensions
 	switch (conf.getNetwork().getRoutingExtension())
 	{
@@ -478,33 +470,25 @@ int main(int argc, char *argv[])
 		IBRCOMMON_LOGGER(info) << "Using flooding routing extensions" << IBRCOMMON_LOGGER_ENDL;
 		dtn::routing::FloodRoutingExtension *flooding = new dtn::routing::FloodRoutingExtension();
 		router->addExtension( flooding );
-
-		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
-		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
-		router->addExtension( new dtn::routing::RetransmissionExtension() );
 		break;
 	}
 
 	case Configuration::EPIDEMIC_ROUTING:
 	{
 		IBRCOMMON_LOGGER(info) << "Using epidemic routing extensions" << IBRCOMMON_LOGGER_ENDL;
-		dtn::routing::EpidemicRoutingExtension *epidemic = new dtn::routing::EpidemicRoutingExtension();
-		router->addExtension( epidemic );
-
-		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
-		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
-		router->addExtension( new dtn::routing::RetransmissionExtension() );
-		if (ipnd != NULL) ipnd->addService(epidemic);
+		router->addExtension( new dtn::routing::EpidemicRoutingExtension() );
 		break;
 	}
 
 	default:
 		IBRCOMMON_LOGGER(info) << "Using default routing extensions" << IBRCOMMON_LOGGER_ENDL;
-		router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
-		router->addExtension( new dtn::routing::NeighborRoutingExtension() );
-		router->addExtension( new dtn::routing::RetransmissionExtension() );
 		break;
 	}
+
+	// add standard routing modules
+	router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
+	router->addExtension( new dtn::routing::NeighborRoutingExtension() );
+	router->addExtension( new dtn::routing::RetransmissionExtension() );
 
 	components.push_back(router);
 

@@ -43,12 +43,12 @@ namespace dtn
 			return TransferAbortedEvent::className;
 		}
 
-		dtn::data::EID TransferAbortedEvent::getPeer() const
+		const dtn::data::EID& TransferAbortedEvent::getPeer() const
 		{
 			return _peer;
 		}
 
-		dtn::data::BundleID TransferAbortedEvent::getBundleID() const
+		const dtn::data::BundleID& TransferAbortedEvent::getBundleID() const
 		{
 			return _bundle;
 		}

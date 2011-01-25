@@ -44,7 +44,7 @@ namespace dtn
 
 			bool operator!=(EID const& other) const;
 
-			EID operator+(string suffix);
+			EID operator+(string suffix) const;
 
 			bool sameHost(string const& other) const;
 			bool sameHost(EID const& other) const;

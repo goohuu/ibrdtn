@@ -34,12 +34,12 @@ namespace dtn
 			return TransferCompletedEvent::className;
 		}
 
-		dtn::data::EID TransferCompletedEvent::getPeer() const
+		const dtn::data::EID& TransferCompletedEvent::getPeer() const
 		{
 			return _peer;
 		}
 
-		dtn::data::MetaBundle TransferCompletedEvent::getBundle() const
+		const dtn::data::MetaBundle& TransferCompletedEvent::getBundle() const
 		{
 			return _bundle;
 		}

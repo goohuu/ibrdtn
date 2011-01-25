@@ -10,7 +10,6 @@
 
 #include "core/Node.h"
 
-#include "net/DiscoveryServiceProvider.h"
 #include "routing/SummaryVector.h"
 #include "routing/BaseRouter.h"
 #include "routing/NeighborDatabase.h"
@@ -30,22 +29,13 @@ namespace dtn
 {
 	namespace routing
 	{
-		class EpidemicRoutingExtension : public BaseRouter::ThreadedExtension, public dtn::net::DiscoveryServiceProvider
+		class EpidemicRoutingExtension : public BaseRouter::ThreadedExtension
 		{
-		private:
-			static const dtn::data::EID EPIDEMIC_ROUTING_ADDRESS;
-
 		public:
 			EpidemicRoutingExtension();
 			virtual ~EpidemicRoutingExtension();
 
 			void notify(const dtn::core::Event *evt);
-
-			/**
-			 * this method updates the given values
-			 */
-			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
-
 			virtual void stopExtension();
 
 		protected:
@@ -58,6 +48,14 @@ namespace dtn
 			public:
 				virtual ~Task() {};
 				virtual std::string toString() = 0;
+			};
+
+			class ExecutableTask : public Task
+			{
+			public:
+				virtual ~ExecutableTask() {};
+				virtual std::string toString() = 0;
+				virtual void execute() const = 0;
 			};
 
 			class ExpireTask : public Task
@@ -82,17 +80,6 @@ namespace dtn
 				const dtn::data::EID eid;
 			};
 
-			class TransferSummaryVectorTask : public Task
-			{
-			public:
-				TransferSummaryVectorTask(const dtn::data::EID &eid);
-				virtual ~TransferSummaryVectorTask();
-
-				virtual std::string toString();
-
-				const dtn::data::EID eid;
-			};
-
 			class ProcessBundleTask : public Task
 			{
 			public:
@@ -105,18 +92,37 @@ namespace dtn
 				const dtn::data::EID origin;
 			};
 
-			/**
-			 * Prepare an epidemic bundle. This includes setting all parameters
-			 * like lifetime, source and destination. Additional the bundle is added
-			 * to the list of known bundles and stored in the bundle storage.
-			 * @param b The bundle sample.
-			 */
-			void prepareEpidemicInfo(dtn::data::Bundle &b);
+			class QuerySummaryVectorTask : public ExecutableTask
+			{
+			public:
+				QuerySummaryVectorTask(const dtn::data::EID &origin);
+				virtual ~QuerySummaryVectorTask();
+
+				virtual std::string toString();
+				virtual void execute() const;
+
+				const dtn::data::EID origin;
+			};
+
+			class TransferCompletedTask : public Task
+			{
+			public:
+				TransferCompletedTask(const dtn::data::EID &eid, const dtn::data::MetaBundle &meta);
+				virtual ~TransferCompletedTask();
+
+				virtual std::string toString();
+
+				const dtn::data::EID peer;
+				const dtn::data::MetaBundle meta;
+			};
 
 			/**
-			 * contains a lock for bundles lists (_bundles, _seenlist)
+			 * Process an ECM bundle. ECM are requests for or contain summary vectors used
+			 * for epidemic routing
+			 * @param origin The ECM is received from this EID.
+			 * @param b The bundle containing the ECM.
 			 */
-			ibrcommon::Mutex _list_mutex;
+			void processECM(const dtn::data::EID &origin, const dtn::data::Bundle &b);
 
 			/**
 			 * contains the own summary vector for all delivered bundles
@@ -132,11 +138,6 @@ namespace dtn
 			 * hold queued tasks for later processing
 			 */
 			ibrcommon::Queue<EpidemicRoutingExtension::Task* > _taskqueue;
-
-			/**
-			 * The current epidemic bundle is stored in this variable.
-			 */
-			dtn::data::Bundle _epidemic_bundle;
 		};
 	}
 }

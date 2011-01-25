@@ -255,6 +255,27 @@ namespace dtn
 			throw BundleStorage::NoBundleFoundException();
 		}
 
+		const std::list<dtn::data::MetaBundle> SimpleBundleStorage::get(const BundleFilterCallback &cb)
+		{
+			// result list
+			std::list<dtn::data::MetaBundle> result;
+
+			// we have to iterate through all bundles
+			ibrcommon::MutexLock l(_bundleslock);
+
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = begin(); (iter != end()) && (result.size() < cb.limit()); iter++)
+			{
+				const dtn::data::MetaBundle &meta = (*iter);
+
+				if ( cb.shouldAdd(meta) )
+				{
+					result.push_back(meta);
+				}
+			}
+
+			return result;
+		}
+
 		dtn::data::Bundle SimpleBundleStorage::get(const dtn::data::BundleID &id)
 		{
 			try {
