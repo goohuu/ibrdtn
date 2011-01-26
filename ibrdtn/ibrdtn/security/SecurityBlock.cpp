@@ -166,78 +166,63 @@ namespace dtn
 		{
 		}
 
-		const dtn::data::EID SecurityBlock::getSecuritySource() const
+		void SecurityBlock::store_security_references()
 		{
-			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+			// clear the EID list
+			_eids.clear();
+
+			// first the security source
+			if (_security_source == dtn::data::EID())
 			{
-				return _eids.front();
+				_ciphersuite_flags &= ~(SecurityBlock::CONTAINS_SECURITY_SOURCE);
 			}
 			else
 			{
-				return dtn::data::EID();
+				_ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_SOURCE;
+				_eids.push_back(_security_source);
 			}
+
+			// then the destination
+			if (_security_destination == dtn::data::EID())
+			{
+				_ciphersuite_flags &= ~(SecurityBlock::CONTAINS_SECURITY_DESTINATION);
+			}
+			else
+			{
+				_ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_DESTINATION;
+				_eids.push_back(_security_destination);
+			}
+
+			if (_eids.size() > 0)
+			{
+				set(Block::BLOCK_CONTAINS_EIDS, true);
+			}
+			else
+			{
+				set(Block::BLOCK_CONTAINS_EIDS, false);
+			}
+		}
+
+		const dtn::data::EID SecurityBlock::getSecuritySource() const
+		{
+			return _security_source;
 		}
 
 		const dtn::data::EID SecurityBlock::getSecurityDestination() const
 		{
-			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
-			{
-				if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
-				{
-					return *(++_eids.begin());
-				}
-				else
-				{
-					return _eids.front();
-				}
-			}
-			else
-			{
-				return dtn::data::EID();
-			}
+			return _security_destination;
 		}
 
 		void SecurityBlock::setSecuritySource(const dtn::data::EID &source)
 		{
-			// the first EID must be the source and the second the destination
-			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
-			{
-				_eids.pop_front();
-			}
-
-			_eids.push_front(source.getNodeEID());
-
-			set(Block::BLOCK_CONTAINS_EIDS, true);
-			this->_ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_SOURCE;
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(getSecuritySource() == source.getNodeEID());
-#endif
+			_security_source = source;
+			store_security_references();
 		}
 
 		void SecurityBlock::setSecurityDestination(const dtn::data::EID &destination)
 		{
-			std::list<dtn::data::EID>::iterator it = _eids.begin();
-
-			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
-			{
-				it++;
-			}
-
-			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
-			{
-				(*it) = destination.getNodeEID();
-			}
-			else
-			{
-				_eids.insert(it, destination.getNodeEID());
-				set(Block::BLOCK_CONTAINS_EIDS, true);
-				this->_ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_DESTINATION;
-			}
-
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(getSecurityDestination() == destination.getNodeEID());
-#endif
+			_security_destination = destination;
+			store_security_references();
 		}
 
 		void SecurityBlock::setCiphersuiteId(const CIPHERSUITE_IDS id)
@@ -391,6 +376,33 @@ namespace dtn
 			// recheck ciphersuite_flags, could be more exhaustive
 			assert(_ciphersuite_flags < 32);
 #endif
+
+			// copy security source and destination
+			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+			{
+				if (_eids.size() == 0)
+					throw dtn::SerializationFailedException("ciphersuite flags indicate a security source, but it is not present");
+
+				_security_source = _eids.front();
+			}
+
+			if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_DESTINATION)
+			{
+				if (_ciphersuite_flags & SecurityBlock::CONTAINS_SECURITY_SOURCE)
+				{
+					if (_eids.size() < 2)
+						throw dtn::SerializationFailedException("ciphersuite flags indicate a security destination, but it is not present");
+
+					_security_destination = (*(_eids.begin())++);
+				}
+				else
+				{
+					if (_eids.size() == 0)
+						throw dtn::SerializationFailedException("ciphersuite flags indicate a security destination, but it is not present");
+
+					_security_destination = _eids.front();
+				}
+			}
 
 			if (_ciphersuite_flags & CONTAINS_CORRELATOR)
 			{
@@ -577,9 +589,10 @@ namespace dtn
 			// deserialize block
 			dtn::data::DefaultDeserializer ddser(plaintext);
 
-			// BLOCK_TYPE
+			// peek the block type
 			char block_type = plaintext.peek();
-			if (dtn::data::PayloadBlock::BLOCK_TYPE)
+
+			if (block_type == dtn::data::PayloadBlock::BLOCK_TYPE)
 			{
 				dtn::data::PayloadBlock &plaintext_block = bundle.insert<dtn::data::PayloadBlock>(block);
 				ddser >> plaintext_block;

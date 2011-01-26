@@ -229,6 +229,15 @@ namespace dtn
 			/** you can find encrypted blocks, signatures or MACs here */
 			TLVList _security_result;
 
+			/** security destination: only set if differs from primary header **/
+			dtn::data::EID _security_destination;
+
+			/** security source: only set if differs from primary header **/
+			dtn::data::EID _security_source;
+
+			/** stores the security source and destination in the EID reference list **/
+			void store_security_references();
+
 			/**
 			Creates an empty SecurityBlock. This is only needed by children, which add
 			blocks to bundles in a factory
