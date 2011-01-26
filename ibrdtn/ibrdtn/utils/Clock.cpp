@@ -50,6 +50,11 @@ namespace dtn
 			return __getExpireTime(timestamp, lifetime);
 		}
 
+		size_t Clock::getExpireTime(size_t lifetime)
+		{
+			return __getExpireTime(getTime(), lifetime);
+		}
+
 		size_t Clock::__getExpireTime(size_t timestamp, size_t lifetime)
 		{
 			// if the quality of time is zero, return standard expire time

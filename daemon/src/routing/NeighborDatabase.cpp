@@ -7,30 +7,48 @@
 
 #include "routing/NeighborDatabase.h"
 #include <ibrdtn/utils/Clock.h>
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
 	namespace routing
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
-		 : _eid(), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _transfer_semaphore(5), _transfer_max(5)		{};
+		 : _eid(), _transfer_semaphore(5), _transfer_max(5), _filter(), _filter_expire(0), _filter_available(false)
+		{};
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &eid)
-		 : _eid(eid), _filter(), _filter_age(0), _lastseen(0), _lastupdate(0), _transfer_semaphore(5), _transfer_max(5)
+		 : _eid(eid), _transfer_semaphore(5), _transfer_max(5), _filter(), _filter_expire(0), _filter_available(false)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
 		{ }
 
-		void NeighborDatabase::NeighborEntry::updateLastSeen()
-		{
-			_lastseen = dtn::utils::Clock::getTime();
-		}
-
-		void NeighborDatabase::NeighborEntry::updateBundles(const ibrcommon::BloomFilter &bf)
+		void NeighborDatabase::NeighborEntry::updateBundles(const ibrcommon::BloomFilter &bf, const size_t lifetime)
 		{
 			_filter = bf;
-			_lastupdate = dtn::utils::Clock::getTime();
+
+			if (lifetime == 0)
+			{
+				_filter_expire = 0;
+			}
+			else
+			{
+				_filter_expire = dtn::utils::Clock::getExpireTime(lifetime);
+			}
+
+			_filter_available = true;
+		}
+
+		ibrcommon::BloomFilter& NeighborDatabase::NeighborEntry::getBundles() throw (BloomfilterNotAvailableException)
+		{
+			if (!_filter_available)
+				throw BloomfilterNotAvailableException(_eid);
+
+			if ((_filter_expire > 0) && (_filter_expire < dtn::utils::Clock::getTime()))
+				throw BloomfilterNotAvailableException(_eid);
+
+			return _filter;
 		}
 
 		void NeighborDatabase::NeighborEntry::acquireTransfer() throw (NoMoreTransfersAvailable)
@@ -39,7 +57,7 @@ namespace dtn
 			if (_transfer_semaphore == 0) throw NoMoreTransfersAvailable();
 			_transfer_semaphore--;
 
-			std::cout << "acquire transfer (" << _transfer_semaphore << " left)" << std::endl;
+			IBRCOMMON_LOGGER_DEBUG(20) << "acquire transfer (" << _transfer_semaphore << " left)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void NeighborDatabase::NeighborEntry::releaseTransfer()
@@ -48,7 +66,7 @@ namespace dtn
 			if (_transfer_semaphore >= _transfer_max) return;
 			_transfer_semaphore++;
 
-			std::cout << "release transfer (" << _transfer_semaphore << " left)" << std::endl;
+			IBRCOMMON_LOGGER_DEBUG(20) << "release transfer (" << _transfer_semaphore << " left)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		NeighborDatabase::NeighborDatabase()
@@ -86,17 +104,17 @@ namespace dtn
 			return (*_entries[eid]);
 		}
 
-		void NeighborDatabase::updateBundles(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf)
+		void NeighborDatabase::updateBundles(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf, const size_t lifetime)
 		{
 			NeighborEntry &entry = create(eid);
-			entry.updateBundles(bf);
+			entry.updateBundles(bf, lifetime);
 		}
 
 		bool NeighborDatabase::knowBundle(const dtn::data::EID &eid, const dtn::data::BundleID &bundle) throw (BloomfilterNotAvailableException)
 		{
 			try {
 				NeighborEntry &entry = get(eid);
-				return entry._filter.contains(bundle.toString());
+				return entry.getBundles().contains(bundle.toString());
 			} catch (const NeighborNotAvailableException&) {
 				throw BloomfilterNotAvailableException(eid);
 			}

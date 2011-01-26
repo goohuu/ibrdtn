@@ -140,7 +140,7 @@ namespace dtn
 					{
 						// add the transferred bundle to the bloomfilter of the receiver
 						ibrcommon::MutexLock l(_list_mutex);
-						ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
+						ibrcommon::BloomFilter &bf = _neighbors.get(eid).getBundles();
 						bf.insert(id.toString());
 
 						if (IBRCOMMON_LOGGER_LEVEL >= 40)
@@ -190,7 +190,7 @@ namespace dtn
 				{
 					// add the transferred bundle to the bloomfilter of the receiver
 					ibrcommon::MutexLock l(_list_mutex);
-					ibrcommon::BloomFilter &bf = _neighbors.get(eid)._filter;
+					ibrcommon::BloomFilter &bf = _neighbors.get(eid).getBundles();
 					bf.insert(meta.toString());
 
 					if (IBRCOMMON_LOGGER_LEVEL >= 40)
@@ -235,7 +235,7 @@ namespace dtn
 							IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 							ibrcommon::MutexLock l(_list_mutex);
-							ibrcommon::BloomFilter &bf = _neighbors.get(task.eid)._filter;
+							ibrcommon::BloomFilter &bf = _neighbors.get(task.eid).getBundles();
 							const dtn::data::BundleID b = (**this).getStorage().getByFilter(bf);
 							transferTo(task.eid, b);
 

@@ -39,6 +39,14 @@ namespace dtn
 			 */
 			static size_t getExpireTime(size_t timestamp, size_t lifetime) __attribute__ ((deprecated));
 
+			/**
+			 * Returns the timestamp when this lifetime is going to be expired
+			 * depending on the current knowledge of time.
+			 * @param lifetime The lifetime in seconds.
+			 * @return A DTN timestamp.
+			 */
+			static size_t getExpireTime(size_t lifetime);
+
 			static int timezone;
 
 			static u_int32_t TIMEVAL_CONVERSION;
