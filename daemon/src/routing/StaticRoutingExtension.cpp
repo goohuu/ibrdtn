@@ -57,24 +57,6 @@ namespace dtn
 
 				return;
 			} catch (std::bad_cast ex) { };
-
-			try {
-				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				try {
-					// delete bundle in storage
-					dtn::core::BundleStorage &storage = (**this).getStorage();
-
-					storage.remove(completed.getBundle());
-				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-
-				}
-				return;
-			} catch (std::bad_cast ex) { };
-
-//			try {
-//				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-//				// nothing?
-//			} catch (std::bad_cast ex) { };
 		}
 
 		void StaticRoutingExtension::route(const dtn::data::MetaBundle &meta)
