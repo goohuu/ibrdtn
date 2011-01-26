@@ -249,10 +249,6 @@ namespace dtn
 
 						// store the bundle into a storage module
 						_storage.store(bundle);
-
-//						// so lange das senden des QueueBundleEvent verzögern, bis alle schlüssel zum verschicken da sind
-//						// outgoing in 2 Teile zeilen, eines für symmetrische und eines für asymmetrische verschlüsselung
-//						dtn::security::SecurityManager::getInstance().outgoing_asymmetric(bundle, received.peer);
 #else
 						// store the bundle into a storage module
 						_storage.store(received.bundle);
