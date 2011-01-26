@@ -40,11 +40,11 @@ namespace dtn
 			bab_begin.setCiphersuiteId(BAB_HMAC);
 
 			BundleAuthenticationBlock& bab_end = bundle.push_back<BundleAuthenticationBlock>();
-			std::string sizehash_hash = calcMAC(bundle, key);
-			bab_end._security_result.set(SecurityBlock::integrity_signature, sizehash_hash);
-
 			bab_end.setCorrelator(correlator);
 			bab_end._ciphersuite_flags |= CONTAINS_SECURITY_RESULT;
+
+			std::string sizehash_hash = calcMAC(bundle, key);
+			bab_end._security_result.set(SecurityBlock::integrity_signature, sizehash_hash);
 		}
 
 		void BundleAuthenticationBlock::verify(const dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key) throw (ibrcommon::Exception)
