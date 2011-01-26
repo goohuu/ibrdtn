@@ -80,9 +80,9 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(10) << "verify signed bundle: " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 			// get all PIBs of this bundle
-			std::list<dtn::security::PayloadIntegrityBlock const *> pibs = bundle.getBlocks<dtn::security::PayloadIntegrityBlock>();
+			std::list<const dtn::security::PayloadIntegrityBlock*> pibs = bundle.getBlocks<dtn::security::PayloadIntegrityBlock>();
 
-			for (std::list<dtn::security::PayloadIntegrityBlock const *>::iterator it = pibs.begin(); it != pibs.end(); it++)
+			for (std::list<const dtn::security::PayloadIntegrityBlock*>::iterator it = pibs.begin(); it != pibs.end(); it++)
 			{
 				const dtn::security::PayloadIntegrityBlock& pib = (**it);
 
