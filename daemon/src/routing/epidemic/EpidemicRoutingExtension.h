@@ -125,6 +125,14 @@ namespace dtn
 			void processECM(const dtn::data::EID &origin, const dtn::data::Bundle &b);
 
 			/**
+			 * Add a bundle id to the summary vector of a neighbor.
+			 * @param neighbor
+			 * @param b
+			 */
+			void addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b);
+			void addToSummaryVector(NeighborDatabase &db, const dtn::data::EID &neighbor, const dtn::data::BundleID &b);
+
+			/**
 			 * contains the own summary vector for all delivered bundles
 			 */
 			dtn::routing::BundleSummary _purge_vector;

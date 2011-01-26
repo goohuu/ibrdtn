@@ -113,13 +113,7 @@ namespace dtn
 					if (aborted.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
 					{
 						// add the transferred bundle to the bloomfilter of the receiver
-						ibrcommon::BloomFilter &bf = entry.getBundles();
-						bf.insert(id.toString());
-
-						if (IBRCOMMON_LOGGER_LEVEL >= 40)
-						{
-							IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
-						}
+						addToSummaryVector(db, eid, id);
 					}
 
 					// transfer the next bundle to this destination
@@ -242,6 +236,9 @@ namespace dtn
 									// acquire resources for transmission
 									entry.acquireTransfer();
 
+									// add the bundle to the summary vector of the neighbor
+									addToSummaryVector(db, task.eid, *iter);
+
 									// transfer the bundle to the neighbor
 									transferTo(task.eid, *iter);
 								}
@@ -261,23 +258,9 @@ namespace dtn
 						 */
 						try {
 							TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
-							NeighborDatabase &db = (**this).getNeighborDB();
 
-							try {
-								// lock the list of bloom filters
-								ibrcommon::MutexLock l(db);
-								NeighborDatabase::NeighborEntry &entry = db.get(task.peer);
-								entry.releaseTransfer();
-
-								ibrcommon::BloomFilter &bf = entry.getBundles();
-								bf.insert(task.meta.toString());
-
-								if (IBRCOMMON_LOGGER_LEVEL >= 40)
-								{
-									IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
-								}
-							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
-							} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+							// add the bundle to the summary vector of the neighbor
+							addToSummaryVector(task.peer, task.meta);
 
 							// add this bundle to the purge vector if it is delivered to its destination
 							if (( EID(task.peer.getNodeEID()) == EID(task.meta.destination.getNodeEID()) ) && (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
@@ -315,15 +298,9 @@ namespace dtn
 							else
 							{
 								// prevent loops:
-								// add this bundle to the summary vector of the sending peer
-								NeighborDatabase &db = (**this).getNeighborDB();
-								try {
-									// lock the list of bloom filters
-									ibrcommon::MutexLock l(db);
-									NeighborDatabase::NeighborEntry &entry = db.get(task.origin);
-									entry.getBundles().insert( task.bundle.toString() );
-								} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
-								} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+								// add the bundle to the summary vector of the neighbor
+								// lock the list of bloom filters
+								addToSummaryVector(task.origin, task.bundle);
 
 								// new bundles trigger a recheck for all neighbors
 								const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
@@ -559,6 +536,30 @@ namespace dtn
 					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 				}
 			}
+		}
+
+		void EpidemicRoutingExtension::addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b)
+		{
+			NeighborDatabase &db = (**this).getNeighborDB();
+			ibrcommon::MutexLock l(db);
+			addToSummaryVector(db, neighbor, b);
+		}
+
+		void EpidemicRoutingExtension::addToSummaryVector(NeighborDatabase &db, const dtn::data::EID &neighbor, const dtn::data::BundleID &b)
+		{
+			try {
+				NeighborDatabase::NeighborEntry &entry = db.get(neighbor);
+				entry.releaseTransfer();
+
+				ibrcommon::BloomFilter &bf = entry.getBundles();
+				bf.insert(b.toString());
+
+				if (IBRCOMMON_LOGGER_LEVEL >= 40)
+				{
+					IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
+				}
+			} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
+			} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 		}
 	}
 }
