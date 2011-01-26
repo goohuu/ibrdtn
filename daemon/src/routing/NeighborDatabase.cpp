@@ -47,8 +47,11 @@ namespace dtn
 
 			if ((_filter_expire > 0) && (_filter_expire < dtn::utils::Clock::getTime()))
 			{
+				IBRCOMMON_LOGGER_DEBUG(15) << "summary vector of " << _eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
+
 				// set the filter state to expired once
 				_filter_state = FILTER_EXPIRED;
+
 				throw BloomfilterNotAvailableException(_eid);
 			}
 
@@ -57,7 +60,7 @@ namespace dtn
 
 		void NeighborDatabase::NeighborEntry::acquireFilterRequest() throw (NoMoreTransfersAvailable)
 		{
-			if (_filter_state == FILTER_EXPIRED)
+			if (_filter_state != FILTER_EXPIRED)
 				throw NoMoreTransfersAvailable();
 
 			_filter_state = FILTER_AWAITING;
