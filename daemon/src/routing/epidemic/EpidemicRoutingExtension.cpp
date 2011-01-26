@@ -154,11 +154,20 @@ namespace dtn
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
+					// do not forward any epidemic control message
+					// this is done by the neighbor routing module
+					if (meta.source == (dtn::core::BundleCore::local + "/routing/epidemic"))
+					{
+						return false;
+					}
+
+					// do not forward to any blacklisted destination
 					if (_blacklist.find(meta.destination) != _blacklist.end())
 					{
 						return false;
 					}
 
+					// do not forward bundles already known by the destination
 					if (_filter.contains(meta.toString()))
 					{
 						return false;
