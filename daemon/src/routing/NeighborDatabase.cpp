@@ -14,11 +14,11 @@ namespace dtn
 	namespace routing
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
-		 : _eid(), _transfer_semaphore(5), _transfer_max(5), _filter(), _filter_expire(0), _filter_available(false)
+		 : _eid(), _transfer_semaphore(5), _transfer_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
 		{};
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &eid)
-		 : _eid(eid), _transfer_semaphore(5), _transfer_max(5), _filter(), _filter_expire(0), _filter_available(false)
+		 : _eid(eid), _transfer_semaphore(5), _transfer_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
@@ -37,18 +37,30 @@ namespace dtn
 				_filter_expire = dtn::utils::Clock::getExpireTime(lifetime);
 			}
 
-			_filter_available = true;
+			_filter_state = FILTER_AVAILABLE;
 		}
 
 		ibrcommon::BloomFilter& NeighborDatabase::NeighborEntry::getBundles() throw (BloomfilterNotAvailableException)
 		{
-			if (!_filter_available)
+			if (_filter_state != FILTER_AVAILABLE)
 				throw BloomfilterNotAvailableException(_eid);
 
 			if ((_filter_expire > 0) && (_filter_expire < dtn::utils::Clock::getTime()))
+			{
+				// set the filter state to expired once
+				_filter_state = FILTER_EXPIRED;
 				throw BloomfilterNotAvailableException(_eid);
+			}
 
 			return _filter;
+		}
+
+		void NeighborDatabase::NeighborEntry::acquireFilterRequest() throw (NoMoreTransfersAvailable)
+		{
+			if (_filter_state == FILTER_EXPIRED)
+				throw NoMoreTransfersAvailable();
+
+			_filter_state = FILTER_AWAITING;
 		}
 
 		void NeighborDatabase::NeighborEntry::acquireTransfer() throw (NoMoreTransfersAvailable)

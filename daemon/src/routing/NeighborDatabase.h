@@ -72,6 +72,12 @@ namespace dtn
 				ibrcommon::BloomFilter& getBundles() throw (BloomfilterNotAvailableException);
 
 				/**
+				 * acquire resource to send a filter request.
+				 * The resources are reset once if the filter expires.
+				 */
+				void acquireFilterRequest() throw (NoMoreTransfersAvailable);
+
+				/**
 				 * Acquire transfer resources. If no resources is left,
 				 * an exception is thrown.
 				 */
@@ -95,7 +101,13 @@ namespace dtn
 				// bloomfilter used as summary vector
 				ibrcommon::BloomFilter _filter;
 				size_t _filter_expire;
-				bool _filter_available;
+
+				enum FILTER_REQUEST_STATE
+				{
+					FILTER_AWAITING = 0,
+					FILTER_AVAILABLE = 1,
+					FILTER_EXPIRED = 2
+				} _filter_state;
 			};
 
 			NeighborDatabase();

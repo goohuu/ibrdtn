@@ -222,30 +222,37 @@ namespace dtn
 							ibrcommon::MutexLock l(db);
 							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							// create a new bundle filter
-							// getBundles throws BloomfilterNotAvailableException if no filter is available or it is expired
-							BundleFilter filter(entry.getBundles());
+							try {
+								// get the bundle filter of the neighbor
+								// getBundles throws BloomfilterNotAvailableException if no filter is available or it is expired
+								BundleFilter filter(entry.getBundles());
 
-							// some debug output
-							IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								// some debug output
+								IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-							// blacklist the neighbor itself, because this is handles by neighbor routing extension
-							filter.blacklist(task.eid);
+								// blacklist the neighbor itself, because this is handles by neighbor routing extension
+								filter.blacklist(task.eid);
 
-							// query an unknown bundle from the storage, the list contains max. 10 items.
-							const std::list<dtn::data::MetaBundle> list = storage.get(filter);
+								// query an unknown bundle from the storage, the list contains max. 10 items.
+								const std::list<dtn::data::MetaBundle> list = storage.get(filter);
 
-							// send the bundles as long as we have resources
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-							{
-								// acquire resources for transmission
-								entry.acquireTransfer();
+								// send the bundles as long as we have resources
+								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+								{
+									// acquire resources for transmission
+									entry.acquireTransfer();
 
-								// transfer the bundle to the neighbor
-								transferTo(task.eid, *iter);
+									// transfer the bundle to the neighbor
+									transferTo(task.eid, *iter);
+								}
+							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
+								// acquire resources to send a summary vector request
+								entry.acquireFilterRequest();
+
+								// query a new summary vector from this neighbor
+								_taskqueue.push( new QuerySummaryVectorTask( task.eid ) );
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-						} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 						} catch (std::bad_cast) { };
 
@@ -255,6 +262,22 @@ namespace dtn
 						try {
 							TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
 							NeighborDatabase &db = (**this).getNeighborDB();
+
+							try {
+								// lock the list of bloom filters
+								ibrcommon::MutexLock l(db);
+								NeighborDatabase::NeighborEntry &entry = db.get(task.peer);
+								entry.releaseTransfer();
+
+								ibrcommon::BloomFilter &bf = entry.getBundles();
+								bf.insert(task.meta.toString());
+
+								if (IBRCOMMON_LOGGER_LEVEL >= 40)
+								{
+									IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
+								}
+							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
+							} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 							// add this bundle to the purge vector if it is delivered to its destination
 							if (( EID(task.peer.getNodeEID()) == EID(task.meta.destination.getNodeEID()) ) && (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
@@ -267,23 +290,8 @@ namespace dtn
 								} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 							}
 
-							// lock the list of bloom filters
-							ibrcommon::MutexLock l(db);
-							NeighborDatabase::NeighborEntry &entry = db.get(task.peer);
-							entry.releaseTransfer();
-
-							ibrcommon::BloomFilter &bf = entry.getBundles();
-							bf.insert(task.meta.toString());
-
-							if (IBRCOMMON_LOGGER_LEVEL >= 40)
-							{
-								IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
-							}
-
 							// transfer the next bundle to this destination
 							_taskqueue.push( new SearchNextBundleTask( task.peer ) );
-						} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
-						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 						} catch (std::bad_cast) { };
 
 						/**
