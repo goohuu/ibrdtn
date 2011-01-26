@@ -302,9 +302,9 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						core.addConvergenceLayer(httpcl);
 						components.push_back(httpcl);
 
-						IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.address.get() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "HTTP ConvergenceLayer added, Server: " << net.url << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Failed to add HTTP ConvergenceLayer, Server: " << net.address.get() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(error) << "Failed to add HTTP ConvergenceLayer, Server: " << net.url << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 					break;
 				}
