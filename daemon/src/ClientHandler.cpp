@@ -210,13 +210,6 @@ namespace dtn
 					}
 
 #ifdef WITH_BUNDLE_SECURITY
-//					// if the encrypt bit is set, then let the security manager prepare encryption
-//					if (bundle._procflags & dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT)
-//					{
-//						// we need the public key of the recipient later on, so we start a prefetch request now
-//						dtn::security::SecurityManager::getInstance().prefetchKey(bundle._destination);
-//					}
-
 					// if the encrypt bit is set, then try to encrypt the bundle
 					if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
 					{
