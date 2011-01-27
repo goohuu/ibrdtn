@@ -6,7 +6,6 @@
  */
 
 #include "routing/epidemic/EpidemicRoutingExtension.h"
-#include "routing/epidemic/EpidemicExtensionBlock.h"
 #include "routing/epidemic/EpidemicControlMessage.h"
 
 #include "routing/QueueBundleEvent.h"
@@ -19,8 +18,6 @@
 #include "net/ConnectionManager.h"
 #include "Configuration.h"
 #include "core/BundleCore.h"
-#include "core/SimpleBundleStorage.h"
-
 #include "core/BundleGeneratedEvent.h"
 
 #include <ibrdtn/data/MetaBundle.h>
@@ -162,7 +159,8 @@ namespace dtn
 					}
 
 					// do not forward to any blacklisted destination
-					if (_blacklist.find(meta.destination) != _blacklist.end())
+					const dtn::data::EID dest = meta.destination.getNodeEID();
+					if (_blacklist.find(dest) != _blacklist.end())
 					{
 						return false;
 					}

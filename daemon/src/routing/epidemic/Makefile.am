@@ -5,8 +5,6 @@ AM_LDFLAGS = @ibrdtn_LIBS@
 
 routing_SOURCES = EpidemicRoutingExtension.cpp \
 				EpidemicRoutingExtension.h \
-				EpidemicExtensionBlock.h \
-				EpidemicExtensionBlock.cpp \
 				EpidemicControlMessage.h \
 				EpidemicControlMessage.cpp
 				

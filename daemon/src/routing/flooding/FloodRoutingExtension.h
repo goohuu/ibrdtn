@@ -50,22 +50,11 @@ namespace dtn
 				virtual std::string toString() = 0;
 			};
 
-			class ExpireTask : public Task
+			class TransferAllBundlesTask : public Task
 			{
 			public:
-				ExpireTask(const size_t timestamp);
-				virtual ~ExpireTask();
-
-				virtual std::string toString();
-
-				const size_t timestamp;
-			};
-
-			class SearchNextBundleTask : public Task
-			{
-			public:
-				SearchNextBundleTask(const dtn::data::EID &eid);
-				virtual ~SearchNextBundleTask();
+				TransferAllBundlesTask(const dtn::data::EID &eid);
+				virtual ~TransferAllBundlesTask();
 
 				virtual std::string toString();
 
@@ -82,21 +71,6 @@ namespace dtn
 
 				const dtn::data::MetaBundle bundle;
 			};
-
-			/**
-			 * contains a lock for bundles lists (_bundles, _seenlist)
-			 */
-			ibrcommon::Mutex _list_mutex;
-
-			/**
-			 * contains the own summary vector for all delivered bundles
-			 */
-			dtn::routing::BundleSummary _purge_vector;
-
-			/**
-			 * stores information about neighbors
-			 */
-			dtn::routing::NeighborDatabase _neighbors;
 
 			/**
 			 * hold queued tasks for later processing
