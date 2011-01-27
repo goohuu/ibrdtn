@@ -87,7 +87,13 @@ namespace dtn
 
 				if (nodeevent.getAction() == NODE_AVAILABLE)
 				{
-					_taskqueue.push( new QuerySummaryVectorTask( n.getEID() ) );
+					try {
+						// acquire resources to send a summary vector request
+						entry.acquireFilterRequest();
+
+						// query a new summary vector from this neighbor
+						_taskqueue.push( new QuerySummaryVectorTask( n.getEID() ) );
+					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) { };
 				}
 
 				return;
@@ -272,9 +278,9 @@ namespace dtn
 							// add this bundle to the purge vector if it is delivered to its destination
 							if (( EID(task.peer.getNodeEID()) == EID(task.meta.destination.getNodeEID()) ) && (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 							{
-								try {
-									IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
+								try {
 									// add it to the purge vector
 									_purge_vector.add(task.meta);
 								} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
