@@ -87,13 +87,20 @@ namespace dtn
 
 				if (nodeevent.getAction() == NODE_AVAILABLE)
 				{
+					NeighborDatabase &db = (**this).getNeighborDB();
+
 					try {
+						// lock the list of neighbors
+						ibrcommon::MutexLock l(db);
+						NeighborDatabase::NeighborEntry &entry = db.get(n.getEID());
+
 						// acquire resources to send a summary vector request
 						entry.acquireFilterRequest();
 
 						// query a new summary vector from this neighbor
 						_taskqueue.push( new QuerySummaryVectorTask( n.getEID() ) );
-					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) { };
+					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
+					} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 				}
 
 				return;
