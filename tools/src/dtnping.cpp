@@ -157,7 +157,10 @@ void print_summary()
 
 	std::cout << std::endl << "--- " << _addr.getString() << " echo statistics --- " << std::endl;
 	std::cout << _transmitted << " bundles transmitted, " << _received << " received, " << loss << "% bundle loss, time " << _runtime << std::endl;
-	std::cout << "rtt min/avg/max = " << _min << "/" << avg_value << "/" << _max << " ms" << std::endl;
+	std::cout << "rtt min/avg/max = ";
+	ibrcommon::TimeMeasurement::format(std::cout, _min) << "/";
+	ibrcommon::TimeMeasurement::format(std::cout, avg_value) << "/";
+	ibrcommon::TimeMeasurement::format(std::cout, _max) << " ms" << std::endl;
 }
 
 void term(int signal)
