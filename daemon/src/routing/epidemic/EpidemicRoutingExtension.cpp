@@ -263,10 +263,8 @@ namespace dtn
 							{
 								IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-								try {
-									// add it to the purge vector
-									_purge_vector.add(task.meta);
-								} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
+								// add it to the purge vector
+								_purge_vector.add(task.meta);
 							}
 
 							// transfer the next bundle to this destination
