@@ -74,14 +74,6 @@ namespace dtn
 			};
 
 			/**
-			 * Add a bundle id to the summary vector of a neighbor.
-			 * @param neighbor
-			 * @param b
-			 */
-			void addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b);
-			void addToSummaryVector(NeighborDatabase &db, const dtn::data::EID &neighbor, const dtn::data::BundleID &b);
-
-			/**
 			 * hold queued tasks for later processing
 			 */
 			ibrcommon::Queue<FloodRoutingExtension::Task* > _taskqueue;

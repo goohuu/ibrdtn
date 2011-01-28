@@ -55,12 +55,6 @@ namespace dtn
 		{
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
-
-				// prevent loops:
-				// add the bundle to the summary vector of the neighbor
-				// lock the list of bloom filters
-				addToSummaryVector(queued.origin, queued.bundle);
-
 				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
 				return;
 			} catch (std::bad_cast ex) { };
@@ -88,29 +82,15 @@ namespace dtn
 			// The bundle transfer has been aborted
 			try {
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-				const dtn::data::EID &eid = aborted.getPeer();
-				const dtn::data::BundleID &id = aborted.getBundleID();
 
-				try {
-					if (aborted.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
-					{
-						// add the transferred bundle to the bloomfilter of the receiver
-						addToSummaryVector(eid, id);
-					}
-
-					// transfer the next bundle to this destination
-					_taskqueue.push( new SearchNextBundleTask( eid ) );
-				} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
-				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+				// transfer the next bundle to this destination
+				_taskqueue.push( new SearchNextBundleTask( aborted.getPeer() ) );
 				return;
 			} catch (std::bad_cast ex) { };
 
 			// A bundle transfer was successful
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
-				
-				// add the bundle to the summary vector of the neighbor
-				addToSummaryVector(completed.getPeer(), completed.getBundle());
 
 				// transfer the next bundle to this destination
 				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
@@ -233,28 +213,6 @@ namespace dtn
 
 				yield();
 			}
-		}
-
-		void FloodRoutingExtension::addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b)
-		{
-			NeighborDatabase &db = (**this).getNeighborDB();
-			ibrcommon::MutexLock l(db);
-			addToSummaryVector(db, neighbor, b);
-		}
-
-		void FloodRoutingExtension::addToSummaryVector(NeighborDatabase &db, const dtn::data::EID &neighbor, const dtn::data::BundleID &b)
-		{
-			try {
-				NeighborDatabase::NeighborEntry &entry = db.get(neighbor);
-				ibrcommon::BloomFilter &bf = entry.getBundles();
-				bf.insert(b.toString());
-
-				if (IBRCOMMON_LOGGER_LEVEL >= 40)
-				{
-					IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
-				}
-			} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
-			} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 		}
 
 		/****************************************/
