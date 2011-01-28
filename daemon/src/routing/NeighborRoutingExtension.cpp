@@ -54,8 +54,8 @@ namespace dtn
 			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
 			{
 			public:
-				BundleFilter(const dtn::data::EID &destination, const dtn::data::BundleList &blacklist)
-				 : _destination(destination), _blacklist(blacklist)
+				BundleFilter(const dtn::data::EID &destination)
+				 : _destination(destination)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -69,17 +69,11 @@ namespace dtn
 						return false;
 					}
 
-					if (_blacklist.contains(meta))
-					{
-						return false;
-					}
-
 					return true;
 				};
 
 			private:
 				const dtn::data::EID &_destination;
-				const dtn::data::BundleList &_blacklist;
 			};
 
 			dtn::core::BundleStorage &storage = (**this).getStorage();
@@ -99,13 +93,10 @@ namespace dtn
 					 */
 					try {
 						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
-						NeighborDatabase &db = (**this).getNeighborDB();
 
 						try {
-							ibrcommon::MutexLock l(_transfer_list_lock);
-
 							// create a new bundle filter
-							BundleFilter filter(task.eid, _transfer_list);
+							BundleFilter filter(task.eid);
 
 							// query an unknown bundle from the storage, the list contains max. 10 items.
 							const std::list<dtn::data::MetaBundle> list = storage.get(filter);
@@ -115,17 +106,10 @@ namespace dtn
 							// send the bundles as long as we have resources
 							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 							{
-								ibrcommon::MutexLock l(db);
-								NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
-
-								// acquire resources for transmission
-								entry.acquireTransfer();
-
-								// add the bundle to the transfer ids (blacklist for filter)
-								_transfer_list.add(*iter);
-
-								// transfer the bundle to the neighbor
-								transferTo(task.eid, *iter);
+								try {
+									// transfer the bundle to the neighbor
+									transferTo(task.eid, *iter);
+								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) { };
 					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
@@ -137,26 +121,19 @@ namespace dtn
 					try {
 						TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
 
-						ibrcommon::MutexLock tl(_transfer_list_lock);
-						if (_transfer_list.contains(task.meta))
+						if ((task.meta.destination.getNodeEID() == task.peer.getNodeEID())
+								&& (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 						{
-							if ((task.meta.destination.getNodeEID() == task.peer.getNodeEID())
-									&& (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
-							{
-								try {
-									// bundle has been delivered to its destination
-									// delete it from our storage
-									storage.remove(task.meta);
+							try {
+								// bundle has been delivered to its destination
+								// delete it from our storage
+								storage.remove(task.meta);
 
-									// remove it from the transfer list
-									_transfer_list.remove(task.meta);
+								IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
+							} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 
-									IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
-								} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
-
-								// transfer the next bundle to this destination
-								_taskqueue.push( new SearchNextBundleTask( task.peer ) );
-							}
+							// transfer the next bundle to this destination
+							_taskqueue.push( new SearchNextBundleTask( task.peer ) );
 						}
 					} catch (std::bad_cast) { };
 
@@ -176,15 +153,6 @@ namespace dtn
 							// transfer the next bundle to this destination
 							_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 						}
-					} catch (std::bad_cast) { };
-
-					/**
-					 * The ExpireTask take care of expired bundles in the purge vector
-					 */
-					try {
-						ExpireTask &task = dynamic_cast<ExpireTask&>(*t);
-						ibrcommon::MutexLock l(_transfer_list_lock);
-						_transfer_list.expire(task.timestamp);
 					} catch (std::bad_cast) { };
 
 				} catch (const std::exception &ex) {
@@ -214,26 +182,9 @@ namespace dtn
 
 			try {
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
-				const dtn::data::EID &eid = aborted.getPeer();
+				const dtn::data::EID &peer = aborted.getPeer();
 				const dtn::data::BundleID &id = aborted.getBundleID();
-
-				// check if the bundle is processed by this module
-				{
-					ibrcommon::MutexLock tl(_transfer_list_lock);
-					if (!_transfer_list.contains(id))
-					{
-						// we're not processing this bundle
-						return;
-					}
-				}
-
 				const dtn::data::MetaBundle meta = (**this).getStorage().get(id);
-
-				// remove the id in the set
-				{
-					ibrcommon::MutexLock tl(_transfer_list_lock);
-					_transfer_list.remove(meta);
-				}
 
 				switch (aborted.reason)
 				{
@@ -251,17 +202,21 @@ namespace dtn
 
 					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
 					{
-						// bundle is not deliverable
-						try {
-							// if the bundle has been sent by this module
-							(**this).getStorage().remove(id);
-						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
+						if ((meta.destination.getNodeEID() == peer.getNodeEID())
+								&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+						{
+							// bundle is not deliverable
+							try {
+								// if the bundle has been sent by this module
+								(**this).getStorage().remove(id);
+							} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
+						}
 					}
 					break;
 				}
 
 				// transfer the next bundle to this destination
-				_taskqueue.push( new SearchNextBundleTask( eid ) );
+				_taskqueue.push( new SearchNextBundleTask( peer ) );
 
 				return;
 			} catch (std::bad_cast ex) { };
@@ -279,32 +234,6 @@ namespace dtn
 
 				return;
 			} catch (std::bad_cast ex) { };
-
-			// On each time event look for expired stuff
-			try {
-				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-
-				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
-				{
-					// check all lists for expired entries
-					_taskqueue.push( new ExpireTask(time.getTimestamp()) );
-				}
-				return;
-			} catch (std::bad_cast ex) { };
-		}
-
-		/****************************************/
-
-		NeighborRoutingExtension::ExpireTask::ExpireTask(const size_t t)
-		 : timestamp(t)
-		{ }
-
-		NeighborRoutingExtension::ExpireTask::~ExpireTask()
-		{ }
-
-		std::string NeighborRoutingExtension::ExpireTask::toString()
-		{
-			return "ExpireTask";
 		}
 
 		/****************************************/

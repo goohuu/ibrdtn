@@ -14,11 +14,11 @@ namespace dtn
 	namespace routing
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
-		 : _eid(), _transfer_semaphore(5), _transfer_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
+		 : _eid(), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
 		{};
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &eid)
-		 : _eid(eid), _transfer_semaphore(5), _transfer_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
+		 : _eid(eid), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
@@ -66,22 +66,25 @@ namespace dtn
 			_filter_state = FILTER_AWAITING;
 		}
 
-		void NeighborDatabase::NeighborEntry::acquireTransfer() throw (NoMoreTransfersAvailable)
+		void NeighborDatabase::NeighborEntry::acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException)
 		{
-			ibrcommon::MutexLock l(_transfer_lock);
-			if (_transfer_semaphore == 0) throw NoMoreTransfersAvailable();
-			_transfer_semaphore--;
+			ibrcommon::MutexLock l(_transit_lock);
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "acquire transfer (" << _transfer_semaphore << " left)" << IBRCOMMON_LOGGER_ENDL;
+			// check if the bundle is already in transit
+			if (_transit_bundles.find(id) != _transit_bundles.end()) throw AlreadyInTransitException();
+
+			// check if enough resources available to transfer the bundle
+			if (_transit_bundles.size() >= _transit_max) throw NoMoreTransfersAvailable();
+
+			IBRCOMMON_LOGGER_DEBUG(20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void NeighborDatabase::NeighborEntry::releaseTransfer()
+		void NeighborDatabase::NeighborEntry::releaseTransfer(const dtn::data::BundleID &id)
 		{
-			ibrcommon::MutexLock l(_transfer_lock);
-			if (_transfer_semaphore >= _transfer_max) return;
-			_transfer_semaphore++;
+			ibrcommon::MutexLock l(_transit_lock);
+			_transit_bundles.erase(id);
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "release transfer (" << _transfer_semaphore << " left)" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(20) << "release transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		NeighborDatabase::NeighborDatabase()

@@ -44,6 +44,13 @@ namespace dtn
 				virtual ~NoMoreTransfersAvailable() throw () { };
 			};
 
+			class AlreadyInTransitException : public ibrcommon::Exception
+			{
+			public:
+				AlreadyInTransitException() : ibrcommon::Exception("This bundle is already in transit.") { };
+				virtual ~AlreadyInTransitException() throw () { };
+			};
+
 			class NeighborNotAvailableException : public ibrcommon::Exception
 			{
 			public:
@@ -81,22 +88,22 @@ namespace dtn
 				 * Acquire transfer resources. If no resources is left,
 				 * an exception is thrown.
 				 */
-				void acquireTransfer() throw (NoMoreTransfersAvailable);
+				void acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException);
 
 				/**
 				 * Release a transfer resource, but never exceed the maxium
 				 * resource limit.
 				 */
-				void releaseTransfer();
+				void releaseTransfer(const dtn::data::BundleID &id);
 
 			private:
 				// the EID of the corresponding node
 				const dtn::data::EID _eid;
 
-				// a triple of lock, counter and max value for transfer resources
-				ibrcommon::Mutex _transfer_lock;
-				size_t _transfer_semaphore;
-				size_t _transfer_max;
+				// stores bundle currently in transit
+				ibrcommon::Mutex _transit_lock;
+				std::set<dtn::data::BundleID> _transit_bundles;
+				size_t _transit_max;
 
 				// bloomfilter used as summary vector
 				ibrcommon::BloomFilter _filter;

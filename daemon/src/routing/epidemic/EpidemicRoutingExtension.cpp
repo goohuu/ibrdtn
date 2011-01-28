@@ -113,17 +113,10 @@ namespace dtn
 				const dtn::data::BundleID &id = aborted.getBundleID();
 
 				try {
-					NeighborDatabase &db = (**this).getNeighborDB();
-
-					// lock the list of neighbors
-					ibrcommon::MutexLock l(db);
-					NeighborDatabase::NeighborEntry &entry = db.get(eid);
-					entry.releaseTransfer();
-
 					if (aborted.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
 					{
 						// add the transferred bundle to the bloomfilter of the receiver
-						addToSummaryVector(db, eid, id);
+						addToSummaryVector(eid, id);
 					}
 
 					// transfer the next bundle to this destination
@@ -253,14 +246,10 @@ namespace dtn
 								// send the bundles as long as we have resources
 								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 								{
-									// acquire resources for transmission
-									entry.acquireTransfer();
-
-									// add the bundle to the summary vector of the neighbor
-									addToSummaryVector(db, task.eid, *iter);
-
-									// transfer the bundle to the neighbor
-									transferTo(task.eid, *iter);
+									try {
+										// transfer the bundle to the neighbor
+										transferTo(task.eid, *iter);
+									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 								}
 							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
 								// acquire resources to send a summary vector request
@@ -569,8 +558,6 @@ namespace dtn
 		{
 			try {
 				NeighborDatabase::NeighborEntry &entry = db.get(neighbor);
-				entry.releaseTransfer();
-
 				ibrcommon::BloomFilter &bf = entry.getBundles();
 				bf.insert(b.toString());
 

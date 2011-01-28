@@ -67,6 +67,16 @@ namespace dtn
 		 */
 		void BaseRouter::Extension::transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &id)
 		{
+			// lock the list of neighbors
+			ibrcommon::MutexLock l(_router->getNeighborDB());
+
+			// get the neighbor entry for the next hop
+			NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
+
+			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
+			entry.acquireTransfer(id);
+
+			// transfer the bundle to the next hop
 			dtn::core::BundleCore::getInstance().transferTo(destination, id);
 		}
 
@@ -201,7 +211,7 @@ namespace dtn
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
 					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
-					entry.releaseTransfer();
+					entry.releaseTransfer(event.getBundle());
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 			} catch (std::bad_cast ex) { };
@@ -214,7 +224,7 @@ namespace dtn
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
 					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
-					entry.releaseTransfer();
+					entry.releaseTransfer(event.getBundleID());
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 			} catch (std::bad_cast ex) { };
 

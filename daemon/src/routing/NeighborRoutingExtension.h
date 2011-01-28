@@ -81,27 +81,10 @@ namespace dtn
 				const dtn::data::MetaBundle meta;
 			};
 
-			class ExpireTask : public Task
-			{
-			public:
-				ExpireTask(const size_t timestamp);
-				virtual ~ExpireTask();
-
-				virtual std::string toString();
-
-				const size_t timestamp;
-			};
-
 			/**
 			 * hold queued tasks for later processing
 			 */
 			ibrcommon::Queue<NeighborRoutingExtension::Task* > _taskqueue;
-
-			/**
-			 * contains a set of bundle ids in transfer
-			 */
-			ibrcommon::Mutex _transfer_list_lock;
-			dtn::data::BundleList _transfer_list;
 		};
 	}
 }
