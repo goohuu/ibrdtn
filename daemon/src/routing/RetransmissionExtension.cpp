@@ -13,6 +13,7 @@
 #include "core/BundleExpiredEvent.h"
 #include "ibrdtn/utils/Clock.h"
 #include "ibrdtn/data/Exceptions.h"
+#include "core/BundleCore.h"
 
 namespace dtn
 {
