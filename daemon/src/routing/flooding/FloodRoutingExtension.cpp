@@ -205,7 +205,7 @@ namespace dtn
 							}
 						} catch (std::bad_cast) { };
 					} catch (ibrcommon::Exception ex) {
-						IBRCOMMON_LOGGER(error) << "Exception occurred in FloodRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in FloodRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (std::exception) {
 					return;

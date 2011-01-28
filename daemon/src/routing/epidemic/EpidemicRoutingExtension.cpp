@@ -308,7 +308,7 @@ namespace dtn
 							// if the bundle is not in the storage we have nothing to do
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
-						IBRCOMMON_LOGGER(error) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				} catch (const std::exception&) {
 					return;
