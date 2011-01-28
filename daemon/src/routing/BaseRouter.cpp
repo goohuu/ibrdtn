@@ -218,6 +218,9 @@ namespace dtn
 					ibrcommon::MutexLock l(_neighbor_database);
 					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
 					entry.releaseTransfer(event.getBundle());
+
+					// add the bundle to the summary vector of the neighbor
+					_neighbor_database.addToSummaryVector(event.getPeer(), event.getBundle());
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 			} catch (std::bad_cast ex) { };
@@ -231,6 +234,12 @@ namespace dtn
 					ibrcommon::MutexLock l(_neighbor_database);
 					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
 					entry.releaseTransfer(event.getBundleID());
+
+					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
+					{
+						// add the transferred bundle to the bloomfilter of the receiver
+						_neighbor_database.addToSummaryVector(event.getPeer(), event.getBundleID());
+					}
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 			} catch (std::bad_cast ex) { };
 
@@ -262,6 +271,14 @@ namespace dtn
 
 						// lets see if signatures and hashes are correct and remove them if possible
 						dtn::security::SecurityManager::getInstance().verify(bundle);
+
+						// prevent loops
+						{
+							ibrcommon::MutexLock l(_neighbor_database);
+
+							// add the bundle to the summary vector of the neighbor
+							_neighbor_database.addToSummaryVector(received.peer, received.bundle);
+						}
 
 						// store the bundle into a storage module
 						_storage.store(bundle);

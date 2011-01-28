@@ -146,5 +146,20 @@ namespace dtn
 		{
 			_entries.erase(eid);
 		}
+
+		void NeighborDatabase::addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b)
+		{
+			try {
+				NeighborDatabase::NeighborEntry &entry = get(neighbor);
+				ibrcommon::BloomFilter &bf = entry.getBundles();
+				bf.insert(b.toString());
+
+				if (IBRCOMMON_LOGGER_LEVEL >= 40)
+				{
+					IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
+				}
+			} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
+			} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+		}
 	}
 }

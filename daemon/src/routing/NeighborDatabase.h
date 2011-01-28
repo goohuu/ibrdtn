@@ -159,6 +159,11 @@ namespace dtn
 			 */
 			void remove(const dtn::data::EID &eid);
 
+			/**
+			 * Add a bundle id to the bloomfilter of a neighbor
+			 */
+			void addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b);
+
 		private:
 			std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* > _entries;
 		};
