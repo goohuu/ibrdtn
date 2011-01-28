@@ -235,7 +235,7 @@ namespace dtn
 								BundleFilter filter(entry.getBundles());
 
 								// some debug output
-								IBRCOMMON_LOGGER_DEBUG(40) << "search one bundle not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 								// blacklist the neighbor itself, because this is handles by neighbor routing extension
 								filter.blacklist(task.eid);

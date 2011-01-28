@@ -50,11 +50,11 @@ namespace dtn
 				virtual std::string toString() = 0;
 			};
 
-			class TransferAllBundlesTask : public Task
+			class SearchNextBundleTask : public Task
 			{
 			public:
-				TransferAllBundlesTask(const dtn::data::EID &eid);
-				virtual ~TransferAllBundlesTask();
+				SearchNextBundleTask(const dtn::data::EID &eid);
+				virtual ~SearchNextBundleTask();
 
 				virtual std::string toString();
 
@@ -64,13 +64,34 @@ namespace dtn
 			class ProcessBundleTask : public Task
 			{
 			public:
-				ProcessBundleTask(const dtn::data::MetaBundle &meta);
+				ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &origin);
 				virtual ~ProcessBundleTask();
 
 				virtual std::string toString();
 
 				const dtn::data::MetaBundle bundle;
+				const dtn::data::EID origin;
 			};
+
+			class TransferCompletedTask : public Task
+			{
+			public:
+				TransferCompletedTask(const dtn::data::EID &eid, const dtn::data::MetaBundle &meta);
+				virtual ~TransferCompletedTask();
+
+				virtual std::string toString();
+
+				const dtn::data::EID peer;
+				const dtn::data::MetaBundle meta;
+			};
+
+			/**
+			 * Add a bundle id to the summary vector of a neighbor.
+			 * @param neighbor
+			 * @param b
+			 */
+			void addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b);
+			void addToSummaryVector(NeighborDatabase &db, const dtn::data::EID &neighbor, const dtn::data::BundleID &b);
 
 			/**
 			 * hold queued tasks for later processing

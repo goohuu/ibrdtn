@@ -8,6 +8,7 @@
 #include "routing/NeighborDatabase.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
+#include <limits>
 
 namespace dtn
 {
@@ -30,7 +31,7 @@ namespace dtn
 
 			if (lifetime == 0)
 			{
-				_filter_expire = 0;
+				_filter_expire = std::numeric_limits<std::size_t>::max();
 			}
 			else
 			{

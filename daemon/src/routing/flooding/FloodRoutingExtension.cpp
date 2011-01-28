@@ -8,6 +8,8 @@
 #include "routing/flooding/FloodRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/NodeEvent.h"
+#include "net/TransferCompletedEvent.h"
+#include "net/TransferAbortedEvent.h"
 #include "core/Node.h"
 #include "net/ConnectionManager.h"
 #include "Configuration.h"
@@ -21,8 +23,6 @@
 #include <functional>
 #include <list>
 #include <algorithm>
-#include <limits>
-
 #include <iomanip>
 #include <ios>
 #include <iostream>
@@ -55,19 +55,56 @@ namespace dtn
 		{
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
-				_taskqueue.push( new ProcessBundleTask(queued.bundle) );
+				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
 				return;
 			} catch (std::bad_cast ex) { };
 
 			try {
 				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
-				dtn::core::Node n = nodeevent.getNode();
+				const dtn::core::Node &n = nodeevent.getNode();
 
 				if (nodeevent.getAction() == NODE_AVAILABLE)
 				{
+					const dtn::data::EID &eid = n.getEID();
+
+					// create an empty bloom filter for the neighbor with maximum lifetime
+					NeighborDatabase &db = (**this).getNeighborDB();
+					ibrcommon::MutexLock l(db);
+					NeighborDatabase::NeighborEntry &entry = db.get(eid);
+					entry.updateBundles(ibrcommon::BloomFilter());
+
 					// send all (multi-hop) bundles in the storage to the neighbor
-					_taskqueue.push( new TransferAllBundlesTask(nodeevent.getNode().getEID()) );
+					_taskqueue.push( new SearchNextBundleTask(eid) );
 				}
+				return;
+			} catch (std::bad_cast ex) { };
+
+			// The bundle transfer has been aborted
+			try {
+				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+				const dtn::data::EID &eid = aborted.getPeer();
+				const dtn::data::BundleID &id = aborted.getBundleID();
+
+				try {
+					if (aborted.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
+					{
+						// add the transferred bundle to the bloomfilter of the receiver
+						addToSummaryVector(eid, id);
+					}
+
+					// transfer the next bundle to this destination
+					_taskqueue.push( new SearchNextBundleTask( eid ) );
+				} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
+				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+				return;
+			} catch (std::bad_cast ex) { };
+
+			// A bundle transfer was successful
+			try {
+				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+
+				// create a transfer completed task
+				_taskqueue.push( new TransferCompletedTask( completed.getPeer(), completed.getBundle() ) );
 				return;
 			} catch (std::bad_cast ex) { };
 		}
@@ -83,20 +120,25 @@ namespace dtn
 			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
 			{
 			public:
-				BundleFilter()
+				BundleFilter(const ibrcommon::BloomFilter &filter)
+				 : _filter(filter)
 				{};
 
 				virtual ~BundleFilter() {};
 
-				// unlimited bundles
-				virtual size_t limit() const { return std::numeric_limits<std::size_t>::max(); };
+				virtual size_t limit() const { return 10; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
-					const dtn::data::EID dest = meta.destination.getNodeEID();
-
 					// do not forward to any blacklisted destination
+					const dtn::data::EID dest = meta.destination.getNodeEID();
 					if (_blacklist.find(dest) != _blacklist.end())
+					{
+						return false;
+					}
+
+					// do not forward bundles already known by the destination
+					if (_filter.contains(meta.toString()))
 					{
 						return false;
 					}
@@ -111,6 +153,7 @@ namespace dtn
 
 			private:
 				std::set<dtn::data::EID> _blacklist;
+				const ibrcommon::BloomFilter &_filter;
 			};
 
 			dtn::core::BundleStorage &storage = (**this).getStorage();
@@ -125,31 +168,59 @@ namespace dtn
 
 					try {
 						try {
-							TransferAllBundlesTask &task = dynamic_cast<TransferAllBundlesTask&>(*t);
+							SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
+							NeighborDatabase &db = (**this).getNeighborDB();
 
-							// get the bundle filter of the neighbor
-							BundleFilter filter;
+							ibrcommon::MutexLock l(db);
+							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							// blacklist the neighbor itself, because this is handles by neighbor routing extension
-							filter.blacklist(task.eid);
+							try {
+								// get the bundle filter of the neighbor
+								// getBundles throws BloomfilterNotAvailableException if no filter is available or it is expired
+								BundleFilter filter(entry.getBundles());
 
-							// some debug
-							IBRCOMMON_LOGGER_DEBUG(40) << "transfer all bundles to " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+								// some debug
+								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-							// query all bundles from the storage
-							const std::list<dtn::data::MetaBundle> list = storage.get(filter);
+								// blacklist the neighbor itself, because this is handles by neighbor routing extension
+								filter.blacklist(task.eid);
 
-							// send the bundles as long as we have resources
-							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-							{
-								// transfer the bundle to the neighbor
-								transferTo(task.eid, *iter);
-							}
+								// query all bundles from the storage
+								const std::list<dtn::data::MetaBundle> list = storage.get(filter);
+
+								// send the bundles as long as we have resources
+								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+								{
+									try {
+										// transfer the bundle to the neighbor
+										transferTo(task.eid, *iter);
+									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
+								}
+							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) { };
+						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
+						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+						} catch (std::bad_cast) { };
+
+						/**
+						 * transfer was completed
+						 */
+						try {
+							TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
+
+							// add the bundle to the summary vector of the neighbor
+							addToSummaryVector(task.peer, task.meta);
+
+							// transfer the next bundle to this destination
+							_taskqueue.push( new SearchNextBundleTask( task.peer ) );
 						} catch (std::bad_cast) { };
 
 						try {
 							ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
-							const dtn::data::Bundle b = storage.get(task.bundle);
+
+							// prevent loops:
+							// add the bundle to the summary vector of the neighbor
+							// lock the list of bloom filters
+							addToSummaryVector(task.origin, task.bundle);
 
 							// new bundles are forwarded to all neighbors
 							const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
@@ -158,13 +229,9 @@ namespace dtn
 							{
 								const dtn::core::Node &n = (*iter);
 
-								if (EID(b._destination.getNodeEID()) != n.getEID())
-								{
-									// transfer the bundle to the next neighbor
-									transferTo(n.getEID(), task.bundle);
-								}
+								// transfer the next bundle to this destination
+								_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 							}
-						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 						} catch (std::bad_cast) { };
 					} catch (ibrcommon::Exception ex) {
 						IBRCOMMON_LOGGER(error) << "Exception occurred in FloodRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -177,24 +244,46 @@ namespace dtn
 			}
 		}
 
-		/****************************************/
-
-		FloodRoutingExtension::TransferAllBundlesTask::TransferAllBundlesTask(const dtn::data::EID &e)
-		 : eid(e)
-		{ }
-
-		FloodRoutingExtension::TransferAllBundlesTask::~TransferAllBundlesTask()
-		{ }
-
-		std::string FloodRoutingExtension::TransferAllBundlesTask::toString()
+		void FloodRoutingExtension::addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b)
 		{
-			return "TransferAllBundlesTask: " + eid.getString();
+			NeighborDatabase &db = (**this).getNeighborDB();
+			ibrcommon::MutexLock l(db);
+			addToSummaryVector(db, neighbor, b);
+		}
+
+		void FloodRoutingExtension::addToSummaryVector(NeighborDatabase &db, const dtn::data::EID &neighbor, const dtn::data::BundleID &b)
+		{
+			try {
+				NeighborDatabase::NeighborEntry &entry = db.get(neighbor);
+				ibrcommon::BloomFilter &bf = entry.getBundles();
+				bf.insert(b.toString());
+
+				if (IBRCOMMON_LOGGER_LEVEL >= 40)
+				{
+					IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
+				}
+			} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
+			} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 		}
 
 		/****************************************/
 
-		FloodRoutingExtension::ProcessBundleTask::ProcessBundleTask(const dtn::data::MetaBundle &meta)
-		 : bundle(meta)
+		FloodRoutingExtension::SearchNextBundleTask::SearchNextBundleTask(const dtn::data::EID &e)
+		 : eid(e)
+		{ }
+
+		FloodRoutingExtension::SearchNextBundleTask::~SearchNextBundleTask()
+		{ }
+
+		std::string FloodRoutingExtension::SearchNextBundleTask::toString()
+		{
+			return "SearchNextBundleTask: " + eid.getString();
+		}
+
+		/****************************************/
+
+		FloodRoutingExtension::ProcessBundleTask::ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &o)
+		 : bundle(meta), origin(o)
 		{ }
 
 		FloodRoutingExtension::ProcessBundleTask::~ProcessBundleTask()
@@ -203,6 +292,20 @@ namespace dtn
 		std::string FloodRoutingExtension::ProcessBundleTask::toString()
 		{
 			return "ProcessBundleTask: " + bundle.toString();
+		}
+
+		/****************************************/
+
+		FloodRoutingExtension::TransferCompletedTask::TransferCompletedTask(const dtn::data::EID &e, const dtn::data::MetaBundle &m)
+		 : peer(e), meta(m)
+		{ }
+
+		FloodRoutingExtension::TransferCompletedTask::~TransferCompletedTask()
+		{ }
+
+		std::string FloodRoutingExtension::TransferCompletedTask::toString()
+		{
+			return "TransferCompletedTask";
 		}
 	}
 }
