@@ -248,7 +248,7 @@ namespace dtn
 								{
 									try {
 										// transfer the bundle to the neighbor
-										transferTo(task.eid, *iter);
+										transferTo(entry, *iter);
 									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 								}
 							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {

@@ -73,11 +73,17 @@ namespace dtn
 			// get the neighbor entry for the next hop
 			NeighborDatabase::NeighborEntry &entry = _router->getNeighborDB().get(destination);
 
+			// transfer bundle to the neighbor
+			transferTo(entry, id);
+		}
+
+		void BaseRouter::Extension::transferTo(NeighborDatabase::NeighborEntry &entry, const dtn::data::BundleID &id)
+		{
 			// acquire the transfer of this bundle, could throw already in transit or no resource left exception
 			entry.acquireTransfer(id);
 
 			// transfer the bundle to the next hop
-			dtn::core::BundleCore::getInstance().transferTo(destination, id);
+			dtn::core::BundleCore::getInstance().transferTo(entry.eid, id);
 		}
 
 		/**

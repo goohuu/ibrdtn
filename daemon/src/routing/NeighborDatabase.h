@@ -96,10 +96,10 @@ namespace dtn
 				 */
 				void releaseTransfer(const dtn::data::BundleID &id);
 
-			private:
 				// the EID of the corresponding node
-				const dtn::data::EID _eid;
+				const dtn::data::EID eid;
 
+			private:
 				// stores bundle currently in transit
 				ibrcommon::Mutex _transit_lock;
 				std::set<dtn::data::BundleID> _transit_bundles;

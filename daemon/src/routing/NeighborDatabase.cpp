@@ -15,11 +15,11 @@ namespace dtn
 	namespace routing
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
-		 : _eid(), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
+		 : eid(), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
 		{};
 
-		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &eid)
-		 : _eid(eid), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
+		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &e)
+		 : eid(e), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
@@ -44,16 +44,16 @@ namespace dtn
 		ibrcommon::BloomFilter& NeighborDatabase::NeighborEntry::getBundles() throw (BloomfilterNotAvailableException)
 		{
 			if (_filter_state != FILTER_AVAILABLE)
-				throw BloomfilterNotAvailableException(_eid);
+				throw BloomfilterNotAvailableException(eid);
 
 			if ((_filter_expire > 0) && (_filter_expire < dtn::utils::Clock::getTime()))
 			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "summary vector of " << _eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(15) << "summary vector of " << eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
 
 				// set the filter state to expired once
 				_filter_state = FILTER_EXPIRED;
 
-				throw BloomfilterNotAvailableException(_eid);
+				throw BloomfilterNotAvailableException(eid);
 			}
 
 			return _filter;
