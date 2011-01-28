@@ -77,6 +77,9 @@ namespace dtn
 			// check if enough resources available to transfer the bundle
 			if (_transit_bundles.size() >= _transit_max) throw NoMoreTransfersAvailable();
 
+			// insert the bundle into the transit list
+			_transit_bundles.insert(id);
+
 			IBRCOMMON_LOGGER_DEBUG(20) << "acquire transfer of " << id.toString() << " (" << _transit_bundles.size() << " bundles in transit)" << IBRCOMMON_LOGGER_ENDL;
 		}
 
