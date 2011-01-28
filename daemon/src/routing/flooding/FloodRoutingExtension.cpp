@@ -55,6 +55,12 @@ namespace dtn
 		{
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
+
+				// prevent loops:
+				// add the bundle to the summary vector of the neighbor
+				// lock the list of bloom filters
+				addToSummaryVector(queued.origin, queued.bundle);
+
 				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
 				return;
 			} catch (std::bad_cast ex) { };
@@ -102,9 +108,12 @@ namespace dtn
 			// A bundle transfer was successful
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+				
+				// add the bundle to the summary vector of the neighbor
+				addToSummaryVector(completed.getPeer(), completed.getBundle());
 
-				// create a transfer completed task
-				_taskqueue.push( new TransferCompletedTask( completed.getPeer(), completed.getBundle() ) );
+				// transfer the next bundle to this destination
+				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
 				return;
 			} catch (std::bad_cast ex) { };
 		}
@@ -201,26 +210,8 @@ namespace dtn
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 						} catch (std::bad_cast) { };
 
-						/**
-						 * transfer was completed
-						 */
 						try {
-							TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
-
-							// add the bundle to the summary vector of the neighbor
-							addToSummaryVector(task.peer, task.meta);
-
-							// transfer the next bundle to this destination
-							_taskqueue.push( new SearchNextBundleTask( task.peer ) );
-						} catch (std::bad_cast) { };
-
-						try {
-							ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
-
-							// prevent loops:
-							// add the bundle to the summary vector of the neighbor
-							// lock the list of bloom filters
-							addToSummaryVector(task.origin, task.bundle);
+							dynamic_cast<ProcessBundleTask&>(*t);
 
 							// new bundles are forwarded to all neighbors
 							const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
@@ -292,20 +283,6 @@ namespace dtn
 		std::string FloodRoutingExtension::ProcessBundleTask::toString()
 		{
 			return "ProcessBundleTask: " + bundle.toString();
-		}
-
-		/****************************************/
-
-		FloodRoutingExtension::TransferCompletedTask::TransferCompletedTask(const dtn::data::EID &e, const dtn::data::MetaBundle &m)
-		 : peer(e), meta(m)
-		{ }
-
-		FloodRoutingExtension::TransferCompletedTask::~TransferCompletedTask()
-		{ }
-
-		std::string FloodRoutingExtension::TransferCompletedTask::toString()
-		{
-			return "TransferCompletedTask";
 		}
 	}
 }
