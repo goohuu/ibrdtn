@@ -67,12 +67,6 @@ namespace dtn
 				{
 					const dtn::data::EID &eid = n.getEID();
 
-					// create an empty bloom filter for the neighbor with maximum lifetime
-					NeighborDatabase &db = (**this).getNeighborDB();
-					ibrcommon::MutexLock l(db);
-					NeighborDatabase::NeighborEntry &entry = db.get(eid);
-					entry.updateBundles(ibrcommon::BloomFilter());
-
 					// send all (multi-hop) bundles in the storage to the neighbor
 					_taskqueue.push( new SearchNextBundleTask(eid) );
 				}
@@ -109,8 +103,8 @@ namespace dtn
 			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
 			{
 			public:
-				BundleFilter(const ibrcommon::BloomFilter &filter)
-				 : _filter(filter)
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry)
+				 : _entry(entry)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -127,7 +121,7 @@ namespace dtn
 					}
 
 					// do not forward bundles already known by the destination
-					if (_filter.contains(meta.toString()))
+					if (_entry.has(meta))
 					{
 						return false;
 					}
@@ -142,7 +136,7 @@ namespace dtn
 
 			private:
 				std::set<dtn::data::EID> _blacklist;
-				const ibrcommon::BloomFilter &_filter;
+				const NeighborDatabase::NeighborEntry &_entry;
 			};
 
 			dtn::core::BundleStorage &storage = (**this).getStorage();
@@ -163,29 +157,26 @@ namespace dtn
 							ibrcommon::MutexLock l(db);
 							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
 
-							try {
-								// get the bundle filter of the neighbor
-								// getBundles throws BloomfilterNotAvailableException if no filter is available or it is expired
-								BundleFilter filter(entry.getBundles());
+							// get the bundle filter of the neighbor
+							BundleFilter filter(entry);
 
-								// some debug
-								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+							// some debug
+							IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-								// blacklist the neighbor itself, because this is handles by neighbor routing extension
-								filter.blacklist(task.eid);
+							// blacklist the neighbor itself, because this is handles by neighbor routing extension
+							filter.blacklist(task.eid);
 
-								// query all bundles from the storage
-								const std::list<dtn::data::MetaBundle> list = storage.get(filter);
+							// query all bundles from the storage
+							const std::list<dtn::data::MetaBundle> list = storage.get(filter);
 
-								// send the bundles as long as we have resources
-								for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-								{
-									try {
-										// transfer the bundle to the neighbor
-										transferTo(entry, *iter);
-									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
-								}
-							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) { };
+							// send the bundles as long as we have resources
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							{
+								try {
+									// transfer the bundle to the neighbor
+									transferTo(entry, *iter);
+								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
+							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
 						} catch (std::bad_cast) { };

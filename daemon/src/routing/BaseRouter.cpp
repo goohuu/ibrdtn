@@ -205,7 +205,7 @@ namespace dtn
 				else if (event.getAction() == NODE_UNAVAILABLE)
 				{
 					ibrcommon::MutexLock l(_neighbor_database);
-					_neighbor_database.remove( event.getNode().getEID() );
+					_neighbor_database.reset( event.getNode().getEID() );
 				}
 			} catch (std::bad_cast ex) { };
 
@@ -220,7 +220,7 @@ namespace dtn
 					entry.releaseTransfer(event.getBundle());
 
 					// add the bundle to the summary vector of the neighbor
-					_neighbor_database.addToSummaryVector(event.getPeer(), event.getBundle());
+					_neighbor_database.addBundle(event.getPeer(), event.getBundle());
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
 			} catch (std::bad_cast ex) { };
@@ -237,8 +237,10 @@ namespace dtn
 
 					if (event.reason == dtn::net::TransferAbortedEvent::REASON_REFUSED)
 					{
+						const dtn::data::MetaBundle meta = _storage.get(event.getBundleID());
+
 						// add the transferred bundle to the bloomfilter of the receiver
-						_neighbor_database.addToSummaryVector(event.getPeer(), event.getBundleID());
+						_neighbor_database.addBundle(event.getPeer(), meta);
 					}
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 			} catch (std::bad_cast ex) { };
@@ -277,7 +279,7 @@ namespace dtn
 							ibrcommon::MutexLock l(_neighbor_database);
 
 							// add the bundle to the summary vector of the neighbor
-							_neighbor_database.addToSummaryVector(received.peer, received.bundle);
+							_neighbor_database.addBundle(received.peer, received.bundle);
 						}
 
 						// store the bundle into a storage module
@@ -334,8 +336,15 @@ namespace dtn
 
 			try {
 				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
-				ibrcommon::MutexLock l(_known_bundles_lock);
-				_known_bundles.expire(time.getTimestamp());
+				{
+					ibrcommon::MutexLock l(_known_bundles_lock);
+					_known_bundles.expire(time.getTimestamp());
+				}
+
+				{
+					ibrcommon::MutexLock l(_neighbor_database);
+					_neighbor_database.expire(time.getTimestamp());
+				}
 			} catch (std::bad_cast) {
 			}
 

@@ -10,73 +10,222 @@
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "routing/RequeueBundleEvent.h"
+#include "core/NodeEvent.h"
 #include "core/SimpleBundleStorage.h"
+
+#include <ibrcommon/Logger.h>
+#include <ibrcommon/AutoDelete.h>
+
 #include <typeinfo>
 
 namespace dtn
 {
 	namespace routing
 	{
-		StaticRoutingExtension::StaticRoutingExtension(list<StaticRoutingExtension::StaticRoute> routes)
+		StaticRoutingExtension::StaticRoutingExtension(const std::list<StaticRoutingExtension::StaticRoute> &routes)
 		 : _routes(routes)
 		{
-			try {
-				// scan for bundles in the storage
-				dtn::core::SimpleBundleStorage &storage = dynamic_cast<dtn::core::SimpleBundleStorage&>((**this).getStorage());
-
-				std::list<dtn::data::BundleID> list = storage.getList();
-
-				for (std::list<dtn::data::BundleID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-				{
-					try {
-						dtn::data::MetaBundle meta( storage.get(*iter) );
-
-						// push the bundle into the queue
-						route( meta );
-					} catch (dtn::core::BundleStorage::NoBundleFoundException) {
-						// error, bundle not found!
-					}
-				}
-			} catch (std::bad_cast ex) {
-				// Another bundle storage is used!
-			}
 		}
 
 		StaticRoutingExtension::~StaticRoutingExtension()
 		{
+			stop();
+			join();
+		}
 
+		void StaticRoutingExtension::stopExtension()
+		{
+			_taskqueue.abort();
+		}
+
+		bool StaticRoutingExtension::__cancellation()
+		{
+			_taskqueue.abort();
+			return true;
+		}
+
+		void StaticRoutingExtension::run()
+		{
+			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
+			{
+			public:
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry, const std::list<StaticRoutingExtension::StaticRoute> &routes)
+				 : _entry(entry), _routes(routes)
+				{};
+
+				virtual ~BundleFilter() {};
+
+				virtual size_t limit() const { return 10; };
+
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				{
+					// do not forward to any blacklisted destination
+					const dtn::data::EID dest = meta.destination.getNodeEID();
+					if (_blacklist.find(dest) != _blacklist.end())
+					{
+						return false;
+					}
+
+					// do not forward bundles already known by the destination
+					if (_entry.has(meta))
+					{
+						return false;
+					}
+
+					// search for one rule that match
+					for (std::list<StaticRoutingExtension::StaticRoute>::const_iterator iter = _routes.begin();
+							iter != _routes.end(); iter++)
+					{
+						const StaticRoutingExtension::StaticRoute &route = (*iter);
+
+						if (route.match(meta.destination))
+						{
+							return true;
+						}
+					}
+
+					return false;
+				};
+
+				void blacklist(const dtn::data::EID& id)
+				{
+					_blacklist.insert(id);
+				};
+
+			private:
+				std::set<dtn::data::EID> _blacklist;
+				const NeighborDatabase::NeighborEntry &_entry;
+				const std::list<StaticRoutingExtension::StaticRoute> _routes;
+			};
+
+			dtn::core::BundleStorage &storage = (**this).getStorage();
+
+			while (true)
+			{
+				NeighborDatabase &db = (**this).getNeighborDB();
+
+				try {
+					Task *t = _taskqueue.getnpop(true);
+					ibrcommon::AutoDelete<Task> killer(t);
+
+					IBRCOMMON_LOGGER_DEBUG(5) << "processing static routing task " << t->toString() << IBRCOMMON_LOGGER_ENDL;
+
+					try {
+						SearchNextBundleTask &task = dynamic_cast<SearchNextBundleTask&>(*t);
+
+						std::list<StaticRoutingExtension::StaticRoute> routes;
+
+						// look for routes to this node
+						for (std::list<StaticRoutingExtension::StaticRoute>::const_iterator iter = _routes.begin();
+								iter != _routes.end(); iter++)
+						{
+							const StaticRoutingExtension::StaticRoute &route = (*iter);
+							if (route.getDestination() == task.eid)
+							{
+								// add to the valid routes
+								routes.push_back(route);
+							}
+						}
+
+						if (routes.size() > 0)
+						{
+							// this destination is not handles by any static route
+							ibrcommon::MutexLock l(db);
+							NeighborDatabase::NeighborEntry &entry = db.get(task.eid);
+
+							// get the bundle filter of the neighbor
+							BundleFilter filter(entry, routes);
+
+							// some debug
+							IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
+
+							// blacklist the neighbor itself, because this is handled by neighbor routing extension
+							filter.blacklist(task.eid);
+
+							// query all bundles from the storage
+							const std::list<dtn::data::MetaBundle> list = storage.get(filter);
+
+							// send the bundles as long as we have resources
+							for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+							{
+								try {
+									// transfer the bundle to the neighbor
+									transferTo(entry, *iter);
+								} catch (const NeighborDatabase::AlreadyInTransitException&) { };
+							}
+						}
+					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
+					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+					} catch (std::bad_cast) { };
+
+					try {
+						const ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
+
+						// look for routes to this node
+						for (std::list<StaticRoutingExtension::StaticRoute>::const_iterator iter = _routes.begin();
+								iter != _routes.end(); iter++)
+						{
+							const StaticRoutingExtension::StaticRoute &route = (*iter);
+							try {
+								if (route.match(task.bundle.destination))
+								{
+									ibrcommon::MutexLock l(db);
+									NeighborDatabase::NeighborEntry &n = db.get(route.getDestination());
+
+									// transfer the bundle to the neighbor
+									transferTo(n, task.bundle);
+								}
+							} catch (const NeighborDatabase::NeighborNotAvailableException&) {
+								// neighbor is not available, can not forward this bundle
+							} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
+							} catch (const NeighborDatabase::AlreadyInTransitException&) { };
+						}
+					} catch (std::bad_cast) { };
+
+				} catch (const std::exception &ex) {
+					IBRCOMMON_LOGGER(error) << "neighbor routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					return;
+				}
+
+				yield();
+			}
 		}
 
 		void StaticRoutingExtension::notify(const dtn::core::Event *evt)
 		{
 			try {
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
+				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
+				return;
+			} catch (std::bad_cast ex) { };
 
-				// try to route this bundle
-				route(queued.bundle);
+			try {
+				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+				const dtn::core::Node &n = nodeevent.getNode();
 
+				if (nodeevent.getAction() == NODE_AVAILABLE)
+				{
+					_taskqueue.push( new SearchNextBundleTask(n.getEID()) );
+				}
+				return;
+			} catch (std::bad_cast ex) { };
+
+			// The bundle transfer has been aborted
+			try {
+				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
+				_taskqueue.push( new SearchNextBundleTask(aborted.getPeer()) );
+				return;
+			} catch (std::bad_cast ex) { };
+
+			// A bundle transfer was successful
+			try {
+				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+				_taskqueue.push( new SearchNextBundleTask(completed.getPeer()) );
 				return;
 			} catch (std::bad_cast ex) { };
 		}
 
-		void StaticRoutingExtension::route(const dtn::data::MetaBundle &meta)
-		{
-			// check all routes
-			for (std::list<StaticRoute>::const_iterator iter = _routes.begin(); iter != _routes.end(); iter++)
-			{
-				StaticRoute route = (*iter);
-				if ( route.match(meta.destination) )
-				{
-					dtn::data::EID target = dtn::data::EID(route.getDestination());
-
-					// Yes, make transmit it now!
-					transferTo( target, meta);
-					return;
-				}
-			}
-		}
-
-		StaticRoutingExtension::StaticRoute::StaticRoute(string route, string dest)
+		StaticRoutingExtension::StaticRoute::StaticRoute(const std::string &route, const std::string &dest)
 			: m_route(route), m_dest(dest)
 		{
 			// prepare for fast matching
@@ -117,9 +266,9 @@ namespace dtn
 		{
 		}
 
-		bool StaticRoutingExtension::StaticRoute::match(const dtn::data::EID &eid)
+		bool StaticRoutingExtension::StaticRoute::match(const dtn::data::EID &eid) const
 		{
-			string dest = eid.getNodeEID();
+			const string dest = eid.getNodeEID();
 
 			switch (m_matchmode)
 			{
@@ -150,9 +299,37 @@ namespace dtn
 			return false;
 		}
 
-		string StaticRoutingExtension::StaticRoute::getDestination()
+		const dtn::data::EID& StaticRoutingExtension::StaticRoute::getDestination() const
 		{
 			return m_dest;
+		}
+
+		/****************************************/
+
+		StaticRoutingExtension::SearchNextBundleTask::SearchNextBundleTask(const dtn::data::EID &e)
+		 : eid(e)
+		{ }
+
+		StaticRoutingExtension::SearchNextBundleTask::~SearchNextBundleTask()
+		{ }
+
+		std::string StaticRoutingExtension::SearchNextBundleTask::toString()
+		{
+			return "SearchNextBundleTask: " + eid.getString();
+		}
+
+		/****************************************/
+
+		StaticRoutingExtension::ProcessBundleTask::ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &o)
+		 : bundle(meta), origin(o)
+		{ }
+
+		StaticRoutingExtension::ProcessBundleTask::~ProcessBundleTask()
+		{ }
+
+		std::string StaticRoutingExtension::ProcessBundleTask::toString()
+		{
+			return "ProcessBundleTask: " + bundle.toString();
 		}
 	}
 }

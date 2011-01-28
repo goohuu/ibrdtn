@@ -25,7 +25,7 @@ namespace dtn
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
 		{ }
 
-		void NeighborDatabase::NeighborEntry::updateBundles(const ibrcommon::BloomFilter &bf, const size_t lifetime)
+		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const size_t lifetime)
 		{
 			_filter = bf;
 
@@ -41,22 +41,52 @@ namespace dtn
 			_filter_state = FILTER_AVAILABLE;
 		}
 
-		ibrcommon::BloomFilter& NeighborDatabase::NeighborEntry::getBundles() throw (BloomfilterNotAvailableException)
+		void NeighborDatabase::NeighborEntry::reset()
 		{
-			if (_filter_state != FILTER_AVAILABLE)
+			_filter_state = FILTER_EXPIRED;
+		}
+
+		void NeighborDatabase::NeighborEntry::add(const dtn::data::MetaBundle &bundle)
+		{
+			_summary.add(bundle);
+		}
+
+		bool NeighborDatabase::NeighborEntry::has(const dtn::data::BundleID &id, const bool require_bloomfilter) const
+		{
+			if (require_bloomfilter && (_filter_state != FILTER_AVAILABLE))
 				throw BloomfilterNotAvailableException(eid);
 
-			if ((_filter_expire > 0) && (_filter_expire < dtn::utils::Clock::getTime()))
+			if (_filter_state == FILTER_AVAILABLE)
+			{
+				if (_filter.contains(id.toString()))
+					return true;
+			}
+
+			if (_summary.contains(id))
+				return true;
+
+			return false;
+		}
+
+		void NeighborDatabase::NeighborEntry::expire(const size_t timestamp)
+		{
+			if ((_filter_expire > 0) && (_filter_expire < timestamp))
 			{
 				IBRCOMMON_LOGGER_DEBUG(15) << "summary vector of " << eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
 
 				// set the filter state to expired once
 				_filter_state = FILTER_EXPIRED;
-
-				throw BloomfilterNotAvailableException(eid);
 			}
 
-			return _filter;
+			_summary.expire(timestamp);
+		}
+
+		void NeighborDatabase::expire(const size_t timestamp)
+		{
+			for (std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* >::const_iterator iter = _entries.begin(); iter != _entries.end(); iter++)
+			{
+				(*iter).second->expire(timestamp);
+			}
 		}
 
 		void NeighborDatabase::NeighborEntry::acquireFilterRequest() throw (NoMoreTransfersAvailable)
@@ -126,20 +156,12 @@ namespace dtn
 			return (*_entries[eid]);
 		}
 
-		void NeighborDatabase::updateBundles(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf, const size_t lifetime)
-		{
-			NeighborEntry &entry = create(eid);
-			entry.updateBundles(bf, lifetime);
-		}
-
-		bool NeighborDatabase::knowBundle(const dtn::data::EID &eid, const dtn::data::BundleID &bundle) throw (BloomfilterNotAvailableException)
+		NeighborDatabase::NeighborEntry& NeighborDatabase::reset(const dtn::data::EID &eid)
 		{
 			try {
-				NeighborEntry &entry = get(eid);
-				return entry.getBundles().contains(bundle.toString());
-			} catch (const NeighborNotAvailableException&) {
-				throw BloomfilterNotAvailableException(eid);
-			}
+				NeighborDatabase::NeighborEntry &e = get(eid);
+				e.reset();
+			} catch (const NeighborNotAvailableException&) { };
 		}
 
 		void NeighborDatabase::remove(const dtn::data::EID &eid)
@@ -147,18 +169,11 @@ namespace dtn
 			_entries.erase(eid);
 		}
 
-		void NeighborDatabase::addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b)
+		void NeighborDatabase::addBundle(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &b)
 		{
 			try {
 				NeighborDatabase::NeighborEntry &entry = get(neighbor);
-				ibrcommon::BloomFilter &bf = entry.getBundles();
-				bf.insert(b.toString());
-
-				if (IBRCOMMON_LOGGER_LEVEL >= 40)
-				{
-					IBRCOMMON_LOGGER_DEBUG(40) << "bloomfilter false-positive propability is " << bf.getAllocation() << IBRCOMMON_LOGGER_ENDL;
-				}
-			} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
+				entry.add(b);
 			} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 		}
 	}

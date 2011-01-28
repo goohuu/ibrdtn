@@ -137,8 +137,8 @@ namespace dtn
 			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
 			{
 			public:
-				BundleFilter(const ibrcommon::BloomFilter &filter)
-				 : _filter(filter)
+				BundleFilter(const NeighborDatabase::NeighborEntry &entry)
+				 : _entry(entry)
 				{};
 
 				virtual ~BundleFilter() {};
@@ -162,7 +162,8 @@ namespace dtn
 					}
 
 					// do not forward bundles already known by the destination
-					if (_filter.contains(meta.toString()))
+					// throws BloomfilterNotAvailableException if no filter is available or it is expired
+					if (_entry.has(meta, true))
 					{
 						return false;
 					}
@@ -177,7 +178,7 @@ namespace dtn
 
 			private:
 				std::set<dtn::data::EID> _blacklist;
-				const ibrcommon::BloomFilter &_filter;
+				const NeighborDatabase::NeighborEntry &_entry;
 			};
 
 			dtn::core::BundleStorage &storage = (**this).getStorage();
@@ -221,8 +222,7 @@ namespace dtn
 
 							try {
 								// get the bundle filter of the neighbor
-								// getBundles throws BloomfilterNotAvailableException if no filter is available or it is expired
-								BundleFilter filter(entry.getBundles());
+								BundleFilter filter(entry);
 
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
@@ -496,14 +496,15 @@ namespace dtn
 					 * The filter was sent by the owner, so we assign the contained summary vector to
 					 * the EID of the sender of this bundle.
 					 */
-					{
+					try {
 						NeighborDatabase &db = (**this).getNeighborDB();
 						ibrcommon::MutexLock l(db);
-						db.updateBundles(bundle._source.getNodeEID(), filter, bundle._lifetime);
-					}
+						NeighborDatabase::NeighborEntry &entry = db.get(bundle._source.getNodeEID());
+						entry.update(filter, bundle._lifetime);
 
-					// trigger the search-for-next-bundle procedure
-					_taskqueue.push( new SearchNextBundleTask( origin ) );
+						// trigger the search-for-next-bundle procedure
+						_taskqueue.push( new SearchNextBundleTask( origin ) );
+					} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 				}
 
 				if (ecm.flags & EpidemicControlMessage::ECM_CONTAINS_PURGE_VECTOR)

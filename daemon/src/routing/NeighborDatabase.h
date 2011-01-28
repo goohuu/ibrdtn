@@ -8,6 +8,8 @@
 #ifndef NEIGHBORDATABASE_H_
 #define NEIGHBORDATABASE_H_
 
+#include "routing/BundleSummary.h"
+
 #include <ibrdtn/data/EID.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrcommon/data/BloomFilter.h>
@@ -70,13 +72,13 @@ namespace dtn
 				 * @param bf The bloomfilter object
 				 * @param lifetime The desired lifetime of this bloomfilter
 				 */
-				void updateBundles(const ibrcommon::BloomFilter &bf, const size_t lifetime = 0);
+				void update(const ibrcommon::BloomFilter &bf, const size_t lifetime = 0);
 
-				/**
-				 * Get a reference to the summary vector.
-				 * @return The summary vector as bloomfilter.
-				 */
-				ibrcommon::BloomFilter& getBundles() throw (BloomfilterNotAvailableException);
+				void reset();
+
+				void add(const dtn::data::MetaBundle&);
+
+				bool has(const dtn::data::BundleID&, const bool require_bloomfilter = false) const;
 
 				/**
 				 * acquire resource to send a filter request.
@@ -99,6 +101,12 @@ namespace dtn
 				// the EID of the corresponding node
 				const dtn::data::EID eid;
 
+				/**
+				 * trigger expire mechanisms for bloomfilter and bundle summary
+				 * @param timestamp
+				 */
+				void expire(const size_t timestamp);
+
 			private:
 				// stores bundle currently in transit
 				ibrcommon::Mutex _transit_lock;
@@ -107,6 +115,7 @@ namespace dtn
 
 				// bloomfilter used as summary vector
 				ibrcommon::BloomFilter _filter;
+				BundleSummary _summary;
 				size_t _filter_expire;
 
 				enum FILTER_REQUEST_STATE
@@ -119,23 +128,6 @@ namespace dtn
 
 			NeighborDatabase();
 			virtual ~NeighborDatabase();
-
-			/**
-			 * updates the bloomfilter of this entry with a new one
-			 * @param eid The EID of the ndoe
-			 * @param bf The bloomfilter object
-			 * @param lifetime The desired lifetime of this bloomfilter
-			 */
-			void updateBundles(const dtn::data::EID &eid, const ibrcommon::BloomFilter &bf, const size_t lifetime = 0);
-
-			/**
-			 * Use the bloom filter of a known neighbor to determine if a specific bundle
-			 * is known by the neighbor and should not transferred to it.
-			 * @param eid
-			 * @param bundle
-			 * @return True, if the bundle is known by the neighbor.
-			 */
-			bool knowBundle(const dtn::data::EID &eid, const dtn::data::BundleID &bundle) throw (BloomfilterNotAvailableException);
 
 			/**
 			 * Query a neighbor entry of the database. It throws an exception
@@ -154,6 +146,13 @@ namespace dtn
 			NeighborDatabase::NeighborEntry& create(const dtn::data::EID &eid);
 
 			/**
+			 * reset bloom filter of this neighbor
+			 * @param eid
+			 * @return
+			 */
+			NeighborDatabase::NeighborEntry& reset(const dtn::data::EID &eid);
+
+			/**
 			 * Remove an entry of the database.
 			 * @param eid The EID of the neighbor to remove.
 			 */
@@ -162,7 +161,13 @@ namespace dtn
 			/**
 			 * Add a bundle id to the bloomfilter of a neighbor
 			 */
-			void addToSummaryVector(const dtn::data::EID &neighbor, const dtn::data::BundleID &b);
+			void addBundle(const dtn::data::EID &neighbor, const dtn::data::MetaBundle &b);
+
+			/**
+			 * trigger expire mechanisms for bloomfilter and bundle summary
+			 * @param timestamp
+			 */
+			void expire(const size_t timestamp);
 
 		private:
 			std::map<dtn::data::EID, NeighborDatabase::NeighborEntry* > _entries;
