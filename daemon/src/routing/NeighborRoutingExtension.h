@@ -69,18 +69,6 @@ namespace dtn
 				const dtn::data::EID origin;
 			};
 
-			class TransferCompletedTask : public Task
-			{
-			public:
-				TransferCompletedTask(const dtn::data::EID &eid, const dtn::data::MetaBundle &meta);
-				virtual ~TransferCompletedTask();
-
-				virtual std::string toString();
-
-				const dtn::data::EID peer;
-				const dtn::data::MetaBundle meta;
-			};
-
 			/**
 			 * hold queued tasks for later processing
 			 */

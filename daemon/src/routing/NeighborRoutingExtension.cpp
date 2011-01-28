@@ -116,28 +116,6 @@ namespace dtn
 					} catch (std::bad_cast) { };
 
 					/**
-					 * transfer was completed
-					 */
-					try {
-						TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
-
-						if ((task.meta.destination.getNodeEID() == task.peer.getNodeEID())
-								&& (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
-						{
-							try {
-								// bundle has been delivered to its destination
-								// delete it from our storage
-								storage.remove(task.meta);
-
-								IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
-							} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
-
-							// transfer the next bundle to this destination
-							_taskqueue.push( new SearchNextBundleTask( task.peer ) );
-						}
-					} catch (std::bad_cast) { };
-
-					/**
 					 * process a received bundle
 					 */
 					try {
@@ -174,9 +152,25 @@ namespace dtn
 
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
+				const dtn::data::MetaBundle &meta = completed.getBundle();
+				const dtn::data::EID &peer = completed.getPeer();
 
-				// create a transfer completed task
-				_taskqueue.push( new TransferCompletedTask( completed.getPeer(), completed.getBundle() ) );
+				if ((meta.destination.getNodeEID() == peer.getNodeEID())
+						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+				{
+					try {
+						dtn::core::BundleStorage &storage = (**this).getStorage();
+
+						// bundle has been delivered to its destination
+						// delete it from our storage
+						storage.remove(meta);
+
+						IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
+
+					// transfer the next bundle to this destination
+					_taskqueue.push( new SearchNextBundleTask( peer ) );
+				}
 				return;
 			} catch (std::bad_cast ex) { };
 
@@ -262,20 +256,6 @@ namespace dtn
 		std::string NeighborRoutingExtension::ProcessBundleTask::toString()
 		{
 			return "ProcessBundleTask: " + bundle.toString();
-		}
-
-		/****************************************/
-
-		NeighborRoutingExtension::TransferCompletedTask::TransferCompletedTask(const dtn::data::EID &e, const dtn::data::MetaBundle &m)
-		 : peer(e), meta(m)
-		{ }
-
-		NeighborRoutingExtension::TransferCompletedTask::~TransferCompletedTask()
-		{ }
-
-		std::string NeighborRoutingExtension::TransferCompletedTask::toString()
-		{
-			return "TransferCompletedTask";
 		}
 	}
 }

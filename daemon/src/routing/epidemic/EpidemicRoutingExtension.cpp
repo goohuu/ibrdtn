@@ -130,6 +130,9 @@ namespace dtn
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 
+				// add the bundle to the summary vector of the neighbor
+				addToSummaryVector(completed.getPeer(), completed.getBundle());
+
 				// create a transfer completed task
 				_taskqueue.push( new TransferCompletedTask( completed.getPeer(), completed.getBundle() ) );
 				return;
@@ -267,9 +270,6 @@ namespace dtn
 						 */
 						try {
 							TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
-
-							// add the bundle to the summary vector of the neighbor
-							addToSummaryVector(task.peer, task.meta);
 
 							// add this bundle to the purge vector if it is delivered to its destination
 							if (( EID(task.peer.getNodeEID()) == EID(task.meta.destination.getNodeEID()) ) && (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
