@@ -183,7 +183,7 @@ namespace dtn
 					} catch (std::bad_cast) { };
 
 				} catch (const std::exception &ex) {
-					IBRCOMMON_LOGGER(error) << "neighbor routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(20) << "static routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					return;
 				}
 
