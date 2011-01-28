@@ -11,6 +11,7 @@
 #include "routing/BaseRouter.h"
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/Queue.h>
+#include <regex.h>
 
 namespace dtn
 {
@@ -22,19 +23,25 @@ namespace dtn
 			class StaticRoute
 			{
 			public:
-				StaticRoute(const std::string &route, const std::string &dest);
+				StaticRoute(const std::string &regex, const std::string &dest);
 				virtual ~StaticRoute();
 
 				bool match(const dtn::data::EID &eid) const;
 				const dtn::data::EID& getDestination() const;
 
-			private:
-				std::string m_route;
-				const dtn::data::EID m_dest;
-				std::string m_route1;
-				std::string m_route2;
+				/**
+				 * copy and assignment operators
+				 * @param obj The object to copy
+				 * @return
+				 */
+				StaticRoute(const StaticRoute &obj);
+				StaticRoute& operator=(const StaticRoute &obj);
 
-				int m_matchmode;
+			private:
+				dtn::data::EID _dest;
+				std::string _regex_str;
+				regex_t _regex;
+				bool _invalid;
 			};
 
 			StaticRoutingExtension(const std::list<StaticRoutingExtension::StaticRoute> &routes);

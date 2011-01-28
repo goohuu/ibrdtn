@@ -225,83 +225,85 @@ namespace dtn
 			} catch (std::bad_cast ex) { };
 		}
 
-		StaticRoutingExtension::StaticRoute::StaticRoute(const std::string &route, const std::string &dest)
-			: m_route(route), m_dest(dest)
+		StaticRoutingExtension::StaticRoute::StaticRoute(const std::string &regex, const std::string &dest)
+			: _dest(dest), _regex_str(regex), _invalid(false)
 		{
-			// prepare for fast matching
-			size_t splitter = m_route.find_first_of("*");
-
-			// four types of matching possible
-			// 0. no asterisk exists, do exact matching
-			// 1. asterisk at the begin
-			// 2. asterisk in the middle
-			// 3. asterisk at the end
-			if ( splitter == string::npos )					m_matchmode = 0;
-			else if ( splitter == 0 ) 						m_matchmode = 1;
-			else if ( splitter == (m_route.length() -1) ) 	m_matchmode = 3;
-			else 											m_matchmode = 2;
-
-			switch (m_matchmode)
+			if ( regcomp(&_regex, regex.c_str(), 0) )
 			{
-				default:
-
-				break;
-
-				case 1:
-					m_route1 = m_route.substr(1);
-				break;
-
-				case 2:
-					m_route1 = m_route.substr(0, splitter);
-					m_route2 = m_route.substr(splitter + 1);
-				break;
-
-				case 3:
-					m_route1 = m_route.substr(0, m_route.length() - 1 );
-				break;
+				IBRCOMMON_LOGGER(error) << "Could not compile regex: " << regex << IBRCOMMON_LOGGER_ENDL;
+				_invalid = true;
 			}
 		}
 
 		StaticRoutingExtension::StaticRoute::~StaticRoute()
 		{
+			if (!_invalid)
+				regfree(&_regex);
+		}
+
+		StaticRoutingExtension::StaticRoute::StaticRoute(const StaticRoutingExtension::StaticRoute &obj)
+			: _dest(obj._dest), _regex_str(obj._regex_str), _invalid(obj._invalid)
+		{
+			if ( regcomp(&_regex, _regex_str.c_str(), 0) )
+			{
+				_invalid = true;
+			}
+		}
+
+		StaticRoutingExtension::StaticRoute& StaticRoutingExtension::StaticRoute::operator=(const StaticRoutingExtension::StaticRoute &obj)
+		{
+			if (!_invalid)
+			{
+				regfree(&_regex);
+			}
+
+			_dest = obj._dest;
+			_regex_str = obj._regex_str;
+			_invalid = obj._invalid;
+
+			if (!_invalid)
+			{
+				if ( regcomp(&_regex, obj._regex_str.c_str(), 0) )
+				{
+					IBRCOMMON_LOGGER(error) << "Could not compile regex: " << _regex_str << IBRCOMMON_LOGGER_ENDL;
+					_invalid = true;
+				}
+			}
+
+			return *this;
 		}
 
 		bool StaticRoutingExtension::StaticRoute::match(const dtn::data::EID &eid) const
 		{
-			const string dest = eid.getNodeEID();
+			if (_invalid) return false;
 
-			switch (m_matchmode)
+			const std::string dest = eid.getString();
+
+			// test against the regular expression
+			int reti = regexec(&_regex, dest.c_str(), 0, NULL, 0);
+
+			if( !reti )
 			{
-				default:
-					// exact matching
-					if ( dest == m_route ) return true;
-				break;
-
-				case 3:
-					// asterisk at the end. the begining must be equal.
-					if ( dest.find(m_route1, 0) == 0 ) return true;
-				break;
-
-				case 2:
-					if (
-						 ( dest.find(m_route1) == 0 ) &&
-						 ( dest.rfind(m_route2) == (dest.length() - m_route2.length()) )
-					   )
-						return true;
-				break;
-
-				case 1:
-					// asterisk at begin. the end must be equal.
-					if ( dest.rfind(m_route1) == (dest.length() - m_route1.length()) ) return true;
-				break;
+				// the expression match
+				return true;
 			}
-
-			return false;
+			else if( reti == REG_NOMATCH )
+			{
+				// the expression not match
+				return false;
+			}
+			else
+			{
+				char msgbuf[100];
+				regerror(reti, &_regex, msgbuf, sizeof(msgbuf));
+				IBRCOMMON_LOGGER(error) << "Regex match failed: " << std::string(msgbuf) << IBRCOMMON_LOGGER_ENDL;
+				return false;
+			}
 		}
 
 		const dtn::data::EID& StaticRoutingExtension::StaticRoute::getDestination() const
 		{
-			return m_dest;
+			return _dest;
 		}
 
 		/****************************************/
