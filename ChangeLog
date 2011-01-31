@@ -2,10 +2,8 @@
 --------------------------------------------------------
  * refactoring of all routing modules for more stability
  * Use regex for static routing
- * static routing can be used with any other routing
-   scheme
- * new routing messages for epidemic routing (not
-   compatible with older versions)
+ * static routing can be used with any other routing scheme and works (disruption tolerant) with discovered nodes
+ * new routing messages for epidemic routing (not compatible with older versions)
 
 2011-01-14
 --------------------------------------------------------
