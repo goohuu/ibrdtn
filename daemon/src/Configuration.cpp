@@ -134,7 +134,6 @@ namespace dtn
 			int doapi = _doapi;
 			int disco = _disco._enabled;
 			int badclock = dtn::utils::Clock::badclock;
-			int quiet = _debug._quiet;
 			int timestamp = _logger._timestamps;
 
 			while (1)
@@ -145,11 +144,11 @@ namespace dtn
 						{"noapi", no_argument, &doapi, 0},
 						{"nodiscovery", no_argument, &disco, 0},
 						{"badclock", no_argument, &badclock, 1},
-						{"quiet", no_argument, &quiet, 1},
 						{"timestamp", no_argument, &timestamp, 1},
 
 						/* These options don't set a flag. We distinguish them by their indices. */
 						{"help", no_argument, 0, 'h'},
+						{"quiet", no_argument, 0, 'q'},
 						{"version", no_argument, 0, 'v'},
 						{"interface", required_argument, 0, 'i'},
 						{"configuration", required_argument, 0, 'c'},
@@ -160,7 +159,7 @@ namespace dtn
 				/* getopt_long stores the option index here. */
 				int option_index = 0;
 
-				c = getopt_long (argc, argv, "hvi:c:d:",
+				c = getopt_long (argc, argv, "qhvi:c:d:",
 						long_options, &option_index);
 
 				/* Detect the end of the options. */
@@ -199,6 +198,10 @@ namespace dtn
 					exit(0);
 					break;
 
+				case 'q':
+					_debug._quiet = true;
+					break;
+
 				case 'c':
 					_filename = optarg;
 					break;
@@ -225,7 +228,6 @@ namespace dtn
 			_doapi = doapi;
 			_disco._enabled = disco;
 			dtn::utils::Clock::badclock = badclock;
-			_debug._quiet = quiet;
 			_logger._timestamps = timestamp;
 		}
 
