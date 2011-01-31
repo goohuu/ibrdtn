@@ -244,7 +244,6 @@ namespace dtn
 				 * @return True, if the daemon should be quiet.
 				 */
 				bool quiet() const;
-
 			};
 
 			class Logger : public Configuration::Extension
@@ -257,6 +256,7 @@ namespace dtn
 
 				bool _quiet;
 				unsigned int _options;
+				bool _timestamps;
 
 			public:
 				/**
@@ -280,6 +280,11 @@ namespace dtn
 				 * The output stream for the logging output
 				 */
 				std::ostream &output() const;
+
+				/**
+				 * Returns true if the logger display timestamp instead of datetime values.
+				 */
+				bool display_timestamps() const;
 			};
 
 			class Network :  public Configuration::Extension

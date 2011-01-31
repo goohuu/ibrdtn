@@ -10,6 +10,8 @@
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/Logger.h>
 
+#include <getopt.h>
+
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
 #endif
@@ -75,7 +77,7 @@ namespace dtn
 		 : _enabled(false), _quiet(false), _level(0) {};
 
 		Configuration::Logger::Logger()
-		 : _quiet(false), _options(0) {};
+		 : _quiet(false), _options(0), _timestamps(false) {};
 
 		Configuration::Network::Network()
 		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false) {};
@@ -128,68 +130,103 @@ namespace dtn
 
 		void Configuration::params(int argc, char *argv[])
 		{
-			for (int i = 0; i < argc; i++)
+			int c;
+			int doapi = _doapi;
+			int disco = _disco._enabled;
+			int badclock = dtn::utils::Clock::badclock;
+			int quiet = _debug._quiet;
+			int timestamp = _logger._timestamps;
+
+			while (1)
 			{
-				std::string arg(argv[i]);
-
-				if (arg == "-c" && argc > i)
+				static struct option long_options[] =
 				{
-						_filename = argv[i + 1];
-				}
+						/* These options set a flag. */
+						{"noapi", no_argument, &doapi, 0},
+						{"nodiscovery", no_argument, &disco, 0},
+						{"badclock", no_argument, &badclock, 1},
+						{"quiet", no_argument, &quiet, 1},
+						{"timestamp", no_argument, &timestamp, 1},
 
-				if (arg == "-i" && argc > i)
-				{
-						_network._default_net = ibrcommon::vinterface(argv[i + 1]);
-						_network._use_default_net = true;
-				}
+						/* These options don't set a flag. We distinguish them by their indices. */
+						{"help", no_argument, 0, 'h'},
+						{"version", no_argument, 0, 'v'},
+						{"interface", required_argument, 0, 'i'},
+						{"configuration", required_argument, 0, 'c'},
+						{"debug", required_argument, 0, 'd'},
+						{0, 0, 0, 0}
+				};
 
-				if (arg == "--noapi")
-				{
-						_doapi = false;
-				}
+				/* getopt_long stores the option index here. */
+				int option_index = 0;
 
-				if ((arg == "--version") || (arg == "-v"))
-				{
-						std::cout << "IBR-DTN version: " << version() << std::endl;
-						exit(0);
-				}
+				c = getopt_long (argc, argv, "hvi:c:d:",
+						long_options, &option_index);
 
-				if (arg == "--nodiscovery")
-				{
-					_disco._enabled = false;
-				}
+				/* Detect the end of the options. */
+				if (c == -1)
+					break;
 
-				if (arg == "--badclock")
+				switch (c)
 				{
-					dtn::utils::Clock::badclock = true;
-				}
+				case 0:
+					/* If this option set a flag, do nothing else now. */
+					if (long_options[option_index].flag != 0)
+						break;
+					printf ("option %s", long_options[option_index].name);
+					if (optarg)
+						printf (" with arg %s", optarg);
+					printf ("\n");
+					break;
 
-				if (arg == "-d")
-				{
+				case 'h':
+					std::cout << "IBR-DTN version: " << version() << std::endl;
+					std::cout << "Syntax: dtnd [options]"  << std::endl;
+					std::cout << " -h|--help       display this text" << std::endl;
+					std::cout << " -c <file>       set a configuration file" << std::endl;
+					std::cout << " -i <interface>  interface to bind on (e.g. eth0)" << std::endl;
+					std::cout << " -d <level>      enable debugging and set a verbose level" << std::endl;
+					std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
+					std::cout << " --noapi         disable API module" << std::endl;
+					std::cout << " --nodiscovery   disable discovery module" << std::endl;
+					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
+					std::cout << " --timestamp     enables timestamps for logging instead of datetime values" << std::endl;
+					exit(0);
+					break;
+
+				case 'v':
+					std::cout << "IBR-DTN version: " << version() << std::endl;
+					exit(0);
+					break;
+
+				case 'c':
+					_filename = optarg;
+					break;
+
+				case 'i':
+					_network._default_net = ibrcommon::vinterface(optarg);
+					_network._use_default_net = true;
+					break;
+
+				case 'd':
 					_debug._enabled = true;
-					_debug._level = atoi(argv[i + 1]);
-				}
+					_debug._level = atoi(optarg);
+					break;
 
-				if (arg == "-q")
-				{
-					_debug._quiet = true;
-				}
+				case '?':
+					/* getopt_long already printed an error message. */
+					break;
 
-				if ((arg == "--help") || (arg == "-h"))
-				{
-						std::cout << "IBR-DTN version: " << version() << std::endl;
-						std::cout << "Syntax: dtnd [options]"  << std::endl;
-						std::cout << " -h|--help       display this text" << std::endl;
-						std::cout << " -c <file>       set a configuration file" << std::endl;
-						std::cout << " -i <interface>  interface to bind on (e.g. eth0)" << std::endl;
-						std::cout << " -d <level>      enable debugging and set a verbose level" << std::endl;
-						std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
-						std::cout << " --noapi         disable API module" << std::endl;
-						std::cout << " --nodiscovery   disable discovery module" << std::endl;
-						std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
-						exit(0);
+				default:
+					abort ();
 				}
 			}
+
+			_doapi = doapi;
+			_disco._enabled = disco;
+			dtn::utils::Clock::badclock = badclock;
+			_debug._quiet = quiet;
+			_logger._timestamps = timestamp;
 		}
 
 		void Configuration::load()
@@ -715,6 +752,11 @@ namespace dtn
 		bool Configuration::Logger::quiet() const
 		{
 			return _quiet;
+		}
+
+		bool Configuration::Logger::display_timestamps() const
+		{
+			return _timestamps;
 		}
 
 		unsigned int Configuration::Logger::options() const

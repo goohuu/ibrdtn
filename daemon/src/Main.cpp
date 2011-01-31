@@ -75,7 +75,7 @@ using namespace dtn::net;
  */
 
 // logging options
-const unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
+unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
 
 // error filter
 const unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
@@ -354,6 +354,12 @@ int main(int argc, char *argv[])
 
 	// load parameter into the configuration
 	conf.params(argc, argv);
+
+	// enable timestamps in logging if requested
+	if (conf.getLogger().display_timestamps())
+	{
+		logopts = (~(ibrcommon::Logger::LOG_DATETIME) & logopts) | ibrcommon::Logger::LOG_TIMESTAMP;
+	}
 
 	// init syslog
 	ibrcommon::Logger::enableAsync(); // enable asynchronous logging feature (thread-safe)
