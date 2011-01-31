@@ -133,30 +133,6 @@ namespace dtn
 		{
 			DiscoveryAgent::componentUp();
 
-			// only if the destination is a multicast address
-			if (_destination.isMulticast())
-			{
-				// bind on the multicast address
-				_socket.bind(_destination, _port, SOCK_DGRAM);
-
-				// get all FD of IPv4 sockets matching this interface
-				std::list<int> fds = _socket.get(ibrcommon::vaddress::VADDRESS_INET);
-
-				// iterate through all socket FD
-				for (std::list<int>::const_iterator iter = fds.begin();
-						iter != fds.end(); iter++)
-				{
-					// enable multicasting on the socket
-					ibrcommon::MulticastSocket ms(*iter);
-					ms.joinGroup(_destination);
-				}
-			}
-			else
-			{
-				// bind on ALL interfaces
-				_socket.bind(_destination, _port, SOCK_DGRAM);
-			}
-
 			// create one socket for each interface
 			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 			{
@@ -165,6 +141,35 @@ namespace dtn
 				{
 					_socket.bind(iface, 0, SOCK_DGRAM);
 				}
+			}
+
+			// only if the destination is a multicast address
+			if (_destination.isMulticast())
+			{
+				// bind on the multicast address
+				_socket.bind(_destination, _port, SOCK_DGRAM);
+
+				for (std::list<ibrcommon::vinterface>::const_iterator i_iter = _interfaces.begin(); i_iter != _interfaces.end(); i_iter++)
+				{
+					const ibrcommon::vinterface &iface = *i_iter;
+
+					// get all FD of IPv4 sockets matching this interface
+					std::list<int> fds = _socket.get(iface, ibrcommon::vaddress::VADDRESS_INET);
+
+					// iterate through all socket FD
+					for (std::list<int>::const_iterator iter = fds.begin();
+							iter != fds.end(); iter++)
+					{
+						// enable multicasting on the socket
+						ibrcommon::MulticastSocket ms(*iter);
+						ms.joinGroup(_destination, iface);
+					}
+				}
+			}
+			else
+			{
+				// bind on ALL interfaces
+				_socket.bind(_destination, _port, SOCK_DGRAM);
 			}
 		}
 
