@@ -4,7 +4,8 @@
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/AutoDelete.h>
 #include <ibrcommon/net/vinterface.h>
-#include "ibrcommon/Logger.h"
+#include <ibrcommon/Logger.h>
+#include <ibrcommon/net/LinkManager.h>
 #include <ibrdtn/utils/Clock.h>
 #include <list>
 
@@ -506,6 +507,9 @@ int main(int argc, char *argv[])
 		IBRCOMMON_LOGGER(info) << "Forwarding of bundles disabled." << IBRCOMMON_LOGGER_ENDL;
 		BundleCore::forwarding = false;
 	}
+
+	// enable netlink manager (watchdog for network interfaces)
+	ibrcommon::LinkManager::initialize();
 
 	try {
 		// initialize all convergence layers
