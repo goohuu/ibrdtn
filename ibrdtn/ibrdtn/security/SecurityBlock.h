@@ -386,7 +386,7 @@ namespace dtn
 			@param ciphersuite_params the string which will get a fragment range TLV added
 			@param stream the stream which size will be calculated
 			*/
-			static void addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, std::istream& stream);
+			static void addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, size_t payload_length);
 
 		private:
 			/** not implemented */

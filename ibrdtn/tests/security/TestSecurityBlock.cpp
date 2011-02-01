@@ -64,7 +64,7 @@ void TestSecurityBlock::localBABTest(void)
 	key.reference = dtn::data::EID("dtn://source");
 
 	// sign the bundle
-	dtn::security::BundleAuthenticationBlock::sign(b, key);
+	dtn::security::BundleAuthenticationBlock::auth(b, key);
 
 	// sign the bundle
 	dtn::security::BundleAuthenticationBlock::verify(b, key);
@@ -98,7 +98,7 @@ void TestSecurityBlock::serializeBABTest(void)
 		key.reference = dtn::data::EID("dtn://source");
 
 		// sign the bundle
-		dtn::security::BundleAuthenticationBlock::sign(b, key);
+		dtn::security::BundleAuthenticationBlock::auth(b, key);
 
 		ds << b;
 	}

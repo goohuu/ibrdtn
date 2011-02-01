@@ -32,28 +32,49 @@ namespace dtn
 
 		void PayloadConfidentialBlock::encrypt(dtn::data::Bundle& bundle, const dtn::security::SecurityKey &long_key, const dtn::data::EID& source)
 		{
+			// contains the random salt
+			u_int32_t salt;
+
+			// contains the random key
+			unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes];
+
+			unsigned char iv[ibrcommon::AES128Stream::iv_len];
+			unsigned char tag[ibrcommon::AES128Stream::tag_len];
+
 			// get all PCBs
 			const std::list<const PayloadConfidentialBlock* > pcbs = bundle.getBlocks<PayloadConfidentialBlock>();
 
 			// get all PIBs
 			const std::list<const PayloadIntegrityBlock* > pibs = bundle.getBlocks<PayloadIntegrityBlock>();
 
-			// generate key and salt
-			u_int32_t salt;
-			unsigned char ephemeral_key[ibrcommon::AES128Stream::key_size_in_bytes];
+			// create a new payload confidential block
+			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
+
+			// create a random salt and key
 			createSaltAndKey(salt, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes);
 
 			// encrypt payload - BEGIN
 			dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference blobref = plb.getBLOB();
 
-			// encrypt in place
-			ibrcommon::BLOB::iostream stream = blobref.iostream();
-			ibrcommon::AES128Stream aes_stream(ibrcommon::CipherStream::CIPHER_ENCRYPT, *stream, ephemeral_key, salt);
-			((ibrcommon::CipherStream&)aes_stream).encrypt(*stream);
+			{
+				ibrcommon::BLOB::iostream stream = blobref.iostream();
+				ibrcommon::AES128Stream aes_stream(ibrcommon::CipherStream::CIPHER_ENCRYPT, *stream, ephemeral_key, salt);
 
-			// create a new payload confidential block
-			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
+				aes_stream.getIV(iv);
+				aes_stream.getTag(tag);
+
+				// encrypt in place
+				((ibrcommon::CipherStream&)aes_stream).encrypt(*stream);
+
+				// check if this is a fragment
+				if (bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
+				{
+					// ... and set the corresponding cipher suit params
+					addFragmentRange(pcb._ciphersuite_params, bundle._fragmentoffset, stream.size());
+				}
+			}
+			// encrypt payload - END
 
 			// set the source and destination address of the new block
 			if (source != bundle._source.getNodeEID()) pcb.setSecuritySource( source );
@@ -62,28 +83,23 @@ namespace dtn
 			// set replicate in every fragment to true
 			pcb.set(REPLICATE_IN_EVERY_FRAGMENT, true);
 
-			// check if this is a fragment
-			if (bundle.get(dtn::data::PrimaryBlock::FRAGMENT))
-			{
-				// ... and set the corresponding cipher suit params
-				addFragmentRange(pcb._ciphersuite_params, bundle._fragmentoffset, *stream);
-			}
-
 			// store encypted key, tag, iv and salt
 			addSalt(pcb._ciphersuite_params, salt);
 
+			// get the RSA key
 			RSA *rsa_key = long_key.getRSA();
+
+			// encrypt the random key and add it to the ciphersuite params
 			addKey(pcb._ciphersuite_params, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes, rsa_key);
+
+			// free the RSA key
 			long_key.free(rsa_key);
 
-			unsigned char iv[ibrcommon::AES128Stream::iv_len]; aes_stream.getIV(iv);
 			pcb._ciphersuite_params.set(SecurityBlock::initialization_vector, std::string((const char*)&iv, ibrcommon::AES128Stream::iv_len));
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
-			unsigned char tag[ibrcommon::AES128Stream::tag_len]; aes_stream.getTag(tag);
 			pcb._security_result.set(SecurityBlock::integrity_signature, std::string((const char*)&tag, ibrcommon::AES128Stream::tag_len));
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
-			// encrypt payload - END
 
 			// create correlator
 			u_int64_t correlator = createCorrelatorValue(bundle);
@@ -127,7 +143,7 @@ namespace dtn
 					if (!getKey(pcb._ciphersuite_params, key, ibrcommon::AES128Stream::key_size_in_bytes, rsa_key))
 					{
 						long_key.free(rsa_key);
-						IBRCOMMON_LOGGER_ex(critical) << "could not get symmetric key decrypted" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(critical) << "could not get symmetric key decrypted" << IBRCOMMON_LOGGER_ENDL;
 						throw ibrcommon::Exception("decrypt failed - could not get symmetric key decrypted");
 					}
 					long_key.free(rsa_key);
@@ -135,7 +151,7 @@ namespace dtn
 					if (!decryptPayload(bundle, key, salt))
 					{
 						// reverse decryption
-						IBRCOMMON_LOGGER_ex(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(critical) << "tag verfication failed, reversing decryption..." << IBRCOMMON_LOGGER_ENDL;
 						decryptPayload(bundle, key, salt);
 						throw ibrcommon::Exception("decrypt reversed - tag verfication failed");
 					}
@@ -195,29 +211,46 @@ namespace dtn
 			dtn::data::PayloadBlock& plb = bundle.getBlock<dtn::data::PayloadBlock>();
 
 			std::string iv_string = pcb._ciphersuite_params.get(SecurityBlock::initialization_vector);
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(iv_string.size() == ibrcommon::AES128Stream::iv_len);
-#endif
+
+			if (iv_string.size() == ibrcommon::AES128Stream::iv_len)
+			{
+				IBRCOMMON_LOGGER(error) << "initialization vector has the wrong size" << IBRCOMMON_LOGGER_ENDL;
+				return false;
+			}
+
 			unsigned char const * iv = reinterpret_cast<unsigned char const *>(iv_string.c_str());
 
 			std::string tag_string = pcb._security_result.get(SecurityBlock::integrity_signature);
-#ifdef __DEVELOPMENT_ASSERTIONS__
-			assert(tag_string.size() == ibrcommon::AES128Stream::tag_len);
-#endif
+
+			if (tag_string.size() == ibrcommon::AES128Stream::tag_len)
+			{
+				IBRCOMMON_LOGGER(error) << "integrity signature has the wrong size" << IBRCOMMON_LOGGER_ENDL;
+				return false;
+			}
+
 			unsigned char const * tag = reinterpret_cast<unsigned char const *>(tag_string.c_str());
 
-			ibrcommon::BLOB::Reference blobref = plb.getBLOB();
-			ibrcommon::BLOB::iostream stream = blobref.iostream();
-
-			ibrcommon::AES128Stream decrypt(ibrcommon::CipherStream::CIPHER_DECRYPT, *stream, ephemeral_key, salt, iv);
-			((ibrcommon::CipherStream&)decrypt).decrypt(*stream);
-
-			// get the decrypt tag
+			// array for the integrity signature (tag)
 			unsigned char decrypt_tag[ibrcommon::AES128Stream::tag_len];
-			decrypt.getTag(decrypt_tag);
+
+			// get the reference to the corresponding BLOB object
+			ibrcommon::BLOB::Reference blobref = plb.getBLOB();
+
+			// decrypt the payload and get the integrity signature (tag)
+			{
+				ibrcommon::BLOB::iostream stream = blobref.iostream();
+				ibrcommon::AES128Stream decrypt(ibrcommon::CipherStream::CIPHER_DECRYPT, *stream, ephemeral_key, salt, iv);
+				((ibrcommon::CipherStream&)decrypt).decrypt(*stream);
+
+				// get the decrypt tag
+				decrypt.getTag(decrypt_tag);
+			}
 
 			if (memcmp(decrypt_tag, tag, ibrcommon::AES128Stream::tag_len) != 0)
+			{
+				IBRCOMMON_LOGGER(error) << "integrity signature of the decrypted payload is invalid" << IBRCOMMON_LOGGER_ENDL;
 				return false;
+			}
 
 			return true;
 		}

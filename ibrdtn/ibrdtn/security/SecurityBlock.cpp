@@ -639,16 +639,10 @@ namespace dtn
 			bundle.remove(block);
 		}
 
-		void SecurityBlock::addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, std::istream& stream)
+		void SecurityBlock::addFragmentRange(TLVList& ciphersuite_params, size_t fragmentoffset, size_t payload_length)
 		{
-			stream.seekg(0, ios_base::end);
-			std::streampos end = stream.tellg();
-			stream.seekg(0, ios_base::beg);
-			std::streampos begin = stream.tellg();
-			std::streampos range = end - begin + 1;
-
 			dtn::data::SDNV offset(fragmentoffset);
-			dtn::data::SDNV range_sdnv(range);
+			dtn::data::SDNV range_sdnv(payload_length);
 
 			std::stringstream ss;
 			ss << offset << range_sdnv;
