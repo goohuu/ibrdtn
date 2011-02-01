@@ -405,20 +405,21 @@ namespace dtn
 			copyEID(block, esb);
 
 			std::stringstream ss;
-			ibrcommon::AES128Stream encrypt(ibrcommon::AES128Stream::ENCRYPT , ss, ephemeral_key, salt);
+			ibrcommon::AES128Stream encrypt(ibrcommon::CipherStream::CIPHER_ENCRYPT, ss, ephemeral_key, salt);
 			dtn::data::Dictionary dict(bundle);
 			dtn::data::DefaultSerializer dser(encrypt, dict);
 			dser << block;
 			encrypt << std::flush;
 
 			// append tag at the end of the ciphertext
-			ss.write(reinterpret_cast<const char *>(encrypt.getTag()), ibrcommon::AES128Stream::tag_len);
+			unsigned char tag[ibrcommon::AES128Stream::tag_len]; encrypt.getTag(tag);
+			ss.write((const char*)&tag, ibrcommon::AES128Stream::tag_len);
 
 			esb._security_result.set(SecurityBlock::encapsulated_block, ss.str());
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
 
-			std::string iv(reinterpret_cast<const char *>(encrypt.getIV()), ibrcommon::AES128Stream::iv_len);
-			esb._ciphersuite_params.set(SecurityBlock::initialization_vector, iv);
+			unsigned char iv[ibrcommon::AES128Stream::iv_len]; encrypt.getIV(iv);
+			esb._ciphersuite_params.set(SecurityBlock::initialization_vector, std::string((const char*)&iv, ibrcommon::AES128Stream::iv_len));
 
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 

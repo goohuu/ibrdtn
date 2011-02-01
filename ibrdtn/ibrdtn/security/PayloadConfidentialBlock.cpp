@@ -49,8 +49,8 @@ namespace dtn
 
 			// encrypt in place
 			ibrcommon::BLOB::iostream stream = blobref.iostream();
-			ibrcommon::AES128Stream encrypt(ibrcommon::AES128Stream::ENCRYPT, *stream, ephemeral_key, salt);
-			encrypt << (*stream).rdbuf() << std::flush;
+			ibrcommon::AES128Stream aes_stream(ibrcommon::CipherStream::CIPHER_ENCRYPT, *stream, ephemeral_key, salt);
+			((ibrcommon::CipherStream&)aes_stream).encrypt(*stream);
 
 			// create a new payload confidential block
 			PayloadConfidentialBlock& pcb = bundle.push_front<PayloadConfidentialBlock>();
@@ -76,12 +76,12 @@ namespace dtn
 			addKey(pcb._ciphersuite_params, ephemeral_key, ibrcommon::AES128Stream::key_size_in_bytes, rsa_key);
 			long_key.free(rsa_key);
 
-			std::string iv(reinterpret_cast<char const *>(encrypt.getIV()), ibrcommon::AES128Stream::iv_len);
-			pcb._ciphersuite_params.set(SecurityBlock::initialization_vector, iv);
+			unsigned char iv[ibrcommon::AES128Stream::iv_len]; aes_stream.getIV(iv);
+			pcb._ciphersuite_params.set(SecurityBlock::initialization_vector, std::string((const char*)&iv, ibrcommon::AES128Stream::iv_len));
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
-			std::string tag(reinterpret_cast<char const *>(encrypt.getTag()), ibrcommon::AES128Stream::tag_len);
-			pcb._security_result.set(SecurityBlock::integrity_signature, tag);
+			unsigned char tag[ibrcommon::AES128Stream::tag_len]; aes_stream.getTag(tag);
+			pcb._security_result.set(SecurityBlock::integrity_signature, std::string((const char*)&tag, ibrcommon::AES128Stream::tag_len));
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
 			// encrypt payload - END
 
@@ -209,10 +209,17 @@ namespace dtn
 			ibrcommon::BLOB::Reference blobref = plb.getBLOB();
 			ibrcommon::BLOB::iostream stream = blobref.iostream();
 
-			ibrcommon::AES128Stream decrypt(ibrcommon::AES128Stream::DECRYPT, *stream, ephemeral_key, salt, iv, tag);
-			decrypt << (*stream).rdbuf() << std::flush;
+			ibrcommon::AES128Stream decrypt(ibrcommon::CipherStream::CIPHER_DECRYPT, *stream, ephemeral_key, salt, iv);
+			((ibrcommon::CipherStream&)decrypt).decrypt(*stream);
 
-			return decrypt.isTagGood();
+			// get the decrypt tag
+			unsigned char decrypt_tag[ibrcommon::AES128Stream::tag_len];
+			decrypt.getTag(decrypt_tag);
+
+			if (memcmp(decrypt_tag, tag, ibrcommon::AES128Stream::tag_len) != 0)
+				return false;
+
+			return true;
 		}
 	}
 }

@@ -580,10 +580,14 @@ namespace dtn
 
 			// decrypt block
 			std::stringstream plaintext;
-			ibrcommon::AES128Stream decrypt(ibrcommon::AES128Stream::DECRYPT, plaintext, key, salt, iv, tag);
+			ibrcommon::AES128Stream decrypt(ibrcommon::CipherStream::CIPHER_DECRYPT, plaintext, key, salt, iv);
 			decrypt << data_tag_string << std::flush;
 
-			if (!decrypt.isTagGood())
+			// get the decrypt tag
+			unsigned char decrypt_tag[ibrcommon::AES128Stream::tag_len];
+			decrypt.getTag(decrypt_tag);
+
+			if (memcmp(decrypt_tag, data_tag_string.c_str(), ibrcommon::AES128Stream::tag_len) != 0)
 				throw ibrcommon::Exception("decryption of block failed - tag is bad");
 
 			// deserialize block
