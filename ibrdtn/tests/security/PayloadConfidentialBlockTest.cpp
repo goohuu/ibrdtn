@@ -125,8 +125,8 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 	}
 
 	dtn::data::Bundle b;
-	b._source = pubkey.reference;
-	b._destination = dtn::data::EID("dtn://destination");
+	b._source = pubkey.reference + "/test";
+	b._destination = dtn::data::EID("dtn://destination/test");
 
 	/**
 	 * Add a payload with some payload data to the bundle and

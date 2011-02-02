@@ -65,7 +65,7 @@ namespace dtn
 		dtn::security::SecurityKey SecurityKeyManager::get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const throw (SecurityKeyManager::KeyNotFoundException)
 		{
 			dtn::security::SecurityKey keydata;
-			keydata.reference = ref;
+			keydata.reference = ref.getNodeEID();
 			keydata.type = type;
 
 			switch (type)

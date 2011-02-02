@@ -205,11 +205,17 @@ namespace dtn
 								// store the correlator
 								correlator = pcb._correlator;
 							}
+							else
+							{
+								// no correlated blocks should exists
+								// stop here with decryption
+								break;
+							}
 						}
 						else
 						{
 							// exit here, because we can not decrypt the first PCB.
-							throw ibrcommon::Exception("unable to not decrypt the first PCB");
+							throw ibrcommon::Exception("unable to decrypt the first PCB");
 						}
 					} catch (const std::bad_cast&) { };
 				}
