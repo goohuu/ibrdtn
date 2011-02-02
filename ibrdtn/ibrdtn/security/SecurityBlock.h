@@ -111,7 +111,9 @@ namespace dtn
 				friend std::istream& operator>>(std::istream &stream, TLVList &tlvlist);
 
 				const std::string get(TLV_TYPES type) const;
+				void get(TLV_TYPES type, unsigned char *value, size_t length) const;
 				void set(TLV_TYPES type, std::string value);
+				void set(TLV_TYPES type, const unsigned char *value, size_t length);
 				void remove(TLV_TYPES type);
 
 				const std::string toString() const;
@@ -419,7 +421,7 @@ namespace dtn
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
 
 			unsigned char iv[ibrcommon::AES128Stream::iv_len]; encrypt.getIV(iv);
-			esb._ciphersuite_params.set(SecurityBlock::initialization_vector, std::string((const char*)&iv, ibrcommon::AES128Stream::iv_len));
+			esb._ciphersuite_params.set(SecurityBlock::initialization_vector, iv, ibrcommon::AES128Stream::iv_len);
 
 			esb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 

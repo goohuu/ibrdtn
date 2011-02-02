@@ -68,12 +68,32 @@ namespace dtn
 			throw ibrcommon::Exception("element not found");
 		}
 
+		void SecurityBlock::TLVList::get(TLV_TYPES type, unsigned char *value, size_t length) const
+		{
+			const std::string data = get(type);
+
+			if (length < data.size())
+			{
+				::memcpy(value, data.c_str(), length);
+			}
+			else
+			{
+				::memcpy(value, data.c_str(), data.size());
+			}
+		}
+
 		void SecurityBlock::TLVList::set(SecurityBlock::TLV_TYPES type, std::string value)
 		{
 			SecurityBlock::TLV tlv(type, value);
 
 			erase(tlv);
 			insert(tlv);
+		}
+
+		void SecurityBlock::TLVList::set(TLV_TYPES type, const unsigned char *value, size_t length)
+		{
+			const std::string data(reinterpret_cast<const char *>(value), length);
+			set(type, data);
 		}
 
 		void SecurityBlock::TLVList::remove(SecurityBlock::TLV_TYPES type)
@@ -514,7 +534,7 @@ namespace dtn
 		{
 			std::string key_string = security_parameter.get(SecurityBlock::key_information);
 			// get key, convert with reinterpret_cast
-			unsigned char const * encrypted_key = reinterpret_cast<unsigned char const *>(key_string.c_str());
+			unsigned char const * encrypted_key = reinterpret_cast<const unsigned char*>(key_string.c_str());
 			unsigned char the_key[RSA_size(rsa)];
 			RSA_blinding_on(rsa, NULL);
 			int plaintext_key_len = RSA_private_decrypt(key_string.size(), encrypted_key, the_key, rsa, RSA_PKCS1_OAEP_PADDING);
@@ -568,27 +588,37 @@ namespace dtn
 
 		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])
 		{
+			// the array for the extracted tag
+			unsigned char tag[ibrcommon::AES128Stream::tag_len];
+
+			// the array for the extracted iv
+			unsigned char iv[ibrcommon::AES128Stream::iv_len];
+
 			// get iv, convert with reinterpret_cast
-			std::string iv_string(block._ciphersuite_params.get(SecurityBlock::initialization_vector));
-			unsigned char const * iv = reinterpret_cast<unsigned char const *>(iv_string.c_str());
+			block._ciphersuite_params.get(SecurityBlock::initialization_vector, iv, ibrcommon::AES128Stream::iv_len);
 
 			// get data and tag, the last tag_len bytes are the tag. cut them of and reinterpret_cast
-			std::string data_tag_string(block._security_result.get(SecurityBlock::encapsulated_block));
-			std::string tag_string(data_tag_string.substr(data_tag_string.size() - ibrcommon::AES128Stream::tag_len, ibrcommon::AES128Stream::tag_len));
-			unsigned char const * tag = reinterpret_cast<unsigned char const *>(tag_string.c_str());
-			data_tag_string.resize(data_tag_string.size() - ibrcommon::AES128Stream::tag_len);
+			std::string block_data = block._security_result.get(SecurityBlock::encapsulated_block);
+
+			// create a pointer to the tag begin
+			const char *tag_p = block_data.c_str() + (block_data.size() - ibrcommon::AES128Stream::tag_len);
+
+			// copy the tag
+			::memcpy(tag, tag_p, ibrcommon::AES128Stream::tag_len);
+
+			// strip off the tag from block data
+			block_data.resize(block_data.size() - ibrcommon::AES128Stream::tag_len);
 
 			// decrypt block
 			std::stringstream plaintext;
 			ibrcommon::AES128Stream decrypt(ibrcommon::CipherStream::CIPHER_DECRYPT, plaintext, key, salt, iv);
-			decrypt << data_tag_string << std::flush;
+			decrypt << block_data << std::flush;
 
-			// get the decrypt tag
-			unsigned char decrypt_tag[ibrcommon::AES128Stream::tag_len];
-			decrypt.getTag(decrypt_tag);
-
-			if (memcmp(decrypt_tag, data_tag_string.c_str(), ibrcommon::AES128Stream::tag_len) != 0)
+			// verify the decrypt tag
+			if (!decrypt.verify(tag))
+			{
 				throw ibrcommon::Exception("decryption of block failed - tag is bad");
+			}
 
 			// deserialize block
 			dtn::data::DefaultDeserializer ddser(plaintext);
