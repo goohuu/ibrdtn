@@ -21,6 +21,7 @@ CPPUNIT_TEST_SUITE_REGISTRATION (PayloadConfidentialBlockTest);
 
 void PayloadConfidentialBlockTest::setUp(void)
 {
+	_testdata = "Hallo Welt!";
 }
 
 void PayloadConfidentialBlockTest::tearDown(void)
@@ -51,13 +52,19 @@ void PayloadConfidentialBlockTest::encryptTest(void)
 	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
 
 	// write some payload
-	(*p.getBLOB().iostream()) << "Hallo Welt!" << std::flush;
+	(*p.getBLOB().iostream()) << _testdata << std::flush;
 
 	// verify the payload
 	{
-		std::stringstream ss; ss << (*p.getBLOB().iostream()).rdbuf();
+		ibrcommon::BLOB::iostream stream = p.getBLOB().iostream();
+		std::stringstream ss; ss << (*stream).rdbuf();
 
-		if (ss.str() != "Hallo Welt!")
+		if (ss.str().length() != _testdata.length())
+		{
+			throw ibrcommon::Exception("wrong payload size, write failed!");
+		}
+
+		if (ss.str() != _testdata)
 		{
 			throw ibrcommon::Exception("payload write failed!");
 		}
@@ -68,13 +75,41 @@ void PayloadConfidentialBlockTest::encryptTest(void)
 
 	// verify the encryption
 	{
-		std::stringstream ss; ss << (*p.getBLOB().iostream()).rdbuf();
+		ibrcommon::BLOB::iostream stream = p.getBLOB().iostream();
+		std::stringstream ss; ss << (*stream).rdbuf();
 
-		if (ss.str() == "Hallo Welt!")
+		if (ss.str().length() != _testdata.length())
+		{
+			throw ibrcommon::Exception("wrong payload size, encryption failed!");
+		}
+
+		if (ss.str() == _testdata)
 		{
 			throw ibrcommon::Exception("encryption failed!");
 		}
 	}
+
+	// check the number of block, should be two
+	CPPUNIT_ASSERT_EQUAL((size_t)2, b.getBlocks().size());
+}
+
+std::string PayloadConfidentialBlockTest::getHex(std::istream &stream)
+{
+	stream.clear();
+	stream.seekg(0);
+
+	std::stringstream buf;
+	unsigned int c = stream.get();
+
+	while (!stream.eof())
+	{
+		buf << std::hex << c << ":";
+		c = stream.get();
+	}
+
+	buf << std::flush;
+
+	return buf.str();
 }
 
 void PayloadConfidentialBlockTest::decryptTest(void)
@@ -82,11 +117,7 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 	dtn::security::SecurityKey pubkey;
 	pubkey.type = dtn::security::SecurityKey::KEY_PUBLIC;
 	pubkey.file = ibrcommon::File("test-key.pem");
-	pubkey.reference = dtn::data::EID("dtn://test");
-
-	dtn::security::SecurityKey pkey;
-	pkey.type = dtn::security::SecurityKey::KEY_PRIVATE;
-	pkey.file = ibrcommon::File("test-key.pem");
+	pubkey.reference = dtn::data::EID("dtn://source");
 
 	if (!pubkey.file.exists())
 	{
@@ -94,25 +125,54 @@ void PayloadConfidentialBlockTest::decryptTest(void)
 	}
 
 	dtn::data::Bundle b;
-	b._source = dtn::data::EID("dtn://test");
-	b._destination = pubkey.reference;
+	b._source = pubkey.reference;
+	b._destination = dtn::data::EID("dtn://destination");
 
-	// add payload block
-	dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
-
-	// encrypt the payload block
-	dtn::security::PayloadConfidentialBlock::encrypt(b, pubkey, b._source);
-
-	// decrypt the payload
-	dtn::security::PayloadConfidentialBlock::decrypt(b, pkey);
-
-	// verify the payload
+	/**
+	 * Add a payload with some payload data to the bundle and
+	 * encrypt it.
+	 */
 	{
-		std::stringstream ss; ss << (*p.getBLOB().iostream()).rdbuf();
+		// add payload block
+		dtn::data::PayloadBlock &p = b.push_back<dtn::data::PayloadBlock>();
 
-		if (ss.str() != "Hallo Welt!")
+		// write some payload
+		(*p.getBLOB().iostream()) << _testdata << std::flush;
+
+		// encrypt the payload block
+		dtn::security::PayloadConfidentialBlock::encrypt(b, pubkey, b._source);
+	}
+
+	/**
+	 * decrypt the bundle (payload only)
+	 */
+	{
+		dtn::security::SecurityKey pkey;
+		pkey.type = dtn::security::SecurityKey::KEY_PRIVATE;
+		pkey.file = ibrcommon::File("test-key.pem");
+		pkey.reference = pubkey.reference;
+
+		dtn::security::PayloadConfidentialBlock::decrypt(b, pkey);
+
+		// verify the payload
 		{
-			throw ibrcommon::Exception("decryption failed!");
+			dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
+
+			ibrcommon::BLOB::iostream stream = p.getBLOB().iostream();
+			std::stringstream ss; ss << (*stream).rdbuf();
+
+			if (ss.str().length() != _testdata.length())
+			{
+				throw ibrcommon::Exception("wrong payload size, decryption failed!");
+			}
+
+			if (ss.str() != _testdata)
+			{
+				throw ibrcommon::Exception("decryption failed!");
+			}
 		}
 	}
+
+	// check the number of block, should be one
+	CPPUNIT_ASSERT_EQUAL((size_t)1, b.getBlocks().size());
 }

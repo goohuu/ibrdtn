@@ -7,6 +7,8 @@
 
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
+#include <iostream>
+#include <string>
 
 #ifndef PAYLOADCONFIDENTIALBLOCKTEST_H_
 #define PAYLOADCONFIDENTIALBLOCKTEST_H_
@@ -25,6 +27,10 @@ public:
 protected:
 	void encryptTest(void);
 	void decryptTest(void);
+
+private:
+	std::string getHex(std::istream &stream);
+	std::string _testdata;
 };
 
 #endif /* PAYLOADCONFIDENTIALBLOCKTEST_H_ */
