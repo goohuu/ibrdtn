@@ -13,6 +13,7 @@
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <algorithm>
+#include "core/SQLiteBundleStorage.h"
 
 using namespace dtn::data;
 using namespace dtn::core;
@@ -148,6 +149,36 @@ namespace dtn
 		 */
 		void ApiServer::Distributor::run()
 		{
+			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback, public dtn::core::SQLiteBundleStorage::SQLBundleQuery
+			{
+			public:
+				BundleFilter(const dtn::data::EID &destination)
+				 : _destination(destination)
+				{};
+
+				virtual ~BundleFilter() {};
+
+				virtual size_t limit() const { return 5; };
+
+				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				{
+					if (_destination != meta.destination)
+					{
+						return false;
+					}
+
+					return true;
+				};
+
+				const std::string getWhere() const
+				{
+					return "Destination = ?";
+				};
+
+			private:
+				const dtn::data::EID &_destination;
+			};
+
 			try
 			{
 				while (true)
@@ -173,24 +204,27 @@ namespace dtn
 
 								if (handler->id == query.id)
 								{
-									const dtn::data::EID &eid = handler->getPeer();
-									const dtn::data::BundleID id = storage.getByDestination( eid, true );
+									BundleFilter filter(handler->getPeer());
+									const std::list<dtn::data::MetaBundle> list = storage.get( filter );
 
-									try {
-										const dtn::data::Bundle b = storage.get(id);
-
-										// push the bundle to the client
-										handler->queue(b);
-
-										// generate a delete bundle task
-										_tasks.push(new RemoveBundleTask(b));
-									}
-									catch (const dtn::core::BundleStorage::BundleLoadException&)
+									for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 									{
-									}
-									catch (const dtn::core::BundleStorage::NoBundleFoundException&)
-									{
-										break;
+										try {
+											const dtn::data::Bundle b = storage.get(*iter);
+
+											// push the bundle to the client
+											handler->queue(b);
+
+											// generate a delete bundle task
+											_tasks.push(new RemoveBundleTask(b));
+										}
+										catch (const dtn::core::BundleStorage::BundleLoadException&)
+										{
+										}
+										catch (const dtn::core::BundleStorage::NoBundleFoundException&)
+										{
+											break;
+										}
 									}
 
 									// generate a task for this receiver

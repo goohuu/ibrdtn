@@ -184,7 +184,7 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 
 			IBRCOMMON_LOGGER(info) << "using sqlite bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
 
-			dtn::core::SQLiteBundleStorage *sbs = new dtn::core::SQLiteBundleStorage(path, "sqlite.db", conf.getLimit("storage") );
+			dtn::core::SQLiteBundleStorage *sbs = new dtn::core::SQLiteBundleStorage(path, conf.getLimit("storage") );
 
 			components.push_back(sbs);
 			storage = sbs;
