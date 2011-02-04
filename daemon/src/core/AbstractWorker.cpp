@@ -62,25 +62,14 @@ namespace dtn
 			try {
 				while (_running)
 				{
-					dtn::data::Bundle b;
+					dtn::data::BundleID id = _receive_bundles.getnpop(true);
 
 					try {
-						b = storage.get( _worker._eid );
-						storage.remove(b);
+						dtn::data::Bundle b = storage.get( id );
 						prepareBundle(b);
-						_worker.callbackBundleReceived(b);
-					}
-					catch (dtn::core::BundleStorage::NoBundleFoundException ex)
-					{
-						dtn::data::BundleID id = _receive_bundles.getnpop(true);
-
-						try {
-							dtn::data::Bundle b = storage.get( id );
-							prepareBundle(b);
-							_worker.callbackBundleReceived( b );
-							storage.remove( id );
-						} catch (dtn::core::BundleStorage::NoBundleFoundException ex) { };
-					}
+						_worker.callbackBundleReceived( b );
+						storage.remove( id );
+					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) { };
 
 					yield();
 				}

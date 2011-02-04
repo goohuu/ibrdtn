@@ -227,8 +227,11 @@ namespace dtn
 										}
 									}
 
-									// generate a task for this receiver
-									_tasks.push(new QueryBundleTask(query.id));
+									if (list.size() > 0)
+									{
+										// generate a task for this receiver
+										_tasks.push(new QueryBundleTask(query.id));
+									}
 								}
 							}
 						} catch (const std::bad_cast&) {};
