@@ -58,31 +58,9 @@ namespace dtn
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
 
 			/**
-			 * Query for a bundle with a specific destination. Set exact to true, if the application
-			 * part should be compared too.
-			 * @param eid
-			 * @param exact
-			 * @return
-			 */
-			virtual const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false, bool singleton = true);
-
-			/**
-			 * Returns a bundle ID which is not in the bloomfilter, but in the storage
-			 * @param filter
-			 * @return
-			 */
-			virtual const dtn::data::MetaBundle getByFilter(const ibrcommon::BloomFilter &filter);
-
-			/**
 			 * @see BundleStorage::get(const BundleFilterCallback &cb)
 			 */
 			virtual const std::list<dtn::data::MetaBundle> get(const BundleFilterCallback &cb);
-
-			/**
-			 * Returns all bundles in the storage as a list of IDs
-			 * @return
-			 */
-			const std::list<dtn::data::BundleID> getList();
 
 			/**
 			 * This method deletes a specific bundle in the storage.

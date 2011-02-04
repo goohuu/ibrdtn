@@ -74,13 +74,6 @@ namespace dtn
 			virtual ~BundleStorage() = 0;
 
 			/**
-			 * Add a EID to the destination filter of the storage. This prevents search methods like getByFilter
-			 * to return a bundle with an destination EID added to the filter.
-			 * @param eid
-			 */
-			void addToFilter(const dtn::data::EID &eid);
-
-			/**
 			 * Stores a bundle in the storage.
 			 * @param bundle The bundle to store.
 			 */
@@ -92,22 +85,6 @@ namespace dtn
 			 * @return A bundle object.
 			 */
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id) = 0;
-
-			/**
-			 * Query for a bundle with a specific destination. Set exact to true, if the application
-			 * part should be compared too.
-			 * @param eid
-			 * @param exact
-			 * @return
-			 */
-			virtual const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false, bool singleton = true) = 0;
-
-			/**
-			 * Returns a bundle ID which is not in the bloomfilter, but in the storage
-			 * @param filter
-			 * @return
-			 */
-			virtual const dtn::data::MetaBundle getByFilter(const ibrcommon::BloomFilter &filter) = 0;
 
 			/**
 			 * Query the database for a number of bundles. The bundles are selected with the BundleFilterCallback
@@ -180,12 +157,6 @@ namespace dtn
 			 * constructor
 			 */
 			BundleStorage();
-
-			/**
-			 * the destination query filter stores EID which are not returned by search methods
-			 * like getByFilter()
-			 */
-			std::set<dtn::data::EID> _destination_filter;
 		};
 	}
 }

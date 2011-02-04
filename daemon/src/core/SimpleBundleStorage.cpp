@@ -193,68 +193,6 @@ namespace dtn
 			return dtn::data::BundleList::size();
 		}
 
-		const dtn::data::MetaBundle SimpleBundleStorage::getByFilter(const ibrcommon::BloomFilter &filter)
-		{
-			// search for one bundle which is not contained in the filter
-			// until we have a better strategy, we have to iterate through all bundles
-			ibrcommon::MutexLock l(_bundleslock);
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = begin(); iter != end(); iter++)
-			{
-				const dtn::data::MetaBundle &meta = (*iter);
-
-				try {
-					if ( !filter.contains(meta.toString()) )
-					{
-						// check if the destination is blocked by the destination filter
-						if ( (_destination_filter.find(meta.destination) == _destination_filter.end()) )
-						{
-							IBRCOMMON_LOGGER_DEBUG(10) << meta.toString() << " is not in the bloomfilter" << IBRCOMMON_LOGGER_ENDL;
-							return __get(meta);
-						}
-					}
-				} catch (const dtn::InvalidDataException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(10) << "InvalidDataException on bundle get: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-
-			throw BundleStorage::NoBundleFoundException();
-		}
-
-		const dtn::data::MetaBundle SimpleBundleStorage::getByDestination(const dtn::data::EID &eid, bool exact, bool singleton)
-		{
-			IBRCOMMON_LOGGER_DEBUG(5) << "Storage: get bundle for " << eid.getString() << IBRCOMMON_LOGGER_ENDL;
-			
-			ibrcommon::MutexLock l(_bundleslock);
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = begin(); iter != end(); iter++)
-			{
-				const dtn::data::MetaBundle &meta = (*iter);
-
-				try {
-					// if singleton destination is requested and bundle destination is not a singleton continue ...
-					if (singleton && !(meta.procflags & dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)) continue;
-
-					// exact match of destination is requested
-					if (exact)
-					{
-						// continue if destination does not match exactly
-						if (meta.destination != eid) continue;
-					}
-					else
-					{
-						// continue if destination node name does not match
-						if (meta.destination.getNodeEID() != eid.getNodeEID()) continue;
-					}
-
-					// return the current bundle
-					return __get(meta);
-				} catch (const dtn::InvalidDataException &ex) {
-					IBRCOMMON_LOGGER_DEBUG(10) << "InvalidDataException on bundle get: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-
-			throw BundleStorage::NoBundleFoundException();
-		}
-
 		const std::list<dtn::data::MetaBundle> SimpleBundleStorage::get(const BundleFilterCallback &cb)
 		{
 			// result list
@@ -435,19 +373,6 @@ namespace dtn
 
 			// raise an event
 			dtn::core::BundleExpiredEvent::raise( b.bundle );
-		}
-
-		const std::list<dtn::data::BundleID> SimpleBundleStorage::getList()
-		{
-			ibrcommon::MutexLock l(_bundleslock);
-			std::list<dtn::data::BundleID> ret;
-
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = begin(); iter != end(); iter++)
-			{
-				ret.push_back( *iter );
-			}
-
-			return ret;
 		}
 
 		SimpleBundleStorage::BundleContainer::BundleContainer(const dtn::data::Bundle &b)

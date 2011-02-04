@@ -155,7 +155,7 @@ namespace core {
 	}
 
 	SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const size_t &size)
-	 : global_shutdown(false), dbPath(path), dbFile(path.get("bundle.db")), dbSize(size), actual_time(0), nextExpiredTime(0)
+	 : global_shutdown(false), dbPath(path), dbFile(path.get("sqlite.db")), dbSize(size), actual_time(0), nextExpiredTime(0)
 	{
 		//Configure SQLite Library
 		SQLiteConfigure::configure();
