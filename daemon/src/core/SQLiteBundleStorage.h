@@ -117,10 +117,10 @@ namespace dtn
 				sqlite3_stmt *_statement;
 			};
 
-			class SQLiteQuerryException : public ibrcommon::Exception
+			class SQLiteQueryException : public ibrcommon::Exception
 			{
 			public:
-				SQLiteQuerryException(string what = "Unable to execute Querry.") throw(): Exception(what)
+				SQLiteQueryException(string what = "Unable to execute Querry.") throw(): Exception(what)
 				{
 				}
 			};
@@ -188,22 +188,6 @@ namespace dtn
 			 * @return A bundle object.
 			 */
 			dtn::data::Bundle get(const dtn::data::BundleID &id);
-
-//			/**
-//			 * Query for a bundle with a specific destination. Set exact to true, if the application
-//			 * part should be compared too.
-//			 * @param eid
-//			 * @param exact
-//			 * @return
-//			 */
-//			const dtn::data::MetaBundle getByDestination(const dtn::data::EID &eid, bool exact = false, bool singleton = true);
-//
-//			/**
-//			 * Returns a bundle ID which is not in the bloomfilter, but in the storage
-//			 * @param filter
-//			 * @return
-//			 */
-//			const dtn::data::MetaBundle getByFilter(const ibrcommon::BloomFilter &filter);
 
 			/**
 			 * @see BundleStorage::get(const BundleFilterCallback &cb)
@@ -342,7 +326,6 @@ namespace dtn
 			bool __cancellation();
 
 		private:
-
 			enum Position
 			{
 				FIRST_FRAGMENT 	= 0,
@@ -350,9 +333,20 @@ namespace dtn
 				BOTH_FRAGMENTS 	= 2
 			};
 
-			void executeQuerry(sqlite3_stmt *statement);
+			/**
+			 * Retrieve the meta data of a given bundle
+			 * @param id
+			 * @return
+			 */
+			dtn::data::MetaBundle get_meta(const dtn::data::BundleID &id);
 
-			void executeQuerry(sqlite3_stmt *statement, list<string> &result);
+			void get(sqlite3_stmt *st, dtn::data::MetaBundle &bundle, size_t offset = 0);
+			void get(sqlite3_stmt *st, dtn::data::Bundle &bundle, size_t offset = 0);
+
+
+			void executeQuery(sqlite3_stmt *statement);
+
+			void executeQuery(sqlite3_stmt *statement, list<string> &result);
 
 			void deleteFiles(list<std::string> &fileList);
 
@@ -402,9 +396,8 @@ namespace dtn
 			 * Reads the Blocks from the belonging to the ID and adds them to the bundle. The caller of this function has to have the Lock for the database.
 			 * @param Bundle where the Blocks should be added
 			 * @param The BundleID for which the Blocks should be read
-			 * @return A number bigges than zero is returned indicating an error. Zero is returned if no error occurred.
 			 */
-			int readBlocks(data::Bundle &bundle, const string &bundleID);
+			void get_blocks(dtn::data::Bundle &bundle, const std::string &bundleID);
 
 			/**
 			 * Contains procedures which should be done only during idle.
@@ -426,6 +419,14 @@ namespace dtn
 			 */
 			void updateexpiredTime();
 
+			const std::string generate_bundle_key(const dtn::data::BundleID &id) const;
+
+			/**
+			 * lower the next expire time if the ttl is lower than the current expire time
+			 * @param ttl
+			 */
+			void new_expire_time(size_t ttl);
+
 			/**
 			 * @see Component::getName()
 			 */
@@ -439,7 +440,8 @@ namespace dtn
 
 			int dbSize;
 			sqlite3 *database;
-			ibrcommon::Conditional dbMutex, timeeventConditional;
+			ibrcommon::Conditional dbMutex;
+			ibrcommon::Conditional timeeventConditional;
 
 			ibrcommon::Mutex time_change;// idle_mutex;
 
