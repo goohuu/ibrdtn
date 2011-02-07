@@ -193,7 +193,7 @@ namespace dtn
 			return dtn::data::BundleList::size();
 		}
 
-		const std::list<dtn::data::MetaBundle> SimpleBundleStorage::get(const BundleFilterCallback &cb)
+		const std::list<dtn::data::MetaBundle> SimpleBundleStorage::get(BundleFilterCallback &cb)
 		{
 			// result list
 			std::list<dtn::data::MetaBundle> result;

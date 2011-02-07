@@ -92,7 +92,7 @@ namespace dtn
 			 * @param cb The instance of the callback filter class.
 			 * @return A list of bundles.
 			 */
-			virtual const std::list<dtn::data::MetaBundle> get(const BundleFilterCallback &cb) = 0;
+			virtual const std::list<dtn::data::MetaBundle> get(BundleFilterCallback &cb) = 0;
 
 			/**
 			 * This method deletes a specific bundle in the storage.

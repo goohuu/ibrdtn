@@ -42,9 +42,9 @@ namespace dtn
 			virtual dtn::data::Bundle get(const dtn::data::BundleID &id);
 
 			/**
-			 * @see BundleStorage::get(const BundleFilterCallback &cb)
+			 * @see BundleStorage::get(BundleFilterCallback &cb)
 			 */
-			virtual const std::list<dtn::data::MetaBundle> get(const BundleFilterCallback &cb);
+			virtual const std::list<dtn::data::MetaBundle> get(BundleFilterCallback &cb);
 
 			/**
 			 * This method deletes a specific bundle in the storage.

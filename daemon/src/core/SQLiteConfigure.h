@@ -14,6 +14,7 @@ namespace core{
 	class SQLiteConfigure{
 	public:
 		static void configure();
+		static void shutdown();
 
 	private:
 		SQLiteConfigure(){};

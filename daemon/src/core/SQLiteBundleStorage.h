@@ -20,9 +20,6 @@
 #include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/thread/Queue.h>
-#include <ibrcommon/thread/Thread.h>
-#include <ibrcommon/thread/Conditional.h>
-#include <ibrcommon/data/File.h>
 
 #include <sqlite3.h>
 #include <string>
@@ -50,40 +47,53 @@ namespace dtn
 			// enum of all possible statements
 			enum STORAGE_STMT
 			{
-				BUNDLE_GET_TTL,
-				BUNDLE_GET_DESTINATION,
+				BUNDLE_GET_FILTER,
+				/* BUNDLE_GET_DESTINATION, */
 				BUNDLE_GET_ID,
-				BUNDLE_GET,
+				/* BUNDLE_GET, */
 				BUNDLE_GET_FRAGMENT,
-				SQL_GET_ROWID,
-				PROCFLAGS_GET,
-				TTL_GET_NEXT_EXPIRED,
+
+				EXPIRE_BUNDLES,
+				EXPIRE_BUNDLE_FILENAMES,
+				EXPIRE_BUNDLE_DELETE,
+				EXPIRE_NEXT_TIMESTAMP,
+
+				/* PROCFLAGS_GET, */
+
 				BUNDLE_GET_SORT_SIZE,
 				BUNDLE_GET_BETWEEN_SIZE,
 				BUNDLE_GET_SOURCE,
 				BUNDLE_GET_SORT_TTL,
+
+				EMPTY_CHECK,
 				COUNT_ENTRIES,
-				BUNDLE_DELETE_TTL,
+
 				BUNDLE_DELETE,
 				BUNDLE_REMOVE,
 				BUNDLE_CLEAR,
 				BUNDLE_STORE,
+
 				PROCFLAGS_SET,
+
 				BLOCK_GET_ID,
 				BLOCK_GET,
 				BLOCK_CLEAR,
 				BLOCK_STORE,
+
 				ROUTING_GET,
 				ROUTING_REMOVE,
 				ROUTING_CLEAR,
 				ROUTING_STORE,
+
 				NODE_GET,
 				NODE_REMOVE,
 				NODE_CLEAR,
 				NODE_STORE,
+
 				INFO_GET,
 				INFO_REMOVE,
 				INFO_STORE,
+
 				VACUUM,
 				SQL_QUERIES_END
 			};
@@ -126,17 +136,6 @@ namespace dtn
 			};
 
 			/**
-			 * If no bundle can be found, this exception is thrown.
-			 */
-			class NoBundleFoundException : public ibrcommon::Exception
-			{
-				public:
-					NoBundleFoundException(string what = "No bundle available.") throw() : Exception(what)
-					{
-					};
-			};
-
-			/**
 			 * Constructor
 			 * @param Pfad zum Ordner in denen die Datein gespeichert werden.
 			 * @param Dateiname der Datenbank
@@ -161,6 +160,19 @@ namespace dtn
 			void store(const dtn::data::Bundle &bundle);
 
 			/**
+			 * This method returns a specific bundle which is identified by
+			 * its id.
+			 * @param id The ID of the bundle to return.
+			 * @return A bundle object.
+			 */
+			dtn::data::Bundle get(const dtn::data::BundleID &id);
+
+			/**
+			 * @see BundleStorage::get(BundleFilterCallback &cb)
+			 */
+			const std::list<dtn::data::MetaBundle> get(BundleFilterCallback &cb);
+
+			/**
 			 * store routinginformation referring to a Bundle
 			 * @param ID of the Bundle to which the routinginformation is referring
 			 * @param string containing the routinginformation
@@ -180,19 +192,6 @@ namespace dtn
 			 * @param string containing Routinginformation
 			 */
 			void storeRoutingInfo(const int &key, const std::string &routingInfo);
-
-			/**
-			 * This method returns a specific bundle which is identified by
-			 * its id.
-			 * @param id The ID of the bundle to return.
-			 * @return A bundle object.
-			 */
-			dtn::data::Bundle get(const dtn::data::BundleID &id);
-
-			/**
-			 * @see BundleStorage::get(const BundleFilterCallback &cb)
-			 */
-			const std::list<dtn::data::MetaBundle> get(const BundleFilterCallback &cb);
 
 			/**
 			 * Returns the routinginformation stored for a specific Bundle.
@@ -264,60 +263,38 @@ namespace dtn
 			 */
 			void releaseCustody(dtn::data::BundleID &bundle);
 
-			/**
-			 * Sets the priority of the Bundle.
-			 * @param The Priority Value between 0 and 3.
-			 * @param BundleId where the priority should be set.
-			 */
-			void setPriority(const int priority,const dtn::data::BundleID &id);
+//			/**
+//			 * Sets the priority of the Bundle.
+//			 * @param The Priority Value between 0 and 3.
+//			 * @param BundleId where the priority should be set.
+//			 */
+//			void setPriority(const int priority,const dtn::data::BundleID &id);
 
 //			/**
-//			 * returns the first 'limit' biggest Bundles
-//			 * @param number of bundles to return
-//			 * @return a list containing the resulting bundles
+//			 * Gets the Block by its type of a specific Bundle
+//			 * @param BundleID
+//			 * @param Blocktype
+//			 * @return A list containing the resulting Blocks
 //			 */
-//			list<data::Bundle> getBundleBySize(const int &limit);
-//
-//			/**
-//			 *  returns the first 'limit' bundles with the lowest expiring time
-//			 * @param number of bundles to return
-//			 * @return a list containing the resulting bundles
-//			 */
-//			list<data::Bundle> getBundleByTTL (const int &limit);
-//
-//			/**
-//			 * Gets a list of Bundles which all have the specifierd SourceEID.
-//			 * @param SourceEID
-//			 * @return list containing bundles with SourceEID equals to the parameter.
-//			 */
-//			list<data::Bundle> getBundlesBySource(const dtn::data::EID &sourceID);
-//
-//			/**
-//			 * Gets a list of Bundles which all have the specifierd DestinationEID.
-//			 * @param SourceEID
-//			 * @return list containing bundles with DestinationEID equals to the parameter.
-//			 */
-//			list<data::Bundle> getBundlesByDestination(const dtn::data::EID &sourceID);
+//			list<data::Block> getBlock(const data::BundleID &bundleID,const char &blocktype);
 
-			/**
-			 * Gets the Block by its type of a specific Bundle
-			 * @param BundleID
-			 * @param Blocktype
-			 * @return A list containing the resulting Blocks
-			 */
-			list<data::Block> getBlock(const data::BundleID &bundleID,const char &blocktype);
-
-			/**
-			 * Returns the ammount of occupied storage space
-			 * @return occupied storage space or -1 indicating an error
-			 */
-			int occupiedSpace();
+//			/**
+//			 * Returns the ammount of occupied storage space
+//			 * @return occupied storage space or -1 indicating an error
+//			 */
+//			int occupiedSpace();
 
 			/**
 			 * This method is used to receive events.
 			 * @param evt
 			 */
 			void raiseEvent(const Event *evt);
+
+			/**
+			 * Remove all bundles which match this filter
+			 * @param filter
+			 */
+			dtn::data::MetaBundle remove(const ibrcommon::BloomFilter&) { return dtn::data::MetaBundle(); };
 
 		protected:
 			virtual void componentRun();
@@ -333,6 +310,89 @@ namespace dtn
 				BOTH_FRAGMENTS 	= 2
 			};
 
+			class Task
+			{
+			public:
+				virtual ~Task() {};
+				virtual void run(SQLiteBundleStorage &storage) = 0;
+			};
+
+			class BlockingTask : public Task
+			{
+			public:
+				BlockingTask() : _done(false), _abort(false) {};
+				virtual ~BlockingTask() {};
+				virtual void run(SQLiteBundleStorage &storage) = 0;
+
+				/**
+				 * wait until this job is done
+				 */
+				void wait()
+				{
+					ibrcommon::MutexLock l(_cond);
+					while (!_done && !_abort) _cond.wait();
+
+					if (_abort) throw ibrcommon::Exception("Task aborted");
+				}
+
+				void abort()
+				{
+					ibrcommon::MutexLock l(_cond);
+					_abort = true;
+					_cond.signal(true);
+				}
+
+				void done()
+				{
+					ibrcommon::MutexLock l(_cond);
+					_done = true;
+					_cond.signal(true);
+				}
+
+			private:
+				ibrcommon::Conditional _cond;
+				bool _done;
+				bool _abort;
+			};
+
+			class TaskRemove : public Task
+			{
+			public:
+				TaskRemove(const dtn::data::BundleID &id)
+				 : _id(id) { };
+
+				virtual ~TaskRemove() {};
+				virtual void run(SQLiteBundleStorage &storage);
+
+			private:
+				const dtn::data::BundleID _id;
+			};
+
+			class TaskIdle : public Task
+			{
+			public:
+				TaskIdle() { };
+
+				virtual ~TaskIdle() {};
+				virtual void run(SQLiteBundleStorage &storage);
+
+				static ibrcommon::Mutex _mutex;
+				static bool _idle;
+			};
+
+			class TaskExpire : public Task
+			{
+			public:
+				TaskExpire(size_t timestamp)
+				: _timestamp(timestamp) { };
+
+				virtual ~TaskExpire() {};
+				virtual void run(SQLiteBundleStorage &storage);
+
+			private:
+				size_t _timestamp;
+			};
+
 			/**
 			 * Retrieve the meta data of a given bundle
 			 * @param id
@@ -344,31 +404,20 @@ namespace dtn
 			void get(sqlite3_stmt *st, dtn::data::Bundle &bundle, size_t offset = 0);
 
 
-			void executeQuery(sqlite3_stmt *statement);
+			void execute(sqlite3_stmt *statement);
 
-			void executeQuery(sqlite3_stmt *statement, list<string> &result);
-
-			void deleteFiles(list<std::string> &fileList);
-
-			/**
-			 * This Function stores Fragments.
-			 * @param bundle The bundle to store.
-			 */
-			void storeFragment(const dtn::data::Bundle &bundle);
+//			/**
+//			 * This Function stores Fragments.
+//			 * @param bundle The bundle to store.
+//			 */
+//			void storeFragment(const dtn::data::Bundle &bundle);
 
 			/**
 			 * Takes a string and a SQLstatement object an creates the Object
 			 * @param string containing the SQLquarry
 			 * @param sqlite statement which should be prepared
 			 */
-			sqlite3_stmt* prepareStatement(const std::string &sqlquery);
-
-			/**
-			 * Is called when a new timeevent in raised. It seach for bundles with expired lifetimes.
-			 * @param actual time
-			 * @return
-			 */
-			void deleteexpired();
+			sqlite3_stmt* prepare(const std::string &sqlquery);
 
 			/**
 			 *  This Funktion gets e list and a bundle. Every block of the bundle except the PrimaryBlock is saved in a File.
@@ -384,42 +433,28 @@ namespace dtn
 			 * @param Bundle which blocks should be saved
 			 * @return The total number of bytes which were stored or -1 indicating an error.
 			 */
-			int storeBlocks(const data::Bundle &Bundle);
-
-			/**
-			 * Remove all bundles which match this filter
-			 * @param filter
-			 */
-			dtn::data::MetaBundle remove(const ibrcommon::BloomFilter&) { return dtn::data::MetaBundle(); };
+			int store_blocks(const data::Bundle &Bundle);
 
 			/**
 			 * Reads the Blocks from the belonging to the ID and adds them to the bundle. The caller of this function has to have the Lock for the database.
 			 * @param Bundle where the Blocks should be added
 			 * @param The BundleID for which the Blocks should be read
 			 */
-			void get_blocks(dtn::data::Bundle &bundle, const std::string &bundleID);
-
-			/**
-			 * Contains procedures which should be done only during idle.
-			 */
-			void idle_work();
-
+			void get_blocks(dtn::data::Bundle &bundle, const dtn::data::BundleID &id);
 
 			/**
 			 * Checks the files on the filesystem against the filenames in the database
 			 */
-			void consistenceCheck();
+			void check_consistency();
 
-			void checkFragments(set<string> &payloadFiles);
+			void check_fragments(set<string> &payloadFiles);
 
-			void checkBundles(set<string> &blockFiles);
+			void check_bundles(set<string> &blockFiles);
 
 			/**
 			 * updates the nextExpiredTime. The calling function has to have the databaselock.
 			 */
-			void updateexpiredTime();
-
-			const std::string generate_bundle_key(const dtn::data::BundleID &id) const;
+			void update_expire_time();
 
 			/**
 			 * lower the next expire time if the ttl is lower than the current expire time
@@ -432,26 +467,21 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
-			bool global_shutdown;
-
 			ibrcommon::File dbPath;
 			ibrcommon::File dbFile;
 			ibrcommon::File _blockPath;
 
 			int dbSize;
-			sqlite3 *database;
-			ibrcommon::Conditional dbMutex;
-			ibrcommon::Conditional timeeventConditional;
 
-			ibrcommon::Mutex time_change;// idle_mutex;
+			// holds the database handle
+			sqlite3 *_database;
 
-			// local Variable which saves the timestamp from incoming Timeevents
-			size_t actual_time;
-			size_t nextExpiredTime;
-			bool idle;
+			// contains all jobs to do
+			ibrcommon::Queue<Task*> _tasks;
 
-			// list containing filenames (inclusive path) which could be deleted
-			std::list<std::string> deleteList;
+			ibrcommon::Mutex _db_mutex;
+
+			size_t next_expiration;
 
 			// array of statements
 			sqlite3_stmt* _statements[SQL_QUERIES_END];
