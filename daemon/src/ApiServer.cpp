@@ -172,7 +172,7 @@ namespace dtn
 
 				const std::string getWhere() const
 				{
-					return "Destination = ?";
+					return "Destination = \"" + _destination.getString() + "\"";
 				};
 
 			private:
