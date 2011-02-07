@@ -120,6 +120,21 @@ namespace dtn
 			stop();
 			join();
 
+			ibrcommon::MutexLock l(_db_mutex);
+
+			// free all statements
+			for (int i = 0; i < SQL_QUERIES_END; i++)
+			{
+				// prepare the statement
+				sqlite3_finalize(_statements[i]);
+			}
+
+			//close Databaseconnection
+			if (sqlite3_close(_database) != SQLITE_OK)
+			{
+				IBRCOMMON_LOGGER(error) <<"unable to close Database" << IBRCOMMON_LOGGER_ENDL;
+			}
+
 			// shutdown sqlite library
 			SQLiteConfigure::shutdown();
 		}
@@ -218,21 +233,6 @@ namespace dtn
 			//unregister Events
 			unbindEvent(TimeEvent::className);
 			unbindEvent(GlobalEvent::className);
-
-			ibrcommon::MutexLock l(_db_mutex);
-
-			// free all statements
-			for (int i = 0; i < SQL_QUERIES_END; i++)
-			{
-				// prepare the statement
-				sqlite3_finalize(_statements[i]);
-			}
-
-			//close Databaseconnection
-			if (sqlite3_close(_database) != SQLITE_OK)
-			{
-				IBRCOMMON_LOGGER(error) <<"unable to close Database" << IBRCOMMON_LOGGER_ENDL;
-			}
 		};
 
 		bool SQLiteBundleStorage::__cancellation()
@@ -440,6 +440,9 @@ namespace dtn
 			// lock the database
 			ibrcommon::MutexLock l(_db_mutex);
 
+			// check if the bundle is already on the deletion list
+			if (_deletion_list.find(id) != _deletion_list.end()) throw dtn::core::BundleStorage::NoBundleFoundException();
+
 			// reset bindings
 //			sqlite3_clear_bindings(_statements[BUNDLE_GET_ID]);
 
@@ -549,11 +552,15 @@ namespace dtn
 					// extract the primary values and set them in the bundle object
 					get(st, m, 1);
 
-					// ask the filter if this bundle should be added to the return list
-					if (cb.shouldAdd(m))
+					// check if the bundle is already on the deletion list
+					if (_deletion_list.find(m) == _deletion_list.end())
 					{
-						// add the bundle to the list
-						ret.push_back(m);
+						// ask the filter if this bundle should be added to the return list
+						if (cb.shouldAdd(m))
+						{
+							// add the bundle to the list
+							ret.push_back(m);
+						}
 					}
 
 					if (sqlite3_step(st) != SQLITE_ROW)
@@ -565,7 +572,7 @@ namespace dtn
 				sqlite3_reset(st);
 
 				// increment the offset, because we might not have enough
-				offset += 50;
+				offset += cb.limit();
 			}
 
 			return ret;
@@ -579,6 +586,9 @@ namespace dtn
 
 			// do this while db is locked
 			ibrcommon::MutexLock l(_db_mutex);
+
+			// if bundle is deleted?
+			if (_deletion_list.find(id) != _deletion_list.end()) throw dtn::core::BundleStorage::NoBundleFoundException();
 
 //			sqlite3_clear_bindings(_statements[BUNDLE_GET_ID]);
 			sqlite3_bind_text(_statements[BUNDLE_GET_ID], 1, id.toString().c_str(), id.toString().length(), SQLITE_TRANSIENT);
@@ -736,6 +746,8 @@ namespace dtn
 
 		void SQLiteBundleStorage::remove(const dtn::data::BundleID &id)
 		{
+			ibrcommon::MutexLock l(_db_mutex);
+			_deletion_list.insert(id);
 			_tasks.push(new TaskRemove(id));
 		}
 
@@ -766,6 +778,9 @@ namespace dtn
 
 			//update deprecated timer
 			storage.update_expire_time();
+
+			// remove it from the deletion list
+			storage._deletion_list.erase(_id);
 		}
 
 		std::string SQLiteBundleStorage::getBundleRoutingInfo(const data::BundleID &bundleID, const int &key)

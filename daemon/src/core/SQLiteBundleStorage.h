@@ -485,6 +485,9 @@ namespace dtn
 
 			// array of statements
 			sqlite3_stmt* _statements[SQL_QUERIES_END];
+
+			// set of bundles to delete
+			std::set<dtn::data::BundleID> _deletion_list;
 		};
 	}
 }
