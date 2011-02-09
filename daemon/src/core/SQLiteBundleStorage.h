@@ -26,13 +26,15 @@
 #include <list>
 #include <set>
 
+//#define SQLITE_STORAGE_EXTENDED 1
+
 class SQLiteBundleStorageTest;
 
 namespace dtn
 {
 	namespace core
 	{
-		class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent
+		class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::MutexInterface
 		{
 			enum SQL_TABLES
 			{
@@ -48,9 +50,8 @@ namespace dtn
 			enum STORAGE_STMT
 			{
 				BUNDLE_GET_FILTER,
-				/* BUNDLE_GET_DESTINATION, */
 				BUNDLE_GET_ID,
-				/* BUNDLE_GET, */
+				FRAGMENT_GET_ID,
 				BUNDLE_GET_FRAGMENT,
 
 				EXPIRE_BUNDLES,
@@ -58,28 +59,24 @@ namespace dtn
 				EXPIRE_BUNDLE_DELETE,
 				EXPIRE_NEXT_TIMESTAMP,
 
-				/* PROCFLAGS_GET, */
-
-				BUNDLE_GET_SORT_SIZE,
-				BUNDLE_GET_BETWEEN_SIZE,
-				BUNDLE_GET_SOURCE,
-				BUNDLE_GET_SORT_TTL,
-
 				EMPTY_CHECK,
 				COUNT_ENTRIES,
 
 				BUNDLE_DELETE,
-				BUNDLE_REMOVE,
+				FRAGMENT_DELETE,
 				BUNDLE_CLEAR,
 				BUNDLE_STORE,
 
 				PROCFLAGS_SET,
 
 				BLOCK_GET_ID,
+				BLOCK_GET_ID_FRAGMENT,
 				BLOCK_GET,
+				BLOCK_GET_FRAGMENT,
 				BLOCK_CLEAR,
 				BLOCK_STORE,
 
+#ifdef SQLITE_STORAGE_EXTENDED
 				ROUTING_GET,
 				ROUTING_REMOVE,
 				ROUTING_CLEAR,
@@ -93,6 +90,7 @@ namespace dtn
 				INFO_GET,
 				INFO_REMOVE,
 				INFO_STORE,
+#endif
 
 				VACUUM,
 				SQL_QUERIES_END
@@ -104,7 +102,7 @@ namespace dtn
 			static const std::string _sql_queries[SQL_QUERIES_END];
 
 			// array of the db structure as sql
-			static const std::string _db_structure[11];
+			static const std::string _db_structure[9];
 
 		public:
 			friend class ::SQLiteBundleStorageTest;
@@ -120,6 +118,17 @@ namespace dtn
 				 * @return
 				 */
 				virtual const std::string getWhere() const = 0;
+
+				/**
+				 * bind all custom values to the statement
+				 * @param st
+				 * @param offset
+				 * @return
+				 */
+				virtual size_t bind(sqlite3_stmt*, size_t offset) const
+				{
+					return offset;
+				}
 
 				/**
 				 * contains the compiled statement of this query
@@ -172,6 +181,7 @@ namespace dtn
 			 */
 			const std::list<dtn::data::MetaBundle> get(BundleFilterCallback &cb);
 
+#ifdef SQLITE_STORAGE_EXTENDED
 			/**
 			 * store routinginformation referring to a Bundle
 			 * @param ID of the Bundle to which the routinginformation is referring
@@ -230,6 +240,7 @@ namespace dtn
 			 * @param key specifieing the information to be deleted
 			 */
 			void removeRoutingInfo(const int &key);
+#endif
 
 			/**
 			 * This method deletes a specific bundle in the storage.
@@ -263,26 +274,28 @@ namespace dtn
 			 */
 			void releaseCustody(dtn::data::BundleID &bundle);
 
-//			/**
-//			 * Sets the priority of the Bundle.
-//			 * @param The Priority Value between 0 and 3.
-//			 * @param BundleId where the priority should be set.
-//			 */
-//			void setPriority(const int priority,const dtn::data::BundleID &id);
+#ifdef SQLITE_STORAGE_EXTENDED
+			/**
+			 * Sets the priority of the Bundle.
+			 * @param The Priority Value between 0 and 3.
+			 * @param BundleId where the priority should be set.
+			 */
+			void setPriority(const int priority,const dtn::data::BundleID &id);
 
-//			/**
-//			 * Gets the Block by its type of a specific Bundle
-//			 * @param BundleID
-//			 * @param Blocktype
-//			 * @return A list containing the resulting Blocks
-//			 */
-//			list<data::Block> getBlock(const data::BundleID &bundleID,const char &blocktype);
+			/**
+			 * Gets the Block by its type of a specific Bundle
+			 * @param BundleID
+			 * @param Blocktype
+			 * @return A list containing the resulting Blocks
+			 */
+			list<data::Block> getBlock(const data::BundleID &bundleID,const char &blocktype);
 
-//			/**
-//			 * Returns the ammount of occupied storage space
-//			 * @return occupied storage space or -1 indicating an error
-//			 */
-//			int occupiedSpace();
+			/**
+			 * Returns the ammount of occupied storage space
+			 * @return occupied storage space or -1 indicating an error
+			 */
+			int occupiedSpace();
+#endif
 
 			/**
 			 * This method is used to receive events.
@@ -296,6 +309,21 @@ namespace dtn
 			 */
 			dtn::data::MetaBundle remove(const ibrcommon::BloomFilter&) { return dtn::data::MetaBundle(); };
 
+			/**
+			 * Try to lock everything in the database.
+			 */
+			virtual void trylock() throw (ibrcommon::MutexException);
+
+			/**
+			 * Locks everything in the database.
+			 */
+			virtual void enter() throw (ibrcommon::MutexException);
+
+			/**
+			 * Unlocks everything in the database.
+			 */
+			virtual void leave() throw (ibrcommon::MutexException);
+
 		protected:
 			virtual void componentRun();
 			virtual void componentUp();
@@ -308,6 +336,17 @@ namespace dtn
 				FIRST_FRAGMENT 	= 0,
 				LAST_FRAGMENT 	= 1,
 				BOTH_FRAGMENTS 	= 2
+			};
+
+			class AutoResetLock
+			{
+			public:
+				AutoResetLock(ibrcommon::Mutex &mutex, sqlite3_stmt *st);
+				~AutoResetLock();
+
+			private:
+				ibrcommon::MutexLock _lock;
+				sqlite3_stmt *_st;
 			};
 
 			class Task
@@ -403,14 +442,13 @@ namespace dtn
 			void get(sqlite3_stmt *st, dtn::data::MetaBundle &bundle, size_t offset = 0);
 			void get(sqlite3_stmt *st, dtn::data::Bundle &bundle, size_t offset = 0);
 
-
-			void execute(sqlite3_stmt *statement);
-
-//			/**
-//			 * This Function stores Fragments.
-//			 * @param bundle The bundle to store.
-//			 */
-//			void storeFragment(const dtn::data::Bundle &bundle);
+#ifdef SQLITE_STORAGE_EXTENDED
+			/**
+			 * This Function stores Fragments.
+			 * @param bundle The bundle to store.
+			 */
+			void storeFragment(const dtn::data::Bundle &bundle);
+#endif
 
 			/**
 			 * Takes a string and a SQLstatement object an creates the Object
@@ -461,6 +499,11 @@ namespace dtn
 			 * @param ttl
 			 */
 			void new_expire_time(size_t ttl);
+			void reset_expire_time();
+			size_t get_expire_time();
+
+			void set_bundleid(sqlite3_stmt *st, const dtn::data::BundleID &id, size_t offset = 0) const;
+			void get_bundleid(sqlite3_stmt *st, dtn::data::BundleID &id, size_t offset = 0) const;
 
 			/**
 			 * @see Component::getName()
@@ -479,14 +522,21 @@ namespace dtn
 			// contains all jobs to do
 			ibrcommon::Queue<Task*> _tasks;
 
-			ibrcommon::Mutex _db_mutex;
-
-			size_t next_expiration;
+			ibrcommon::Mutex _next_expiration_lock;
+			size_t _next_expiration;
 
 			// array of statements
 			sqlite3_stmt* _statements[SQL_QUERIES_END];
 
+			// array of locks for each statement
+			ibrcommon::Mutex _locks[SQL_QUERIES_END];
+
+			void add_deletion(const dtn::data::BundleID &id);
+			void remove_deletion(const dtn::data::BundleID &id);
+			bool contains_deletion(const dtn::data::BundleID &id);
+
 			// set of bundles to delete
+			ibrcommon::Mutex _deletion_mutex;
 			std::set<dtn::data::BundleID> _deletion_list;
 		};
 	}

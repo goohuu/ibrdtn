@@ -24,9 +24,7 @@ namespace dtn
 
 			if (!_isSet)
 			{
-//				int err = sqlite3_config(SQLITE_CONFIG_SINGLETHREAD);
-				int err = sqlite3_config(SQLITE_CONFIG_MULTITHREAD);
-//				int err = sqlite3_config(SQLITE_CONFIG_SERIALIZED);
+				int err = sqlite3_config(SQLITE_CONFIG_SERIALIZED);
 
 				if (err != SQLITE_OK)
 				{
@@ -35,10 +33,10 @@ namespace dtn
 				}
 
 				_isSet = true;
-			}
 
-			// initialize sqlite
-			sqlite3_initialize();
+				// initialize sqlite
+				sqlite3_initialize();
+			}
 		}
 
 		void SQLiteConfigure::shutdown()
