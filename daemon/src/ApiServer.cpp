@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "ApiServer.h"
 #include "core/BundleCore.h"
 #include "core/EventSwitch.h"
@@ -13,12 +14,10 @@
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <algorithm>
-#include "core/SQLiteBundleStorage.h"
 
-using namespace dtn::data;
-using namespace dtn::core;
-using namespace dtn::streams;
-using namespace std;
+#ifdef HAVE_SQLITE
+#include "core/SQLiteBundleStorage.h"
+#endif
 
 namespace dtn
 {
@@ -149,7 +148,11 @@ namespace dtn
 		 */
 		void ApiServer::Distributor::run()
 		{
+#ifdef HAVE_SQLITE
 			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback, public dtn::core::SQLiteBundleStorage::SQLBundleQuery
+#else
+			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
+#endif
 			{
 			public:
 				BundleFilter(const dtn::data::EID &destination)
@@ -170,10 +173,18 @@ namespace dtn
 					return true;
 				};
 
+#ifdef HAVE_SQLITE
 				const std::string getWhere() const
 				{
-					return "Destination = \"" + _destination.getString() + "\"";
+					return "destination = ?";
 				};
+
+				size_t bind(sqlite3_stmt *st, size_t offset) const
+				{
+					sqlite3_bind_text(st, offset, _destination.getString().c_str(), _destination.getString().size(), SQLITE_TRANSIENT);
+					return offset + 1;
+				}
+#endif
 
 			private:
 				const dtn::data::EID &_destination;
@@ -193,7 +204,7 @@ namespace dtn
 							IBRCOMMON_LOGGER_DEBUG(60) << "QueryBundleTask: " << query.id << IBRCOMMON_LOGGER_ENDL;
 
 							// get the global storage
-							BundleStorage &storage = BundleCore::getInstance().getStorage();
+							dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 							// lock the connection list
 							ibrcommon::MutexLock l(_connections_cond);
@@ -269,7 +280,7 @@ namespace dtn
 							IBRCOMMON_LOGGER_DEBUG(60) << "TransferBundleTask: " << transfer.bundle.toString() << ", id: " << transfer.id << IBRCOMMON_LOGGER_ENDL;
 
 							// get the global storage
-							BundleStorage &storage = BundleCore::getInstance().getStorage();
+							dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 							// search for all receiver of this bundle
 							ibrcommon::MutexLock l(_connections_cond);
@@ -297,7 +308,7 @@ namespace dtn
 							IBRCOMMON_LOGGER_DEBUG(60) << "RemoveBundleTask: " << r.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 							// get the global storage
-							BundleStorage &storage = BundleCore::getInstance().getStorage();
+							dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 							storage.remove(r.bundle);
 
@@ -318,7 +329,7 @@ namespace dtn
 		/**
 		 * @see dtn::core::EventReceiver::raiseEvent()
 		 */
-		void ApiServer::Distributor::raiseEvent(const Event *evt)
+		void ApiServer::Distributor::raiseEvent(const dtn::core::Event *evt)
 		{
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
