@@ -41,15 +41,15 @@ void BaseRouterTest::testGetRouter()
 
 		void notify(const dtn::core::Event*) {};
 
-		dtn::routing::BaseRouter* testGetRouter()
+		dtn::routing::BaseRouter& testGetRouter()
 		{
-			return getRouter();
+			return **this;
 		};
 	};
 
 	dtn::routing::BaseRouter router(_storage);
 	ExtensionTest e;
-	CPPUNIT_ASSERT_EQUAL(&router, e.testGetRouter());
+	CPPUNIT_ASSERT_EQUAL(&router, &e.testGetRouter());
 }
 
 /*=== END   tests for class 'Extension' ===*/
@@ -65,9 +65,9 @@ void BaseRouterTest::testAddExtension()
 
 		void notify(const dtn::core::Event*) {};
 
-		dtn::routing::BaseRouter* testGetRouter()
+		dtn::routing::BaseRouter& testGetRouter()
 		{
-			return getRouter();
+			return **this;
 		};
 	};
 
@@ -78,11 +78,24 @@ void BaseRouterTest::testAddExtension()
 
 void BaseRouterTest::testTransferTo()
 {
+	/* test signature (BaseRouter::Extension *extension) */
+	class ExtensionTest : public dtn::routing::BaseRouter::Extension
+	{
+	public:
+		ExtensionTest() {};
+		~ExtensionTest() {};
+
+		void notify(const dtn::core::Event*) {};
+	};
+
 	/* test signature (const dtn::data::EID &destination, const dtn::data::BundleID &id) */
-	dtn::data::EID eid("dtn://no-neighbor");
 	dtn::data::Bundle b;
 	dtn::routing::BaseRouter router(_storage);
-	router.transferTo(eid, b);
+	dtn::routing::NeighborDatabase::NeighborEntry n(dtn::data::EID("dtn://no-neighbor"));
+	ExtensionTest *ex = new ExtensionTest();
+	router.addExtension(ex);
+	ex->transferTo(n, b);
+	delete ex;
 }
 
 void BaseRouterTest::testRaiseEvent()

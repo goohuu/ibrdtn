@@ -211,7 +211,7 @@ void DataStorageTest::testStressTest()
 	{
 	public:
 		DataCallback(std::list<dtn::core::DataStorage::Hash> &data)
-		: stored(false), _data(data) {};
+		: stored(0), failed(0), _data(data) {};
 		virtual ~DataCallback() {};
 
 		void wait(int value)

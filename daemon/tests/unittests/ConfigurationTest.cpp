@@ -159,7 +159,7 @@ void ConfigurationTest::testDiscoveryAddress()
 {
 	/* test signature () const */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(std::string("224.0.0.1"), conf.getDiscovery().address());
+	CPPUNIT_ASSERT_EQUAL(std::string("224.0.0.1"), conf.getDiscovery().address().toString());
 }
 
 void ConfigurationTest::testDiscoveryPort()
