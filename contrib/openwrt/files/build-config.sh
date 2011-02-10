@@ -63,6 +63,7 @@ else
 	add_param $CONFFILE "ibrdtn.storage.limit" "limit_storage"
 	add_param $CONFFILE "ibrdtn.storage.blobs" "blob_path"
 	add_param $CONFFILE "ibrdtn.storage.bundles" "storage_path"
+	add_param $CONFFILE "ibrdtn.storage.engine" "storage"
 fi
 
 add_param $CONFFILE "ibrdtn.statistic.type" "statistic_type"
@@ -73,6 +74,11 @@ add_param $CONFFILE "ibrdtn.statistic.port" "statistic_port"
 
 add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
 add_param $CONFFILE "ibrdtn.discovery.timeout" "discovery_timeout"
+
+add_param $CONFFILE "ibrdtn.security.level" "security_level"
+add_param $CONFFILE "ibrdtn.security.bab_key" "security_bab_default_key"
+add_param $CONFFILE "ibrdtn.security.key_path" "security_path"
+
 
 # iterate through all network interfaces
 iter=0
@@ -121,6 +127,7 @@ while [ 1 == 1 ]; do
 		add_param $CONFFILE "ibrdtn.@static-connection[$iter].address" "static${NUMBER}_address"
 		add_param $CONFFILE "ibrdtn.@static-connection[$iter].port" "static${NUMBER}_port"
 		add_param $CONFFILE "ibrdtn.@static-connection[$iter].protocol" "static${NUMBER}_proto"
+		add_param $CONFFILE "ibrdtn.@static-connection[$iter].immediately" "static${NUMBER}_immediately"
 	else
 		break
 	fi
