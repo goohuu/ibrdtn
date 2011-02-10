@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "routing/NeighborRoutingExtension.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/TimeEvent.h"
@@ -18,6 +19,10 @@
 #include "core/SimpleBundleStorage.h"
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/AutoDelete.h>
+
+#ifdef HAVE_SQLITE
+#include "core/SQLiteBundleStorage.h"
+#endif
 
 #include <functional>
 #include <list>
@@ -51,7 +56,11 @@ namespace dtn
 
 		void NeighborRoutingExtension::run()
 		{
+#ifdef HAVE_SQLITE
+			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback, public dtn::core::SQLiteBundleStorage::SQLBundleQuery
+#else
 			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
+#endif
 			{
 			public:
 				BundleFilter(const dtn::data::EID &destination)
@@ -71,6 +80,20 @@ namespace dtn
 
 					return true;
 				};
+
+#ifdef HAVE_SQLITE
+				const std::string getWhere() const
+				{
+					return "destination = ?";
+				};
+
+				size_t bind(sqlite3_stmt *st, size_t offset) const
+				{
+					const std::string d = _destination.getNodeEID();
+					sqlite3_bind_text(st, offset, d.c_str(), d.size(), SQLITE_TRANSIENT);
+					return offset + 1;
+				}
+#endif
 
 			private:
 				const dtn::data::EID &_destination;
