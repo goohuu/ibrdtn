@@ -106,6 +106,19 @@ namespace dtn
 			ibrcommon::Mutex _bundleslock;
 			std::set<dtn::data::Bundle> _bundles;
 
+			struct CMP_BUNDLE_PRIORITY
+			{
+				bool operator() (const dtn::data::MetaBundle& lhs, const dtn::data::MetaBundle& rhs) const
+				{
+					if (lhs.getPriority() == rhs.getPriority())
+						return rhs > lhs;
+
+					return (lhs.getPriority() > rhs.getPriority());
+				}
+			};
+
+			std::set<dtn::data::MetaBundle, CMP_BUNDLE_PRIORITY> _priority_index;
+
 			size_t _maxsize;
 			size_t _currentsize;
 		};

@@ -97,6 +97,7 @@ namespace dtn
 
 				// add it to the bundle list
 				dtn::data::BundleList::add(meta);
+				_priority_index.insert(meta);
 
 			} catch (const std::exception&) {
 				// report this error to the console
@@ -201,7 +202,7 @@ namespace dtn
 			// we have to iterate through all bundles
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (std::set<dtn::data::MetaBundle>::const_iterator iter = begin(); (iter != end()) && (result.size() < cb.limit()); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && (result.size() < cb.limit()); iter++)
 			{
 				const dtn::data::MetaBundle &meta = (*iter);
 
@@ -268,6 +269,7 @@ namespace dtn
 
 			// add it to the bundle list
 			dtn::data::BundleList::add(meta);
+			_priority_index.insert(meta);
 		}
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)
@@ -283,6 +285,7 @@ namespace dtn
 
 					// remove it from the bundle list
 					dtn::data::BundleList::remove(meta);
+					_priority_index.erase(meta);
 
 					DataStorage::Hash hash(meta.toString());
 
@@ -309,6 +312,7 @@ namespace dtn
 				{
 					// remove it from the bundle list
 					dtn::data::BundleList::remove(meta);
+					_priority_index.erase(meta);
 
 					DataStorage::Hash hash(meta.toString());
 
@@ -344,6 +348,7 @@ namespace dtn
 			}
 
 			_bundles.clear();
+			_priority_index.clear();
 			dtn::data::BundleList::clear();
 
 			// set the storage size to zero
@@ -363,6 +368,9 @@ namespace dtn
 
 					// create a background task for removing the bundle
 					_datastore.remove(hash);
+
+					// remove the bundle off the index
+					_priority_index.erase(meta);
 
 					break;
 				}

@@ -102,7 +102,7 @@ namespace dtn
 			static const std::string _sql_queries[SQL_QUERIES_END];
 
 			// array of the db structure as sql
-			static const std::string _db_structure[9];
+			static const std::string _db_structure[10];
 
 		public:
 			friend class ::SQLiteBundleStorageTest;

@@ -81,9 +81,9 @@ namespace dtn
 			// we have to iterate through all bundles
 			ibrcommon::MutexLock l(_bundleslock);
 
-			for (std::set<dtn::data::Bundle>::const_iterator iter = _bundles.begin(); (iter != _bundles.end()) && (result.size() < cb.limit()); iter++)
+			for (std::set<dtn::data::MetaBundle>::const_iterator iter = _priority_index.begin(); (iter != _priority_index.end()) && (result.size() < cb.limit()); iter++)
 			{
-				const dtn::data::Bundle &bundle = (*iter);
+				const dtn::data::MetaBundle &bundle = (*iter);
 
 				if ( cb.shouldAdd(bundle) )
 				{
@@ -143,6 +143,7 @@ namespace dtn
 			if (ret.second)
 			{
 				dtn::data::BundleList::add(dtn::data::MetaBundle(bundle));
+				_priority_index.insert( bundle );
 			}
 			else
 			{
@@ -162,6 +163,7 @@ namespace dtn
 					dtn::data::Bundle bundle = (*iter);
 
 					// remove it from the bundle list
+					_priority_index.erase(bundle);
 					dtn::data::BundleList::remove(bundle);
 
 					// get size of the bundle
@@ -192,6 +194,7 @@ namespace dtn
 				if ( filter.contains(bundle.toString()) )
 				{
 					// remove it from the bundle list
+					_priority_index.erase(bundle);
 					dtn::data::BundleList::remove(bundle);
 
 					// get size of the bundle
@@ -220,6 +223,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_bundleslock);
 
 			_bundles.clear();
+			_priority_index.clear();
 			dtn::data::BundleList::clear();
 
 			// set the storage size to zero
@@ -240,6 +244,7 @@ namespace dtn
 					// decrement the storage size
 					_currentsize -= s.getLength(bundle);
 
+					_priority_index.erase(bundle);
 					_bundles.erase(iter);
 					break;
 				}
