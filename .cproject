@@ -5,10 +5,6 @@
 	<storageModule moduleId="org.eclipse.cdt.core.settings">
 		<cconfiguration id="cdt.managedbuild.toolchain.gnu.base.1264114665">
 			<storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.toolchain.gnu.base.1264114665" moduleId="org.eclipse.cdt.core.settings" name="Linux GCC">
-				<macros>
-					<stringMacro name="CC" type="VALUE_TEXT" value="distcc"/>
-					<stringMacro name="CXX" type="VALUE_TEXT" value="distcc"/>
-				</macros>
 				<externalSettings/>
 				<extensions>
 					<extension id="org.eclipse.cdt.core.ELF" point="org.eclipse.cdt.core.BinaryParser"/>
@@ -25,11 +21,15 @@
 					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.992035904" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.base.1627314243" name="cdt.managedbuild.toolchain.gnu.base" resourceTypeBasedDiscovery="false" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.ELF;org.eclipse.cdt.core.GNU_ELF" id="cdt.managedbuild.target.gnu.platform.base.1947729665" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
-							<builder id="cdt.managedbuild.target.gnu.builder.base.2091082944" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="3" superClass="cdt.managedbuild.target.gnu.builder.base"/>
+							<builder id="cdt.managedbuild.target.gnu.builder.base.2091082944" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="3" superClass="cdt.managedbuild.target.gnu.builder.base">
+								<outputEntries>
+									<entry flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="outputPath" name=""/>
+								</outputEntries>
+							</builder>
 							<tool id="cdt.managedbuild.tool.gnu.archiver.base.1878889996" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 							<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
 								<option id="gnu.cpp.compiler.option.include.paths.1604046875" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ibrdtn/include}&quot;"/>
+									<listOptionValue builtIn="false" value="../ibrdtn/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.4.3"/>
 									<listOptionValue builtIn="false" value="/usr/include"/>
 								</option>
@@ -37,7 +37,9 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.1303801129" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
 								<option id="gnu.c.compiler.option.include.paths.1587555681" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ibrdtn/include}&quot;"/>
+									<listOptionValue builtIn="false" value="../ibrdtn/include"/>
+									<listOptionValue builtIn="false" value="/usr/include/c++/4.4.3"/>
+									<listOptionValue builtIn="false" value="/usr/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.82720256" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
@@ -50,15 +52,27 @@
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.base.622521072" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.base">
 								<option id="gnu.both.asm.option.include.paths.904495717" name="Include paths (-I)" superClass="gnu.both.asm.option.include.paths" valueType="includePath">
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ibrdtn/include}&quot;"/>
+									<listOptionValue builtIn="false" value="../ibrdtn/include"/>
+									<listOptionValue builtIn="false" value="/usr/include/c++/4.4.3"/>
+									<listOptionValue builtIn="false" value="/usr/include"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.972968718" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.973757589" name="EpidemicControlMessage.cpp" rcbsApplicability="disable" resourcePath="EpidemicControlMessage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.694535799">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.694535799" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1816024285" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.651138182" name="MutexLock.cpp" rcbsApplicability="disable" resourcePath="MutexLock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1971958906">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1971958906" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.687885545" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1328899156" name="NeighborRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="NeighborRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1000528577">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1000528577" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2010642680" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.585888183" name="dtntrigger.cpp" rcbsApplicability="disable" resourcePath="dtntrigger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1807063411">
@@ -66,9 +80,9 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.840118230" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2031792291" name="dtntunnel.cpp" rcbsApplicability="disable" resourcePath="dtntunnel.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.536562646">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.536562646" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.407235281" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.294986390" name="AbstractWorker.cpp" rcbsApplicability="disable" resourcePath="AbstractWorker.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1174438628">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1174438628" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1438302520" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2139615016" name="BundleID.cpp" rcbsApplicability="disable" resourcePath="BundleID.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.101591503">
@@ -81,9 +95,9 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2023117855" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1619638744" name="StreamContactHeader.cpp" rcbsApplicability="disable" resourcePath="StreamContactHeader.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.514032722">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.514032722" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1665057531" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1179515068" name="'`ConfigurationTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'ConfigurationTest.cpp' || echo './'`ConfigurationTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1043834389">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1043834389" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1449148992" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.174441764" name="Dictionary.cpp" rcbsApplicability="disable" resourcePath="Dictionary.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.162614777">
@@ -91,9 +105,9 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1282964434" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.137787349" name="Logger.cpp" rcbsApplicability="disable" resourcePath="Logger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.922330807">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.922330807" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.320011321" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1257698964" name="QueueBundleEvent.cpp" rcbsApplicability="disable" resourcePath="QueueBundleEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1625664757">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1625664757" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.18441187" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1647182128" name="XORStream.cpp" rcbsApplicability="disable" resourcePath="XORStream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1244877784">
@@ -101,18 +115,26 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1913273983" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.623306073" name="SQLiteBundleStorage.cpp" rcbsApplicability="disable" resourcePath="SQLiteBundleStorage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1531167665">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1531167665" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.814894705" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2063928315" name="BLOB.cpp" rcbsApplicability="disable" resourcePath="BLOB.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.670060819">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.670060819" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.643589932" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1614939620" name="NetInterface.cpp" rcbsApplicability="disable" resourcePath="NetInterface.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2115539173">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2115539173" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1392140478" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1198832901" name="'`FileTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'FileTest.cpp' || echo './'`FileTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.583466239">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.583466239" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2098611546" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1084373851" name="nl_policy.c" rcbsApplicability="disable" resourcePath="nl_policy.c" toolsToInvoke="cdt.managedbuild.tool.gnu.c.compiler.base.1303801129.2133738363">
 						<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.1303801129.2133738363" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base.1303801129">
+							<option id="gnu.c.compiler.option.include.paths.1204937840" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<listOptionValue builtIn="false" value="../ibrdtn/include"/>
+							</option>
 							<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1041582673" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 						</tool>
 					</fileInfo>
@@ -121,29 +143,19 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.997041520" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1083007514" name="TestBundleList.cpp" rcbsApplicability="disable" resourcePath="`test -f 'tests/TestBundleList.cpp' || echo './'`tests/TestBundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.268730732">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.268730732" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.81515596" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.752761941" name="TestBundleSummary.cpp" rcbsApplicability="disable" resourcePath="`test -f 'tests/TestBundleSummary.cpp' || echo './'`tests/TestBundleSummary.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1740821438">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1740821438" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.37182103" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.743852405" name="testsuite.cpp" rcbsApplicability="disable" resourcePath="`test -f 'tests/testsuite.cpp' || echo './'`tests/testsuite.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1362645424">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1362645424" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.432448279" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1395460576" name="StatusReportBlock.cpp" rcbsApplicability="disable" resourcePath="StatusReportBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.695478369">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.695478369" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.594136307" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1375910919" name="Semaphore.cpp" rcbsApplicability="disable" resourcePath="Semaphore.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1653616687">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1653616687" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.242831255" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.605272237" name="stopandwait.cpp" rcbsApplicability="disable" resourcePath="stopandwait.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1531012102">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1531012102" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.252053261" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1013533020" name="LinkManager.cpp" rcbsApplicability="disable" resourcePath="LinkManager.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1003116741">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1003116741" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1229898136" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.933011693" name="SecurityBlock.cpp" rcbsApplicability="disable" resourcePath="SecurityBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.422879724">
@@ -151,9 +163,14 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.108489291" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.928347310" name="Timer.cpp" rcbsApplicability="disable" resourcePath="Timer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.220531032">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.220531032" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1556678817" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.270422951" name="DiscoveryService.cpp" rcbsApplicability="disable" resourcePath="DiscoveryService.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.382705623">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.382705623" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1462547544" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1296140304" name="ObjectLock.cpp" rcbsApplicability="disable" resourcePath="ObjectLock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.773897059">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.773897059" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.270816846" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.588249304" name="Block.cpp" rcbsApplicability="disable" resourcePath="Block.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.145580128">
@@ -161,19 +178,14 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1871293312" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1997759490" name="dtnrecv.cpp" rcbsApplicability="disable" resourcePath="dtnrecv.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.156116884">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.156116884" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2096243992" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.153281053" name="Main.cpp" rcbsApplicability="disable" resourcePath="Main.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1828629216">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1828629216" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.623022888" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1950281798" name="Configuration.cpp" rcbsApplicability="disable" resourcePath="Configuration.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1585178491">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1585178491" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1393452200" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.362726366" name="dtnconvert.cpp" rcbsApplicability="disable" resourcePath="dtnconvert.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2024809029">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2024809029" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1950067616" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.673899415" name="'`ApiServer.cpp" rcbsApplicability="disable" resourcePath="`test -f 'ApiServer.cpp' || echo './'`ApiServer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.234429513">
@@ -181,14 +193,19 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1234686186" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1912261482" name="StreamConnection.cpp" rcbsApplicability="disable" resourcePath="StreamConnection.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.506651457">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.506651457" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.889446153" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2107245576" name="ConvergenceLayer.cpp" rcbsApplicability="disable" resourcePath="ConvergenceLayer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.944569651">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.944569651" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1682610043" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.964754820" name="DTNTime.cpp" rcbsApplicability="disable" resourcePath="DTNTime.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1374755429">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1374755429" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1947735611" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.370408488" name="gf128mul.cc" rcbsApplicability="disable" resourcePath="gf128mul.cc" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.222255768">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.222255768" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.964534153" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1165845821" name="'`Main.cpp" rcbsApplicability="disable" resourcePath="`test -f 'Main.cpp' || echo './'`Main.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1502369189">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1502369189" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.349920217" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1421034375" name="Serializer.cpp" rcbsApplicability="disable" resourcePath="Serializer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.234392104">
@@ -196,19 +213,14 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2111301518" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1801175370" name="appstreambuf.cpp" rcbsApplicability="disable" resourcePath="appstreambuf.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.558805154">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.558805154" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1059242613" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1597160535" name="NetAddress.cpp" rcbsApplicability="disable" resourcePath="NetAddress.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1559028948">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1559028948" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.351035370" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2079879761" name="Mutex.cpp" rcbsApplicability="disable" resourcePath="Mutex.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.638744620">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.638744620" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1157639737" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1279853092" name="'`Component.cpp" rcbsApplicability="disable" resourcePath="`test -f 'Component.cpp' || echo './'`Component.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.674689257">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.674689257" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1504599336" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1762782913" name="SimpleBundleStorage.cpp" rcbsApplicability="disable" resourcePath="SimpleBundleStorage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1030600345">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1030600345" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2136558027" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1347261107" name="AtomicCounter.cpp" rcbsApplicability="disable" resourcePath="AtomicCounter.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.173791475">
@@ -226,9 +238,9 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1233703655" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1186426656" name="BundleStreamWriter.cpp" rcbsApplicability="disable" resourcePath="BundleStreamWriter.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.774426380">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.774426380" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.669812074" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2065433817" name="SummaryVector.cpp" rcbsApplicability="disable" resourcePath="SummaryVector.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.223672276">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.223672276" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1474361915" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.459126870" name="BLOBBundle.cpp" rcbsApplicability="disable" resourcePath="BLOBBundle.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1210743373">
@@ -236,69 +248,479 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1119011923" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1245367493" name="EpidemicRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/EpidemicRoutingExtension.cpp' || echo './'`routing/EpidemicRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.454819025">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.454819025" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.994815147" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1021529221" name="SDNV.cpp" rcbsApplicability="disable" resourcePath="SDNV.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1124865572">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1124865572" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1487643148" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.347823606" name="BundleList.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/BundleList.cpp' || echo './'`routing/BundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.553028612">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.553028612" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.407029919" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.418892500" name="BloomFilter.cpp" rcbsApplicability="disable" resourcePath="BloomFilter.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1759096687">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1759096687" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1178197560" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.862742302" name="StaticRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/StaticRoutingExtension.cpp' || echo './'`routing/StaticRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.975604804">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.975604804" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.314058536" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1928084032" name="'`BundleSummaryTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'BundleSummaryTest.cpp' || echo './'`BundleSummaryTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2043506275">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2043506275" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1160331358" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.645386849" name="NeighborDatabase.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/NeighborDatabase.cpp' || echo './'`routing/NeighborDatabase.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.266845689">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.266845689" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.776162222" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1487684818" name="NetLinkManager.cpp" rcbsApplicability="disable" resourcePath="NetLinkManager.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.178571906">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.178571906" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1471756311" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1008359738" name="BundleSummary.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/BundleSummary.cpp' || echo './'`routing/BundleSummary.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.88584341">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.88584341" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1116759390" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1230914851" name="EventReceiver.cpp" rcbsApplicability="disable" resourcePath="EventReceiver.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1084044095">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1084044095" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.91070006" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1956356380" name="RequeueBundleEvent.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/RequeueBundleEvent.cpp' || echo './'`routing/RequeueBundleEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.970685632">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.970685632" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2071067869" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1325457796" name="BundleCore.cpp" rcbsApplicability="disable" resourcePath="BundleCore.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.123710871">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.123710871" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1466610351" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1215219256" name="QueueBundleEvent.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/QueueBundleEvent.cpp' || echo './'`routing/QueueBundleEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.188180182">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.188180182" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.713231688" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.192327171" name="MutexTests.cpp" rcbsApplicability="disable" resourcePath="`test -f 'thread/MutexTests.cpp' || echo './'`thread/MutexTests.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1160341869">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1160341869" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1791504838" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.425177253" name="FloodRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/FloodRoutingExtension.cpp' || echo './'`routing/FloodRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1745761221">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1745761221" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1947479721" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.422192447" name="TimerTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'thread/TimerTest.cpp' || echo './'`thread/TimerTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.681061955">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.681061955" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.163932447" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.847330935" name="RetransmissionExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/RetransmissionExtension.cpp' || echo './'`routing/RetransmissionExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1338528585">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1338528585" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1555170056" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1694875268" name="ThreadTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'thread/ThreadTest.cpp' || echo './'`thread/ThreadTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.5209506">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.5209506" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1777508143" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.367500506" name="BaseRouter.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/BaseRouter.cpp' || echo './'`routing/BaseRouter.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1953034414">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1953034414" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.794163248" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1059000171" name="QueueTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'thread/QueueTest.cpp' || echo './'`thread/QueueTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1180604100">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1180604100" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1025817047" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.332785746" name="SummaryVector.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/SummaryVector.cpp' || echo './'`routing/SummaryVector.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.750349150">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.750349150" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.195427311" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1890298122" name="RetransmissionExtension.cpp" rcbsApplicability="disable" resourcePath="RetransmissionExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1603541445">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1603541445" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1659814173" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1708480372" name="MetaBundle.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/MetaBundle.cpp' || echo './'`routing/MetaBundle.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.274857122">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.274857122" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1126331004" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1028420109" name="CustodySignalBlock.cpp" rcbsApplicability="disable" resourcePath="CustodySignalBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1371567175">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1371567175" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.848994863" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2002903696" name="NeighborRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/NeighborRoutingExtension.cpp' || echo './'`routing/NeighborRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.660452955">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.660452955" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.711444085" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.539588743" name="'`DataStorageTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'DataStorageTest.cpp' || echo './'`DataStorageTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.65507677">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.65507677" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1671757472" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.453140450" name="EpidemicExtensionBlock.cpp" rcbsApplicability="disable" resourcePath="EpidemicExtensionBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1814411536">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1814411536" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.961796141" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1079997648" name="Thread.cpp" rcbsApplicability="disable" resourcePath="Thread.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1203807908">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1203807908" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1999520897" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.3988760" name="MemoryBundleStorage.cpp" rcbsApplicability="disable" resourcePath="MemoryBundleStorage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1917733195">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1917733195" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.734387307" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.666926859" name="KeyServerWorker.cpp" rcbsApplicability="disable" resourcePath="KeyServerWorker.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.669584598">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.669584598" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1866925619" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.180595185" name="BundleString.cpp" rcbsApplicability="disable" resourcePath="BundleString.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.888761811">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.888761811" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1926924522" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1157559492" name="BroadcastSocket.cpp" rcbsApplicability="disable" resourcePath="BroadcastSocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1459183857">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1459183857" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1467751841" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.134781311" name="'`Configuration.cpp" rcbsApplicability="disable" resourcePath="`test -f 'Configuration.cpp' || echo './'`Configuration.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1684472547">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1684472547" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1702720240" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2010383596" name="CipherStreamTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'ssl/CipherStreamTest.cpp' || echo './'`ssl/CipherStreamTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.900377925">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.900377925" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1720925558" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1601076862" name="HashStreamTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'ssl/HashStreamTest.cpp' || echo './'`ssl/HashStreamTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.125608179">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.125608179" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.52866507" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1758255360" name="LOWPANConvergenceLayer.cpp" rcbsApplicability="disable" resourcePath="LOWPANConvergenceLayer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.725249088">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.725249088" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.257831280" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2035567022" name="BundleFactory.cpp" rcbsApplicability="disable" resourcePath="BundleFactory.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1752416658">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1752416658" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1924872476" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.170280284" name="TimeMeasurement.cpp" rcbsApplicability="disable" resourcePath="TimeMeasurement.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1992414891">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1992414891" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.277668697" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1524595137" name="PayloadIntegrityBlock.cpp" rcbsApplicability="disable" resourcePath="PayloadIntegrityBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1650993443">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1650993443" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.413881624" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.812425623" name="lowpansocket.cpp" rcbsApplicability="disable" resourcePath="lowpansocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.405428121">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.405428121" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1280154623" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.368372644" name="ClientHandler.cpp" rcbsApplicability="disable" resourcePath="ClientHandler.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.899268068">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.899268068" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1011112698" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2108252750" name="SharedMutex.cpp" rcbsApplicability="disable" resourcePath="SharedMutex.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.350369608">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.350369608" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.599775402" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1720036948" name="MulticastSocket.cpp" rcbsApplicability="disable" resourcePath="MulticastSocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1130769486">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1130769486" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.968488212" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1277649132" name="StrictSerializer.cpp" rcbsApplicability="disable" resourcePath="StrictSerializer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1114252149">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1114252149" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1485346229" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1366786648" name="BundleMerger.cpp" rcbsApplicability="disable" resourcePath="BundleMerger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1313840189">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1313840189" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1096762887" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2115969793" name="BundleReceivedEvent.cpp" rcbsApplicability="disable" resourcePath="BundleReceivedEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.768679795">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.768679795" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1349832085" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1681927027" name="tcpclient.cpp" rcbsApplicability="disable" resourcePath="tcpclient.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1948256444">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1948256444" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1389277010" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1035865974" name="UnicastSocketLowpan.cpp" rcbsApplicability="disable" resourcePath="UnicastSocketLowpan.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1196610364">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1196610364" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1016650045" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1953251672" name="'`ClientHandler.cpp" rcbsApplicability="disable" resourcePath="`test -f 'ClientHandler.cpp' || echo './'`ClientHandler.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.388175019">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.388175019" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1806950284" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.301452704" name="dtnsend.cpp" rcbsApplicability="disable" resourcePath="dtnsend.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.568601263">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.568601263" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1110296090" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.436040512" name="tcpstream.cpp" rcbsApplicability="disable" resourcePath="tcpstream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2137439873">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2137439873" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.94325254" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1151800348" name="Conditional.cpp" rcbsApplicability="disable" resourcePath="Conditional.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1710673011">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1710673011" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.664880281" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2121072258" name="TrackedStream.cpp" rcbsApplicability="disable" resourcePath="TrackedStream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1396040824">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1396040824" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1554164470" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.866461443" name="BundleStorage.cpp" rcbsApplicability="disable" resourcePath="BundleStorage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1277971038">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1277971038" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2022811633" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1103074930" name="NetSocket.cpp" rcbsApplicability="disable" resourcePath="NetSocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.810000583">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.810000583" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.279720911" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.202301980" name="'`StatisticLogger.cpp" rcbsApplicability="disable" resourcePath="`test -f 'StatisticLogger.cpp' || echo './'`StatisticLogger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1574969777">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1574969777" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.460742861" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1906072538" name="RuleBlock.cpp" rcbsApplicability="disable" resourcePath="RuleBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.826041842">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.826041842" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.144946897" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1306412482" name="CipherStream.cpp" rcbsApplicability="disable" resourcePath="CipherStream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1264722852">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1264722852" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1816077192" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1727733068" name="MutualSerializer.cpp" rcbsApplicability="disable" resourcePath="MutualSerializer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.276903422">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.276903422" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1948403482" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.54857286" name="BundleGeneratedEvent.cpp" rcbsApplicability="disable" resourcePath="BundleGeneratedEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1383779649">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1383779649" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1174546895" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1941132880" name="TCPConnection.cpp" rcbsApplicability="disable" resourcePath="TCPConnection.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.837331075">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.837331075" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.183414354" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1033851212" name="StaticRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="StaticRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1775302214">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1775302214" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1501312212" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.140841812" name="DiscoveryAnnouncement.cpp" rcbsApplicability="disable" resourcePath="DiscoveryAnnouncement.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1223190840">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1223190840" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.272921748" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.972729236" name="StreamBuffer.cpp" rcbsApplicability="disable" resourcePath="StreamBuffer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2019867238">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2019867238" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1597112651" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.471591329" name="udpsocket.cpp" rcbsApplicability="disable" resourcePath="udpsocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1322402882">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1322402882" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.39200656" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1819156821" name="BundleList.cpp" rcbsApplicability="disable" resourcePath="BundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1017339324">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1017339324" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.102248407" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1898050064" name="testsuite.cpp" rcbsApplicability="disable" resourcePath="testsuite.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.146670406">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.146670406" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.409855685" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1705537328" name="'`BaseRouterTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'BaseRouterTest.cpp' || echo './'`BaseRouterTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.827082872">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.827082872" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.892048035" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1668761047" name="File.cpp" rcbsApplicability="disable" resourcePath="File.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.232761598">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.232761598" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.369874131" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1553626529" name="vaddress.cpp" rcbsApplicability="disable" resourcePath="vaddress.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1667015105">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1667015105" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2143821289" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.663778763" name="TestSecurityBlock.cpp" rcbsApplicability="disable" resourcePath="`test -f 'security/TestSecurityBlock.cpp' || echo './'`security/TestSecurityBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.235754914">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.235754914" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.663795774" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.394805933" name="PayloadConfidentialBlockTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'security/PayloadConfidentialBlockTest.cpp' || echo './'`security/PayloadConfidentialBlockTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1486940249">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1486940249" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.210831531" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.521783120" name="BaseRouter.cpp" rcbsApplicability="disable" resourcePath="BaseRouter.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.483087976">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.483087976" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.504363011" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.500794476" name="'`iobufferTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'iobufferTest.cpp' || echo './'`iobufferTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.712905920">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.712905920" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2054747833" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.379182341" name="SecurityRule.cpp" rcbsApplicability="disable" resourcePath="SecurityRule.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.829236793">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.829236793" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.851577408" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.260405264" name="HashStream.cpp" rcbsApplicability="disable" resourcePath="HashStream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1692038829">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1692038829" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1940862489" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1099876948" name="DiscoveryAgent.cpp" rcbsApplicability="disable" resourcePath="DiscoveryAgent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.378004765">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.378004765" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2109005657" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1007578511" name="ConnectionManager.cpp" rcbsApplicability="disable" resourcePath="ConnectionManager.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.605233938">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.605233938" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.700586069" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1084614891" name="StatusReportGenerator.cpp" rcbsApplicability="disable" resourcePath="StatusReportGenerator.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1656966192">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1656966192" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.942897847" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2019319643" name="EpidemicRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="EpidemicRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.381754295">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.381754295" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1657517370" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1580819894" name="AgeBlock.cpp" rcbsApplicability="disable" resourcePath="AgeBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.534323734">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.534323734" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.820019397" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.159900650" name="vinterface.cpp" rcbsApplicability="disable" resourcePath="vinterface.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1651130222">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1651130222" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2141448365" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.551916271" name="TimeEvent.cpp" rcbsApplicability="disable" resourcePath="TimeEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1031479855">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1031479855" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.258909438" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2031792291" name="dtntunnel.cpp" rcbsApplicability="disable" resourcePath="dtntunnel.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.536562646">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.536562646" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.407235281" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1619638744" name="StreamContactHeader.cpp" rcbsApplicability="disable" resourcePath="StreamContactHeader.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.514032722">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.514032722" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1665057531" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.794854532" name="Neighbor.cpp" rcbsApplicability="disable" resourcePath="Neighbor.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1197987498">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1197987498" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.276254008" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.137787349" name="Logger.cpp" rcbsApplicability="disable" resourcePath="Logger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.922330807">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.922330807" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.320011321" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1614939620" name="NetInterface.cpp" rcbsApplicability="disable" resourcePath="NetInterface.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2115539173">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2115539173" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1392140478" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1083007514" name="TestBundleList.cpp" rcbsApplicability="disable" resourcePath="`test -f 'tests/TestBundleList.cpp' || echo './'`tests/TestBundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.268730732">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.268730732" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.81515596" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.752761941" name="TestBundleSummary.cpp" rcbsApplicability="disable" resourcePath="`test -f 'tests/TestBundleSummary.cpp' || echo './'`tests/TestBundleSummary.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1740821438">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1740821438" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.37182103" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.743852405" name="testsuite.cpp" rcbsApplicability="disable" resourcePath="`test -f 'tests/testsuite.cpp' || echo './'`tests/testsuite.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1362645424">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1362645424" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.432448279" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1375910919" name="Semaphore.cpp" rcbsApplicability="disable" resourcePath="Semaphore.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1653616687">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1653616687" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.242831255" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.134307978" name="UDPConvergenceLayer.cpp" rcbsApplicability="disable" resourcePath="UDPConvergenceLayer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1920723545">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1920723545" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.851787233" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.615630341" name="vsocket.cpp" rcbsApplicability="disable" resourcePath="vsocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1662772749">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1662772749" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1407473737" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1849775812" name="RSASHA256Stream.cpp" rcbsApplicability="disable" resourcePath="RSASHA256Stream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1834595197">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1834595197" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.438725523" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.928347310" name="Timer.cpp" rcbsApplicability="disable" resourcePath="Timer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.220531032">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.220531032" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1556678817" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1997759490" name="dtnrecv.cpp" rcbsApplicability="disable" resourcePath="dtnrecv.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.156116884">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.156116884" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2096243992" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1950281798" name="Configuration.cpp" rcbsApplicability="disable" resourcePath="Configuration.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1585178491">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1585178491" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1393452200" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1912261482" name="StreamConnection.cpp" rcbsApplicability="disable" resourcePath="StreamConnection.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.506651457">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.506651457" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.889446153" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.964754820" name="DTNTime.cpp" rcbsApplicability="disable" resourcePath="DTNTime.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1374755429">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1374755429" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1947735611" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.461539412" name="GlobalEvent.cpp" rcbsApplicability="disable" resourcePath="GlobalEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1902802926">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1902802926" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1650218218" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1942587648" name="BundleSummary.cpp" rcbsApplicability="disable" resourcePath="BundleSummary.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1775836627">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1775836627" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.124956311" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1801175370" name="appstreambuf.cpp" rcbsApplicability="disable" resourcePath="appstreambuf.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.558805154">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.558805154" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1059242613" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2079879761" name="Mutex.cpp" rcbsApplicability="disable" resourcePath="Mutex.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.638744620">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.638744620" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1157639737" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1988499325" name="SQLiteConfigure.cpp" rcbsApplicability="disable" resourcePath="SQLiteConfigure.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1513191313">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1513191313" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.468091357" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1279853092" name="'`Component.cpp" rcbsApplicability="disable" resourcePath="`test -f 'Component.cpp' || echo './'`Component.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.674689257">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.674689257" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1504599336" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.908004640" name="'`BloomFilterTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'BloomFilterTest.cpp' || echo './'`BloomFilterTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.399256846">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.399256846" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1718365782" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1186426656" name="BundleStreamWriter.cpp" rcbsApplicability="disable" resourcePath="BundleStreamWriter.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.774426380">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.774426380" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.669812074" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1482103901" name="BundleCore.cpp" rcbsApplicability="disable" resourcePath="`test -f 'core/BundleCore.cpp' || echo './'`core/BundleCore.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.37182386">
@@ -416,6 +838,71 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1620223222" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1245367493" name="EpidemicRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/EpidemicRoutingExtension.cpp' || echo './'`routing/EpidemicRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.454819025">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.454819025" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.994815147" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.347823606" name="BundleList.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/BundleList.cpp' || echo './'`routing/BundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.553028612">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.553028612" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.407029919" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.862742302" name="StaticRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/StaticRoutingExtension.cpp' || echo './'`routing/StaticRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.975604804">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.975604804" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.314058536" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.645386849" name="NeighborDatabase.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/NeighborDatabase.cpp' || echo './'`routing/NeighborDatabase.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.266845689">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.266845689" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.776162222" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1008359738" name="BundleSummary.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/BundleSummary.cpp' || echo './'`routing/BundleSummary.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.88584341">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.88584341" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1116759390" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1956356380" name="RequeueBundleEvent.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/RequeueBundleEvent.cpp' || echo './'`routing/RequeueBundleEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.970685632">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.970685632" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2071067869" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1215219256" name="QueueBundleEvent.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/QueueBundleEvent.cpp' || echo './'`routing/QueueBundleEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.188180182">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.188180182" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.713231688" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.425177253" name="FloodRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/FloodRoutingExtension.cpp' || echo './'`routing/FloodRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1745761221">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1745761221" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1947479721" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.847330935" name="RetransmissionExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/RetransmissionExtension.cpp' || echo './'`routing/RetransmissionExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1338528585">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1338528585" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1555170056" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.367500506" name="BaseRouter.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/BaseRouter.cpp' || echo './'`routing/BaseRouter.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1953034414">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1953034414" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.794163248" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.332785746" name="SummaryVector.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/SummaryVector.cpp' || echo './'`routing/SummaryVector.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.750349150">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.750349150" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.195427311" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1708480372" name="MetaBundle.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/MetaBundle.cpp' || echo './'`routing/MetaBundle.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.274857122">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.274857122" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1126331004" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2002903696" name="NeighborRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="`test -f 'routing/NeighborRoutingExtension.cpp' || echo './'`routing/NeighborRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.660452955">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.660452955" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.711444085" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1329426526" name="BundleCopier.cpp" rcbsApplicability="disable" resourcePath="BundleCopier.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.628103888">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.628103888" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1812997794" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -446,6 +933,11 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1209868950" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1748351422" name="TestStreamConnection.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/TestStreamConnection.cpp' || echo './'`net/TestStreamConnection.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1926807957">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1926807957" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.50756846" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.856384119" name="TransferAbortedEvent.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/TransferAbortedEvent.cpp' || echo './'`net/TransferAbortedEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1346685689">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1346685689" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.347544039" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -471,6 +963,11 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.457293873" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1611147654" name="tcpstreamtest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/tcpstreamtest.cpp' || echo './'`net/tcpstreamtest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.231722409">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.231722409" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1146659908" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.329700264" name="ConvergenceLayer.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/ConvergenceLayer.cpp' || echo './'`net/ConvergenceLayer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1485157448">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1485157448" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.965809775" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -486,14 +983,14 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2108271993" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1139186033" name="TCPConnection.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/TCPConnection.cpp' || echo './'`net/TCPConnection.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1238242921">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1238242921" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1183411237" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1985723742" name="ConnectionManager.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/ConnectionManager.cpp' || echo './'`net/ConnectionManager.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1315408095">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1315408095" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1651944463" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1139186033" name="TCPConnection.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/TCPConnection.cpp' || echo './'`net/TCPConnection.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1238242921">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1238242921" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1183411237" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.498214278" name="BundleReceivedEvent.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/BundleReceivedEvent.cpp' || echo './'`net/BundleReceivedEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1133308189">
@@ -521,14 +1018,34 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1670817408" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1021529221" name="SDNV.cpp" rcbsApplicability="disable" resourcePath="SDNV.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1124865572">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1124865572" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1487643148" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.71335876" name="tcpclienttest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'net/tcpclienttest.cpp' || echo './'`net/tcpclienttest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.582211565">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.582211565" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1631745627" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.418892500" name="BloomFilter.cpp" rcbsApplicability="disable" resourcePath="BloomFilter.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1759096687">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1759096687" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1178197560" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1837848110" name="EventDebugger.cpp" rcbsApplicability="disable" resourcePath="EventDebugger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1009741566">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1009741566" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1930061117" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.709303725" name="PayloadConfidentialBlock.cpp" rcbsApplicability="disable" resourcePath="PayloadConfidentialBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.430877056">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.430877056" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1533577727" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1941349967" name="HTTPConvergenceLayer.cpp" rcbsApplicability="disable" resourcePath="HTTPConvergenceLayer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.445616665">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.445616665" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1166286078" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.96326087" name="TCPConvergenceLayer.cpp" rcbsApplicability="disable" resourcePath="TCPConvergenceLayer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.698514629">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.698514629" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.290981169" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1572221139" name="NeighborDatabase.cpp" rcbsApplicability="disable" resourcePath="NeighborDatabase.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.72410970">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.72410970" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1836958537" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1866920792" name="TestBundleList.cpp" rcbsApplicability="disable" resourcePath="`test -f 'cases/TestBundleList.cpp' || echo './'`cases/TestBundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1053242320">
@@ -546,14 +1063,14 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1961023182" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.192327171" name="MutexTests.cpp" rcbsApplicability="disable" resourcePath="`test -f 'thread/MutexTests.cpp' || echo './'`thread/MutexTests.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1160341869">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1160341869" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1791504838" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.407655336" name="BundleExpiredEvent.cpp" rcbsApplicability="disable" resourcePath="BundleExpiredEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1906364158">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1906364158" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1223049024" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1028420109" name="CustodySignalBlock.cpp" rcbsApplicability="disable" resourcePath="CustodySignalBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1371567175">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1371567175" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.848994863" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.753001123" name="ConnectionEvent.cpp" rcbsApplicability="disable" resourcePath="ConnectionEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2129369566">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2129369566" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.403271250" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1572791304" name="Client.cpp" rcbsApplicability="disable" resourcePath="Client.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1324079856">
@@ -561,19 +1078,24 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.989193871" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1308059614" name="ExtensionSecurityBlock.cpp" rcbsApplicability="disable" resourcePath="ExtensionSecurityBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1212801313">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1212801313" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1604546031" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1176683415" name="ExtensionBlock.cpp" rcbsApplicability="disable" resourcePath="ExtensionBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.628211523">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.628211523" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1038465919" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1079997648" name="Thread.cpp" rcbsApplicability="disable" resourcePath="Thread.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1203807908">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1203807908" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1999520897" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.358355906" name="BundleStreamReader.cpp" rcbsApplicability="disable" resourcePath="BundleStreamReader.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1647520942">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1647520942" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1517586807" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1500252723" name="BundleEvent.cpp" rcbsApplicability="disable" resourcePath="BundleEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.804105330">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.804105330" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1626873624" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1627531152" name="dtnping.cpp" rcbsApplicability="disable" resourcePath="dtnping.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.46215657">
@@ -586,44 +1108,62 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1985469105" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.749832096" name="gcm_aes.c" rcbsApplicability="disable" resourcePath="gcm_aes.c" toolsToInvoke="cdt.managedbuild.tool.gnu.c.compiler.base.1303801129.128873861">
+						<tool id="cdt.managedbuild.tool.gnu.c.compiler.base.1303801129.128873861" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base.1303801129">
+							<option id="gnu.c.compiler.option.include.paths.1594312044" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
+								<listOptionValue builtIn="false" value="../ibrdtn/include"/>
+							</option>
+							<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.281176212" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.130171295" name="CApi.cpp" rcbsApplicability="disable" resourcePath="CApi.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.42643078">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.42643078" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.906844842" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.180595185" name="BundleString.cpp" rcbsApplicability="disable" resourcePath="BundleString.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.888761811">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.888761811" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1926924522" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.146878566" name="EventSwitch.cpp" rcbsApplicability="disable" resourcePath="EventSwitch.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.139401382">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.139401382" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.983127954" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1157559492" name="BroadcastSocket.cpp" rcbsApplicability="disable" resourcePath="BroadcastSocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1459183857">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1459183857" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1467751841" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.989799768" name="AES128Stream.cpp" rcbsApplicability="disable" resourcePath="AES128Stream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.629599429">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.629599429" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1794542966" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.134781311" name="'`Configuration.cpp" rcbsApplicability="disable" resourcePath="`test -f 'Configuration.cpp' || echo './'`Configuration.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1684472547">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1684472547" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1702720240" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.745155580" name="SecurityKey.cpp" rcbsApplicability="disable" resourcePath="SecurityKey.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.875080932">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.875080932" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.691299405" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2010383596" name="CipherStreamTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'ssl/CipherStreamTest.cpp' || echo './'`ssl/CipherStreamTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.900377925">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.900377925" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1720925558" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1601076862" name="HashStreamTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'ssl/HashStreamTest.cpp' || echo './'`ssl/HashStreamTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.125608179">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.125608179" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.52866507" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2035567022" name="BundleFactory.cpp" rcbsApplicability="disable" resourcePath="BundleFactory.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1752416658">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1752416658" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1924872476" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.271191960" name="TransferCompletedEvent.cpp" rcbsApplicability="disable" resourcePath="TransferCompletedEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.320551794">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.320551794" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1094590982" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2096696580" name="EchoWorker.cpp" rcbsApplicability="disable" resourcePath="EchoWorker.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1292911950">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1292911950" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1939974200" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1190325092" name="'`StressBLOB.cpp" rcbsApplicability="disable" resourcePath="`test -f 'StressBLOB.cpp' || echo './'`StressBLOB.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.411891199">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.411891199" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.63881158" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1473859032" name="RequeueBundleEvent.cpp" rcbsApplicability="disable" resourcePath="RequeueBundleEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1665328007">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1665328007" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.717088425" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1503279553" name="CustodyEvent.cpp" rcbsApplicability="disable" resourcePath="CustodyEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1185272570">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1185272570" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.46637847" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1338569344" name="StringBundle.cpp" rcbsApplicability="disable" resourcePath="StringBundle.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.675399711">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.675399711" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.939887522" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.781302104" name="BundleList.cpp" rcbsApplicability="disable" resourcePath="`test -f '../src/routing/BundleList.cpp' || echo './'`../src/routing/BundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1325629635">
@@ -636,31 +1176,6 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1913910694" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1338569344" name="StringBundle.cpp" rcbsApplicability="disable" resourcePath="StringBundle.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.675399711">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.675399711" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.939887522" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.170280284" name="TimeMeasurement.cpp" rcbsApplicability="disable" resourcePath="TimeMeasurement.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1992414891">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1992414891" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.277668697" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.812425623" name="lowpansocket.cpp" rcbsApplicability="disable" resourcePath="lowpansocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.405428121">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.405428121" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1280154623" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.368372644" name="ClientHandler.cpp" rcbsApplicability="disable" resourcePath="ClientHandler.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.899268068">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.899268068" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1011112698" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2108252750" name="SharedMutex.cpp" rcbsApplicability="disable" resourcePath="SharedMutex.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.350369608">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.350369608" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.599775402" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1540121304" name="Debugger.cpp" rcbsApplicability="disable" resourcePath="Debugger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1850952271">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1850952271" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.736480550" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
@@ -669,16 +1184,6 @@
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.194771586" name="DevNull.cpp" rcbsApplicability="disable" resourcePath="DevNull.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1702577775">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1702577775" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.52552982" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1720036948" name="MulticastSocket.cpp" rcbsApplicability="disable" resourcePath="MulticastSocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1130769486">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1130769486" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.968488212" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1366786648" name="BundleMerger.cpp" rcbsApplicability="disable" resourcePath="BundleMerger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1313840189">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1313840189" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1096762887" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1372819544" name="SyslogStream.cpp" rcbsApplicability="disable" resourcePath="SyslogStream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.358623256">
@@ -691,9 +1196,14 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.940978446" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1681927027" name="tcpclient.cpp" rcbsApplicability="disable" resourcePath="tcpclient.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1948256444">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1948256444" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1389277010" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.608981300" name="KeyBlock.cpp" rcbsApplicability="disable" resourcePath="KeyBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.131858669">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.131858669" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1413219066" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1408796767" name="gcm.cc" rcbsApplicability="disable" resourcePath="gcm.cc" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.476296721">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.476296721" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1594072405" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2063724465" name="tcpserver.cpp" rcbsApplicability="disable" resourcePath="tcpserver.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2024446824">
@@ -706,34 +1216,24 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1479581261" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1035865974" name="UnicastSocketLowpan.cpp" rcbsApplicability="disable" resourcePath="UnicastSocketLowpan.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1196610364">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1196610364" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1016650045" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2122861586" name="Utils.cpp" rcbsApplicability="disable" resourcePath="Utils.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1154242352">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1154242352" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.800207697" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1953251672" name="'`ClientHandler.cpp" rcbsApplicability="disable" resourcePath="`test -f 'ClientHandler.cpp' || echo './'`ClientHandler.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.388175019">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.388175019" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1806950284" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.247302598" name="IPNDAgent.cpp" rcbsApplicability="disable" resourcePath="IPNDAgent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.660046238">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.660046238" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1952806935" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.301452704" name="dtnsend.cpp" rcbsApplicability="disable" resourcePath="dtnsend.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.568601263">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.568601263" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1110296090" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1627180593" name="DataStorage.cpp" rcbsApplicability="disable" resourcePath="DataStorage.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.861658501">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.861658501" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.947086567" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.436040512" name="tcpstream.cpp" rcbsApplicability="disable" resourcePath="tcpstream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2137439873">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2137439873" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.94325254" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1151800348" name="Conditional.cpp" rcbsApplicability="disable" resourcePath="Conditional.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1710673011">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1710673011" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.664880281" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1449468457" name="FloodRoutingExtension.cpp" rcbsApplicability="disable" resourcePath="FloodRoutingExtension.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.293460877">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.293460877" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.134078894" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2120651177" name="UnicastSocket.cpp" rcbsApplicability="disable" resourcePath="UnicastSocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.126790940">
@@ -741,19 +1241,19 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.421593259" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.202301980" name="'`StatisticLogger.cpp" rcbsApplicability="disable" resourcePath="`test -f 'StatisticLogger.cpp' || echo './'`StatisticLogger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1574969777">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1574969777" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.460742861" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.497380690" name="'`Debugger.cpp" rcbsApplicability="disable" resourcePath="`test -f 'Debugger.cpp' || echo './'`Debugger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1279226889">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1279226889" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1459488497" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1306412482" name="CipherStream.cpp" rcbsApplicability="disable" resourcePath="CipherStream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1264722852">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1264722852" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1816077192" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1793781285" name="'`BLOBTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'BLOBTest.cpp' || echo './'`BLOBTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1941547318">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1941547318" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1324672302" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1122048859" name="TransferAbortedEvent.cpp" rcbsApplicability="disable" resourcePath="TransferAbortedEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.454541426">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.454541426" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1023504481" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.212323306" name="Notifier.cpp" rcbsApplicability="disable" resourcePath="Notifier.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.987037967">
@@ -761,9 +1261,24 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1305520941" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.342200127" name="NodeEvent.cpp" rcbsApplicability="disable" resourcePath="NodeEvent.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1094105952">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1094105952" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1207676624" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1364257106" name="WallClock.cpp" rcbsApplicability="disable" resourcePath="WallClock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.270814387">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.270814387" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1783616482" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1935922313" name="TestBundleList.cpp" rcbsApplicability="disable" resourcePath="`test -f 'data/TestBundleList.cpp' || echo './'`data/TestBundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1491533842">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1491533842" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.508500247" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.918464496" name="TestDictionary.cpp" rcbsApplicability="disable" resourcePath="`test -f 'data/TestDictionary.cpp' || echo './'`data/TestDictionary.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.488807780">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.488807780" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.217556421" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1168605782" name="TestSerializer.cpp" rcbsApplicability="disable" resourcePath="`test -f 'data/TestSerializer.cpp' || echo './'`data/TestSerializer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.534528305">
@@ -771,9 +1286,19 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.526969240" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1609712799" name="'`stopandwaitTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'stopandwaitTest.cpp' || echo './'`stopandwaitTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.805375749">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.805375749" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1993949613" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1811884873" name="Clock.cpp" rcbsApplicability="disable" resourcePath="Clock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.614536588">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.614536588" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.640736627" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2098412372" name="RuleServerWorker.cpp" rcbsApplicability="disable" resourcePath="RuleServerWorker.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.422581389">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.422581389" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2045470713" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.2144050964" name="FileBundle.cpp" rcbsApplicability="disable" resourcePath="FileBundle.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.319020598">
@@ -781,24 +1306,9 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.2028722441" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.972729236" name="StreamBuffer.cpp" rcbsApplicability="disable" resourcePath="StreamBuffer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2019867238">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2019867238" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1597112651" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.471591329" name="udpsocket.cpp" rcbsApplicability="disable" resourcePath="udpsocket.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1322402882">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1322402882" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.39200656" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1819156821" name="BundleList.cpp" rcbsApplicability="disable" resourcePath="BundleList.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1017339324">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1017339324" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.102248407" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
-						</tool>
-					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1898050064" name="testsuite.cpp" rcbsApplicability="disable" resourcePath="testsuite.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.146670406">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.146670406" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.409855685" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.64411741" name="iobuffer.cpp" rcbsApplicability="disable" resourcePath="iobuffer.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1287077579">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1287077579" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.863087840" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.537636881" name="'`DevNull.cpp" rcbsApplicability="disable" resourcePath="`test -f 'DevNull.cpp' || echo './'`DevNull.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.544511063">
@@ -811,9 +1321,14 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1046752764" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1668761047" name="File.cpp" rcbsApplicability="disable" resourcePath="File.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.232761598">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.232761598" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.369874131" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1391342237" name="BundleAuthenticationBlock.cpp" rcbsApplicability="disable" resourcePath="BundleAuthenticationBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.16063117">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.16063117" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1703473300" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1558879050" name="Event.cpp" rcbsApplicability="disable" resourcePath="Event.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.679511661">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.679511661" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.439455610" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1031013032" name="PayloadBlock.cpp" rcbsApplicability="disable" resourcePath="PayloadBlock.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.859087288">
@@ -826,9 +1341,19 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1828354096" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1315372515" name="Node.cpp" rcbsApplicability="disable" resourcePath="Node.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.231742387">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.231742387" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1945494453" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.664544857" name="ConfigFile.cpp" rcbsApplicability="disable" resourcePath="ConfigFile.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1238567060">
 						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1238567060" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.536283775" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+						</tool>
+					</fileInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.874997843" name="SecurityKeyManager.cpp" rcbsApplicability="disable" resourcePath="SecurityKeyManager.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1755669564">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1755669564" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.544583305" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1553248174" name="EID.cpp" rcbsApplicability="disable" resourcePath="EID.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.2073558025">
@@ -836,9 +1361,9 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.786077359" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.642356662" name="StatisticLogger.cpp" rcbsApplicability="disable" resourcePath="StatisticLogger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1994231723">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1994231723" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1618488996" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1870153170" name="'`SimpleBundleStorageTest.cpp" rcbsApplicability="disable" resourcePath="`test -f 'SimpleBundleStorageTest.cpp' || echo './'`SimpleBundleStorageTest.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1424040912">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1424040912" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1644975088" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.1733063827" name="MetaBundle.cpp" rcbsApplicability="disable" resourcePath="MetaBundle.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.441399803">
@@ -846,81 +1371,19 @@
 							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1376464061" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.260405264" name="HashStream.cpp" rcbsApplicability="disable" resourcePath="HashStream.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1692038829">
-						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1692038829" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
-							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1940862489" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.base.1264114665.642356662" name="StatisticLogger.cpp" rcbsApplicability="disable" resourcePath="StatisticLogger.cpp" toolsToInvoke="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1994231723">
+						<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147.1994231723" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base.1339759147">
+							<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.1618488996" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 						</tool>
 					</fileInfo>
 					<sourceEntries>
-						<entry excluding="etc|autom4te.cache|bin|obj|lib" flags="VALUE_WORKSPACE_PATH" kind="sourcePath" name=""/>
+						<entry excluding="epidemic|obj|lib|bin|autom4te.cache|etc" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 			<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 			<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
-			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
-				<buildTargets>
-					<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments>-j12  -j2</buildArguments>
-						<buildTarget>all</buildTarget>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>true</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="clean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments>-j2</buildArguments>
-						<buildTarget>clean</buildTarget>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>true</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="daemon" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments>-C daemon</buildArguments>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="ibrcommon" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments>-C ibrcommon</buildArguments>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="ibrdtn" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments>-C ibrdtn</buildArguments>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="tools" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments>-C tools</buildArguments>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="testsuite" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments>-C testsuite</buildArguments>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-					<target name="ibrdtn testsuite" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
-						<buildCommand>make</buildCommand>
-						<buildArguments>-C ibrdtn/tests testsuite</buildArguments>
-						<stopOnError>true</stopOnError>
-						<useDefaultCommand>false</useDefaultCommand>
-						<runAllBuilders>true</runAllBuilders>
-					</target>
-				</buildTargets>
-			</storageModule>
 			<storageModule moduleId="scannerConfiguration">
 				<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
 				<profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
@@ -1916,6 +2379,107 @@
 						</scannerInfoProvider>
 					</profile>
 				</scannerConfigBuildInfo>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
+				<buildTargets>
+					<target name="all" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-j5</buildArguments>
+						<buildTarget>all</buildTarget>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="clean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-j2</buildArguments>
+						<buildTarget>clean</buildTarget>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>true</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="daemon" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C daemon</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="ibrcommon" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C ibrcommon</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="ibrdtn" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C ibrdtn</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="tools" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C tools</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="testsuite" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C testsuite</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="ibrdtn testsuite" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C ibrdtn/tests testsuite</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="daemon check" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C daemon</buildArguments>
+						<buildTarget>check</buildTarget>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="ibrcommon check" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C ibrcommon</buildArguments>
+						<buildTarget>check</buildTarget>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="ibrdtn check" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C ibrdtn</buildArguments>
+						<buildTarget>check</buildTarget>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="ibrcommon clean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C ibrcommon clean</buildArguments>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+					<target name="daemon clean" path="" targetID="org.eclipse.cdt.build.MakeTargetBuilder">
+						<buildCommand>make</buildCommand>
+						<buildArguments>-C daemon clean</buildArguments>
+						<buildTarget/>
+						<stopOnError>true</stopOnError>
+						<useDefaultCommand>false</useDefaultCommand>
+						<runAllBuilders>true</runAllBuilders>
+					</target>
+				</buildTargets>
 			</storageModule>
 		</cconfiguration>
 	</storageModule>
