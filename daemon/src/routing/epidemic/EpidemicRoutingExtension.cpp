@@ -227,10 +227,10 @@ namespace dtn
 								// some debug output
 								IBRCOMMON_LOGGER_DEBUG(40) << "search some bundles not known by " << task.eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-								// blacklist the neighbor itself, because this is handles by neighbor routing extension
+								// blacklist the neighbor itself, because this is handled by neighbor routing extension
 								filter.blacklist(task.eid);
 
-								// query an unknown bundle from the storage, the list contains max. 10 items.
+								// query some unknown bundle from the storage, the list contains max. 10 items.
 								const std::list<dtn::data::MetaBundle> list = storage.get(filter);
 
 								// send the bundles as long as we have resources

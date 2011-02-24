@@ -201,7 +201,6 @@ namespace dtn
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
 				const dtn::data::EID &peer = aborted.getPeer();
 				const dtn::data::BundleID &id = aborted.getBundleID();
-				const dtn::data::MetaBundle meta = (**this).getStorage().get(id);
 
 				switch (aborted.reason)
 				{
@@ -219,6 +218,8 @@ namespace dtn
 
 					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
 					{
+						const dtn::data::MetaBundle meta = (**this).getStorage().get(id);
+
 						if ((meta.destination.getNodeEID() == peer.getNodeEID())
 								&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 						{
