@@ -141,7 +141,7 @@ namespace dtn
 				// set ACK to zero
 				_lastack = 0;
 
-			} catch (ibrcommon::QueueUnblockedException) {
+			} catch (const ibrcommon::QueueUnblockedException&) {
 				// pop on empty queue!
 				IBRCOMMON_LOGGER(error) << "transfer refused without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -160,7 +160,7 @@ namespace dtn
 
 				// set ACK to zero
 				_lastack = 0;
-			} catch (ibrcommon::QueueUnblockedException) {
+			} catch (const ibrcommon::QueueUnblockedException&) {
 				// pop on empty queue!
 				IBRCOMMON_LOGGER(error) << "transfer completed without a bundle in queue" << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -214,6 +214,12 @@ namespace dtn
 
 			// clear the queue
 			clearQueue();
+		}
+
+		bool TCPConnection::__cancellation()
+		{
+			_tcpstream->abort(*this);
+			return true;
 		}
 
 		void TCPConnection::setup()
@@ -480,7 +486,7 @@ namespace dtn
 					// set last ack to zero
 					_lastack = 0;
 				}
-			} catch (ibrcommon::QueueUnblockedException) {
+			} catch (const ibrcommon::QueueUnblockedException&) {
 				// queue emtpy
 			}
 		}

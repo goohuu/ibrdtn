@@ -101,6 +101,12 @@ namespace dtn
 				 */
 				void run();
 
+				/**
+				 * Overload the cancellation routine.
+				 * @return
+				 */
+				bool __cancellation();
+
 			private:
 				// member variable for the reference to the client object
 				Client &_client;
