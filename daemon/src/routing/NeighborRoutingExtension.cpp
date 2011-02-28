@@ -84,12 +84,12 @@ namespace dtn
 #ifdef HAVE_SQLITE
 				const std::string getWhere() const
 				{
-					return "destination = ?";
+					return "destination LIKE ?";
 				};
 
 				size_t bind(sqlite3_stmt *st, size_t offset) const
 				{
-					const std::string d = _destination.getNodeEID();
+					const std::string d = _destination.getNodeEID() + "/%";
 					sqlite3_bind_text(st, offset, d.c_str(), d.size(), SQLITE_TRANSIENT);
 					return offset + 1;
 				}
