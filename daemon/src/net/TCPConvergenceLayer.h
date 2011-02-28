@@ -125,7 +125,6 @@ namespace dtn
 			void setup();
 			void run();
 			void finally();
-			bool __cancellation();
 
 			void clearQueue();
 

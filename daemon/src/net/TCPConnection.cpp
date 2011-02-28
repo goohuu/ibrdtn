@@ -216,12 +216,6 @@ namespace dtn
 			clearQueue();
 		}
 
-		bool TCPConnection::__cancellation()
-		{
-			_tcpstream->abort(*this);
-			return true;
-		}
-
 		void TCPConnection::setup()
 		{
 			// try to connect to the other side

@@ -64,12 +64,6 @@ namespace dtn
 			}
 		}
 
-		bool Client::AsyncReceiver::__cancellation()
-		{
-			_client._stream.abort(*this);
-			return true;
-		}
-
 		Client::Client(const std::string &app, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode)
 		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _receiver(*this)
 		{

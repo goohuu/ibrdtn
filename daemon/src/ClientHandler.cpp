@@ -165,12 +165,6 @@ namespace dtn
 			} catch (std::exception) { };
 		}
 
-		bool ClientHandler::__cancellation()
-		{
-			_stream->abort(*this);
-			return true;
-		}
-
 		void ClientHandler::run()
 		{
 			try {
