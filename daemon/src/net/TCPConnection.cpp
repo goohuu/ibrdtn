@@ -393,7 +393,7 @@ namespace dtn
 				while (!_abort)
 				{
 					try {
-						dtn::data::BundleID _current_transfer = getnpop(true, _keepalive_timeout);
+						_current_transfer = getnpop(true, _keepalive_timeout);
 
 						try {
 							// read the bundle out of the storage
