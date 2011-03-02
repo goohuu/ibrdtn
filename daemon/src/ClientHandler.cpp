@@ -100,7 +100,7 @@ namespace dtn
 				// set ACK to zero
 				_lastack = 0;
 
-			} catch (ibrcommon::QueueUnblockedException) {
+			} catch (const ibrcommon::QueueUnblockedException&) {
 				// pop on empty queue!
 			}
 		}
@@ -116,7 +116,7 @@ namespace dtn
 				// set ACK to zero
 				_lastack = 0;
 
-			} catch (ibrcommon::QueueUnblockedException) {
+			} catch (const ibrcommon::QueueUnblockedException&) {
 				// pop on empty queue!
 			}
 		}
@@ -162,7 +162,7 @@ namespace dtn
 			try {
 				// shutdown the sender thread
 				_sender.stop();
-			} catch (std::exception) { };
+			} catch (const std::exception&) { };
 		}
 
 		void ClientHandler::run()

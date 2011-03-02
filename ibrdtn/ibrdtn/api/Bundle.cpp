@@ -16,7 +16,6 @@ namespace dtn
 		Bundle::Bundle()
 		{
 			setPriority(PRIO_MEDIUM);
-
 			_b._source = dtn::data::EID("api:me");
 		}
 
@@ -29,6 +28,7 @@ namespace dtn
 		{
 			setDestination(destination);
 			setPriority(PRIO_MEDIUM);
+			_b._source = dtn::data::EID("api:me");
 		}
 
 		Bundle::~Bundle()
@@ -63,6 +63,12 @@ namespace dtn
 		void Bundle::requestReceptionReport()
 		{
 			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_RECEPTION, true);
+		}
+
+		void Bundle::requestCustodyTransfer()
+		{
+			_b.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, true);
+			_b._custodian = dtn::data::EID("api:me");
 		}
 
 		void Bundle::requestEncryption()
@@ -160,7 +166,7 @@ namespace dtn
 			try {
 				dtn::data::PayloadBlock &p = _b.getBlock<dtn::data::PayloadBlock>();
 				return p.getBLOB();
-			} catch(dtn::data::Bundle::NoSuchBlockFoundException ex) {
+			} catch(const dtn::data::Bundle::NoSuchBlockFoundException&) {
 				throw dtn::MissingObjectException("No payload block exists!");
 			}
 		}

@@ -93,6 +93,11 @@ namespace dtn
 			void requestReceptionReport();
 
 			/**
+			 * Set the request custody transfer flag.
+			 */
+			void requestCustodyTransfer();
+
+			/**
 			 * Set the request encryption bit in the bundle processing flags.
 			 * The right after the bundle is transferred to the daemon, it will
 			 * be encrypted if keys are available.
