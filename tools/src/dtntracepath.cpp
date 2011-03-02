@@ -67,7 +67,7 @@ class Tracer : public dtn::api::Client
 
 						std::cout << "Report received after " << tm << std::endl;
 					}
-				} catch (std::exception) {
+				} catch (const std::exception&) {
 
 				}
 
@@ -82,9 +82,9 @@ class Tracer : public dtn::api::Client
 					std::cout << "Hop: " << (*iter).getSource().getString() << std::endl;
 				}
 
-			} catch (dtn::api::ConnectionException ex) {
+			} catch (const dtn::api::ConnectionException&) {
 				cout << "Disconnected." << endl;
-			} catch (ibrcommon::IOException ex) {
+			} catch (const ibrcommon::IOException&) {
 				cout << "Error while receiving a bundle." << endl;
 			}
 		}
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 		tracer.close();
 		conn.close();
 
-	} catch (ibrcommon::tcpclient::SocketException ex) {
+	} catch (const ibrcommon::tcpclient::SocketException&) {
 		cerr << "Can not connect to the daemon. Does it run?" << endl;
 		return -1;
 	} catch (...) {

@@ -360,9 +360,9 @@ int main(int argc, char *argv[])
 
 				if (nonstop) ::sleep(1);
 			}
-		} catch (dtn::api::ConnectionException ex) {
+		} catch (const dtn::api::ConnectionException&) {
 			std::cerr << "Disconnected." << std::endl;
-		} catch (ibrcommon::IOException ex) {
+		} catch (const ibrcommon::IOException&) {
 			std::cerr << "Error while receiving a bundle." << std::endl;
 		}
 
@@ -370,7 +370,7 @@ int main(int argc, char *argv[])
 		client.close();
 		conn.close();
 
-	} catch (ibrcommon::tcpclient::SocketException ex) {
+	} catch (const ibrcommon::tcpclient::SocketException&) {
 		std::cerr << "Can not connect to the daemon. Does it run?" << std::endl;
 		return -1;
 	} catch (...) {

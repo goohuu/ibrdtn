@@ -39,7 +39,7 @@ namespace dtn
 					Event *evt = _queue.getnpop();
 					delete evt;
 				}
-			} catch (ibrcommon::QueueUnblockedException) {
+			} catch (const ibrcommon::QueueUnblockedException&) {
 
 			}
 
@@ -76,7 +76,7 @@ namespace dtn
 										// An error occurred during event raising
 									}
 								}
-							} catch (NoReceiverFoundException ex) {
+							} catch (const NoReceiverFoundException&) {
 								// No receiver available!
 							}
 						}
@@ -89,13 +89,13 @@ namespace dtn
 								_running = false;
 							}
 						}
-					} catch (std::exception) {
+					} catch (const std::exception&) {
 						_running = false;
 					}
 
 					delete evt;
 				}
-			} catch (std::exception) {
+			} catch (const std::exception&) {
 				_running = false;
 			}
 		}

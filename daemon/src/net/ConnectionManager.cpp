@@ -91,7 +91,7 @@ namespace dtn
 					default:
 						break;
 				}
-			} catch (std::bad_cast) { }
+			} catch (const std::bad_cast&) { }
 
 			try {
 				const TimeEvent &timeevent = dynamic_cast<const TimeEvent&>(*evt);
@@ -100,7 +100,7 @@ namespace dtn
 				{
 					check_discovered();
 				}
-			} catch (std::bad_cast) { }
+			} catch (const std::bad_cast&) { }
 
 			try {
 				const ConnectionEvent &connection = dynamic_cast<const ConnectionEvent&>(*evt);
@@ -149,7 +149,7 @@ namespace dtn
 						break;
 				}
 
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 
 			}
 		}
@@ -327,7 +327,7 @@ namespace dtn
 						{
 							throw (*iter);
 						}
-					} catch (std::exception) { }
+					} catch (const std::exception&) { }
 
 					try {
 						// queue to a dynamic discovered node
@@ -337,7 +337,7 @@ namespace dtn
 						{
 							throw (*iter);
 						}
-					} catch (std::exception) { }
+					} catch (const std::exception&) { }
 
 					try {
 						// queue to a connected node
@@ -347,7 +347,7 @@ namespace dtn
 						{
 							throw (*iter);
 						}
-					} catch (std::exception) { }
+					} catch (const std::exception&) { }
 				}
 			} catch (const dtn::core::Node next) {
 				IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;

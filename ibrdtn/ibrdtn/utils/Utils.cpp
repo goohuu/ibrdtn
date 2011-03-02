@@ -198,7 +198,7 @@ namespace dtn
 //				// the first merge creates a new bundle object
 //				bundle = merge(first, second);
 //				bundles.pop_front();
-//			} catch (exceptions::FragmentationException ex) {
+//			} catch (const exceptions::FragmentationException&) {
 //				bundles.push_front(first);
 //				throw ex;
 //			}

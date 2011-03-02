@@ -157,7 +157,7 @@ namespace dtn
 						return dynamic_cast<CustodySignalBlock&>(*b);
 					}
 				}
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 
 			}
 
@@ -177,7 +177,7 @@ namespace dtn
 						return dynamic_cast<const CustodySignalBlock&>(*b);
 					}
 				}
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 
 			}
 
@@ -197,7 +197,7 @@ namespace dtn
 						return dynamic_cast<StatusReportBlock&>(*b);
 					}
 				}
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 
 			}
 
@@ -217,7 +217,7 @@ namespace dtn
 						return dynamic_cast<const StatusReportBlock&>(*b);
 					}
 				}
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 
 			}
 
@@ -237,7 +237,7 @@ namespace dtn
 						return dynamic_cast<const T&>(*b);
 					}
 				}
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 
 			}
 
@@ -257,7 +257,7 @@ namespace dtn
 						return dynamic_cast<T&>(*b);
 					}
 				}
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 
 			}
 

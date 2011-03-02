@@ -207,7 +207,7 @@ namespace dtn
 					ibrcommon::MutexLock l(_neighbor_database);
 					_neighbor_database.reset( event.getNode().getEID() );
 				}
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferCompletedEvent &event = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
@@ -223,7 +223,7 @@ namespace dtn
 					_neighbor_database.addBundle(event.getPeer(), event.getBundle());
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferAbortedEvent &event = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
@@ -243,7 +243,7 @@ namespace dtn
 						_neighbor_database.addBundle(event.getPeer(), meta);
 					}
 				} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::BundleReceivedEvent &received = dynamic_cast<const dtn::net::BundleReceivedEvent&>(*evt);
@@ -308,7 +308,7 @@ namespace dtn
 				}
 
 				return;
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 			}
 
 			try {
@@ -324,14 +324,14 @@ namespace dtn
 
 					// raise the queued event to notify all receivers about the new bundle
  					QueueBundleEvent::raise(generated.bundle, dtn::core::BundleCore::local);
-				} catch (ibrcommon::IOException ex) {
+				} catch (const ibrcommon::IOException &ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-				} catch (dtn::core::BundleStorage::StorageSizeExeededException ex) {
+				} catch (const dtn::core::BundleStorage::StorageSizeExeededException &ex) {
 					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << generated.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 				}
 
 				return;
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 			}
 
 			try {
@@ -345,7 +345,7 @@ namespace dtn
 					ibrcommon::MutexLock l(_neighbor_database);
 					_neighbor_database.expire(time.getTimestamp());
 				}
-			} catch (std::bad_cast) {
+			} catch (const std::bad_cast&) {
 			}
 
 			// notify all underlying extensions

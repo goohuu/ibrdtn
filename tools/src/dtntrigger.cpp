@@ -191,7 +191,7 @@ int main(int argc, char** argv)
 
 					// remove temporary file
 					file.remove();
-				} catch (ios_base::failure ex) {
+				} catch (const ios_base::failure&) {
 
 				}
 			}

@@ -215,8 +215,8 @@ namespace dtn
 					try {
 						ss >> announce;
 						received(announce);
-					} catch (dtn::InvalidDataException ex) {
-					} catch (ibrcommon::IOException ex) {
+					} catch (const dtn::InvalidDataException&) {
+					} catch (const ibrcommon::IOException&) {
 					}
 
 					yield();

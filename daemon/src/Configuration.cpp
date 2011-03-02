@@ -244,7 +244,7 @@ namespace dtn
 				_filename = filename;
 
 				IBRCOMMON_LOGGER(info) << "Configuration: " << filename << IBRCOMMON_LOGGER_ENDL;
-			} catch (ibrcommon::ConfigFile::file_not_found ex) {
+			} catch (const ibrcommon::ConfigFile::file_not_found&) {
 				IBRCOMMON_LOGGER(info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
 			}
@@ -294,7 +294,7 @@ namespace dtn
 		{
 			try {
 				return _conf.read<string>("local_uri");
-			} catch (ibrcommon::ConfigFile::key_not_found ex) {
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
 				char *hostname_array = new char[64];
 				if ( gethostname(hostname_array, 64) != 0 )
 				{
@@ -324,7 +324,7 @@ namespace dtn
 			try {
 				return ibrcommon::vaddress( ibrcommon::vaddress::VADDRESS_INET,
 						Configuration::getInstance()._conf.read<string>("discovery_address"));
-			} catch (ConfigFile::key_not_found ex) {
+			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotFoundException();
 			}
 		}
@@ -472,7 +472,7 @@ namespace dtn
 								ibrcommon::vinterface interface(conf.read<std::string>(key_interface));
 								Configuration::NetConfig::NetConfig nc(netname, type, interface, port, discovery);
 								_interfaces.push_back(nc);
-							} catch (ConfigFile::key_not_found ex) {
+							} catch (const ConfigFile::key_not_found&) {
 								ibrcommon::vaddress addr;
 								Configuration::NetConfig::NetConfig nc(netname, type, addr, port, discovery);
 								_interfaces.push_back(nc);
@@ -482,7 +482,7 @@ namespace dtn
 						}
 					}
 				}
-			} catch (ConfigFile::key_not_found ex) {
+			} catch (const ConfigFile::key_not_found&) {
 				// stop the one network is not found.
 			}
 
@@ -516,7 +516,7 @@ namespace dtn
 
 			try {
 				return ibrcommon::File(_conf.read<string>(key));
-			} catch (ConfigFile::key_not_found ex) {
+			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotSetException();
 			}
 		}
@@ -525,7 +525,7 @@ namespace dtn
 		{
 			try {
 				return _conf.read<unsigned int>("user");
-			} catch (ConfigFile::key_not_found ex) {
+			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotSetException();
 			}
 		}
@@ -534,7 +534,7 @@ namespace dtn
 		{
 			try {
 				return _conf.read<unsigned int>("group");
-			} catch (ConfigFile::key_not_found ex) {
+			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotSetException();
 			}
 		}
@@ -569,7 +569,7 @@ namespace dtn
 		{
 			try {
 				return _conf.read<string>("notify_cmd");
-			} catch (ConfigFile::key_not_found ex) {
+			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotSetException();
 			}
 		}
@@ -606,7 +606,7 @@ namespace dtn
 		{
 			try {
 				return ibrcommon::File(Configuration::getInstance()._conf.read<std::string>("statistic_file"));
-			} catch (ConfigFile::key_not_found ex) {
+			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotSetException();
 			}
 		}

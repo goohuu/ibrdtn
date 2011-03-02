@@ -146,9 +146,7 @@ namespace dtn
 					}
 				}
 
-			} catch (std::bad_cast ex) {
-
-			}
+			} catch (const std::bad_cast&) { }
 
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
@@ -172,7 +170,7 @@ namespace dtn
 						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
 						delivered = true;
-					} catch (dtn::data::Bundle::NoSuchBlockFoundException) {
+					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 						// no custody signal available
 					}
 
@@ -191,9 +189,7 @@ namespace dtn
 					getStorage().remove(meta);
 				}
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-			} catch (std::bad_cast ex) {
-
-			}
+			} catch (const std::bad_cast&) {}
 		}
 
 		void BundleCore::validate(const dtn::data::PrimaryBlock &p) const throw (dtn::data::Validator::RejectedException)

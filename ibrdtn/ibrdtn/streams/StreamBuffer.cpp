@@ -151,7 +151,7 @@ namespace dtn
 				// return the received header
 				return peer;
 
-			} catch (std::exception) {
+			} catch (const std::exception&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
@@ -177,7 +177,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_sendlock);
 				// send a SHUTDOWN message
 				_stream << StreamDataSegment(reason) << std::flush;
-			} catch (std::exception) {
+			} catch (const std::exception&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
@@ -191,7 +191,7 @@ namespace dtn
 				ibrcommon::MutexLock l(_sendlock);
 				_stream << StreamDataSegment() << std::flush;
 				IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
-			} catch (std::exception) {
+			} catch (const std::exception&) {
 				// set failed bit
 				set(STREAM_FAILED);
 			}
@@ -263,7 +263,7 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): wait for completion of transmission, " << _segments.size() << " ACKs left" << IBRCOMMON_LOGGER_ENDL;
 				_segments.wait(ibrcommon::Queue<StreamDataSegment>::QUEUE_EMPTY, timeout);
 				IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): transfer completed" << IBRCOMMON_LOGGER_ENDL;
-			} catch (ibrcommon::QueueUnblockedException) {
+			} catch (const ibrcommon::QueueUnblockedException&) {
 				IBRCOMMON_LOGGER_DEBUG(15) << "waitCompleted(): transfer aborted (timeout)" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
@@ -334,21 +334,21 @@ namespace dtn
 				}
 
 				return traits_type::not_eof(c);
-			} catch (StreamClosedException ex) {
+			} catch (const StreamClosedException&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in overflow()" << IBRCOMMON_LOGGER_ENDL;
 
 				throw;
-			} catch (StreamErrorException ex) {
+			} catch (const StreamErrorException&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in overflow()" << IBRCOMMON_LOGGER_ENDL;
 
 				throw;
-			} catch (ios_base::failure ex) {
+			} catch (const ios_base::failure&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
@@ -372,7 +372,7 @@ namespace dtn
 
 				// ... and flush.
 				_stream.flush();
-			} catch (ios_base::failure ex) {
+			} catch (const ios_base::failure&) {
 				// set failed bit
 				set(STREAM_BAD);
 
@@ -406,7 +406,7 @@ namespace dtn
 						_in_timeout_value = _in_timeout;
 					}
 				}
-			} catch (ios_base::failure ex) {
+			} catch (const ios_base::failure &ex) {
 				_underflow_state = IDLE;
 				throw StreamErrorException("read error during data skip: " + std::string(ex.what()));
 			}
@@ -607,7 +607,7 @@ namespace dtn
 										IBRCOMMON_LOGGER_DEBUG(25) << "skip the current transfer" << IBRCOMMON_LOGGER_ENDL;
 									}
 
-								} catch (ibrcommon::QueueUnblockedException) {
+								} catch (const ibrcommon::QueueUnblockedException&) {
 									IBRCOMMON_LOGGER(error) << "got an unexpected NACK" << IBRCOMMON_LOGGER_ENDL;
 								}
 
@@ -651,20 +651,20 @@ namespace dtn
 
 				return traits_type::not_eof(in_buf_[0]);
 
-			} catch (StreamClosedException ex) {
+			} catch (const StreamClosedException&) {
 				// set failed bit
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamClosedException in underflow()" << IBRCOMMON_LOGGER_ENDL;
 
-			} catch (StreamErrorException ex) {
+			} catch (const StreamErrorException &ex) {
 				// set failed bit
 				set(STREAM_FAILED);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "StreamErrorException in underflow(): " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 
 				throw;
-			} catch (StreamShutdownException ex) {
+			} catch (const StreamShutdownException&) {
 				// set failed bit
 				set(STREAM_FAILED);
 

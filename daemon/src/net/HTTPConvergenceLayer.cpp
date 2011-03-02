@@ -167,7 +167,7 @@ namespace dtn
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle);
-					} catch (ibrcommon::Exception ex) {
+					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG(10) << "http error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 				}

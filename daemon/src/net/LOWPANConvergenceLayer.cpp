@@ -160,10 +160,10 @@ namespace dtn
 				try {
 					ibrcommon::UnicastSocketLowpan &sock = dynamic_cast<ibrcommon::UnicastSocketLowpan&>(*_socket);
 					sock.bind(_panid, _net);
-				} catch (std::bad_cast) {
+				} catch (const std::bad_cast&) {
 
 				}
-			} catch (ibrcommon::lowpansocket::SocketException ex) {
+			} catch (const ibrcommon::lowpansocket::SocketException &ex) {
 				IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << _net.toString() << ":" << _panid << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -192,9 +192,9 @@ namespace dtn
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(sender, bundle);
 
-				} catch (dtn::InvalidDataException ex) {
+				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				} catch (ibrcommon::IOException ex) {
+				} catch (const ibrcommon::IOException&) {
 
 				}
 				yield();

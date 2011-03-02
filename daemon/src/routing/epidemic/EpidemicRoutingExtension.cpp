@@ -65,7 +65,7 @@ namespace dtn
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// On each time event look for expired stuff
 			try {
@@ -77,7 +77,7 @@ namespace dtn
 					_taskqueue.push( new ExpireTask(time.getTimestamp()) );
 				}
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// If a new neighbor comes available, send him a request for the summary vector
 			// If a neighbor went away we can free the stored summary vector
@@ -104,7 +104,7 @@ namespace dtn
 				}
 
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// The bundle transfer has been aborted
 			try {
@@ -114,7 +114,7 @@ namespace dtn
 				_taskqueue.push( new SearchNextBundleTask( aborted.getPeer() ) );
 
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// A bundle transfer was successful
 			try {
@@ -123,7 +123,7 @@ namespace dtn
 				// create a transfer completed task
 				_taskqueue.push( new TransferCompletedTask( completed.getPeer(), completed.getBundle() ) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 		}
 
 		bool EpidemicRoutingExtension::__cancellation()
@@ -198,7 +198,7 @@ namespace dtn
 						try {
 							ExecutableTask &etask = dynamic_cast<ExecutableTask&>(*t);
 							etask.execute();
-						} catch (std::bad_cast) { };
+						} catch (const std::bad_cast&) { };
 
 						/**
 						 * The ExpireTask take care of expired bundles in the purge vector
@@ -206,7 +206,7 @@ namespace dtn
 						try {
 							ExpireTask &task = dynamic_cast<ExpireTask&>(*t);
 							_purge_vector.expire(task.timestamp);
-						} catch (std::bad_cast) { };
+						} catch (const std::bad_cast&) { };
 
 						/**
 						 * SearchNextBundleTask triggers a search for a bundle to transfer
@@ -250,7 +250,7 @@ namespace dtn
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (std::bad_cast) { };
+						} catch (const std::bad_cast&) { };
 
 						/**
 						 * transfer was completed
@@ -269,7 +269,7 @@ namespace dtn
 
 							// transfer the next bundle to this destination
 							_taskqueue.push( new SearchNextBundleTask( task.peer ) );
-						} catch (std::bad_cast) { };
+						} catch (const std::bad_cast&) { };
 
 						/**
 						 * process a received bundle

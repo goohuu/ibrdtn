@@ -129,14 +129,14 @@ void switchUser(Configuration &config)
     try {
         setuid( config.getUID() );
         IBRCOMMON_LOGGER(info) << "Switching UID to " << config.getUID() << IBRCOMMON_LOGGER_ENDL;
-    } catch (Configuration::ParameterNotSetException ex) {
+    } catch (const Configuration::ParameterNotSetException&) {
 
     }
 
     try {
         setuid( config.getGID() );
         IBRCOMMON_LOGGER(info) << "Switching GID to " << config.getGID() << IBRCOMMON_LOGGER_ENDL;
-    } catch (Configuration::ParameterNotSetException ex) {
+    } catch (const Configuration::ParameterNotSetException&) {
 
     }
 }
@@ -153,7 +153,7 @@ void setGlobalVars(Configuration &config)
     try {
     	// new methods for blobs
     	ibrcommon::BLOB::tmppath = config.getPath("blob");
-    } catch (Configuration::ParameterNotSetException ex) {
+    } catch (const Configuration::ParameterNotSetException&) {
 
     }
 
@@ -188,7 +188,7 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 
 			components.push_back(sbs);
 			storage = sbs;
-		} catch (Configuration::ParameterNotSetException ex) {
+		} catch (const Configuration::ParameterNotSetException&) {
 			IBRCOMMON_LOGGER(error) << "storage for bundles" << IBRCOMMON_LOGGER_ENDL;
 			exit(-1);
 		}
@@ -214,7 +214,7 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 
 			components.push_back(sbs);
 			storage = sbs;
-		} catch (Configuration::ParameterNotSetException ex) {
+		} catch (const Configuration::ParameterNotSetException&) {
 			IBRCOMMON_LOGGER(info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
 
 			dtn::core::MemoryBundleStorage *sbs = new dtn::core::MemoryBundleStorage(conf.getLimit("storage"));
@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
 	// create a notifier if configured
 	try {
 		components.push_back( new dtn::daemon::Notifier( conf.getNotifyCommand() ) );
-	} catch (Configuration::ParameterNotSetException ex) {
+	} catch (const Configuration::ParameterNotSetException&) {
 
 	}
 
@@ -436,7 +436,7 @@ int main(int argc, char *argv[])
 
 		try {
 			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscovery().address() );
-		} catch (Configuration::ParameterNotFoundException ex) {
+		} catch (const Configuration::ParameterNotFoundException&) {
 			ipnd = new dtn::net::IPNDAgent( disco_port, ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, "255.255.255.255") );
 		}
 
@@ -514,7 +514,7 @@ int main(int argc, char *argv[])
 	try {
 		// initialize all convergence layers
 		createConvergenceLayers(core, conf, components, ipnd);
-	} catch (std::exception) {
+	} catch (const std::exception&) {
 		return -1;
 	}
 
@@ -578,7 +578,7 @@ int main(int argc, char *argv[])
 			{
 				components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_UDP, conf.getStatistic().interval(), conf.getStatistic().address(), conf.getStatistic().port() ) );
 			}
-		} catch (Configuration::ParameterNotSetException ex) {
+		} catch (const Configuration::ParameterNotSetException&) {
 			IBRCOMMON_LOGGER(error) << "StatisticLogger: Parameter statistic_file is not set! Fallback to stdout logging." << IBRCOMMON_LOGGER_ENDL;
 			components.push_back( new StatisticLogger( dtn::daemon::StatisticLogger::LOGGER_STDOUT, conf.getStatistic().interval() ) );
 		}

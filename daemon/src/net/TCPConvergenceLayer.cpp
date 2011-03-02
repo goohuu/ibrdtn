@@ -251,7 +251,7 @@ namespace dtn
 					// breakpoint
 					ibrcommon::Thread::yield();
 				}
-			} catch (std::exception) {
+			} catch (const std::exception&) {
 				// ignore all errors
 				return;
 			}

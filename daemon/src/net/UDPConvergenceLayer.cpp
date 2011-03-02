@@ -196,10 +196,10 @@ namespace dtn
 				try {
 					ibrcommon::UnicastSocket &sock = dynamic_cast<ibrcommon::UnicastSocket&>(*_socket);
 					sock.bind(_port, _net);
-				} catch (std::bad_cast) {
+				} catch (const std::bad_cast&) {
 
 				}
-			} catch (ibrcommon::udpsocket::SocketException ex) {
+			} catch (const ibrcommon::udpsocket::SocketException &ex) {
 				IBRCOMMON_LOGGER(error) << "Failed to add UDP ConvergenceLayer on " << _net.toString() << ":" << _port << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER(error) << "      Error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
@@ -228,9 +228,9 @@ namespace dtn
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(sender, bundle);
 
-				} catch (dtn::InvalidDataException ex) {
+				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				} catch (ibrcommon::IOException ex) {
+				} catch (const ibrcommon::IOException &ex) {
 
 				}
 				yield();

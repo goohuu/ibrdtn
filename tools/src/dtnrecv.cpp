@@ -169,7 +169,7 @@ int main(int argc, char *argv[])
 					std::cout << "Bundle received (" << (h + 1) << ")." << endl;
 
 					file << ref.iostream()->rdbuf();
-				} catch (ios_base::failure ex) {
+				} catch (const ios_base::failure&) {
 
 				}
 			}

@@ -46,7 +46,7 @@ namespace dtn
 					}
 				}
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
@@ -56,7 +56,7 @@ namespace dtn
 				_set.erase(data);
 
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
@@ -66,7 +66,7 @@ namespace dtn
 				_set.erase(data);
 
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::routing::RequeueBundleEvent &requeue = dynamic_cast<const dtn::routing::RequeueBundleEvent&>(*evt);
@@ -102,7 +102,7 @@ namespace dtn
 				}
 
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::core::BundleExpiredEvent &expired = dynamic_cast<const dtn::core::BundleExpiredEvent&>(*evt);
@@ -126,7 +126,7 @@ namespace dtn
 				}
 
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 		}
 
 		bool RetransmissionExtension::RetransmissionData::operator!=(const RetransmissionData &obj)

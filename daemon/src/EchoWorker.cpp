@@ -41,7 +41,7 @@ namespace dtn
 
 				// send it
 				transmit( echo );
-			} catch (dtn::data::Bundle::NoSuchBlockFoundException ex) {
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 
 			}
 		}

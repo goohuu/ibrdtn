@@ -129,7 +129,7 @@ namespace dtn
 
 				// do not announce on node info updated
 				if (node.getAction() == dtn::core::NODE_INFO_UPDATED) return;
-			} catch (std::bad_cast& bc) {
+			} catch (const std::bad_cast&) {
 			}
 
 			try {
@@ -153,7 +153,7 @@ namespace dtn
 						return;
 						break;
 				}
-			} catch (std::bad_cast& bc) {
+			} catch (const std::bad_cast&) {
 			}
 
 			if ((_type == LOGGER_UDP) && (_sock != NULL))

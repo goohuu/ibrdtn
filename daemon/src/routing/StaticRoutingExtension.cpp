@@ -156,7 +156,7 @@ namespace dtn
 						}
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-					} catch (std::bad_cast) { };
+					} catch (const std::bad_cast&) { };
 
 					try {
 						const ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
@@ -180,7 +180,7 @@ namespace dtn
 							} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 							} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 						}
-					} catch (std::bad_cast) { };
+					} catch (const std::bad_cast&) { };
 
 				} catch (const std::exception &ex) {
 					IBRCOMMON_LOGGER_DEBUG(20) << "static routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -197,7 +197,7 @@ namespace dtn
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
@@ -208,21 +208,21 @@ namespace dtn
 					_taskqueue.push( new SearchNextBundleTask(n.getEID()) );
 				}
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// The bundle transfer has been aborted
 			try {
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
 				_taskqueue.push( new SearchNextBundleTask(aborted.getPeer()) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// A bundle transfer was successful
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
 				_taskqueue.push( new SearchNextBundleTask(completed.getPeer()) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 		}
 
 		StaticRoutingExtension::StaticRoute::StaticRoute(const std::string &regex, const std::string &dest)

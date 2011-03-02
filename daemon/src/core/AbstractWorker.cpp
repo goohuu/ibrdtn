@@ -42,9 +42,7 @@ namespace dtn
 				{
 					_receive_bundles.push(queued.bundle);
 				}
-			} catch (std::bad_cast ex) {
-
-			}
+			} catch (const std::bad_cast&) { }
 		}
 
 		void AbstractWorker::AbstractWorkerAsync::shutdown()
@@ -69,7 +67,7 @@ namespace dtn
 						prepareBundle(b);
 						_worker.callbackBundleReceived( b );
 						storage.remove( id );
-					} catch (dtn::core::BundleStorage::NoBundleFoundException ex) { };
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 
 					yield();
 				}

@@ -111,7 +111,7 @@ namespace dtn
 						_callback.eventShutdown(csc);
 						break;
 				}
-			} catch (StreamConnection::StreamErrorException ex) {
+			} catch (const StreamConnection::StreamErrorException&) {
 				_buf.shutdowntimers();
 				_callback.eventError();
 			}

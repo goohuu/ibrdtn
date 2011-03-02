@@ -57,7 +57,7 @@ namespace dtn
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::core::NodeEvent &nodeevent = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
@@ -71,7 +71,7 @@ namespace dtn
 					_taskqueue.push( new SearchNextBundleTask(eid) );
 				}
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// The bundle transfer has been aborted
 			try {
@@ -80,7 +80,7 @@ namespace dtn
 				// transfer the next bundle to this destination
 				_taskqueue.push( new SearchNextBundleTask( aborted.getPeer() ) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// A bundle transfer was successful
 			try {
@@ -89,7 +89,7 @@ namespace dtn
 				// transfer the next bundle to this destination
 				_taskqueue.push( new SearchNextBundleTask( completed.getPeer() ) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 		}
 
 		bool FloodRoutingExtension::__cancellation()
@@ -179,7 +179,7 @@ namespace dtn
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-						} catch (std::bad_cast) { };
+						} catch (const std::bad_cast&) { };
 
 						try {
 							dynamic_cast<ProcessBundleTask&>(*t);
@@ -194,11 +194,11 @@ namespace dtn
 								// transfer the next bundle to this destination
 								_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 							}
-						} catch (std::bad_cast) { };
-					} catch (ibrcommon::Exception ex) {
+						} catch (const std::bad_cast&) { };
+					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in FloodRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
-				} catch (std::exception) {
+				} catch (const std::exception&) {
 					return;
 				}
 

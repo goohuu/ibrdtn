@@ -583,7 +583,7 @@ namespace dtn
 				obj._reportto = _dictionary.get(ref[2].first.getValue(), ref[2].second.getValue());
 				obj._custodian = _dictionary.get(ref[3].first.getValue(), ref[3].second.getValue());
 				_compressed = false;
-			} catch (dtn::InvalidDataException ex) {
+			} catch (const dtn::InvalidDataException&) {
 				// error while reading the dictionary. We assume that this is a compressed bundle header.
 				obj._destination = dtn::data::EID(ref[0].first.getValue(), ref[0].second.getValue());
 				obj._source = dtn::data::EID(ref[1].first.getValue(), ref[1].second.getValue());

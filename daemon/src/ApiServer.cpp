@@ -72,7 +72,7 @@ namespace dtn
 					// breakpoint
 					ibrcommon::Thread::yield();
 				}
-			} catch (std::exception) {
+			} catch (const std::exception&) {
 				// ignore all errors
 				return;
 			}
@@ -321,7 +321,7 @@ namespace dtn
 				}
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "ApiServer::Distributor going down" << IBRCOMMON_LOGGER_ENDL;
-			} catch (std::exception) {
+			} catch (const std::exception&) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected error or shutdown" << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
@@ -334,7 +334,7 @@ namespace dtn
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 				_tasks.push(new ApiServer::ProcessBundleTask(queued.bundle));
-			} catch (std::bad_cast ex) {
+			} catch (const std::bad_cast&) {
 
 			}
 		}

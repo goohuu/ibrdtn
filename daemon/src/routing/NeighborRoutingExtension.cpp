@@ -136,7 +136,7 @@ namespace dtn
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) { };
 					} catch (const NeighborDatabase::NeighborNotAvailableException&) {
-					} catch (std::bad_cast) { };
+					} catch (const std::bad_cast&) { };
 
 					/**
 					 * process a received bundle
@@ -154,7 +154,7 @@ namespace dtn
 							// transfer the next bundle to this destination
 							_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 						}
-					} catch (std::bad_cast) { };
+					} catch (const std::bad_cast&) { };
 
 				} catch (const std::exception &ex) {
 					IBRCOMMON_LOGGER_DEBUG(20) << "neighbor routing failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -171,7 +171,7 @@ namespace dtn
 				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
 				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferCompletedEvent &completed = dynamic_cast<const dtn::net::TransferCompletedEvent&>(*evt);
@@ -195,7 +195,7 @@ namespace dtn
 					_taskqueue.push( new SearchNextBundleTask( peer ) );
 				}
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::net::TransferAbortedEvent &aborted = dynamic_cast<const dtn::net::TransferAbortedEvent&>(*evt);
@@ -237,7 +237,7 @@ namespace dtn
 				_taskqueue.push( new SearchNextBundleTask( peer ) );
 
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 
 			// If a new neighbor comes available, send him a request for the summary vector
 			// If a neighbor went away we can free the stored summary vector
@@ -251,7 +251,7 @@ namespace dtn
 				}
 
 				return;
-			} catch (std::bad_cast ex) { };
+			} catch (const std::bad_cast&) { };
 		}
 
 		/****************************************/
