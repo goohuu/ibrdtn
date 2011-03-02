@@ -218,17 +218,17 @@ namespace dtn
 
 					case dtn::net::TransferAbortedEvent::REASON_REFUSED:
 					{
-						const dtn::data::MetaBundle meta = (**this).getStorage().get(id);
+						try {
+							const dtn::data::MetaBundle meta = (**this).getStorage().get(id);
 
-						if ((meta.destination.getNodeEID() == peer.getNodeEID())
-								&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
-						{
-							// bundle is not deliverable
-							try {
-								// if the bundle has been sent by this module
+							// if the bundle has been sent by this module delete it
+							if ((meta.destination.getNodeEID() == peer.getNodeEID())
+									&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+							{
+								// bundle is not deliverable
 								(**this).getStorage().remove(id);
-							} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
-						}
+							}
+						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 					}
 					break;
 				}
