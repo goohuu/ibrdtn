@@ -104,7 +104,6 @@ namespace dtn
 					if ( b.get(Bundle::REQUEST_REPORT_OF_BUNDLE_RECEPTION))
 					{
 						createStatusReport(b, StatusReportBlock::RECEIPT_OF_BUNDLE, bundleevent->getReason());
-
 					}
 					break;
 				case BUNDLE_DELETED:

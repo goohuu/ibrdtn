@@ -6,6 +6,7 @@
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
 #include <ibrcommon/refcnt_ptr.h>
+#include <ibrcommon/Logger.h>
 #include <list>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
@@ -519,11 +520,27 @@ namespace dtn
 							(*this) >> block;
 							lastblock = block.get(Block::LAST_BLOCK);
 
-						} catch (const ibrcommon::Exception &ex) {
+							if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
+							{
+								IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 
+								// remove the block
+								obj.remove(block);
+							}
+						}
+						catch (const ibrcommon::Exception &ex)
+						{
 							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
 							(*this) >> block;
 							lastblock = block.get(Block::LAST_BLOCK);
+
+							if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
+							{
+								IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+
+								// remove the block
+								obj.remove(block);
+							}
 						}
 						break;
 					}

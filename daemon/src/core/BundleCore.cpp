@@ -255,6 +255,27 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
+			// check for invalid blocks
+			const std::list<const dtn::data::Block*> bl = b.getBlocks();
+			for (std::list<const dtn::data::Block*>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
+			{
+				try {
+					const dtn::data::ExtensionBlock &e = dynamic_cast<const dtn::data::ExtensionBlock&>(**iter);
+
+					if (e.get(dtn::data::Block::DELETE_BUNDLE_IF_NOT_PROCESSED))
+					{
+						// reject the hole bundle
+						throw dtn::data::Validator::RejectedException("bundle contains unintelligible blocks");
+					}
+
+					if (e.get(dtn::data::Block::TRANSMIT_STATUSREPORT_IF_NOT_PROCESSED))
+					{
+						// transmit status report, because we can not process this block
+						dtn::core::BundleEvent::raise(b, BUNDLE_RECEIVED, dtn::data::StatusReportBlock::BLOCK_UNINTELLIGIBLE);
+					}
+				} catch (const std::bad_cast&) { }
+			}
+
 #ifdef WITH_BUNDLE_SECURITY
 			// lets see if signatures and hashes are correct and it decrypts if needed
 			// the const_cast is dangerous, but in BundleReceivedEvent::raise() bundle was not const, so I think it will be ok
