@@ -61,10 +61,15 @@ AC_ARG_WITH(curl,
 		@<:@default=no@:>@]),
 	[
 	if test "x$with_curl" = "xyes"; then
-		PKG_CHECK_MODULES(CURL, libcurl >= 7.16.4, use_curl="yes", use_curl="no")
-		AC_DEFINE(HAVE_LIBCURL, [1], ["curl library is available"])
-		AC_SUBST(CURL_CFLAGS)
-		AC_SUBST(CURL_LIBS)
+		PKG_CHECK_MODULES(CURL, libcurl >= 7.16.4, [
+			use_curl="yes"
+			AC_SUBST(CURL_CFLAGS)
+			AC_SUBST(CURL_LIBS)
+			AC_DEFINE(HAVE_LIBCURL, [1], ["curl library is available"])
+		], [
+			use_curl="no"
+			AC_MSG_WARN([curl extension requested, but no curl library is found.])
+		])
 	else
 		use_curl="no"
 	fi
@@ -77,13 +82,15 @@ AC_ARG_WITH(sqlite,
 		@<:@default=no@:>@]),
 	[
 	if test "x$with_sqlite" = "xyes"; then
-		PKG_CHECK_MODULES(SQLITE, sqlite3, use_sqlite="yes", use_sqlite="no")
-		AC_SUBST(SQLITE_CFLAGS)
-		AC_SUBST(SQLITE_LIBS)
-		AC_DEFINE(HAVE_SQLITE, [1], ["sqlite library is available"])
-		AC_CHECK_FUNCS([mkdir])
-		AC_CHECK_FUNCS([strdup])
-		AC_CHECK_FUNCS([strerror])
+		PKG_CHECK_MODULES(SQLITE, sqlite3, [
+			use_sqlite="yes"
+			AC_SUBST(SQLITE_CFLAGS)
+			AC_SUBST(SQLITE_LIBS)
+			AC_DEFINE(HAVE_SQLITE, [1], ["sqlite library is available"])
+		], [
+			use_sqlite="no"
+			AC_MSG_WARN([sqlite extension requested, but no sqlite library is found.])
+		])
 	else
 		use_sqlite="no"
 	fi
@@ -97,15 +104,20 @@ AC_ARG_WITH(lowpan,
 		@<:@default=no@:>@]),
 	[
 	if test "x$with_lowpan" = "xyes"; then
-		PKG_CHECK_MODULES([NL], [libnl-1], use_lowpan="yes", use_lowpan="no")
-		AC_SUBST(NL_CFLAGS)
-		AC_SUBST(NL_LIBS)
-		AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
-		AC_CHECK_HEADERS([arpa/inet.h])
-		AC_CHECK_HEADERS([fcntl.h])
-		AC_CHECK_HEADERS([limits.h])
-		AC_CHECK_HEADERS([netinet/in.h])
-		AC_CHECK_HEADERS([sys/socket.h])
+		PKG_CHECK_MODULES([NL], [libnl-1], [
+			use_lowpan="yes"
+			AC_SUBST(NL_CFLAGS)
+			AC_SUBST(NL_LIBS)
+			AC_DEFINE(HAVE_LOWPAN_SUPPORT, [1], ["enable lowpan support"])
+			AC_CHECK_HEADERS([arpa/inet.h])
+			AC_CHECK_HEADERS([fcntl.h])
+			AC_CHECK_HEADERS([limits.h])
+			AC_CHECK_HEADERS([netinet/in.h])
+			AC_CHECK_HEADERS([sys/socket.h])
+		], [
+			use_lowpan="no"
+			AC_MSG_WARN([lowpan extension requested, but no libnl library is found. lowpan support is disabled.])
+		])
 	else
 		use_lowpan="no"
 	fi

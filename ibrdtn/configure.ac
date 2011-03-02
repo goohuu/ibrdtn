@@ -102,7 +102,15 @@ AC_ARG_WITH(dtnsec,
 		@<:@default=no@:>@]),
 	[
 	if test "x$with_dtnsec" = "xyes"; then
-		AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
+		PKG_CHECK_MODULES(OPENSSL, openssl, [
+			AC_DEFINE(WITH_BUNDLE_SECURITY, [1], ["bundle security support enabled"])
+			AC_DEFINE(HAVE_OPENSSL, [1], ["openssl library is available"])
+			AC_SUBST(OPENSSL_CFLAGS)
+			AC_SUBST(OPENSSL_LIBS)
+		], [
+			with_dtnsec="no"
+			AC_MSG_WARN([DTNSEC enabled, but no openssl libraries are found. Security extensions are disabled.])
+		])
 	else
 		with_dtnsec="no"
 	fi
