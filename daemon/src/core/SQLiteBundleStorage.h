@@ -66,6 +66,8 @@ namespace dtn
 				FRAGMENT_DELETE,
 				BUNDLE_CLEAR,
 				BUNDLE_STORE,
+				BUNDLE_UPDATE_CUSTODIAN,
+				FRAGMENT_UPDATE_CUSTODIAN,
 
 				PROCFLAGS_SET,
 
@@ -272,7 +274,7 @@ namespace dtn
 			/**
 			 * @sa BundleStorage::releaseCustody();
 			 */
-			void releaseCustody(dtn::data::BundleID &bundle);
+			void releaseCustody(const dtn::data::EID &custodian, const dtn::data::BundleID &id);
 
 #ifdef SQLITE_STORAGE_EXTENDED
 			/**
@@ -493,6 +495,11 @@ namespace dtn
 			 * updates the nextExpiredTime. The calling function has to have the databaselock.
 			 */
 			void update_expire_time();
+
+			/**
+			 * updates the custodian of a bundle
+			 */
+			void update_custodian(const dtn::data::BundleID &b, const dtn::data::EID &custodian);
 
 			/**
 			 * lower the next expire time if the ttl is lower than the current expire time

@@ -88,17 +88,14 @@ namespace dtn
 
 		Bundle::BUNDLE_PRIORITY Bundle::getPriority() const
 		{
-			// If none of the priority bit are set, then the priority is LOW. bit1 = 1 and
-			// bit2 = 0 indicated an MEDIUM priority and both bits set leads to a HIGH
-			// priority.
 			if (_b.get(dtn::data::Bundle::PRIORITY_BIT1))
 			{
-					if (_b.get(dtn::data::Bundle::PRIORITY_BIT2))
-					{
-						return PRIO_HIGH;
-					}
+				return PRIO_MEDIUM;
+			}
 
-					return PRIO_MEDIUM;
+			if (_b.get(dtn::data::Bundle::PRIORITY_BIT2))
+			{
+				return PRIO_HIGH;
 			}
 
 			return PRIO_LOW;

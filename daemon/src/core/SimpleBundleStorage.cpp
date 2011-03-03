@@ -182,7 +182,7 @@ namespace dtn
 			return dtn::data::BundleList::empty();
 		}
 
-		void SimpleBundleStorage::releaseCustody(dtn::data::BundleID&)
+		void SimpleBundleStorage::releaseCustody(const dtn::data::EID&, const dtn::data::BundleID&)
 		{
 			// custody is successful transferred to another node.
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)

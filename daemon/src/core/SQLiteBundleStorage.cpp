@@ -55,6 +55,8 @@ namespace dtn
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +";",
 			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source_id, timestamp, sequencenumber, fragmentoffset, source, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);",
+			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL;",
+			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET procflags = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 
@@ -746,6 +748,16 @@ namespace dtn
 
 			// set new expire time
 			new_expire_time(TTL);
+
+			try {
+				// the bundle is stored sucessfully, we could accept custody if it is requested
+				const dtn::data::EID custodian = acceptCustody(bundle);
+
+				// update the custody address of this bundle
+				update_custodian(bundle, custodian);
+			} catch (const ibrcommon::Exception&) {
+				// this bundle has no request for custody transfers
+			}
 		}
 
 		void SQLiteBundleStorage::remove(const dtn::data::BundleID &id)
@@ -1425,6 +1437,29 @@ namespace dtn
 			sqlite3_reset(_statements[EXPIRE_NEXT_TIMESTAMP]);
 		}
 
+		void SQLiteBundleStorage::update_custodian(const dtn::data::BundleID &id, const dtn::data::EID &custodian)
+		{
+			// select query with or without fragmentation extension
+			STORAGE_STMT query = BUNDLE_UPDATE_CUSTODIAN;
+			if (id.fragment)	query = FRAGMENT_UPDATE_CUSTODIAN;
+
+
+			AutoResetLock l(_locks[query], _statements[query]);
+
+			sqlite3_bind_text(_statements[query], 1, custodian.getString().c_str(), custodian.getString().length(), SQLITE_TRANSIENT);
+			set_bundleid(_statements[query], id, 1);
+
+			// update the custodian in the database
+			int err = sqlite3_step(_statements[query]);
+
+			if (err != SQLITE_DONE)
+			{
+				stringstream error;
+				error << "SQLiteBundleStorage: update_custodian() failure: " << err << " " <<  sqlite3_errmsg(_database);
+				IBRCOMMON_LOGGER(error) << error.str() << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
 		int SQLiteBundleStorage::store_blocks(const data::Bundle &bundle)
 		{
 			int blocktyp, blocknumber(1), storedBytes(0);
@@ -1561,10 +1596,12 @@ namespace dtn
 			return "SQLiteBundleStorage";
 		}
 
-		void SQLiteBundleStorage::releaseCustody(dtn::data::BundleID&)
+		void SQLiteBundleStorage::releaseCustody(const dtn::data::EID &custodian, const dtn::data::BundleID &id)
 		{
 			// custody is successful transferred to another node.
 			// it is safe to delete this bundle now. (depending on the routing algorithm.)
+			// update the custodian of this bundle with the new one
+			update_custodian(id, custodian);
 		}
 
 		void SQLiteBundleStorage::new_expire_time(size_t ttl)

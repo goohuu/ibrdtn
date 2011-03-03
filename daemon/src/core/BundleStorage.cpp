@@ -28,63 +28,68 @@ namespace dtn
 			remove(dtn::data::BundleID(b));
 		};
 
-		void BundleStorage::acceptCustody(dtn::data::Bundle &bundle)
+		const dtn::data::EID BundleStorage::acceptCustody(const dtn::data::MetaBundle &meta)
 		{
-			if (bundle._custodian == EID()) return;
+			if (!meta.get(Bundle::CUSTODY_REQUESTED))
+				throw ibrcommon::Exception("custody transfer is not requested for this bundle.");
 
-			if (bundle.get(Bundle::CUSTODY_REQUESTED))
-			{
-				// we are the new custodian for this bundle
-				bundle._custodian = dtn::core::BundleCore::local;
+			if (meta.custodian == EID())
+				throw ibrcommon::Exception("no previous custodian is set.");
 
-				// create a new bundle
-				Bundle b;
+			// create a new bundle
+			Bundle custody_bundle;
 
-				// send a custody signal with accept flag
-				CustodySignalBlock &signal = b.push_back<CustodySignalBlock>();
+			// set priority to HIGH
+			custody_bundle.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
+			custody_bundle.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
 
-				// set the bundle to match
-				signal.setMatch(bundle);
+			// send a custody signal with accept flag
+			CustodySignalBlock &signal = custody_bundle.push_back<CustodySignalBlock>();
 
-				// set accepted
-				signal._status |= 1;
+			// set the bundle to match
+			signal.setMatch(meta);
 
-				b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
-				b._destination = bundle._custodian;
-				b._source = dtn::core::BundleCore::local;
+			// set accepted
+			signal._status |= 1;
 
-				// send the custody accepted bundle
-				dtn::core::BundleGeneratedEvent::raise(b);
+			custody_bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+			custody_bundle._destination = meta.custodian;
+			custody_bundle._source = dtn::core::BundleCore::local;
 
-				// raise the custody accepted event
-				dtn::core::CustodyEvent::raise(b, CUSTODY_ACCEPT);
-			}
+			// send the custody accepted bundle
+			dtn::core::BundleGeneratedEvent::raise(custody_bundle);
+
+			// raise the custody accepted event
+			dtn::core::CustodyEvent::raise(meta, CUSTODY_ACCEPT);
+
+			return dtn::core::BundleCore::local;
 		}
 
-		void BundleStorage::rejectCustody(const dtn::data::Bundle &bundle)
+		void BundleStorage::rejectCustody(const dtn::data::MetaBundle &meta)
 		{
-			if (bundle._custodian == EID()) return;
+			if (!meta.get(Bundle::CUSTODY_REQUESTED))
+				throw ibrcommon::Exception("custody transfer is not requested for this bundle.");
 
-			if (bundle.get(Bundle::CUSTODY_REQUESTED))
-			{
-				// create a new bundle
-				Bundle b;
+			if (meta.custodian == EID())
+				throw ibrcommon::Exception("no previous custodian is set.");
 
-				// send a custody signal with reject flag
-				CustodySignalBlock &signal = b.push_back<CustodySignalBlock>();
+			// create a new bundle
+			Bundle b;
 
-				// set the bundle to match
-				signal.setMatch(bundle);
+			// send a custody signal with reject flag
+			CustodySignalBlock &signal = b.push_back<CustodySignalBlock>();
 
-				b._destination = bundle._custodian;
-				b._source = BundleCore::local;
+			// set the bundle to match
+			signal.setMatch(meta);
 
-				// send the custody rejected bundle
-				dtn::core::BundleGeneratedEvent::raise(b);
+			b._destination = meta.custodian;
+			b._source = BundleCore::local;
 
-				// raise the custody rejected event
-				dtn::core::CustodyEvent::raise(b, CUSTODY_REJECT);
-			}
+			// send the custody rejected bundle
+			dtn::core::BundleGeneratedEvent::raise(b);
+
+			// raise the custody rejected event
+			dtn::core::CustodyEvent::raise(b, CUSTODY_REJECT);
 		}
 	}
 }

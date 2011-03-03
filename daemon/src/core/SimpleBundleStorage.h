@@ -99,7 +99,7 @@ namespace dtn
 			/**
 			 * @sa BundleStorage::releaseCustody();
 			 */
-			void releaseCustody(dtn::data::BundleID &bundle);
+			void releaseCustody(const dtn::data::EID &custodian, const dtn::data::BundleID &id);
 
 			/**
 			 * This method is used to receive events.

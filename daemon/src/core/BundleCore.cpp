@@ -165,7 +165,7 @@ namespace dtn
 						// check for a custody signal
 						dtn::data::CustodySignalBlock custody = bundle.getBlock<dtn::data::CustodySignalBlock>();
 						dtn::data::BundleID id(custody._source, custody._bundle_timestamp.getValue(), custody._bundle_sequence.getValue(), (custody._fragment_length.getValue() > 0), custody._fragment_offset.getValue());
-						getStorage().releaseCustody(id);
+						getStorage().releaseCustody(bundle._source, id);
 
 						IBRCOMMON_LOGGER_DEBUG(5) << "custody released for " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
@@ -255,6 +255,17 @@ namespace dtn
 				throw dtn::data::Validator::RejectedException("bundle is expired");
 			}
 
+#ifdef WITH_BUNDLE_SECURITY
+			// lets see if signatures and hashes are correct and it decrypts if needed
+			// the const_cast is dangerous, but in BundleReceivedEvent::raise() bundle was not const, so I think it will be ok
+			try {
+				dtn::security::SecurityManager::getInstance().fastverify(b);
+			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
+				IBRCOMMON_LOGGER(notice) << "bundle rejected: security checks failed: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
+				throw dtn::data::Validator::RejectedException("security checks failed");
+			}
+#endif
+
 			// check for invalid blocks
 			const std::list<const dtn::data::Block*> bl = b.getBlocks();
 			for (std::list<const dtn::data::Block*>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
@@ -275,17 +286,6 @@ namespace dtn
 					}
 				} catch (const std::bad_cast&) { }
 			}
-
-#ifdef WITH_BUNDLE_SECURITY
-			// lets see if signatures and hashes are correct and it decrypts if needed
-			// the const_cast is dangerous, but in BundleReceivedEvent::raise() bundle was not const, so I think it will be ok
-			try {
-				dtn::security::SecurityManager::getInstance().fastverify(b);
-			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {
-				IBRCOMMON_LOGGER(notice) << "bundle rejected: security checks failed: " << b.toString() << IBRCOMMON_LOGGER_ENDL;
-				throw dtn::data::Validator::RejectedException("security checks failed");
-			}
-#endif
 		}
 
 		const std::string BundleCore::getName() const

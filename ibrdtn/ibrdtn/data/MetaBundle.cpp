@@ -21,7 +21,7 @@ namespace dtn
 		{
 		}
 
-		MetaBundle::MetaBundle(const dtn::data::BundleID id, const size_t l,
+		MetaBundle::MetaBundle(const dtn::data::BundleID &id, const size_t l,
 				const dtn::data::DTNTime recv, const dtn::data::EID d, const dtn::data::EID r,
 				const dtn::data::EID c, const size_t app, const size_t proc)
 		 : BundleID(id), received(recv), lifetime(l), destination(d), reportto(r),
@@ -47,11 +47,13 @@ namespace dtn
 			{
 				return 0;
 			}
-			else
+
+			if (procflags & dtn::data::Bundle::PRIORITY_BIT2)
 			{
-				if (procflags & dtn::data::Bundle::PRIORITY_BIT2) return 1;
-				else return -1;
+				return 1;
 			}
+
+			return -1;
 		}
 
 		bool MetaBundle::get(dtn::data::PrimaryBlock::FLAGS flag) const

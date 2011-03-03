@@ -234,6 +234,86 @@ namespace dtn
 		{
 			return PrimaryBlock::toString();
 		}
+
+		template<>
+		CustodySignalBlock& Bundle::BlockList::get<CustodySignalBlock>()
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->getType() == PayloadBlock::BLOCK_TYPE)
+					{
+						Block *b = (*iter).getPointer();
+						return dynamic_cast<CustodySignalBlock&>(*b);
+					}
+				}
+			} catch (const std::bad_cast&) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<>
+		const CustodySignalBlock& Bundle::BlockList::get<const CustodySignalBlock>() const
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->getType() == PayloadBlock::BLOCK_TYPE)
+					{
+						const Block *b = (*iter).getPointer();
+						return dynamic_cast<const CustodySignalBlock&>(*b);
+					}
+				}
+			} catch (const std::bad_cast&) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<>
+		StatusReportBlock& Bundle::BlockList::get<StatusReportBlock> ()
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->getType() == PayloadBlock::BLOCK_TYPE)
+					{
+						Block *b = (*iter).getPointer();
+						return dynamic_cast<StatusReportBlock&>(*b);
+					}
+				}
+			} catch (const std::bad_cast&) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
+
+		template<>
+		const StatusReportBlock& Bundle::BlockList::get<const StatusReportBlock>() const
+		{
+			try {
+				// copy all blocks to the list
+				for (std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin(); iter != _blocks.end(); iter++)
+				{
+					if ((*iter)->getType() == PayloadBlock::BLOCK_TYPE)
+					{
+						const Block *b = (*iter).getPointer();
+						return dynamic_cast<const StatusReportBlock&>(*b);
+					}
+				}
+			} catch (const std::bad_cast&) {
+
+			}
+
+			throw NoSuchBlockFoundException();
+		}
 	}
 }
 

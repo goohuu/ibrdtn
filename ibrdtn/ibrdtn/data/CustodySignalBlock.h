@@ -10,9 +10,9 @@
 #ifndef CUSTODYSIGNALBLOCK_H_
 #define CUSTODYSIGNALBLOCK_H_
 
-#include "ibrdtn/data/PayloadBlock.h"
 #include "ibrdtn/data/EID.h"
 #include "ibrdtn/data/SDNV.h"
+#include "ibrdtn/data/MetaBundle.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/DTNTime.h"
 
@@ -26,6 +26,7 @@ namespace dtn
 			CustodySignalBlock();
 			virtual ~CustodySignalBlock();
 
+			void setMatch(const MetaBundle& other);
 			void setMatch(const Bundle& other);
 			bool match(const Bundle& other) const;
 

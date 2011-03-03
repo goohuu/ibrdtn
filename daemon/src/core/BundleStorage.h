@@ -135,22 +135,22 @@ namespace dtn
 			 * bundle of us.
 			 * @param bundle
 			 */
-			virtual void releaseCustody(dtn::data::BundleID &bundle) = 0;
+			virtual void releaseCustody(const dtn::data::EID &custodian, const dtn::data::BundleID &id) = 0;
 
 			/**
-			 * Accept custody for a given bundle. The bundle is modified by this method
-			 * and contains us as future custodian. The previous custodian gets notified
+			 * Accept custody for a given bundle. The previous custodian gets notified
 			 * with a custody accept message.
 			 * @param bundle
+			 * @return The new custodian.
 			 */
-			void acceptCustody(dtn::data::Bundle &bundle);
+			const dtn::data::EID acceptCustody(const dtn::data::MetaBundle &meta);
 
 			/**
 			 * Reject custody for a given bundle. The custodian of this bundle gets notified
 			 * with a custody reject message.
 			 * @param bundle
 			 */
-			void rejectCustody(const dtn::data::Bundle &bundle);
+			void rejectCustody(const dtn::data::MetaBundle &meta);
 
 		protected:
 			/**

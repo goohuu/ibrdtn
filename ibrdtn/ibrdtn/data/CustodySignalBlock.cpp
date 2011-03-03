@@ -95,7 +95,23 @@ namespace dtn
 			return stream;
 		}
 
-		void CustodySignalBlock::setMatch(const Bundle& other)
+		void CustodySignalBlock::setMatch(const dtn::data::MetaBundle& other)
+		{
+			// set bundle parameter
+			if (other.get(Bundle::FRAGMENT))
+			{
+				_fragment_offset = other.offset;
+				_fragment_length = other.appdatalength;
+
+				if (!(_admfield & 1)) _admfield += 1;
+			}
+
+			_bundle_timestamp = other.timestamp;
+			_bundle_sequence = other.sequencenumber;
+			_source = other.source;
+		}
+
+		void CustodySignalBlock::setMatch(const dtn::data::Bundle& other)
 		{
 			// set bundle parameter
 			if (other.get(Bundle::FRAGMENT))
