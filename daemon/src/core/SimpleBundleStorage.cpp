@@ -21,8 +21,8 @@ namespace dtn
 {
 	namespace core
 	{
-		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize)
-		 : _datastore(*this, workdir), _maxsize(maxsize), _currentsize(0)
+		SimpleBundleStorage::SimpleBundleStorage(const ibrcommon::File &workdir, size_t maxsize, size_t buffer_limit)
+		 : _datastore(*this, workdir, buffer_limit), _maxsize(maxsize), _currentsize(0)
 		{
 			// load persistent bundles
 			_datastore.iterateAll();

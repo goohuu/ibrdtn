@@ -210,7 +210,7 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 
 			IBRCOMMON_LOGGER(info) << "using simple bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
 
-			dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path, conf.getLimit("storage"));
+			dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path, conf.getLimit("storage"), conf.getLimit("storage_buffer"));
 
 			components.push_back(sbs);
 			storage = sbs;
