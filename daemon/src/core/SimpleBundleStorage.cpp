@@ -243,33 +243,44 @@ namespace dtn
 
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
-			ibrcommon::MutexLock l(_bundleslock);
-
 			// get the bundle size
 			dtn::data::DefaultSerializer s(std::cout);
 			size_t bundle_size = s.getLength(bundle);
 
 			// check if this container is too big for us.
-			if ((_maxsize > 0) && (_currentsize + bundle_size > _maxsize))
 			{
-				throw StorageSizeExeededException();
+				ibrcommon::MutexLock l(_bundleslock);
+				if ((_maxsize > 0) && (_currentsize + bundle_size > _maxsize))
+				{
+					throw StorageSizeExeededException();
+				}
 			}
 
 			// store the bundle
-			DataStorage::Hash hash = _datastore.store(new BundleContainer(bundle));
+			BundleContainer *bc = new BundleContainer(bundle);
+			DataStorage::Hash hash(*bc);
 
+			// create meta data object
 			dtn::data::MetaBundle meta(bundle);
 
-			// add the bundle to the stored bundles
-			_pending_bundles[hash] = bundle;
+			{
+				// the next operations should
+				ibrcommon::MutexLock l(_bundleslock);
 
-			// increment the storage size
-			_bundle_size[meta] = bundle_size;
-			_currentsize += bundle_size;
+				// add the bundle to the stored bundles
+				_pending_bundles[hash] = bundle;
 
-			// add it to the bundle list
-			dtn::data::BundleList::add(meta);
-			_priority_index.insert(meta);
+				// increment the storage size
+				_bundle_size[meta] = bundle_size;
+				_currentsize += bundle_size;
+
+				// add it to the bundle list
+				dtn::data::BundleList::add(meta);
+				_priority_index.insert(meta);
+			}
+
+			// put the bundle into the data store
+			_datastore.store(hash, bc);
 		}
 
 		void SimpleBundleStorage::remove(const dtn::data::BundleID &id)

@@ -136,12 +136,17 @@ namespace dtn
 			}
 		}
 
+		void DataStorage::store(const DataStorage::Hash &hash, DataStorage::Container *data)
+		{
+			// put the task into the queue
+			_tasks.push( new StoreDataTask(hash, data) );
+		}
+
 		const DataStorage::Hash DataStorage::store(DataStorage::Container *data)
 		{
 			// create a corresponding hash
 			DataStorage::Hash hash(*data);
-			_tasks.push( new StoreDataTask(hash, data) );
-
+			store(hash, data);
 			return hash;
 		}
 

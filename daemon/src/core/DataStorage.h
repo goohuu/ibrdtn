@@ -83,6 +83,8 @@ namespace dtn
 			virtual ~DataStorage();
 
 			const Hash store(Container *data);
+			void store(const Hash &hash, Container *data);
+
 			DataStorage::istream retrieve(const Hash &hash) throw (DataNotAvailableException);
 			void remove(const Hash &hash);
 
