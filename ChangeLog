@@ -1,3 +1,8 @@
+2011-03-03
+--------------------------------------------------------
+ * discard unknown bundle block if requested
+ * custody acceptance with sqlite bundle storage
+
 2011-02-23
 --------------------------------------------------------
  * deliver bundles according to their priority
