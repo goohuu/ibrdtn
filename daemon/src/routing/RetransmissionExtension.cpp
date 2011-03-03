@@ -83,7 +83,7 @@ namespace dtn
 					// remove the item
 					_set.erase(data);
 
-					if (data2.getCount() <= 10)
+					if (data2.getCount() <= 8)
 					{
 						// requeue the bundle
 						_set.insert(data2);
@@ -165,7 +165,7 @@ namespace dtn
 		{
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
-			_timestamp += retry;
+			_timestamp += pow(retry, _count -1);
 
 			return (*this);
 		}
@@ -174,7 +174,7 @@ namespace dtn
 		{
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
-			_timestamp += retry;
+			_timestamp += pow(retry, _count -1);
 
 			return (*this);
 		}

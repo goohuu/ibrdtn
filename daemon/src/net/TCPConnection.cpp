@@ -469,12 +469,12 @@ namespace dtn
 					{
 						// some data are already acknowledged, make a fragment?
 						//TODO: make a fragment
-						TransferAbortedEvent::raise(EID(_node.getURI()), id, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+						dtn::routing::RequeueBundleEvent::raise(_node.getURI(), id);
 					}
 					else
 					{
 						// raise transfer abort event for all bundles without an ACK
-						TransferAbortedEvent::raise(EID(_node.getURI()), id, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+						dtn::routing::RequeueBundleEvent::raise(_node.getURI(), id);
 					}
 
 					// set last ack to zero
@@ -495,7 +495,7 @@ namespace dtn
 			// notify the aborted transfer of the last bundle
 			if (_current_transfer != dtn::data::BundleID())
 			{
-				TransferAbortedEvent::raise(EID(_connection._node.getURI()), _current_transfer, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+				dtn::routing::RequeueBundleEvent::raise(_connection._node.getURI(), _current_transfer);
 			}
 		}
 
