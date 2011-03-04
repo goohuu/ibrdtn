@@ -13,6 +13,7 @@
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Thread.h>
+#include <ibrcommon/thread/Semaphore.h>
 
 #ifndef DATASTORAGE_H_
 #define DATASTORAGE_H_
@@ -123,6 +124,7 @@ namespace dtn
 			Callback &_callback;
 			ibrcommon::File _path;
 			ibrcommon::Queue< Task* > _tasks;
+			ibrcommon::Semaphore _store_sem;
 
 			ibrcommon::Mutex _global_mutex;
 		};
