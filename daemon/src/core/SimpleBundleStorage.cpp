@@ -43,9 +43,23 @@ namespace dtn
 			_stored_bundles[meta] = hash;
 		}
 
-		void SimpleBundleStorage::eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash&, const ibrcommon::Exception &ex)
+		void SimpleBundleStorage::eventDataStorageStoreFailed(const dtn::core::DataStorage::Hash &hash, const ibrcommon::Exception &ex)
 		{
 			IBRCOMMON_LOGGER(error) << "store failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+
+			ibrcommon::MutexLock l(_bundleslock);
+
+			// get the reference to the bundle
+			const dtn::data::Bundle &b = _pending_bundles[hash];
+
+			// decrement the storage size
+			_currentsize -= _bundle_size[b];
+
+			// cleanup bundle sizes
+			_bundle_size.erase(b);
+
+			// delete the pending bundle
+			_pending_bundles.erase(hash);
 		}
 
 		void SimpleBundleStorage::eventDataStorageRemoved(const dtn::core::DataStorage::Hash &hash)
@@ -247,6 +261,10 @@ namespace dtn
 			dtn::data::DefaultSerializer s(std::cout);
 			size_t bundle_size = s.getLength(bundle);
 
+			// store the bundle
+			BundleContainer *bc = new BundleContainer(bundle);
+			DataStorage::Hash hash(*bc);
+
 			// check if this container is too big for us.
 			{
 				ibrcommon::MutexLock l(_bundleslock);
@@ -254,18 +272,9 @@ namespace dtn
 				{
 					throw StorageSizeExeededException();
 				}
-			}
 
-			// store the bundle
-			BundleContainer *bc = new BundleContainer(bundle);
-			DataStorage::Hash hash(*bc);
-
-			// create meta data object
-			dtn::data::MetaBundle meta(bundle);
-
-			{
-				// the next operations should
-				ibrcommon::MutexLock l(_bundleslock);
+				// create meta data object
+				dtn::data::MetaBundle meta(bundle);
 
 				// add the bundle to the stored bundles
 				_pending_bundles[hash] = bundle;
