@@ -384,8 +384,7 @@ namespace dtn
 		{
 			// The queue is not cancel-safe with uclibc, so we need to
 			// disable cancel here
-			int oldstate;
-			ibrcommon::Thread::disableCancel(oldstate);
+			ibrcommon::Thread::CancelProtector __disable_cancellation__(false);
 
 			try {
 				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
@@ -418,7 +417,7 @@ namespace dtn
 #endif
 
 							// enable cancellation during transmission
-							ibrcommon::Thread::CancelProtector cprotect(true);
+							ibrcommon::Thread::CancelProtector __enable_cancellation__(true);
 
 							// send bundle
 							_connection << bundle;

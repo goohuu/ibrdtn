@@ -137,7 +137,8 @@ void SimpleBundleStorageTest::testReleaseCustody()
 	/* test signature (dtn::data::BundleID &bundle) */
 	dtn::core::MemoryBundleStorage storage;
 	dtn::data::BundleID id;
-	storage.releaseCustody(id);
+	dtn::data::EID eid;
+	storage.releaseCustody(eid, id);
 }
 
 void SimpleBundleStorageTest::testRaiseEvent()
