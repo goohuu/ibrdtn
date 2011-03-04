@@ -125,6 +125,7 @@ namespace dtn
 			ibrcommon::File _path;
 			ibrcommon::Queue< Task* > _tasks;
 			ibrcommon::Semaphore _store_sem;
+			bool _store_limited;
 
 			ibrcommon::Mutex _global_mutex;
 		};

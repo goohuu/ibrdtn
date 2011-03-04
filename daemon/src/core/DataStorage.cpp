@@ -77,7 +77,7 @@ namespace dtn
 		{ return *_stream; }
 
 		DataStorage::DataStorage(Callback &callback, const ibrcommon::File &path, size_t write_buffer, bool initialize)
-		 : _callback(callback), _path(path), _tasks(), _store_sem(write_buffer)
+		 : _callback(callback), _path(path), _tasks(), _store_sem(write_buffer), _store_limited(write_buffer > 0)
 		// limit the number of bundles in the write buffer
 		{
 			// initialize the storage
@@ -139,7 +139,7 @@ namespace dtn
 		void DataStorage::store(const DataStorage::Hash &hash, DataStorage::Container *data)
 		{
 			// wait for resources
-			_store_sem.wait();
+			if (_store_limited) _store_sem.wait();
 
 			// put the task into the queue
 			_tasks.push( new StoreDataTask(hash, data) );
@@ -205,13 +205,13 @@ namespace dtn
 							}
 
 							// release resources
-							_store_sem.post();
+							if (_store_limited) _store_sem.post();
 
 							// notify the stored item
 							_callback.eventDataStorageStored(store.hash);
 						} catch (const ibrcommon::Exception &ex) {
 							// release resources
-							_store_sem.post();
+							if (_store_limited) _store_sem.post();
 
 							// notify the fail of store action
 							_callback.eventDataStorageStoreFailed(store.hash, ex);
