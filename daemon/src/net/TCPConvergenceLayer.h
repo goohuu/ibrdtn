@@ -143,7 +143,6 @@ namespace dtn
 				bool __cancellation();
 
 			private:
-				bool _abort;
 				TCPConnection &_connection;
 				size_t &_keepalive_timeout;
 				dtn::data::BundleID _current_transfer;

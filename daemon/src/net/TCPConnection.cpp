@@ -361,20 +361,19 @@ namespace dtn
 		}
 
 		TCPConnection::Sender::Sender(TCPConnection &connection, size_t &keepalive_timeout)
-		 : _abort(false), _connection(connection), _keepalive_timeout(keepalive_timeout)
+		 : _connection(connection), _keepalive_timeout(keepalive_timeout)
 		{
 		}
 
 		TCPConnection::Sender::~Sender()
 		{
-			join();
+			ibrcommon::JoinableThread::join();
 		}
 
 		bool TCPConnection::Sender::__cancellation()
 		{
 			// cancel the main thread in here
-			_abort = true;
-			this->abort();
+			ibrcommon::Queue<dtn::data::BundleID>::abort();
 
 			// return false, to signal that further cancel (the hardway) is needed
 			return false;
@@ -389,19 +388,16 @@ namespace dtn
 			try {
 				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-				while (!_abort)
+				while (true)
 				{
 					try {
-						_current_transfer = getnpop(true, _keepalive_timeout);
+						_current_transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true, _keepalive_timeout);
 
 						try {
 							// read the bundle out of the storage
 							dtn::data::Bundle bundle = storage.get(_current_transfer);
 
 #ifdef WITH_BUNDLE_SECURITY
-//							// Apply BundleAuthenticationBlocks, if keys are present
-//							dtn::security::SecurityManager::getInstance().outgoing_p2p(EID(_connection.getNode().getURI()), bundle);
-
 							const dtn::daemon::Configuration::Security::Level seclevel =
 									dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
 
