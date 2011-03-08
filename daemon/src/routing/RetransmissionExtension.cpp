@@ -165,7 +165,7 @@ namespace dtn
 		{
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
-			_timestamp += pow(retry, _count -1);
+			_timestamp += pow((float)retry, (float)_count -1);
 
 			return (*this);
 		}
@@ -174,7 +174,7 @@ namespace dtn
 		{
 			_count++;
 			_timestamp = dtn::utils::Clock::getTime();
-			_timestamp += pow(retry, _count -1);
+			_timestamp += pow((float)retry, (float)_count -1);
 
 			return (*this);
 		}
