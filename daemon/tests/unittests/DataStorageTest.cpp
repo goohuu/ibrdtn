@@ -369,8 +369,14 @@ void DataStorageTest::testStressTest()
 
 void DataStorageTest::setUp()
 {
+	// create temporary directory for data storage
+	ibrcommon::File datapath("/tmp/datastorage");
+	ibrcommon::File::createDirectory(datapath);
 }
 
 void DataStorageTest::tearDown()
 {
+	// delete the temporary directory for data storage
+	ibrcommon::File datapath("/tmp/datastorage");
+	datapath.remove(true);
 }
