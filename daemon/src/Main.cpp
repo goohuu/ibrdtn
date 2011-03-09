@@ -153,8 +153,36 @@ void setGlobalVars(Configuration &config)
     try {
     	// new methods for blobs
     	ibrcommon::BLOB::tmppath = config.getPath("blob");
-    } catch (const Configuration::ParameterNotSetException&) {
 
+    	// check if the BLOB path exists
+    	if (ibrcommon::BLOB::tmppath.exists())
+    	{
+    		if (ibrcommon::BLOB::tmppath.isDirectory())
+    		{
+    			IBRCOMMON_LOGGER(info) << "using BLOB path: " << ibrcommon::BLOB::tmppath.getPath() << IBRCOMMON_LOGGER_ENDL;
+    		}
+    		else
+    		{
+    			IBRCOMMON_LOGGER(warning) << "BLOB path exists, but is not a directory! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
+    			ibrcommon::BLOB::tmppath = ibrcommon::File();
+    		}
+    	}
+    	else
+    	{
+    		// try to create the BLOB path
+    		ibrcommon::File::createDirectory(ibrcommon::BLOB::tmppath);
+
+    		if (ibrcommon::BLOB::tmppath.exists())
+    		{
+    			IBRCOMMON_LOGGER(info) << "using BLOB path: " << ibrcommon::BLOB::tmppath.getPath() << IBRCOMMON_LOGGER_ENDL;
+    		}
+    		else
+    		{
+    			IBRCOMMON_LOGGER(warning) << "Could not create BLOB path! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
+    			ibrcommon::BLOB::tmppath = ibrcommon::File();
+    		}
+    	}
+    } catch (const Configuration::ParameterNotSetException&) {
     }
 
     // set block size limit
