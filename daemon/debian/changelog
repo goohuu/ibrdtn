@@ -1,0 +1,14 @@
+ibrdtnd (0.6.0) unstable; urgency=low
+
+  * Bundle Security Protocol
+  * IPv6 support
+  * Use regular expressions for static routes
+  * New routing messages for epidemic routing (not compatible with older versions)
+  * SQLite bundle storage will accept custody for bundles
+  * Deliver bundles according to their priority
+  * Static routing can be used with any other routing scheme
+  * Better handling of the same convergence layer on multiple interfaces
+  * DTN2 compatibility fix for discovery
+  * Bind on any interface is possible now
+
+ -- Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>  Fri, 11 Mar 2011 09:47:16 +0100
