@@ -16,7 +16,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC=ibrdtnd             # Introduce a short description here
 NAME=ibrdtnd             # Introduce the short server's name here
 DAEMON=/usr/sbin/dtnd    # Introduce the server's location here
-DAEMON_ARGS="-q ${DAEMON_OPTS}" # Arguments to run the daemon with
+DAEMON_ARGS=""		 # Arguments to run the daemon with
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
@@ -25,6 +25,12 @@ SCRIPTNAME=/etc/init.d/$NAME
 
 # Read configuration variable file if it is present
 [ -r /etc/default/$NAME ] && . /etc/default/$NAME
+
+# set quiet option if requested
+[ "${DAEMON_QUIET}" = "yes" ] && DAEMON_ARGS="${DAEMON_ARGS} -q"
+
+# set quiet option if requested
+[ -n "${DAEMON_OPTS}" ] && DAEMON_ARGS="${DAEMON_ARGS} ${DAEMON_OPTS}"
 
 # Load the VERBOSE setting and other rcS variables
 . /lib/init/vars.sh
@@ -44,7 +50,7 @@ do_start()
 	#   2 if daemon could not be started
 	start-stop-daemon --start --quiet --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
-	start-stop-daemon --background --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
+	start-stop-daemon --background --make-pidfile --start --quiet --pidfile $PIDFILE --exec $DAEMON -- \
 		$DAEMON_ARGS \
 		|| return 2
 	# Add code here, if necessary, that waits for the process to be ready
