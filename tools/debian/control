@@ -1,0 +1,13 @@
+Source: ibrdtn-tools
+Section: net
+Priority: extra
+Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
+Build-Depends: cdbs, debhelper (>= 7.0.50~), autotools-dev, ibrcommon-dev, ibrdtn-dev
+Standards-Version: 3.8.4
+Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
+
+Package: ibrdtn-tools
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1, ibrdtn1
+Description: Tools (ping, send, recv, ...) to use in conjunction with IBR-DTN daemon.
+
