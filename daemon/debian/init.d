@@ -16,7 +16,7 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC=ibrdtnd             # Introduce a short description here
 NAME=ibrdtnd             # Introduce the short server's name here
 DAEMON=/usr/sbin/dtnd    # Introduce the server's location here
-DAEMON_ARGS="-q"           # Arguments to run the daemon with
+DAEMON_ARGS="-q ${DAEMON_OPTS}" # Arguments to run the daemon with
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
