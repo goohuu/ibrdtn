@@ -384,12 +384,30 @@ namespace dtn
 #endif
 			};
 
+			class Daemon : public Configuration::Extension
+			{
+				friend class Configuration;
+			private:
+				bool _daemonize;
+				ibrcommon::File _pidfile;
+
+			protected:
+				Daemon();
+				virtual ~Daemon();
+				void load(const ibrcommon::ConfigFile &conf);
+
+			public:
+				bool daemonize() const;
+				const ibrcommon::File& getPidFile() const;
+			};
+
 			const Configuration::Discovery& getDiscovery() const;
 			const Configuration::Statistic& getStatistic() const;
 			const Configuration::Debug& getDebug() const;
 			const Configuration::Logger& getLogger() const;
 			const Configuration::Network& getNetwork() const;
 			const Configuration::Security& getSecurity() const;
+			const Configuration::Daemon& getDaemon() const;
 
 		private:
 			ibrcommon::ConfigFile _conf;
@@ -399,6 +417,7 @@ namespace dtn
 			Configuration::Logger _logger;
 			Configuration::Network _network;
 			Configuration::Security _security;
+			Configuration::Daemon _daemon;
 
 			std::string _filename;
 			bool _doapi;

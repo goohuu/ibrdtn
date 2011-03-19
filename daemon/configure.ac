@@ -56,6 +56,16 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_CHECK_FUNCS([gethostname socket])
 
+PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.14, [
+	use_daemon="yes"
+	AC_SUBST(DAEMON_CFLAGS)
+	AC_SUBST(DAEMON_LIBS)
+	AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
+], [
+	use_daemon="no"
+	AC_MSG_WARN([daemon library not found, daemonize features disabled])
+])
+
 AC_ARG_WITH(curl,
 	AS_HELP_STRING([--with-curl], [Build with libcurl
 		@<:@default=no@:>@]),
@@ -128,6 +138,7 @@ AC_ARG_WITH(lowpan,
 AM_CONDITIONAL(CURL, test x$use_curl = xyes)
 AM_CONDITIONAL(SQLITE, test x$use_sqlite = xyes)
 AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)
+AM_CONDITIONAL(DAEMON, test x$use_daemon = xyes)
 
 dnl -----------------------------------------------
 dnl optional parameter: DTN security support

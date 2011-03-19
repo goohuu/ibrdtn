@@ -86,11 +86,16 @@ namespace dtn
 		 : _enabled(false)
 		{};
 
+		Configuration::Daemon::Daemon()
+		 : _daemonize(false)
+		{};
+
 		Configuration::Discovery::~Discovery() {};
 		Configuration::Statistic::~Statistic() {};
 		Configuration::Debug::~Debug() {};
 		Configuration::Logger::~Logger() {};
 		Configuration::Network::~Network() {};
+		Configuration::Daemon::~Daemon() {};
 
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
@@ -122,6 +127,11 @@ namespace dtn
 			return _security;
 		}
 
+		const Configuration::Daemon& Configuration::getDaemon() const
+		{
+			return _daemon;
+		}
+
 		Configuration& Configuration::getInstance()
 		{
 			static Configuration conf;
@@ -148,6 +158,11 @@ namespace dtn
 
 						/* These options don't set a flag. We distinguish them by their indices. */
 						{"help", no_argument, 0, 'h'},
+#ifdef HAVE_LIBDAEMON
+						{"daemon", no_argument, 0, 'D'},
+						{"pidfile", required_argument, 0, 'p'},
+#endif
+
 						{"quiet", no_argument, 0, 'q'},
 						{"version", no_argument, 0, 'v'},
 						{"interface", required_argument, 0, 'i'},
@@ -159,8 +174,13 @@ namespace dtn
 				/* getopt_long stores the option index here. */
 				int option_index = 0;
 
+#ifdef HAVE_LIBDAEMON
+				c = getopt_long (argc, argv, "qhDp:vi:c:d:",
+						long_options, &option_index);
+#else
 				c = getopt_long (argc, argv, "qhvi:c:d:",
 						long_options, &option_index);
+#endif
 
 				/* Detect the end of the options. */
 				if (c == -1)
@@ -214,6 +234,14 @@ namespace dtn
 				case 'd':
 					_debug._enabled = true;
 					_debug._level = atoi(optarg);
+					break;
+
+				case 'D':
+					_daemon._daemonize = true;
+					break;
+
+				case 'p':
+					_daemon._pidfile = std::string(optarg);
 					break;
 
 				case '?':
@@ -272,6 +300,10 @@ namespace dtn
 		}
 
 		void Configuration::Debug::load(const ibrcommon::ConfigFile&)
+		{
+		}
+
+		void Configuration::Daemon::load(const ibrcommon::ConfigFile&)
 		{
 		}
 
@@ -769,6 +801,16 @@ namespace dtn
 		std::ostream& Configuration::Logger::output() const
 		{
 			return std::cout;
+		}
+
+		bool Configuration::Daemon::daemonize() const
+		{
+			return _daemonize;
+		}
+
+		const ibrcommon::File& Configuration::Daemon::getPidFile() const
+		{
+			return _pidfile;
 		}
 	}
 }
