@@ -717,6 +717,7 @@ int main(int argc, char *argv[])
 #ifdef HAVE_LIBDAEMON
 	if (conf.getDaemon().daemonize())
 	{
+		int ret = 0;
 		pid_t pid;
 
 		/* Reset signal handlers */
@@ -811,7 +812,7 @@ int main(int argc, char *argv[])
 				goto finish;
 			}
 
-			__daemon_run(conf);
+			ret = __daemon_run(conf);
 
 	finish:
 			/* Do a cleanup */
@@ -820,10 +821,12 @@ int main(int argc, char *argv[])
 			daemon_signal_done();
 			daemon_pid_file_remove();
 		}
+
+		return ret;
 	} else {
 #endif
 		// run the daemon
-		__daemon_run(conf);
+		return __daemon_run(conf);
 #ifdef HAVE_LIBDAEMON
 	}
 #endif
