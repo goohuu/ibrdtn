@@ -8,6 +8,6 @@ Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 
 Package: ibrdtnd
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1 (>= 0.6.0), ibrdtn1 (>= 0.6.0), libsqlite3-0 (>= 3.5.9), libcurl3 (>= 7.18.2), libdaemon (>= 0.14)
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibrcommon1 (>= 0.6.0), ibrdtn1 (>= 0.6.0), libsqlite3-0 (>= 3.5.9), libcurl3 (>= 7.18.2), libdaemon0 (>= 0.14)
 Description: The implementation of the bundle protocol of the IBR (TU Braunschweig).
 
