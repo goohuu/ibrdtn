@@ -87,8 +87,9 @@ namespace dtn
 		{};
 
 		Configuration::Daemon::Daemon()
-		 : _daemonize(false)
-		{};
+		 : _daemonize(false), _kill(false)
+		{
+		};
 
 		Configuration::Discovery::~Discovery() {};
 		Configuration::Statistic::~Statistic() {};
@@ -160,6 +161,7 @@ namespace dtn
 						{"help", no_argument, 0, 'h'},
 #ifdef HAVE_LIBDAEMON
 						{"daemon", no_argument, 0, 'D'},
+						{"kill", no_argument, 0, 'k'},
 						{"pidfile", required_argument, 0, 'p'},
 #endif
 
@@ -175,7 +177,7 @@ namespace dtn
 				int option_index = 0;
 
 #ifdef HAVE_LIBDAEMON
-				c = getopt_long (argc, argv, "qhDp:vi:c:d:",
+				c = getopt_long (argc, argv, "qhDkp:vi:c:d:",
 						long_options, &option_index);
 #else
 				c = getopt_long (argc, argv, "qhvi:c:d:",
@@ -203,6 +205,11 @@ namespace dtn
 					std::cout << "Syntax: dtnd [options]"  << std::endl;
 					std::cout << " -h|--help       display this text" << std::endl;
 					std::cout << " -c <file>       set a configuration file" << std::endl;
+#ifdef HAVE_LIBDAEMON
+					std::cout << " -D              daemonize the process" << std::endl;
+					std::cout << " -k              stop the running daemon" << std::endl;
+					std::cout << " -p <file>       store the pid in this pidfile" << std::endl;
+#endif
 					std::cout << " -i <interface>  interface to bind on (e.g. eth0)" << std::endl;
 					std::cout << " -d <level>      enable debugging and set a verbose level" << std::endl;
 					std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
@@ -238,6 +245,12 @@ namespace dtn
 
 				case 'D':
 					_daemon._daemonize = true;
+					_debug._quiet = true;
+					break;
+
+				case 'k':
+					_daemon._daemonize = true;
+					_daemon._kill = true;
 					break;
 
 				case 'p':
@@ -808,8 +821,14 @@ namespace dtn
 			return _daemonize;
 		}
 
+		bool Configuration::Daemon::kill_daemon() const
+		{
+			return _kill;
+		}
+
 		const ibrcommon::File& Configuration::Daemon::getPidFile() const
 		{
+			if (_pidfile == ibrcommon::File()) throw ParameterNotSetException();
 			return _pidfile;
 		}
 	}

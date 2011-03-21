@@ -57,6 +57,14 @@
 #include "security/SecurityKeyManager.h"
 #endif
 
+#ifdef HAVE_LIBDAEMON
+#include <libdaemon/dfork.h>
+#include <libdaemon/dsignal.h>
+#include <libdaemon/dlog.h>
+#include <libdaemon/dpid.h>
+#include <libdaemon/dexec.h>
+#endif
+
 #include <csignal>
 #include <sys/types.h>
 #include <syslog.h>
@@ -79,13 +87,13 @@ using namespace dtn::net;
 unsigned char logopts = ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL;
 
 // error filter
-const unsigned int logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
+const unsigned char logerr = ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT;
 
 // logging filter, everything but debug, err and crit
-const unsigned int logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
+const unsigned char logstd = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_ERR | ibrcommon::Logger::LOGGER_CRIT);
 
 // syslog filter, everything but DEBUG and NOTICE
-const unsigned int logsys = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
+const unsigned char logsys = ~(ibrcommon::Logger::LOGGER_DEBUG | ibrcommon::Logger::LOGGER_NOTICE);
 
 // debug off by default
 bool _debug = false;
@@ -366,20 +374,15 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 	}
 }
 
-int main(int argc, char *argv[])
+int __daemon_run(Configuration &conf)
 {
 	// catch process signals
 	signal(SIGINT, sighandler);
 	signal(SIGTERM, sighandler);
 	signal(SIGHUP, sighandler);
+	signal(SIGQUIT, sighandler);
 	signal(SIGUSR1, sighandler);
 	signal(SIGUSR2, sighandler);
-
-	// create a configuration
-	Configuration &conf = Configuration::getInstance();
-
-	// load parameter into the configuration
-	conf.params(argc, argv);
 
 	// enable timestamps in logging if requested
 	if (conf.getLogger().display_timestamps())
@@ -656,6 +659,15 @@ int main(int argc, char *argv[])
 		core.addConnection(*iter);
 	}
 
+#ifdef HAVE_LIBDAEMON
+	if (conf.getDaemon().daemonize())
+	{
+		/* Send OK to parent process */
+		daemon_retval_send(0);
+		daemon_log(LOG_INFO, "Sucessfully started");
+	}
+#endif
+
 	// run the event switch loop forever
 	esw.loop();
 
@@ -690,3 +702,132 @@ int main(int argc, char *argv[])
 
 	return 0;
 };
+
+static char* __daemon_pidfile__ = NULL;
+
+static const char* __daemon_pid_file_proc__(void) {
+	return __daemon_pidfile__;
+}
+
+int main(int argc, char *argv[])
+{
+	// create a configuration
+	Configuration &conf = Configuration::getInstance();
+
+	// load parameter into the configuration
+	conf.params(argc, argv);
+
+#ifdef HAVE_LIBDAEMON
+	if (conf.getDaemon().daemonize())
+	{
+		pid_t pid;
+
+		/* Reset signal handlers */
+		if (daemon_reset_sigs(-1) < 0) {
+			daemon_log(LOG_ERR, "Failed to reset all signal handlers: %s", strerror(errno));
+			return 1;
+		}
+
+		/* Unblock signals */
+		if (daemon_unblock_sigs(-1) < 0) {
+			daemon_log(LOG_ERR, "Failed to unblock all signals: %s", strerror(errno));
+			return 1;
+		}
+
+		/* Set identification string for the daemon for both syslog and PID file */
+		daemon_pid_file_ident = daemon_log_ident = daemon_ident_from_argv0(argv[0]);
+
+		/* set the pid file path */
+		try {
+			std::string p = conf.getDaemon().getPidFile().getPath();
+			__daemon_pidfile__ = new char[p.length() + 1];
+			::strcpy(__daemon_pidfile__, p.c_str());
+			daemon_pid_file_proc = __daemon_pid_file_proc__;
+		} catch (const std::exception&) { };
+
+		/* Check if we are called with -k parameter */
+		if (conf.getDaemon().kill_daemon())
+		{
+			int ret;
+
+			/* Kill daemon with SIGTERM */
+
+			/* Check if the new function daemon_pid_file_kill_wait() is available, if it is, use it. */
+			if ((ret = daemon_pid_file_kill_wait(SIGTERM, 5)) < 0)
+				daemon_log(LOG_WARNING, "Failed to kill daemon: %s", strerror(errno));
+
+			return ret < 0 ? 1 : 0;
+		}
+
+		/* Check that the daemon is not rung twice a the same time */
+		if ((pid = daemon_pid_file_is_running()) >= 0) {
+			daemon_log(LOG_ERR, "Daemon already running on PID file %u", pid);
+			return 1;
+		}
+
+		/* Prepare for return value passing from the initialization procedure of the daemon process */
+		if (daemon_retval_init() < 0) {
+			daemon_log(LOG_ERR, "Failed to create pipe.");
+			return 1;
+		}
+
+		/* Do the fork */
+		if ((pid = daemon_fork()) < 0) {
+
+			/* Exit on error */
+			daemon_retval_done();
+			return 1;
+
+		} else if (pid) { /* The parent */
+			int ret;
+
+			/* Wait for 20 seconds for the return value passed from the daemon process */
+			if ((ret = daemon_retval_wait(20)) < 0) {
+				daemon_log(LOG_ERR, "Could not recieve return value from daemon process: %s", strerror(errno));
+				return 255;
+			}
+
+			//daemon_log(ret != 0 ? LOG_ERR : LOG_INFO, "Daemon returned %i as return value.", ret);
+			return ret;
+
+		} else { /* The daemon */
+			/* Close FDs */
+			if (daemon_close_all(-1) < 0) {
+				daemon_log(LOG_ERR, "Failed to close all file descriptors: %s", strerror(errno));
+
+				/* Send the error condition to the parent process */
+				daemon_retval_send(1);
+				goto finish;
+			}
+
+			/* Create the PID file */
+			if (daemon_pid_file_create() < 0) {
+				daemon_log(LOG_ERR, "Could not create PID file (%s).", strerror(errno));
+				daemon_retval_send(2);
+				goto finish;
+			}
+
+			/* Initialize signal handling */
+			if (daemon_signal_init(SIGINT, SIGTERM, SIGQUIT, SIGHUP, SIGUSR1, SIGUSR2, 0) < 0) {
+				daemon_log(LOG_ERR, "Could not register signal handlers (%s).", strerror(errno));
+				daemon_retval_send(3);
+				goto finish;
+			}
+
+			__daemon_run(conf);
+
+	finish:
+			/* Do a cleanup */
+			daemon_log(LOG_INFO, "Exiting...");
+			daemon_retval_send(255);
+			daemon_signal_done();
+			daemon_pid_file_remove();
+		}
+	} else {
+#endif
+		// run the daemon
+		__daemon_run(conf);
+#ifdef HAVE_LIBDAEMON
+	}
+#endif
+}

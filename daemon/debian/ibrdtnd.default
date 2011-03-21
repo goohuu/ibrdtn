@@ -8,6 +8,3 @@
 
 # Additional options that are passed to the Daemon.
 DAEMON_OPTS=""
-
-# no output on startup
-DAEMON_QUIET="yes"

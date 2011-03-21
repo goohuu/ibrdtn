@@ -390,6 +390,7 @@ namespace dtn
 			private:
 				bool _daemonize;
 				ibrcommon::File _pidfile;
+				bool _kill;
 
 			protected:
 				Daemon();
@@ -399,6 +400,7 @@ namespace dtn
 			public:
 				bool daemonize() const;
 				const ibrcommon::File& getPidFile() const;
+				bool kill_daemon() const;
 			};
 
 			const Configuration::Discovery& getDiscovery() const;
