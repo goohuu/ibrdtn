@@ -1,4 +1,10 @@
-ibrdtnd (0.6.0) unstable; urgency=low
+ibrdtnd (0.6.1) stable; urgency=low
+
+  * use libdaemon to daemonize into the background
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 21 Mar 2011 14:42:40 +0100
+
+ibrdtnd (0.6.0) stable; urgency=low
 
   * Bundle Security Protocol
   * IPv6 support
