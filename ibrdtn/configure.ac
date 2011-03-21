@@ -71,7 +71,7 @@ AC_LANG_CPLUSPLUS
 AC_CHECK_LIB([rt], [clock_gettime])
 
 # check for ibrcommon library
-LOCAL_IBRCOMMON_VERSION=0.4
+LOCAL_IBRCOMMON_VERSION=0.6
 LOCAL_CHECK_IBRCOMMON
 AC_SUBST(ibrcommon_CFLAGS)
 AC_SUBST(ibrcommon_LIBS)
