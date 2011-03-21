@@ -15,9 +15,10 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC=ibrdtnd             # Introduce a short description here
 NAME=ibrdtnd             # Introduce the short server's name here
+PNAME=dtnd               # Introduce the process name
 DAEMON=/usr/sbin/dtnd    # Introduce the server's location here
 DAEMON_ARGS="-D"	 # Arguments to run the daemon with
-PIDFILE=/var/run/$NAME.pid
+PIDFILE=/var/run/$PNAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
@@ -65,7 +66,7 @@ do_stop()
 	#   1 if daemon was already stopped
 	#   2 if daemon could not be stopped
 	#   other if a failure occurred
-	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 --pidfile $PIDFILE --name $PNAME
 	RETVAL="$?"
 	[ "$RETVAL" = 2 ] && return 2
 	# Wait for children to finish too if this is a daemon that forks
@@ -90,7 +91,7 @@ do_reload() {
 	# restarting (for example, when it is sent a SIGHUP),
 	# then implement that here.
 	#
-	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $NAME
+	start-stop-daemon --stop --signal 1 --quiet --pidfile $PIDFILE --name $PNAME
 	return 0
 }
 
