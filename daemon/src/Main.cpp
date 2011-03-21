@@ -743,7 +743,7 @@ int main(int argc, char *argv[])
 			__daemon_pidfile__ = new char[p.length() + 1];
 			::strcpy(__daemon_pidfile__, p.c_str());
 			daemon_pid_file_proc = __daemon_pid_file_proc__;
-		} catch (const std::exception&) { };
+		} catch (const Configuration::ParameterNotSetException&) { };
 
 		/* Check if we are called with -k parameter */
 		if (conf.getDaemon().kill_daemon())
