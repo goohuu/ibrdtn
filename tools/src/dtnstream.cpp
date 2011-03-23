@@ -114,7 +114,7 @@ size_t StreamBundle::getSequenceNumber(const StreamBundle &b)
 
 BundleStreamBuf::BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, size_t buffer)
  : _in_buf(new char[BUFF_SIZE]), _out_buf(new char[BUFF_SIZE]), _client(client), _chunk(chunk),
-   _buffer(buffer), _chunk_available(false), _chunk_offset(0), _out_seq(0), _in_seq(0)
+   _buffer(buffer), _chunk_offset(0), _in_seq(0)
 {
 	// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 	setg(0, 0, 0);
@@ -172,39 +172,51 @@ int BundleStreamBuf::overflow(int c)
 	return std::char_traits<char>::not_eof(c);
 }
 
+void BundleStreamBuf::received(const dtn::api::Bundle &b)
+{
+	ibrcommon::MutexLock l(_chunks_cond);
+
+	if (StreamBundle::getSequenceNumber(b) < _in_seq) return;
+
+	_chunks.insert(Chunk(b));
+	_chunks_cond.signal(true);
+
+	// bundle received
+//	std::cerr << ". " << StreamBundle::getSequenceNumber(b) << std::flush;
+}
+
 int BundleStreamBuf::underflow()
 {
-	// we need to get more chunks if there are none
-	if (_chunks.empty()) _chunk_available = false;
+	ibrcommon::MutexLock l(_chunks_cond);
 
+	return __underflow();
+}
+
+int BundleStreamBuf::__underflow()
+{
 	// receive chunks until the next sequence number is received
-	while (!_chunk_available)
+	while (_chunks.empty())
 	{
-		// receive the next bundle
-		const dtn::api::Bundle b = _client.getBundle();
+		// wait for the next bundle
+		_chunks_cond.wait();
+	}
 
-		// compare the sequence number
-		if (StreamBundle::getSequenceNumber(b) < _in_seq)
+	// while not the right sequence number received -> wait
+	while (_in_seq != (*_chunks.begin())._seq)
+	{
+		// wait for the next bundle
+		_chunks_cond.wait();
+
+		if (_chunks.size() > 10)
 		{
-			// drop this bundle
-			continue;
-		}
-
-		// add the chunks to the chunk buffer (set)
-		_chunks.insert( Chunk(b) );
-
-		// get the first chunk in the buffer
-		const Chunk &c = (*_chunks.begin());
-
-		if (c._seq == _in_seq)
-		{
-			_in_seq++;
-			_chunk_available = true;
+			// skip the missing bundles and proceed with the last received one
+			_in_seq = (*_chunks.begin())._seq;
 		}
 	}
 
 	// get the first chunk in the buffer
 	const Chunk &c = (*_chunks.begin());
+
 	dtn::api::Bundle b = c._bundle;
 	ibrcommon::BLOB::Reference r = b.getData();
 
@@ -222,16 +234,22 @@ int BundleStreamBuf::underflow()
 
 	if ((*stream).eof())
 	{
+		// bundle consumed
+//		std::cerr << std::endl << "# " << c._seq << std::endl << std::flush;
+
 		// delete the last chunk
 		_chunks.erase(c);
 
 		// reset the chunk offset
 		_chunk_offset = 0;
-		
+
+		// increment sequence number
+		_in_seq++;
+
 		// if no more bytes are read, get the next bundle -> call underflow() recursive
 		if (bytes == 0)
 		{
-			return underflow();
+			return __underflow();
 		}
 	}
 	else
@@ -280,6 +298,11 @@ BundleStreamBuf& BundleStream::rdbuf()
 dtn::api::Bundle& BundleStream::base()
 {
 	return _chunk;
+}
+
+void BundleStream::received(const dtn::api::Bundle &b)
+{
+	_buf.received(b);
 }
 
 void print_help()

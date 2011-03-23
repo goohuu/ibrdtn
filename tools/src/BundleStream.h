@@ -85,10 +85,13 @@ public:
 	BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, size_t buffer = 4096);
 	virtual ~BundleStreamBuf();
 
+	virtual void received(const dtn::api::Bundle &b);
+
 protected:
 	virtual int sync();
 	virtual int overflow(int = std::char_traits<char>::eof());
 	virtual int underflow();
+	int __underflow();
 
 private:
 	class Chunk
@@ -113,11 +116,10 @@ private:
 	StreamBundle &_chunk;
 	size_t _buffer;
 
+	ibrcommon::Conditional _chunks_cond;
 	std::set<Chunk> _chunks;
-	bool _chunk_available;
 	size_t _chunk_offset;
 
-	size_t _out_seq;
 	size_t _in_seq;
 };
 
@@ -129,6 +131,9 @@ public:
 
 	BundleStreamBuf& rdbuf();
 	dtn::api::Bundle& base();
+
+protected:
+	virtual void received(const dtn::api::Bundle &b);
 
 private:
 	ibrcommon::tcpstream &_stream;
