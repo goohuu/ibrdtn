@@ -59,28 +59,33 @@ namespace dtn
 			return dtn::core::Node::CONN_UDPIP;
 		}
 
-		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
+		void UDPConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw (dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
-			if (iface == _net) throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			if (iface == _net)
+			{
+				name = "udpcl";
+				stringstream service;
 
-			name = "udpcl";
-			stringstream service;
-
-			try {
-				std::list<ibrcommon::vaddress> list = _net.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
-				if (!list.empty())
-				{
-					 service << "ip=" << list.front().get(false) << ";port=" << _port << ";";
-				}
-				else
-				{
+				try {
+					std::list<ibrcommon::vaddress> list = _net.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
+					if (!list.empty())
+					{
+						 service << "ip=" << list.front().get(false) << ";port=" << _port << ";";
+					}
+					else
+					{
+						service << "port=" << _port << ";";
+					}
+				} catch (const ibrcommon::vinterface::interface_not_set&) {
 					service << "port=" << _port << ";";
-				}
-			} catch (const ibrcommon::vinterface::interface_not_set&) {
-				service << "port=" << _port << ";";
-			};
+				};
 
-			params = service.str();
+				params = service.str();
+			}
+			else
+			{
+				 throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			}
 		}
 
 		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
@@ -209,6 +214,7 @@ namespace dtn
 		{
 			_running = false;
 			_socket->shutdown();
+			stop();
 			join();
 		}
 

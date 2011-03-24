@@ -83,7 +83,19 @@
 # broadcast address is used.
 #
 #discovery_address = 224.0.0.1
+
+# Specify the timeout. If no further discovery announcement is received
+# for x seconds, the daemon assume that the node has went away.
 #discovery_timeout = 5
+
+# use short IPND beacons
+#discovery_short = 0
+
+# specify the discovery mechanism to use
+# 0 = DTN2 compatible discovery
+# 1 = IPND version 0
+# 2 = IPND version 1 (default)
+#discovery_version = 2
 
 #
 # a list (seperated by spaces) of names for convergence layer instances.
