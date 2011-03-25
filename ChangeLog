@@ -1,3 +1,7 @@
+2011-03-25
+--------------------------------------------------------
+ * handle interface up/down or address change by dynamic bind on addresses
+
 2011-03-23
 --------------------------------------------------------
  * new tool: dtnstream... stream data across a DTN!
