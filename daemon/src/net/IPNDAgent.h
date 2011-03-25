@@ -21,6 +21,7 @@
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/udpsocket.h>
 #include <ibrcommon/net/vsocket.h>
+#include <ibrcommon/net/LinkManager.h>
 #include <list>
 #include <map>
 
@@ -30,7 +31,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class IPNDAgent : public DiscoveryAgent
+		class IPNDAgent : public DiscoveryAgent, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
 			IPNDAgent(int port, const ibrcommon::vaddress &address);
@@ -43,6 +44,8 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+			void eventNotify(const ibrcommon::LinkManagerEvent &evt);
+
 		protected:
 			void sendAnnoucement(const u_int16_t &sn, std::list<DiscoveryService> &services);
 			virtual void componentRun();
@@ -51,6 +54,7 @@ namespace dtn
 			bool __cancellation();
 
 		private:
+			void __join_multicast_groups__(const ibrcommon::vinterface &iface);
 			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr, const unsigned int port);
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;

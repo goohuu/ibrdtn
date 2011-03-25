@@ -455,10 +455,24 @@ namespace dtn
 
 		void TCPConnection::clearQueue()
 		{
+			// requeue all bundles still queued
 			try {
 				while (true)
 				{
 					const dtn::data::BundleID id = _sender.getnpop();
+
+					// raise transfer abort event for all bundles without an ACK
+					dtn::routing::RequeueBundleEvent::raise(_node.getURI(), id);
+				}
+			} catch (const ibrcommon::QueueUnblockedException&) {
+				// queue emtpy
+			}
+
+			// requeue all bundles still in transit
+			try {
+				while (true)
+				{
+					const dtn::data::BundleID id = _sentqueue.getnpop();
 
 					if (_lastack > 0)
 					{

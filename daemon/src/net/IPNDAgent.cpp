@@ -129,6 +129,32 @@ namespace dtn
 			}
 		}
 
+		void IPNDAgent::eventNotify(const ibrcommon::LinkManagerEvent &evt)
+		{
+			if (evt.getType() == ibrcommon::LinkManagerEvent::EVENT_ADDRESS_ADDED)
+			{
+				if (_destination.isMulticast())
+				{
+					__join_multicast_groups__(evt.getInterface());
+				}
+			}
+		}
+
+		void IPNDAgent::__join_multicast_groups__(const ibrcommon::vinterface &iface)
+		{
+			// get all FD of IPv4 sockets matching this interface
+			std::list<int> fds = _socket.get(iface, ibrcommon::vaddress::VADDRESS_INET);
+
+			// iterate through all socket FD
+			for (std::list<int>::const_iterator iter = fds.begin();
+					iter != fds.end(); iter++)
+			{
+				// enable multicasting on the socket
+				ibrcommon::MulticastSocket ms(*iter);
+				ms.joinGroup(_destination, iface);
+			}
+		}
+
 		void IPNDAgent::componentUp()
 		{
 			DiscoveryAgent::componentUp();
@@ -151,19 +177,8 @@ namespace dtn
 
 				for (std::list<ibrcommon::vinterface>::const_iterator i_iter = _interfaces.begin(); i_iter != _interfaces.end(); i_iter++)
 				{
-					const ibrcommon::vinterface &iface = *i_iter;
-
-					// get all FD of IPv4 sockets matching this interface
-					std::list<int> fds = _socket.get(iface, ibrcommon::vaddress::VADDRESS_INET);
-
-					// iterate through all socket FD
-					for (std::list<int>::const_iterator iter = fds.begin();
-							iter != fds.end(); iter++)
-					{
-						// enable multicasting on the socket
-						ibrcommon::MulticastSocket ms(*iter);
-						ms.joinGroup(_destination, iface);
-					}
+					// enable multicast
+					__join_multicast_groups__(*i_iter);
 				}
 			}
 			else
@@ -171,10 +186,17 @@ namespace dtn
 				// bind on ALL interfaces
 				_socket.bind(_destination, _port, SOCK_DGRAM);
 			}
+
+			// set this socket as listener to socket events
+			_socket.setEventCallback(this);
 		}
 
 		void IPNDAgent::componentDown()
 		{
+			// unset this socket as listener to socket events
+			_socket.setEventCallback(NULL);
+
+			// shutdown the sockets
 			_socket.shutdown();
 			DiscoveryAgent::componentDown();
 		}
