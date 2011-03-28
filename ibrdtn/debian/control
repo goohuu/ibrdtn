@@ -1,7 +1,7 @@
 Source: ibrdtn
 Priority: extra
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
-Build-Depends: debhelper (>= 7.0.50~), autotools-dev, libssl-dev (>= 0.9.8), ibrcommon-dev (>= 0.6.0)
+Build-Depends: debhelper (>= 7.0.50~), autotools-dev, libssl-dev (>= 0.9.8), ibrcommon-dev (>= 0.6.0), cdbs (>= 0.4)
 Standards-Version: 3.8.4
 Section: libs
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
