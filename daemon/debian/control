@@ -2,7 +2,7 @@ Source: ibrdtnd
 Section: net
 Priority: extra
 Maintainer: Johannes Morgenroth <morgenroth@ibr.cs.tu-bs.de>
-Build-Depends: cdbs, debhelper (>= 7.0.50~), autotools-dev, ibrcommon-dev (>= 0.6.0), ibrdtn-dev (>= 0.6.0), libsqlite3-dev (>= 3.5.9), libcurl4-openssl-dev (>= 7.18.2), libdaemon-dev (>= 0.14)
+Build-Depends: cdbs, debhelper (>= 7.0.50~), autotools-dev, ibrcommon-dev (>= 0.6.0), ibrdtn-dev (>= 0.6.0), libsqlite3-dev (>= 3.5.9), libcurl4-openssl-dev (>= 7.18.2), libdaemon-dev (>= 0.14), cdbs (>= 0.4)
 Standards-Version: 3.8.4
 Homepage: http://www.ibr.cs.tu-bs.de/projects/ibr-dtn/
 
