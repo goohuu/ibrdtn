@@ -5,9 +5,9 @@
 . mkversion.sh $@
 
 # run libtool
-libtoolize
+libtoolize -i
 
 # run autotools
 aclocal
-automake --add-missing
-autoreconf
+automake --add-missing -c
+autoreconf -i
