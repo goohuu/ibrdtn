@@ -5,7 +5,7 @@
 . mkversion.sh $@
 
 # run libtool
-libtoolize -i
+libtoolize -i -c
 
 # run autotools
 aclocal
