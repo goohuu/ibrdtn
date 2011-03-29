@@ -56,7 +56,7 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_CHECK_FUNCS([gethostname socket])
 
-PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.14, [
+PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.10, [
 	use_daemon="yes"
 	AC_SUBST(DAEMON_CFLAGS)
 	AC_SUBST(DAEMON_LIBS)
@@ -92,7 +92,7 @@ AC_ARG_WITH(sqlite,
 		@<:@default=no@:>@]),
 	[
 	if test "x$with_sqlite" = "xyes"; then
-		PKG_CHECK_MODULES(SQLITE, sqlite3, [
+		PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.6, [
 			use_sqlite="yes"
 			AC_SUBST(SQLITE_CFLAGS)
 			AC_SUBST(SQLITE_LIBS)
