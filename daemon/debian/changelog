@@ -1,6 +1,8 @@
 ibrdtnd (0.6.1) stable; urgency=low
 
   * use libdaemon to daemonize into the background
+  * dynamic rebind for sockets bound on interfaces
+  * Fix: requeue bundles in transit on disconnection
 
  -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 21 Mar 2011 14:42:40 +0100
 

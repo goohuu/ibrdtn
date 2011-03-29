@@ -1,3 +1,9 @@
+ibrdtn (0.6.1) stable; urgency=low
+
+  * Dynamic rebind for sockets bound to interfaces.
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Tue, 29 Mar 2011 11:36:45 +0200
+
 ibrdtn (0.6.0) unstable; urgency=low
 
   * Bundle Security Protocol

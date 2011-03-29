@@ -1,3 +1,9 @@
+ibrdtn-tools (0.6.1) stable; urgency=low
+
+  * dtnstream application ... stream data across a DTN!
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Tue, 29 Mar 2011 11:38:26 +0200
+
 ibrdtn-tools (0.6.0) unstable; urgency=low
 
   * Bundle Security Protocol
