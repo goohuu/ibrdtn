@@ -1,10 +1,15 @@
 #!/bin/bash
 #
 
-# define default version
-MAJOR=0
-MINOR=7
-MICRO=svn
+# extract the latest version
+VERSION=`cat debian/changelog | head -n 1 | sed 's/[a-z\-\_]* (\(.*\)) .*$/\1/'`
+
+# ... and set it as default
+MAJOR=`echo ${VERSION} | sed 's/^\([0-9]*\).[0-9]*.[0-9]*$/\1/'`
+MINOR=`echo ${VERSION} | sed 's/^[0-9]*.\([0-9]*\).[0-9]*$/\1/'`
+MICRO=`echo ${VERSION} | sed 's/^[0-9]*.[0-9]*.\([0-9]*\)$/\1/'`
+
+echo "set version to ${MAJOR}.${MINOR}.${MICRO}"
 
 # create a version.inc file
 if [ -n "$1" ] && [ -n "$2" ]; then
