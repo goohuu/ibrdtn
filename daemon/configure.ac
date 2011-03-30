@@ -56,11 +56,13 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_CHECK_FUNCS([gethostname socket])
 
-PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.10, [
+PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
 	use_daemon="yes"
 	AC_SUBST(DAEMON_CFLAGS)
 	AC_SUBST(DAEMON_LIBS)
 	AC_DEFINE(HAVE_LIBDAEMON, [1], ["daemon library is available"])
+	AC_CHECK_LIB(daemon, daemon_reset_sigs)
+	AC_DEFINE(HAVE_DAEMON_RESET_SIGS, [1], ["daemon library has daemon_reset_sigs() and daemon_unblock_sigs() functions"])
 ], [
 	use_daemon="no"
 	AC_MSG_WARN([daemon library not found, daemonize features disabled])

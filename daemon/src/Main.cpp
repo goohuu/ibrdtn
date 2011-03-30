@@ -720,6 +720,7 @@ int main(int argc, char *argv[])
 		int ret = 0;
 		pid_t pid;
 
+#ifdef HAVE_DAEMON_RESET_SIGS
 		/* Reset signal handlers */
 		if (daemon_reset_sigs(-1) < 0) {
 			daemon_log(LOG_ERR, "Failed to reset all signal handlers: %s", strerror(errno));
@@ -731,6 +732,7 @@ int main(int argc, char *argv[])
 			daemon_log(LOG_ERR, "Failed to unblock all signals: %s", strerror(errno));
 			return 1;
 		}
+#endif
 
 		/* Set identification string for the daemon for both syslog and PID file */
 		daemon_pid_file_ident = daemon_log_ident = daemon_ident_from_argv0(argv[0]);
