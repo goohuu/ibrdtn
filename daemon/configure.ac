@@ -138,10 +138,22 @@ AC_ARG_WITH(lowpan,
 	use_lowpan="no"
 ])
 
+# Checks for extended api support
+AC_ARG_WITH(extended-api,
+	AS_HELP_STRING([--with-extended-api], [Build with extended API support
+		@<:@default=no@:>@]),
+	[
+	use_extapi="yes"
+	AC_DEFINE(HAVE_EXTENDED_API, [1], ["enable extended API support"])
+	],[
+	use_extapi="no"
+])
+
 AM_CONDITIONAL(CURL, test x$use_curl = xyes)
 AM_CONDITIONAL(SQLITE, test x$use_sqlite = xyes)
 AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)
 AM_CONDITIONAL(DAEMON, test x$use_daemon = xyes)
+AM_CONDITIONAL(EXTAPI, test x$use_extapi = xyes)
 
 dnl -----------------------------------------------
 dnl optional parameter: DTN security support
@@ -175,6 +187,7 @@ AC_CONFIG_FILES([Makefile \
 	src/routing/epidemic/Makefile \
 	src/routing/flooding/Makefile \
 	src/security/Makefile \
+	src/api/Makefile \
 	doc/Makefile \
 	man/Makefile \
 	etc/Makefile \

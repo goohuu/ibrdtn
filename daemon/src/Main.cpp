@@ -45,6 +45,11 @@
 #include "net/IPNDAgent.h"
 
 #include "ApiServer.h"
+
+#ifdef HAVE_EXTENDED_API
+#include "api/ExtendedApiServer.h"
+#endif
+
 #include "Configuration.h"
 #include "EchoWorker.h"
 #include "Notifier.h"
@@ -548,6 +553,8 @@ int __daemon_run(Configuration &conf)
 
 	if (conf.doAPI())
 	{
+		Configuration::NetConfig lo = conf.getAPIInterface();
+
 		try {
 			ibrcommon::File socket = conf.getAPISocket();
 
@@ -561,8 +568,6 @@ int __daemon_run(Configuration &conf)
 			}
 
 		} catch (const Configuration::ParameterNotSetException&) {
-			Configuration::NetConfig lo = conf.getAPIInterface();
-
 			try {
 				// instance a API server, first create a socket
 				components.push_back( new ApiServer(lo.interface, lo.port) );
@@ -572,6 +577,16 @@ int __daemon_run(Configuration &conf)
 				exit(-1);
 			}
 		}
+
+#ifdef HAVE_EXTENDED_API
+		try {
+			components.push_back( new dtn::api::ExtendedApiServer(lo.interface, lo.port) );
+			IBRCOMMON_LOGGER(info) << "Extended API initialized using tcp socket: " << lo.interface.toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
+		} catch (const ibrcommon::vsocket_exception&) {
+			IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.toString() << ":" << lo.port << ". Extended API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+			exit(-1);
+		}
+#endif
 	}
 	else
 	{

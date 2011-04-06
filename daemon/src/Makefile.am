@@ -25,6 +25,10 @@ if DTNSEC
 SUBDIRS += security
 endif
 
+if EXTAPI
+SUBDIRS += api
+endif
+
 INCLUDES = -I@top_srcdir@/src
 
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
@@ -57,6 +61,10 @@ libdaemon_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la
 
 if DTNSEC
 libdaemon_la_LIBADD += security/libsecurity.la
+endif
+
+if EXTAPI
+libdaemon_la_LIBADD += api/libapi.la
 endif
 
 dtnd_SOURCES = Main.cpp
