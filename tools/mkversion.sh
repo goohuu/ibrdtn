@@ -9,8 +9,6 @@ MAJOR=`echo ${VERSION} | sed 's/^\([0-9]*\).[0-9]*.[0-9]*$/\1/'`
 MINOR=`echo ${VERSION} | sed 's/^[0-9]*.\([0-9]*\).[0-9]*$/\1/'`
 MICRO=`echo ${VERSION} | sed 's/^[0-9]*.[0-9]*.\([0-9]*\)$/\1/'`
 
-echo "set version to ${MAJOR}.${MINOR}.${MICRO}"
-
 # create a version.inc file
 if [ -n "$1" ] && [ -n "$2" ]; then
 	MAJOR=$1
@@ -20,6 +18,8 @@ if [ -n "$1" ] && [ -n "$2" ]; then
 		MICRO=$3
 	fi
 fi
+
+echo "set version to ${MAJOR}.${MINOR}.${MICRO}"
 
 # write version to version.inc file
 echo "$MAJOR.$MINOR.$MICRO" > version.inc
