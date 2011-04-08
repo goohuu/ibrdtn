@@ -74,8 +74,10 @@ namespace dtn
 			else
 			{
 				// contact received event
-				_eid = BundleCore::local + "/" + header._localeid.getNode();
+				_eid = BundleCore::local + "/" + header._localeid.getNode() + header._localeid.getApplication();
 			}
+
+			IBRCOMMON_LOGGER_DEBUG(20) << "new client connected: " << _eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
 			_srv.connectionUp(this);
 		}
