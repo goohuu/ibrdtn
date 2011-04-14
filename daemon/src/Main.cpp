@@ -466,12 +466,7 @@ int __daemon_run(Configuration &conf)
 	{
 		// get the discovery port
 		int disco_port = conf.getDiscovery().port();
-
-		try {
-			ipnd = new dtn::net::IPNDAgent( disco_port, conf.getDiscovery().address() );
-		} catch (const Configuration::ParameterNotFoundException&) {
-			ipnd = new dtn::net::IPNDAgent( disco_port, ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, "255.255.255.255") );
-		}
+		bool multicast = false;
 
 		// collect all interfaces of convergence layer instances
 		std::set<ibrcommon::vinterface> interfaces;
@@ -483,10 +478,26 @@ int __daemon_run(Configuration &conf)
 			interfaces.insert(net.interface);
 		}
 
+		try {
+			const ibrcommon::vaddress addr = conf.getDiscovery().address();
+			multicast = addr.isMulticast();
+			ipnd = new dtn::net::IPNDAgent( disco_port, addr );
+		} catch (const Configuration::ParameterNotFoundException&) {
+			ipnd = new dtn::net::IPNDAgent( disco_port, ibrcommon::vaddress(ibrcommon::vaddress::VADDRESS_INET, "255.255.255.255") );
+		}
+
 		for (std::set<ibrcommon::vinterface>::const_iterator iter = interfaces.begin(); iter != interfaces.end(); iter++)
 		{
-			// add interfaces to discovery
-			ipnd->bind(*iter);
+			const ibrcommon::vinterface &i = (*iter);
+			if (i.empty() && multicast)
+			{
+				IBRCOMMON_LOGGER(warning) << "Multicast discovery will not work with bind on ANY interfaces." << IBRCOMMON_LOGGER_ENDL;
+			}
+			else
+			{
+				// add interfaces to discovery
+				ipnd->bind(*iter);
+			}
 		}
 
 		components.push_back(ipnd);
@@ -580,10 +591,10 @@ int __daemon_run(Configuration &conf)
 
 #ifdef HAVE_EXTENDED_API
 		try {
-			components.push_back( new dtn::api::ExtendedApiServer(lo.interface, lo.port) );
-			IBRCOMMON_LOGGER(info) << "Extended API initialized using tcp socket: " << lo.interface.toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
+			components.push_back( new dtn::api::ExtendedApiServer(lo.interface, lo.port - 1) );
+			IBRCOMMON_LOGGER(info) << "Extended API initialized using tcp socket: " << lo.interface.toString() << ":" << (lo.port - 1) << IBRCOMMON_LOGGER_ENDL;
 		} catch (const ibrcommon::vsocket_exception&) {
-			IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.toString() << ":" << lo.port << ". Extended API not initialized!" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.toString() << ":" << (lo.port - 1) << ". Extended API not initialized!" << IBRCOMMON_LOGGER_ENDL;
 			exit(-1);
 		}
 #endif

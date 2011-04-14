@@ -386,7 +386,23 @@ namespace dtn
 
 		Configuration::NetConfig Configuration::getAPIInterface()
 		{
-			return Configuration::NetConfig("local", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface("lo"), 4550);
+			size_t port = 4550;
+			std::string interface_name = "lo";
+
+			try {
+				port = _conf.read<size_t>("api_port");
+			} catch (const ConfigFile::key_not_found&) { };
+
+			try {
+				interface_name = _conf.read<std::string>("api_interface");
+			} catch (const ConfigFile::key_not_found&) { };
+
+			if (interface_name == "any")
+			{
+				return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(), port);
+			}
+
+			return Configuration::NetConfig("api", Configuration::NetConfig::NETWORK_TCP, ibrcommon::vinterface(interface_name), port);
 		}
 
 		ibrcommon::File Configuration::getAPISocket()

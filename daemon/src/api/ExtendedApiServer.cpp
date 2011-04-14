@@ -15,7 +15,7 @@ namespace dtn
 		ExtendedApiServer::ExtendedApiServer(const ibrcommon::vinterface &net, int port)
 		 : _srv()
 		{
-			_srv.bind(net, port - 1);
+			_srv.bind(net, port);
 		}
 
 		ExtendedApiServer::~ExtendedApiServer()
