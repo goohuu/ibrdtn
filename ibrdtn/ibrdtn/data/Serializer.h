@@ -13,6 +13,7 @@
 #include "ibrdtn/data/Dictionary.h"
 #include "ibrdtn/data/PrimaryBlock.h"
 #include "ibrdtn/data/Exceptions.h"
+#include "ibrdtn/data/BundleFragment.h"
 
 namespace dtn
 {
@@ -21,6 +22,7 @@ namespace dtn
 		class Bundle;
 		class Block;
 		class PrimaryBlock;
+		class PayloadBlock;
 
 		class Serializer
 		{
@@ -30,6 +32,11 @@ namespace dtn
 			virtual Serializer &operator<<(const dtn::data::Bundle &obj) = 0;
 			virtual Serializer &operator<<(const dtn::data::PrimaryBlock &obj) = 0;
 			virtual Serializer &operator<<(const dtn::data::Block &obj) = 0;
+			virtual Serializer &operator<<(const dtn::data::BundleFragment &obj)
+			{
+				(*this) << obj._bundle;
+				return (*this);
+			};
 
 			virtual size_t getLength(const dtn::data::Bundle &obj) = 0;
 			virtual size_t getLength(const dtn::data::PrimaryBlock &obj) const = 0;
@@ -98,12 +105,14 @@ namespace dtn
 			virtual Serializer &operator<<(const dtn::data::Bundle &obj);
 			virtual Serializer &operator<<(const dtn::data::PrimaryBlock &obj);
 			virtual Serializer &operator<<(const dtn::data::Block &obj);
+			virtual Serializer &operator<<(const dtn::data::BundleFragment &obj);
 
 			virtual size_t getLength(const dtn::data::Bundle &obj);
 			virtual size_t getLength(const dtn::data::PrimaryBlock &obj) const;
 			virtual size_t getLength(const dtn::data::Block &obj) const;
 
 		protected:
+			Serializer &serialize(const dtn::data::PayloadBlock& obj, size_t clip_offset, size_t clip_length);
 			void rebuildDictionary(const dtn::data::Bundle &obj);
 			bool isCompressable(const dtn::data::Bundle &obj) const;
 			std::ostream &_stream;

@@ -54,6 +54,21 @@ namespace dtn
 			return stream;
 		}
 
+		std::ostream& PayloadBlock::serialize(std::ostream &stream, size_t clip_offset, size_t clip_length) const
+		{
+			ibrcommon::BLOB::Reference blobref = _blobref;
+			ibrcommon::BLOB::iostream io = blobref.iostream();
+
+			try {
+				(*io).seekg(clip_offset, std::ios::beg);
+				ibrcommon::BLOB::copy(stream, *io, clip_length);
+			} catch (const ibrcommon::IOException &ex) {
+				throw dtn::SerializationFailedException(ex.what());
+			}
+
+			return stream;
+		}
+
 		std::istream& PayloadBlock::deserialize(std::istream &stream)
 		{
 			// lock the BLOB

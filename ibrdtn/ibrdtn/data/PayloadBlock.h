@@ -32,6 +32,15 @@ namespace dtn
 			virtual std::ostream &serialize(std::ostream &stream) const;
 			virtual std::istream &deserialize(std::istream &stream);
 
+			/**
+			 * serialize only a part of the payload
+			 * @param stream The stream to serialize to.
+			 * @param clip_offset The data offset of the payload.
+			 * @param clip_length The length of the data.
+			 * @return The previously given stream.
+			 */
+			std::ostream &serialize(std::ostream &stream, size_t clip_offset, size_t clip_length) const;
+
 		private:
 			ibrcommon::BLOB::Reference _blobref;
 		};

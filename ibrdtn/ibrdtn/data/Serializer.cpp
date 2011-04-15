@@ -5,6 +5,7 @@
 #include "ibrdtn/data/StatusReportBlock.h"
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
+#include "ibrdtn/data/PayloadBlock.h"
 #include <ibrcommon/refcnt_ptr.h>
 #include <ibrcommon/Logger.h>
 #include <list>
@@ -66,6 +67,57 @@ namespace dtn
 			{
 				const Block &b = (*(*iter));
 				(*this) << b;
+			}
+
+			return (*this);
+		}
+
+		Serializer& DefaultSerializer::operator<<(const dtn::data::BundleFragment &obj)
+		{
+			// rebuild the dictionary
+			rebuildDictionary(obj._bundle);
+
+			// check if the bundle header could be compressed
+			_compressable = isCompressable(obj._bundle);
+
+			PrimaryBlock prim = obj._bundle;
+			prim.set(dtn::data::PrimaryBlock::FRAGMENT, true);
+
+			// TODO: check if the remaining data length is >= obj._length
+			// set the real predicted payload length
+
+			prim._appdatalength = obj._length;
+			prim._fragmentoffset += obj._offset;
+
+			// serialize the primary block
+			(*this) << prim;
+
+			// serialize all secondary blocks
+			std::list<refcnt_ptr<Block> > list = obj._bundle._blocks._blocks;
+			bool post_payload = false;
+
+			for (std::list<refcnt_ptr<Block> >::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			{
+				const Block &b = (*(*iter));
+
+				try {
+					// test if this is the payload block
+					const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(b);
+
+					// serialize the clipped block
+					serialize(payload, obj._offset, obj._length);
+
+					// we had serialized the payload block
+					post_payload = true;
+				} catch (const std::bad_cast&) {
+					// serialize this block if
+					// ... this block if before the payload block and marked as replicated in every fragment
+					// ... this block if after the payload block and all remaining bytes of the payload block are included
+					if (post_payload || b.get(dtn::data::Block::REPLICATE_IN_EVERY_FRAGMENT))
+					{
+						(*this) << b;
+					}
+				}
 			}
 
 			return (*this);
@@ -252,6 +304,46 @@ namespace dtn
 
 			// write the payload of the block
 			obj.serialize(_stream);
+
+			return (*this);
+		}
+
+		Serializer& DefaultSerializer::serialize(const dtn::data::PayloadBlock& obj, size_t clip_offset, size_t clip_length)
+		{
+			_stream << obj._blocktype;
+			_stream << dtn::data::SDNV(obj._procflags);
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
+			// test: BLOCK_CONTAINS_EIDS => (_eids.size() > 0)
+			assert(!obj.get(Block::BLOCK_CONTAINS_EIDS) || (obj._eids.size() > 0));
+#endif
+
+			if (obj.get(Block::BLOCK_CONTAINS_EIDS))
+			{
+				_stream << SDNV(obj._eids.size());
+				for (std::list<dtn::data::EID>::const_iterator it = obj._eids.begin(); it != obj._eids.end(); it++)
+				{
+					pair<size_t, size_t> offsets;
+
+					if (_compressable)
+					{
+						offsets = (*it).getCompressed();
+					}
+					else
+					{
+						offsets = _dictionary.getRef(*it);
+					}
+
+					_stream << SDNV(offsets.first);
+					_stream << SDNV(offsets.second);
+				}
+			}
+
+			// write size of the payload in the block
+			_stream << SDNV(clip_length);
+
+			// now skip the <offset>-bytes and all bytes after <offset + length>
+			obj.serialize( _stream, clip_offset, clip_length );
 
 			return (*this);
 		}
