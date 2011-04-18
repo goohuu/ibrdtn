@@ -197,7 +197,7 @@ namespace dtn
 			/*
 			 *
 			 * TODO: reject a bundle if...
-			 * ... it is expired
+			 * ... it is expired (moved to validate(Bundle) to support AgeBlock for expiration)
 			 * ... already in the storage
 			 * ... a fragment of an already received bundle in the storage
 			 *
@@ -221,7 +221,7 @@ namespace dtn
 		{
 			/*
 			 *
-			 * TODO: reject a block if
+			 * reject a block if
 			 * ... it exceeds the payload limit
 			 *
 			 * throw dtn::data::DefaultDeserializer::RejectedException();
