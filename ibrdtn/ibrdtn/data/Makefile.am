@@ -1,7 +1,7 @@
 ## sub directory
 
-h_sources = Serializer.h AgeBlock.h Block.h Bundle.h BundleID.h BundleList.h BundleMerger.h BundleString.h CustodySignalBlock.h Dictionary.h DTNTime.h EID.h Exceptions.h ExtensionBlock.h MetaBundle.h PayloadBlock.h PrimaryBlock.h SDNV.h StatusReportBlock.h
-cc_sources = Serializer.cpp AgeBlock.cpp Block.cpp Bundle.cpp BundleID.cpp BundleList.cpp BundleMerger.cpp BundleString.cpp CustodySignalBlock.cpp Dictionary.cpp DTNTime.cpp EID.cpp ExtensionBlock.cpp MetaBundle.cpp PayloadBlock.cpp PrimaryBlock.cpp SDNV.cpp StatusReportBlock.cpp
+h_sources = Serializer.h AgeBlock.h Block.h Bundle.h BundleID.h BundleList.h BundleMerger.h BundleString.h CustodySignalBlock.h Dictionary.h DTNTime.h EID.h Exceptions.h ExtensionBlock.h MetaBundle.h PayloadBlock.h PrimaryBlock.h SDNV.h StatusReportBlock.h BundleFragment.h
+cc_sources = Serializer.cpp AgeBlock.cpp Block.cpp Bundle.cpp BundleID.cpp BundleList.cpp BundleMerger.cpp BundleString.cpp CustodySignalBlock.cpp Dictionary.cpp DTNTime.cpp EID.cpp ExtensionBlock.cpp MetaBundle.cpp PayloadBlock.cpp PrimaryBlock.cpp SDNV.cpp StatusReportBlock.cpp BundleFragment.cpp
 
 #Install the headers in a versioned directory
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/data

@@ -18,6 +18,7 @@ class TestSerializer : public CPPUNIT_NS :: TestFixture
 	CPPUNIT_TEST (serializer_cbhe01);
 	CPPUNIT_TEST (serializer_cbhe02);
 	CPPUNIT_TEST (serializer_bundle_length);
+	CPPUNIT_TEST (serializer_fragment_one);
 	CPPUNIT_TEST_SUITE_END ();
 
 public:
@@ -30,6 +31,8 @@ protected:
 	void serializer_cbhe02(void);
 
 	void serializer_bundle_length(void);
+
+	void serializer_fragment_one(void);
 };
 
 #endif /* TESTSERIALIZER_H_ */

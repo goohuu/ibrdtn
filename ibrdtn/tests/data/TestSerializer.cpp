@@ -12,6 +12,7 @@
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/Serializer.h>
+#include <ibrdtn/data/BundleFragment.h>
 #include <iostream>
 #include <sstream>
 
@@ -121,4 +122,48 @@ void TestSerializer::serializer_bundle_length(void)
 	ds << b;
 
 	CPPUNIT_ASSERT_EQUAL(ds.getLength(b), ss.str().length());
+}
+
+void TestSerializer::serializer_fragment_one(void)
+{
+	dtn::data::Bundle b;
+	b._source = dtn::data::EID("dtn://node1/app1");
+	b._destination = dtn::data::EID("dtn://node2/app2");
+	b._lifetime = 3600;
+	b._timestamp = 12345678;
+	b._sequencenumber = 1234;
+
+	std::stringstream ss;
+	dtn::data::DefaultSerializer ds(ss);
+
+	ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+
+	// generate some payload data
+	{
+		ibrcommon::BLOB::iostream ios = ref.iostream();
+		for (int i = 0; i < 100; i++)
+		{
+			(*ios) << "0123456789";
+		}
+	}
+
+	// add a payload block to the bundle
+	b.push_back(ref);
+
+	// serialize the bundle in fragments with only 100 bytes of payload
+	for (int i = 0; i < 10; i++)
+	{
+		ds << dtn::data::BundleFragment(b, i * 100, 100);
+	}
+
+	// jump to the first byte in the stringstream
+	ss.seekg(0);
+
+	for (int i = 0; i < 10; i++)
+	{
+		dtn::data::Bundle fb;
+		dtn::data::DefaultDeserializer(ss) >> fb;
+		CPPUNIT_ASSERT(fb.get(dtn::data::PrimaryBlock::FRAGMENT));
+		CPPUNIT_ASSERT_EQUAL(fb.getBlock<dtn::data::PayloadBlock>().getLength(), (size_t)100);
+	}
 }

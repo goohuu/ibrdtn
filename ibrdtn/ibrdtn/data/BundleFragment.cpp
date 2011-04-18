@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/BundleFragment.h"
+#include "ibrdtn/data/Bundle.h"
 
 namespace dtn
 {
