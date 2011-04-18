@@ -86,7 +86,7 @@ void ConfigurationTest::testGetAPIInterface()
 {
 	/* test signature () */
 	dtn::daemon::Configuration &conf = dtn::daemon::Configuration::getInstance();
-	CPPUNIT_ASSERT_EQUAL(conf.getAPIInterface().name, std::string("local"));
+	CPPUNIT_ASSERT_EQUAL(conf.getAPIInterface().name, std::string("api"));
 }
 
 void ConfigurationTest::testGetAPISocket()
