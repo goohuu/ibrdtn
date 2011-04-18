@@ -95,7 +95,15 @@ namespace dtn
 		std::string PrimaryBlock::toString() const
 		{
 			stringstream ss;
-			ss << "[" << _timestamp << "." << _sequencenumber << "] " << _source.getString() << " -> " << _destination.getString();
+			ss << "[" << _timestamp << "." << _sequencenumber;
+
+			if (get(FRAGMENT))
+			{
+				ss << "." << _fragmentoffset;
+			}
+
+			ss << "] " << _source.getString() << " -> " << _destination.getString();
+
 			return ss.str();
 		}
 
