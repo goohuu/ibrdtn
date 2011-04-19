@@ -71,6 +71,7 @@
 #include <sys/types.h>
 #include <syslog.h>
 #include <set>
+#include <pwd.h>
 
 using namespace dtn::core;
 using namespace dtn::daemon;
@@ -136,19 +137,32 @@ void sighandler(int signal)
 
 void switchUser(Configuration &config)
 {
-    try {
-        setuid( config.getUID() );
-        IBRCOMMON_LOGGER(info) << "Switching UID to " << config.getUID() << IBRCOMMON_LOGGER_ENDL;
-    } catch (const Configuration::ParameterNotSetException&) {
+	try {
+		// get the username if set
+		std::string username = config.getUser();
 
-    }
+		// resolve the username to a valid user id
+		struct passwd *pw = getpwnam(username.c_str());
 
-    try {
-        setuid( config.getGID() );
-        IBRCOMMON_LOGGER(info) << "Switching GID to " << config.getGID() << IBRCOMMON_LOGGER_ENDL;
-    } catch (const Configuration::ParameterNotSetException&) {
+		if (pw != NULL)
+		{
+			if (setuid( pw->pw_uid ) < 0) return;
+			setgid( pw->pw_gid );
 
-    }
+			IBRCOMMON_LOGGER(info) << "Switching user to " << username << IBRCOMMON_LOGGER_ENDL;
+			return;
+		}
+	} catch (const Configuration::ParameterNotSetException&) { }
+
+	try {
+		setuid( config.getUID() );
+		IBRCOMMON_LOGGER(info) << "Switching UID to " << config.getUID() << IBRCOMMON_LOGGER_ENDL;
+	} catch (const Configuration::ParameterNotSetException&) { }
+
+	try {
+		setgid( config.getGID() );
+		IBRCOMMON_LOGGER(info) << "Switching GID to " << config.getGID() << IBRCOMMON_LOGGER_ENDL;
+	} catch (const Configuration::ParameterNotSetException&) { }
 }
 
 void setGlobalVars(Configuration &config)
@@ -423,6 +437,17 @@ int __daemon_run(Configuration &conf)
 
 	// load the configuration file
 	conf.load();
+
+	// logfile output stream
+	ofstream logfile_stream;
+
+	try {
+		const ibrcommon::File &lf = conf.getLogger().getLogfile();
+		logfile_stream.open(lf.getPath().c_str(), std::ios::out | std::ios::app);
+		logfile_stream << "IBR-DTN daemon " << conf.version() << std::endl;
+		ibrcommon::Logger::addStream(logfile_stream, ~(ibrcommon::Logger::LOGGER_DEBUG), logopts);
+		IBRCOMMON_LOGGER(info) << "use logfile for output: " << lf.getPath() << IBRCOMMON_LOGGER_ENDL;
+	} catch (const Configuration::ParameterNotSetException&) { };
 
 	// switch the user is requested
 	switchUser(conf);

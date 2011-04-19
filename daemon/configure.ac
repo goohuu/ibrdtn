@@ -47,7 +47,7 @@ AC_SUBST(ibrdtn_CFLAGS)
 AC_SUBST(ibrdtn_LIBS)
 
 # Checks for header files.
-AC_CHECK_HEADERS([syslog.h])
+AC_CHECK_HEADERS([syslog.h pwd.h])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL

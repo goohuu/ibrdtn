@@ -288,6 +288,9 @@ namespace dtn
 			} catch (const ibrcommon::ConfigFile::file_not_found&) {
 				IBRCOMMON_LOGGER(info) << "Using default settings. Call with --help for options." << IBRCOMMON_LOGGER_ENDL;
 				_conf = ConfigFile();
+
+				// set the default user to nobody
+				_conf.add<std::string>("user", "nobody");
 			}
 
 			// load all configuration extensions
@@ -308,8 +311,12 @@ namespace dtn
 		{
 		}
 
-		void Configuration::Logger::load(const ibrcommon::ConfigFile&)
+		void Configuration::Logger::load(const ibrcommon::ConfigFile &conf)
 		{
+			try {
+				_logfile = conf.read<std::string>("logfile");
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+			}
 		}
 
 		void Configuration::Debug::load(const ibrcommon::ConfigFile&)
@@ -582,19 +589,28 @@ namespace dtn
 			}
 		}
 
-		unsigned int Configuration::getUID()
+		const std::string Configuration::getUser() const
 		{
 			try {
-				return _conf.read<unsigned int>("user");
+				return _conf.read<std::string>("user");
 			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotSetException();
 			}
 		}
 
-		unsigned int Configuration::getGID()
+		unsigned int Configuration::getUID() const
 		{
 			try {
-				return _conf.read<unsigned int>("group");
+				return _conf.read<unsigned int>("uid");
+			} catch (const ConfigFile::key_not_found&) {
+				throw ParameterNotSetException();
+			}
+		}
+
+		unsigned int Configuration::getGID() const
+		{
+			try {
+				return _conf.read<unsigned int>("gid");
 			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotSetException();
 			}
@@ -815,6 +831,12 @@ namespace dtn
 		bool Configuration::Logger::quiet() const
 		{
 			return _quiet;
+		}
+
+		const ibrcommon::File& Configuration::Logger::getLogfile() const
+		{
+			if (_logfile.getPath() == "") throw Configuration::ParameterNotSetException();
+			return _logfile;
 		}
 
 		bool Configuration::Logger::display_timestamps() const

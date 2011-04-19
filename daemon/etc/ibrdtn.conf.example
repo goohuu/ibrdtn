@@ -23,8 +23,9 @@
 #limit_blocksize = 1.3G
 
 # set the user and group for the daemon
-# user = 1
-# group = 1
+#user = nobody
+#uid = 1
+#gid = 1
 
 # bind API to a named socket instead of an interface
 #api_socket = /tmp/ibrdtn.sock
