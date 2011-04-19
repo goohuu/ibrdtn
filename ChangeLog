@@ -1,3 +1,17 @@
+2011-04-19
+--------------------------------------------------------
+ * Workaround for Logging to files
+ * Define a logfile in the configuration with "logfile"
+ * Define a username with "user"
+ * Define user id and group id with "uid" and "gid"
+
+2011-04-15
+--------------------------------------------------------
+ * Fix: Threading in ibrcommon (Thanks to Ke Meng)
+   * sometimes dtnsend do not return
+   * Failed connections stay unconnected forever
+   * Bundles are not retransmitted after a failed connection
+
 2011-03-25
 --------------------------------------------------------
  * handle interface up/down or address change by dynamic bind on addresses
