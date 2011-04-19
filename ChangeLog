@@ -1,5 +1,6 @@
 2011-04-19
 --------------------------------------------------------
+ * HTTPConvergenceLayer by Robert Heitz
  * Workaround for Logging to files
  * Define a logfile in the configuration with "logfile"
  * Define a username with "user"
