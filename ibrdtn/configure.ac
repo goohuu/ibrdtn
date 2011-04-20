@@ -118,7 +118,33 @@ AC_ARG_WITH(dtnsec,
 	with_dtnsec="no"
 ])
 
+dnl -----------------------------------------------
+dnl optional parameter: compression support
+dnl -----------------------------------------------
+
+AC_ARG_WITH(compression,
+	AS_HELP_STRING([--with-compression], [build with compression support
+		@<:@default=no@:>@]),
+	[
+	if test "x$with_compression" = "xyes"; then
+		PKG_CHECK_MODULES(ZLIB, zlib, [
+			AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
+			AC_DEFINE(HAVE_ZLIB, [1], ["zlib library is available"])
+			AC_SUBST(ZLIB_CFLAGS)
+			AC_SUBST(ZLIB_LIBS)
+		], [
+			with_compression="no"
+			AC_MSG_WARN([compression enabled, but zlib libraries are not found. Compression extensions are disabled.])
+		])
+	else
+		with_compression="no"
+	fi
+	],[
+	with_compression="no"
+])
+
 AM_CONDITIONAL(DTNSEC, test x$with_dtnsec = xyes)
+AM_CONDITIONAL(COMPRESSION, test x$with_compression = xyes)
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
