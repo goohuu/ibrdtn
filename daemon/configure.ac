@@ -149,6 +149,24 @@ AC_ARG_WITH(extended-api,
 	use_extapi="no"
 ])
 
+dnl -----------------------------------------------
+dnl optional parameter: compression support
+dnl -----------------------------------------------
+
+AC_ARG_WITH(compression,
+	AS_HELP_STRING([--with-compression], [build with compression support
+		@<:@default=no@:>@]),
+	[
+	if test "x$with_compression" = "xyes"; then
+		AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
+	else
+		with_compression="no"
+	fi
+	],[
+	with_compression="no"
+])
+
+AM_CONDITIONAL(COMPRESSION, test x$with_compression = xyes)
 AM_CONDITIONAL(CURL, test x$use_curl = xyes)
 AM_CONDITIONAL(SQLITE, test x$use_sqlite = xyes)
 AM_CONDITIONAL(LOWPAN, test x$use_lowpan = xyes)

@@ -88,7 +88,7 @@ namespace dtn
 			}
 
 			// add a compressed payload block in front of the old payload block
-			dtn::data::CompressedPayloadBlock &cpb = b.insert<CompressedPayloadBlock>(p);
+			dtn::data::CompressedPayloadBlock &cpb = b.push_front<CompressedPayloadBlock>();
 
 			// set cpb values
 			cpb.setAlgorithm(alg);

@@ -5,6 +5,7 @@
  *      Author: morgenro
  */
 
+#include "config.h"
 #include "ClientHandler.h"
 #include "Configuration.h"
 #include "core/GlobalEvent.h"
@@ -20,6 +21,10 @@
 
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
+#endif
+
+#ifdef WITH_COMPRESSION
+#include <ibrdtn/data/CompressedPayloadBlock.h>
 #endif
 
 using namespace dtn::data;
@@ -211,6 +216,18 @@ namespace dtn
 						}
 					}
 
+#ifdef WITH_COMPRESSION
+					// if the compression bit is set, then compress the bundle
+					if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
+					{
+						try {
+							dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+						} catch (const ibrcommon::Exception &ex) {
+							IBRCOMMON_LOGGER(warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						};
+					}
+#endif
+
 #ifdef WITH_BUNDLE_SECURITY
 					// if the encrypt bit is set, then try to encrypt the bundle
 					if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
@@ -315,18 +332,8 @@ namespace dtn
 				{
 					dtn::data::Bundle bundle = getnpop(true);
 
-#ifdef WITH_BUNDLE_SECURITY
-					// try to decrypt the bundle
-					try {
-						dtn::security::SecurityManager::getInstance().decrypt(bundle);
-					} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-						// decrypt needed, but no key is available
-						IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
-					} catch (const dtn::security::SecurityManager::DecryptException &ex) {
-						// decrypt failed
-						IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-					}
-#endif
+					// process the bundle block (security, compression, ...)
+					dtn::core::BundleCore::processBlocks(bundle);
 
 					// enable cancellation during transmission
 					{

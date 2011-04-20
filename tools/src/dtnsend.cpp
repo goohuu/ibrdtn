@@ -34,6 +34,7 @@ void print_help()
 	cout << " --encrypt     request encryption on the bundle layer" << endl;
 	cout << " --sign        request signature on the bundle layer" << endl;
 	cout << " --custody     request custody transfer of the bundle" << endl;
+	cout << " --compression request compression of the payload" << endl;
 
 }
 
@@ -51,6 +52,7 @@ int main(int argc, char *argv[])
 	bool bundle_encryption = false;
 	bool bundle_signed = false;
 	bool bundle_custody = false;
+	bool bundle_compression = false;
 
 //	ibrcommon::Logger::setVerbosity(99);
 //	ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL);
@@ -80,6 +82,10 @@ int main(int argc, char *argv[])
 			else if (arg == "--custody")
 			{
 				bundle_custody = true;
+			}
+			else if (arg == "--compression")
+			{
+				bundle_compression = true;
 			}
 			else if (arg == "--src" && argc > i)
 			{
@@ -227,6 +233,9 @@ int main(int argc, char *argv[])
 						// enable custody transfer if requested
 						if (bundle_custody) b.requestCustodyTransfer();
 
+						// enable compression
+						if (bundle_compression) b.requestCompression();
+
 						// set the lifetime
 						b.setLifetime(lifetime);
 
@@ -258,6 +267,9 @@ int main(int argc, char *argv[])
 
 						// enable custody transfer if requested
 						if (bundle_custody) b.requestCustodyTransfer();
+
+						// enable compression
+						if (bundle_compression) b.requestCompression();
 
 						// set the lifetime
 						b.setLifetime(lifetime);

@@ -69,6 +69,8 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+			static void processBlocks(dtn::data::Bundle &b);
+
 		protected:
 			virtual void componentUp();
 			virtual void componentDown();

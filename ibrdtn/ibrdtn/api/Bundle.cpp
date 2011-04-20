@@ -81,6 +81,11 @@ namespace dtn
 			_b.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, true);
 		}
 
+		void Bundle::requestCompression()
+		{
+			_b.set(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION, true);
+		}
+
 		bool Bundle::statusVerified()
 		{
 			return _b.get(dtn::data::PrimaryBlock::DTNSEC_STATUS_VERIFIED);

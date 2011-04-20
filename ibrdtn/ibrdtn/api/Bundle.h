@@ -112,6 +112,11 @@ namespace dtn
 			void requestSigned();
 
 			/**
+			 * Set the request compression flag.
+			 */
+			void requestCompression();
+
+			/**
 			 * Return the state of the verified bit. This is set, if the daemon
 			 * has verified the signature of this bundle successfully.
 			 */

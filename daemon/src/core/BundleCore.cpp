@@ -20,6 +20,11 @@
 
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
+#include <ibrdtn/security/PayloadConfidentialBlock.h>
+#endif
+
+#ifdef WITH_COMPRESSION
+#include <ibrdtn/data/CompressedPayloadBlock.h>
 #endif
 
 using namespace dtn::data;
@@ -291,6 +296,45 @@ namespace dtn
 		const std::string BundleCore::getName() const
 		{
 			return "BundleCore";
+		}
+
+		void BundleCore::processBlocks(dtn::data::Bundle &b)
+		{
+			// walk through the block and process them when needed
+			const std::list<const dtn::data::Block*> blist = b.getBlocks();
+
+			for (std::list<const dtn::data::Block*>::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
+			{
+				const dtn::data::Block &block = (**iter);
+				switch (block.getType())
+				{
+#ifdef WITH_BUNDLE_SECURITY
+					case dtn::security::PayloadConfidentialBlock::BLOCK_TYPE:
+					{
+						// try to decrypt the bundle
+						try {
+							dtn::security::SecurityManager::getInstance().decrypt(b);
+						} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+							// decrypt needed, but no key is available
+							IBRCOMMON_LOGGER(warning) << "No key available for decrypt bundle." << IBRCOMMON_LOGGER_ENDL;
+						} catch (const dtn::security::SecurityManager::DecryptException &ex) {
+							// decrypt failed
+							IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+						}
+					}
+#endif
+
+#ifdef WITH_COMPRESSION
+					case dtn::data::CompressedPayloadBlock::BLOCK_TYPE:
+					{
+						// try to decompress the bundle
+						try {
+							dtn::data::CompressedPayloadBlock::extract(b);
+						} catch (const ibrcommon::Exception&) { };
+					}
+#endif
+				}
+			}
 		}
 	}
 }
