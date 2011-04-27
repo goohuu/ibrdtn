@@ -53,7 +53,9 @@ daemon_SOURCES =  ApiServer.cpp \
 				Notifier.cpp \
 				Notifier.h \
 				StatisticLogger.h \
-				StatisticLogger.cpp
+				StatisticLogger.cpp \
+				CapsuleWorker.cpp \
+				CapsuleWorker.h
 
 noinst_LTLIBRARIES = libdaemon.la
 libdaemon_la_SOURCES= $(daemon_SOURCES)

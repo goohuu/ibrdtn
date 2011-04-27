@@ -52,6 +52,7 @@
 
 #include "Configuration.h"
 #include "EchoWorker.h"
+#include "CapsuleWorker.h"
 #include "Notifier.h"
 #include "DevNull.h"
 #include "StatisticLogger.h"
@@ -695,6 +696,9 @@ int __daemon_run(Configuration &conf)
 
 	// add echo module
 	EchoWorker echo;
+
+	// add bundle-in-bundle endpoint
+	CapsuleWorker capsule;
 
 	// add DevNull module
 	DevNull devnull;

@@ -1,6 +1,9 @@
 #include "ibrdtn/utils/Utils.h"
 #include "ibrcommon/data/BLOB.h"
 #include "ibrdtn/data/Exceptions.h"
+#include "ibrdtn/data/PayloadBlock.h"
+#include "ibrdtn/utils/Clock.h"
+
 #include <math.h>
 
 namespace dtn
@@ -55,166 +58,113 @@ namespace dtn
 			return value * pi / 180;
 		 }
 
-//		dtn::data::CustodySignalBlock* Utils::getCustodySignalBlock(const dtn::data::Bundle &bundle)
-//		{
-//			const std::list<dtn::data::Block*> blocks = bundle.getBlocks();
-//			std::list<dtn::data::Block*>::const_iterator iter = blocks.begin();
-//
-//			while (iter != blocks.end())
-//			{
-//				dtn::data::CustodySignalBlock *block = dynamic_cast<dtn::data::CustodySignalBlock*>(*iter);
-//				if (block != NULL) return block;
-//			}
-//
-//			return NULL;
-//		}
-//
-//		dtn::data::StatusReportBlock* Utils::getStatusReportBlock(const dtn::data::Bundle &bundle)
-//		{
-//			const list<dtn::data::Block*> blocks = bundle.getBlocks();
-//			list<dtn::data::Block*>::const_iterator iter = blocks.begin();
-//
-//			while (iter != blocks.end())
-//			{
-//				dtn::data::StatusReportBlock *block = dynamic_cast<dtn::data::StatusReportBlock*>(*iter);
-//				if (block != NULL) return block;
-//			}
-//
-//			return NULL;
-//		}
-//
-//		dtn::data::PayloadBlock* Utils::getPayloadBlock(const dtn::data::Bundle &bundle)
-//		{
-//			const list<dtn::data::Block*> blocks = bundle.getBlocks();
-//			list<dtn::data::Block*>::const_iterator iter = blocks.begin();
-//
-//			while (iter != blocks.end())
-//			{
-//				dtn::data::PayloadBlock *payload = dynamic_cast<dtn::data::PayloadBlock*>(*iter);
-//				if (payload != NULL) return payload;
-//			}
-//
-//			return NULL;
-//		}
+		void Utils::encapsule(dtn::data::Bundle &capsule, const std::list<dtn::data::Bundle> &bundles)
+		{
+			bool custody = false;
+			size_t exp_time = 0;
 
-//		pair<dtn::data::PayloadBlock*, dtn::data::PayloadBlock*> Utils::split(dtn::data::PayloadBlock *block, size_t split_position)
-//		{
-//			const ibrcommon::BLOB::Reference b = block->getBLOB::Reference();
-//			pair<ibrcommon::BLOB::Reference, ibrcommon::BLOB::Reference> refpair = b.split(split_position);
-//
-//			dtn::data::PayloadBlock *p1 = new dtn::data::PayloadBlock(refpair.first);
-//			dtn::data::PayloadBlock *p2 = new dtn::data::PayloadBlock(refpair.second);
-//
-//			return make_pair(p1, p2);
-//		}
-//
-//		bool Utils::compareFragments(const dtn::data::Bundle &first, const dtn::data::Bundle &second)
-//		{
-//			// if the offset of the first bundle is lower than the second...
-//			if (first._fragmentoffset < second._fragmentoffset)
-//			{
-//				return true;
-//			}
-//			else
-//			{
-//				return false;
-//			}
-//		}
+			try {
+				const dtn::data::PayloadBlock &payload = capsule.getBlock<dtn::data::PayloadBlock>();
 
-//		dtn::data::Bundle Utils::merge(dtn::data::Bundle &destination, const dtn::data::Bundle &source)
-//		{
-//			if (!(destination._procflags & dtn::data::Bundle::FRAGMENT))
-//			{
-//				throw dtn::exceptions::FragmentationException("At least one of the bundles isn't a fragment.");
-//			}
-//
-//			if (!(source._procflags & dtn::data::Bundle::FRAGMENT))
-//			{
-//				throw dtn::exceptions::FragmentationException("At least one of the bundles isn't a fragment.");
-//			}
-//
-//			// check that they belongs together
-//			if (( destination._timestamp != source._timestamp ) ||
-//				( destination._sequencenumber != source._sequencenumber ) ||
-//				( destination._lifetime != source._lifetime ) ||
-//				( destination._appdatalength != source._appdatalength ) ||
-//				( destination._source != source._source ) )
-//			{
-//				// exception
-//				throw dtn::exceptions::FragmentationException("This fragments don't belongs together.");
-//			}
-//
-//			// checks complete, now merge the blocks
-//			dtn::data::PayloadBlock *payload1 = Utils::getPayloadBlock( destination );
-//			dtn::data::PayloadBlock *payload2 = Utils::getPayloadBlock( source );
-//
-//			// TODO: copy blocks other than the payload block!
-//
-//			unsigned int endof1 = destination._fragmentoffset + payload1->getBLOBReference().getSize();
-//
-//			if (endof1 < source._fragmentoffset)
-//			{
-//				// this aren't adjacency fragments
-//				throw dtn::exceptions::FragmentationException("This aren't adjacency fragments and can't be merged.");
-//			}
-//
-//			// relative offset of payload1 to payload2
-//			unsigned int p2offset = source._fragmentoffset - destination._fragmentoffset;
-//
-//			// append the payload of fragment2 at the end of fragment1
-//			ibrcommon::BLOBReference ref = payload2->getBLOBReference();
-//			payload1->getBLOBReference().append( ref );
-//
-//			size_t payload_s = payload1->getBLOBReference().getSize();
-//
-//			// if the bundle is complete return a non-fragmented bundle instead of the fragment
-//			if (payload_s == destination._appdatalength)
-//			{
-//				// remove the fragment fields of the bundle data
-//				destination._procflags &= ~(dtn::data::Bundle::FRAGMENT);
-//			}
-//
-//			return destination;
-//		}
+				// get the stream object of the payload
+				ibrcommon::BLOB::Reference ref = payload.getBLOB();
 
-//		dtn::data::Bundle Utils::merge(std::list<dtn::data::Bundle> &bundles)
-//		{
-//			// no bundle, raise a exception
-//			if (bundles.size() <= 1)
-//			{
-//				throw dtn::exceptions::FragmentationException("None or only one item in the list.");
-//			}
-//
-//			// sort the fragments
-//			bundles.sort(Utils::compareFragments);
-//
-//			// take a copy of the first bundle as base and merge it with the others
-//			dtn::data::Bundle first = bundles.front();
-//			bundles.pop_front();
-//			dtn::data::Bundle second = bundles.front();
-//			dtn::data::Bundle bundle;
-//
-//			try {
-//				// the first merge creates a new bundle object
-//				bundle = merge(first, second);
-//				bundles.pop_front();
-//			} catch (const exceptions::FragmentationException&) {
-//				bundles.push_front(first);
-//				throw ex;
-//			}
-//
-//			if (bundle._procflags & dtn::data::Bundle::FRAGMENT)
-//			{
-//				// put the new fragment into the list
-//				bundles.push_back(bundle);
-//
-//				// call merge recursive
-//				return merge(bundles);
-//			}
-//			else
-//			{
-//				return bundle;
-//			}
-//		}
+				// clear the hole payload
+				ref.iostream().clear();
+
+				// encapsule the bundles into the BLOB
+				Utils::encapsule(ref, bundles);
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+				ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+
+				// encapsule the bundles into the BLOB
+				Utils::encapsule(ref, bundles);
+
+				// add a new payload block
+				capsule.push_back(ref);
+			}
+
+			// get maximum lifetime
+			for (std::list<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				const dtn::data::Bundle &b = (*iter);
+
+				// get the expiration time of this bundle
+				size_t expt = dtn::utils::Clock::getExpireTime(b);
+
+				// if this bundle expire later then use this lifetime
+				if (expt > exp_time) exp_time = expt;
+
+				// set custody to true if at least one bundle has custody requested
+				if (b.get(dtn::data::PrimaryBlock::CUSTODY_REQUESTED)) custody = true;
+			}
+
+			// set the bundle flags
+			capsule.set(dtn::data::PrimaryBlock::CUSTODY_REQUESTED, custody);
+
+			// set the new lifetime
+			capsule._lifetime = exp_time - capsule._timestamp;
+		}
+
+		void Utils::encapsule(ibrcommon::BLOB::Reference &ref, const std::list<dtn::data::Bundle> &bundles)
+		{
+			ibrcommon::BLOB::iostream stream = ref.iostream();
+
+			// the number of encapsulated bundles
+			dtn::data::SDNV elements(bundles.size());
+			(*stream) << elements;
+
+			// create a serializer
+			dtn::data::DefaultSerializer serializer(*stream);
+
+			// write bundle offsets
+			std::list<dtn::data::Bundle>::const_iterator iter = bundles.begin();
+
+			for (size_t i = 0; i < (bundles.size() - 1); i++, iter++)
+			{
+				const dtn::data::Bundle &b = (*iter);
+				(*stream) << dtn::data::SDNV(serializer.getLength(b));
+			}
+
+			// serialize all bundles
+			for (std::list<dtn::data::Bundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			{
+				serializer << (*iter);
+			}
+		}
+
+		void Utils::decapsule(const dtn::data::Bundle &capsule, std::list<dtn::data::Bundle> &bundles)
+		{
+			try {
+				const dtn::data::PayloadBlock &payload = capsule.getBlock<dtn::data::PayloadBlock>();
+				ibrcommon::BLOB::iostream stream = payload.getBLOB().iostream();
+
+				// read the number of bundles
+				dtn::data::SDNV nob; (*stream) >> nob;
+
+				// read all offsets
+				for (size_t i = 0; i < (nob.getValue() - 1); i++)
+				{
+					dtn::data::SDNV offset; (*stream) >> offset;
+				}
+
+				// create a deserializer for all bundles
+				dtn::data::DefaultDeserializer deserializer(*stream);
+				dtn::data::Bundle b;
+
+				try {
+					// read all bundles
+					for (size_t i = 0; i < nob.getValue(); i++)
+					{
+						// deserialize the next bundle
+						deserializer >> b;
+
+						// add the bundle to the list
+						bundles.push_back(b);
+					}
+				}
+				catch (const dtn::InvalidDataException &ex) { };
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+		}
 	}
 }

@@ -1,3 +1,8 @@
+2011-04-27
+--------------------------------------------------------
+ * Bundle-in-Bundle support based on
+   http://tools.ietf.org/html/draft-irtf-dtnrg-bundle-encapsulation-06
+
 2011-04-20
 --------------------------------------------------------
  * Experimental support for compressed bundle payload
