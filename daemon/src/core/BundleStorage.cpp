@@ -50,7 +50,7 @@ namespace dtn
 			signal.setMatch(meta);
 
 			// set accepted
-			signal._status |= 1;
+			signal._custody_accepted = true;
 
 			custody_bundle.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 			custody_bundle._destination = meta.custodian;
@@ -65,7 +65,7 @@ namespace dtn
 			return dtn::core::BundleCore::local;
 		}
 
-		void BundleStorage::rejectCustody(const dtn::data::MetaBundle &meta)
+		void BundleStorage::rejectCustody(const dtn::data::MetaBundle &meta, dtn::data::CustodySignalBlock::REASON_CODE reason)
 		{
 			if (!meta.get(Bundle::CUSTODY_REQUESTED))
 				throw ibrcommon::Exception("custody transfer is not requested for this bundle.");
@@ -81,6 +81,9 @@ namespace dtn
 
 			// set the bundle to match
 			signal.setMatch(meta);
+
+			// set reason code
+			signal._reason = reason;
 
 			b._destination = meta.custodian;
 			b._source = BundleCore::local;

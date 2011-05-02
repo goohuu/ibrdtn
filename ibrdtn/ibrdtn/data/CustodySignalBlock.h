@@ -23,6 +23,19 @@ namespace dtn
 		class CustodySignalBlock : public Block
 		{
 		public:
+			enum REASON_CODE
+			{
+				NO_ADDITIONAL_INFORMATION = 0x00,
+				RESERVED_01 = 0x01,
+				RESERVED_02 = 0x02,
+				REDUNDANT_RECEPTION = 0x03,
+				DEPLETED_STORAGE = 0x04,
+				DESTINATION_ENDPOINT_ID_UNINTELLIGIBLE = 0x05,
+				NO_KNOWN_ROUTE_TO_DESTINATION_FROM_HERE = 0x06,
+				NO_TIMELY_CONTACT_WITH_NEXT_NODE_ON_ROUTE = 0x07,
+				BLOCK_UNINTELLIGIBLE = 0x08
+			};
+
 			CustodySignalBlock();
 			virtual ~CustodySignalBlock();
 
@@ -35,7 +48,9 @@ namespace dtn
 			virtual std::istream &deserialize(std::istream &stream);
 
 			char _admfield;
-			char _status;
+			//char _status;
+			bool _custody_accepted;
+			REASON_CODE _reason;
 			SDNV _fragment_offset;
 			SDNV _fragment_length;
 			DTNTime _timeofsignal;

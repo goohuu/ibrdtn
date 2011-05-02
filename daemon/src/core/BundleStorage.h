@@ -11,6 +11,7 @@
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/MetaBundle.h>
+#include <ibrdtn/data/CustodySignalBlock.h>
 #include <ibrcommon/data/BloomFilter.h>
 
 #include <stdexcept>
@@ -150,7 +151,7 @@ namespace dtn
 			 * with a custody reject message.
 			 * @param bundle
 			 */
-			void rejectCustody(const dtn::data::MetaBundle &meta);
+			void rejectCustody(const dtn::data::MetaBundle &meta, dtn::data::CustodySignalBlock::REASON_CODE reason = dtn::data::CustodySignalBlock::NO_ADDITIONAL_INFORMATION);
 
 		protected:
 			/**

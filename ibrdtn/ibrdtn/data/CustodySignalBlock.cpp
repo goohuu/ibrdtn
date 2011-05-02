@@ -16,7 +16,7 @@ namespace dtn
 	namespace data
 	{
 		CustodySignalBlock::CustodySignalBlock()
-		 : Block(dtn::data::PayloadBlock::BLOCK_TYPE), _admfield(32), _status(0), _fragment_offset(0),
+		 : Block(dtn::data::PayloadBlock::BLOCK_TYPE), _admfield(32), _custody_accepted(false), _reason(NO_ADDITIONAL_INFORMATION), _fragment_offset(0),
 		 _fragment_length(0), _timeofsignal(), _bundle_timestamp(0), _bundle_sequence(0)
 		{
 		}
@@ -30,7 +30,7 @@ namespace dtn
 			// determine the block size
 			size_t len = 0;
 			len += sizeof(_admfield);
-			len += sizeof(_status);
+			len += sizeof(char); // status
 
 			if ( _admfield & 0x01 )
 			{
@@ -51,7 +51,14 @@ namespace dtn
 		std::istream& CustodySignalBlock::deserialize(std::istream &stream)
 		{
 			stream >> _admfield;
-			stream >> _status;
+
+			char status; stream >> status;
+
+			// decode custody acceptance
+			_custody_accepted = (status & 0x01);
+
+			// decode reason flag
+			_reason = REASON_CODE(status >> 1);
 
 			if ( _admfield & 0x01 )
 			{
@@ -77,7 +84,15 @@ namespace dtn
 		{
 			// write the content
 			stream << _admfield;
-			stream << _status;
+
+			// encode reason flag
+			char status = (_reason << 1);
+
+			// encode custody acceptance
+			if (_custody_accepted) status |= 0x01;
+
+			// write the status byte
+			stream << status;
 
 			if ( _admfield & 0x01 )
 			{
