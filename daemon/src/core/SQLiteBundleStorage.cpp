@@ -415,13 +415,15 @@ namespace dtn
 
 			for(std::set<dtn::data::BundleID>::const_iterator iter = corrupt_bundle_ids.begin(); iter != corrupt_bundle_ids.end(); iter++)
 			{
-				const dtn::data::BundleID &id = (*iter);
+				try {
+					const dtn::data::BundleID &id = (*iter);
 
-				// get meta data of this bundle
-				const dtn::data::MetaBundle m = get_meta(id);
+					// get meta data of this bundle
+					const dtn::data::MetaBundle m = get_meta(id);
 
-				// remove the hole bundle
-				remove(id);
+					// remove the hole bundle
+					remove(id);
+				} catch (const dtn::core::SQLiteBundleStorage::SQLiteQueryException&) { };
 			}
 
 			// delete block files still in the blockfile list
