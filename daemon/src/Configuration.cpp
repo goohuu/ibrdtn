@@ -523,7 +523,7 @@ namespace dtn
 					{
 						case Configuration::NetConfig::NETWORK_HTTP:
 						{
-							Configuration::NetConfig::NetConfig nc(netname, type,
+							Configuration::NetConfig nc(netname, type,
 									conf.read<std::string>(key_address, "http://localhost/"),
 									conf.read<std::string>(key_discovery, "yes") == "no");
 
@@ -538,11 +538,11 @@ namespace dtn
 
 							try {
 								ibrcommon::vinterface interface(conf.read<std::string>(key_interface));
-								Configuration::NetConfig::NetConfig nc(netname, type, interface, port, discovery);
+								Configuration::NetConfig nc(netname, type, interface, port, discovery);
 								_interfaces.push_back(nc);
 							} catch (const ConfigFile::key_not_found&) {
 								ibrcommon::vaddress addr;
-								Configuration::NetConfig::NetConfig nc(netname, type, addr, port, discovery);
+								Configuration::NetConfig nc(netname, type, addr, port, discovery);
 								_interfaces.push_back(nc);
 							}
 

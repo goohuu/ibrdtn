@@ -57,17 +57,17 @@ daemon_SOURCES =  ApiServer.cpp \
 				CapsuleWorker.cpp \
 				CapsuleWorker.h
 
-noinst_LTLIBRARIES = libdaemon.la
-libdaemon_la_SOURCES= $(daemon_SOURCES)
-libdaemon_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la
+noinst_LTLIBRARIES = libdtnd.la
+libdtnd_la_SOURCES= $(daemon_SOURCES)
+libdtnd_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la
 
 if DTNSEC
-libdaemon_la_LIBADD += security/libsecurity.la
+libdtnd_la_LIBADD += security/libsecurity.la
 endif
 
 if EXTAPI
-libdaemon_la_LIBADD += api/libapi.la
+libdtnd_la_LIBADD += api/libapi.la
 endif
 
 dtnd_SOURCES = Main.cpp
-dtnd_LDADD = libdaemon.la
+dtnd_LDADD = libdtnd.la
