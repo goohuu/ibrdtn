@@ -1,3 +1,11 @@
+2011-05-05
+--------------------------------------------------------
+ * Modified precision of the AgeBlock to microseconds as proposed in the draft.
+ * Added AgeBlock support to the SQLiteBundleStorage.
+ * Changed method of AgeBlock from addAge() to addSeconds().
+ * Added DTNTP worker, but is disabled in the Main.cpp .
+ * Added getMicroseconds() and getNanoseconds() to TimeMeasurement class.
+ 
 2011-04-27
 --------------------------------------------------------
  * Bundle-in-Bundle support based on
