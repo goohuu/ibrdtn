@@ -184,7 +184,7 @@ namespace dtn
 			SeparateDeserializer(std::istream &stream, Bundle &b);
 			virtual ~SeparateDeserializer();
 
-			void readBlock();
+			dtn::data::Block& readBlock();
 
 			virtual Deserializer &operator>>(dtn::data::Block &obj);
 

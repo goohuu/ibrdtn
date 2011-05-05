@@ -55,7 +55,9 @@ daemon_SOURCES =  ApiServer.cpp \
 				StatisticLogger.h \
 				StatisticLogger.cpp \
 				CapsuleWorker.cpp \
-				CapsuleWorker.h
+				CapsuleWorker.h \
+				DTNTPWorker.cpp \
+				DTNTPWorker.h
 
 noinst_LTLIBRARIES = libdtnd.la
 libdtnd_la_SOURCES= $(daemon_SOURCES)

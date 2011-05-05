@@ -33,17 +33,18 @@ namespace dtn
 		{
 			ibrcommon::TimeMeasurement time = this->_time;
 			time.stop();
-			return _age.getValue() + time.getSeconds();
+
+			return _age.getValue() + time.getMicroseconds();
 		}
 
-		void AgeBlock::addAge(size_t value)
+		void AgeBlock::addSeconds(size_t value)
 		{
-			_age += value;
+			_age += (value * 1000000);
 		}
 
-		void AgeBlock::setAge(size_t value)
+		void AgeBlock::setSeconds(size_t value)
 		{
-			_age = value;
+			_age = value * 1000000;
 		}
 
 		size_t AgeBlock::getLength() const

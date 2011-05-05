@@ -53,6 +53,7 @@
 #include "Configuration.h"
 #include "EchoWorker.h"
 #include "CapsuleWorker.h"
+#include "DTNTPWorker.h"
 #include "Notifier.h"
 #include "DevNull.h"
 #include "StatisticLogger.h"
@@ -699,6 +700,9 @@ int __daemon_run(Configuration &conf)
 
 	// add bundle-in-bundle endpoint
 	CapsuleWorker capsule;
+
+	// add DT-NTP worker
+	//DTNTPWorker dtntp;
 
 	// add DevNull module
 	DevNull devnull;

@@ -151,7 +151,7 @@ namespace dtn
 					// modify the AgeBlock with the age of the file
 					time_t age = stream.lastaccess() - stream.lastmodify();
 
-					agebl.addAge(age);
+					agebl.addSeconds(age);
 				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 				return bundle;

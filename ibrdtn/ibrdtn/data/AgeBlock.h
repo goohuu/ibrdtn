@@ -45,12 +45,12 @@ namespace dtn
 			/**
 			 * set the age
 			 */
-			void setAge(size_t value);
+			void setSeconds(size_t value);
 
 			/**
 			 * add a value to the age
 			 */
-			void addAge(size_t value);
+			void addSeconds(size_t value);
 
 		private:
 			dtn::data::SDNV _age;

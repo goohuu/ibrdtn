@@ -860,7 +860,7 @@ namespace dtn
 		{
 		}
 
-		void SeparateDeserializer::readBlock()
+		dtn::data::Block& SeparateDeserializer::readBlock()
 		{
 			char block_type;
 
@@ -906,20 +906,20 @@ namespace dtn
 							{
 								dtn::data::StatusReportBlock &block = _bundle.push_back<dtn::data::StatusReportBlock>();
 								(*this) >> block;
-								break;
+								return block;
 							}
 
 							case 2:
 							{
 								dtn::data::CustodySignalBlock &block = _bundle.push_back<dtn::data::CustodySignalBlock>();
 								(*this) >> block;
-								break;
+								return block;
 							}
 
 							default:
 							{
 								// drop unknown administrative block
-								break;
+								return block;
 							}
 						}
 
@@ -928,6 +928,7 @@ namespace dtn
 					{
 						dtn::data::PayloadBlock &block = _bundle.push_back<dtn::data::PayloadBlock>();
 						(*this) >> block;
+						return block;
 					}
 					break;
 				}
@@ -939,9 +940,11 @@ namespace dtn
 						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
 						dtn::data::Block &block = _bundle.push_back(f);
 						(*this) >> block;
+						return block;
 					} catch (const ibrcommon::Exception &ex) {
 						dtn::data::ExtensionBlock &block = _bundle.push_back<dtn::data::ExtensionBlock>();
 						(*this) >> block;
+						return block;
 					}
 					break;
 				}

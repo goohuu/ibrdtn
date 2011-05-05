@@ -15,6 +15,7 @@
 #include "core/BundleExpiredEvent.h"
 
 #include <ibrdtn/data/PayloadBlock.h>
+#include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleID.h>
@@ -1520,7 +1521,6 @@ namespace dtn
 		{
 			int err = 0;
 			string file;
-			std::list<ibrcommon::File> files;
 
 			// select the right statement to use
 			const size_t stmt_key = id.fragment ? BLOCK_GET_ID_FRAGMENT : BLOCK_GET_ID;
@@ -1533,12 +1533,31 @@ namespace dtn
 			// query the database and step through all blocks
 			while ((err = sqlite3_step(_statements[stmt_key])) == SQLITE_ROW)
 			{
-				files.push_back( ibrcommon::File( (const char*) sqlite3_column_text(_statements[stmt_key], 0) ) );
+				const ibrcommon::File f( (const char*) sqlite3_column_text(_statements[stmt_key], 0) );
+
+				// open the file
+				std::ifstream is(f.getPath().c_str(), std::ios::binary | std::ios::in);
+
+				// read the block
+				dtn::data::Block &block = dtn::data::SeparateDeserializer(is, bundle).readBlock();
+
+				// close the file
+				is.close();
+
+				// modify the age block if present
+				try {
+					dtn::data::AgeBlock &agebl = dynamic_cast<dtn::data::AgeBlock&>(block);
+
+					// modify the AgeBlock with the age of the file
+					time_t age = f.lastaccess() - f.lastmodify();
+
+					agebl.addSeconds(age);
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 			}
 
 			if (err == SQLITE_DONE)
 			{
-				if (files.size() == 0)
+				if (bundle.getBlocks().size())
 				{
 					IBRCOMMON_LOGGER(error) << "get_blocks: no blocks found for: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 					throw SQLiteQueryException("no blocks found");
@@ -1548,21 +1567,6 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER(error) << "get_blocks() failure: "<< err << " " << sqlite3_errmsg(_database) << IBRCOMMON_LOGGER_ENDL;
 				throw SQLiteQueryException("can not query for blocks");
-			}
-
-			//De-serialize the Blocks
-			for (std::list<ibrcommon::File>::const_iterator it = files.begin(); it != files.end(); it++)
-			{
-				const ibrcommon::File &f = (*it);
-
-				// open the file
-				std::ifstream is(f.getPath().c_str(), std::ios::binary | std::ios::in);
-
-				// read the block
-				dtn::data::SeparateDeserializer(is, bundle).readBlock();
-
-				// close the file
-				is.close();
 			}
 		}
 
