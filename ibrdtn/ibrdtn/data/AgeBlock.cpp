@@ -49,7 +49,7 @@ namespace dtn
 
 		size_t AgeBlock::getLength() const
 		{
-			return _age.getLength();
+			return SDNV(getAge()).getLength();
 		}
 
 		std::ostream& AgeBlock::serialize(std::ostream &stream) const
