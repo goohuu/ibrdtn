@@ -47,11 +47,19 @@ namespace dtn
 					// send a time sync bundle
 					dtn::data::Bundle b;
 
-					// add a age block
+					// add an age block
 					b.push_back<dtn::data::AgeBlock>();
 
 					ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
-					(*ref.iostream()) << dtn::data::SDNV(getTimestamp());
+
+					// create the payload of the message
+					{
+						ibrcommon::BLOB::iostream stream = ref.iostream();
+						(*stream) << (char)MEASUREMENT_REQUEST;
+						(*stream) << dtn::data::SDNV(getTimestamp());
+					}
+
+					// add the payload to the message
 					b.push_back(ref);
 
 					b._source = dtn::core::BundleCore::local + "/dtntp";
@@ -67,15 +75,71 @@ namespace dtn
 			try {
 				// read payload block
 				const dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
-				dtn::data::SDNV timestamp;
-				(*p.getBLOB().iostream()) >> timestamp;
 
-				// read the ageblock of the bundle
-				const dtn::data::AgeBlock &age = b.getBlock<dtn::data::AgeBlock>();
-				size_t offset = getTimestamp() - (timestamp.getValue() + age.getAge());
+				char type = 0;
 
-				// print out offset to the local clock
-				IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; clock of " << b._source.getNodeEID() << " has a offset of " << offset << " us" << IBRCOMMON_LOGGER_ENDL;
+				// read the type of the message
+				(*p.getBLOB().iostream()).get(type);
+
+				switch (type)
+				{
+					case MEASUREMENT_REQUEST:
+					{
+						dtn::data::Bundle response = b;
+						response.relabel();
+						response._source = b._destination;
+						response._destination = b._source;
+
+						{
+							ibrcommon::BLOB::Reference ref = p.getBLOB();
+							ibrcommon::BLOB::iostream stream = ref.iostream();
+
+							// read the origin timestamp
+							dtn::data::SDNV otime;
+							(*stream) >> type;
+							(*stream) >> otime;
+
+							stream.clear();
+							(*stream) << (char)MEASUREMENT_RESPONSE << otime << dtn::data::SDNV(getTimestamp()) << std::flush;
+						}
+
+						// add a second age block
+						response.push_front<dtn::data::AgeBlock>();
+
+						transmit(response);
+						break;
+					}
+
+					case MEASUREMENT_RESPONSE:
+					{
+						dtn::data::SDNV origin_timestamp, peer_timestamp;
+						ibrcommon::BLOB::Reference ref = p.getBLOB();
+						ibrcommon::BLOB::iostream stream = ref.iostream();
+						(*stream).seekg(1);
+						(*stream) >> origin_timestamp;
+						(*stream) >> peer_timestamp;
+
+						// read the ageblock of the bundle
+						const std::list<const dtn::data::AgeBlock*> ageblocks = b.getBlocks<dtn::data::AgeBlock>();
+						const dtn::data::AgeBlock &peer_age = (*ageblocks.front());
+						const dtn::data::AgeBlock &origin_age = (*ageblocks.back());
+
+						size_t local_timestamp = getTimestamp();
+
+						// get the RTT
+						size_t rtt = local_timestamp - origin_timestamp.getValue();
+
+						// get the propagation delay
+						size_t prop_delay = rtt - origin_age.getAge();
+
+						size_t fixed_peer_timestamp = peer_timestamp.getValue() + peer_age.getAge() + (prop_delay/2);
+						ssize_t offset = local_timestamp - fixed_peer_timestamp;
+
+						// print out offset to the local clock
+						IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; rtt = " << rtt << "; prop. delay = " << prop_delay << "; clock of " << b._source.getNodeEID() << " has a offset of " << offset << " us" << IBRCOMMON_LOGGER_ENDL;
+						break;
+					}
+				}
 			} catch (const ibrcommon::Exception&) { };
 		}
 	}

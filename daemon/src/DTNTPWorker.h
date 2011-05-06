@@ -24,6 +24,13 @@ namespace dtn
 			size_t getTimestamp() const;
 			void callbackBundleReceived(const Bundle &b);
 			void raiseEvent(const dtn::core::Event *evt);
+
+		private:
+			enum MSG_TYPE
+			{
+				MEASUREMENT_REQUEST = 1,
+				MEASUREMENT_RESPONSE = 2
+			};
 		};
 	}
 }
