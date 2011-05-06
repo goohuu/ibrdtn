@@ -62,8 +62,15 @@ namespace dtn
 					// add the payload to the message
 					b.push_back(ref);
 
+					// set the source and destination
 					b._source = dtn::core::BundleCore::local + "/dtntp";
 					b._destination = n.getNode().getEID() + "/dtntp";
+
+					// set the the destination as singleton receiver
+					b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+
+					// set the lifetime of the bundle to 60 seconds
+					b._lifetime = 60;
 
 					transmit(b);
 				}
@@ -76,10 +83,8 @@ namespace dtn
 				// read payload block
 				const dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
 
-				char type = 0;
-
 				// read the type of the message
-				(*p.getBLOB().iostream()).get(type);
+				char type = 0; (*p.getBLOB().iostream()).get(type);
 
 				switch (type)
 				{
@@ -87,9 +92,18 @@ namespace dtn
 					{
 						dtn::data::Bundle response = b;
 						response.relabel();
+
+						// set the lifetime of the bundle to 60 seconds
+						response._lifetime = 60;
+
+						// switch the source and destination
 						response._source = b._destination;
 						response._destination = b._source;
 
+						// set the the destination as singleton receiver
+						response.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+
+						// modify the payload - locked
 						{
 							ibrcommon::BLOB::Reference ref = p.getBLOB();
 							ibrcommon::BLOB::iostream stream = ref.iostream();
@@ -100,12 +114,13 @@ namespace dtn
 							(*stream) >> otime;
 
 							stream.clear();
-							(*stream) << (char)MEASUREMENT_RESPONSE << otime << dtn::data::SDNV(getTimestamp()) << std::flush;
+							(*stream) << (char)MEASUREMENT_RESPONSE << otime << dtn::data::SDNV(getTimestamp());
 						}
 
 						// add a second age block
 						response.push_front<dtn::data::AgeBlock>();
 
+						// send the response
 						transmit(response);
 						break;
 					}

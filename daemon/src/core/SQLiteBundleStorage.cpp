@@ -1552,12 +1552,12 @@ namespace dtn
 					time_t age = f.lastaccess() - f.lastmodify();
 
 					agebl.addSeconds(age);
-				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+				} catch (const std::bad_cast&) { };
 			}
 
 			if (err == SQLITE_DONE)
 			{
-				if (bundle.getBlocks().size())
+				if (bundle.getBlocks().size() == 0)
 				{
 					IBRCOMMON_LOGGER(error) << "get_blocks: no blocks found for: " << id.toString() << IBRCOMMON_LOGGER_ENDL;
 					throw SQLiteQueryException("no blocks found");
