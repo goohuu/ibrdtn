@@ -214,3 +214,29 @@ routing_forwarding = yes
 # key path
 #
 #security_path = /path/to/security-keys
+
+
+#####################################
+# time synchronization              #
+#####################################
+
+#
+# set to yes if this node is connected to a high precision time reference
+# like GPS, DCF77, NTP, etc.
+#
+#time_reference = yes
+
+#
+# set the quality of time decrease tick
+#
+#time_qot_tick = 0
+
+#
+# request time synchronization on discovery
+#
+#time_sync_on_discovery = yes
+
+#
+# announce time sync capabilities in discovery messages
+#
+#time_discovery_announcements = yes

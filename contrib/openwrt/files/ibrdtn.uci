@@ -143,3 +143,13 @@ config 'daemon' 'security'
 	option level		0
 	option bab_key		/path/to/default-bab-key.mac
 	option key_path		/path/to/security-keys
+
+
+#####################################
+# time synchronization              #
+#####################################
+
+#config 'daemon' 'timesync'
+#	option reference			yes
+#	option qot_tick				0
+#	option sync_on_discovery	yes
