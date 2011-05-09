@@ -32,16 +32,18 @@ namespace dtn
 
 			if (_conf.hasReference())
 			{
-				get_time(_last_sync);
-				_last_sync.quality = 1.0;
+				_last_sync.origin_quality = 0.0;
+				_last_sync.peer_quality = 1.0;
+				_last_sync.peer_timestamp = _last_sync.origin_timestamp;
 			}
 			else
 			{
-				_last_sync.quality = 0;
+				_last_sync.origin_quality = 0.0;
+				_last_sync.peer_quality = 0.0;
 			}
 
 			// set current quality to last sync quality
-			dtn::utils::Clock::quality = _last_sync.quality;
+			dtn::utils::Clock::quality = _last_sync.peer_quality;
 
 			if (_conf.syncOnDiscovery())
 			{
@@ -60,20 +62,63 @@ namespace dtn
 			unbindEvent(dtn::core::TimeEvent::className);
 		}
 
-		DTNTPWorker::TimeBeacon::TimeBeacon()
-		 : nodeid(""), sec(0), usec(0), quality(0.0)
+		DTNTPWorker::TimeSyncMessage::TimeSyncMessage()
+		 : type(TIMESYNC_REQUEST), origin_quality(dtn::utils::Clock::quality), peer_quality(0.0)
+		{
+			timerclear(&origin_timestamp);
+			timerclear(&peer_timestamp);
+
+			struct timezone tz;
+			gettimeofday(&origin_timestamp, &tz);
+		}
+
+		DTNTPWorker::TimeSyncMessage::~TimeSyncMessage()
 		{
 		}
 
-		DTNTPWorker::TimeBeacon::~TimeBeacon()
+		std::ostream &operator<<(std::ostream &stream, const DTNTPWorker::TimeSyncMessage &obj)
 		{
+			std::stringstream ss;
+
+			stream << (char)obj.type;
+
+			ss.clear(); ss.str(""); ss << obj.origin_quality;
+			stream << dtn::data::BundleString(ss.str());
+
+			stream << dtn::data::SDNV(obj.origin_timestamp.tv_sec);
+			stream << dtn::data::SDNV(obj.origin_timestamp.tv_usec);
+
+			ss.clear(); ss.str(""); ss << obj.peer_quality;
+			stream << dtn::data::BundleString(ss.str());
+
+			stream << dtn::data::SDNV(obj.peer_timestamp.tv_sec);
+			stream << dtn::data::SDNV(obj.peer_timestamp.tv_usec);
+
+			return stream;
 		}
 
-		size_t DTNTPWorker::getTimestamp() const
+		std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj)
 		{
-			struct timeval detail_time;
-			gettimeofday(&detail_time, NULL);
-			return (detail_time.tv_sec * 1000000) + detail_time.tv_usec;
+			char type = 0;
+			std::stringstream ss;
+			dtn::data::BundleString bs;
+			dtn::data::SDNV sdnv;
+
+			stream >> type; obj.type = DTNTPWorker::TimeSyncMessage::MSG_TYPE(type);
+
+			stream >> bs; ss.clear(); ss.str((std::string&)bs);
+			ss >> obj.origin_quality;
+
+			stream >> sdnv; obj.origin_timestamp.tv_sec = sdnv.getValue();
+			stream >> sdnv; obj.origin_timestamp.tv_usec = sdnv.getValue();
+
+			stream >> bs; ss.clear(); ss.str((std::string&)bs);
+			ss >> obj.peer_quality;
+
+			stream >> sdnv; obj.peer_timestamp.tv_sec = sdnv.getValue();
+			stream >> sdnv; obj.peer_timestamp.tv_usec = sdnv.getValue();
+
+			return stream;
 		}
 
 		void DTNTPWorker::raiseEvent(const dtn::core::Event *evt)
@@ -93,11 +138,10 @@ namespace dtn
 						if ((_qot_current_tic % _conf.getQualityOfTimeTick()) == 0)
 						{
 							// get current time values
-							TimeBeacon current; get_time(current);
-							long int tdiff = current.sec - _last_sync.sec;
+							_sync_age++;
 
 							// adjust own quality of time
-							dtn::utils::Clock::quality = _last_sync.quality * (1 / ::pow(_sigma, tdiff) );
+							dtn::utils::Clock::quality = _last_sync.peer_quality * (1 / ::pow(_sigma, _sync_age) );
 
 							// debug quality of time
 							IBRCOMMON_LOGGER_DEBUG(25) << "new quality of time is " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
@@ -145,15 +189,11 @@ namespace dtn
 					{
 						ibrcommon::BLOB::iostream stream = ref.iostream();
 
-						// write the type
-						(*stream) << (char)MEASUREMENT_REQUEST;
+						// create a new timesync request
+						TimeSyncMessage msg;
 
-						// write the current timestamp
-						(*stream) << dtn::data::SDNV(getTimestamp());
-
-						// write the quality of time
-						std::stringstream ss; ss << (float)dtn::utils::Clock::quality;
-						(*stream) << dtn::data::BundleString(ss.str());
+						// write the message
+						(*stream) << msg;
 					}
 
 					// add the payload to the message
@@ -174,85 +214,67 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		void DTNTPWorker::set_time(size_t sec, size_t usec)
-		{
-			struct timeval tv;
-			tv.tv_sec = sec;
-			tv.tv_usec = usec;
-			::settimeofday(&tv, NULL);
-		}
+//		void DTNTPWorker::shared_sync(const TimeBeacon &beacon)
+//		{
+//			// do not sync if we are a reference
+//			if (_conf.hasReference()) return;
+//
+//			// adjust own quality of time
+//			TimeBeacon current; get_time(current);
+//			long int tdiff = current.sec - _last_sync.sec;
+//
+//			ibrcommon::MutexLock l(_sync_lock);
+//
+//			// if we have no time, take it
+//			if (_last_sync.quality == 0)
+//			{
+//				dtn::utils::Clock::quality = beacon.quality * _epsilon;
+//			}
+//			// if our last sync is older than one second...
+//			else if (tdiff > 0)
+//			{
+//				// sync our clock
+//				double ext_faktor = beacon.quality / (beacon.quality + dtn::utils::Clock::quality);
+//				double int_faktor = dtn::utils::Clock::quality / (beacon.quality + dtn::utils::Clock::quality);
+//
+//				// set the new time values
+//				set_time( 	(beacon.sec * ext_faktor) + (current.sec * int_faktor),
+//							(beacon.usec * ext_faktor) + (current.usec * int_faktor)
+//						);
+//			}
+//			else
+//			{
+//				return;
+//			}
+//		}
 
-		void DTNTPWorker::get_time(TimeBeacon &beacon)
-		{
-			struct timeval tv;
-			struct timezone tz;
-			gettimeofday(&tv, &tz);
-
-			beacon.nodeid = dtn::core::BundleCore::local;
-			beacon.sec = tv.tv_sec;
-			beacon.usec = tv.tv_usec;
-			beacon.quality = dtn::utils::Clock::quality;
-		}
-
-		void DTNTPWorker::shared_sync(const TimeBeacon &beacon)
-		{
-			// do not sync if we are a reference
-			if (_conf.hasReference()) return;
-
-			// adjust own quality of time
-			TimeBeacon current; get_time(current);
-			long int tdiff = current.sec - _last_sync.sec;
-
-			ibrcommon::MutexLock l(_sync_lock);
-
-			// if we have no time, take it
-			if (_last_sync.quality == 0)
-			{
-				dtn::utils::Clock::quality = beacon.quality * _epsilon;
-			}
-			// if our last sync is older than one second...
-			else if (tdiff > 0)
-			{
-				// sync our clock
-				double ext_faktor = beacon.quality / (beacon.quality + dtn::utils::Clock::quality);
-				double int_faktor = dtn::utils::Clock::quality / (beacon.quality + dtn::utils::Clock::quality);
-
-				// set the new time values
-				set_time( 	(beacon.sec * ext_faktor) + (current.sec * int_faktor),
-							(beacon.usec * ext_faktor) + (current.usec * int_faktor)
-						);
-			}
-			else
-			{
-				return;
-			}
-		}
-
-		void DTNTPWorker::sync(const TimeBeacon &beacon)
+		void DTNTPWorker::sync(const TimeSyncMessage &msg, struct timeval &tv)
 		{
 			// do not sync if we are a reference
 			if (_conf.hasReference()) return;
-
-			// do not sync with ourselves
-			if (beacon.nodeid == dtn::core::BundleCore::local) return;
 
 			ibrcommon::MutexLock l(_sync_lock);
 
 			// if the received quality of time is worse than ours, ignore it
-			if (dtn::utils::Clock::quality >= beacon.quality) return;
+			if (dtn::utils::Clock::quality >= msg.peer_quality) return;
 
 			// the values are better, adapt them
-			dtn::utils::Clock::quality = beacon.quality * _epsilon;
-			set_time( beacon.sec, beacon.usec );
+			dtn::utils::Clock::quality = msg.peer_quality * _epsilon;
 
-			IBRCOMMON_LOGGER(info) << "time adjusted to " << beacon.sec << "." << beacon.usec << "; quality: " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
+			// set the local clock to the new timestamp
+			::settimeofday(&tv, NULL);
+
+			IBRCOMMON_LOGGER(info) << "time adjusted to " << msg.peer_timestamp.tv_sec << "." << msg.peer_timestamp.tv_usec << "; quality: " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
 
 			// remember the last sync
-			_last_sync = beacon;
+			_last_sync = msg;
 		}
 
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
 		{
+			// do not sync with ourselves
+			if (b._source.getNodeEID() == dtn::core::BundleCore::local.getNodeEID()) return;
+
 			try {
 				// read payload block
 				const dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
@@ -262,7 +284,7 @@ namespace dtn
 
 				switch (type)
 				{
-					case MEASUREMENT_REQUEST:
+					case TimeSyncMessage::TIMESYNC_REQUEST:
 					{
 						dtn::data::Bundle response = b;
 						response.relabel();
@@ -282,19 +304,21 @@ namespace dtn
 							ibrcommon::BLOB::Reference ref = p.getBLOB();
 							ibrcommon::BLOB::iostream stream = ref.iostream();
 
-							// read the origin timestamp
-							dtn::data::SDNV otime;
-							dtn::data::BundleString oqot;
-							(*stream) >> type;
-							(*stream) >> otime;
-							(*stream) >> oqot;
+							// read the timesync message
+							TimeSyncMessage msg;
+							(*stream) >> msg;
 
+							// clear the payload
 							stream.clear();
-							(*stream) << (char)MEASUREMENT_RESPONSE << otime << oqot << dtn::data::SDNV(getTimestamp());
 
-							// write the quality of time
-							std::stringstream ss; ss << (float)dtn::utils::Clock::quality;
-							(*stream) << dtn::data::BundleString(ss.str());
+							// fill in the own values
+							msg.type = TimeSyncMessage::TIMESYNC_RESPONSE;
+							msg.peer_quality = dtn::utils::Clock::quality;
+							struct timezone tz;
+							gettimeofday(&msg.peer_timestamp, &tz);
+
+							// write the response
+							(*stream) << msg;
 						}
 
 						// add a second age block
@@ -305,78 +329,51 @@ namespace dtn
 						break;
 					}
 
-					case MEASUREMENT_RESPONSE:
+					case TimeSyncMessage::TIMESYNC_RESPONSE:
 					{
-						dtn::data::SDNV origin_timestamp, peer_timestamp;
-						dtn::data::BundleString origin_qot, peer_qot;
-
-						ibrcommon::BLOB::Reference ref = p.getBLOB();
-						ibrcommon::BLOB::iostream stream = ref.iostream();
-						(*stream).seekg(1);
-						(*stream) >> origin_timestamp;
-						(*stream) >> origin_qot;
-						(*stream) >> peer_timestamp;
-						(*stream) >> peer_qot;
-
 						// read the ageblock of the bundle
 						const std::list<const dtn::data::AgeBlock*> ageblocks = b.getBlocks<dtn::data::AgeBlock>();
 						const dtn::data::AgeBlock &peer_age = (*ageblocks.front());
 						const dtn::data::AgeBlock &origin_age = (*ageblocks.back());
 
-						size_t local_timestamp = getTimestamp();
+						timeval tv_age; timerclear(&tv_age);
+						tv_age.tv_usec = origin_age.getMicroseconds();
 
-						// get the RTT
-						size_t rtt = local_timestamp - origin_timestamp.getValue();
+						ibrcommon::BLOB::Reference ref = p.getBLOB();
+						ibrcommon::BLOB::iostream stream = ref.iostream();
 
-						// get the propagation delay
-						size_t prop_delay = rtt - origin_age.getAge();
+						TimeSyncMessage msg; (*stream) >> msg;
 
-						size_t fixed_peer_timestamp = peer_timestamp.getValue() + peer_age.getAge() + (prop_delay/2);
-						ssize_t offset = local_timestamp - fixed_peer_timestamp;
-
-						// print out offset to the local clock
-						IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; rtt = " << rtt << "; prop. delay = " << prop_delay << "; clock of " << b._source.getNodeEID() << " has a offset of " << offset << " us" << IBRCOMMON_LOGGER_ENDL;
-
-						// convert to a time beacon
+						timeval tv_local, rtt;
 						struct timezone tz;
-						timeval tv_offset, tv_local, tv_res;
-						timerclear(&tv_offset);
-						timerclear(&tv_local);
-
 						gettimeofday(&tv_local, &tz);
 
-						if (offset > 0)
-						{
-							// get seconds
-							tv_offset.tv_sec = offset / 1000000;
-							tv_offset.tv_usec = offset % 1000000;
+						// get the RTT
+						timersub(&tv_local, &msg.origin_timestamp, &rtt);
 
-							// add offset to current time
-							timeradd(&tv_local, &tv_offset, &tv_res);
-						}
-						else if (offset < 0)
-						{
-							// turn offset into a positive value
-							offset *= -1;
+						// get the propagation delay
+						timeval prop_delay;
+						timersub(&rtt, &tv_age, &prop_delay);
 
-							// get seconds
-							tv_offset.tv_sec = offset / 1000000;
-							tv_offset.tv_usec = offset % 1000000;
+						// half the prop delay
+						prop_delay.tv_sec /= 2;
+						prop_delay.tv_usec /= 2;
 
-							// add offset to current time
-							timersub(&tv_local, &tv_offset, &tv_res);
-						}
+						timeval sync_delay;
+						timerclear(&sync_delay);
+						sync_delay.tv_usec = peer_age.getMicroseconds() + prop_delay.tv_usec;
 
-						TimeBeacon tb;
-						tb.sec = tv_res.tv_sec;
-						tb.usec = tv_res.tv_usec;
-						tb.nodeid = b._source.getNodeEID();
+						timeval peer_timestamp;
+						timeradd(&msg.peer_timestamp, &sync_delay, &peer_timestamp);
 
-						std::stringstream ss; ss << std::string(peer_qot); float qot = 0.0; ss >> qot;
-						tb.quality = qot;
+						timeval offset;
+						timersub(&tv_local, &peer_timestamp, &offset);
 
-						// sync to this beacon
-						sync(tb);
+						// print out offset to the local clock
+						IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; rtt = " << rtt.tv_sec << "s " << rtt.tv_usec << "us; prop. delay = " << prop_delay.tv_sec << "s " << prop_delay.tv_usec << "us; clock of " << b._source.getNodeEID() << " has a offset of " << offset.tv_sec << "s " << offset.tv_usec << "us" << IBRCOMMON_LOGGER_ENDL;
+
+						// sync to this time message
+						sync(msg, peer_timestamp);
 
 						break;
 					}

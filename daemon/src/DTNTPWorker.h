@@ -11,7 +11,6 @@
 #include "core/AbstractWorker.h"
 #include "core/EventReceiver.h"
 #include "Configuration.h"
-#include "ibrdtn/data/EID.h"
 
 namespace dtn
 {
@@ -23,43 +22,46 @@ namespace dtn
 			DTNTPWorker();
 			virtual ~DTNTPWorker();
 
-			size_t getTimestamp() const;
 			void callbackBundleReceived(const Bundle &b);
 			void raiseEvent(const dtn::core::Event *evt);
 
-		private:
-			enum MSG_TYPE
-			{
-				MEASUREMENT_REQUEST = 1,
-				MEASUREMENT_RESPONSE = 2
-			};
-
-			class TimeBeacon : public ibrcommon::Mutex
+			class TimeSyncMessage
 			{
 			public:
-				TimeBeacon();
-				virtual ~TimeBeacon();
+				enum MSG_TYPE
+				{
+					TIMESYNC_REQUEST = 1,
+					TIMESYNC_RESPONSE = 2
+				};
 
-				dtn::data::EID nodeid;
-				time_t sec;
-				long int usec;
-				float quality;
+				TimeSyncMessage();
+				~TimeSyncMessage();
+
+				MSG_TYPE type;
+
+				timeval origin_timestamp;
+				float origin_quality;
+
+				timeval peer_timestamp;
+				float peer_quality;
+
+				friend std::ostream &operator<<(std::ostream &stream, const DTNTPWorker::TimeSyncMessage &obj);
+				friend std::istream &operator>>(std::istream &stream, DTNTPWorker::TimeSyncMessage &obj);
 			};
 
-			void set_time(size_t sec, size_t usec);
-			void get_time(TimeBeacon &beacon);
-
-			void shared_sync(const TimeBeacon &beacon);
-			void sync(const TimeBeacon &beacon);
+		private:
+//			void shared_sync(const TimeSyncMessage &msg);
+			void sync(const TimeSyncMessage &msg, struct timeval &tv);
 
 			const dtn::daemon::Configuration::TimeSync &_conf;
 			size_t _qot_current_tic;
 			double _sigma;
 			double _epsilon;
 
-			TimeBeacon _last_sync;
+			TimeSyncMessage _last_sync;
 
 			ibrcommon::Mutex _sync_lock;
+			time_t _sync_age;
 		};
 	}
 }
