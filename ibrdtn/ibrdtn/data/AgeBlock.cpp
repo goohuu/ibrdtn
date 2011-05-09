@@ -29,12 +29,20 @@ namespace dtn
 		{
 		}
 
-		size_t AgeBlock::getAge() const
+		size_t AgeBlock::getMicroseconds() const
 		{
 			ibrcommon::TimeMeasurement time = this->_time;
 			time.stop();
 
 			return _age.getValue() + time.getMicroseconds();
+		}
+
+		size_t AgeBlock::getSeconds() const
+		{
+			ibrcommon::TimeMeasurement time = this->_time;
+			time.stop();
+
+			return (_age.getValue() + time.getMicroseconds()) / 1000000;
 		}
 
 		void AgeBlock::addSeconds(size_t value)
@@ -49,12 +57,12 @@ namespace dtn
 
 		size_t AgeBlock::getLength() const
 		{
-			return SDNV(getAge()).getLength();
+			return SDNV(getMicroseconds()).getLength();
 		}
 
 		std::ostream& AgeBlock::serialize(std::ostream &stream) const
 		{
-			stream << SDNV(getAge());
+			stream << SDNV(getMicroseconds());
 			return stream;
 		}
 

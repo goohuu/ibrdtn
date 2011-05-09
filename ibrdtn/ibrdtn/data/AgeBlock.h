@@ -40,7 +40,8 @@ namespace dtn
 			virtual std::ostream &serialize_strict(std::ostream &stream) const;
 			virtual size_t getLength_strict() const;
 
-			size_t getAge() const;
+			size_t getMicroseconds() const;
+			size_t getSeconds() const;
 
 			/**
 			 * set the age
