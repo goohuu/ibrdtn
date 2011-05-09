@@ -127,14 +127,19 @@ AC_ARG_WITH(compression,
 		@<:@default=no@:>@]),
 	[
 	if test "x$with_compression" = "xyes"; then
-		PKG_CHECK_MODULES(ZLIB, zlib, [
+		PKG_CHECK_MODULES(ZLIB, 123zlib, [
 			AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
 			AC_DEFINE(HAVE_ZLIB, [1], ["zlib library is available"])
 			AC_SUBST(ZLIB_CFLAGS)
 			AC_SUBST(ZLIB_LIBS)
 		], [
-			with_compression="no"
-			AC_MSG_WARN([compression enabled, but zlib libraries are not found. Compression extensions are disabled.])
+			AC_CHECK_LIB([z], [gzread],[
+				AC_DEFINE(WITH_COMPRESSION, [1], ["bundle compression support enabled"])
+				AC_DEFINE(HAVE_ZLIB, [1], ["zlib library is available"])
+			] , [
+				with_compression="no"
+				AC_MSG_WARN([compression enabled, but zlib libraries are not found. Compression extensions are disabled.])
+			])
 		])
 	else
 		with_compression="no"
