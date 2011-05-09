@@ -10,6 +10,8 @@
 
 #include "core/AbstractWorker.h"
 #include "core/EventReceiver.h"
+#include "Configuration.h"
+#include "ibrdtn/data/EID.h"
 
 namespace dtn
 {
@@ -31,6 +33,33 @@ namespace dtn
 				MEASUREMENT_REQUEST = 1,
 				MEASUREMENT_RESPONSE = 2
 			};
+
+			class TimeBeacon : public ibrcommon::Mutex
+			{
+			public:
+				TimeBeacon();
+				virtual ~TimeBeacon();
+
+				dtn::data::EID nodeid;
+				time_t sec;
+				long int usec;
+				float quality;
+			};
+
+			void set_time(size_t sec, size_t usec);
+			void get_time(TimeBeacon &beacon);
+
+			void shared_sync(const TimeBeacon &beacon);
+			void sync(const TimeBeacon &beacon);
+
+			const dtn::daemon::Configuration::TimeSync &_conf;
+			size_t _qot_current_tic;
+			double _sigma;
+			double _epsilon;
+
+			TimeBeacon _last_sync;
+
+			ibrcommon::Mutex _sync_lock;
 		};
 	}
 }

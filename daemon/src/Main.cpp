@@ -702,7 +702,7 @@ int __daemon_run(Configuration &conf)
 	CapsuleWorker capsule;
 
 	// add DT-NTP worker
-	//DTNTPWorker dtntp;
+	DTNTPWorker dtntp;
 
 	// add DevNull module
 	DevNull devnull;

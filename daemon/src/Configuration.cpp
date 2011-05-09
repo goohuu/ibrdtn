@@ -88,8 +88,11 @@ namespace dtn
 
 		Configuration::Daemon::Daemon()
 		 : _daemonize(false), _kill(false)
-		{
-		};
+		{};
+
+		Configuration::TimeSync::TimeSync()
+		 : _reference(true), _sync(false), _discovery(false), _qot_tick(0)
+		{};
 
 		Configuration::Discovery::~Discovery() {};
 		Configuration::Statistic::~Statistic() {};
@@ -97,6 +100,7 @@ namespace dtn
 		Configuration::Logger::~Logger() {};
 		Configuration::Network::~Network() {};
 		Configuration::Daemon::~Daemon() {};
+		Configuration::TimeSync::~TimeSync() {};
 
 		const Configuration::Discovery& Configuration::getDiscovery() const
 		{
@@ -131,6 +135,11 @@ namespace dtn
 		const Configuration::Daemon& Configuration::getDaemon() const
 		{
 			return _daemon;
+		}
+
+		const Configuration::TimeSync& Configuration::getTimeSync() const
+		{
+			return _timesync;
 		}
 
 		Configuration& Configuration::getInstance()
@@ -300,6 +309,7 @@ namespace dtn
 			_logger.load(_conf);
 			_network.load(_conf);
 			_security.load(_conf);
+			_timesync.load(_conf);
 		}
 
 		void Configuration::Discovery::load(const ibrcommon::ConfigFile &conf)
@@ -325,6 +335,25 @@ namespace dtn
 
 		void Configuration::Daemon::load(const ibrcommon::ConfigFile&)
 		{
+		}
+
+		void Configuration::TimeSync::load(const ibrcommon::ConfigFile &conf)
+		{
+			try {
+				_qot_tick = conf.read<int>("time_qot_tick", 0);
+			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
+
+			try {
+				_reference = (conf.read<std::string>("time_reference") == "yes");
+			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
+
+			try {
+				_sync = (conf.read<std::string>("time_sync_on_discovery") == "yes");
+			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
+
+			try {
+				_discovery = (conf.read<std::string>("time_discovery_announcements") == "yes");
+			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 		}
 
 		bool Configuration::Debug::quiet() const
@@ -868,6 +897,26 @@ namespace dtn
 		{
 			if (_pidfile == ibrcommon::File()) throw ParameterNotSetException();
 			return _pidfile;
+		}
+
+		bool Configuration::TimeSync::hasReference() const
+		{
+			return _reference;
+		}
+
+		bool Configuration::TimeSync::syncOnDiscovery() const
+		{
+			return _sync;
+		}
+
+		bool Configuration::TimeSync::sendDiscoveryAnnouncements() const
+		{
+			return _discovery;
+		}
+
+		int Configuration::TimeSync::getQualityOfTimeTick() const
+		{
+			return _qot_tick;
 		}
 	}
 }

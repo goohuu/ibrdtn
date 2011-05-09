@@ -418,6 +418,26 @@ namespace dtn
 				bool kill_daemon() const;
 			};
 
+			class TimeSync : public Configuration::Extension
+			{
+				friend class Configuration;
+			protected:
+				TimeSync();
+				virtual ~TimeSync();
+				void load(const ibrcommon::ConfigFile &conf);
+
+				bool _reference;
+				bool _sync;
+				bool _discovery;
+				int _qot_tick;
+
+			public:
+				bool hasReference() const;
+				bool syncOnDiscovery() const;
+				bool sendDiscoveryAnnouncements() const;
+				int getQualityOfTimeTick() const;
+			};
+
 			const Configuration::Discovery& getDiscovery() const;
 			const Configuration::Statistic& getStatistic() const;
 			const Configuration::Debug& getDebug() const;
@@ -425,6 +445,7 @@ namespace dtn
 			const Configuration::Network& getNetwork() const;
 			const Configuration::Security& getSecurity() const;
 			const Configuration::Daemon& getDaemon() const;
+			const Configuration::TimeSync& getTimeSync() const;
 
 		private:
 			ibrcommon::ConfigFile _conf;
@@ -435,6 +456,7 @@ namespace dtn
 			Configuration::Network _network;
 			Configuration::Security _security;
 			Configuration::Daemon _daemon;
+			Configuration::TimeSync _timesync;
 
 			std::string _filename;
 			bool _doapi;
