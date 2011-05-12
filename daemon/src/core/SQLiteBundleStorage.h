@@ -306,12 +306,6 @@ namespace dtn
 			void raiseEvent(const Event *evt);
 
 			/**
-			 * Remove all bundles which match this filter
-			 * @param filter
-			 */
-			dtn::data::MetaBundle remove(const ibrcommon::BloomFilter&) { return dtn::data::MetaBundle(); };
-
-			/**
 			 * Try to lock everything in the database.
 			 */
 			virtual void trylock() throw (ibrcommon::MutexException);

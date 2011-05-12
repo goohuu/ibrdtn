@@ -28,6 +28,11 @@ namespace dtn
 			remove(dtn::data::BundleID(b));
 		};
 
+		dtn::data::MetaBundle BundleStorage::remove(const ibrcommon::BloomFilter&)
+		{
+			throw dtn::core::BundleStorage::NoBundleFoundException();
+		};
+
 		const dtn::data::EID BundleStorage::acceptCustody(const dtn::data::MetaBundle &meta)
 		{
 			if (!meta.get(Bundle::CUSTODY_REQUESTED))

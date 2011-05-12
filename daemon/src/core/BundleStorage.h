@@ -114,7 +114,7 @@ namespace dtn
 			 * @param filter
 			 * @return The bundle meta data of the removed bundle.
 			 */
-			virtual dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter) = 0;
+			virtual dtn::data::MetaBundle remove(const ibrcommon::BloomFilter &filter);
 
 			/**
 			 * Clears all bundles and fragments in the storage.
