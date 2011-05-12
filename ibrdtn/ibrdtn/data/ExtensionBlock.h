@@ -38,7 +38,7 @@ namespace dtn
 			ExtensionBlock(ibrcommon::BLOB::Reference ref);
 			virtual ~ExtensionBlock();
 
-			ibrcommon::BLOB::Reference getBLOB();
+			ibrcommon::BLOB::Reference getBLOB() const;
 
 			virtual size_t getLength() const;
 			virtual std::ostream &serialize(std::ostream &stream) const;

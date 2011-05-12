@@ -92,7 +92,7 @@ namespace dtn
 		{
 		}
 
-		ibrcommon::BLOB::Reference ExtensionBlock::getBLOB()
+		ibrcommon::BLOB::Reference ExtensionBlock::getBLOB() const
 		{
 			return _blobref;
 		}
