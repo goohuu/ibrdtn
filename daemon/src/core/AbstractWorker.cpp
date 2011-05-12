@@ -10,6 +10,7 @@
 #include "core/BundleCore.h"
 #include "routing/QueueBundleEvent.h"
 #include "core/BundleGeneratedEvent.h"
+#include "core/BundleEvent.h"
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
 #endif
@@ -69,6 +70,11 @@ namespace dtn
 						dtn::data::Bundle b = storage.get( id );
 						prepareBundle(b);
 						_worker.callbackBundleReceived( b );
+
+						// raise bundle event
+						dtn::core::BundleEvent::raise(b, BUNDLE_DELIVERED);
+
+						// remove the bundle from the storage
 						storage.remove( id );
 					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 
