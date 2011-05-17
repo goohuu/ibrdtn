@@ -69,14 +69,11 @@ namespace dtn
 
 		bool Clock::isExpired(const dtn::data::Bundle &b)
 		{
-			if ((b._timestamp == 0) || dtn::utils::Clock::badclock)
-			{
-				// use the AgeBlock to verify the age
-				try {
-					const dtn::data::AgeBlock &agebl = b.getBlock<const dtn::data::AgeBlock>();
-					return (b._lifetime < agebl.getSeconds());
-				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
-			}
+			// use the AgeBlock to verify the age
+			try {
+				const dtn::data::AgeBlock &agebl = b.getBlock<const dtn::data::AgeBlock>();
+				return (b._lifetime < agebl.getSeconds());
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 			return __isExpired(b._timestamp, b._lifetime);
 		}
