@@ -188,7 +188,7 @@ namespace dtn
 
 			try {
 				// abort the connection thread
-				this->stop();
+				ibrcommon::DetachedThread::stop();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(50) << "TCPConnection::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
 			}
