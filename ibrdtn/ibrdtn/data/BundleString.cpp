@@ -44,11 +44,17 @@ namespace dtn
 		{
 			dtn::data::SDNV length;
 			stream >> length;
-			size_t data_len = length.getValue();
+			std::streamsize data_len = length.getValue();
 
-			char data[data_len];
-			stream.read(data, data_len);
-			bstring.assign(data, data_len);
+			// clear the content
+			((std::string&)bstring) = "";
+			
+			if (data_len > 0)
+			{
+				char data[data_len];
+				stream.read(data, data_len);
+				bstring.assign(data, data_len);
+			}
 
 			return stream;
 		}
