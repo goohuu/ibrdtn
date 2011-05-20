@@ -4,6 +4,9 @@
 
 #include <string>
 #include <ibrdtn/data/EID.h>
+#include <map>
+#include <set>
+#include <list>
 
 namespace dtn
 {
@@ -43,6 +46,23 @@ namespace dtn
 				CONN_HTTP = 5
 			};
 
+			class URI
+			{
+			public:
+				URI(const std::string &uri, const Protocol p);
+				~URI();
+
+				const Protocol protocol;
+				const std::string value;
+
+				void decode(std::string &address, unsigned int &port) const;
+
+				bool operator<(const URI &other) const;
+				bool operator==(const URI &other) const;
+
+				bool operator==(const Node::Protocol &p) const;
+			};
+
 			static std::string getTypeName(Node::Type type);
 			static std::string getProtocolName(Node::Protocol proto);
 
@@ -53,7 +73,7 @@ namespace dtn
 			 */
 			Node(Node::Type type = NODE_PERMANENT, unsigned int rtt = 2700);
 
-			Node(dtn::data::EID id, Node::Protocol proto = CONN_UNDEFINED, Node::Type type = NODE_PERMANENT, unsigned int rtt = 2700);
+			Node(const dtn::data::EID &id, Node::Type type = NODE_PERMANENT, unsigned int rtt = 2700);
 
 			/**
 			 * destructor
@@ -68,23 +88,36 @@ namespace dtn
 			Node::Type getType() const;
 			void setType(Node::Type type);
 
-			void setProtocol(Node::Protocol protocol);
-			Node::Protocol getProtocol() const;
+			/**
+			 * Check if the protocol is available for this node.
+			 * @param proto
+			 * @return
+			 */
+			bool has(Node::Protocol proto) const;
 
 			/**
-			 * Set the address of the node.
-			 * @param address The address of the node. (e.g. 10.0.0.1 for IP)
+			 * Add a URI to this node.
+			 * @param u
 			 */
-			void setAddress(std::string address);
+			void add(const URI &u);
 
 			/**
-			 * Get the address of the node.
-			 * @return The address of the node. (e.g. 10.0.0.1 for IP)
+			 * Remove a given URI of the node.
+			 * @param proto
 			 */
-			std::string getAddress() const;
+			void remove(const URI &u);
 
-			void setPort(unsigned int port);
-			unsigned int getPort() const;
+			/**
+			 * Clear all URIs contained in this node.
+			 */
+			void clear();
+
+			/**
+			 * Returns a list of URIs matching the given protocol
+			 * @param proto
+			 * @return
+			 */
+			std::list<URI> get(Node::Protocol proto) const;
 
 			/*
 			 * Set a description for the node.
@@ -97,18 +130,6 @@ namespace dtn
 			 * @return The description.
 			 */
 			std::string getDescription() const;
-
-			/**
-			 * Set the URI (EID) of the node.
-			 * @param uri The URI of the node.
-			 */
-			void setURI(std::string uri);
-
-			/**
-			 * Get the URI (EID) of the node.
-			 * @return The URI of the node.
-			 */
-			std::string getURI() const;
 
 			/**
 			 * Set the EID of this Node
@@ -163,14 +184,14 @@ namespace dtn
 
 		private:
 			bool _connect_immediately;
-			std::string _address;
 			std::string _description;
 			dtn::data::EID _id;
 			int _timeout;
 			unsigned int _rtt;
 			Node::Type _type;
-			unsigned int _port;
-			Node::Protocol _protocol;
+
+			std::set<URI> _uri_list;
+			std::map<std::string, std::string> _attributes;
 		};
 	}
 }

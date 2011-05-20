@@ -140,7 +140,7 @@ namespace dtn
 				if (conn.match(n))
 				{
 					conn.queue(job._bundle);
-					IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an existing tcp connection (" << conn.getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an existing tcp connection (" << conn.getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 
 					return;
 				}
@@ -164,7 +164,7 @@ namespace dtn
 			// signal that there is a new connection
 			_connections_cond.signal(true);
 
-			IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an new tcp connection (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void TCPConvergenceLayer::raiseEvent(const Event *evt)
@@ -208,7 +208,7 @@ namespace dtn
 			// signal that there is a new connection
 			_connections_cond.signal(true);
 
-			IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection added (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection added (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void TCPConvergenceLayer::connectionDown(TCPConnection *conn)
@@ -219,7 +219,7 @@ namespace dtn
 				if (conn == (*iter))
 				{
 					_connections.erase(iter);
-					IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection removed (" << conn->getNode().getEID().getString() << ")" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(15) << "tcp connection removed (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
 
 					// signal that there is a connection less
 					_connections_cond.signal(true);

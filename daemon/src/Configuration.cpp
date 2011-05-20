@@ -485,27 +485,51 @@ namespace dtn
 
 			while ( conf.keyExists(prefix + "uri") )
 			{
-				Node n(Node::NODE_PERMANENT);
+				const dtn::data::EID node_eid( conf.read<std::string>(prefix + "uri", "dtn:none") );
 
-				n.setAddress( conf.read<std::string>(prefix + "address", "127.0.0.1") );
-				n.setPort( conf.read<unsigned int>(prefix + "port", 4556) );
-				n.setURI( conf.read<std::string>(prefix + "uri", "dtn:none") );
-				n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
+				// create a address URI
+				std::stringstream ss;
+				ss << "ip=" << conf.read<std::string>(prefix + "address", "127.0.0.1") << ";port=" << conf.read<unsigned int>(prefix + "port", 4556);
 
-				std::string protocol = conf.read<std::string>(prefix + "proto", "tcp");
-				if (protocol == "tcp") n.setProtocol(Node::CONN_TCPIP);
-				if (protocol == "udp") n.setProtocol(Node::CONN_UDPIP);
-				if (protocol == "zigbee") n.setProtocol(Node::CONN_ZIGBEE);
-				if (protocol == "bluetooth") n.setProtocol(Node::CONN_BLUETOOTH);
-				if (protocol == "http") n.setProtocol(Node::CONN_HTTP);
+				dtn::core::Node::Protocol p = Node::CONN_UNDEFINED;
+
+				const std::string protocol = conf.read<std::string>(prefix + "proto", "tcp");
+				if (protocol == "tcp") p = Node::CONN_TCPIP;
+				if (protocol == "udp") p = Node::CONN_UDPIP;
+				if (protocol == "zigbee") p = Node::CONN_ZIGBEE;
+				if (protocol == "bluetooth") p = Node::CONN_BLUETOOTH;
+				if (protocol == "http") p = Node::CONN_HTTP;
+
+				bool node_exists = false;
+
+				// get node
+				for (std::list<Node>::iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+				{
+					dtn::core::Node &n = (*iter);
+
+					if (n.getEID() == node_eid)
+					{
+						n.add( dtn::core::Node::URI( ss.str(), p ) );
+						//n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
+						node_exists = true;
+						break;
+					}
+				}
+
+				if (!node_exists)
+				{
+					Node n(Node::NODE_PERMANENT);
+					n.setEID( node_eid );
+					n.add( dtn::core::Node::URI( ss.str(), p ) );
+					n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
+					_nodes.push_back(n);
+				}
 
 				count++;
 
 				std::stringstream prefix_stream;
 				prefix_stream << "static" << count << "_";
 				prefix = prefix_stream.str();
-
-				_nodes.push_back(n);
 			}
 
 			/**

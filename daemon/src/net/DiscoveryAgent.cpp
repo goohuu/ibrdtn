@@ -64,7 +64,7 @@ namespace dtn
 			Node n(Node::NODE_FLOATING, rtt);
 
 			// set the EID and some parameters of this Node
-			n.setURI(announcement.getEID().getString());
+			n.setEID(announcement.getEID());
 
 			// get configured timeout value
 			n.setTimeout( _config.timeout() );
@@ -76,45 +76,16 @@ namespace dtn
 
 				if (s.getName() == "tcpcl")
 				{
-					n.setProtocol(Node::CONN_TCPIP);
+					n.add(Node::URI(s.getParameters(), Node::CONN_TCPIP));
 				}
 				else if (s.getName() == "udpcl")
 				{
-					n.setProtocol(Node::CONN_UDPIP);
+					n.add(Node::URI(s.getParameters(), Node::CONN_UDPIP));
 				}
-				else
-				{
-					continue;
-				}
-
-				// parse parameters
-				std::vector<string> parameters = dtn::utils::Utils::tokenize(";", s.getParameters());
-				std::vector<string>::const_iterator param_iter = parameters.begin();
-
-				while (param_iter != parameters.end())
-				{
-					std::vector<string> p = dtn::utils::Utils::tokenize("=", (*param_iter));
-
-					if (p[0].compare("ip") == 0)
-					{
-						n.setAddress(p[1]);
-					}
-
-					if (p[0].compare("port") == 0)
-					{
-						int port_number = 0;
-						stringstream port_stream;
-						port_stream << p[1];
-						port_stream >> port_number;
-						n.setPort(port_number);
-					}
-
-					param_iter++;
-				}
-
-				// create and raise a new event
-				dtn::core::NodeEvent::raise(n, NODE_INFO_UPDATED);
 			}
+
+			// create and raise a new event
+			dtn::core::NodeEvent::raise(n, NODE_INFO_UPDATED);
 		}
 
 		size_t DiscoveryAgent::timeout(size_t)

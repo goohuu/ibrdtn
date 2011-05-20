@@ -46,12 +46,12 @@ namespace dtn
 				switch (node->getAction())
 				{
 				case NODE_AVAILABLE:
-					msg << "Node is available: " << node->getNode().getURI();
+					msg << "Node is available: " << node->getNode().toString();
 					notify("IBR-DTN", msg.str());
 					break;
 
 				case NODE_UNAVAILABLE:
-					msg << "Node is unavailable: " << node->getNode().getURI();
+					msg << "Node is unavailable: " << node->getNode().toString();
 					notify("IBR-DTN", msg.str());
 					break;
 				default:

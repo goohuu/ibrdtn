@@ -51,7 +51,9 @@ namespace dtn
 
 			stream->enableLinger(10);
 			stream->enableKeepalive();
-			_node.setProtocol(Node::CONN_TCPIP);
+
+			// add default TCP connection
+			_node.add(dtn::core::Node::URI("0.0.0.0", Node::CONN_TCPIP));
 		}
 
 		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout)
@@ -136,7 +138,7 @@ namespace dtn
 				const dtn::data::BundleID bundle = _sentqueue.getnpop();
 
 				// requeue the bundle
-				TransferAbortedEvent::raise(EID(_node.getURI()), bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
+				TransferAbortedEvent::raise(EID(_node.getEID()), bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
 
 				// set ACK to zero
 				_lastack = 0;
@@ -153,7 +155,7 @@ namespace dtn
 				const dtn::data::MetaBundle bundle = _sentqueue.getnpop();
 
 				// signal completion of the transfer
-				TransferCompletedEvent::raise(EID(_node.getURI()), bundle);
+				TransferCompletedEvent::raise(_node.getEID(), bundle);
 
 				// raise bundle event
 				dtn::core::BundleEvent::raise(bundle, BUNDLE_FORWARDED);
@@ -218,10 +220,21 @@ namespace dtn
 
 		void TCPConnection::setup()
 		{
+			// variables for address and port
+			std::string address = "0.0.0.0";
+			unsigned int port = 0;
+
 			// try to connect to the other side
 			try {
+				const std::list<dtn::core::Node::URI> uri_list = _node.get(dtn::core::Node::CONN_TCPIP);
+				if (uri_list.empty()) throw ibrcommon::tcpclient::SocketException("no address available to connect");
+
+				// decode address and port
+				const dtn::core::Node::URI &uri = uri_list.front();
+				uri.decode(address, port);
+
 				ibrcommon::tcpclient &client = dynamic_cast<ibrcommon::tcpclient&>(*_tcpstream);
-				client.open(_node.getAddress(), _node.getPort());
+				client.open(address, port);
 
 				if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
 				{
@@ -230,10 +243,9 @@ namespace dtn
 
 				_tcpstream->enableLinger(10);
 				_tcpstream->enableKeepalive();
-				_node.setProtocol(Node::CONN_TCPIP);
 			} catch (const ibrcommon::tcpclient::SocketException&) {
 				// error on open, requeue all bundles in the queue
-				IBRCOMMON_LOGGER(warning) << "connection to " << _node.getURI() << " (" << _node.getAddress() << ":" << _node.getPort() << ") failed" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(warning) << "connection to " << _node.toString() << " (" << address << ":" << port << ") failed" << IBRCOMMON_LOGGER_ENDL;
 				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				throw;
 			} catch (const bad_cast&) { };
@@ -420,7 +432,7 @@ namespace dtn
 
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 							// send transfer aborted event
-							TransferAbortedEvent::raise(EID(_connection._node.getURI()), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+							TransferAbortedEvent::raise(_connection._node.getEID(), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 						}
 						
 						// unset the current transfer
@@ -462,7 +474,7 @@ namespace dtn
 					const dtn::data::BundleID id = _sender.getnpop();
 
 					// raise transfer abort event for all bundles without an ACK
-					dtn::routing::RequeueBundleEvent::raise(_node.getURI(), id);
+					dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
 				}
 			} catch (const ibrcommon::QueueUnblockedException&) {
 				// queue emtpy
@@ -478,12 +490,12 @@ namespace dtn
 					{
 						// some data are already acknowledged, make a fragment?
 						//TODO: make a fragment
-						dtn::routing::RequeueBundleEvent::raise(_node.getURI(), id);
+						dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
 					}
 					else
 					{
 						// raise transfer abort event for all bundles without an ACK
-						dtn::routing::RequeueBundleEvent::raise(_node.getURI(), id);
+						dtn::routing::RequeueBundleEvent::raise(_node.getEID(), id);
 					}
 
 					// set last ack to zero
@@ -504,7 +516,7 @@ namespace dtn
 			// notify the aborted transfer of the last bundle
 			if (_current_transfer != dtn::data::BundleID())
 			{
-				dtn::routing::RequeueBundleEvent::raise(_connection._node.getURI(), _current_transfer);
+				dtn::routing::RequeueBundleEvent::raise(_connection._node.getEID(), _current_transfer);
 			}
 		}
 
@@ -515,7 +527,7 @@ namespace dtn
 
 		bool TCPConnection::match(const dtn::data::EID &destination) const
 		{
-			return (_node.getURI() == destination.getNodeEID());
+			return (_node.getEID() == destination.getNodeEID());
 		}
 
 		bool TCPConnection::match(const NodeEvent &evt) const

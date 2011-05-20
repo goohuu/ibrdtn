@@ -86,13 +86,13 @@ namespace dtn
 				switch (node->getAction())
 				{
 				case NODE_INFO_UPDATED:
-					IBRCOMMON_LOGGER_DEBUG(10) << evt->getName() << ": Info updated for " << node->getNode().getURI() << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(10) << evt->getName() << ": Info updated for " << node->getNode().toString() << IBRCOMMON_LOGGER_ENDL;
 					break;
 				case NODE_AVAILABLE:
-					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().getURI() << " available over " << Node::getProtocolName(node->getNode().getProtocol()) << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().toString() << " available " << IBRCOMMON_LOGGER_ENDL;
 					break;
 				case NODE_UNAVAILABLE:
-					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().getURI() << " unavailable" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(notice) << evt->getName() << ": Node " << node->getNode().toString() << " unavailable" << IBRCOMMON_LOGGER_ENDL;
 					break;
 				default:
 					IBRCOMMON_LOGGER(notice) << evt->getName() << ": unknown" << IBRCOMMON_LOGGER_ENDL;

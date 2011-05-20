@@ -1,8 +1,10 @@
 #include "core/Node.h"
 #include "net/ConvergenceLayer.h"
+#include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/Logger.h>
 
 #include <iostream>
+#include <sstream>
 
 using namespace std;
 
@@ -10,13 +12,66 @@ namespace dtn
 {
 	namespace core
 	{
-		Node::Node(Node::Type type, unsigned int rtt)
-		: _connect_immediately(false), _address(), _description(), _id("dtn:none"), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(CONN_UNDEFINED)
+		Node::URI::URI(const std::string &uri, const Protocol p)
+		 : protocol(p), value(uri)
 		{
 		}
 
-		Node::Node(dtn::data::EID id, Node::Protocol proto, Node::Type type, unsigned int rtt)
-		: _connect_immediately(false), _address(), _description(), _id(id), _timeout(5), _rtt(rtt), _type(type), _port(4556), _protocol(proto)
+		Node::URI::~URI()
+		{
+		}
+
+		void Node::URI::decode(std::string &address, unsigned int &port) const
+		{
+			// parse parameters
+			std::vector<string> parameters = dtn::utils::Utils::tokenize(";", value);
+			std::vector<string>::const_iterator param_iter = parameters.begin();
+
+			while (param_iter != parameters.end())
+			{
+				std::vector<string> p = dtn::utils::Utils::tokenize("=", (*param_iter));
+
+				if (p[0].compare("ip") == 0)
+				{
+					address = p[1];
+				}
+
+				if (p[0].compare("port") == 0)
+				{
+					std::stringstream port_stream;
+					port_stream << p[1];
+					port_stream >> port;
+				}
+
+				param_iter++;
+			}
+		}
+
+		bool Node::URI::operator<(const URI &other) const
+		{
+			if (protocol < other.protocol) return true;
+			if (protocol != other.protocol) return false;
+
+			return (value < other.value);
+		}
+
+		bool Node::URI::operator==(const URI &other) const
+		{
+			return ((protocol == other.protocol) && (value == other.value));
+		}
+
+		bool Node::URI::operator==(const Node::Protocol &p) const
+		{
+			return (protocol == p);
+		}
+
+		Node::Node(Node::Type type, unsigned int rtt)
+		: _connect_immediately(false), _description(), _id("dtn:none"), _timeout(5), _rtt(rtt), _type(type)
+		{
+		}
+
+		Node::Node(const dtn::data::EID &id, Node::Type type, unsigned int rtt)
+		: _connect_immediately(false), _description(), _id(id), _timeout(5), _rtt(rtt), _type(type)
 		{
 
 		}
@@ -81,34 +136,38 @@ namespace dtn
 			_type = type;
 		}
 
-		void Node::setProtocol(Node::Protocol protocol)
+		bool Node::has(Node::Protocol proto) const
 		{
-			_protocol = protocol;
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			{
+				if ((*iter) == proto) return true;
+			}
+			return false;
 		}
 
-		Node::Protocol Node::getProtocol() const
+		void Node::add(const URI &u)
 		{
-			return _protocol;
+			_uri_list.insert(u);
 		}
 
-		void Node::setAddress(string address)
+		void Node::remove(const URI &u)
 		{
-			_address = address;
+			_uri_list.erase(u);
 		}
 
-		string Node::getAddress() const
+		void Node::clear()
 		{
-			return _address;
+			_uri_list.clear();
 		}
 
-		void Node::setPort(unsigned int port)
+		std::list<Node::URI> Node::get(Node::Protocol proto) const
 		{
-			_port = port;
-		}
-
-		unsigned int Node::getPort() const
-		{
-			return _port;
+			std::list<URI> ret;
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			{
+				if ((*iter) == proto) ret.push_back(*iter);
+			}
+			return ret;
 		}
 
 		void Node::setDescription(string description)
@@ -119,17 +178,6 @@ namespace dtn
 		string Node::getDescription() const
 		{
 			return _description;
-		}
-
-
-		void Node::setURI(string uri)
-		{
-			_id = dtn::data::EID(uri);
-		}
-
-		string Node::getURI() const
-		{
-			return _id.getString();
 		}
 
 		void Node::setEID(const dtn::data::EID &id)
@@ -168,18 +216,11 @@ namespace dtn
 
 		bool Node::operator==(const Node &other) const
 		{
-			return (other._id == _id) && (other._protocol == _protocol);
+			return (other._id == _id);
 		}
 
 		bool Node::operator<(const Node &other) const
 		{
-//			if (IBRCOMMON_LOGGER_LEVEL >= 50)
-//			{
-//				IBRCOMMON_LOGGER_DEBUG(50) << "compare " << this->toString() << " with " << other.toString() << IBRCOMMON_LOGGER_ENDL;
-//			}
-
-			if (_protocol < other._protocol) return true;
-			if (_protocol != other._protocol) return false;
 			if (_id < other._id ) return true;
 
 			return false;
@@ -187,7 +228,7 @@ namespace dtn
 
 		std::string Node::toString() const
 		{
-			std::stringstream ss; ss << getURI() << " (" << Node::getTypeName(getType()) << ", " << Node::getProtocolName(getProtocol()) << ", " << getAddress() << ", " << getPort() << ")";
+			std::stringstream ss; ss << getEID().getString() << " (" << Node::getTypeName(getType()) << ")";
 			return ss.str();
 		}
 

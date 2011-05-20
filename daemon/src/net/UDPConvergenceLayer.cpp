@@ -90,6 +90,13 @@ namespace dtn
 
 		void UDPConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
+			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_UDPIP);
+			if (uri_list.empty())
+			{
+				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_UNDEFINED);
+				return;
+			}
+
 			std::stringstream ss;
 			dtn::data::DefaultSerializer serializer(ss);
 
@@ -104,56 +111,28 @@ namespace dtn
 				if (size > m_maxmsgsize)
 				{
 					// TODO: create a fragment of length "size"
-
-//				// get the payload block
-//				PayloadBlock *payload = utils::Utils::getPayloadBlock( b );
-//				size_t application_length = payload->getBLOB().getSize();
-//
-//				// the new size for the payload
-//				size_t payload_size = m_maxmsgsize;
-//
-//				// reduce by the overhead
-//				payload_size -= (size - application_length);
-//
-//				// possible size of fragment offset and application data length
-//				payload_size -= 20;
-//
-//				// split the payload block
-//				pair<PayloadBlock*, PayloadBlock*> frags = payload->split(payload_size);
-//
-//				Bundle frag1 = b;
-//				frag1.clearBlocks();
-//				frag1.addBlock(frags.first);
-//
-//				Bundle frag2 = b;
-//				frag2.clearBlocks();
-//				frag2.addBlock(frags.second);
-//				frag2._fragmentoffset += payload_size;
-//
-//				if (!(b._procflags & Bundle::FRAGMENT))
-//				{
-//					frag1._procflags += Bundle::FRAGMENT;
-//					frag1._appdatalength += application_length;
-//					frag2._procflags += Bundle::FRAGMENT;
-//					frag2._appdatalength += application_length;
-//				}
-
-				// TODO: transfer the fragment
-
 					throw ConnectionInterruptedException();
 				}
 
 				serializer << bundle;
 				string data = ss.str();
 
+				const dtn::core::Node::URI &uri = uri_list.front();
+
+				std::string address = "0.0.0.0";
+				unsigned int port = 0;
+
+				// read values
+				uri.decode(address, port);
+
 				// get the address of the node
-				ibrcommon::vaddress addr(node.getAddress());
+				ibrcommon::vaddress addr(address);
 
 				// set write lock
 				ibrcommon::MutexLock l(m_writelock);
 
 				// send converted line back to client.
-				int ret = _socket->send(addr, node.getPort(), data.c_str(), data.length());
+				int ret = _socket->send(addr, port, data.c_str(), data.length());
 
 				if (ret == -1)
 				{
@@ -168,7 +147,7 @@ namespace dtn
 				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(EID(node.getURI()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				dtn::net::TransferAbortedEvent::raise(node.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}
 
 		}

@@ -85,6 +85,9 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
+			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_ZIGBEE);
+			if (uri_list.empty()) return;
+
 			std::stringstream ss;
 			dtn::data::DefaultSerializer serializer(ss);
 
@@ -101,13 +104,21 @@ namespace dtn
 					throw ConnectionInterruptedException();
 				}
 
-				cout << "CL LOWPAN was asked to connect to " << hex << node.getAddress() << " in PAN " << hex << node.getPort() << endl;
+				const dtn::core::Node::URI &uri = uri_list.front();
+
+				std::string address = "0";
+				unsigned int pan = 0x00;
+
+				// read values
+				uri.decode(address, pan);
+
+				cout << "CL LOWPAN was asked to connect to " << hex << address << " in PAN " << hex << pan << endl;
 
 				serializer << bundle;
 				string data = ss.str();
 
 				// get a lowpan peer //FIXME should be getPan not getPort
-				ibrcommon::lowpansocket::peer p = _socket->getPeer(node.getAddress(), node.getPort());
+				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
 
 				// set write lock
 				ibrcommon::MutexLock l(m_writelock);
@@ -128,7 +139,7 @@ namespace dtn
 				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(EID(node.getURI()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+				dtn::net::TransferAbortedEvent::raise(EID(node.getEID()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 			}
 		}
 

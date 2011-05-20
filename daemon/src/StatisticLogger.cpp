@@ -241,7 +241,7 @@ namespace dtn
 
 			for (std::set<dtn::core::Node>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++)
 			{
-				_fileout << "\t" << (*iter).getURI() << std::endl;
+				_fileout << "\t" << (*iter).toString() << std::endl;
 			}
 
 			_fileout << std::endl;
@@ -261,7 +261,7 @@ namespace dtn
 			const std::set<dtn::core::Node> neighbors = _core.getNeighbors();
 			for (std::set<dtn::core::Node>::const_iterator iter = neighbors.begin(); iter != neighbors.end(); iter++)
 			{
-				ss << (*iter).getURI() << "\n";
+				ss << (*iter).toString() << "\n";
 			}
 
 			ss << std::flush;

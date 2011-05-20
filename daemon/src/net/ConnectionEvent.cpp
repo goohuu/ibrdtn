@@ -12,7 +12,7 @@ namespace dtn
 	namespace net
 	{
 		ConnectionEvent::ConnectionEvent(State s, const dtn::core::Node &n)
-		 : state(s), peer(n.getURI()), node(n)
+		 : state(s), peer(n.getEID()), node(n)
 		{
 
 		}

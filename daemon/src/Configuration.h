@@ -6,6 +6,7 @@
 #include "routing/StaticRoutingExtension.h"
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/net/vinterface.h>
+#include <list>
 
 using namespace dtn::net;
 using namespace dtn::core;

@@ -104,15 +104,20 @@ namespace dtn
 			dtn::data::BundleString bs;
 			dtn::data::SDNV sdnv;
 
-			stream >> type; obj.type = DTNTPWorker::TimeSyncMessage::MSG_TYPE(type);
+			stream >> type;
+			obj.type = DTNTPWorker::TimeSyncMessage::MSG_TYPE(type);
 
-			stream >> bs; ss.clear(); ss.str((std::string&)bs);
+			stream >> bs;
+			ss.clear();
+			ss.str((const std::string&)bs);
 			ss >> obj.origin_quality;
 
 			stream >> sdnv; obj.origin_timestamp.tv_sec = sdnv.getValue();
 			stream >> sdnv; obj.origin_timestamp.tv_usec = sdnv.getValue();
 
-			stream >> bs; ss.clear(); ss.str((std::string&)bs);
+			stream >> bs;
+			ss.clear();
+			ss.str((const std::string&)bs);
 			ss >> obj.peer_quality;
 
 			stream >> sdnv; obj.peer_timestamp.tv_sec = sdnv.getValue();
