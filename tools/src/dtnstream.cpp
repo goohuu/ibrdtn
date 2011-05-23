@@ -15,7 +15,10 @@
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrcommon/net/tcpclient.h>
 #include <ibrcommon/data/File.h>
+#include <ibrcommon/TimeMeasurement.h>
 #include <iostream>
+
+unsigned int __timeout_receive__ = 0;
 
 dtn::data::Block* StreamBlock::Factory::create()
 {
@@ -201,13 +204,18 @@ int BundleStreamBuf::__underflow()
 		_chunks_cond.wait();
 	}
 
+	ibrcommon::TimeMeasurement tm;
+	tm.start();
+
 	// while not the right sequence number received -> wait
 	while (_in_seq != (*_chunks.begin())._seq)
 	{
 		// wait for the next bundle
-		_chunks_cond.wait();
+		_chunks_cond.wait(1000);
 
-		if (_chunks.size() > 10)
+		tm.stop();
+		if ((__timeout_receive__ > 0) && (tm.getSeconds() > __timeout_receive__))
+		//if (_chunks.size() > 10)
 		{
 			// skip the missing bundles and proceed with the last received one
 			_in_seq = (*_chunks.begin())._seq;
@@ -314,7 +322,7 @@ void print_help()
 	std::cout << " -d <destination> set the destination eid (e.g. dtn://node/stream)" << std::endl;
 	std::cout << " -s <identifier>  set the source identifier (e.g. stream)" << std::endl;
 	std::cout << " -c <bytes>       set the chunk size (max. size of each bundle)" << std::endl;
-//	std::cout << " -t <seconds>     set the timeout of the buffer" << std::endl;
+	std::cout << " -t <seconds>     set the timeout of the buffer" << std::endl;
 	std::cout << " -l <seconds>     set the lifetime of stream chunks default: 30" << std::endl;
 	std::cout << " -E               request encryption on the bundle layer" << std::endl;
 	std::cout << " -S               request signature on the bundle layer" << std::endl;
@@ -353,9 +361,9 @@ int main(int argc, char *argv[])
 			_chunk_size = atoi(optarg);
 			break;
 
-//		case 't':
-//			_timeout = atoi(optarg);
-//			break;
+		case 't':
+			__timeout_receive__ = atoi(optarg);
+			break;
 
 		case 'l':
 			_lifetime = atoi(optarg);
