@@ -10,13 +10,14 @@
 
 #include "core/AbstractWorker.h"
 #include "core/EventReceiver.h"
+#include "net/DiscoveryServiceProvider.h"
 #include "Configuration.h"
 
 namespace dtn
 {
 	namespace daemon
 	{
-		class DTNTPWorker : public dtn::core::AbstractWorker, public dtn::core::EventReceiver
+		class DTNTPWorker : public dtn::core::AbstractWorker, public dtn::core::EventReceiver, public dtn::net::DiscoveryServiceProvider
 		{
 		public:
 			DTNTPWorker();
@@ -24,6 +25,8 @@ namespace dtn
 
 			void callbackBundleReceived(const Bundle &b);
 			void raiseEvent(const dtn::core::Event *evt);
+
+			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data) throw(NoServiceHereException);
 
 			class TimeSyncMessage
 			{
@@ -50,6 +53,10 @@ namespace dtn
 			};
 
 		private:
+			static const unsigned int PROTO_VERSION;
+
+			void decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality);
+
 //			void shared_sync(const TimeSyncMessage &msg);
 			void sync(const TimeSyncMessage &msg, struct timeval &tv);
 
@@ -57,6 +64,7 @@ namespace dtn
 			size_t _qot_current_tic;
 			double _sigma;
 			double _epsilon;
+			float _quality_diff;
 
 			TimeSyncMessage _last_sync;
 

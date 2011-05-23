@@ -10,6 +10,7 @@
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
 #include <ibrdtn/utils/Clock.h>
+#include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/SDNV.h>
@@ -22,13 +23,13 @@ namespace dtn
 {
 	namespace daemon
 	{
+		const unsigned int DTNTPWorker::PROTO_VERSION = 1;
+
 		DTNTPWorker::DTNTPWorker()
-		 : _conf(dtn::daemon::Configuration::getInstance().getTimeSync()), _sigma(1.001), _epsilon(0.99)
+		 : _conf(dtn::daemon::Configuration::getInstance().getTimeSync()), _sigma(_conf.getSigma()),
+		   _epsilon(1 / _sigma), _quality_diff(_conf.getSyncLevel())
 		{
 			AbstractWorker::initialize("/dtntp", true);
-
-			// the quality of a received time is at least 1 second worth.
-			_epsilon = 1 / _sigma;
 
 			if (_conf.hasReference())
 			{
@@ -179,9 +180,28 @@ namespace dtn
 
 			try {
 				const dtn::core::NodeEvent &n = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+				const dtn::core::Node &node = n.getNode();
 
-				if (n.getAction() == dtn::core::NODE_AVAILABLE)
+				if (n.getAction() == dtn::core::NODE_INFO_UPDATED)
 				{
+					// only query for time sync if the other node supports this
+					if (!node.has("dtntp")) return;
+
+					// get discovery attribute
+					const std::list<dtn::core::Node::Attribute> attrs = node.get("dtntp");
+
+					// decode attribute parameter
+					unsigned int version = 0;
+					size_t timestamp = 0;
+					float quality = 0.0;
+					decode(attrs.front(), version, timestamp, quality);
+
+					// we do only support version = 1
+					if (version != 1) return;
+
+					// do not sync if the quality is worse than ours
+					if ((quality * _quality_diff) <= dtn::utils::Clock::quality) return;
+
 					// send a time sync bundle
 					dtn::data::Bundle b;
 
@@ -217,6 +237,46 @@ namespace dtn
 					transmit(b);
 				}
 			} catch (const std::bad_cast&) { };
+		}
+
+		void DTNTPWorker::update(const ibrcommon::vinterface&, std::string &name, std::string &data) throw(NoServiceHereException)
+		{
+			std::stringstream ss;
+			ss << "version=" << PROTO_VERSION << ";quality=" << dtn::utils::Clock::quality << ";timestamp=" << dtn::utils::Clock::getTime() << ";";
+			name = "dtntp";
+			data = ss.str();
+		}
+
+		void DTNTPWorker::decode(const dtn::core::Node::Attribute &attr, unsigned int &version, size_t &timestamp, float &quality)
+		{
+			// parse parameters
+			std::vector<std::string> parameters = dtn::utils::Utils::tokenize(";", attr.value);
+			std::vector<std::string>::const_iterator param_iter = parameters.begin();
+
+			while (param_iter != parameters.end())
+			{
+				std::vector<std::string> p = dtn::utils::Utils::tokenize("=", (*param_iter));
+
+				if (p[0].compare("version") == 0)
+				{
+					std::stringstream ss(p[1]);
+					ss >> version;
+				}
+
+				if (p[0].compare("timestamp") == 0)
+				{
+					std::stringstream ss(p[1]);
+					ss >> timestamp;
+				}
+
+				if (p[0].compare("quality") == 0)
+				{
+					std::stringstream ss(p[1]);
+					ss >> quality;
+				}
+
+				param_iter++;
+			}
 		}
 
 //		void DTNTPWorker::shared_sync(const TimeBeacon &beacon)

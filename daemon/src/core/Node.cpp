@@ -65,6 +65,33 @@ namespace dtn
 			return (protocol == p);
 		}
 
+		Node::Attribute::Attribute(const std::string &n, const std::string &v)
+		 : name(n), value(v)
+		{
+		}
+
+		Node::Attribute::~Attribute()
+		{
+		}
+
+		bool Node::Attribute::operator<(const Attribute &other) const
+		{
+			if (name < other.name) return true;
+			if (name != other.name) return false;
+
+			return (value < other.value);
+		}
+
+		bool Node::Attribute::operator==(const Attribute &other) const
+		{
+			return ((name == other.name) && (value == other.value));
+		}
+
+		bool Node::Attribute::operator==(const std::string &n) const
+		{
+			return (name == n);
+		}
+
 		Node::Node(Node::Type type, unsigned int rtt)
 		: _connect_immediately(false), _description(), _id("dtn:none"), _timeout(5), _rtt(rtt), _type(type)
 		{
@@ -145,9 +172,23 @@ namespace dtn
 			return false;
 		}
 
+		bool Node::has(const std::string &name) const
+		{
+			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); iter++)
+			{
+				if ((*iter) == name) return true;
+			}
+			return false;
+		}
+
 		void Node::add(const URI &u)
 		{
 			_uri_list.insert(u);
+		}
+
+		void Node::add(const Attribute &attr)
+		{
+			_attr_list.insert(attr);
 		}
 
 		void Node::remove(const URI &u)
@@ -155,9 +196,15 @@ namespace dtn
 			_uri_list.erase(u);
 		}
 
+		void Node::remove(const Attribute &attr)
+		{
+			_attr_list.erase(attr);
+		}
+
 		void Node::clear()
 		{
 			_uri_list.clear();
+			_attr_list.clear();
 		}
 
 		std::list<Node::URI> Node::get(Node::Protocol proto) const
@@ -166,6 +213,16 @@ namespace dtn
 			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
 			{
 				if ((*iter) == proto) ret.push_back(*iter);
+			}
+			return ret;
+		}
+
+		std::list<Node::Attribute> Node::get(const std::string &name) const
+		{
+			std::list<Attribute> ret;
+			for (std::set<Attribute>::const_iterator iter = _attr_list.begin(); iter != _attr_list.end(); iter++)
+			{
+				if ((*iter) == name) ret.push_back(*iter);
 			}
 			return ret;
 		}

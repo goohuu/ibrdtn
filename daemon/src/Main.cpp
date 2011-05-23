@@ -703,6 +703,7 @@ int __daemon_run(Configuration &conf)
 
 	// add DT-NTP worker
 	DTNTPWorker dtntp;
+	if (ipnd != NULL) ipnd->addService(&dtntp);
 
 	// add DevNull module
 	DevNull devnull;

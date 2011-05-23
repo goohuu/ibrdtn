@@ -63,6 +63,21 @@ namespace dtn
 				bool operator==(const Node::Protocol &p) const;
 			};
 
+			class Attribute
+			{
+			public:
+				Attribute(const std::string &name, const std::string &value);
+				~Attribute();
+
+				const std::string name;
+				const std::string value;
+
+				bool operator<(const Attribute &other) const;
+				bool operator==(const Attribute &other) const;
+
+				bool operator==(const std::string &name) const;
+			};
+
 			static std::string getTypeName(Node::Type type);
 			static std::string getProtocolName(Node::Protocol proto);
 
@@ -94,21 +109,24 @@ namespace dtn
 			 * @return
 			 */
 			bool has(Node::Protocol proto) const;
+			bool has(const std::string &name) const;
 
 			/**
 			 * Add a URI to this node.
 			 * @param u
 			 */
 			void add(const URI &u);
+			void add(const Attribute &attr);
 
 			/**
 			 * Remove a given URI of the node.
 			 * @param proto
 			 */
 			void remove(const URI &u);
+			void remove(const Attribute &attr);
 
 			/**
-			 * Clear all URIs contained in this node.
+			 * Clear all URIs & Attributes contained in this node.
 			 */
 			void clear();
 
@@ -118,6 +136,13 @@ namespace dtn
 			 * @return
 			 */
 			std::list<URI> get(Node::Protocol proto) const;
+
+			/**
+			 * get a list of attributes match the given name
+			 * @param name
+			 * @return
+			 */
+			std::list<Attribute> get(const std::string &name) const;
 
 			/*
 			 * Set a description for the node.
@@ -191,6 +216,7 @@ namespace dtn
 			Node::Type _type;
 
 			std::set<URI> _uri_list;
+			std::set<Attribute> _attr_list;
 			std::map<std::string, std::string> _attributes;
 		};
 	}

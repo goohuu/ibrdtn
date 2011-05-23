@@ -431,12 +431,17 @@ namespace dtn
 				bool _sync;
 				bool _discovery;
 				int _qot_tick;
+				float _sigma;
+				float _sync_level;
 
 			public:
 				bool hasReference() const;
 				bool syncOnDiscovery() const;
 				bool sendDiscoveryAnnouncements() const;
 				int getQualityOfTimeTick() const;
+
+				float getSigma() const;
+				float getSyncLevel() const;
 			};
 
 			const Configuration::Discovery& getDiscovery() const;

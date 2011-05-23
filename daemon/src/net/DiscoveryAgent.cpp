@@ -82,6 +82,10 @@ namespace dtn
 				{
 					n.add(Node::URI(s.getParameters(), Node::CONN_UDPIP));
 				}
+				else
+				{
+					n.add(Node::Attribute(s.getName(), s.getParameters()));
+				}
 			}
 
 			// create and raise a new event

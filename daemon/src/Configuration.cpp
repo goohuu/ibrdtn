@@ -354,6 +354,9 @@ namespace dtn
 			try {
 				_discovery = (conf.read<std::string>("time_discovery_announcements") == "yes");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
+
+			_sigma = conf.read<float>("time_sigma", 1.001);
+			_sync_level = conf.read<float>("time_sync_level", 0.15);
 		}
 
 		bool Configuration::Debug::quiet() const
@@ -941,6 +944,16 @@ namespace dtn
 		int Configuration::TimeSync::getQualityOfTimeTick() const
 		{
 			return _qot_tick;
+		}
+
+		float Configuration::TimeSync::getSigma() const
+		{
+			return _sigma;
+		}
+
+		float Configuration::TimeSync::getSyncLevel() const
+		{
+			return _sync_level;
 		}
 	}
 }
