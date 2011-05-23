@@ -210,12 +210,13 @@ int BundleStreamBuf::__underflow()
 	// while not the right sequence number received -> wait
 	while (_in_seq != (*_chunks.begin())._seq)
 	{
-		// wait for the next bundle
-		_chunks_cond.wait(1000);
+		try {
+			// wait for the next bundle
+			_chunks_cond.wait(1000);
+		} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 
 		tm.stop();
 		if ((__timeout_receive__ > 0) && (tm.getSeconds() > __timeout_receive__))
-		//if (_chunks.size() > 10)
 		{
 			// skip the missing bundles and proceed with the last received one
 			_in_seq = (*_chunks.begin())._seq;
@@ -336,12 +337,11 @@ int main(int argc, char *argv[])
 	std::string _source = "stream";
 	unsigned int _lifetime = 30;
 	size_t _chunk_size = 4096;
-//	size_t _timeout = 0;
 	bool _bundle_encryption = false;
 	bool _bundle_signed = false;
 	ibrcommon::File _unixdomain;
 
-	while((opt = getopt(argc, argv, "hd:s:c:l:ESU:")) != -1)
+	while((opt = getopt(argc, argv, "hd:t:s:c:l:ESU:")) != -1)
 	{
 		switch (opt)
 		{
