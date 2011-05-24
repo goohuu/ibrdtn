@@ -150,6 +150,7 @@ namespace dtn
 							dtn::utils::Clock::quality = _last_sync.peer_quality * (1 / ::pow(_sigma, _sync_age) );
 
 							// debug quality of time
+							IBRCOMMON_LOGGER_DEBUG(25) << "new quality = " << _last_sync.peer_quality << " * (1 / (" << _sigma << " ^ " << _sync_age << "))" << IBRCOMMON_LOGGER_ENDL;
 							IBRCOMMON_LOGGER_DEBUG(25) << "new quality of time is " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
 
 							// reset the tick counter
@@ -202,6 +203,24 @@ namespace dtn
 					// do not sync if the quality is worse than ours
 					if ((quality * _quality_diff) <= dtn::utils::Clock::quality) return;
 
+					// get the EID of the peer
+					const dtn::data::EID &peer = n.getNode().getEID();
+
+					// check sync blacklist
+					{
+						ibrcommon::MutexLock l(_blacklist_lock);
+						size_t bl_age = _sync_blacklist[peer];
+
+						// do not query again if the blacklist entry is valid
+						if ((bl_age > 0) && (bl_age < dtn::utils::Clock::getTime()))
+						{
+							return;
+						}
+
+						// create a new blacklist entry
+						_sync_blacklist[peer] = dtn::utils::Clock::getTime() + 60;
+					}
+
 					// send a time sync bundle
 					dtn::data::Bundle b;
 
@@ -226,7 +245,7 @@ namespace dtn
 
 					// set the source and destination
 					b._source = dtn::core::BundleCore::local + "/dtntp";
-					b._destination = n.getNode().getEID() + "/dtntp";
+					b._destination = peer + "/dtntp";
 
 					// set high priority
 					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
@@ -337,6 +356,7 @@ namespace dtn
 
 			// remember the last sync
 			_last_sync = msg;
+			_sync_age = 0;
 		}
 
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)

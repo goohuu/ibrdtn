@@ -70,6 +70,9 @@ namespace dtn
 
 			ibrcommon::Mutex _sync_lock;
 			time_t _sync_age;
+
+			ibrcommon::Mutex _blacklist_lock;
+			std::map<EID, size_t> _sync_blacklist;
 		};
 	}
 }
