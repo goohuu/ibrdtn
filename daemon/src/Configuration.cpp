@@ -340,10 +340,6 @@ namespace dtn
 		void Configuration::TimeSync::load(const ibrcommon::ConfigFile &conf)
 		{
 			try {
-				_qot_tick = conf.read<int>("time_qot_tick", 0);
-			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
-
-			try {
 				_reference = (conf.read<std::string>("time_reference") == "yes");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
@@ -355,6 +351,7 @@ namespace dtn
 				_discovery = (conf.read<std::string>("time_discovery_announcements") == "yes");
 			} catch (const ibrcommon::ConfigFile::key_not_found&) { };
 
+			_qot_tick = conf.read<int>("time_qot_tick", 0);
 			_sigma = conf.read<float>("time_sigma", 1.001);
 			_sync_level = conf.read<float>("time_sync_level", 0.15);
 		}

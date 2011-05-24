@@ -26,8 +26,8 @@ namespace dtn
 		const unsigned int DTNTPWorker::PROTO_VERSION = 1;
 
 		DTNTPWorker::DTNTPWorker()
-		 : _conf(dtn::daemon::Configuration::getInstance().getTimeSync()), _sigma(_conf.getSigma()),
-		   _epsilon(1 / _sigma), _quality_diff(_conf.getSyncLevel())
+		 : _conf(dtn::daemon::Configuration::getInstance().getTimeSync()), _qot_current_tic(0), _sigma(_conf.getSigma()),
+		   _epsilon(1 / _sigma), _quality_diff(_conf.getSyncLevel()), _sync_age(0)
 		{
 			AbstractWorker::initialize("/dtntp", true);
 
@@ -141,7 +141,7 @@ namespace dtn
 						/**
 						 * decrease the quality of time each x tics
 						 */
-						if ((_qot_current_tic % _conf.getQualityOfTimeTick()) == 0)
+						if (_qot_current_tic == _conf.getQualityOfTimeTick())
 						{
 							// get current time values
 							_sync_age++;

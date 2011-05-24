@@ -61,7 +61,7 @@ namespace dtn
 			void sync(const TimeSyncMessage &msg, struct timeval &tv);
 
 			const dtn::daemon::Configuration::TimeSync &_conf;
-			size_t _qot_current_tic;
+			int _qot_current_tic;
 			double _sigma;
 			double _epsilon;
 			float _quality_diff;
