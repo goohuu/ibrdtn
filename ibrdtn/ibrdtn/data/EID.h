@@ -54,10 +54,10 @@ namespace dtn
 
 			string getString() const;
 			string getApplication() const throw (ibrcommon::Exception);
-			string getNode() const throw (ibrcommon::Exception);
+			string getHost() const throw (ibrcommon::Exception);
 			string getScheme() const;
 
-			string getNodeEID() const;
+			EID getNode() const throw (ibrcommon::Exception);
 
 			bool hasApplication() const;
 

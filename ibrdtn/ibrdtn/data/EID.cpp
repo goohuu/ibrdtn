@@ -99,12 +99,12 @@ namespace dtn
 
 		bool EID::sameHost(string const& other) const
 		{
-			return ( other == getNodeEID() );
+			return ( EID(other) == getNode() );
 		}
 
 		bool EID::sameHost(EID const& other) const
 		{
-			return ( other.getNodeEID() == getNodeEID() );
+			return ( other.getNode() == getNode() );
 		}
 
 		bool EID::operator<(EID const& other) const
@@ -159,7 +159,7 @@ namespace dtn
 			}
 		}
 
-		std::string EID::getNode() const throw (ibrcommon::Exception)
+		std::string EID::getHost() const throw (ibrcommon::Exception)
 		{
 			size_t first_char = 0;
 			char delimiter = '.';
@@ -193,9 +193,9 @@ namespace dtn
 			return _scheme;
 		}
 
-		std::string EID::getNodeEID() const
+		EID EID::getNode() const throw (ibrcommon::Exception)
 		{
-			return _scheme + ":" + getNode();
+			return _scheme + ":" + getHost();
 		}
 
 		bool EID::hasApplication() const
@@ -236,7 +236,7 @@ namespace dtn
 
 			if (isCompressable())
 			{
-				std::stringstream ss_node(getNode());
+				std::stringstream ss_node(getHost());
 				ss_node >> node;
 
 				if (hasApplication())

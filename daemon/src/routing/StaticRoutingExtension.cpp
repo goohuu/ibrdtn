@@ -60,7 +60,7 @@ namespace dtn
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
 					// do not forward to any blacklisted destination
-					const dtn::data::EID dest = meta.destination.getNodeEID();
+					const dtn::data::EID dest = meta.destination.getNode();
 					if (_blacklist.find(dest) != _blacklist.end())
 					{
 						return false;

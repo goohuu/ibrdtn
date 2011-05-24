@@ -682,21 +682,21 @@ namespace dtn
 
 		bool SecurityBlock::isSecuritySource(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
-			IBRCOMMON_LOGGER_DEBUG(30) << "check security source: " << getSecuritySource(bundle).getString() << " == " << eid.getNodeEID() << IBRCOMMON_LOGGER_ENDL;
-			return getSecuritySource(bundle) == eid.getNodeEID();
+			IBRCOMMON_LOGGER_DEBUG(30) << "check security source: " << getSecuritySource(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
+			return getSecuritySource(bundle) == eid.getNode();
 		}
 
 		bool SecurityBlock::isSecurityDestination(const dtn::data::Bundle& bundle, const dtn::data::EID& eid) const
 		{
-			IBRCOMMON_LOGGER_DEBUG(30) << "check security destination: " << getSecurityDestination(bundle).getString() << " == " << eid.getNodeEID() << IBRCOMMON_LOGGER_ENDL;
-			return getSecurityDestination(bundle) == eid.getNodeEID();
+			IBRCOMMON_LOGGER_DEBUG(30) << "check security destination: " << getSecurityDestination(bundle).getString() << " == " << eid.getNode().getString() << IBRCOMMON_LOGGER_ENDL;
+			return getSecurityDestination(bundle) == eid.getNode();
 		}
 		
 		const dtn::data::EID SecurityBlock::getSecuritySource(const dtn::data::Bundle& bundle) const
 		{
 			dtn::data::EID source = getSecuritySource();
 			if (source == dtn::data::EID())
-				source = bundle._source.getNodeEID();
+				source = bundle._source.getNode();
 			return source;
 		}
 
@@ -704,7 +704,7 @@ namespace dtn
 		{
 			dtn::data::EID destination = getSecurityDestination();
 			if (destination == dtn::data::EID())
-				destination = bundle._destination.getNodeEID();
+				destination = bundle._destination.getNode();
 			return destination;
 		}
 	}

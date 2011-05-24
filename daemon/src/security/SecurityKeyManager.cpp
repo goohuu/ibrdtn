@@ -43,7 +43,7 @@ namespace dtn
 
 		const std::string SecurityKeyManager::hash(const dtn::data::EID &eid)
 		{
-			std::string value = eid.getNodeEID();
+			std::string value = eid.getNode().getString();
 			std::stringstream ss;
 			for (std::string::const_iterator iter = value.begin(); iter != value.end(); iter++)
 			{
@@ -58,14 +58,14 @@ namespace dtn
 
 		bool SecurityKeyManager::hasKey(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const
 		{
-			const ibrcommon::File keyfile = _path.get(hash(ref.getNodeEID()) + ".pem");
+			const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
 			return keyfile.exists();
 		}
 
 		dtn::security::SecurityKey SecurityKeyManager::get(const dtn::data::EID &ref, const dtn::security::SecurityKey::KeyType type) const throw (SecurityKeyManager::KeyNotFoundException)
 		{
 			dtn::security::SecurityKey keydata;
-			keydata.reference = ref.getNodeEID();
+			keydata.reference = ref.getNode();
 			keydata.type = type;
 
 			switch (type)
@@ -73,7 +73,7 @@ namespace dtn
 				case SecurityKey::KEY_SHARED:
 				{
 					// read a symmetric key required for BAB signing
-					const ibrcommon::File keyfile = _path.get(hash(ref.getNodeEID()) + ".mac");
+					const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".mac");
 
 					if (!keyfile.exists())
 					{
@@ -100,7 +100,7 @@ namespace dtn
 				case SecurityKey::KEY_PUBLIC:
 				case SecurityKey::KEY_PRIVATE:
 				{
-					const ibrcommon::File keyfile = _path.get(hash(ref.getNodeEID()) + ".pem");
+					const ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
 
 					if (!keyfile.exists())
 					{
@@ -120,7 +120,7 @@ namespace dtn
 
 		void SecurityKeyManager::store(const dtn::data::EID &ref, const std::string &data, const dtn::security::SecurityKey::KeyType type)
 		{
-			ibrcommon::File keyfile = _path.get(hash(ref.getNodeEID()) + ".pem");
+			ibrcommon::File keyfile = _path.get(hash(ref.getNode()) + ".pem");
 
 			// delete if already exists
 			if (keyfile.exists()) keyfile.remove();

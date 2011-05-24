@@ -228,6 +228,10 @@ namespace dtn
 					b._source = dtn::core::BundleCore::local + "/dtntp";
 					b._destination = n.getNode().getEID() + "/dtntp";
 
+					// set high priority
+					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
+					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
+
 					// set the the destination as singleton receiver
 					b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
 
@@ -338,7 +342,7 @@ namespace dtn
 		void DTNTPWorker::callbackBundleReceived(const Bundle &b)
 		{
 			// do not sync with ourselves
-			if (b._source.getNodeEID() == dtn::core::BundleCore::local.getNodeEID()) return;
+			if (b._source.getNode() == dtn::core::BundleCore::local) return;
 
 			try {
 				// read payload block
@@ -360,6 +364,10 @@ namespace dtn
 						// switch the source and destination
 						response._source = b._destination;
 						response._destination = b._source;
+						
+						// set high priority
+						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
+						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
 
 						// set the the destination as singleton receiver
 						response.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
@@ -435,7 +443,7 @@ namespace dtn
 						timersub(&tv_local, &peer_timestamp, &offset);
 
 						// print out offset to the local clock
-						IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; rtt = " << rtt.tv_sec << "s " << rtt.tv_usec << "us; prop. delay = " << prop_delay.tv_sec << "s " << prop_delay.tv_usec << "us; clock of " << b._source.getNodeEID() << " has a offset of " << offset.tv_sec << "s " << offset.tv_usec << "us" << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; rtt = " << rtt.tv_sec << "s " << rtt.tv_usec << "us; prop. delay = " << prop_delay.tv_sec << "s " << prop_delay.tv_usec << "us; clock of " << b._source.getNode().getString() << " has a offset of " << offset.tv_sec << "s " << offset.tv_usec << "us" << IBRCOMMON_LOGGER_ENDL;
 
 						// sync to this time message
 						sync(msg, peer_timestamp);

@@ -18,7 +18,7 @@
 #include "net/ConnectionManager.h"
 #include "Configuration.h"
 #include "core/BundleCore.h"
-#include "core/BundleGeneratedEvent.h"
+#include "core/BundleEvent.h"
 
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -42,6 +42,7 @@ namespace dtn
 	namespace routing
 	{
 		EpidemicRoutingExtension::EpidemicRoutingExtension()
+		 : _endpoint(_taskqueue, _purge_vector)
 		{
 			// write something to the syslog
 			IBRCOMMON_LOGGER(info) << "Initializing epidemic routing module" << IBRCOMMON_LOGGER_ENDL;
@@ -98,7 +99,7 @@ namespace dtn
 						entry.acquireFilterRequest();
 
 						// query a new summary vector from this neighbor
-						_taskqueue.push( new QuerySummaryVectorTask( n.getEID() ) );
+						_taskqueue.push( new QuerySummaryVectorTask( n.getEID(), _endpoint ) );
 					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 					} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 				}
@@ -155,7 +156,7 @@ namespace dtn
 					}
 
 					// do not forward to any blacklisted destination
-					const dtn::data::EID dest = meta.destination.getNodeEID();
+					const dtn::data::EID dest = meta.destination.getNode();
 					if (_blacklist.find(dest) != _blacklist.end())
 					{
 						return false;
@@ -246,7 +247,7 @@ namespace dtn
 								entry.acquireFilterRequest();
 
 								// query a new summary vector from this neighbor
-								_taskqueue.push( new QuerySummaryVectorTask( task.eid ) );
+								_taskqueue.push( new QuerySummaryVectorTask( task.eid, _endpoint ) );
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
@@ -258,52 +259,45 @@ namespace dtn
 						try {
 							TransferCompletedTask &task = dynamic_cast<TransferCompletedTask&>(*t);
 
-							// add this bundle to the purge vector if it is delivered to its destination
-							if (( EID(task.peer.getNodeEID()) == EID(task.meta.destination.getNodeEID()) ) && (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
-							{
-								IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
+							try {
+								// add this bundle to the purge vector if it is delivered to its destination
+								if (( task.peer.getNode() == task.meta.destination.getNode() ) && (task.meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+								{
+									IBRCOMMON_LOGGER(notice) << "singleton bundle added to purge vector: " << task.meta.toString() << IBRCOMMON_LOGGER_ENDL;
 
-								// add it to the purge vector
-								_purge_vector.add(task.meta);
-							}
+									// add it to the purge vector
+									_purge_vector.add(task.meta);
+								}
+							} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 
 							// transfer the next bundle to this destination
 							_taskqueue.push( new SearchNextBundleTask( task.peer ) );
 						} catch (const std::bad_cast&) { };
 
 						/**
+						 * process a epidemic bundle
+						 */
+						try {
+							const ProcessEpidemicBundleTask &task = dynamic_cast<ProcessEpidemicBundleTask&>(*t);
+							processECM(task.bundle);
+						} catch (const std::bad_cast&) { };
+
+						/**
 						 * process a received bundle
 						 */
 						try {
-							ProcessBundleTask &task = dynamic_cast<ProcessBundleTask&>(*t);
+							dynamic_cast<ProcessBundleTask&>(*t);
 
-							// look for ECM bundles
-							if ( task.bundle.destination == (dtn::core::BundleCore::local + "/routing/epidemic") )
+							// new bundles trigger a recheck for all neighbors
+							const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
+
+							for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
 							{
-								// the bundle is an control message, get it from the storage
-								dtn::data::Bundle bundle = storage.get(task.bundle);
+								const dtn::core::Node &n = (*iter);
 
-								// process the incoming ECM
-								processECM(task.origin, bundle);
-
-								// we do not need it anymore in the storage
-								storage.remove(bundle);
+								// transfer the next bundle to this destination
+								_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
 							}
-							else
-							{
-								// new bundles trigger a recheck for all neighbors
-								const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
-
-								for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
-								{
-									const dtn::core::Node &n = (*iter);
-
-									// transfer the next bundle to this destination
-									_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-								}
-							}
-						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-							// if the bundle is not in the storage we have nothing to do
 						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -346,6 +340,20 @@ namespace dtn
 
 		/****************************************/
 
+		EpidemicRoutingExtension::ProcessEpidemicBundleTask::ProcessEpidemicBundleTask(const dtn::data::Bundle &b)
+		 : bundle(b)
+		{ }
+
+		EpidemicRoutingExtension::ProcessEpidemicBundleTask::~ProcessEpidemicBundleTask()
+		{ }
+
+		std::string EpidemicRoutingExtension::ProcessEpidemicBundleTask::toString()
+		{
+			return "ProcessEpidemicBundleTask: " + bundle.toString();
+		}
+
+		/****************************************/
+
 		EpidemicRoutingExtension::ExpireTask::ExpireTask(const size_t t)
 		 : timestamp(t)
 		{ }
@@ -374,14 +382,45 @@ namespace dtn
 
 		/****************************************/
 
-		EpidemicRoutingExtension::QuerySummaryVectorTask::QuerySummaryVectorTask(const dtn::data::EID &o)
-		 : origin(o)
+		EpidemicRoutingExtension::QuerySummaryVectorTask::QuerySummaryVectorTask(const dtn::data::EID &o, EpidemicEndpoint &e)
+		 : origin(o), endpoint(e)
 		{ }
 
 		EpidemicRoutingExtension::QuerySummaryVectorTask::~QuerySummaryVectorTask()
 		{ }
 
 		void EpidemicRoutingExtension::QuerySummaryVectorTask::execute() const
+		{
+			// call the query method at the epidemic endpoint instance
+			endpoint.query(origin);
+		}
+
+		std::string EpidemicRoutingExtension::QuerySummaryVectorTask::toString()
+		{
+			return "QuerySummaryVectorTask: " + origin.getString();
+		}
+
+		EpidemicRoutingExtension::EpidemicEndpoint::EpidemicEndpoint(ibrcommon::Queue<EpidemicRoutingExtension::Task* > &queue, dtn::routing::BundleSummary &purge)
+		 : _taskqueue(queue), _purge_vector(purge)
+		{
+			AbstractWorker::initialize("/routing/epidemic", true);
+		}
+
+		EpidemicRoutingExtension::EpidemicEndpoint::~EpidemicEndpoint()
+		{
+		}
+
+		void EpidemicRoutingExtension::EpidemicEndpoint::callbackBundleReceived(const Bundle &b)
+		{
+			_taskqueue.push( new ProcessEpidemicBundleTask(b) );
+		}
+
+		void EpidemicRoutingExtension::EpidemicEndpoint::send(const dtn::data::Bundle &b)
+		{
+			transmit(b);
+		}
+
+		void EpidemicRoutingExtension::EpidemicEndpoint::query(const dtn::data::EID &origin)
 		{
 			// create a new request for the summary vector of the neighbor
 			EpidemicControlMessage ecm;
@@ -415,16 +454,11 @@ namespace dtn
 				(*ios) << ecm;
 			}
 
-			// transfer the bundle to the neighbor
-			dtn::core::BundleGeneratedEvent::raise(req);
+			// send the bundle
+			transmit(req);
 		}
 
-		std::string EpidemicRoutingExtension::QuerySummaryVectorTask::toString()
-		{
-			return "QuerySummaryVectorTask: " + origin.getString();
-		}
-
-		void EpidemicRoutingExtension::processECM(const dtn::data::EID &origin, const dtn::data::Bundle &bundle)
+		void EpidemicRoutingExtension::processECM(const dtn::data::Bundle &bundle)
 		{
 			// read the ecm
 			const dtn::data::PayloadBlock &p = bundle.getBlock<dtn::data::PayloadBlock>();
@@ -480,7 +514,7 @@ namespace dtn
 				}
 
 				// transfer the bundle to the neighbor
-				dtn::core::BundleGeneratedEvent::raise(answer);
+				_endpoint.send(answer);
 			}
 			else if (ecm.type == EpidemicControlMessage::ECM_RESPONSE)
 			{
@@ -497,11 +531,11 @@ namespace dtn
 					try {
 						NeighborDatabase &db = (**this).getNeighborDB();
 						ibrcommon::MutexLock l(db);
-						NeighborDatabase::NeighborEntry &entry = db.get(bundle._source.getNodeEID());
+						NeighborDatabase::NeighborEntry &entry = db.get(bundle._source.getNode());
 						entry.update(filter, bundle._lifetime);
 
 						// trigger the search-for-next-bundle procedure
-						_taskqueue.push( new SearchNextBundleTask( origin ) );
+						_taskqueue.push( new SearchNextBundleTask( entry.eid ) );
 					} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 				}
 
@@ -518,7 +552,11 @@ namespace dtn
 							// delete bundles in the purge vector
 							const dtn::data::MetaBundle meta = storage.remove(purge);
 
-							IBRCOMMON_LOGGER_DEBUG(15) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+							// log the purged bundle
+							IBRCOMMON_LOGGER(notice) << "bundle purged: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+
+							// gen a report
+							dtn::core::BundleEvent::raise(meta, BUNDLE_DELETED, StatusReportBlock::DEPLETED_STORAGE);
 
 							// add this bundle to the own purge vector
 							_purge_vector.add(meta);

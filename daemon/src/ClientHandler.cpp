@@ -74,12 +74,12 @@ namespace dtn
 			{
 				// This node is working with compressed addresses
 				// generate a number
-				_eid = BundleCore::local + "." + header._localeid.getNode();
+				_eid = BundleCore::local + "." + header._localeid.getHost();
 			}
 			else
 			{
 				// contact received event
-				_eid = BundleCore::local + "/" + header._localeid.getNode() + header._localeid.getApplication();
+				_eid = BundleCore::local + "/" + header._localeid.getHost() + header._localeid.getApplication();
 			}
 
 			IBRCOMMON_LOGGER_DEBUG(20) << "new client connected: " << _eid.getString() << IBRCOMMON_LOGGER_ENDL;

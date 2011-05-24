@@ -55,7 +55,7 @@ namespace dtn
 				const SecurityKey key = SecurityKeyManager::getInstance().get(dtn::core::BundleCore::local, SecurityKey::KEY_PRIVATE);
 
 				// sign the bundle with PIB
-				dtn::security::PayloadIntegrityBlock::sign(bundle, key, bundle._destination.getNodeEID());
+				dtn::security::PayloadIntegrityBlock::sign(bundle, key, bundle._destination.getNode());
 			} catch (const SecurityKeyManager::KeyNotFoundException &ex) {
 				throw KeyMissingException(ex.what());
 			}

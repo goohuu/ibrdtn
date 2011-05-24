@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 			try {
 				if (use_stdin)
 				{
-					cout << "Transfer stdin to " << addr.getNodeEID() << endl;
+					cout << "Transfer stdin to " << addr.getString() << endl;
 
 					// create an empty BLOB
 					ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
@@ -253,7 +253,7 @@ int main(int argc, char *argv[])
 				}
 				else
 				{
-					cout << "Transfer file \"" << filename << "\" to " << addr.getNodeEID() << endl;
+					cout << "Transfer file \"" << filename << "\" to " << addr.getString() << endl;
 					
 					for(int u=0; u<copies; u++){
 						// create a bundle from the file

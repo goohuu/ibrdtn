@@ -122,7 +122,7 @@ namespace data
 	void Dictionary::add(const EID &eid)
 	{
 		add(eid.getScheme());
-		add(eid.getNode() + eid.getApplication());
+		add(eid.getHost() + eid.getApplication());
 	}
 
 	void Dictionary::add(const list<EID> &eids)
@@ -164,7 +164,7 @@ namespace data
 	pair<size_t, size_t> Dictionary::getRef(const EID &eid) const
 	{
 		const string scheme = eid.getScheme();
-		const string ssp = eid.getNode() + eid.getApplication();
+		const string ssp = eid.getHost() + eid.getApplication();
 		return make_pair(get(scheme), get(ssp));
 	}
 

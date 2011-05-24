@@ -17,6 +17,7 @@
 #include "net/ConnectionManager.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include "core/SimpleBundleStorage.h"
+#include "core/BundleEvent.h"
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/AutoDelete.h>
 
@@ -73,7 +74,7 @@ namespace dtn
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
-					if (_destination.getNodeEID() != meta.destination.getNodeEID())
+					if (_destination.getNode() != meta.destination.getNode())
 					{
 						return false;
 					}
@@ -89,7 +90,7 @@ namespace dtn
 
 				size_t bind(sqlite3_stmt *st, size_t offset) const
 				{
-					const std::string d = _destination.getNodeEID() + "/%";
+					const std::string d = _destination.getNode().getString() + "/%";
 					sqlite3_bind_text(st, offset, d.c_str(), d.size(), SQLITE_TRANSIENT);
 					return offset + 1;
 				}
@@ -178,7 +179,7 @@ namespace dtn
 				const dtn::data::MetaBundle &meta = completed.getBundle();
 				const dtn::data::EID &peer = completed.getPeer();
 
-				if ((meta.destination.getNodeEID() == peer.getNodeEID())
+				if ((meta.destination.getNode() == peer.getNode())
 						&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 				{
 					try {
@@ -188,7 +189,10 @@ namespace dtn
 						// delete it from our storage
 						storage.remove(meta);
 
-						IBRCOMMON_LOGGER_DEBUG(15) << "singleton bundle delivered: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(notice) << "singleton bundle delivered and removed: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+
+						// gen a report
+						dtn::core::BundleEvent::raise(meta, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
 
 					// transfer the next bundle to this destination
@@ -222,7 +226,7 @@ namespace dtn
 							const dtn::data::MetaBundle meta = (**this).getStorage().get(id);
 
 							// if the bundle has been sent by this module delete it
-							if ((meta.destination.getNodeEID() == peer.getNodeEID())
+							if ((meta.destination.getNode() == peer.getNode())
 									&& (meta.procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
 							{
 								// bundle is not deliverable
