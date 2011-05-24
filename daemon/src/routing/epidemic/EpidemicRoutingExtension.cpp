@@ -63,8 +63,18 @@ namespace dtn
 		{
 			// If an incoming bundle is received, forward it to all connected neighbors
 			try {
-				const QueueBundleEvent &queued = dynamic_cast<const QueueBundleEvent&>(*evt);
-				_taskqueue.push( new ProcessBundleTask(queued.bundle, queued.origin) );
+				dynamic_cast<const QueueBundleEvent&>(*evt);
+
+				// new bundles trigger a recheck for all neighbors
+				const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
+
+				for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
+				{
+					const dtn::core::Node &n = (*iter);
+
+					// transfer the next bundle to this destination
+					_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
+				}
 				return;
 			} catch (const std::bad_cast&) { };
 
@@ -282,23 +292,6 @@ namespace dtn
 							processECM(task.bundle);
 						} catch (const std::bad_cast&) { };
 
-						/**
-						 * process a received bundle
-						 */
-						try {
-							dynamic_cast<ProcessBundleTask&>(*t);
-
-							// new bundles trigger a recheck for all neighbors
-							const std::set<dtn::core::Node> nl = dtn::core::BundleCore::getInstance().getNeighbors();
-
-							for (std::set<dtn::core::Node>::const_iterator iter = nl.begin(); iter != nl.end(); iter++)
-							{
-								const dtn::core::Node &n = (*iter);
-
-								// transfer the next bundle to this destination
-								_taskqueue.push( new SearchNextBundleTask( n.getEID() ) );
-							}
-						} catch (const std::bad_cast&) { };
 					} catch (const ibrcommon::Exception &ex) {
 						IBRCOMMON_LOGGER_DEBUG(20) << "Exception occurred in EpidemicRoutingExtension: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
@@ -322,20 +315,6 @@ namespace dtn
 		std::string EpidemicRoutingExtension::SearchNextBundleTask::toString()
 		{
 			return "SearchNextBundleTask: " + eid.getString();
-		}
-
-		/****************************************/
-
-		EpidemicRoutingExtension::ProcessBundleTask::ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &o)
-		 : bundle(meta), origin(o)
-		{ }
-
-		EpidemicRoutingExtension::ProcessBundleTask::~ProcessBundleTask()
-		{ }
-
-		std::string EpidemicRoutingExtension::ProcessBundleTask::toString()
-		{
-			return "ProcessBundleTask: " + bundle.toString();
 		}
 
 		/****************************************/

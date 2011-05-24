@@ -97,18 +97,6 @@ namespace dtn
 				const dtn::data::EID eid;
 			};
 
-			class ProcessBundleTask : public Task
-			{
-			public:
-				ProcessBundleTask(const dtn::data::MetaBundle &meta, const dtn::data::EID &origin);
-				virtual ~ProcessBundleTask();
-
-				virtual std::string toString();
-
-				const dtn::data::MetaBundle bundle;
-				const dtn::data::EID origin;
-			};
-
 			class ProcessEpidemicBundleTask : public Task
 			{
 			public:
@@ -117,7 +105,7 @@ namespace dtn
 
 				virtual std::string toString();
 
-				const dtn::data::Bundle &bundle;
+				const dtn::data::Bundle bundle;
 			};
 
 			class QuerySummaryVectorTask : public ExecutableTask
