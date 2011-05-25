@@ -35,7 +35,7 @@ namespace dtn
 		struct CompareNodeDestination:
 		public std::binary_function< dtn::core::Node, dtn::data::EID, bool > {
 			bool operator() ( const dtn::core::Node &node, const dtn::data::EID &destination ) const {
-				return dtn::data::EID(node.getEID()) == destination;
+				return node.getEID() == destination;
 			}
 		};
 
@@ -126,21 +126,14 @@ namespace dtn
 					{
 						ibrcommon::MutexLock l(_node_lock);
 
-						// if this node is still available (discovered or static)
-						if (isNeighbor(connection.node))
+						// remove the node from the connected list
+						_connected_nodes.erase(connection.node);
+
+						// if the node is unknown now ...
+						if (!isNeighbor(connection.node))
 						{
-							// remove the node from the connected list
-							_connected_nodes.erase(connection.node);
-
-							// remove the node from the discovered list
-							_discovered_nodes.erase(connection.node);
-
-							// if the node is unknown now ...
-							if (!isNeighbor(connection.node))
-							{
-								// announce the unavailable event
-								dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_UNAVAILABLE);
-							}
+							// announce the unavailable event
+							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_UNAVAILABLE);
 						}
 						break;
 					}
@@ -201,11 +194,12 @@ namespace dtn
 
 				if ( !n.decrementTimeout(1) )
 				{
-					// remove the connected node
-					_connected_nodes.erase(n);
-
-					// announce the unavailable event
-					dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
+					// if the node is unknown now ...
+					if (!isNeighbor(n))
+					{
+						// announce the unavailable event
+						dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
+					}
 				}
 				else
 				{
