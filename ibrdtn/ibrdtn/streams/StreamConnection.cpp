@@ -26,7 +26,6 @@ namespace dtn
 
 		StreamConnection::~StreamConnection()
 		{
-			_buf.shutdowntimers();
 		}
 
 		void StreamConnection::handshake(const dtn::data::EID &eid, const size_t timeout, const char flags)
@@ -85,18 +84,15 @@ namespace dtn
 				{
 					case CONNECTION_SHUTDOWN_IDLE:
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
-						_buf.shutdowntimers();
 						_buf.abort();
 						_callback.eventTimeout();
 						break;
 					case CONNECTION_SHUTDOWN_ERROR:
-						_buf.shutdowntimers();
 						_buf.abort();
 						_callback.eventError();
 						break;
 					case CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN:
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
-						_buf.shutdowntimers();
 						_callback.eventShutdown(csc);
 						break;
 					case CONNECTION_SHUTDOWN_NODE_TIMEOUT:
@@ -106,13 +102,11 @@ namespace dtn
 					case CONNECTION_SHUTDOWN_PEER_SHUTDOWN:
 						_buf.shutdown(StreamDataSegment::MSG_SHUTDOWN_NONE);
 					case CONNECTION_SHUTDOWN_NOTSET:
-						_buf.shutdowntimers();
 						_buf.abort();
 						_callback.eventShutdown(csc);
 						break;
 				}
 			} catch (const StreamConnection::StreamErrorException&) {
-				_buf.shutdowntimers();
 				_callback.eventError();
 			}
 

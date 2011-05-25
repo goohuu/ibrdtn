@@ -15,7 +15,7 @@ namespace dtn
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const size_t buffer_size)
 			: _buffer_size(buffer_size), _statebits(STREAM_SOB), _conn(conn), in_buf_(new char[buffer_size]), out_buf_(new char[buffer_size]), _stream(stream),
-			  _recv_size(0), _timer(*this, 0), _underflow_data_remain(0), _underflow_state(IDLE)
+			  _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -24,9 +24,6 @@ namespace dtn
 
 		StreamConnection::StreamBuffer::~StreamBuffer()
 		{
-			// stop all timer
-			_timer.remove();
-
 			// clear the own buffer
 			delete [] in_buf_;
 			delete [] out_buf_;
@@ -56,8 +53,6 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(80) << "Buffer size: " << _buffer_size << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "State bits: " << _statebits << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Recv size: " << _recv_size << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Timeout: " << _in_timeout << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(80) << "Current timeout: " << _in_timeout_value << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Segments: " << _segments.size() << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Reject segments: " << _rejected_segments.size() << IBRCOMMON_LOGGER_ENDL;
 			IBRCOMMON_LOGGER_DEBUG(80) << "Underflow remaining: " << _underflow_data_remain << IBRCOMMON_LOGGER_ENDL;
@@ -131,18 +126,8 @@ namespace dtn
 				// set the incoming timer if set (> 0)
 				if (peer._keepalive > 0)
 				{
+					// mark timer support
 					set(STREAM_TIMER_SUPPORT);
-
-					// read the timer values
-					_in_timeout = header._keepalive * 2;
-
-					// activate timer
-					ibrcommon::MutexLock timerl(_timer_lock);
-					_in_timeout_value = _in_timeout;
-					_timer.set(1);
-
-					// start the timer
-					_timer.start();
 				}
 
 				// set handshake completed bit
@@ -197,45 +182,10 @@ namespace dtn
 			}
 		}
 
-		/**
-		 * This method is called by the timer object.
-		 * In this class we have two timer.
-		 *
-		 * TIMER_IN: is raised if no data was received for a specified amount of time.
-		 * TIMER_OUT: is raised every x seconds to send a keepalive message
-		 *
-		 * @param identifier Identifier for the timer.
-		 * @return The new value for this timer.
-		 */
-		size_t StreamConnection::StreamBuffer::timeout(size_t)
-		{
-			size_t in_timeout_value = 0;
-			{
-				ibrcommon::MutexLock timerl(_timer_lock);
-				_in_timeout_value--;
-				in_timeout_value = _in_timeout_value;
-			}
-
-			if (in_timeout_value <= 0)
-			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE timeout reached -> shutdown connection" << IBRCOMMON_LOGGER_ENDL;
-				_conn.shutdown(CONNECTION_SHUTDOWN_NODE_TIMEOUT);
-				return 0;
-			}
-
-			return 1;
-		}
-
 		void StreamConnection::StreamBuffer::close()
 		{
 			// set shutdown bit
 			set(STREAM_SHUTDOWN);
-		}
-
-		void StreamConnection::StreamBuffer::shutdowntimers()
-		{
-			// stop all timer
-			_timer.remove();
 		}
 
 		void StreamConnection::StreamBuffer::reject()
@@ -399,12 +349,6 @@ namespace dtn
 
 					// adjust the remain counter
 					size -= readsize;
-
-					// reset the incoming timer
-					{
-						ibrcommon::MutexLock timerl(_timer_lock);
-						_in_timeout_value = _in_timeout;
-					}
 				}
 			} catch (const ios_base::failure &ex) {
 				_underflow_state = IDLE;
@@ -468,12 +412,6 @@ namespace dtn
 						_stream >> seg;
 					} catch (const ios_base::failure &ex) {
 						throw StreamErrorException("read error: " + std::string(ex.what()));
-					}
-
-					// reset the incoming timer
-					{
-						ibrcommon::MutexLock timerl(_timer_lock);
-						_in_timeout_value = _in_timeout;
 					}
 
 					switch (seg._type)

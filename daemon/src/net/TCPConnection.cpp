@@ -110,6 +110,13 @@ namespace dtn
 			_node.setEID(header._localeid);
 			_keepalive_timeout = header._keepalive * 1000;
 
+			// set the incoming timer if set (> 0)
+			if (_peer._keepalive > 0)
+			{
+				// set the timer
+				_tcpstream->setTimeout(header._keepalive * 2);
+			}
+
 			// raise up event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
 		}
@@ -373,7 +380,7 @@ namespace dtn
 		}
 
 		TCPConnection::Sender::Sender(TCPConnection &connection, size_t &keepalive_timeout)
-		 : _connection(connection), _keepalive_timeout(keepalive_timeout), _cancel_state(STATE_IDLE, STATE_FINAL)
+		 : _connection(connection), _keepalive_timeout(keepalive_timeout)
 		{
 		}
 
@@ -384,19 +391,8 @@ namespace dtn
 
 		bool TCPConnection::Sender::__cancellation()
 		{
-			ibrcommon::ThreadsafeState<CANCEL_STATE>::Locked lock_state = _cancel_state.lock();
-
-			if (lock_state == STATE_TRANSMIT)
-			{
-				// return false, to signal that further cancel (the hardway) is needed
-				return false;
-			}
-
-			if (lock_state == STATE_IDLE)
-			{
-				// cancel the main thread in here
-				ibrcommon::Queue<dtn::data::BundleID>::abort();
-			}
+			// cancel the main thread in here
+			ibrcommon::Queue<dtn::data::BundleID>::abort();
 
 			return true;
 		}
@@ -429,15 +425,8 @@ namespace dtn
 								}
 							}
 #endif
-
-							// set state to transmit, we need to abort the hard way
-							_cancel_state = STATE_TRANSMIT;
-
 							// send bundle
 							_connection << bundle;
-
-							// set state to idle, now we could cancel without the hard way
-							_cancel_state = STATE_IDLE;
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 							// send transfer aborted event
 							TransferAbortedEvent::raise(_connection._node.getEID(), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);

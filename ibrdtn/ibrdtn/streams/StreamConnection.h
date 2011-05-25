@@ -181,7 +181,7 @@ namespace dtn
 			/**
 			 * stream buffer class
 			 */
-			class StreamBuffer : public std::basic_streambuf<char, std::char_traits<char> >, public ibrcommon::SimpleTimerCallback
+			class StreamBuffer : public std::basic_streambuf<char, std::char_traits<char> >
 			{
 			public:
 				enum State
@@ -212,19 +212,9 @@ namespace dtn
 				void close();
 
 				/**
-				 * This terminates all internal timer to avoid deadlocks.
-				 */
-				void shutdowntimers();
-
-				/**
 				 * send a shutdown message to the peer
 				 */
 				void shutdown(const StreamDataSegment::ShutdownReason reason = StreamDataSegment::MSG_SHUTDOWN_NONE);
-
-				/**
-				 * This method is called by the timers.
-				 */
-				size_t timeout(size_t identifier);
 
 				/**
 				 * This method rejects the currently transmitted bundle
@@ -304,12 +294,6 @@ namespace dtn
 				std::iostream &_stream;
 
 				size_t _recv_size;
-
-				size_t _in_timeout;
-
-				ibrcommon::Mutex _timer_lock;
-				size_t _in_timeout_value;
-				ibrcommon::SimpleTimer _timer;
 
 				// this queue contains all sent data segments
 				// they are removed if an ack or nack is received
