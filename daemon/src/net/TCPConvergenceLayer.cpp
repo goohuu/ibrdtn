@@ -6,17 +6,17 @@
  */
 
 #include "net/TCPConvergenceLayer.h"
-#include "core/BundleCore.h"
-#include "core/GlobalEvent.h"
-#include <ibrcommon/net/vinterface.h>
 #include "net/ConnectionEvent.h"
-#include <ibrcommon/thread/MutexLock.h>
 #include "routing/RequeueBundleEvent.h"
+#include "core/BundleCore.h"
+
+#include <ibrcommon/net/vinterface.h>
+#include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/net/tcpclient.h>
 #include <ibrcommon/Logger.h>
-#include <streambuf>
 
+#include <streambuf>
 #include <functional>
 #include <list>
 #include <algorithm>
@@ -34,12 +34,10 @@ namespace dtn
 
 		TCPConvergenceLayer::TCPConvergenceLayer()
 		{
-			bindEvent(NodeEvent::className);
 		}
 
 		TCPConvergenceLayer::~TCPConvergenceLayer()
 		{
-			unbindEvent(NodeEvent::className);
 			join();
 		}
 
@@ -52,7 +50,7 @@ namespace dtn
 
 		dtn::core::Node::Protocol TCPConvergenceLayer::getDiscoveryProtocol() const
 		{
-			return Node::CONN_TCPIP;
+			return dtn::core::Node::CONN_TCPIP;
 		}
 
 		void TCPConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
@@ -165,30 +163,6 @@ namespace dtn
 			_connections_cond.signal(true);
 
 			IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
-		}
-
-		void TCPConvergenceLayer::raiseEvent(const Event *evt)
-		{
-			const NodeEvent *node = dynamic_cast<const NodeEvent*>(evt);
-
-			if (node != NULL)
-			{
-				if (node->getAction() == NODE_UNAVAILABLE)
-				{
-					// search for an existing connection
-					ibrcommon::MutexLock l(_connections_cond);
-					for (std::list<TCPConnection*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
-					{
-						TCPConnection &conn = *(*iter);
-
-						if (conn.match(*node))
-						{
-							// close the connection immediately
-							conn.shutdown();
-						}
-					}
-				}
-			}
 		}
 
 		void TCPConvergenceLayer::connectionUp(TCPConnection *conn)

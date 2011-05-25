@@ -6,11 +6,10 @@
  */
 
 #include "config.h"
+#include "Configuration.h"
 #include "core/BundleCore.h"
-#include "core/GlobalEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundleStorage.h"
-#include "Configuration.h"
 
 #include "net/TCPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"

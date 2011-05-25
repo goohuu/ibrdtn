@@ -10,10 +10,8 @@
 
 #include "Component.h"
 
-#include "core/EventReceiver.h"
 #include "core/NodeEvent.h"
 #include "core/Node.h"
-
 #include "net/ConvergenceLayer.h"
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryServiceProvider.h"
@@ -173,7 +171,7 @@ namespace dtn
 		 * This class implement a ConvergenceLayer for TCP/IP.
 		 * http://tools.ietf.org/html/draft-irtf-dtnrg-tcp-clayer-02
 		 */
-		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public ConvergenceLayer, public DiscoveryServiceProvider, public dtn::core::EventReceiver
+		class TCPConvergenceLayer : public dtn::daemon::IndependentComponent, public ConvergenceLayer, public DiscoveryServiceProvider
 		{
 			friend class TCPConnection;
 		public:
@@ -195,11 +193,6 @@ namespace dtn
 			 * @param port
 			 */
 			void bind(const ibrcommon::vinterface &net, int port);
-
-			/**
-			 * handler for events
-			 */
-			void raiseEvent(const dtn::core::Event *evt);
 
 			/**
 			 * Queue a new transmission job for this convergence layer.
