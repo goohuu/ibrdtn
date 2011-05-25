@@ -27,7 +27,7 @@ namespace dtn
 
 		DTNTPWorker::DTNTPWorker()
 		 : _conf(dtn::daemon::Configuration::getInstance().getTimeSync()), _qot_current_tic(0), _sigma(_conf.getSigma()),
-		   _epsilon(1 / _sigma), _quality_diff(_conf.getSyncLevel()), _sync_age(0)
+		   _epsilon(1 / _sigma), _quality_diff(1 - _conf.getSyncLevel()), _sync_age(0)
 		{
 			AbstractWorker::initialize("/dtntp", true);
 
@@ -136,6 +136,21 @@ namespace dtn
 				{
 					ibrcommon::MutexLock l(_sync_lock);
 
+					// remove outdated blacklist entries
+					{
+						ibrcommon::MutexLock l(_blacklist_lock);
+						for (std::map<EID, size_t>::iterator iter = _sync_blacklist.begin(); iter != _sync_blacklist.end(); iter++)
+						{
+							size_t bl_age = (*iter).second;
+
+							// do not query again if the blacklist entry is valid
+							if (bl_age < dtn::utils::Clock::getTime())
+							{
+								_sync_blacklist.erase((*iter).first);
+							}
+						}
+					}
+
 					if ((_conf.getQualityOfTimeTick() > 0) && !_conf.hasReference())
 					{
 						/**
@@ -209,12 +224,15 @@ namespace dtn
 					// check sync blacklist
 					{
 						ibrcommon::MutexLock l(_blacklist_lock);
-						size_t bl_age = _sync_blacklist[peer];
-
-						// do not query again if the blacklist entry is valid
-						if ((bl_age > 0) && (bl_age < dtn::utils::Clock::getTime()))
+						if (_sync_blacklist.find(peer) != _sync_blacklist.end())
 						{
-							return;
+							size_t bl_age = _sync_blacklist[peer];
+
+							// do not query again if the blacklist entry is valid
+							if (bl_age > dtn::utils::Clock::getTime())
+							{
+								return;
+							}
 						}
 
 						// create a new blacklist entry
@@ -467,6 +485,10 @@ namespace dtn
 
 						// sync to this time message
 						sync(msg, peer_timestamp);
+
+						// remove the blacklist entry
+						ibrcommon::MutexLock l(_blacklist_lock);
+						_sync_blacklist.erase(b._source.getNode());
 
 						break;
 					}
