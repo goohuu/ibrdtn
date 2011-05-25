@@ -373,7 +373,7 @@ namespace dtn
 		}
 
 		TCPConnection::Sender::Sender(TCPConnection &connection, size_t &keepalive_timeout)
-		 : _connection(connection), _keepalive_timeout(keepalive_timeout)
+		 : _connection(connection), _keepalive_timeout(keepalive_timeout), _cancel_state(STATE_IDLE, STATE_FINAL)
 		{
 		}
 
@@ -384,19 +384,25 @@ namespace dtn
 
 		bool TCPConnection::Sender::__cancellation()
 		{
-			// cancel the main thread in here
-			ibrcommon::Queue<dtn::data::BundleID>::abort();
+			ibrcommon::ThreadsafeState<CANCEL_STATE>::Locked lock_state = _cancel_state.lock();
 
-			// return false, to signal that further cancel (the hardway) is needed
-			return false;
+			if (lock_state == STATE_TRANSMIT)
+			{
+				// return false, to signal that further cancel (the hardway) is needed
+				return false;
+			}
+
+			if (lock_state == STATE_IDLE)
+			{
+				// cancel the main thread in here
+				ibrcommon::Queue<dtn::data::BundleID>::abort();
+			}
+
+			return true;
 		}
 
 		void TCPConnection::Sender::run()
 		{
-			// The queue is not cancel-safe with uclibc, so we need to
-			// disable cancel here
-			ibrcommon::Thread::CancelProtector __disable_cancellation__(false);
-
 			try {
 				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
@@ -424,12 +430,14 @@ namespace dtn
 							}
 #endif
 
-							// enable cancellation during transmission
-							ibrcommon::Thread::CancelProtector __enable_cancellation__(true);
+							// set state to transmit, we need to abort the hard way
+							_cancel_state = STATE_TRANSMIT;
 
 							// send bundle
 							_connection << bundle;
 
+							// set state to idle, now we could cancel without the hard way
+							_cancel_state = STATE_IDLE;
 						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 							// send transfer aborted event
 							TransferAbortedEvent::raise(_connection._node.getEID(), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);

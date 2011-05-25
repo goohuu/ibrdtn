@@ -146,6 +146,15 @@ namespace dtn
 				TCPConnection &_connection;
 				size_t &_keepalive_timeout;
 				dtn::data::BundleID _current_transfer;
+
+				enum CANCEL_STATE
+				{
+					STATE_IDLE = 0,
+					STATE_TRANSMIT = 1,
+					STATE_FINAL = 2
+				};
+
+				ibrcommon::ThreadsafeState<CANCEL_STATE> _cancel_state;
 			};
 
 			StreamContactHeader _peer;
