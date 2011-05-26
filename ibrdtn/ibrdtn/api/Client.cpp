@@ -26,7 +26,7 @@ namespace dtn
 	namespace api
 	{
 		Client::AsyncReceiver::AsyncReceiver(Client &client)
-		 : _client(client)
+		 : _client(client), _running(true)
 		{
 			_client.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
@@ -36,10 +36,17 @@ namespace dtn
 			join();
 		}
 
+		bool Client::AsyncReceiver::__cancellation()
+		{
+			_running = false;
+			interrupt();
+			return true;
+		}
+
 		void Client::AsyncReceiver::run()
 		{
 			try {
-				while (!_client.eof())
+				while (!_client.eof() && _running)
 				{
 					dtn::api::Bundle b;
 					_client >> b;

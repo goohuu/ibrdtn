@@ -123,10 +123,12 @@ namespace dtn
 			void setup();
 			void run();
 			void finally();
+			bool __cancellation();
 
 			void clearQueue();
 
 			void keepalive();
+			bool good() const;
 
 		private:
 			class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::BundleID>

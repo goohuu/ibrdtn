@@ -202,6 +202,19 @@ namespace dtn
 			}
 		}
 
+		bool TCPConnection::__cancellation()
+		{
+			// close the stream
+			try {
+				(*_tcpstream).close();
+			} catch (const ibrcommon::ConnectionClosedException&) { };
+
+			// interrupt the receiving thread
+			interrupt();
+
+			return true;
+		}
+
 		void TCPConnection::finally()
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
@@ -401,7 +414,7 @@ namespace dtn
 			try {
 				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
-				while (true)
+				while (_connection.good())
 				{
 					try {
 						_current_transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true, _keepalive_timeout);
@@ -505,6 +518,11 @@ namespace dtn
 		void TCPConnection::keepalive()
 		{
 			_stream.keepalive();
+		}
+
+		bool TCPConnection::good() const
+		{
+			return _tcpstream->good();
 		}
 
 		void TCPConnection::Sender::finally()

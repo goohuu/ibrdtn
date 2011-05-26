@@ -156,6 +156,19 @@ namespace dtn
 			}
 		}
 
+		bool ClientHandler::__cancellation()
+		{
+			// close the stream
+			try {
+				(*_stream).close();
+			} catch (const ibrcommon::ConnectionClosedException&) { };
+
+			// interrupt the receiving thread
+			interrupt();
+
+			return true;
+		}
+
 		void ClientHandler::finally()
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "ClientHandler down" << IBRCOMMON_LOGGER_ENDL;
@@ -164,7 +177,9 @@ namespace dtn
 			_srv.connectionDown(this);
 
 			// close the stream
-			(*_stream).close();
+			try {
+				(*_stream).close();
+			} catch (const ibrcommon::ConnectionClosedException&) { };
 
 			try {
 				// shutdown the sender thread
@@ -303,6 +318,11 @@ namespace dtn
 			return conn;
 		}
 
+		bool ClientHandler::good() const
+		{
+			return _stream->good();
+		}
+
 		ClientHandler::Sender::Sender(ClientHandler &client)
 		 : _client(client)
 		{
@@ -310,6 +330,7 @@ namespace dtn
 
 		ClientHandler::Sender::~Sender()
 		{
+			ibrcommon::JoinableThread::join();
 		}
 
 		bool ClientHandler::Sender::__cancellation()
@@ -317,36 +338,25 @@ namespace dtn
 			// cancel the main thread in here
 			this->abort();
 
-			// return false, to signal that further cancel (the hardway) is needed
-			return false;
+			return true;
 		}
 
 		void ClientHandler::Sender::run()
 		{
-			// The queue is not cancel-safe with uclibc, so we need to
-			// disable cancel here
-			ibrcommon::Thread::CancelProtector __disable_cancellation__(false);
-
 			try {
-				while (true)
+				while (_client.good())
 				{
 					dtn::data::Bundle bundle = getnpop(true);
 
 					// process the bundle block (security, compression, ...)
 					dtn::core::BundleCore::processBlocks(bundle);
 
-					// enable cancellation during transmission
-					{
-						ibrcommon::Thread::CancelProtector __enable_cancellation__(true);
-
-						// send bundle
-						_client << bundle;
-					}
+					// send bundle
+					_client << bundle;
 
 					// idle a little bit
 					yield();
 				}
-
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(40) << "ClientHandler::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
 				return;

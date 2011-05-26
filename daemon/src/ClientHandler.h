@@ -61,6 +61,8 @@ namespace dtn
 			void received(const dtn::streams::StreamContactHeader &h);
 			void run();
 			void finally();
+			bool __cancellation();
+			bool good() const;
 
 		private:
 			class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::Bundle>

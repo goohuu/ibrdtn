@@ -101,9 +101,17 @@ namespace dtn
 				 */
 				void run();
 
+				/**
+				 * Aborts the receiver thread
+				 * @return
+				 */
+				bool __cancellation();
+
 			private:
 				// member variable for the reference to the client object
 				Client &_client;
+
+				bool _running;
 			};
 
 			/**
