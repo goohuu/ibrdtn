@@ -14,6 +14,7 @@
 #include <ibrdtn/data/BundleID.h>
 #include <ibrcommon/data/BloomFilter.h>
 #include <ibrcommon/Exceptions.h>
+#include <ibrcommon/thread/ThreadsafeState.h>
 #include <map>
 
 namespace dtn
@@ -122,8 +123,11 @@ namespace dtn
 				{
 					FILTER_AWAITING = 0,
 					FILTER_AVAILABLE = 1,
-					FILTER_EXPIRED = 2
-				} _filter_state;
+					FILTER_EXPIRED = 2,
+					FILTER_FINAL = 3
+				};
+
+				ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE> _filter_state;
 			};
 
 			NeighborDatabase();

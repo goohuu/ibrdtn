@@ -98,20 +98,8 @@ namespace dtn
 
 				if (nodeevent.getAction() == NODE_AVAILABLE)
 				{
-					NeighborDatabase &db = (**this).getNeighborDB();
-
-					try {
-						// lock the list of neighbors
-						ibrcommon::MutexLock l(db);
-						NeighborDatabase::NeighborEntry &entry = db.get(n.getEID());
-
-						// acquire resources to send a summary vector request
-						entry.acquireFilterRequest();
-
-						// query a new summary vector from this neighbor
-						_taskqueue.push( new QuerySummaryVectorTask( n.getEID(), _endpoint ) );
-					} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
-					} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
+					// query a new summary vector from this neighbor
+					_taskqueue.push( new QuerySummaryVectorTask( (**this).getNeighborDB(), n.getEID(), _endpoint ) );
 				}
 
 				return;
@@ -253,11 +241,8 @@ namespace dtn
 									} catch (const NeighborDatabase::AlreadyInTransitException&) { };
 								}
 							} catch (const NeighborDatabase::BloomfilterNotAvailableException&) {
-								// acquire resources to send a summary vector request
-								entry.acquireFilterRequest();
-
 								// query a new summary vector from this neighbor
-								_taskqueue.push( new QuerySummaryVectorTask( task.eid, _endpoint ) );
+								_taskqueue.push( new QuerySummaryVectorTask( (**this).getNeighborDB(), task.eid, _endpoint ) );
 							}
 						} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
 						} catch (const NeighborDatabase::NeighborNotAvailableException&) {
@@ -361,8 +346,8 @@ namespace dtn
 
 		/****************************************/
 
-		EpidemicRoutingExtension::QuerySummaryVectorTask::QuerySummaryVectorTask(const dtn::data::EID &o, EpidemicEndpoint &e)
-		 : origin(o), endpoint(e)
+		EpidemicRoutingExtension::QuerySummaryVectorTask::QuerySummaryVectorTask(NeighborDatabase &db, const dtn::data::EID &o, EpidemicEndpoint &e)
+		 : ndb(db), origin(o), endpoint(e)
 		{ }
 
 		EpidemicRoutingExtension::QuerySummaryVectorTask::~QuerySummaryVectorTask()
@@ -370,8 +355,18 @@ namespace dtn
 
 		void EpidemicRoutingExtension::QuerySummaryVectorTask::execute() const
 		{
-			// call the query method at the epidemic endpoint instance
-			endpoint.query(origin);
+			try {
+				// lock the list of neighbors
+				ibrcommon::MutexLock l(ndb);
+				NeighborDatabase::NeighborEntry &entry = ndb.get(origin);
+
+				// acquire resources to send a summary vector request
+				entry.acquireFilterRequest();
+
+				// call the query method at the epidemic endpoint instance
+				endpoint.query(origin);
+			} catch (const NeighborDatabase::NoMoreTransfersAvailable&) {
+			} catch (const NeighborDatabase::NeighborNotAvailableException&) { };
 		}
 
 		std::string EpidemicRoutingExtension::QuerySummaryVectorTask::toString()

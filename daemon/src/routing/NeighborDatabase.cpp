@@ -15,11 +15,11 @@ namespace dtn
 	namespace routing
 	{
 		NeighborDatabase::NeighborEntry::NeighborEntry()
-		 : eid(), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
+		 : eid(), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
 		{};
 
 		NeighborDatabase::NeighborEntry::NeighborEntry(const dtn::data::EID &e)
-		 : eid(e), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED)
+		 : eid(e), _transit_max(5), _filter(), _filter_expire(0), _filter_state(FILTER_EXPIRED, FILTER_FINAL)
 		{ }
 
 		NeighborDatabase::NeighborEntry::~NeighborEntry()
@@ -27,6 +27,7 @@ namespace dtn
 
 		void NeighborDatabase::NeighborEntry::update(const ibrcommon::BloomFilter &bf, const size_t lifetime)
 		{
+			ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
 			_filter = bf;
 
 			if (lifetime == 0)
@@ -38,12 +39,17 @@ namespace dtn
 				_filter_expire = dtn::utils::Clock::getExpireTime(lifetime);
 			}
 
-			_filter_state = FILTER_AVAILABLE;
+			l = FILTER_AVAILABLE;
 		}
 
 		void NeighborDatabase::NeighborEntry::reset()
 		{
-			_filter_state = FILTER_EXPIRED;
+			ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
+
+			l = FILTER_EXPIRED;
+
+			// Set the expire time to zero.
+			_filter_expire = 0;
 		}
 
 		void NeighborDatabase::NeighborEntry::add(const dtn::data::MetaBundle &bundle)
@@ -70,12 +76,19 @@ namespace dtn
 
 		void NeighborDatabase::NeighborEntry::expire(const size_t timestamp)
 		{
-			if ((_filter_expire > 0) && (_filter_expire < timestamp))
 			{
-				IBRCOMMON_LOGGER_DEBUG(15) << "summary vector of " << eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
+				ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
 
-				// set the filter state to expired once
-				_filter_state = FILTER_EXPIRED;
+				if ((_filter_expire > 0) && (_filter_expire < timestamp))
+				{
+					IBRCOMMON_LOGGER_DEBUG(15) << "summary vector of " << eid.getString() << " is expired" << IBRCOMMON_LOGGER_ENDL;
+
+					// set the filter state to expired once
+					l = FILTER_EXPIRED;
+
+					// Set the expire time to zero.
+					_filter_expire = 0;
+				}
 			}
 
 			_summary.expire(timestamp);
@@ -91,10 +104,13 @@ namespace dtn
 
 		void NeighborDatabase::NeighborEntry::acquireFilterRequest() throw (NoMoreTransfersAvailable)
 		{
-			if (_filter_state != FILTER_EXPIRED)
+			ibrcommon::ThreadsafeState<FILTER_REQUEST_STATE>::Locked l = _filter_state.lock();
+
+			if (l != FILTER_EXPIRED)
 				throw NoMoreTransfersAvailable();
 
-			_filter_state = FILTER_AWAITING;
+			// set the state to zero
+			l = FILTER_AWAITING;
 		}
 
 		void NeighborDatabase::NeighborEntry::acquireTransfer(const dtn::data::BundleID &id) throw (NoMoreTransfersAvailable, AlreadyInTransitException)
@@ -158,10 +174,9 @@ namespace dtn
 
 		NeighborDatabase::NeighborEntry& NeighborDatabase::reset(const dtn::data::EID &eid)
 		{
-			try {
-				NeighborDatabase::NeighborEntry &e = get(eid);
-				e.reset();
-			} catch (const NeighborNotAvailableException&) { };
+			NeighborDatabase::NeighborEntry &e = get(eid);
+			e.reset();
+			return e;
 		}
 
 		void NeighborDatabase::remove(const dtn::data::EID &eid)

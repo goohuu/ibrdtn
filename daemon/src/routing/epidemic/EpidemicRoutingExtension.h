@@ -111,12 +111,13 @@ namespace dtn
 			class QuerySummaryVectorTask : public ExecutableTask
 			{
 			public:
-				QuerySummaryVectorTask(const dtn::data::EID &origin, EpidemicEndpoint &endpoint);
+				QuerySummaryVectorTask(NeighborDatabase &ndb, const dtn::data::EID &origin, EpidemicEndpoint &endpoint);
 				virtual ~QuerySummaryVectorTask();
 
 				virtual std::string toString();
 				virtual void execute() const;
 
+				NeighborDatabase &ndb;
 				const dtn::data::EID origin;
 				EpidemicEndpoint &endpoint;
 			};
