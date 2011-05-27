@@ -209,9 +209,6 @@ namespace dtn
 				(*_tcpstream).close();
 			} catch (const ibrcommon::ConnectionClosedException&) { };
 
-			// interrupt the receiving thread
-			interrupt();
-
 			return true;
 		}
 

@@ -39,7 +39,6 @@ namespace dtn
 		bool Client::AsyncReceiver::__cancellation()
 		{
 			_running = false;
-			interrupt();
 			return true;
 		}
 
@@ -83,6 +82,8 @@ namespace dtn
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client destructor: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+			
+			_stream.close();
 
 			_receiver.join();
 		}
