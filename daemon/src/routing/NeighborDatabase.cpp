@@ -48,8 +48,8 @@ namespace dtn
 
 			l = FILTER_EXPIRED;
 
-			// Set the expire time to zero.
-			_filter_expire = 0;
+			// do not expire again in the next 60 seconds
+			_filter_expire = dtn::utils::Clock::getTime() + 60;
 		}
 
 		void NeighborDatabase::NeighborEntry::add(const dtn::data::MetaBundle &bundle)
@@ -86,8 +86,8 @@ namespace dtn
 					// set the filter state to expired once
 					l = FILTER_EXPIRED;
 
-					// Set the expire time to zero.
-					_filter_expire = 0;
+					// do not expire again in the next 60 seconds
+					_filter_expire = timestamp + 60;
 				}
 			}
 
