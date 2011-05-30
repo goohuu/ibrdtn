@@ -250,7 +250,7 @@ namespace dtn
 				uri.decode(address, port);
 
 				ibrcommon::tcpclient &client = dynamic_cast<ibrcommon::tcpclient&>(*_tcpstream);
-				client.open(address, port);
+				client.open(address, port, _timeout);
 
 				if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
 				{
