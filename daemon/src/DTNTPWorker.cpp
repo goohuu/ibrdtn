@@ -282,6 +282,8 @@ namespace dtn
 
 		void DTNTPWorker::update(const ibrcommon::vinterface&, std::string &name, std::string &data) throw(NoServiceHereException)
 		{
+			if (!_conf.sendDiscoveryAnnouncements()) throw NoServiceHereException("Discovery of time sync mechanisms disabled.");
+
 			std::stringstream ss;
 			ss << "version=" << PROTO_VERSION << ";quality=" << dtn::utils::Clock::quality << ";timestamp=" << dtn::utils::Clock::getTime() << ";";
 			name = "dtntp";
