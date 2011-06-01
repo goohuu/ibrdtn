@@ -12,8 +12,10 @@
 #include <string.h>
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/net/MulticastSocket.h>
+#include <ibrcommon/TimeMeasurement.h>
 #include "Configuration.h"
 #include <typeinfo>
+#include <time.h>
 
 namespace dtn
 {
@@ -157,8 +159,6 @@ namespace dtn
 
 		void IPNDAgent::componentUp()
 		{
-			DiscoveryAgent::componentUp();
-
 			// create one socket for each interface
 			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 			{
@@ -198,50 +198,70 @@ namespace dtn
 
 			// shutdown the sockets
 			_socket.shutdown();
-			DiscoveryAgent::componentDown();
+
+			stop();
+			join();
 		}
 
 		void IPNDAgent::componentRun()
 		{
+			ibrcommon::TimeMeasurement tm;
+			tm.start();
+
 			while (true)
 			{
 				std::list<int> fds;
 
-				// select on all bound sockets
-				ibrcommon::select(_socket, fds, NULL);
+				struct timespec tv;
 
-				// receive from all sockets
-				for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+				// every second we want to transmit a discovery message, timeout of 1 seconds
+				tv.tv_sec = 0;
+				tv.tv_nsec = 100000;
+
+				try {
+					// select on all bound sockets
+					ibrcommon::select(_socket, fds, &tv);
+
+					// receive from all sockets
+					for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
+					{
+						char data[1500];
+						std::string sender;
+						DiscoveryAnnouncement announce(_version);
+
+						int len = ibrcommon::recvfrom(*iter, data, 1500, sender);
+
+						if (announce.isShort())
+						{
+							// TODO: generate name with the sender address
+						}
+
+						if (announce.getServices().empty())
+						{
+							announce.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender + ";port=4556;"));
+						}
+
+						if (len < 0) return;
+
+						stringstream ss;
+						ss.write(data, len);
+
+						try {
+							ss >> announce;
+							received(announce);
+						} catch (const dtn::InvalidDataException&) {
+						} catch (const ibrcommon::IOException&) {
+						}
+
+						yield();
+					}
+				} catch (const ibrcommon::vsocket_timeout&) { };
+
+				// trigger timeout, if one second is elapsed
+				tm.stop(); if (tm.getMilliseconds() > 1000)
 				{
-					char data[1500];
-					std::string sender;
-					DiscoveryAnnouncement announce(_version);
-
-					int len = ibrcommon::recvfrom(*iter, data, 1500, sender);
-
-					if (announce.isShort())
-					{
-						// TODO: generate name with the sender address
-					}
-
-					if (announce.getServices().empty())
-					{
-						announce.addService(dtn::net::DiscoveryService("tcpcl", "ip=" + sender + ";port=4556;"));
-					}
-
-					if (len < 0) return;
-
-					stringstream ss;
-					ss.write(data, len);
-
-					try {
-						ss >> announce;
-						received(announce);
-					} catch (const dtn::InvalidDataException&) {
-					} catch (const ibrcommon::IOException&) {
-					}
-
-					yield();
+					tm.start();
+					timeout();
 				}
 			}
 		}

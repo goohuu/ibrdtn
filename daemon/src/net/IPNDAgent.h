@@ -16,6 +16,7 @@
 #ifndef IPNDAGENT_H_
 #define IPNDAGENT_H_
 
+#include "Component.h"
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryAnnouncement.h"
 #include <ibrcommon/net/vinterface.h>
@@ -31,7 +32,7 @@ namespace dtn
 {
 	namespace net
 	{
-		class IPNDAgent : public DiscoveryAgent, public ibrcommon::LinkManager::EventCallback
+		class IPNDAgent : public DiscoveryAgent, public dtn::daemon::IndependentComponent, public ibrcommon::LinkManager::EventCallback
 		{
 		public:
 			IPNDAgent(int port, const ibrcommon::vaddress &address);

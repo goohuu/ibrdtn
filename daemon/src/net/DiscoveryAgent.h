@@ -8,18 +8,11 @@
 #ifndef DISCOVERYAGENT_H_
 #define DISCOVERYAGENT_H_
 
-#include "Component.h"
-
 #include "core/Node.h"
-#include "core/EventReceiver.h"
-
 #include "net/Neighbor.h"
 #include "net/DiscoveryAnnouncement.h"
 #include "net/DiscoveryService.h"
 #include "Configuration.h"
-#include <ibrcommon/thread/Timer.h>
-
-using namespace dtn::data;
 
 #include <list>
 
@@ -27,32 +20,28 @@ namespace dtn
 {
 	namespace net
 	{
-		class DiscoveryAgent : public dtn::daemon::IndependentComponent, public ibrcommon::SimpleTimerCallback
+		class DiscoveryAgent
 		{
 		public:
 			DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config);
 			virtual ~DiscoveryAgent() = 0;
 
-			void received(const DiscoveryAnnouncement &announcement);
+			void received(const dtn::net::DiscoveryAnnouncement &announcement);
 
 			void addService(string name, string parameters);
-			void addService(DiscoveryServiceProvider *provider);
-
-			virtual size_t timeout(size_t identifier);
+			void addService(dtn::net::DiscoveryServiceProvider *provider);
 
 		protected:
-			virtual void componentUp();
-			virtual void componentDown();
-			virtual void componentRun() = 0;
-			virtual void sendAnnoucement(const u_int16_t &sn, std::list<DiscoveryService> &services) = 0;
+			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryService> &services) = 0;
+
+			void timeout();
 
 			const dtn::daemon::Configuration::Discovery &_config;
 
 		private:
-			list<Neighbor> _neighbors;
+			std::list<Neighbor> _neighbors;
 			u_int16_t _sn;
-			std::list<DiscoveryService> _services;
-			ibrcommon::SimpleTimer _clock;
+			std::list<dtn::net::DiscoveryService> _services;
 		};
 	}
 }

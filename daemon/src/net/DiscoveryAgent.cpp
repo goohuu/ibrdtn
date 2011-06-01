@@ -10,9 +10,9 @@
 #include "net/DiscoveryAnnouncement.h"
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
-#include "core/Node.h"
 #include <ibrdtn/utils/Utils.h>
 #include "Configuration.h"
+#include <ibrcommon/Logger.h>
 
 using namespace dtn::core;
 
@@ -21,7 +21,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryAgent::DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config)
-		 : _config(config), _sn(0), _clock(*this, 0)
+		 : _config(config), _sn(0)
 		{
 		}
 
@@ -29,21 +29,7 @@ namespace dtn
 		{
 		}
 
-		void DiscoveryAgent::componentUp()
-		{
-			_clock.set(1);
-			_clock.start();
-		}
-
-		void DiscoveryAgent::componentDown()
-		{
-			_clock.remove();
-
-			stop();
-			join();
-		}
-
-		void DiscoveryAgent::addService(string name, string parameters)
+		void DiscoveryAgent::addService(std::string name, std::string parameters)
 		{
 			DiscoveryService service(name, parameters);
 			_services.push_back(service);
@@ -92,18 +78,18 @@ namespace dtn
 			dtn::core::NodeEvent::raise(n, NODE_INFO_UPDATED);
 		}
 
-		size_t DiscoveryAgent::timeout(size_t)
+		void DiscoveryAgent::timeout()
 		{
 			// check if announcements are enabled
 			if (_config.announce())
 			{
+				IBRCOMMON_LOGGER_DEBUG(25) << "send discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+
 				sendAnnoucement(_sn, _services);
 
 				// increment sequencenumber
 				_sn++;
 			}
-
-			return 1;
 		}
 	}
 }
