@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 
-CONF_PARAMS="--with-openssl --with-curl --with-lowpan --with-sqlite --with-dtnsec --with-extended-api --with-compression"
+CONF_PARAMS="--with-openssl --with-curl --with-lowpan --with-sqlite --with-dtnsec --with-extended-api --with-compression --with-xml"
 
 if [ -e .coverage ]; then
 	export CXXFLAGS="-g -O0 -Wall -W -Wunused-variable -Wunused-parameter -Wunused-function -Wunused -Wno-system-headers -Wno-deprecated -Woverloaded-virtual -Wwrite-strings -fprofile-arcs -ftest-coverage"
