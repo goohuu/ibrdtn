@@ -320,6 +320,7 @@ namespace dtn
 				size_t _tcp_chunksize;
 				ibrcommon::vinterface _default_net;
 				bool _use_default_net;
+				bool _dynamic_rebind;
 
 			public:
 				/**
@@ -357,6 +358,11 @@ namespace dtn
 				 * @return The size of TCP chunks for bundles.
 				 */
 				size_t getTCPChunkSize() const;
+
+				/**
+				 * @return True, if the dynamic rebind feature is requested.
+				 */
+				bool doDynamicRebind() const;
 			};
 
 			class Security : public Configuration::Extension

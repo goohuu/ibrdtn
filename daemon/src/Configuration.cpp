@@ -612,6 +612,11 @@ namespace dtn
 			 */
 			_tcp_nodelay = (conf.read<std::string>("tcp_nodelay", "yes") == "yes");
 			_tcp_chunksize = conf.read<unsigned int>("tcp_chunksize", 1024);
+
+			/**
+			 * dynamic rebind
+			 */
+			_dynamic_rebind = (conf.read<std::string>("net_rebind", "no") == "yes");
 		}
 
 		const list<dtn::routing::StaticRoutingExtension::StaticRoute>& Configuration::Network::getStaticRoutes() const
@@ -725,6 +730,11 @@ namespace dtn
 		size_t Configuration::Network::getTCPChunkSize() const
 		{
 			return _tcp_chunksize;
+		}
+
+		bool Configuration::Network::doDynamicRebind() const
+		{
+			return _dynamic_rebind;
 		}
 
 		bool Configuration::Statistic::enabled() const

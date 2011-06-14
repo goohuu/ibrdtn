@@ -580,7 +580,10 @@ int __daemon_run(Configuration &conf)
 	}
 
 	// enable netlink manager (watchdog for network interfaces)
-	ibrcommon::LinkManager::initialize();
+	if (conf.getNetwork().doDynamicRebind())
+	{
+		ibrcommon::LinkManager::initialize();
+	}
 
 	try {
 		// initialize all convergence layers
