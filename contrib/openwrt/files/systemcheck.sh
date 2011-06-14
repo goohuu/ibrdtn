@@ -35,6 +35,43 @@ check_writable() {
 	fi
 }
 
+check_mountdev() {
+	# get wait_mount option
+	WAIT_MOUNT_DEV=`uci -q get ibrdtn.safemode.wait_mount`
+	
+	if [ $? -ne 0 ]; then
+		return 0
+	fi
+	
+	DATA=`mount | grep ${WAIT_MOUNT_DEV}`
+
+	if [ -n "${DATA}" ]; then
+		return 0
+	fi
+	
+	return 1
+}
+
+# check the storage device
+check_mountdev
+RET=$?
+
+if [ ${RET} -ne 0 ]; then
+	WAIT_SECONDS=60
+	/usr/bin/logger -t "systemcheck.sh" -p 2 "disk storage not ready, wait max. ${WAIT_SECONDS} seconds until it is mounted"
+	while [ ${RET} -ne 0 ] && [ ${WAIT_SECONDS} -ne 0 ]; do
+		sleep 1
+		let WAIT_SECONDS=WAIT_SECONDS-1
+		check_mountdev
+		RET=$?
+	done
+fi
+
+if [ ${RET} -ne 0 ]; then
+	# failed, storage not mounted
+	exit 1
+fi
+
 # get the path for the container
 CONTAINER=`uci -q get ibrdtn.storage.container`
 
