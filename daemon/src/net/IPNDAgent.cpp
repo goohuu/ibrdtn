@@ -216,7 +216,7 @@ namespace dtn
 
 				// every second we want to transmit a discovery message, timeout of 1 seconds
 				tv.tv_sec = 0;
-				tv.tv_nsec = 100000;
+				tv.tv_nsec = 100000000;
 
 				try {
 					// select on all bound sockets
