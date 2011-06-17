@@ -154,3 +154,6 @@ config 'daemon' 'security'
 #	option reference			yes
 #	option qot_tick				0
 #	option sync_on_discovery	yes
+#	option discovery_announcement	yes
+#	option sigma				1.01
+#	option sync_level			0.1
