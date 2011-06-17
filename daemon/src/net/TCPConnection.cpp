@@ -216,15 +216,15 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
 
-			// close the tcpstream
-			try {
-				_tcpstream->close();
-			} catch (const ibrcommon::ConnectionClosedException&) { };
-
 			try {
 				// shutdown the sender thread
 				_sender.stop();
 			} catch (const std::exception&) { };
+
+			// close the tcpstream
+			try {
+				_tcpstream->close();
+			} catch (const ibrcommon::ConnectionClosedException&) { };
 
 			try {
 				_callback.connectionDown(this);
