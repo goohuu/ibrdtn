@@ -9,7 +9,7 @@
 #define APISERVER_H_
 
 #include "Component.h"
-#include "ClientHandler.h"
+#include "api/ClientHandler.h"
 #include "ibrcommon/net/tcpserver.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrdtn/data/MetaBundle.h>
@@ -20,7 +20,7 @@
 
 namespace dtn
 {
-	namespace daemon
+	namespace api
 	{
 		class ApiServer : public dtn::daemon::IndependentComponent, public ApiServerInterface
 		{

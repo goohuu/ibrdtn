@@ -44,7 +44,7 @@
 
 #include "net/IPNDAgent.h"
 
-#include "ApiServer.h"
+#include "api/ApiServer.h"
 
 #ifdef HAVE_EXTENDED_API
 #include "api/ExtendedApiServer.h"
@@ -601,7 +601,7 @@ int __daemon_run(Configuration &conf)
 
 			try {
 				// use unix domain sockets for API
-				components.push_back( new ApiServer(socket) );
+				components.push_back( new dtn::api::ApiServer(socket) );
 				IBRCOMMON_LOGGER(info) << "API initialized using unix domain socket: " << socket.getPath() << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::vsocket_exception&) {
 				IBRCOMMON_LOGGER(error) << "Unable to bind to unix domain socket " << socket.getPath() << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;
@@ -611,7 +611,7 @@ int __daemon_run(Configuration &conf)
 		} catch (const Configuration::ParameterNotSetException&) {
 			try {
 				// instance a API server, first create a socket
-				components.push_back( new ApiServer(lo.interface, lo.port) );
+				components.push_back( new dtn::api::ApiServer(lo.interface, lo.port) );
 				IBRCOMMON_LOGGER(info) << "API initialized using tcp socket: " << lo.interface.toString() << ":" << lo.port << IBRCOMMON_LOGGER_ENDL;
 			} catch (const ibrcommon::vsocket_exception&) {
 				IBRCOMMON_LOGGER(error) << "Unable to bind to " << lo.interface.toString() << ":" << lo.port << ". API not initialized!" << IBRCOMMON_LOGGER_ENDL;

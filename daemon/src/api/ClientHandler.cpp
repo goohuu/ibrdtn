@@ -33,7 +33,7 @@ using namespace dtn::core;
 
 namespace dtn
 {
-	namespace daemon
+	namespace api
 	{
 		ClientHandler::ClientHandler(ApiServerInterface &srv, ibrcommon::tcpstream *stream, size_t i)
 		 : ibrcommon::DetachedThread(0), id(i), _srv(srv), _sender(*this), _stream(stream), _connection(*this, *_stream)

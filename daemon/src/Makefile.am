@@ -35,10 +35,7 @@ INCLUDES = -I@top_srcdir@/src
 # the previous manual Makefile
 sbin_PROGRAMS = dtnd
 
-daemon_SOURCES =  ApiServer.cpp \
-				ApiServer.h \
-				ClientHandler.cpp \
-				ClientHandler.h \
+daemon_SOURCES = \
 				Component.cpp \
 				Component.h \
 				config.h \
@@ -58,6 +55,7 @@ daemon_SOURCES =  ApiServer.cpp \
 				CapsuleWorker.h \
 				DTNTPWorker.cpp \
 				DTNTPWorker.h
+
 
 noinst_LTLIBRARIES = libdtnd.la
 libdtnd_la_SOURCES= $(daemon_SOURCES)

@@ -6,11 +6,11 @@
  */
 
 #include "config.h"
-#include "ApiServer.h"
+#include "api/ApiServer.h"
+#include "api/ClientHandler.h"
 #include "core/BundleCore.h"
 #include "core/EventSwitch.h"
 #include "routing/QueueBundleEvent.h"
-#include "ClientHandler.h"
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <algorithm>
@@ -21,7 +21,7 @@
 
 namespace dtn
 {
-	namespace daemon
+	namespace api
 	{
 		ApiServer::ApiServer(const ibrcommon::File &socket)
 		 : _tcpsrv(socket), _next_connection_id(1)

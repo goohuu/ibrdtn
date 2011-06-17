@@ -18,7 +18,7 @@ using namespace dtn::streams;
 
 namespace dtn
 {
-	namespace daemon
+	namespace api
 	{
 		class ClientHandler;
 
