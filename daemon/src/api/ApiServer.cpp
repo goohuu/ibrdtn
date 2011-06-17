@@ -57,9 +57,6 @@ namespace dtn
 
 		void ApiServer::componentRun()
 		{
-			// enable interruption in this thread
-			Thread::enable_interruption();
-
 			try {
 				while (true)
 				{
@@ -89,7 +86,6 @@ namespace dtn
 			_dist.stop();
 			_tcpsrv.shutdown();
 			_tcpsrv.close();
-			Thread::interrupt();
 		}
 
 		void ApiServer::connectionUp(ClientHandler *obj)

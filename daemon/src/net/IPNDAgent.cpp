@@ -212,15 +212,15 @@ namespace dtn
 			{
 				std::list<int> fds;
 
-				struct timespec tv;
+				struct timeval tv;
 
 				// every second we want to transmit a discovery message, timeout of 1 seconds
 				tv.tv_sec = 0;
-				tv.tv_nsec = 100000000;
+				tv.tv_usec = 100000;
 
 				try {
 					// select on all bound sockets
-					ibrcommon::select(_socket, fds, &tv);
+					_socket.select(fds, &tv);
 
 					// receive from all sockets
 					for (std::list<int>::const_iterator iter = fds.begin(); iter != fds.end(); iter++)
@@ -269,7 +269,7 @@ namespace dtn
 		bool IPNDAgent::__cancellation()
 		{
 			// interrupt the receiving thread
-			ibrcommon::interrupt(_socket, *this);
+			_socket.close();
 
 			// do not cancel the hard-way
 			return true;

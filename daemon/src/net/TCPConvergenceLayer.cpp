@@ -204,9 +204,6 @@ namespace dtn
 
 		void TCPConvergenceLayer::componentRun()
 		{
-			// enable interruption in this thread
-			Thread::enable_interruption();
-
 			try {
 				while (true)
 				{
@@ -235,7 +232,6 @@ namespace dtn
 		{
 			_tcpsrv.shutdown();
 			_tcpsrv.close();
-			Thread::interrupt();
 			return true;
 		}
 
@@ -272,9 +268,6 @@ namespace dtn
 				ibrcommon::MutexLock l(_connections_cond);
 				while (_connections.size() > 0) _connections_cond.wait();
 			}
-
-			// interrupt the select thread
-			Thread::interrupt();
 		}
 	}
 }

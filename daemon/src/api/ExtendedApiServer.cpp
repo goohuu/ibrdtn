@@ -30,7 +30,6 @@ namespace dtn
 		bool ExtendedApiServer::__cancellation()
 		{
 			_srv.shutdown();
-			Thread::interrupt();
 			return true;
 		}
 
