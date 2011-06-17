@@ -1,5 +1,5 @@
 AUTOMAKE_OPTIONS = foreign
-SUBDIRS = core net routing
+SUBDIRS = core net routing api
 noinst_HEADERS = config.h
 
 # what flags you want to pass to the C compiler & linker
@@ -23,10 +23,6 @@ endif
 
 if DTNSEC
 SUBDIRS += security
-endif
-
-if EXTAPI
-SUBDIRS += api
 endif
 
 INCLUDES = -I@top_srcdir@/src
@@ -59,14 +55,10 @@ daemon_SOURCES = \
 
 noinst_LTLIBRARIES = libdtnd.la
 libdtnd_la_SOURCES= $(daemon_SOURCES)
-libdtnd_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la
+libdtnd_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la api/libapi.la
 
 if DTNSEC
 libdtnd_la_LIBADD += security/libsecurity.la
-endif
-
-if EXTAPI
-libdtnd_la_LIBADD += api/libapi.la
 endif
 
 dtnd_SOURCES = Main.cpp
