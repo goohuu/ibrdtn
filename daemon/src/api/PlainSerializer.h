@@ -46,6 +46,11 @@ namespace dtn
 			dtn::data::Deserializer &operator>>(dtn::data::Block &obj);
 
 		private:
+			/**
+			 * deserialize a base64 encoded data stream into another stream
+			 */
+			dtn::data::Deserializer &operator>>(std::ostream &stream);
+
 			std::istream &_stream;
 		};
 	}

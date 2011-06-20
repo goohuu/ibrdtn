@@ -7,6 +7,7 @@
 
 #include "config.h"
 #include "api/PlainSerializer.h"
+#include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/refcnt_ptr.h>
 #include <ibrcommon/data/Base64Stream.h>
 #include <list>
@@ -142,6 +143,198 @@ namespace dtn
 		size_t PlainSerializer::getLength(const dtn::data::Block &obj) const
 		{
 			return 0;
+		}
+
+		PlainDeserializer::PlainDeserializer(std::istream &stream)
+		 : _stream(stream)
+		{
+		}
+
+		PlainDeserializer::~PlainDeserializer()
+		{
+		}
+
+		dtn::data::Deserializer& PlainDeserializer::operator>>(dtn::data::Bundle &obj)
+		{
+			// clear all blocks
+			obj.clearBlocks();
+
+			// read the primary block
+			(*this) >> (dtn::data::PrimaryBlock&)obj;
+
+			// read until the last block
+			bool lastblock = false;
+
+//			// read all BLOCKs
+//			while (!_stream.eof() && !lastblock)
+//			{
+//				char block_type;
+//
+//				// BLOCK_TYPE
+//				block_type = _stream.peek();
+//
+//				switch (block_type)
+//				{
+//					case 0:
+//					{
+//						throw dtn::InvalidDataException("block type is zero");
+//						break;
+//					}
+//
+//					case dtn::data::PayloadBlock::BLOCK_TYPE:
+//					{
+//						if (obj.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD))
+//						{
+//							// create a temporary block
+//							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
+//
+//							// read the block data
+//							(*this) >> block;
+//
+//							// access the payload to get the first byte
+//							char admfield;
+//							ibrcommon::BLOB::Reference ref = block.getBLOB();
+//							ref.iostream()->get(admfield);
+//
+//							// write the block into a temporary stream
+//							stringstream ss;
+//							dtn::data::DefaultSerializer serializer(ss, _dictionary);
+//							dtn::data::DefaultDeserializer deserializer(ss, _dictionary);
+//
+//							serializer << block;
+//
+//							// remove the temporary block
+//							obj.remove(block);
+//
+//							switch (admfield >> 4)
+//							{
+//								case 1:
+//								{
+//									dtn::data::StatusReportBlock &block = obj.push_back<dtn::data::StatusReportBlock>();
+//									deserializer >> block;
+//									lastblock = block.get(Block::LAST_BLOCK);
+//									break;
+//								}
+//
+//								case 2:
+//								{
+//									dtn::data::CustodySignalBlock &block = obj.push_back<dtn::data::CustodySignalBlock>();
+//									deserializer >> block;
+//									lastblock = block.get(Block::LAST_BLOCK);
+//									break;
+//								}
+//
+//								default:
+//								{
+//									// drop unknown administrative block
+//									break;
+//								}
+//							}
+//
+//						}
+//						else
+//						{
+//							dtn::data::PayloadBlock &block = obj.push_back<dtn::data::PayloadBlock>();
+//							(*this) >> block;
+//
+//							lastblock = block.get(Block::LAST_BLOCK);
+//						}
+//						break;
+//					}
+//
+//					default:
+//					{
+//						// get a extension block factory
+//						try {
+//							ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
+//
+//							dtn::data::Block &block = obj.push_back(f);
+//							(*this) >> block;
+//							lastblock = block.get(Block::LAST_BLOCK);
+//
+//							if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
+//							{
+//								IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+//
+//								// remove the block
+//								obj.remove(block);
+//							}
+//						}
+//						catch (const ibrcommon::Exception &ex)
+//						{
+//							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
+//							(*this) >> block;
+//							lastblock = block.get(Block::LAST_BLOCK);
+//
+//							if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
+//							{
+//								IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
+//
+//								// remove the block
+//								obj.remove(block);
+//							}
+//						}
+//						break;
+//					}
+//				}
+//			}
+
+			return (*this);
+		}
+
+		dtn::data::Deserializer& PlainDeserializer::operator>>(dtn::data::PrimaryBlock &obj)
+		{
+			std::string data;
+
+			// read until the first empty line appears
+			while (_stream.good())
+			{
+				getline(_stream, data);
+
+				// abort after the first empty line
+				if (data[0] == '\n') break;
+
+				// split header value
+				std::vector<std::string> values = dtn::utils::Utils::tokenize(":", data, 1);
+
+				// assign header value
+				if (values[0] == "Source")
+				{
+					obj._source = values[1];
+				}
+			}
+
+			return (*this);
+		}
+
+		dtn::data::Deserializer& PlainDeserializer::operator>>(dtn::data::Block &obj)
+		{
+			// read until the first empty line appears
+
+			// then read the payload
+
+			return (*this);
+		}
+
+		dtn::data::Deserializer& PlainDeserializer::operator>>(std::ostream &stream)
+		{
+			ibrcommon::Base64Stream b64(stream, true);
+			std::string data;
+
+			while (b64.good())
+			{
+				getline(_stream, data);
+
+				// abort after the first empty line
+				if (data[0] == '\n') break;
+
+				// put the line into the stream decoder
+				b64 << data;
+			}
+
+			b64 << std::flush;
+
+			return (*this);
 		}
 	}
 }

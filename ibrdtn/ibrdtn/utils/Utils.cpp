@@ -10,7 +10,7 @@ namespace dtn
 {
 	namespace utils
 	{
-		vector<string> Utils::tokenize(string token, string data)
+		vector<string> Utils::tokenize(string token, string data, size_t max)
 		{
 			vector<string> l;
 			string value;
@@ -29,6 +29,16 @@ namespace dtn
 				lastPos = data.find_first_not_of(token, pos);
 				// Find next "non-delimiter"
 				pos = data.find_first_of(token, lastPos);
+
+				// if maximum reached
+				if (l.size() >= max)
+				{
+					// add the remaining part to the vector as last element
+					l.push_back(data.substr(pos, data.length() - pos));
+
+					// and break the search loop
+					break;
+				}
 			}
 
 			return l;

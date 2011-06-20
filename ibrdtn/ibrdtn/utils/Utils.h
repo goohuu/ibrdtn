@@ -14,7 +14,7 @@ namespace dtn
 		class Utils
 		{
 		public:
-			static vector<string> tokenize(string token, string data);
+			static vector<string> tokenize(std::string token, std::string data, size_t max = std::string::npos);
 			static double distance(double lat1, double lon1, double lat2, double lon2);
 
 			static void encapsule(dtn::data::Bundle &capsule, const std::list<dtn::data::Bundle> &bundles);
