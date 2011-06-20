@@ -327,7 +327,6 @@ namespace dtn
 
 		ClientHandler::Sender::~Sender()
 		{
-			ibrcommon::JoinableThread::join();
 		}
 
 		bool ClientHandler::Sender::__cancellation()

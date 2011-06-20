@@ -304,11 +304,6 @@ namespace dtn
 				State _underflow_state;
 			};
 
-			/**
-			 * Close this stream connection
-			 */
-			void close();
-
 			void connectionTimeout();
 
 			void eventShutdown(StreamConnection::ConnectionShutdownCases csc);

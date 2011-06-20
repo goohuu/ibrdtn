@@ -56,10 +56,6 @@ namespace dtn
 			_buf.keepalive();
 		}
 
-		void StreamConnection::close()
-		{
-		}
-
 		void StreamConnection::shutdown(ConnectionShutdownCases csc)
 		{
 			if (csc == CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN)
@@ -111,7 +107,6 @@ namespace dtn
 			}
 
 			_buf.close();
-			close();
 			_callback.eventConnectionDown();
 		}
 

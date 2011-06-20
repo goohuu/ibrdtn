@@ -28,12 +28,12 @@ namespace dtn
 		Client::AsyncReceiver::AsyncReceiver(Client &client)
 		 : _client(client), _running(true)
 		{
+			// enable exception throwing on stream events
 			_client.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
 		Client::AsyncReceiver::~AsyncReceiver()
 		{
-			join();
 		}
 
 		bool Client::AsyncReceiver::__cancellation()
@@ -78,13 +78,16 @@ namespace dtn
 		Client::~Client()
 		{
 			try {
+				// stop the receiver
 				_receiver.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(20) << "ThreadException in Client destructor: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 			
+			// Close the stream. This releases all reading or writing threads.
 			_stream.close();
 
+			// wait until the async thread has been finished
 			_receiver.join();
 		}
 
@@ -115,6 +118,7 @@ namespace dtn
 
 		void Client::close()
 		{
+			// shutdown the bundle stream connection
 			shutdown(StreamConnection::CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
 		}
 
@@ -136,8 +140,10 @@ namespace dtn
 
 		void Client::received(const dtn::api::Bundle &b)
 		{
+			// if we are in send only mode...
 			if (_mode != dtn::api::Client::MODE_SENDONLY)
 			{
+				// ... then discard the received bundle
 				_inqueue.push(b);
 			}
 		}
