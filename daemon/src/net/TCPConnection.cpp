@@ -64,6 +64,8 @@ namespace dtn
 
 		TCPConnection::~TCPConnection()
 		{
+			// wait until the sender thread is finished
+			_sender.join();
 		}
 
 		void TCPConnection::queue(const dtn::data::BundleID &bundle)
@@ -395,7 +397,6 @@ namespace dtn
 
 		TCPConnection::Sender::~Sender()
 		{
-			ibrcommon::JoinableThread::join();
 		}
 
 		bool TCPConnection::Sender::__cancellation()
