@@ -202,10 +202,10 @@ namespace dtn
 			}
 		}
 
-		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream)
+		std::istream& PayloadIntegrityBlock::deserialize(std::istream &stream, const size_t length)
 		{
 			// deserialize the SecurityBlock
-			SecurityBlock::deserialize(stream);
+			SecurityBlock::deserialize(stream, length);
 
 			// set the key size locally
 			result_size = _security_result.getLength();

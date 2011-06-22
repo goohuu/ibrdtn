@@ -111,7 +111,8 @@ namespace dtn
 				(*this) << dtn::data::SDNV(obj.getLength());
 
 				// write the payload of the block
-				obj.serialize(_stream);
+				size_t slength = 0;
+				obj.serialize(_stream, slength);
 			};
 
 			return (*this);

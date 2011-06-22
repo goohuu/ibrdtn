@@ -6,6 +6,7 @@
  */
 
 #include "ibrdtn/data/EID.h"
+#include "ibrdtn/utils/Utils.h"
 #include <sstream>
 #include <iostream>
 
@@ -24,11 +25,16 @@ namespace dtn
 		EID::EID(std::string scheme, std::string ssp)
 		 : _scheme(scheme), _ssp(ssp)
 		{
+			dtn::utils::Utils::trim(_scheme);
+			dtn::utils::Utils::trim(_ssp);
+
 			// TODO: checks for illegal characters
 		}
 
 		EID::EID(std::string value)
 		{
+			dtn::utils::Utils::trim(value);
+
 			try {
 				// search for the delimiter
 				size_t delimiter = value.find_first_of(":");

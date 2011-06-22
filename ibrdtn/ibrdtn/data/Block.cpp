@@ -16,7 +16,7 @@ namespace dtn
 	namespace data
 	{
 		Block::Block(char blocktype)
-		 : _blocktype(blocktype), _blocksize(0), _procflags(0)
+		 : _blocktype(blocktype), _procflags(0)
 		{
 		}
 
@@ -59,9 +59,9 @@ namespace dtn
 			return getLength();
 		}
 
-		std::ostream& Block::serialize_strict(std::ostream &stream) const
+		std::ostream& Block::serialize_strict(std::ostream &stream, size_t &length) const
 		{
-			return serialize(stream);
+			return serialize(stream, length);
 		}
 	}
 }

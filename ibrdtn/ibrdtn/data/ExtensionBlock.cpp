@@ -104,7 +104,7 @@ namespace dtn
 			return io.size();
 		}
 
-		std::ostream& ExtensionBlock::serialize(std::ostream &stream) const
+		std::ostream& ExtensionBlock::serialize(std::ostream &stream, size_t &length) const
 		{
 			ibrcommon::BLOB::Reference blobref = _blobref;
 			ibrcommon::BLOB::iostream io = blobref.iostream();
@@ -118,7 +118,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& ExtensionBlock::deserialize(std::istream &stream)
+		std::istream& ExtensionBlock::deserialize(std::istream &stream, const size_t length)
 		{
 			// lock the BLOB
 			ibrcommon::BLOB::iostream io = _blobref.iostream();
@@ -130,7 +130,7 @@ namespace dtn
 			if (!(*io).good()) throw dtn::SerializationFailedException("could not open BLOB for payload");
 
 			try {
-				ibrcommon::BLOB::copy(*io, stream, _blocksize);
+				ibrcommon::BLOB::copy(*io, stream, length);
 			} catch (const ibrcommon::IOException &ex) {
 				throw dtn::SerializationFailedException(ex.what());
 			}

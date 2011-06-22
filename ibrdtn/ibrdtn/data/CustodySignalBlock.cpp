@@ -48,7 +48,7 @@ namespace dtn
 			return len;
 		}
 
-		std::istream& CustodySignalBlock::deserialize(std::istream &stream)
+		std::istream& CustodySignalBlock::deserialize(std::istream &stream, const size_t length)
 		{
 			stream >> _admfield;
 
@@ -80,7 +80,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::ostream& CustodySignalBlock::serialize(std::ostream &stream) const
+		std::ostream& CustodySignalBlock::serialize(std::ostream &stream, size_t &length) const
 		{
 			// write the content
 			stream << _admfield;

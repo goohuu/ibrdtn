@@ -65,14 +65,14 @@ namespace dtn
 			 * @param stream A output stream to serialize into.
 			 * @return The same reference as given with the stream parameter.
 			 */
-			virtual std::ostream &serialize(std::ostream &stream) const = 0;
+			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const = 0;
 
 			/**
 			 * Deserialize the derived block payload.
 			 * @param stream A input stream to deserialize from.
 			 * @return The same reference as given with the stream parameter.
 			 */
-			virtual std::istream &deserialize(std::istream &stream) = 0;
+			virtual std::istream &deserialize(std::istream &stream, const size_t length) = 0;
 
 		protected:
 			/**
@@ -97,13 +97,10 @@ namespace dtn
 			@param stream the stream to be written into
 			@return the same stream as the parameter for chaining
 			*/
-			virtual std::ostream &serialize_strict(std::ostream &stream) const;
+			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
 
 			// block type of this block
 			char _blocktype;
-
-			// block size of the block, this is used by the serializer to store the deserialized value
-			size_t _blocksize;
 
 			// the list of EID references embedded in this block
 			std::list<dtn::data::EID> _eids;

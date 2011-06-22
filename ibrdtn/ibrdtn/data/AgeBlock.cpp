@@ -60,13 +60,15 @@ namespace dtn
 			return SDNV(getMicroseconds()).getLength();
 		}
 
-		std::ostream& AgeBlock::serialize(std::ostream &stream) const
+		std::ostream& AgeBlock::serialize(std::ostream &stream, size_t &length) const
 		{
-			stream << SDNV(getMicroseconds());
+			SDNV value(getMicroseconds());
+			stream << value;
+			length += value.getLength();
 			return stream;
 		}
 
-		std::istream& AgeBlock::deserialize(std::istream &stream)
+		std::istream& AgeBlock::deserialize(std::istream &stream, const size_t length)
 		{
 			stream >> _age;
 			_time.start();
@@ -78,10 +80,11 @@ namespace dtn
 			return 1;
 		}
 
-		std::ostream& AgeBlock::serialize_strict(std::ostream &stream) const
+		std::ostream& AgeBlock::serialize_strict(std::ostream &stream, size_t &length) const
 		{
 			// we have to ignore the age field, because this is very dynamic data
 			stream << (char)0;
+			length += 1;
 			return stream;
 		}
 	}

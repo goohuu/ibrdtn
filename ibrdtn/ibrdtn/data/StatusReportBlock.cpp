@@ -66,7 +66,7 @@ namespace dtn
 			return len;
 		}
 
-		std::ostream& StatusReportBlock::serialize(std::ostream &stream) const
+		std::ostream& StatusReportBlock::serialize(std::ostream &stream, size_t &length) const
 		{
 			stream << _admfield;
 			stream << _status;
@@ -100,7 +100,7 @@ namespace dtn
 			return stream;
 		}
 
-		std::istream& StatusReportBlock::deserialize(std::istream &stream)
+		std::istream& StatusReportBlock::deserialize(std::istream &stream, const size_t length)
 		{
 			stream >> _admfield;
 			stream >> _status;

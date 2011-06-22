@@ -38,13 +38,13 @@ namespace dtn
 			return _algorithm.getLength() + _origin_size.getLength();
 		}
 
-		std::ostream& CompressedPayloadBlock::serialize(std::ostream &stream) const
+		std::ostream& CompressedPayloadBlock::serialize(std::ostream &stream, size_t &length) const
 		{
 			stream << _algorithm << _origin_size;
 			return stream;
 		}
 
-		std::istream& CompressedPayloadBlock::deserialize(std::istream &stream)
+		std::istream& CompressedPayloadBlock::deserialize(std::istream &stream, const size_t length)
 		{
 			stream >> _algorithm;
 			stream >> _origin_size;

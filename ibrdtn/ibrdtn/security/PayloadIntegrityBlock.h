@@ -73,7 +73,7 @@ namespace dtn
 				Parses the PayloadIntegrityBlock from a Stream
 				@param stream the stream to read from
 				*/
-				virtual std::istream &deserialize(std::istream &stream);
+				virtual std::istream &deserialize(std::istream &stream, const size_t length);
 
 			protected:
 				/**

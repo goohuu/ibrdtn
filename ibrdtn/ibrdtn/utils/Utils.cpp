@@ -10,6 +10,32 @@ namespace dtn
 {
 	namespace utils
 	{
+		void Utils::rtrim(std::string &str)
+		{
+			// trim trailing spaces
+			size_t endpos = str.find_last_not_of(" \t");
+			if( string::npos != endpos )
+			{
+				str = str.substr( 0, endpos+1 );
+			}
+		}
+
+		void Utils::ltrim(std::string &str)
+		{
+			// trim leading spaces
+			size_t startpos = str.find_first_not_of(" \t");
+			if( string::npos != startpos )
+			{
+				str = str.substr( startpos );
+			}
+		}
+
+		void Utils::trim(std::string &str)
+		{
+			ltrim(str);
+			rtrim(str);
+		}
+
 		vector<string> Utils::tokenize(string token, string data, size_t max)
 		{
 			vector<string> l;
@@ -34,7 +60,7 @@ namespace dtn
 				if (l.size() >= max)
 				{
 					// add the remaining part to the vector as last element
-					l.push_back(data.substr(pos, data.length() - pos));
+					l.push_back(data.substr(lastPos, data.length() - lastPos));
 
 					// and break the search loop
 					break;

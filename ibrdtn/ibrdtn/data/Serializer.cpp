@@ -303,7 +303,8 @@ namespace dtn
 			_stream << SDNV(obj.getLength());
 
 			// write the payload of the block
-			obj.serialize(_stream);
+			size_t slength = 0;
+			obj.serialize(_stream, slength);
 
 			return (*this);
 		}
@@ -752,13 +753,12 @@ namespace dtn
 			// read the size of the payload in the block
 			SDNV block_size;
 			_stream >> block_size;
-			obj._blocksize = block_size.getValue();
 
 			// validate this block
 			_validator.validate(obj, block_size.getValue());
 
 			// read the payload of the block
-			obj.deserialize(_stream);
+			obj.deserialize(_stream, block_size.getValue());
 
 			return (*this);
 		}
@@ -818,7 +818,8 @@ namespace dtn
 			_stream << SDNV(obj.getLength());
 
 			// write the payload of the block
-			obj.serialize(_stream);
+			size_t slength = 0;
+			obj.serialize(_stream, slength);
 
 			return (*this);
 		}
@@ -975,13 +976,13 @@ namespace dtn
 			// read the size of the payload in the block
 			SDNV block_size;
 			_stream >> block_size;
-			obj._blocksize = block_size.getValue();
+//			obj._blocksize = block_size.getValue();
 
 			// validate this block
 			_validator.validate(obj, block_size.getValue());
 
 			// read the payload of the block
-			obj.deserialize(_stream);
+			obj.deserialize(_stream, block_size.getValue());
 
 			return (*this);
 		}

@@ -100,7 +100,8 @@ namespace dtn
 			// write size of the payload in the block
 			_stream << dtn::data::SDNV(obj.getLength_strict());
 
-			obj.serialize_strict(_stream);
+			size_t slength = 0;
+			obj.serialize_strict(_stream, slength);
 
 			return (*this);
 		}

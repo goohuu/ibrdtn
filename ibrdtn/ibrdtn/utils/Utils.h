@@ -14,6 +14,10 @@ namespace dtn
 		class Utils
 		{
 		public:
+			static void rtrim(std::string &str);
+			static void ltrim(std::string &str);
+			static void trim(std::string &str);
+
 			static vector<string> tokenize(std::string token, std::string data, size_t max = std::string::npos);
 			static double distance(double lat1, double lon1, double lat2, double lon2);
 

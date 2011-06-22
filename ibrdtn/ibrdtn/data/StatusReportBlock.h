@@ -48,8 +48,8 @@ namespace dtn
 			virtual ~StatusReportBlock();
 
 			virtual size_t getLength() const;
-			virtual std::ostream &serialize(std::ostream &stream) const;
-			virtual std::istream &deserialize(std::istream &stream);
+			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
+			virtual std::istream &deserialize(std::istream &stream, const size_t length);
 
 			char _admfield;
 			char _status;

@@ -144,7 +144,7 @@ namespace dtn
 			@param the stream in which should be written
 			@return the same stream as the input stream
 			*/
-			virtual std::ostream &serialize(std::ostream &stream) const;
+			virtual std::ostream &serialize(std::ostream &stream, size_t &length) const;
 
 			/**
 			 * Serializes this block in a strict form. That skips all dynamic field like
@@ -152,13 +152,13 @@ namespace dtn
 			 * @param stream
 			 * @return
 			 */
-			virtual std::ostream &serialize_strict(std::ostream &stream) const;
+			virtual std::ostream &serialize_strict(std::ostream &stream, size_t &length) const;
 
 			/**
 			Parses the SecurityBlock from a Stream
 			@param stream the stream to read from
 			*/
-			virtual std::istream &deserialize(std::istream &stream);
+			virtual std::istream &deserialize(std::istream &stream, const size_t length);
 
 			/**
 			Returns the Security source of a SecurityBlock or dtn:none if none exists
