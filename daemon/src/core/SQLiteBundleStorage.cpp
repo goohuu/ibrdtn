@@ -530,7 +530,17 @@ namespace dtn
 
 				if (query._statement == NULL)
 				{
-					std::string sql = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC LIMIT ?,?;";
+					std::string sql = base_query + " WHERE " + query.getWhere() + " ORDER BY priority DESC";
+
+					if (cb.limit() > 0)
+					{
+						sql += " LIMIT ?,?";
+					}
+
+					// add closing delimiter
+					sql += ";";
+
+					// prepare the hole statement
 					query._statement = prepare(sql);
 				}
 
@@ -541,14 +551,17 @@ namespace dtn
 				st = _statements[BUNDLE_GET_FILTER];
 			};
 
-			int offset = 0;
-			while (ret.size() != cb.limit())
+			size_t offset = 0;
+			while (true)
 			{
 				// lock the database
 				AutoResetLock l(_locks[BUNDLE_GET_FILTER], st);
 
-				sqlite3_bind_int64(st, bind_offset, offset);
-				sqlite3_bind_int64(st, bind_offset + 1, cb.limit());
+				if (cb.limit() > 0)
+				{
+					sqlite3_bind_int64(st, bind_offset, offset);
+					sqlite3_bind_int64(st, bind_offset + 1, cb.limit());
+				}
 
 				if (sqlite3_step(st) == SQLITE_DONE)
 				{
@@ -556,7 +569,7 @@ namespace dtn
 					break;
 				}
 
-				while (ret.size() != cb.limit())
+				while (true)
 				{
 					dtn::data::MetaBundle m;
 
@@ -580,10 +593,24 @@ namespace dtn
 					{
 						break;
 					}
+
+					// abort if enough bundles are found
+					if ((cb.limit() > 0) && (ret.size() >= cb.limit())) break;
 				}
 
-				// increment the offset, because we might not have enough
-				offset += cb.limit();
+				// if a limit is set
+				if (cb.limit() > 0)
+				{
+					// increment the offset, because we might not have enough
+					offset += cb.limit();
+
+					// abort if enough bundles are found
+					if (ret.size() >= cb.limit()) break;
+				}
+				else
+				{
+					break;
+				}
 			}
 
 			return ret;

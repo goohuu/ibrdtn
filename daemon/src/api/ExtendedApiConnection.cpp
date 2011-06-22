@@ -9,6 +9,7 @@
 #include "Configuration.h"
 #include "api/ExtendedApiConnection.h"
 #include "api/PlainSerializer.h"
+#include "net/BundleReceivedEvent.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/utils/Utils.h>
 #include "core/BundleCore.h"
@@ -177,8 +178,67 @@ namespace dtn
 						{
 							// transfer bundle data
 							ibrcommon::MutexLock l(_write_lock);
-							(*_stream) << API_STATUS_OK << " BUNDLE GET "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
-							PlainSerializer(*_stream) << _bundle_reg;
+
+							if (cmd.size() == 2)
+							{
+								(*_stream) << API_STATUS_OK << " BUNDLE GET "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
+								PlainSerializer(*_stream) << _bundle_reg;
+							}
+							else if (cmd[2] == "binary")
+							{
+								(*_stream) << API_STATUS_OK << " BUNDLE GET BINARY "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
+								dtn::data::DefaultSerializer(*_stream) << _bundle_reg; (*_stream) << std::flush;
+							}
+							else if (cmd[2] == "plain")
+							{
+								(*_stream) << API_STATUS_OK << " BUNDLE GET PLAIN "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
+								PlainSerializer(*_stream) << _bundle_reg;
+							}
+							else if (cmd[2] == "xml")
+							{
+								(*_stream) << API_STATUS_NOT_IMPLEMENTED << " FORMAT NOT IMPLEMENTED" << std::endl;
+							}
+							else
+							{
+								(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN FORMAT" << std::endl;
+							}
+						}
+						else if (cmd[1] == "put")
+						{
+							// lock the stream during reception of bundle data
+							ibrcommon::MutexLock l(_write_lock);
+
+							if (cmd.size() < 2)
+							{
+								(*_stream) << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
+							}
+							else if (cmd[2] == "plain")
+							{
+								(*_stream) << API_STATUS_CONTINUE << " PUT BUNDLE PLAIN" << std::endl;
+
+								try {
+									PlainDeserializer(*_stream) >> _bundle_reg;
+									(*_stream) << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
+								} catch (const std::exception&) {
+									(*_stream) << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
+
+								}
+							}
+							else if (cmd[2] == "binary")
+							{
+								(*_stream) << API_STATUS_CONTINUE << " PUT BUNDLE BINARY" << std::endl;
+
+								try {
+									dtn::data::DefaultDeserializer(*_stream) >> _bundle_reg;
+									(*_stream) << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
+								} catch (const std::exception&) {
+									(*_stream) << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
+								}
+							}
+							else
+							{
+								(*_stream) << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
+							}
 						}
 						else if (cmd[1] == "load")
 						{
@@ -250,6 +310,26 @@ namespace dtn
 								ibrcommon::MutexLock l(_write_lock);
 								(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
 							}
+						}
+						else if (cmd[1] == "store")
+						{
+							// store the bundle in the storage
+							try {
+								dtn::core::BundleCore::getInstance().getStorage().store(_bundle_reg);
+								ibrcommon::MutexLock l(_write_lock);
+								(*_stream) << API_STATUS_OK << " BUNDLE STORE SUCCESSFUL" << std::endl;
+							} catch (const ibrcommon::Exception&) {
+								ibrcommon::MutexLock l(_write_lock);
+								(*_stream) << API_STATUS_INTERNAL_ERROR << " BUNDLE STORE FAILED" << std::endl;
+							}
+						}
+						else if (cmd[1] == "send")
+						{
+							// raise default bundle received event
+							dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + getRegistration().getHandle(), _bundle_reg, true);
+
+							ibrcommon::MutexLock l(_write_lock);
+							(*_stream) << API_STATUS_OK << " BUNDLE SENT" << std::endl;
 						}
 						else
 						{

@@ -126,7 +126,8 @@ namespace dtn
 
 				// put data here
 				ibrcommon::Base64Stream b64(_stream, false, 80);
-				obj.serialize(b64);
+				size_t slength = 0;
+				obj.serialize(b64, slength);
 				b64 << std::flush;
 			} catch (const std::exception &ex) {
 				std::cerr << ex.what() << std::endl;
@@ -186,13 +187,20 @@ namespace dtn
 				// strip off the last char
 				buffer.erase(buffer.size() - 1);
 
+				// abort if the line data is empty
+				if (buffer.size() == 0) throw dtn::InvalidDataException("block header is missing");
+
 				// split header value
 				std::vector<std::string> values = dtn::utils::Utils::tokenize(":", buffer, 1);
 
-				if (values[0] == "Block:")
+				if (values[0] == "Block")
 				{
 					std::stringstream ss; ss.str(values[1]);
 					ss >> (int&)block_type;
+				}
+				else
+				{
+					throw dtn::InvalidDataException("need block type as first header");
 				}
 
 				switch (block_type)
@@ -318,10 +326,13 @@ namespace dtn
 				data.erase(data.size() - 1);
 
 				// abort after the first empty line
-				if (data[0] == '\n') break;
+				if (data.size() == 0) break;
 
 				// split header value
 				std::vector<std::string> values = dtn::utils::Utils::tokenize(":", data, 1);
+
+				// if there are not enough parameter abort with an error
+				if (values.size() < 1) throw ibrcommon::Exception("parsing error");
 
 				// assign header value
 				if (values[0] == "Processing flags")
@@ -378,6 +389,7 @@ namespace dtn
 		dtn::data::Deserializer& PlainDeserializer::operator>>(dtn::data::Block &obj)
 		{
 			std::string data;
+			size_t blocksize = 0;
 
 			// read until the first empty line appears
 			while (_stream.good())
@@ -388,7 +400,7 @@ namespace dtn
 				data.erase(data.size() - 1);
 
 				// abort after the first empty line
-				if (data[0] == '\n') break;
+				if (data.size() == 0) break;
 
 				// split header value
 				std::vector<std::string> values = dtn::utils::Utils::tokenize(":", data, 1);
@@ -431,11 +443,16 @@ namespace dtn
 				{
 					obj.addEID(values[1]);
 				}
+				else if (values[0] == "Length")
+				{
+					std::stringstream ss; ss.str(values[1]);
+					ss >> blocksize;
+				}
 			}
 
 			// then read the payload
-			ibrcommon::Base64Reader base64_decoder(_stream);
-			obj.deserialize(base64_decoder);
+			ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
+			obj.deserialize(base64_decoder, blocksize);
 
 			return (*this);
 		}
@@ -449,8 +466,11 @@ namespace dtn
 			{
 				getline(_stream, data);
 
+				// strip off the last char
+				data.erase(data.size() - 1);
+
 				// abort after the first empty line
-				if (data[0] == '\n') break;
+				if (data.size() == 0) break;
 
 				// put the line into the stream decoder
 				b64 << data;

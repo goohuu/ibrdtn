@@ -94,7 +94,7 @@ namespace dtn
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return -1; };
+				virtual size_t limit() const { return 0; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
