@@ -40,13 +40,13 @@ size_t StreamBlock::getLength() const
 	return _seq.getLength();
 }
 
-std::ostream& StreamBlock::serialize(std::ostream &stream) const
+std::ostream& StreamBlock::serialize(std::ostream &stream, size_t &length) const
 {
 	stream << _seq;
 	return stream;
 }
 
-std::istream& StreamBlock::deserialize(std::istream &stream)
+std::istream& StreamBlock::deserialize(std::istream &stream, const size_t length)
 {
 	stream >> _seq;
 	return stream;
