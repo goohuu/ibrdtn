@@ -1,3 +1,9 @@
+ibrdtn-tools (0.6.2) stable; urgency=low
+
+  * Fix: sometimes dtnsend do not return
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 24 Jun 2011 12:00:00 +0200
+
 ibrdtn-tools (0.6.1) stable; urgency=low
 
   * dtnstream application ... stream data across a DTN!

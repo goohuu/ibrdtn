@@ -1,3 +1,27 @@
+ibrdtnd (0.6.2) stable; urgency=low
+
+  * New features
+    * Experimental support for compressed bundle payload
+    * Bundle-in-Bundle support based on
+      http://tools.ietf.org/html/draft-irtf-dtnrg-bundle-encapsulation-06
+    * Added AgeBlock support to the SQLiteBundleStorage
+    * HTTPConvergenceLayer by Robert Heitz
+    * Define a logfile in the configuration with "logfile"
+    * Define a username with "user"
+    * Define user id and group id with "uid" and "gid"
+	
+  * Improvements
+    * Neighbor handling reworked
+    * Improved connection termination for API and TCP-CL for more stability
+    
+  * Fixes
+    * Epidemic routing combined with sqlite leads to 100% cpu usage
+    * Bundles are not retransmitted after a failed connection
+    * Failed TCPCL connections stay unconnected forever
+    * Logging to files
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 24 Jun 2011 12:00:00 +0200
+
 ibrdtnd (0.6.1) stable; urgency=low
 
   * use libdaemon to daemonize into the background
