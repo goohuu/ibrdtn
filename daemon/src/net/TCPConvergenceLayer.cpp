@@ -108,20 +108,22 @@ namespace dtn
 				}
 			}
 
-			// create a connection
-			TCPConnection *conn = new TCPConnection(*this, n, dtn::core::BundleCore::local, 10);
+			try {
+				// create a connection
+				TCPConnection *conn = new TCPConnection(*this, n, dtn::core::BundleCore::local, 10);
 
-			// raise setup event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
+				// raise setup event
+				ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
 
-			// add connection as pending
-			_connections.push_back( conn );
+				// add connection as pending
+				_connections.push_back( conn );
 
-			// start the ClientHandler (service)
-			conn->initialize();
+				// start the ClientHandler (service)
+				conn->initialize();
 
-			// signal that there is a new connection
-			_connections_cond.signal(true);
+				// signal that there is a new connection
+				_connections_cond.signal(true);
+			} catch (const ibrcommon::Exception&) {	};
 
 			return;
 		}
@@ -144,25 +146,30 @@ namespace dtn
 				}
 			}
 
-			// create a connection
-			TCPConnection *conn = new TCPConnection(*this, n, dtn::core::BundleCore::local, 10);
+			try {
+				// create a connection
+				TCPConnection *conn = new TCPConnection(*this, n, dtn::core::BundleCore::local, 10);
 
-			// raise setup event
-			ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
+				// raise setup event
+				ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
 
-			// add connection as pending
-			_connections.push_back( conn );
+				// add connection as pending
+				_connections.push_back( conn );
 
-			// start the ClientHandler (service)
-			conn->initialize();
+				// start the ClientHandler (service)
+				conn->initialize();
 
-			// queue the bundle
-			conn->queue(job._bundle);
+				// queue the bundle
+				conn->queue(job._bundle);
 
-			// signal that there is a new connection
-			_connections_cond.signal(true);
+				// signal that there is a new connection
+				_connections_cond.signal(true);
 
-			IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(15) << "queued bundle to an new tcp connection (" << conn->getNode().toString() << ")" << IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::Exception&) {
+				// raise transfer abort event for all bundles without an ACK
+				dtn::routing::RequeueBundleEvent::raise(n.getEID(), job._bundle);
+			}
 		}
 
 		void TCPConvergenceLayer::connectionUp(TCPConnection *conn)
