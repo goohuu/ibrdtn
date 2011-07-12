@@ -61,10 +61,10 @@ namespace dtn
 
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET procflags = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 
-			"SELECT filename FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL ORDER BY ordernumber ASC;",
-			"SELECT filename FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? ORDER BY ordernumber ASC;",
-			"SELECT filename FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL AND ordernumber = ?;",
-			"SELECT filename FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? AND ordernumber = ?;",
+			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL ORDER BY ordernumber ASC;",
+			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? ORDER BY ordernumber ASC;",
+			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL AND ordernumber = ?;",
+			"SELECT filename, blocktype FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ? AND ordernumber = ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BLOCK] +";",
 			"INSERT INTO "+ _tables[SQL_TABLE_BLOCK] +" (source_id, timestamp, sequencenumber, fragmentoffset, blocktype, filename, ordernumber) VALUES (?,?,?,?,?,?,?);",
 
@@ -86,21 +86,6 @@ namespace dtn
 
 			"VACUUM;"
 		};
-
-//		const std::string SQLiteBundleStorage::_db_structure[11] =
-//		{
-//			"create table if not exists "+ _tables[SQL_TABLE_BUNDLE] +" (Key INTEGER PRIMARY KEY ASC, BundleID text, Source text, Destination text, Reportto text, Custodian text, ProcFlags int, Timestamp int, Sequencenumber int, Lifetime int, Fragmentoffset int, Appdatalength int, TTL int, Size int, Payloadlength int, Payloadfilename text);",
-//			"create table if not exists "+ _tables[SQL_TABLE_BLOCK] +" (Key INTEGER PRIMARY KEY ASC, BundleID text, BlockType int, Filename text, Blocknumber int);",
-//			"create table if not exists "+ _tables[SQL_TABLE_ROUTING] +" (INTEGER PRIMARY KEY ASC, Key int, Routing text);",
-//			"create table if not exists "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, BundleID text, Key int, Routing text);",
-//			"create table if not exists "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, EID text, Key int, Routing text);",
-//			"CREATE TRIGGER IF NOT EXISTS Blockdelete AFTER DELETE ON "+ _tables[SQL_TABLE_BUNDLE] +" FOR EACH ROW BEGIN DELETE FROM "+ _tables[SQL_TABLE_BLOCK] +" WHERE BundleID = OLD.BundleID; DELETE FROM "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" WHERE BundleID = OLD.BundleID; END;",
-//			"CREATE TRIGGER IF NOT EXISTS BundleRoutingdelete BEFORE INSERT ON "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" BEGIN SELECT CASE WHEN (SELECT BundleID FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE BundleID = NEW.BundleID) IS NULL THEN RAISE(ABORT, \"Foreign Key Violation: BundleID doesn't exist in BundleTable\")END; END;",
-//			"CREATE INDEX IF NOT EXISTS BlockIDIndex ON "+ _tables[SQL_TABLE_BLOCK] +" (BundleID);",
-//			"CREATE UNIQUE INDEX IF NOT EXISTS BundleIDIndex ON "+ _tables[SQL_TABLE_BUNDLE] +" (BundleID);",
-//			"CREATE UNIQUE INDEX IF NOT EXISTS RoutingKeyIndex ON "+ _tables[SQL_TABLE_ROUTING] +" (Key);",
-//			"CREATE UNIQUE INDEX IF NOT EXISTS BundleRoutingIDIndex ON "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" (BundleID,Key);",
-//		};
 
 		const std::string SQLiteBundleStorage::_db_structure[10] =
 		{
@@ -142,6 +127,68 @@ namespace dtn
 		SQLiteBundleStorage::AutoResetLock::~AutoResetLock()
 		{
 			sqlite3_reset(_st);
+		}
+
+		SQLiteBundleStorage::SQLiteBLOB::SQLiteBLOB(const ibrcommon::File &f)
+		 : _file(f)
+		{
+		}
+
+		SQLiteBundleStorage::SQLiteBLOB::~SQLiteBLOB()
+		{
+			// delete the file if the last reference is destroyed
+			_file.remove();
+		}
+
+		void SQLiteBundleStorage::SQLiteBLOB::clear()
+		{
+			// close the file
+			_filestream.close();
+
+			// open temporary file
+			_filestream.open(_file.getPath().c_str(), ios::in | ios::out | ios::trunc | ios::binary );
+
+			if (!_filestream.is_open())
+			{
+				IBRCOMMON_LOGGER(error) << "can not open temporary file " << _file.getPath() << IBRCOMMON_LOGGER_ENDL;
+				throw ibrcommon::CanNotOpenFileException(_file);
+			}
+		}
+
+		void SQLiteBundleStorage::SQLiteBLOB::open()
+		{
+			ibrcommon::BLOB::_filelimit.wait();
+
+			// open temporary file
+			_filestream.open(_file.getPath().c_str(), ios::in | ios::out | ios::binary );
+
+			if (!_filestream.is_open())
+			{
+				IBRCOMMON_LOGGER(error) << "can not open temporary file " << _file.getPath() << IBRCOMMON_LOGGER_ENDL;
+				throw ibrcommon::CanNotOpenFileException(_file);
+			}
+		}
+
+		void SQLiteBundleStorage::SQLiteBLOB::close()
+		{
+			// flush the filestream
+			_filestream.flush();
+
+			// close the file
+			_filestream.close();
+
+			ibrcommon::BLOB::_filelimit.post();
+		}
+
+		size_t SQLiteBundleStorage::SQLiteBLOB::__get_size()
+		{
+			return _file.size();
+		}
+
+		ibrcommon::BLOB::Reference SQLiteBundleStorage::create()
+		{
+			ibrcommon::TemporaryFile tmpfile(_blobPath, "blob");
+			return ibrcommon::BLOB::Reference(new SQLiteBLOB(tmpfile));
 		}
 
 		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const size_t &size)
@@ -188,6 +235,7 @@ namespace dtn
 
 			// set the block path
 			_blockPath = dbPath.get(_tables[SQL_TABLE_BLOCK]);
+			_blobPath = dbPath.get("blob");
 
 			//open the database
 			if (sqlite3_open_v2(path.getPath().c_str(), &_database,  SQLITE_OPEN_FULLMUTEX | SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, NULL))
@@ -211,6 +259,12 @@ namespace dtn
 				sqlite3_reset(st);
 				sqlite3_finalize(st);
 			}
+
+			// delete all old BLOB container
+			_blobPath.remove(true);
+
+			// create BLOB folder
+			ibrcommon::File::createDirectory( _blobPath );
 
 			// create the bundle folder
 			ibrcommon::File::createDirectory( _blockPath );
@@ -1495,23 +1549,39 @@ namespace dtn
 			int blocktyp, blocknumber(1), storedBytes(0);
 
 			// get all blocks of the bundle
-			const list<const data::Block*> blocklist = bundle.getBlocks();
+			const list<const dtn::data::Block*> blocklist = bundle.getBlocks();
 
 			// generate a bundle id
-			data::BundleID id(bundle);
+			dtn::data::BundleID id(bundle);
 
-			for(std::list<const data::Block*>::const_iterator it = blocklist.begin() ;it != blocklist.end(); it++)
+			for(std::list<const dtn::data::Block*>::const_iterator it = blocklist.begin() ;it != blocklist.end(); it++)
 			{
-				blocktyp = (int)(*it)->getType();
+				const dtn::data::Block &block = (**it);
+				blocktyp = (int)block.getType();
 
 				ibrcommon::TemporaryFile tmpfile(_blockPath, "block");
-				std::ofstream filestream(tmpfile.getPath().c_str(), std::ios_base::out | std::ios::binary);
 
-				dtn::data::SeparateSerializer serializer(filestream);
-				serializer << (*(*it));
-				storedBytes += serializer.getLength(*(*it));
+				try {
+					const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(block);
+					ibrcommon::BLOB::Reference ref = payload.getBLOB();
+					ibrcommon::BLOB::iostream stream = ref.iostream();
 
-				filestream.close();
+					const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref.getPointer());
+
+					// first remove the tmp file
+					tmpfile.remove();
+
+					// make a hardlink to the origin blob file
+					::link(blob._file.getPath().c_str(), tmpfile.getPath().c_str());
+
+					storedBytes += _blockPath.size();
+				} catch (const std::bad_cast&) {
+					std::ofstream filestream(tmpfile.getPath().c_str(), std::ios_base::out | std::ios::binary);
+					dtn::data::SeparateSerializer serializer(filestream);
+					serializer << block;
+					storedBytes += serializer.getLength(block);
+					filestream.close();
+				}
 
 				// protect this query from concurrent access and enable the auto-reset feature
 				AutoResetLock l(_locks[BLOCK_STORE], _statements[BLOCK_STORE]);
@@ -1561,25 +1631,42 @@ namespace dtn
 			while ((err = sqlite3_step(_statements[stmt_key])) == SQLITE_ROW)
 			{
 				const ibrcommon::File f( (const char*) sqlite3_column_text(_statements[stmt_key], 0) );
+				int blocktyp = sqlite3_column_int(_statements[stmt_key], 1);
 
 				// open the file
 				std::ifstream is(f.getPath().c_str(), std::ios::binary | std::ios::in);
 
-				// read the block
-				dtn::data::Block &block = dtn::data::SeparateDeserializer(is, bundle).readBlock();
+				if (blocktyp == dtn::data::PayloadBlock::BLOCK_TYPE)
+				{
+					ibrcommon::TemporaryFile tmpfile(_blobPath, "blob");
+					tmpfile.remove();
 
-				// close the file
-				is.close();
+					// generate a hardlink
+					::link(f.getPath().c_str(), tmpfile.getPath().c_str());
 
-				// modify the age block if present
-				try {
-					dtn::data::AgeBlock &agebl = dynamic_cast<dtn::data::AgeBlock&>(block);
+					ibrcommon::BLOB::Reference ref(new SQLiteBLOB(tmpfile));
 
-					// modify the AgeBlock with the age of the file
-					time_t age = f.lastaccess() - f.lastmodify();
+					// add payload block to the bundle
+					bundle.push_back(ref);
+				}
+				else
+				{
+					// read the block
+					dtn::data::Block &block = dtn::data::SeparateDeserializer(is, bundle).readBlock();
 
-					agebl.addSeconds(age);
-				} catch (const std::bad_cast&) { };
+					// close the file
+					is.close();
+
+					// modify the age block if present
+					try {
+						dtn::data::AgeBlock &agebl = dynamic_cast<dtn::data::AgeBlock&>(block);
+
+						// modify the AgeBlock with the age of the file
+						time_t age = f.lastaccess() - f.lastmodify();
+
+						agebl.addSeconds(age);
+					} catch (const std::bad_cast&) { };
+				}
 			}
 
 			if (err == SQLITE_DONE)

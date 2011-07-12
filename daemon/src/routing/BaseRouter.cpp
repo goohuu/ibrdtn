@@ -61,7 +61,6 @@ namespace dtn
 
 		/**
 		 * Transfer one bundle to another node.
-		 * @throw BundleNotFoundException if the bundle do not exist.
 		 * @param destination The EID of the other node.
 		 * @param id The ID of the bundle to transfer. This bundle must be stored in the storage.
 		 */

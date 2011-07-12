@@ -13,7 +13,7 @@ namespace dtn
 	namespace api
 	{
 		StringBundle::StringBundle(const dtn::data::EID &destination)
-		 : Bundle(destination), _ref(ibrcommon::StringBLOB::create())
+		 : Bundle(destination), _ref(ibrcommon::BLOB::create())
 		{
 			_b.push_back(_ref);
 		}

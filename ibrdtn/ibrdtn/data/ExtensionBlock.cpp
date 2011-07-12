@@ -79,7 +79,7 @@ namespace dtn
 		}
 
 		ExtensionBlock::ExtensionBlock()
-		 : Block(0), _blobref(ibrcommon::TmpFileBLOB::create())
+		 : Block(0), _blobref(ibrcommon::BLOB::create())
 		{
 		}
 

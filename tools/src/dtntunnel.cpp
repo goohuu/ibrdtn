@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
 		cout << "received " << ret << " bytes" << endl;
 
 		// create a blob
-		ibrcommon::BLOB::Reference blob = ibrcommon::StringBLOB::create();
+		ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
 		// add the data
 		blob.iostream()->write(data, ret);

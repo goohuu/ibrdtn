@@ -245,7 +245,7 @@ namespace dtn
 					// add an age block
 					b.push_back<dtn::data::AgeBlock>();
 
-					ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
+					ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 					// create the payload of the message
 					{

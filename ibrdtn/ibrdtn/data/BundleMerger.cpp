@@ -81,7 +81,7 @@ namespace dtn
 
 		BundleMerger::Container BundleMerger::getContainer(dtn::data::Bundle &b)
 		{
-			ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 			return Container(b, ref);
 		}
 

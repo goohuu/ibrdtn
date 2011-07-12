@@ -176,46 +176,49 @@ void setGlobalVars(Configuration &config)
     dtn::core::BundleCore::local = config.getNodename();
     IBRCOMMON_LOGGER(info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
 
-    try {
-    	// new methods for blobs
-    	ibrcommon::BLOB::tmppath = config.getPath("blob");
-
-    	// check if the BLOB path exists
-    	if (ibrcommon::BLOB::tmppath.exists())
-    	{
-    		if (ibrcommon::BLOB::tmppath.isDirectory())
-    		{
-    			IBRCOMMON_LOGGER(info) << "using BLOB path: " << ibrcommon::BLOB::tmppath.getPath() << IBRCOMMON_LOGGER_ENDL;
-    		}
-    		else
-    		{
-    			IBRCOMMON_LOGGER(warning) << "BLOB path exists, but is not a directory! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
-    			ibrcommon::BLOB::tmppath = ibrcommon::File();
-    		}
-    	}
-    	else
-    	{
-    		// try to create the BLOB path
-    		ibrcommon::File::createDirectory(ibrcommon::BLOB::tmppath);
-
-    		if (ibrcommon::BLOB::tmppath.exists())
-    		{
-    			IBRCOMMON_LOGGER(info) << "using BLOB path: " << ibrcommon::BLOB::tmppath.getPath() << IBRCOMMON_LOGGER_ENDL;
-    		}
-    		else
-    		{
-    			IBRCOMMON_LOGGER(warning) << "Could not create BLOB path! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
-    			ibrcommon::BLOB::tmppath = ibrcommon::File();
-    		}
-    	}
-    } catch (const Configuration::ParameterNotSetException&) {
-    }
-
     // set block size limit
     dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
     if (dtn::core::BundleCore::blocksizelimit > 0)
     {
     	IBRCOMMON_LOGGER(info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
+    }
+}
+
+void initialize_blobs(Configuration &config)
+{
+    try {
+    	// the configured BLOB path
+    	ibrcommon::File blob_path = config.getPath("blob");
+
+    	// check if the BLOB path exists
+    	if (blob_path.exists())
+    	{
+    		if (blob_path.isDirectory())
+    		{
+    			IBRCOMMON_LOGGER(info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
+    			ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), false);
+    		}
+    		else
+    		{
+    			IBRCOMMON_LOGGER(warning) << "BLOB path exists, but is not a directory! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
+    		}
+    	}
+    	else
+    	{
+    		// try to create the BLOB path
+    		ibrcommon::File::createDirectory(blob_path);
+
+    		if (blob_path.exists())
+    		{
+    			IBRCOMMON_LOGGER(info) << "using BLOB path: " << blob_path.getPath() << IBRCOMMON_LOGGER_ENDL;
+    			ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), false);
+    		}
+    		else
+    		{
+    			IBRCOMMON_LOGGER(warning) << "Could not create BLOB path! Fallback to memory based mode." << IBRCOMMON_LOGGER_ENDL;
+    		}
+    	}
+    } catch (const Configuration::ParameterNotSetException&) {
     }
 }
 
@@ -239,6 +242,9 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 			IBRCOMMON_LOGGER(info) << "using sqlite bundle storage in " << path.getPath() << IBRCOMMON_LOGGER_ENDL;
 
 			dtn::core::SQLiteBundleStorage *sbs = new dtn::core::SQLiteBundleStorage(path, conf.getLimit("storage") );
+
+			// use sqlite storage as BLOB provider, auto delete off
+			ibrcommon::BLOB::changeProvider(sbs, false);
 
 			components.push_back(sbs);
 			storage = sbs;
@@ -266,12 +272,19 @@ void createBundleStorage(BundleCore &core, Configuration &conf, std::list< dtn::
 
 			dtn::core::SimpleBundleStorage *sbs = new dtn::core::SimpleBundleStorage(path, conf.getLimit("storage"), conf.getLimit("storage_buffer"));
 
+			// initialize BLOB mechanism
+			initialize_blobs(conf);
+
 			components.push_back(sbs);
 			storage = sbs;
 		} catch (const Configuration::ParameterNotSetException&) {
 			IBRCOMMON_LOGGER(info) << "using bundle storage in memory-only mode" << IBRCOMMON_LOGGER_ENDL;
 
 			dtn::core::MemoryBundleStorage *sbs = new dtn::core::MemoryBundleStorage(conf.getLimit("storage"));
+
+			// initialize BLOB mechanism
+			initialize_blobs(conf);
+
 			components.push_back(sbs);
 			storage = sbs;
 		}

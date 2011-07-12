@@ -216,7 +216,7 @@ int main(int argc, char *argv[])
 					cout << "Transfer stdin to " << addr.getString() << endl;
 
 					// create an empty BLOB
-					ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+					ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 					// copy cin to a BLOB
 					(*ref.iostream()) << cin.rdbuf();

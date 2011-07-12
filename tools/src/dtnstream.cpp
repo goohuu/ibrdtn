@@ -63,7 +63,7 @@ size_t StreamBlock::getSequenceNumber() const
 }
 
 StreamBundle::StreamBundle()
- : _ref(ibrcommon::StringBLOB::create())
+ : _ref(ibrcommon::BLOB::create())
 {
 	StreamBlock &block = _b.push_front<StreamBlock>();
 	block.setSequenceNumber(0);

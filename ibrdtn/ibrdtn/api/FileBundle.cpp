@@ -18,7 +18,7 @@ namespace dtn
 		 : Bundle(destination)
 		{
 			// create a reference out of the given file
-			ibrcommon::BLOB::Reference ref = ibrcommon::FileBLOB::create(file);
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::open(file);
 
 			// create a new payload block with this reference.
 			_b.push_back(ref);

@@ -98,7 +98,12 @@ int main(int argc, char** argv)
     // init working directory
     if (conf.find("workdir") != conf.end())
     {
-    	ibrcommon::BLOB::tmppath = File(conf["workdir"]);
+    	ibrcommon::File blob_path(conf["workdir"]);
+
+    	if (blob_path.exists())
+    	{
+    		ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
+    	}
     }
 
     // backoff for reconnect

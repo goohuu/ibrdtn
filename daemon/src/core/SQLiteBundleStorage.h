@@ -34,7 +34,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::MutexInterface
+		class SQLiteBundleStorage: public BundleStorage, public EventReceiver, public dtn::daemon::IndependentComponent, public ibrcommon::MutexInterface, public ibrcommon::BLOB::Provider
 		{
 			enum SQL_TABLES
 			{
@@ -145,6 +145,12 @@ namespace dtn
 				{
 				}
 			};
+
+			/**
+			 * create a new BLOB object within this storage
+			 * @return
+			 */
+			ibrcommon::BLOB::Reference create();
 
 			/**
 			 * Constructor
@@ -429,6 +435,35 @@ namespace dtn
 			};
 
 			/**
+			 * A SQLiteBLOB is container for large amount of data. Stored in the database
+			 * working directory.
+			 */
+			class SQLiteBLOB : public ibrcommon::BLOB
+			{
+				friend class SQLiteBundleStorage;
+			public:
+				virtual ~SQLiteBLOB();
+
+				virtual void clear();
+
+				virtual void open();
+				virtual void close();
+
+			protected:
+				std::iostream &__get_stream()
+				{
+					return _filestream;
+				}
+
+				size_t __get_size();
+
+			private:
+				SQLiteBLOB(const ibrcommon::File &f);
+				std::fstream _filestream;
+				ibrcommon::File _file;
+			};
+
+			/**
 			 * Retrieve the meta data of a given bundle
 			 * @param id
 			 * @return
@@ -513,6 +548,7 @@ namespace dtn
 
 			ibrcommon::File dbPath;
 			ibrcommon::File dbFile;
+			ibrcommon::File _blobPath;
 			ibrcommon::File _blockPath;
 
 			int dbSize;

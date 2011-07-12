@@ -100,7 +100,12 @@ int main(int argc, char** argv)
     // init working directory
     if (conf.find("workdir") != conf.end())
     {
-    	ibrcommon::BLOB::tmppath = File(conf["workdir"]);
+    	ibrcommon::File blob_path(conf["workdir"]);
+
+    	if (blob_path.exists())
+    	{
+    		ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path), true);
+    	}
     }
 
     // backoff for reconnect
@@ -176,7 +181,7 @@ int main(int argc, char** argv)
             	istream stream(&app);
 
     			// create a blob
-            	ibrcommon::BLOB::Reference blob = ibrcommon::TmpFileBLOB::create();
+            	ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
 
     			// stream the content of "tar" to the payload block
     			(*blob.iostream()) << stream.rdbuf();

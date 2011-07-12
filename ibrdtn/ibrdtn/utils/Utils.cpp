@@ -111,7 +111,7 @@ namespace dtn
 				// encapsule the bundles into the BLOB
 				Utils::encapsule(ref, bundles);
 			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
-				ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 				// encapsule the bundles into the BLOB
 				Utils::encapsule(ref, bundles);

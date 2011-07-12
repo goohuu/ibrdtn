@@ -15,7 +15,7 @@ namespace dtn
 	namespace data
 	{
 		PayloadBlock::PayloadBlock()
-		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ibrcommon::TmpFileBLOB::create())
+		 : Block(PayloadBlock::BLOCK_TYPE), _blobref(ibrcommon::BLOB::create())
 		{
 		}
 

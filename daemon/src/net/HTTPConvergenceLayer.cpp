@@ -291,7 +291,7 @@ namespace dtn
 				// read the bundle out of the storage
 				const dtn::data::Bundle bundle = storage.get(job._bundle);
 
-				ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+				ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 				{
 					ibrcommon::BLOB::iostream io = ref.iostream();
 					dtn::data::DefaultSerializer(*io) << bundle;

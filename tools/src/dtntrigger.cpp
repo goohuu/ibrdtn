@@ -45,6 +45,8 @@ std::string _appname = "trigger";
 std::string _script = "";
 std::string _shell = "/bin/sh";
 
+ibrcommon::File blob_path("/tmp");
+
 void print_help()
 {
 	cout << "-- dtntrigger (IBR-DTN) --" << endl;
@@ -61,7 +63,6 @@ int init(int argc, char** argv)
 {
 	int index;
 	int c;
-	ibrcommon::BLOB::tmppath = ibrcommon::File("/tmp");
 
 	opterr = 0;
 
@@ -69,7 +70,7 @@ int init(int argc, char** argv)
 	switch (c)
 	{
 		case 'w':
-			ibrcommon::BLOB::tmppath = ibrcommon::File(optarg);
+			blob_path = ibrcommon::File(optarg);
 			break;
 
 		case '?':
@@ -111,6 +112,12 @@ int init(int argc, char** argv)
 
 	// print help if not enough parameters are set
 	if (optindex < 2) { print_help(); exit(0); }
+
+	// enable file based BLOBs if a correct path is set
+	if (blob_path.exists())
+	{
+		ibrcommon::BLOB::changeProvider(new ibrcommon::FileBLOBProvider(blob_path));
+	}
 
 	return 0;
 }
@@ -176,7 +183,7 @@ int main(int argc, char** argv)
 				ibrcommon::BLOB::Reference ref = b.getData();
 
 				// get a temporary file name
-				ibrcommon::TemporaryFile file(ibrcommon::BLOB::tmppath, "bundle");
+				ibrcommon::TemporaryFile file(blob_path, "bundle");
 
 				// write data to temporary file
 				try {

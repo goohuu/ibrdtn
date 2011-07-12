@@ -76,7 +76,7 @@ namespace dtn
 			dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
 
 			// get a data container for the compressed payload
-			ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 			// lock the BLOBs while we are compress the payload
 			{
@@ -111,7 +111,7 @@ namespace dtn
 			dtn::data::PayloadBlock &p = b.getBlock<dtn::data::PayloadBlock>();
 
 			// get a data container for the uncompressed payload
-			ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 			// lock the BLOBs while we are uncompress the payload
 			{
