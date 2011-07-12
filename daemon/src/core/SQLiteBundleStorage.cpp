@@ -129,9 +129,11 @@ namespace dtn
 			sqlite3_reset(_st);
 		}
 
-		SQLiteBundleStorage::SQLiteBLOB::SQLiteBLOB(const ibrcommon::File &f)
-		 : _file(f)
+		SQLiteBundleStorage::SQLiteBLOB::SQLiteBLOB(const ibrcommon::File &path)
+		 : _blobPath(path)
 		{
+			// generate a new temporary file
+			_file = ibrcommon::TemporaryFile(_blobPath, "blob");
 		}
 
 		SQLiteBundleStorage::SQLiteBLOB::~SQLiteBLOB()
@@ -144,6 +146,12 @@ namespace dtn
 		{
 			// close the file
 			_filestream.close();
+
+			// remove the old file
+			_file.remove();
+
+			// generate a new temporary file
+			_file = ibrcommon::TemporaryFile(_blobPath, "blob");
 
 			// open temporary file
 			_filestream.open(_file.getPath().c_str(), ios::in | ios::out | ios::trunc | ios::binary );
@@ -187,8 +195,7 @@ namespace dtn
 
 		ibrcommon::BLOB::Reference SQLiteBundleStorage::create()
 		{
-			ibrcommon::TemporaryFile tmpfile(_blobPath, "blob");
-			return ibrcommon::BLOB::Reference(new SQLiteBLOB(tmpfile));
+			return ibrcommon::BLOB::Reference(new SQLiteBLOB(_blobPath));
 		}
 
 		SQLiteBundleStorage::SQLiteBundleStorage(const ibrcommon::File &path, const size_t &size)

@@ -458,9 +458,10 @@ namespace dtn
 				size_t __get_size();
 
 			private:
-				SQLiteBLOB(const ibrcommon::File &f);
+				SQLiteBLOB(const ibrcommon::File &path);
 				std::fstream _filestream;
 				ibrcommon::File _file;
+				ibrcommon::File _blobPath;
 			};
 
 			/**
