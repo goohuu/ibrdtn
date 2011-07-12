@@ -1562,20 +1562,28 @@ namespace dtn
 				ibrcommon::TemporaryFile tmpfile(_blockPath, "block");
 
 				try {
-					const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(block);
-					ibrcommon::BLOB::Reference ref = payload.getBLOB();
-					ibrcommon::BLOB::iostream stream = ref.iostream();
+					try {
+						const dtn::data::PayloadBlock &payload = dynamic_cast<const dtn::data::PayloadBlock&>(block);
+						ibrcommon::BLOB::Reference ref = payload.getBLOB();
+						ibrcommon::BLOB::iostream stream = ref.iostream();
 
-					const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref.getPointer());
+						const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref.getPointer());
 
-					// first remove the tmp file
-					tmpfile.remove();
+						// first remove the tmp file
+						tmpfile.remove();
 
-					// make a hardlink to the origin blob file
-					::link(blob._file.getPath().c_str(), tmpfile.getPath().c_str());
+						// make a hardlink to the origin blob file
+						if ( ::link(blob._file.getPath().c_str(), tmpfile.getPath().c_str()) != 0 )
+						{
+							tmpfile = ibrcommon::TemporaryFile(_blockPath, "block");
+							throw ibrcommon::Exception("hard-link failed");
+						}
+					} catch (const std::bad_cast&) {
+						throw ibrcommon::Exception("not a Payload or SQLiteBLOB");
+					}
 
 					storedBytes += _blockPath.size();
-				} catch (const std::bad_cast&) {
+				} catch (const ibrcommon::Exception&) {
 					std::ofstream filestream(tmpfile.getPath().c_str(), std::ios_base::out | std::ios::binary);
 					dtn::data::SeparateSerializer serializer(filestream);
 					serializer << block;
@@ -1642,12 +1650,17 @@ namespace dtn
 					tmpfile.remove();
 
 					// generate a hardlink
-					::link(f.getPath().c_str(), tmpfile.getPath().c_str());
+					if ( ::link(f.getPath().c_str(), tmpfile.getPath().c_str()) == 0)
+					{
+						ibrcommon::BLOB::Reference ref(new SQLiteBLOB(tmpfile));
 
-					ibrcommon::BLOB::Reference ref(new SQLiteBLOB(tmpfile));
-
-					// add payload block to the bundle
-					bundle.push_back(ref);
+						// add payload block to the bundle
+						bundle.push_back(ref);
+					}
+					else
+					{
+						IBRCOMMON_LOGGER(error) << "unable to load bundle: failed to create a hard-link" << IBRCOMMON_LOGGER_ENDL;
+					}
 				}
 				else
 				{
