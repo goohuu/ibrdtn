@@ -1653,19 +1653,24 @@ namespace dtn
 
 				if (blocktyp == dtn::data::PayloadBlock::BLOCK_TYPE)
 				{
-					ibrcommon::TemporaryFile tmpfile(_blobPath, "blob");
-					tmpfile.remove();
+					// create a new BLOB object
+					SQLiteBLOB *blob = new SQLiteBLOB(_blobPath);
 
-					// generate a hardlink
-					if ( ::link(f.getPath().c_str(), tmpfile.getPath().c_str()) == 0)
+					// remove the corresponding file
+					blob->_file.remove();
+
+					// generate a hardlink, pointing to the BLOB file
+					if ( ::link(f.getPath().c_str(), blob->_file.getPath().c_str()) == 0)
 					{
-						ibrcommon::BLOB::Reference ref(new SQLiteBLOB(tmpfile));
+						// create a reference of the BLOB
+						ibrcommon::BLOB::Reference ref(blob);
 
 						// add payload block to the bundle
 						bundle.push_back(ref);
 					}
 					else
 					{
+						delete blob;
 						IBRCOMMON_LOGGER(error) << "unable to load bundle: failed to create a hard-link" << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
