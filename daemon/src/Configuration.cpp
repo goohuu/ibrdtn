@@ -497,6 +497,7 @@ namespace dtn
 				if (protocol == "tcp") p = Node::CONN_TCPIP;
 				if (protocol == "udp") p = Node::CONN_UDPIP;
 				if (protocol == "lowpan") p = Node::CONN_LOWPAN;
+				if (protocol == "zigbee") p = Node::CONN_LOWPAN; //Legacy: Stay compatible with older config files
 				if (protocol == "bluetooth") p = Node::CONN_BLUETOOTH;
 				if (protocol == "http") p = Node::CONN_HTTP;
 
