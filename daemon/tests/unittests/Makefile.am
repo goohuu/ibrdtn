@@ -131,6 +131,6 @@ INCLUDES = -I@top_srcdir@ -I@top_srcdir@/tests/unittests
 check_PROGRAMS = unittest
 unittest_CXXFLAGS = ${AM_CPPFLAGS} ${CPPUNIT_CFLAGS} -Wall
 unittest_LDFLAGS = ${AM_LDFLAGS} ${CPPUNIT_LIBS}
-unittest_LDADD = @top_srcdir@/src/libdaemon.la
+unittest_LDADD = @top_srcdir@/src/libdtnd.la
 
 TESTS = unittest

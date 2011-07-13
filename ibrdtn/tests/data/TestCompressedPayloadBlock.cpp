@@ -23,7 +23,7 @@ void TestCompressedPayloadBlock::tearDown()
 void TestCompressedPayloadBlock::compressTest(void)
 {
 	dtn::data::Bundle b;
-	ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 	// generate some test data
 	{
@@ -47,7 +47,7 @@ void TestCompressedPayloadBlock::compressTest(void)
 void TestCompressedPayloadBlock::extractTest(void)
 {
 	dtn::data::Bundle b;
-	ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 	// generate some test data
 	{

@@ -270,7 +270,7 @@ void DataStorageTest::testStressTest()
 			fake._source = dtn::data::EID("dtn://test1/fake");
 			fake._destination = dtn::data::EID("dtn://test/fake");
 
-			ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 			{
 				ibrcommon::BLOB::iostream io = ref.iostream();

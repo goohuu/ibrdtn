@@ -105,7 +105,7 @@ void TestStreamConnection::connectionUpDown()
 		void send(int size = 2048)
 		{
 			dtn::data::Bundle b;
-			ibrcommon::BLOB::Reference ref = ibrcommon::StringBLOB::create();
+			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 			{
 				ibrcommon::MutexLock l(ref);

@@ -29,7 +29,7 @@ void TestSerializer::tearDown(void)
 void TestSerializer::serializer_separate01(void)
 {
 	dtn::data::Bundle b;
-	ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 	stringstream ss1;
 	dtn::data::PayloadBlock &p1 = b.push_back(ref);
@@ -67,7 +67,7 @@ void TestSerializer::serializer_cbhe01(void)
 	b._destination = dst;
 	b._reportto = report;
 
-	ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 	b.push_back(ref);
 
 	std::stringstream ss;
@@ -93,7 +93,7 @@ void TestSerializer::serializer_cbhe02(void)
 	b._source = src;
 	b._destination = dst;
 
-	ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 	{
 		ibrcommon::MutexLock l(ref);
@@ -136,7 +136,7 @@ void TestSerializer::serializer_fragment_one(void)
 	std::stringstream ss;
 	dtn::data::DefaultSerializer ds(ss);
 
-	ibrcommon::BLOB::Reference ref = ibrcommon::TmpFileBLOB::create();
+	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 	// generate some payload data
 	{

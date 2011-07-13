@@ -23,7 +23,7 @@ endif
 INCLUDES = -I@top_srcdir@
 
 check_PROGRAMS = testsuite
-testsuite_LDADD = @top_srcdir@/src/libdaemon.la
+testsuite_LDADD = @top_srcdir@/src/libdtnd.la
 testsuite_SOURCES = $(h_sources) $(cc_sources) testsuite.cpp
 
 TESTS = testsuite
