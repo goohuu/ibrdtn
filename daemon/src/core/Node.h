@@ -41,7 +41,7 @@ namespace dtn
 				CONN_UNDEFINED = 0,
 				CONN_UDPIP = 1,
 				CONN_TCPIP = 2,
-				CONN_ZIGBEE = 3,
+				CONN_LOWPAN = 3,
 				CONN_BLUETOOTH = 4,
 				CONN_HTTP = 5
 			};

@@ -56,7 +56,7 @@ namespace dtn
 
 		dtn::core::Node::Protocol LOWPANConvergenceLayer::getDiscoveryProtocol() const
 		{
-			return dtn::core::Node::CONN_ZIGBEE; // FIXME CONN_LOWPAN instead?
+			return dtn::core::Node::CONN_LOWPAN;
 		}
 
 		void LOWPANConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
@@ -85,7 +85,7 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
-			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_ZIGBEE);
+			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_LOWPAN);
 			if (uri_list.empty()) return;
 
 			std::stringstream ss;

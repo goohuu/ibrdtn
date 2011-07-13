@@ -140,8 +140,8 @@ namespace dtn
 			case Node::CONN_TCPIP:
 				return "TCP";
 
-			case Node::CONN_ZIGBEE:
-				return "ZigBee";
+			case Node::CONN_LOWPAN:
+				return "LoWPAN";
 
 			case Node::CONN_BLUETOOTH:
 				return "Bluetooth";

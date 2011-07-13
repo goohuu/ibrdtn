@@ -496,7 +496,7 @@ namespace dtn
 				const std::string protocol = conf.read<std::string>(prefix + "proto", "tcp");
 				if (protocol == "tcp") p = Node::CONN_TCPIP;
 				if (protocol == "udp") p = Node::CONN_UDPIP;
-				if (protocol == "zigbee") p = Node::CONN_ZIGBEE;
+				if (protocol == "lowpan") p = Node::CONN_LOWPAN;
 				if (protocol == "bluetooth") p = Node::CONN_BLUETOOTH;
 				if (protocol == "http") p = Node::CONN_HTTP;
 
