@@ -13,6 +13,9 @@ AC_CONFIG_HEADER([src/config.h])
 AC_CONFIG_MACRO_DIR([m4])
 AM_MAINTAINER_MODE
 
+# Test for new silent rules and enable only if they are available
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
+
 dnl -----------------------------------------------
 dnl Checks for programs.
 dnl -----------------------------------------------
