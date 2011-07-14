@@ -73,24 +73,26 @@ class EchoClient : public dtn::api::Client
 			
 			//Add magic seqnr. Hmm, how to to do this without string?
 			b.append(string((char *)(&seq),4));
-			size-=4;
 			
-			// create testing pattern, chunkwise to ocnserve memory
-			char pattern[CREATE_CHUNK_SIZE];
-			for (size_t i = 0; i < sizeof(pattern); i++)
+			if (size > 4)
 			{
-				pattern[i] = '0';
-				pattern[i] += i % 10;
-			}
-			string chunk=string(pattern,CREATE_CHUNK_SIZE);
+				size-=4;
 
-			while (size > CREATE_CHUNK_SIZE) {
-				b.append(chunk);
-				size-=CREATE_CHUNK_SIZE;
+				// create testing pattern, chunkwise to ocnserve memory
+				char pattern[CREATE_CHUNK_SIZE];
+				for (size_t i = 0; i < sizeof(pattern); i++)
+				{
+					pattern[i] = '0';
+					pattern[i] += i % 10;
+				}
+				string chunk=string(pattern,CREATE_CHUNK_SIZE);
+
+				while (size > CREATE_CHUNK_SIZE) {
+					b.append(chunk);
+					size-=CREATE_CHUNK_SIZE;
+				}
+				b.append(chunk.substr(0,size));
 			}
-			b.append(chunk.substr(0,size));
-			
-			
 
 			// send the bundle
 			(*this) << b;
