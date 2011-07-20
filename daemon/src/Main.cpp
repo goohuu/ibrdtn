@@ -605,6 +605,7 @@ int __daemon_run(Configuration &conf)
 	{
 		components.push_back(new dtn::security::TLSStreamComponent());
 		components.push_back(new dtn::security::SecurityCertificateManager());
+		IBRCOMMON_LOGGER(info) << "TLS security for TCP convergence layer enabled" << IBRCOMMON_LOGGER_ENDL;
 	}
 #endif
 

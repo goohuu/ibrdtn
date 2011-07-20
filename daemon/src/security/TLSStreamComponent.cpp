@@ -5,7 +5,7 @@
  *      Author: roettger
  */
 
-#include "TLSStreamComponent.h"
+#include "security/TLSStreamComponent.h"
 
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
@@ -13,57 +13,56 @@
 #include "SecurityCertificateManager.h"
 #include "Configuration.h"
 
-namespace dtn {
-
-namespace security {
-
-TLSStreamComponent::TLSStreamComponent()
+namespace dtn
 {
-}
+	namespace security
+	{
+		TLSStreamComponent::TLSStreamComponent()
+		{
+		}
 
-TLSStreamComponent::~TLSStreamComponent()
-{
-}
+		TLSStreamComponent::~TLSStreamComponent()
+		{
+		}
 
-void
-TLSStreamComponent::raiseEvent(const dtn::core::Event *evt)
-{
-	if(evt->getName() == CertificateManagerInitEvent::className){
-		try{
-			const CertificateManagerInitEvent *event = dynamic_cast<const CertificateManagerInitEvent*>(evt);
-			if(event){
-				ibrcommon::TLSStream::init(event->certificate, event->privateKey, event->trustedCAPath, !dtn::daemon::Configuration::getInstance().getSecurity().TLSEncryptionDisabled());
+		void
+		TLSStreamComponent::raiseEvent(const dtn::core::Event *evt)
+		{
+			if(evt->getName() == CertificateManagerInitEvent::className)
+			{
+				try {
+					const CertificateManagerInitEvent *event = dynamic_cast<const CertificateManagerInitEvent*>(evt);
+					if (event)
+					{
+						ibrcommon::TLSStream::init(event->certificate, event->privateKey, event->trustedCAPath, !dtn::daemon::Configuration::getInstance().getSecurity().TLSEncryptionDisabled());
+					}
+				} catch(const ibrcommon::Exception&) { }
 			}
-		} catch(...){
+		}
+
+		/* functions from Component */
+		void
+		TLSStreamComponent::initialize()
+		{
+			bindEvent(CertificateManagerInitEvent::className);
+		}
+
+		void
+		TLSStreamComponent::startup()
+		{
+			/* nothing to do */
+		}
+
+		void
+		TLSStreamComponent::terminate()
+		{
+			unbindEvent(CertificateManagerInitEvent::className);
+		}
+
+		const std::string
+		TLSStreamComponent::getName() const
+		{
+			return "TLSStreamComponent";
 		}
 	}
-}
-
-/* functions from Component */
-void
-TLSStreamComponent::initialize()
-{
-	bindEvent(CertificateManagerInitEvent::className);
-}
-
-void
-TLSStreamComponent::startup()
-{
-	/* nothing to do */
-}
-
-void
-TLSStreamComponent::terminate()
-{
-	unbindEvent(CertificateManagerInitEvent::className);
-}
-
-const std::string
-TLSStreamComponent::getName() const
-{
-	return "TLSStreamComponent";
-}
-
-}
-
 }

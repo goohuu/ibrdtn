@@ -853,6 +853,8 @@ namespace dtn
 
 			if (activateTLS)
 			{
+				_tlsEnabled = true;
+
 				/* read if TLS is required */
 				_tlsRequired = (conf.read<std::string>("security_tls_required", "no") == "yes");
 			}
