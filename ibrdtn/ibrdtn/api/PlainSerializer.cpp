@@ -6,8 +6,8 @@
  */
 
 #include "config.h"
-#include "api/PlainSerializer.h"
-#include <ibrdtn/utils/Utils.h>
+#include "ibrdtn/api/PlainSerializer.h"
+#include "ibrdtn/utils/Utils.h"
 #include <ibrcommon/refcnt_ptr.h>
 #include <ibrcommon/data/Base64Stream.h>
 #include <ibrcommon/data/Base64Reader.h>
@@ -121,6 +121,8 @@ namespace dtn
 				}
 			}
 
+			_stream << "Length: " << obj.getLength() << std::endl;
+
 			try {
 				_stream << std::endl;
 
@@ -184,8 +186,8 @@ namespace dtn
 				// read the block type (first line)
 				getline(_stream, buffer);
 
-				// strip off the last char
-				buffer.erase(buffer.size() - 1);
+//				// strip off the last char
+//				buffer.erase(buffer.size() - 1);
 
 				// abort if the line data is empty
 				if (buffer.size() == 0) throw dtn::InvalidDataException("block header is missing");
@@ -322,8 +324,8 @@ namespace dtn
 				std::stringstream ss;
 				getline(_stream, data);
 
-				// strip off the last char
-				data.erase(data.size() - 1);
+//				// strip off the last char
+//				data.erase(data.size() - 1);
 
 				// abort after the first empty line
 				if (data.size() == 0) break;
@@ -396,8 +398,8 @@ namespace dtn
 			{
 				getline(_stream, data);
 
-				// strip off the last char
-				data.erase(data.size() - 1);
+//				// strip off the last char
+//				data.erase(data.size() - 1);
 
 				// abort after the first empty line
 				if (data.size() == 0) break;
@@ -454,6 +456,12 @@ namespace dtn
 			ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
 			obj.deserialize(base64_decoder, blocksize);
 
+			// read the final empty line
+			std::string buffer;
+			getline(_stream, buffer);
+
+			if (buffer.size() != 0) throw dtn::InvalidDataException("last line not empty");
+
 			return (*this);
 		}
 
@@ -466,8 +474,8 @@ namespace dtn
 			{
 				getline(_stream, data);
 
-				// strip off the last char
-				data.erase(data.size() - 1);
+//				// strip off the last char
+//				data.erase(data.size() - 1);
 
 				// abort after the first empty line
 				if (data.size() == 0) break;

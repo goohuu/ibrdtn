@@ -6,17 +6,23 @@
  */
 
 #include "config.h"
+#include "Configuration.h"
 #include "api/ApiServer.h"
-#include "api/ClientHandler.h"
 #include "core/BundleCore.h"
-#include "core/EventSwitch.h"
 #include "routing/QueueBundleEvent.h"
+#include "net/BundleReceivedEvent.h"
+#include "core/NodeEvent.h"
+#include <ibrdtn/data/AgeBlock.h>
 #include <ibrcommon/Logger.h>
 #include <typeinfo>
 #include <algorithm>
 
-#ifdef HAVE_SQLITE
-#include "core/SQLiteBundleStorage.h"
+#ifdef WITH_COMPRESSION
+#include <ibrdtn/data/CompressedPayloadBlock.h>
+#endif
+
+#ifdef WITH_BUNDLE_SECURITY
+#include "security/SecurityManager.h"
 #endif
 
 namespace dtn
@@ -24,13 +30,14 @@ namespace dtn
 	namespace api
 	{
 		ApiServer::ApiServer(const ibrcommon::File &socket)
-		 : _tcpsrv(socket), _next_connection_id(1)
+		 : _srv(socket)
 		{
 		}
 
 		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
+		 : _srv()
 		{
-			_tcpsrv.bind(net, port);
+			_srv.bind(net, port);
 		}
 
 		ApiServer::~ApiServer()
@@ -40,19 +47,15 @@ namespace dtn
 
 		bool ApiServer::__cancellation()
 		{
-			shutdown();
+			_srv.shutdown();
 			return true;
 		}
 
 		void ApiServer::componentUp()
 		{
-			_tcpsrv.listen(5);
-
-			try {
-				_dist.start();
-			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER(error) << "failed to start ApiServer\n" << ex.what() << IBRCOMMON_LOGGER_ENDL;
-			}
+			_srv.listen(5);
+			bindEvent(dtn::routing::QueueBundleEvent::className);
+			bindEvent(dtn::core::NodeEvent::className);
 		}
 
 		void ApiServer::componentRun()
@@ -60,11 +63,26 @@ namespace dtn
 			try {
 				while (true)
 				{
-					ClientHandler *obj = new ClientHandler(*this, _tcpsrv.accept(), _next_connection_id);
-					_next_connection_id++;
+					// accept the next client
+					ibrcommon::tcpstream *conn = _srv.accept();
 
-					// initialize the object
-					obj->initialize();
+					// generate some output
+					IBRCOMMON_LOGGER_DEBUG(5) << "new connected client at the extended API server" << IBRCOMMON_LOGGER_ENDL;
+
+					// send welcome banner
+					(*conn) << "IBR-DTN " << dtn::daemon::Configuration::getInstance().version() << " API 1.0" << std::endl;
+
+					ibrcommon::MutexLock l(_connection_lock);
+
+					// create a new registration
+					Registration reg; _registrations.push_back(reg);
+					IBRCOMMON_LOGGER_DEBUG(5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+
+					ClientHandler *obj = new ClientHandler(*this, _registrations.back(), conn);
+					_connections.push_back(obj);
+
+					// start the client handler
+					obj->start();
 
 					// breakpoint
 					ibrcommon::Thread::yield();
@@ -77,262 +95,91 @@ namespace dtn
 
 		void ApiServer::componentDown()
 		{
-			_dist.shutdown();
-			shutdown();
-		}
-
-		void ApiServer::shutdown()
-		{
-			_dist.stop();
-			_tcpsrv.shutdown();
-			_tcpsrv.close();
-		}
-
-		void ApiServer::connectionUp(ClientHandler *obj)
-		{
-			_dist.add(obj);
-			IBRCOMMON_LOGGER_DEBUG(5) << "client connection up (id: " << obj->id << ")" << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(60) << "current open connections " << _dist._connections.size() << IBRCOMMON_LOGGER_ENDL;
-		}
-
-		void ApiServer::connectionDown(ClientHandler *obj)
-		{
-			_dist.remove(obj);
-			IBRCOMMON_LOGGER_DEBUG(5) << "client connection down (id: " << obj->id << ")" << IBRCOMMON_LOGGER_ENDL;
-			IBRCOMMON_LOGGER_DEBUG(60) << "current open connections " << _dist._connections.size() << IBRCOMMON_LOGGER_ENDL;
-		}
-
-		ApiServer::Distributor::Distributor()
-		{
-			bindEvent(dtn::routing::QueueBundleEvent::className);
-		}
-
-		ApiServer::Distributor::~Distributor()
-		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
-			join();
-		}
+			unbindEvent(dtn::core::NodeEvent::className);
 
-		void ApiServer::Distributor::add(ClientHandler *obj)
-		{
 			{
-				ibrcommon::MutexLock l(_connections_cond);
-				_connections.push_back(obj);
-				_connections_cond.signal(true);
-			}
-			_tasks.push(new QueryBundleTask(obj->id));
-		}
+				ibrcommon::MutexLock l(_connection_lock);
 
-		void ApiServer::Distributor::remove(ClientHandler *obj)
-		{
-			ibrcommon::MutexLock l(_connections_cond);
-			_connections.erase( std::remove( _connections.begin(), _connections.end(), obj), _connections.end() );
-			_connections_cond.signal(true);
-		}
-
-		bool ApiServer::Distributor::__cancellation()
-		{
-			// cancel the main thread in here
-			_tasks.abort();
-
-			// return true, to signal that no further cancel (the hardway) is needed
-			return true;
-		}
-
-		/**
-		 * @see ibrcommon::JoinableThread::run()
-		 */
-		void ApiServer::Distributor::run()
-		{
-#ifdef HAVE_SQLITE
-			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback, public dtn::core::SQLiteBundleStorage::SQLBundleQuery
-#else
-			class BundleFilter : public dtn::core::BundleStorage::BundleFilterCallback
-#endif
-			{
-			public:
-				BundleFilter(const dtn::data::EID &destination)
-				 : _destination(destination)
-				{};
-
-				virtual ~BundleFilter() {};
-
-				virtual size_t limit() const { return 5; };
-
-				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
+				// shutdown all clients
+				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 				{
-					if (_destination != meta.destination)
-					{
-						return false;
-					}
-
-					return true;
-				};
-
-#ifdef HAVE_SQLITE
-				const std::string getWhere() const
-				{
-					return "destination = ?";
-				};
-
-				size_t bind(sqlite3_stmt *st, size_t offset) const
-				{
-					sqlite3_bind_text(st, offset, _destination.getString().c_str(), _destination.getString().size(), SQLITE_TRANSIENT);
-					return offset + 1;
+					(*iter)->stop();
 				}
+			}
+
+			// wait until all clients are down
+			while (_connections.size() > 0) ::sleep(1);
+		}
+
+		void ApiServer::processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle)
+		{
+			// check address fields for "api:me", this has to be replaced
+			static const dtn::data::EID clienteid("api:me");
+
+			// set the source address to the sending EID
+			bundle._source = source;
+
+			if (bundle._destination == clienteid) bundle._destination = source;
+			if (bundle._reportto == clienteid) bundle._reportto = source;
+			if (bundle._custodian == clienteid) bundle._custodian = source;
+
+			// if the timestamp is not set, add a ageblock
+			if (bundle._timestamp == 0)
+			{
+				// check for ageblock
+				try {
+					bundle.getBlock<dtn::data::AgeBlock>();
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+					// add a new ageblock
+					bundle.push_front<dtn::data::AgeBlock>();
+				}
+			}
+
+#ifdef WITH_COMPRESSION
+			// if the compression bit is set, then compress the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
+			{
+				try {
+					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER(warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				};
+			}
 #endif
 
-			private:
-				const dtn::data::EID &_destination;
-			};
-
-			try
+#ifdef WITH_BUNDLE_SECURITY
+			// if the encrypt bit is set, then try to encrypt the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
 			{
-				while (true)
-				{
-					// get the next task
-					ApiServer::Task *task = _tasks.getnpop(true);
+				try {
+					dtn::security::SecurityManager::getInstance().encrypt(bundle);
 
-					try {
-						try {
-							QueryBundleTask &query = dynamic_cast<QueryBundleTask&>(*task);
-
-							IBRCOMMON_LOGGER_DEBUG(60) << "QueryBundleTask: " << query.id << IBRCOMMON_LOGGER_ENDL;
-
-							// get the global storage
-							dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-
-							// lock the connection list
-							ibrcommon::MutexLock l(_connections_cond);
-
-							for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
-							{
-								ClientHandler *handler = (*iter);
-
-								if (handler->id == query.id)
-								{
-									BundleFilter filter(handler->getPeer());
-									const std::list<dtn::data::MetaBundle> list = storage.get( filter );
-
-									for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
-									{
-										try {
-											const dtn::data::Bundle b = storage.get(*iter);
-
-											// push the bundle to the client
-											handler->queue(b);
-
-											// generate a delete bundle task
-											_tasks.push(new RemoveBundleTask(b));
-										}
-										catch (const dtn::core::BundleStorage::BundleLoadException&)
-										{
-										}
-										catch (const dtn::core::BundleStorage::NoBundleFoundException&)
-										{
-											break;
-										}
-									}
-
-									if (list.size() > 0)
-									{
-										// generate a task for this receiver
-										_tasks.push(new QueryBundleTask(query.id));
-									}
-								}
-							}
-						} catch (const std::bad_cast&) {};
-
-						try {
-							ProcessBundleTask &pbt = dynamic_cast<ProcessBundleTask&>(*task);
-
-							IBRCOMMON_LOGGER_DEBUG(60) << "ProcessBundleTask: " << pbt.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-
-							// search for all receiver of this bundle
-							ibrcommon::MutexLock l(_connections_cond);
-							bool deleteIt = false;
-
-							for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
-							{
-								ClientHandler *handler = (*iter);
-
-								if (handler->getPeer() == pbt.bundle.destination)
-								{
-									// generate a task for each receiver
-									_tasks.push(new TransferBundleTask(pbt.bundle, handler->id));
-
-									deleteIt = true;
-								}
-							}
-
-							// generate a delete bundle task
-							if (deleteIt) _tasks.push(new RemoveBundleTask(pbt.bundle));
-
-						} catch (const std::bad_cast&) { };
-
-						try {
-							TransferBundleTask &transfer = dynamic_cast<TransferBundleTask&>(*task);
-
-							IBRCOMMON_LOGGER_DEBUG(60) << "TransferBundleTask: " << transfer.bundle.toString() << ", id: " << transfer.id << IBRCOMMON_LOGGER_ENDL;
-
-							// get the global storage
-							dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-
-							// search for all receiver of this bundle
-							ibrcommon::MutexLock l(_connections_cond);
-
-							for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
-							{
-								ClientHandler *handler = (*iter);
-
-								try {
-									if (handler->id == transfer.id)
-									{
-										const dtn::data::Bundle b = storage.get( transfer.bundle );
-
-										// push the bundle to the client
-										handler->queue(b);
-									}
-								} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {};
-							}
-
-						} catch (const std::bad_cast&) { };
-
-						try {
-							RemoveBundleTask &r = dynamic_cast<RemoveBundleTask&>(*task);
-
-							IBRCOMMON_LOGGER_DEBUG(60) << "RemoveBundleTask: " << r.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-
-							// get the global storage
-							dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-
-							storage.remove(r.bundle);
-
-						} catch (const std::bad_cast&) {};
-					} catch (const std::exception&) {};
-
-					delete task;
-
-					yield();
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
+				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+					// sign requested, but no key is available
+					IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
+				} catch (const dtn::security::SecurityManager::EncryptException&) {
+					IBRCOMMON_LOGGER(warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
 				}
-			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "ApiServer::Distributor going down" << IBRCOMMON_LOGGER_ENDL;
-			} catch (const std::exception&) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected error or shutdown" << IBRCOMMON_LOGGER_ENDL;
 			}
-		}
 
-		/**
-		 * @see dtn::core::EventReceiver::raiseEvent()
-		 */
-		void ApiServer::Distributor::raiseEvent(const dtn::core::Event *evt)
-		{
-			try {
-				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
-				_tasks.push(new ApiServer::ProcessBundleTask(queued.bundle));
-			} catch (const std::bad_cast&) {
+			// if the sign bit is set, then try to sign the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
+			{
+				try {
+					dtn::security::SecurityManager::getInstance().sign(bundle);
 
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
+				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+					// sign requested, but no key is available
+					IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+				}
 			}
+#endif
+
+			// raise default bundle received event
+			dtn::net::BundleReceivedEvent::raise(source, bundle, true);
 		}
 
 		const std::string ApiServer::getName() const
@@ -340,38 +187,78 @@ namespace dtn
 			return "ApiServer";
 		}
 
-		void ApiServer::Distributor::shutdown()
+		void ApiServer::connectionUp(ClientHandler *obj)
 		{
-			closeAll();
-
-			// wait until all client connections are down
-			ibrcommon::MutexLock l(_connections_cond);
-			while (_connections.size() > 0) _connections_cond.wait();
+			// generate some output
+			IBRCOMMON_LOGGER_DEBUG(5) << "api connection up" << IBRCOMMON_LOGGER_ENDL;
 		}
 
-		void ApiServer::Distributor::closeAll()
+		void ApiServer::connectionDown(ClientHandler *obj)
 		{
-			// search for an existing connection
-			ibrcommon::MutexLock l(_connections_cond);
+			// generate some output
+			IBRCOMMON_LOGGER_DEBUG(5) << "api connection down" << IBRCOMMON_LOGGER_ENDL;
+
+			ibrcommon::MutexLock l(_connection_lock);
+
+			// remove this object out of the list
 			for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
 			{
-				ClientHandler &conn = *(*iter);
-
-				// close the connection immediately
-				conn.shutdown();
+				if (obj == (*iter))
+				{
+					_connections.erase(iter);
+					break;
+				}
 			}
 		}
 
-		ApiServer::ProcessBundleTask::ProcessBundleTask(const dtn::data::MetaBundle &b) : bundle(b) {}
-		ApiServer::ProcessBundleTask::~ProcessBundleTask(){}
+		void ApiServer::freeRegistration(Registration &reg)
+		{
+			// remove the registration
+			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+			{
+				if (reg == (*iter))
+				{
+					IBRCOMMON_LOGGER_DEBUG(5) << "release registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+					_registrations.erase(iter);
+					break;
+				}
+			}
+		}
 
-		ApiServer::TransferBundleTask::TransferBundleTask(const dtn::data::BundleID &b, const size_t i) : bundle(b), id(i) {}
-		ApiServer::TransferBundleTask::~TransferBundleTask() {}
+		void ApiServer::raiseEvent(const dtn::core::Event *evt)
+		{
+			try {
+				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 
-		ApiServer::RemoveBundleTask::RemoveBundleTask(const dtn::data::BundleID &b) : bundle(b) {}
-		ApiServer::RemoveBundleTask::~RemoveBundleTask() {}
+				ibrcommon::MutexLock l(_connection_lock);
+				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				{
+					ClientHandler &conn = **iter;
+					if (conn.getRegistration().hasSubscribed(queued.bundle.destination))
+					{
+						conn.getRegistration().notify(Registration::NOTIFY_BUNDLE_AVAILABLE);
+					}
+				}
+			} catch (const std::bad_cast&) { };
 
-		ApiServer::QueryBundleTask::QueryBundleTask(const size_t i) : id(i) {}
-		ApiServer::QueryBundleTask::~QueryBundleTask() {}
+			try {
+				const dtn::core::NodeEvent &ne = dynamic_cast<const dtn::core::NodeEvent&>(*evt);
+
+				ibrcommon::MutexLock l(_connection_lock);
+				for (std::list<ClientHandler*>::iterator iter = _connections.begin(); iter != _connections.end(); iter++)
+				{
+					ClientHandler &conn = **iter;
+
+					if (ne.getAction() == NODE_AVAILABLE)
+					{
+						conn.eventNodeAvailable(ne.getNode());
+					}
+					else if (ne.getAction() == NODE_UNAVAILABLE)
+					{
+						conn.eventNodeUnavailable(ne.getNode());
+					}
+				}
+			} catch (const std::bad_cast&) { };
+		}
 	}
 }

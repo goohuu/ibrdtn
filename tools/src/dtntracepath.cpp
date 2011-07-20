@@ -55,7 +55,7 @@ class Tracer : public dtn::api::Client
 				tm.start();
 
 				// send the bundle
-				(*this) << b << std::flush;
+				(*this) << b; (*this).flush();
 
 				try {
 					// now receive all incoming bundles

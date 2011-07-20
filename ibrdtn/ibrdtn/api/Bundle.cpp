@@ -35,6 +35,11 @@ namespace dtn
 		{
 		}
 
+		void Bundle::setSingleton(bool val)
+		{
+			_b.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, val);
+		}
+
 		void Bundle::setLifetime(unsigned int lifetime)
 		{
 			_b._lifetime = lifetime;

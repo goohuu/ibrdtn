@@ -7,19 +7,11 @@ api_SOURCES = \
 		ApiServer.h \
 		ApiServer.cpp \
 		ClientHandler.cpp \
-		ClientHandler.h
-		
-if EXTAPI
-api_SOURCES += \
-		ExtendedApiServer.h \
-		ExtendedApiServer.cpp \
+		ClientHandler.h \
 		Registration.h \
 		Registration.cpp \
-		ExtendedApiConnection.h \
-		ExtendedApiConnection.cpp \
-		PlainSerializer.h \
-		PlainSerializer.cpp
-endif
-				
+		BinaryStreamClient.h \
+		BinaryStreamClient.cpp
+		
 noinst_LTLIBRARIES = libapi.la
 libapi_la_SOURCES= $(api_SOURCES)

@@ -8,7 +8,9 @@
 #ifndef REGISTRATION_H_
 #define REGISTRATION_H_
 
+#include "core/BundleStorage.h"
 #include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/data/BundleList.h>
 #include <ibrcommon/thread/Queue.h>
 #include <string>
 #include <set>
@@ -22,7 +24,7 @@ namespace dtn
 		public:
 			enum NOTIFY_CALL
 			{
-				NOTIFY_BUNDLE_QUEUED = 0,
+				NOTIFY_BUNDLE_AVAILABLE = 0,
 				NOTIFY_NEIGHBOR_AVAILABLE = 1,
 				NOTIFY_NEIGHBOR_UNAVAILABLE = 2,
 				NOTIFY_SHUTDOWN = 3
@@ -39,15 +41,20 @@ namespace dtn
 			virtual ~Registration();
 
 			/**
-			 * enqueue a bundle to the queue of this registration
-			 * @param id
-			 */
-			void queue(const dtn::data::BundleID &id);
-
-			/**
 			 * notify the corresponding client about something happen
 			 */
-			void notify(const NOTIFY_CALL) { };
+			void notify(const NOTIFY_CALL);
+
+			/**
+			 * wait for the next notify event
+			 * @return
+			 */
+			NOTIFY_CALL wait();
+
+			/**
+			 * wait for available bundle
+			 */
+			void wait_for_bundle();
 
 			/**
 			 * subscribe to a end-point
@@ -87,18 +94,44 @@ namespace dtn
 			bool operator<(const Registration&) const;
 
 			/**
-			 * @return The queue of all waiting bundles
+			 * Receive a bundle from the queue. If the queue is empty, it will
+			 * query the storage for more bundles (up to 10). If no bundle is found
+			 * and the queue is empty an exception is thrown.
+			 * @return
 			 */
-			ibrcommon::Queue<dtn::data::BundleID>& getQueue();
+			dtn::data::Bundle receive() throw (dtn::core::BundleStorage::NoBundleFoundException);
 
+			/**
+			 * notify a bundle as delivered (and delete it if singleton destination)
+			 * @param id
+			 */
+			void delivered(const dtn::data::MetaBundle &m);
+
+			/**
+			 * returns the handle of this registration
+			 * @return
+			 */
 			const std::string& getHandle() const;
 
+			/**
+			 * abort all blocking operations on this registration
+			 */
+			void abort();
+
 		protected:
+			void underflow();
 
 		private:
-			ibrcommon::Queue<dtn::data::BundleID> _queue;
+			ibrcommon::Queue<dtn::data::MetaBundle> _queue;
 			const std::string _handle;
 			std::set<dtn::data::EID> _endpoints;
+			dtn::data::BundleList _received_bundles;
+
+			ibrcommon::Mutex _receive_lock;
+			ibrcommon::Conditional _wait_for_cond;
+			bool _no_more_bundles;
+
+			ibrcommon::Queue<NOTIFY_CALL> _notify_queue;
 
 			static const std::string alloc_handle();
 			static void free_handle(const std::string &handle);

@@ -74,18 +74,18 @@ namespace dtn
 			 */
 			virtual std::istream &deserialize(std::istream &stream, const size_t length) = 0;
 
+			/**
+			 * Return the length of the payload, if this were an abstract block. It is
+			 * the length put in the third field, after block type and processing flags.
+			 */
+			virtual size_t getLength() const = 0;
+
 		protected:
 			/**
 			 * The constructor of this class is protected to prevent instantiation of this abstract class.
 			 * @param blocktype The type of the block.
 			 */
 			Block(char blocktype);
-
-			/**
-			 * Return the length of the payload, if this were an abstract block. It is
-			 * the length put in the third field, after block type and processing flags.
-			 */
-			virtual size_t getLength() const = 0;
 
 			/**
 			 * Return the length of the payload in strict format

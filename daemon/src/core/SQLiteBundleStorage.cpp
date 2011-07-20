@@ -19,6 +19,7 @@
 #include <ibrdtn/data/Serializer.h>
 #include <ibrdtn/data/Bundle.h>
 #include <ibrdtn/data/BundleID.h>
+#include <ibrdtn/utils/Clock.h>
 
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/data/BLOB.h>
@@ -550,6 +551,7 @@ namespace dtn
 			bundle.timestamp = sqlite3_column_int64(st, offset + 5);
 			bundle.sequencenumber = sqlite3_column_int64(st, offset + 6);
 			bundle.lifetime = sqlite3_column_int64(st, offset + 7);
+			bundle.expiretime = dtn::utils::Clock::getExpireTime(bundle.timestamp, bundle.lifetime);
 
 			if (bundle.procflags & data::Bundle::FRAGMENT)
 			{

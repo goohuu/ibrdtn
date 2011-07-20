@@ -1,16 +1,14 @@
 /*
- * dtnrecv.cpp
+ * dtnrecv-ng.cpp
  *
- *  Created on: 06.11.2009
+ *  Created on: 01.07.2011
  *      Author: morgenro
  */
 
 #include "config.h"
-#include "ibrdtn/api/Client.h"
+#include "ibrdtn/api/APIClient.h"
 #include "ibrdtn/api/FileBundle.h"
 #include "ibrcommon/net/tcpclient.h"
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
 
 #include <csignal>
 #include <sys/types.h>
@@ -18,19 +16,18 @@
 
 void print_help()
 {
-	cout << "-- dtnrecv (IBR-DTN) --" << endl;
-	cout << "Syntax: dtnrecv [options]"  << endl;
+	cout << "-- dtnrecv-ng (IBR-DTN) --" << endl;
+	cout << "Syntax: dtnrecv-ng [options]"  << endl;
 	cout << "* optional parameters *" << endl;
 	cout << " -h|--help            display this text" << endl;
 	cout << " --file <filename>    write the incoming data to the a file instead of the standard output" << endl;
 	cout << " --name <name>        set the application name (e.g. filetransfer)" << endl;
-	cout << " --timeout <seconds>  receive timeout in seconds" << endl;
+//	cout << " --timeout <seconds>  receive timeout in seconds" << endl;
 	cout << " --count <number>     receive that many bundles" << endl;
-	cout << " --group <group>      join a group" << endl;
 	cout << " -U <socket>     use UNIX domain sockets" << endl;
 }
 
-dtn::api::Client *_client = NULL;
+dtn::api::APIClient *_client = NULL;
 ibrcommon::tcpclient *_conn = NULL;
 
 int h = 0;
@@ -47,7 +44,7 @@ void term(int signal)
 	{
 		if (_client != NULL)
 		{
-			_client->close();
+			_client->unblock_wait();
 			_conn->close();
 			exit(0);
 		}
@@ -63,7 +60,6 @@ int main(int argc, char *argv[])
 	int ret = EXIT_SUCCESS;
 	string filename = "";
 	string name = "filetransfer";
-	dtn::data::EID group;
 	int timeout = 0;
 	int count   = 1;
 	ibrcommon::File unixdomain;
@@ -95,12 +91,7 @@ int main(int argc, char *argv[])
 			timeout = atoi(argv[i + 1]);
 		}
 
-		if (arg == "--group" && argc > i)
-		{
-			group = std::string(argv[i + 1]);
-		}
-
-		if (arg == "--count" && argc > i) 
+		if (arg == "--count" && argc > i)
 		{
 			count = atoi(argv[i + 1]);
 		}
@@ -137,15 +128,17 @@ int main(int argc, char *argv[])
 		}
 
 		// Initiate a client for synchronous receiving
-		dtn::api::Client client(name, group, conn);
+		dtn::api::APIClient client(conn);
+
+		// read the connection banner
+		client.connect();
 
 		// export objects for the signal handler
 		_conn = &conn;
 		_client = &client;
 
-		// Connect to the server. Actually, this function initiate the
-		// stream protocol by starting the thread and sending the contact header.
-		client.connect();
+		// register endpoint identifier
+		client.setEndpoint(name);
 
 		std::fstream file;
 
@@ -156,29 +149,46 @@ int main(int argc, char *argv[])
 			file.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
-		for(h = 0; h < count; h++)
+		h = 0;
+		while ((h < count) && !conn.eof())
 		{
-			// receive the bundle
-			dtn::api::Bundle b = client.getBundle(timeout);
+			// receive the next notify
+			dtn::api::APIClient::Message n = client.wait();
 
-			// get the reference to the blob
-			ibrcommon::BLOB::Reference ref = b.getData();
+			try {
+				if (n.code == dtn::api::APIClient::API_STATUS_NOTIFY_BUNDLE)
+				{
+					dtn::api::Bundle b = client.get();
 
-			// write the data to output
-			if (_stdout)
-			{
-				cout << ref.iostream()->rdbuf();
-			}
-			else
-			{
-				// write data to temporary file
-				try {
-					std::cout << "Bundle received (" << (h + 1) << ")." << endl;
+					// get the reference to the blob
+					ibrcommon::BLOB::Reference ref = b.getData();
 
-					file << ref.iostream()->rdbuf();
-				} catch (const ios_base::failure&) {
+					// write the data to output
+					if (_stdout)
+					{
+						cout << ref.iostream()->rdbuf();
+					}
+					else
+					{
+						// write data to temporary file
+						try {
+							std::cout << "Bundle received (" << (h + 1) << ")." << endl;
 
+							file << ref.iostream()->rdbuf();
+						} catch (const ios_base::failure&) {
+
+						}
+					}
+
+					// bundle received, increment counter
+					h++;
+
+					// notify it as delivered
+					client.notify_delivered(b);
 				}
+			} catch (const ibrcommon::Exception&) {
+				// bundle get failed
+				std::cerr << "bundle get failed" << std::endl;
 			}
 		}
 
@@ -188,18 +198,8 @@ int main(int argc, char *argv[])
 			std::cout << "done." << std::endl;
 		}
 
-		// Shutdown the client connection.
-		client.close();
-
 		// close the tcp connection
 		conn.close();
-	} catch (const dtn::api::ConnectionTimeoutException&) {
-		std::cerr << "Timeout." << std::endl;
-		ret = EXIT_FAILURE;
-	} catch (const dtn::api::ConnectionAbortedException&) {
-		std::cerr << "Aborted." << std::endl;
-		ret = EXIT_FAILURE;
-	} catch (const dtn::api::ConnectionException&) {
 	} catch (const std::exception &ex) {
 		std::cerr << "Error: " << ex.what() << std::endl;
 		ret = EXIT_FAILURE;
@@ -207,3 +207,4 @@ int main(int argc, char *argv[])
 
 	return ret;
 }
+

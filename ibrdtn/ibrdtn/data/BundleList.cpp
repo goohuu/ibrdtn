@@ -14,6 +14,7 @@ namespace dtn
 	namespace data
 	{
 		BundleList::BundleList()
+		 : _version(0)
 		{ }
 
 		BundleList::~BundleList()

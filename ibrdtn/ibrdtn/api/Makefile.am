@@ -1,7 +1,7 @@
 ## sub directory
 
-h_sources = BLOBBundle.h Client.h FileBundle.h StringBundle.h Bundle.h dtn_api.h
-cc_sources = BLOBBundle.cpp CApi.cpp FileBundle.cpp StringBundle.cpp Bundle.cpp Client.cpp
+h_sources = BLOBBundle.h APIClient.h Client.h FileBundle.h StringBundle.h Bundle.h dtn_api.h PlainSerializer.h
+cc_sources = BLOBBundle.cpp FileBundle.cpp StringBundle.cpp Bundle.cpp APIClient.cpp Client.cpp PlainSerializer.cpp
 
 #Install the headers in a versioned directory
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)-$(GENERIC_API_VERSION)/$(GENERIC_LIBRARY_NAME)/api

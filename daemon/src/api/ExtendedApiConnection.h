@@ -80,6 +80,9 @@ namespace dtn
 			} _sender;
 
 			static void sayBundleID(ostream &stream, const dtn::data::BundleID &id);
+			static dtn::data::BundleID readBundleID(const std::vector<std::string>&, const size_t start);
+
+			void processIncomingBundle(dtn::data::Bundle &b);
 
 			ExtendedApiServer &_server;
 			Registration &_registration;
@@ -87,6 +90,7 @@ namespace dtn
 			ibrcommon::Mutex _write_lock;
 
 			dtn::data::Bundle _bundle_reg;
+			dtn::data::EID _endpoint;
 			ibrcommon::Queue<dtn::data::BundleID> _bundle_queue;
 		};
 	}

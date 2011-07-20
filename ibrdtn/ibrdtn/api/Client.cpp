@@ -18,8 +18,8 @@
 #include <ibrcommon/net/tcpstream.h>
 #include <ibrcommon/Logger.h>
 
-using namespace dtn::data;
-using namespace dtn::streams;
+#include <iostream>
+#include <string>
 
 namespace dtn
 {
@@ -28,8 +28,6 @@ namespace dtn
 		Client::AsyncReceiver::AsyncReceiver(Client &client)
 		 : _client(client), _running(true)
 		{
-			// enable exception throwing on stream events
-			_client.exceptions(std::ios::badbit | std::ios::eofbit);
 		}
 
 		Client::AsyncReceiver::~AsyncReceiver()
@@ -70,6 +68,11 @@ namespace dtn
 			}
 		}
 
+		Client::Client(const std::string &app, const dtn::data::EID &group, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode)
+		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _group(group), _receiver(*this)
+		{
+		}
+
 		Client::Client(const std::string &app, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode)
 		  : StreamConnection(*this, stream), _stream(stream), _mode(mode), _app(app), _receiver(*this)
 		{
@@ -104,6 +107,23 @@ namespace dtn
 
 			// set comm. mode
 			if (_mode == MODE_SENDONLY) flags |= HANDSHAKE_SENDONLY;
+
+			// receive API banner
+			std::string buffer;
+			std::getline(_stream, buffer);
+
+			// if requested...
+			if (_group != dtn::data::EID())
+			{
+				// join the group
+				_stream << "registration add " << _group.getString() << std::endl;
+
+				// read the reply
+				std::getline(_stream, buffer);
+			}
+
+			// switch to API tcpcl mode
+			_stream << "protocol tcpcl" << std::endl;
 
 			// do the handshake (no timeout, no keepalive)
 			handshake(localeid, 0, flags);

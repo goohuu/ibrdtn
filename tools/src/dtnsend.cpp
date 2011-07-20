@@ -27,6 +27,7 @@ void print_help()
 	cout << " -h|--help     display this text" << endl;
 	cout << " --src <name>  set the source application name (e.g. filetransfer)" << endl;
 	cout << " -p <0..2>     set the bundle priority (0 = low, 1 = normal, 2 = high)" << endl;
+	cout << " -g            receiver is a destination group" << endl;
 	cout << " --lifetime <seconds>" << endl;
 	cout << "               set the lifetime of outgoing bundles; default: 3600" << endl;
 	cout << " -U <socket>   use UNIX domain sockets" << endl;
@@ -53,6 +54,7 @@ int main(int argc, char *argv[])
 	bool bundle_signed = false;
 	bool bundle_custody = false;
 	bool bundle_compression = false;
+	bool bundle_group = false;
 
 //	ibrcommon::Logger::setVerbosity(99);
 //	ibrcommon::Logger::addStream(std::cout, ibrcommon::Logger::LOGGER_ALL, ibrcommon::Logger::LOG_DATETIME | ibrcommon::Logger::LOG_LEVEL);
@@ -143,7 +145,11 @@ int main(int argc, char *argv[])
 					std::cout << "invalid number of bundle copies!" << std::endl;
 					return -1;
 				}
-			} 
+			}
+			else if (arg == "-g")
+			{
+				bundle_group = true;
+			}
 			else
 			{
 				std::cout << "invalid argument " << arg << std::endl;
@@ -224,6 +230,9 @@ int main(int argc, char *argv[])
 					for(int u=0; u<copies; u++){
 						dtn::api::BLOBBundle b(file_destination, ref);
 
+						// set destination address to non-singleton
+						if (bundle_group) b.setSingleton(false);
+
 						// enable encryption if requested
 						if (bundle_encryption) b.requestEncryption();
 
@@ -258,6 +267,9 @@ int main(int argc, char *argv[])
 					for(int u=0; u<copies; u++){
 						// create a bundle from the file
 						dtn::api::FileBundle b(file_destination, filename);
+
+						// set destination address to non-singleton
+						if (bundle_group) b.setSingleton(false);
 
 						// enable encryption if requested
 						if (bundle_encryption) b.requestEncryption();
@@ -297,9 +309,6 @@ int main(int argc, char *argv[])
 
 			// Shutdown the client connection.
 			client.close();
-
-			// print out the transmitted bytes
-			std::cout << client.lastack << " bytes sent" << std::endl;
 
 		} catch (const ibrcommon::IOException &ex) {
 			cout << "Error: " << ex.what() << endl;

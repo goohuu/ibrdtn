@@ -126,7 +126,7 @@ private:
 class BundleStream : public dtn::api::Client
 {
 public:
-	BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app = "stream");
+	BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app = "stream", const dtn::data::EID &group = dtn::data::EID());
 	virtual ~BundleStream();
 
 	BundleStreamBuf& rdbuf();

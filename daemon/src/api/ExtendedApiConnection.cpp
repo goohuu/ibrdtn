@@ -8,18 +8,28 @@
 #include "config.h"
 #include "Configuration.h"
 #include "api/ExtendedApiConnection.h"
-#include "api/PlainSerializer.h"
 #include "net/BundleReceivedEvent.h"
+#include "core/BundleEvent.h"
 #include <ibrcommon/Logger.h>
+#include <ibrdtn/api/PlainSerializer.h>
+#include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/utils/Utils.h>
 #include "core/BundleCore.h"
+
+#ifdef WITH_COMPRESSION
+#include <ibrdtn/data/CompressedPayloadBlock.h>
+#endif
+
+#ifdef WITH_BUNDLE_SECURITY
+#include "security/SecurityManager.h"
+#endif
 
 namespace dtn
 {
 	namespace api
 	{
 		ExtendedApiConnection::ExtendedApiConnection(ExtendedApiServer &server, Registration &registration, ibrcommon::tcpstream *conn)
-		 : _sender(*this), _server(server), _registration(registration), _stream(conn)
+		 : _sender(*this), _server(server), _registration(registration), _stream(conn), _endpoint(dtn::core::BundleCore::local)
 		{
 			_stream->exceptions(std::ios::badbit | std::ios::eofbit);
 
@@ -32,6 +42,7 @@ namespace dtn
 		ExtendedApiConnection::~ExtendedApiConnection()
 		{
 			_sender.join();
+			delete _stream;
 		}
 
 		Registration& ExtendedApiConnection::getRegistration()
@@ -61,15 +72,18 @@ namespace dtn
 			// remove the client from the list in ApiServer
 			_server.connectionDown(this);
 
+			_registration.getQueue().abort();
+			_server.freeRegistration(_registration);
+
 			// close the stream
 			try {
 				(*_stream).close();
 			} catch (const ibrcommon::ConnectionClosedException&) { };
 
-			try {
-				// shutdown the sender thread
-				_sender.stop();
-			} catch (const std::exception&) { };
+//			try {
+//				// shutdown the sender thread
+//				_sender.stop();
+//			} catch (const std::exception&) { };
 		}
 
 		void ExtendedApiConnection::run()
@@ -83,14 +97,40 @@ namespace dtn
 			{
 				getline(*_stream, buffer);
 
-				// strip off the last char
-				buffer.erase(buffer.size() - 1);
-
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
 				if (cmd.size() == 0) continue;
 
 				try {
-					if (cmd[0] == "registration")
+					if (cmd[0] == "set")
+					{
+						if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
+						if (cmd[1] == "endpoint")
+						{
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+							ibrcommon::MutexLock l(_write_lock);
+							_endpoint = dtn::core::BundleCore::local + "/" + cmd[2];
+
+							// error checking
+							if (_endpoint == dtn::data::EID())
+							{
+								(*_stream) << API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
+								_endpoint = dtn::core::BundleCore::local;
+							}
+							else
+							{
+								_registration.subscribe(_endpoint);
+								(*_stream) << API_STATUS_ACCEPTED << " OK" << std::endl;
+							}
+						}
+						else
+						{
+							ibrcommon::MutexLock l(_write_lock);
+							(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+						}
+					}
+					else if (cmd[0] == "registration")
 					{
 						if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
 
@@ -252,33 +292,8 @@ namespace dtn
 							}
 							else
 							{
-								// load bundle id
-								std::stringstream ss;
-								size_t timestamp = 0;
-								size_t sequencenumber = 0;
-								bool fragment = false;
-								size_t offset = 0;
-
-								// read timestamp
-								 ss.clear(); ss.str(cmd[2]); ss >> timestamp;
-
-								// read sequence number
-								 ss.clear(); ss.str(cmd[3]); ss >> sequencenumber;
-
-								// read fragment offset
-								if (cmd.size() > 4)
-								{
-									fragment = true;
-
-									// read sequence number
-									 ss.clear(); ss.str(cmd[4]); ss >> offset;
-								}
-
-								// read EID
-								 ss.clear(); dtn::data::EID eid(cmd[cmd.size() - 1]);
-
 								// construct bundle id
-								dtn::data::BundleID id(eid, timestamp, sequencenumber, fragment, offset);
+								id = readBundleID(cmd, 2);
 							}
 
 							// load the bundle
@@ -311,6 +326,31 @@ namespace dtn
 								(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
 							}
 						}
+						else if (cmd[1] == "delivered")
+						{
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+							try {
+								// construct bundle id
+								dtn::data::BundleID id = readBundleID(cmd, 2);
+								dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
+
+								// raise bundle event
+								dtn::core::BundleEvent::raise(meta, BUNDLE_DELIVERED);
+
+								// delete it if it was a singleton
+								if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+								{
+									dtn::core::BundleCore::getInstance().getStorage().remove(id);
+								}
+
+								ibrcommon::MutexLock l(_write_lock);
+								(*_stream) << API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;
+							} catch (const ibrcommon::Exception&) {
+								ibrcommon::MutexLock l(_write_lock);
+								(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
+							}
+						}
 						else if (cmd[1] == "store")
 						{
 							// store the bundle in the storage
@@ -325,8 +365,7 @@ namespace dtn
 						}
 						else if (cmd[1] == "send")
 						{
-							// raise default bundle received event
-							dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + getRegistration().getHandle(), _bundle_reg, true);
+							processIncomingBundle(_bundle_reg);
 
 							ibrcommon::MutexLock l(_write_lock);
 							(*_stream) << API_STATUS_OK << " BUNDLE SENT" << std::endl;
@@ -374,14 +413,14 @@ namespace dtn
 		bool ExtendedApiConnection::Sender::__cancellation()
 		{
 			// cancel the main thread in here
-			_conn.getRegistration().getQueue().abort();
+			//_conn.getRegistration().getQueue().abort();
 
 			return true;
 		}
 
 		void ExtendedApiConnection::Sender::finally()
 		{
-			_conn._server.freeRegistration(_conn.getRegistration());
+			//_conn._server.freeRegistration(_conn.getRegistration());
 		}
 
 		void ExtendedApiConnection::Sender::run()
@@ -399,7 +438,7 @@ namespace dtn
 					// notify the client about the new bundle
 					{
 						ibrcommon::MutexLock l(_conn._write_lock);
-						(*_conn._stream) << API_STATUS_NOTIFY_NEIGHBOR << " NOTIFY BUNDLE ";
+						(*_conn._stream) << API_STATUS_NOTIFY_BUNDLE << " NOTIFY BUNDLE ";
 						sayBundleID(*_conn._stream, id);
 						(*_conn._stream) << std::endl;
 					}
@@ -418,11 +457,84 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
-			try {
-				_conn.stop();
-			} catch (const ibrcommon::ThreadException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): ThreadException (" << ex.what() << ") on termination" << IBRCOMMON_LOGGER_ENDL;
+//			try {
+//				_conn.stop();
+//			} catch (const ibrcommon::ThreadException &ex) {
+//				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): ThreadException (" << ex.what() << ") on termination" << IBRCOMMON_LOGGER_ENDL;
+//			}
+		}
+
+		void ExtendedApiConnection::processIncomingBundle(dtn::data::Bundle &bundle)
+		{
+			// create a new sequence number
+			bundle.relabel();
+
+			// check address fields for "api:me", this has to be replaced
+			static const dtn::data::EID clienteid("api:me");
+
+			// set the source address to the sending EID
+			bundle._source = _endpoint;
+
+			if (bundle._destination == clienteid) bundle._destination = _endpoint;
+			if (bundle._reportto == clienteid) bundle._reportto = _endpoint;
+			if (bundle._custodian == clienteid) bundle._custodian = _endpoint;
+
+			// if the timestamp is not set, add a ageblock
+			if (bundle._timestamp == 0)
+			{
+				// check for ageblock
+				try {
+					bundle.getBlock<dtn::data::AgeBlock>();
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+					// add a new ageblock
+					bundle.push_front<dtn::data::AgeBlock>();
+				}
 			}
+
+#ifdef WITH_COMPRESSION
+			// if the compression bit is set, then compress the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
+			{
+				try {
+					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER(warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				};
+			}
+#endif
+
+#ifdef WITH_BUNDLE_SECURITY
+			// if the encrypt bit is set, then try to encrypt the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
+			{
+				try {
+					dtn::security::SecurityManager::getInstance().encrypt(bundle);
+
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
+				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+					// sign requested, but no key is available
+					IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
+				} catch (const dtn::security::SecurityManager::EncryptException&) {
+					IBRCOMMON_LOGGER(warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+
+			// if the sign bit is set, then try to sign the bundle
+			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
+			{
+				try {
+					dtn::security::SecurityManager::getInstance().sign(bundle);
+
+					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
+				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+					// sign requested, but no key is available
+					IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
+				}
+			}
+#endif
+
+			// raise default bundle received event
+			dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + getRegistration().getHandle(), bundle, true);
 		}
 
 		void ExtendedApiConnection::sayBundleID(ostream &stream, const dtn::data::BundleID &id)
@@ -435,6 +547,37 @@ namespace dtn
 			}
 
 			stream << id.source.getString();
+		}
+
+		dtn::data::BundleID ExtendedApiConnection::readBundleID(const std::vector<std::string> &data, const size_t start)
+		{
+			// load bundle id
+			std::stringstream ss;
+			size_t timestamp = 0;
+			size_t sequencenumber = 0;
+			bool fragment = false;
+			size_t offset = 0;
+
+			// read timestamp
+			 ss.clear(); ss.str(data[start]); ss >> timestamp;
+
+			// read sequence number
+			 ss.clear(); ss.str(data[start+1]); ss >> sequencenumber;
+
+			// read fragment offset
+			if ((data.size() - start) > 3)
+			{
+				fragment = true;
+
+				// read sequence number
+				 ss.clear(); ss.str(data[start+2]); ss >> offset;
+			}
+
+			// read EID
+			 ss.clear(); dtn::data::EID eid(data[data.size() - 1]);
+
+			// construct bundle id
+			return dtn::data::BundleID(eid, timestamp, sequencenumber, fragment, offset);
 		}
 	}
 }

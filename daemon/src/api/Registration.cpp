@@ -9,12 +9,15 @@
 #include "api/Registration.h"
 #include "core/BundleStorage.h"
 #include "core/BundleCore.h"
+#include "core/BundleEvent.h"
 
 #ifdef HAVE_SQLITE
 #include "core/SQLiteBundleStorage.h"
 #endif
 
+#include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Random.h>
+#include <ibrcommon/Logger.h>
 
 #include <limits.h>
 #include <stdint.h>
@@ -55,13 +58,33 @@ namespace dtn
 			free_handle(_handle);
 		}
 
-		void Registration::queue(const dtn::data::BundleID &id)
+		void Registration::notify(const NOTIFY_CALL call)
 		{
-			// add bundle to the queue
-			_queue.push(id);
+			ibrcommon::MutexLock l(_wait_for_cond);
+			if (call == NOTIFY_BUNDLE_AVAILABLE)
+			{
+				_no_more_bundles = false;
+				_wait_for_cond.signal(true);
+			}
+			else
+			{
+				_notify_queue.push(call);
+			}
+		}
 
-			// notify the client about the new bundle
-			notify(NOTIFY_BUNDLE_QUEUED);
+		void Registration::wait_for_bundle()
+		{
+			ibrcommon::MutexLock l(_wait_for_cond);
+
+			while (_no_more_bundles)
+			{
+				_wait_for_cond.wait();
+			}
+		}
+
+		Registration::NOTIFY_CALL Registration::wait()
+		{
+			return _notify_queue.getnpop(true);
 		}
 
 		bool Registration::hasSubscribed(const dtn::data::EID &endpoint) const
@@ -74,9 +97,52 @@ namespace dtn
 			return _endpoints;
 		}
 
-		void Registration::subscribe(const dtn::data::EID &endpoint)
+		void Registration::delivered(const dtn::data::MetaBundle &m)
 		{
-			_endpoints.insert(endpoint);
+			// raise bundle event
+			dtn::core::BundleEvent::raise(m, dtn::core::BUNDLE_DELIVERED);
+
+			if (m.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
+			{
+				// get the global storage
+				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
+				// delete the bundle
+				storage.remove(m);
+			}
+		}
+
+		dtn::data::Bundle Registration::receive() throw (dtn::core::BundleStorage::NoBundleFoundException)
+		{
+			ibrcommon::MutexLock l(_receive_lock);
+
+			// get the global storage
+			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
+			while (true)
+			{
+				try {
+					// get the first bundle in the queue
+					dtn::data::MetaBundle b = _queue.getnpop(false);
+
+					// load the bundle
+					return storage.get(b);
+				} catch (const ibrcommon::QueueUnblockedException &e) {
+					if (e.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT)
+					{
+						// query for new bundles
+						underflow();
+					}
+				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { }
+			}
+
+			throw dtn::core::BundleStorage::NoBundleFoundException();
+		}
+
+		void Registration::underflow()
+		{
+			// expire outdated bundles in the list
+			_received_bundles.expire(dtn::utils::Clock::getTime());
 
 			/**
 			 * search for bundles in the storage
@@ -88,50 +154,103 @@ namespace dtn
 #endif
 			{
 			public:
-				BundleFilter(const dtn::data::EID &endpoint)
-				 : _endpoint(endpoint)
+				BundleFilter(const std::set<dtn::data::EID> endpoints, const dtn::data::BundleList &blist)
+				 : _endpoints(endpoints), _blist(blist)
 				{};
 
 				virtual ~BundleFilter() {};
 
-				virtual size_t limit() const { return 0; };
+				virtual size_t limit() const { return 10; };
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
-					if (_endpoint == meta.destination)
+					if (_endpoints.find(meta.destination) == _endpoints.end())
 					{
-						return true;
+						return false;
 					}
 
-					return false;
+					IBRCOMMON_LOGGER_DEBUG(10) << "search bundle in the list of delivered bundles: " << meta.toString() << IBRCOMMON_LOGGER_ENDL;
+
+					if (_blist.contains(meta))
+					{
+						return false;
+					}
+
+					return true;
 				};
 
 #ifdef HAVE_SQLITE
 				const std::string getWhere() const
 				{
-					return "destination = ?";
+					if (_endpoints.size() > 1)
+					{
+						std::string where = "(";
+
+						for (size_t i = _endpoints.size() - 1; i > 0; i--)
+						{
+							where += "destination = ? OR ";
+						}
+
+						return where + "destination = ?)";
+					}
+					else if (_endpoints.size() == 1)
+					{
+						return "destination = ?";
+					}
+					else
+					{
+						return "destination = null";
+					}
 				};
 
 				size_t bind(sqlite3_stmt *st, size_t offset) const
 				{
-					sqlite3_bind_text(st, offset, _endpoint.getString().c_str(), _endpoint.getString().size(), SQLITE_TRANSIENT);
-					return offset + 1;
+					size_t o = offset;
+
+					for (std::set<dtn::data::EID>::const_iterator iter = _endpoints.begin(); iter != _endpoints.end(); iter++)
+					{
+						const std::string data = (*iter).getString();
+
+						sqlite3_bind_text(st, o, data.c_str(), data.size(), SQLITE_TRANSIENT);
+						o++;
+					}
+
+					return o;
 				}
 #endif
 
 			private:
-				const dtn::data::EID &_endpoint;
-			} filter(endpoint);
+				const std::set<dtn::data::EID> _endpoints;
+				const dtn::data::BundleList &_blist;
+			} filter(_endpoints, _received_bundles);
 
 			// get the global storage
 			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
+			// query the database for more bundles
 			const std::list<dtn::data::MetaBundle> list = storage.get( filter );
 
-			for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+			if (list.size() == 0)
 			{
-				queue(*iter);
+				ibrcommon::MutexLock l(_wait_for_cond);
+				_no_more_bundles = true;
+				throw dtn::core::BundleStorage::NoBundleFoundException();
 			}
+
+			try {
+				for (std::list<dtn::data::MetaBundle>::const_iterator iter = list.begin(); iter != list.end(); iter++)
+				{
+					_queue.push(*iter);
+
+					IBRCOMMON_LOGGER_DEBUG(10) << "add bundle to list of delivered bundles: " << (*iter).toString() << IBRCOMMON_LOGGER_ENDL;
+					_received_bundles.add(*iter);
+				}
+			} catch (const ibrcommon::Exception&) { }
+		}
+
+		void Registration::subscribe(const dtn::data::EID &endpoint)
+		{
+			_endpoints.insert(endpoint);
 		}
 
 		void Registration::unsubscribe(const dtn::data::EID &endpoint)
@@ -163,9 +282,13 @@ namespace dtn
 			return (_handle < other._handle);
 		}
 
-		ibrcommon::Queue<dtn::data::BundleID>& Registration::getQueue()
+		void Registration::abort()
 		{
-			return _queue;
+			_queue.abort();
+			_notify_queue.abort();
+
+			ibrcommon::MutexLock l(_wait_for_cond);
+			_wait_for_cond.abort();
 		}
 
 		const std::string& Registration::getHandle() const

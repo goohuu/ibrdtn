@@ -9,20 +9,21 @@
 #define APISERVER_H_
 
 #include "Component.h"
+#include "api/Registration.h"
 #include "api/ClientHandler.h"
-#include "ibrcommon/net/tcpserver.h"
+#include "core/EventReceiver.h"
 #include <ibrcommon/net/vinterface.h>
-#include <ibrdtn/data/MetaBundle.h>
-#include <ibrcommon/thread/Queue.h>
+#include <ibrcommon/net/tcpserver.h>
+#include <ibrcommon/thread/Mutex.h>
 
-#include <queue>
+#include <set>
 #include <list>
 
 namespace dtn
 {
 	namespace api
 	{
-		class ApiServer : public dtn::daemon::IndependentComponent, public ApiServerInterface
+		class ApiServer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ApiServerInterface
 		{
 		public:
 			ApiServer(const ibrcommon::File &socket);
@@ -34,9 +35,14 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+			void freeRegistration(Registration &reg);
+
+			void raiseEvent(const dtn::core::Event *evt);
+
+			void processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle);
+
 		protected:
 			bool __cancellation();
-			void shutdown();
 
 			virtual void connectionUp(ClientHandler *conn);
 			virtual void connectionDown(ClientHandler *conn);
@@ -46,81 +52,10 @@ namespace dtn
 			void componentDown();
 
 		private:
-			class Task
-			{
-			public:
-				virtual ~Task() {};
-			};
-
-			class ProcessBundleTask : public Task
-			{
-			public:
-				ProcessBundleTask(const dtn::data::MetaBundle&);
-				virtual ~ProcessBundleTask();
-				const dtn::data::MetaBundle bundle;
-			};
-
-			class TransferBundleTask : public Task
-			{
-			public:
-				TransferBundleTask(const dtn::data::BundleID&, const size_t id);
-				virtual ~TransferBundleTask();
-				const dtn::data::BundleID bundle;
-				const size_t id;
-			};
-
-			class QueryBundleTask : public Task
-			{
-			public:
-				QueryBundleTask(const size_t id);
-				virtual ~QueryBundleTask();
-				const size_t id;
-			};
-
-			class RemoveBundleTask : public Task
-			{
-			public:
-				RemoveBundleTask(const dtn::data::BundleID&);
-				virtual ~RemoveBundleTask();
-				const dtn::data::BundleID bundle;
-			};
-
-			class Distributor : public ibrcommon::JoinableThread, public dtn::core::EventReceiver
-			{
-			public:
-				Distributor();
-				virtual ~Distributor();
-
-				void add(ClientHandler *obj);
-				void remove(ClientHandler *obj);
-				void shutdown();
-
-				/**
-				 * @see dtn::core::EventReceiver::raiseEvent()
-				 */
-				void raiseEvent(const dtn::core::Event *evt);
-
-				ibrcommon::Conditional _connections_cond;
-				std::list<ClientHandler*> _connections;
-
-			protected:
-				/**
-				 * @see ibrcommon::JoinableThread::run()
-				 */
-				void run();
-
-				bool __cancellation();
-
-				ibrcommon::Queue<ApiServer::Task*> _tasks;
-
-			private:
-				void closeAll();
-			};
-
-			ibrcommon::tcpserver _tcpsrv;
-			Distributor _dist;
-
-			size_t _next_connection_id;
+			ibrcommon::tcpserver _srv;
+			std::list<Registration> _registrations;
+			std::list<ClientHandler*> _connections;
+			ibrcommon::Mutex _connection_lock;
 		};
 	}
 }

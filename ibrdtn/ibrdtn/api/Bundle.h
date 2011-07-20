@@ -25,6 +25,9 @@ namespace dtn
 		 */
 		class Bundle
 		{
+			friend class Client;
+			friend class APIClient;
+
 		public:
 			/**
 			 * Define the Bundle Priorities
@@ -54,6 +57,12 @@ namespace dtn
 			 * Destructor
 			 */
 			virtual ~Bundle();
+
+			/**
+			 * Set the destination address as singleton or not.
+			 * @param val
+			 */
+			void setSingleton(bool val);
 
 			/**
 			 * Set the lifetime of a bundle.

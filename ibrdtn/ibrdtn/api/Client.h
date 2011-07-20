@@ -146,6 +146,7 @@ namespace dtn
 			 * @param mode Communication mode. Default is bidirectional communication.
 			 */
 			Client(const std::string &app, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode = MODE_BIDIRECTIONAL);
+			Client(const std::string &app, const dtn::data::EID &group, ibrcommon::tcpstream &stream, const COMMUNICATION_MODE mode = MODE_BIDIRECTIONAL);
 
 			/**
 			 * Virtual destructor for this class.
@@ -249,7 +250,10 @@ namespace dtn
 			COMMUNICATION_MODE _mode;
 
 			// own application suffix
-			string _app;
+			std::string _app;
+
+			// group to join
+			dtn::data::EID _group;
 
 			// The asynchronous receiver thread which receives incoming bundles
 			Client::AsyncReceiver _receiver;

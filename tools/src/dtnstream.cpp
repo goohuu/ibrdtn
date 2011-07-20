@@ -293,8 +293,8 @@ bool BundleStreamBuf::Chunk::operator<(const Chunk& other) const
 	return (_seq < other._seq);
 }
 
-BundleStream::BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app)
- : dtn::api::Client(app, stream), _stream(stream), _buf(*this, _chunk, chunk_size)
+BundleStream::BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app, const dtn::data::EID &group)
+ : dtn::api::Client(app, group, stream), _stream(stream), _buf(*this, _chunk, chunk_size)
 {};
 
 BundleStream::~BundleStream() {};
@@ -321,7 +321,9 @@ void print_help()
 	std::cout << "* optional parameters *" << std::endl;
 	std::cout << " -h               display this text" << std::endl;
 	std::cout << " -d <destination> set the destination eid (e.g. dtn://node/stream)" << std::endl;
+	std::cout << " -G               destination is a group" << std::endl;
 	std::cout << " -s <identifier>  set the source identifier (e.g. stream)" << std::endl;
+	std::cout << " -g <group>       join a destination group" << std::endl;
 	std::cout << " -c <bytes>       set the chunk size (max. size of each bundle)" << std::endl;
 	std::cout << " -t <seconds>     set the timeout of the buffer" << std::endl;
 	std::cout << " -l <seconds>     set the lifetime of stream chunks default: 30" << std::endl;
@@ -337,11 +339,13 @@ int main(int argc, char *argv[])
 	std::string _source = "stream";
 	unsigned int _lifetime = 30;
 	size_t _chunk_size = 4096;
+	dtn::data::EID _group;
 	bool _bundle_encryption = false;
 	bool _bundle_signed = false;
+	bool _bundle_group = false;
 	ibrcommon::File _unixdomain;
 
-	while((opt = getopt(argc, argv, "hd:t:s:c:l:ESU:")) != -1)
+	while((opt = getopt(argc, argv, "hg:Gd:t:s:c:l:ESU:")) != -1)
 	{
 		switch (opt)
 		{
@@ -351,6 +355,14 @@ int main(int argc, char *argv[])
 
 		case 'd':
 			_destination = std::string(optarg);
+			break;
+
+		case 'g':
+			_group = std::string(optarg);
+			break;
+
+		case 'G':
+			_bundle_group = true;
 			break;
 
 		case 's':
@@ -407,7 +419,7 @@ int main(int argc, char *argv[])
 		}
 
 		// Initiate a derivated client
-		BundleStream bs(conn, _chunk_size, _source);
+		BundleStream bs(conn, _chunk_size, _source, _group);
 
 		// Connect to the server. Actually, this function initiate the
 		// stream protocol by starting the thread and sending the contact header.
@@ -420,6 +432,7 @@ int main(int argc, char *argv[])
 			bs.base().setLifetime(_lifetime);
 			if (_bundle_encryption) bs.base().requestEncryption();
 			if (_bundle_signed) bs.base().requestSigned();
+			if (_bundle_group) bs.base().setSingleton(false);
 			std::ostream stream(&bs.rdbuf());
 			stream << std::cin.rdbuf() << std::flush;
 		}
