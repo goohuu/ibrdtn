@@ -79,6 +79,12 @@ add_param $CONFFILE "ibrdtn.security.level" "security_level"
 add_param $CONFFILE "ibrdtn.security.bab_key" "security_bab_default_key"
 add_param $CONFFILE "ibrdtn.security.key_path" "security_path"
 
+add_param $CONFFILE "ibrdtn.tls.ca" "security_ca"
+add_param $CONFFILE "ibrdtn.tls.key" "security_key"
+add_param $CONFFILE "ibrdtn.tls.trustedpath" "security_trusted_ca_path"
+add_param $CONFFILE "ibrdtn.tls.required" "security_tls_required"
+add_param $CONFFILE "ibrdtn.tls.noencryption" "security_tls_disable_encryption"
+
 add_param $CONFFILE "ibrdtn.timesync.reference" "time_reference"
 add_param $CONFFILE "ibrdtn.timesync.qot_tick" "time_qot_tick"
 add_param $CONFFILE "ibrdtn.timesync.sync_on_discovery" "time_sync_on_discovery"

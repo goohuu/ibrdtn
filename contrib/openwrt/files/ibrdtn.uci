@@ -140,10 +140,17 @@ config 'network'
 # 3 = accept only BAB authenticated and encrypted bundles
 #
 
-config 'daemon' 'security'
-	option level		0
-	option bab_key		/path/to/default-bab-key.mac
-	option key_path		/path/to/security-keys
+#config 'daemon' 'security'
+#	option level		0
+#	option bab_key		/path/to/default-bab-key.mac
+#	option key_path		/path/to/security-keys
+	
+#config 'daemon' 'tls'
+#	option ca			/path/to/tls-ca.crt
+#	option key			/path/to/tls-key.key
+#	option trustedpath	/path/to/tls-ca
+#	option required		no
+#	option noencryption no
 
 
 #####################################

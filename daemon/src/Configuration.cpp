@@ -849,20 +849,12 @@ namespace dtn
 			}
 
 			// read if encryption should be disabled
-			try{
-				_disableEncryption = conf.read<bool>("security_tls_disable_encryption");
-			} catch (const ibrcommon::ConfigFile::key_not_found&) {
-				_disableEncryption = false;
-			}
+			_disableEncryption = (conf.read<std::string>("security_tls_disable_encryption", "no") == "yes");
 
-			if(activateTLS){
-				_tlsEnabled = true;
-
+			if (activateTLS)
+			{
 				/* read if TLS is required */
-				try{
-					_tlsRequired = conf.read<bool>("security_tls_required");
-				} catch (const ibrcommon::ConfigFile::key_not_found&) {
-				}
+				_tlsRequired = (conf.read<std::string>("security_tls_required", "no") == "yes");
 			}
 #endif
 

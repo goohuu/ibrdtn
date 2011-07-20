@@ -1,3 +1,9 @@
+2011-07-20
+--------------------------------------------------------
+ * New API framework supports group destinations
+ * Support for groups in dtnsend / dtnrecv / dtnstream 
+ * TLS extension for TCPCL
+
 2011-05-26
 --------------------------------------------------------
  * Neighbor handling reworked
