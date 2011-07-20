@@ -31,7 +31,9 @@ namespace dtn
 			{
 				REQUEST_ACKNOWLEDGMENTS = 1 << 0,
 				REQUEST_FRAGMENTATION = 1 << 1,
-				REQUEST_NEGATIVE_ACKNOWLEDGMENTS = 1 << 2
+				REQUEST_NEGATIVE_ACKNOWLEDGMENTS = 1 << 2,
+				/* this flag is implementation specific and not in the draft */
+				REQUEST_TLS = 1 << 7
 			};
 
 			StreamContactHeader();

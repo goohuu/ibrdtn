@@ -112,6 +112,14 @@ namespace dtn
 				// create a connection
 				TCPConnection *conn = new TCPConnection(*this, n, dtn::core::BundleCore::local, 10);
 
+#ifdef WITH_TLS
+				// enable TLS Support
+				if ( ibrcommon::TLSStream::isInitialized() )
+				{
+					conn->enableTLS();
+				}
+#endif
+
 				// raise setup event
 				ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
 
@@ -149,6 +157,14 @@ namespace dtn
 			try {
 				// create a connection
 				TCPConnection *conn = new TCPConnection(*this, n, dtn::core::BundleCore::local, 10);
+
+#ifdef WITH_TLS
+				// enable TLS Support
+				if ( ibrcommon::TLSStream::isInitialized() )
+				{
+					conn->enableTLS();
+				}
+#endif
 
 				// raise setup event
 				ConnectionEvent::raise(ConnectionEvent::CONNECTION_SETUP, n);
@@ -219,6 +235,14 @@ namespace dtn
 
 					// create a new TCPConnection and return the pointer
 					TCPConnection *obj = new TCPConnection(*this, stream, dtn::core::BundleCore::local, 10);
+
+#ifdef WITH_TLS
+					// enable TLS Support
+					if ( ibrcommon::TLSStream::isInitialized() )
+					{
+						obj->enableTLS();
+					}
+#endif
 
 					// add the connection to the connection list
 					connectionUp(obj);

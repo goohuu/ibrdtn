@@ -185,6 +185,26 @@ AC_ARG_WITH(dtnsec,
 AM_CONDITIONAL(DTNSEC, test x$with_dtnsec = xyes)
 
 dnl -----------------------------------------------
+dnl optional parameter: TLS support
+dnl -----------------------------------------------
+
+AC_ARG_WITH(tls,
+	AS_HELP_STRING([--with-tls], [build with TLS support
+		@<:@default=no@:>@]),
+	[
+	if test "x$with_tls" = "xyes"; then
+		AC_DEFINE(WITH_TLS, [1], ["tls support enabled"])
+		CPPFLAGS+=" -DWITH_TLS"
+	else
+		with_tls="no"
+	fi
+	],[
+	with_tls="no"
+])
+
+AM_CONDITIONAL(TLS, test x$with_tls = xyes)
+
+dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 

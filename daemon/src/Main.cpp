@@ -60,6 +60,11 @@
 #include "security/SecurityKeyManager.h"
 #endif
 
+#ifdef WITH_TLS
+#include "security/SecurityCertificateManager.h"
+#include "security/TLSStreamComponent.h"
+#endif
+
 #ifdef HAVE_LIBDAEMON
 #include <libdaemon/daemon.h>
 #include <string.h>
@@ -593,6 +598,15 @@ int __daemon_run(Configuration &conf)
 	{
 		ibrcommon::LinkManager::initialize();
 	}
+
+#ifdef WITH_TLS
+	/* enable TLS support */
+	if ( conf.getSecurity().doTLS() )
+	{
+		components.push_back(new dtn::security::TLSStreamComponent());
+		components.push_back(new dtn::security::SecurityCertificateManager());
+	}
+#endif
 
 	try {
 		// initialize all convergence layers

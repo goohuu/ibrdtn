@@ -23,6 +23,10 @@ endif
 
 if DTNSEC
 SUBDIRS += security
+else
+if TLS
+SUBDIRS += security
+endif
 endif
 
 INCLUDES = -I@top_srcdir@/src
@@ -59,6 +63,10 @@ libdtnd_la_LIBADD = core/libcore.la net/libnet.la routing/librouting.la api/liba
 
 if DTNSEC
 libdtnd_la_LIBADD += security/libsecurity.la
+else
+if TLS
+libdtnd_la_LIBADD += security/libsecurity.la
+endif
 endif
 
 dtnd_SOURCES = Main.cpp

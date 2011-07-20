@@ -8,6 +8,7 @@
 #ifndef TCPCONVERGENCELAYER_H_
 #define TCPCONVERGENCELAYER_H_
 
+#include "config.h"
 #include "Component.h"
 
 #include "core/NodeEvent.h"
@@ -26,9 +27,12 @@
 #include <ibrcommon/net/tcpserver.h>
 #include <ibrcommon/net/tcpstream.h>
 #include <ibrcommon/net/vinterface.h>
-
-#include <memory>
 #include <ibrcommon/thread/Queue.h>
+#include <memory>
+
+#ifdef WITH_TLS
+#include <ibrcommon/net/TLSStream.h>
+#endif
 
 using namespace dtn::streams;
 
@@ -117,6 +121,13 @@ namespace dtn
 			friend TCPConnection& operator>>(TCPConnection &conn, dtn::data::Bundle &bundle);
 			friend TCPConnection& operator<<(TCPConnection &conn, const dtn::data::Bundle &bundle);
 
+#ifdef WITH_TLS
+			/*!
+			 * \brief enables TLS for this connection
+			 */
+			void enableTLS();
+#endif
+
 		protected:
 			void rejectTransmission();
 
@@ -154,6 +165,10 @@ namespace dtn
 			std::auto_ptr<ibrcommon::tcpstream> _tcpstream;
 			StreamConnection _stream;
 
+#ifdef WITH_TLS
+			ibrcommon::TLSStream _tlsstream;
+#endif
+
 			// This thread gets awaiting bundles of the queue
 			// and transmit them to the peer.
 			Sender _sender;
@@ -167,6 +182,9 @@ namespace dtn
 			size_t _keepalive_timeout;
 
 			TCPConvergenceLayer &_callback;
+
+			/* flags to be used in this nodes StreamContactHeader */
+			char _flags;
 		};
 
 		/**

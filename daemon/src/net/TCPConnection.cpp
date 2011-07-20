@@ -26,6 +26,12 @@
 #include <iostream>
 #include <iomanip>
 
+#ifdef WITH_TLS
+#include <openssl/x509.h>
+#include "security/SecurityCertificateManager.h"
+#include <ibrcommon/TLSExceptions.h>
+#endif
+
 #ifdef WITH_BUNDLE_SECURITY
 #include "security/SecurityManager.h"
 #endif
@@ -37,9 +43,14 @@ namespace dtn
 		/*
 		 * class TCPConnection
 		 */
-		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID &name, const size_t timeout)
-		 : _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *stream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
-		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv)
+		TCPConnection::TCPConnection(TCPConvergenceLayer & tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID & name, const size_t timeout)
+#ifdef WITH_TLS
+		 : _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _tlsstream(stream), _stream(*this, _tlsstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
+		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
+#else
+		 : _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
+		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
+#endif
 		{
 			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
 
@@ -53,13 +64,29 @@ namespace dtn
 
 			// add default TCP connection
 			_node.add(dtn::core::Node::URI("0.0.0.0", Node::CONN_TCPIP));
+
+			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+			_flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
+
+#ifdef WITH_TLS
+			// set tls mode to server
+			_tlsstream.setServer(true);
+#endif
 		}
 
 		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout)
-		 : _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()), _sender(*this, _keepalive_timeout),
-		   _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv)
+#ifdef WITH_TLS
+		 : _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _tlsstream(_tcpstream.get()), _stream(*this, _tlsstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
+		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
+#else
+		 : _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
+		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
+#endif
 		{
 			_stream.exceptions(std::ios::badbit | std::ios::eofbit);
+
+			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
+			_flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
 		}
 
 		TCPConnection::~TCPConnection()
@@ -110,6 +137,38 @@ namespace dtn
 			_peer = header;
 			_node.setEID(header._localeid);
 			_keepalive_timeout = header._keepalive * 1000;
+
+#ifdef WITH_TLS
+			/* if both nodes support TLS, activate it */
+			if((_peer._flags & dtn::streams::StreamContactHeader::REQUEST_TLS)
+					&& (_flags & dtn::streams::StreamContactHeader::REQUEST_TLS)){
+				try{
+					X509 *peer_cert = _tlsstream.activate();
+					if(!dtn::security::SecurityCertificateManager::validateSubject(peer_cert, _peer.getEID())){
+						IBRCOMMON_LOGGER(warning) << "TCPConnection: certificate does not fit the EID." << IBRCOMMON_LOGGER_ENDL;
+						throw ibrcommon::TLSCertificateVerificationException("certificate does not fit the EID");
+					}
+				} catch(...){
+					if(dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
+						/* close the connection */
+						IBRCOMMON_LOGGER(warning) << "TCPConnection: TLS failed, closing the connection." << IBRCOMMON_LOGGER_ENDL;
+						throw;
+					} else {
+						IBRCOMMON_LOGGER(warning) << "TCPConnection: TLS failed, continuing unauthenticated." << IBRCOMMON_LOGGER_ENDL;
+					}
+				}
+			} else {
+				/* TLS not supported by both Nodes, check if its required */
+				if(dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
+					/* close the connection */
+					IBRCOMMON_LOGGER(warning) << "TCPConnection: TLS not supported by both Peers. Closing the connection." << IBRCOMMON_LOGGER_ENDL;
+					throw ibrcommon::TLSException("TLS not supported by peer.");
+				} else if(_flags & dtn::streams::StreamContactHeader::REQUEST_TLS){
+					IBRCOMMON_LOGGER(warning) << "TCPConnection: TLS not supported by peer. Continuing without TLS." << IBRCOMMON_LOGGER_ENDL;
+				}
+				/* else: this node does not support TLS, should have already printed a warning */
+			}
+#endif
 
 			// set the incoming timer if set (> 0)
 			if (_peer._keepalive > 0)
@@ -273,14 +332,7 @@ namespace dtn
 		{
 			try {
 				// do the handshake
-				char flags = 0;
-
-				// enable ACKs and NACKs
-				flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
-				flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
-
-				// do the handshake
-				_stream.handshake(_name, _timeout, flags);
+				_stream.handshake(_name, _timeout, _flags);
 
 				// start the sender
 				_sender.start();
@@ -512,6 +564,13 @@ namespace dtn
 				// queue emtpy
 			}
 		}
+		
+#ifdef WITH_TLS
+		void dtn::net::TCPConnection::enableTLS()
+		{
+			_flags |= dtn::streams::StreamContactHeader::REQUEST_TLS;
+		}
+#endif
 
 		void TCPConnection::keepalive()
 		{

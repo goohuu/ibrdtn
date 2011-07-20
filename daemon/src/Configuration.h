@@ -370,6 +370,8 @@ namespace dtn
 				friend class Configuration;
 			private:
 				bool _enabled;
+				bool _tlsEnabled;
+				bool _tlsRequired;
 
 			protected:
 				Security();
@@ -378,6 +380,21 @@ namespace dtn
 
 			public:
 				bool enabled() const;
+
+				/*!
+				 * \brief checks if TLS shall be activated
+				 * \return true if TLS is requested, false otherwise
+				 * If TLS is requested, the TCP Convergence Layer Contact Header has the most significant bit
+				 * of the flags field set to 1. If both peers support it, a TLS Handshake is executed.
+				 */
+				bool doTLS() const;
+
+				/*!
+				 * \brief Checks if TLS is required
+				 * \return true if TLS is required, false otherwise
+				 * If TLS is required, this node should abort TCP Convergence Layer Connections immediately if TLS is not available or fails
+				 */
+				bool TLSRequired() const;
 
 #ifdef WITH_BUNDLE_SECURITY
 				enum Level
@@ -391,18 +408,39 @@ namespace dtn
 
 				const ibrcommon::File& getPath() const;
 
-				const ibrcommon::File& getCA() const;
-
-				const ibrcommon::File& getKey() const;
-
 				const ibrcommon::File& getBABDefaultKey() const;
 
 			private:
 				ibrcommon::File _path;
 				Level _level;
+				ibrcommon::File _bab_default_key;
+#endif
+#if defined WITH_BUNDLE_SECURITY || defined WITH_TLS
+			public:
+				const ibrcommon::File& getCA() const;
+
+				const ibrcommon::File& getKey() const;
+			private:
 				ibrcommon::File _ca;
 				ibrcommon::File _key;
-				ibrcommon::File _bab_default_key;
+#endif
+#ifdef WITH_TLS
+			public:
+				/*!
+				 * \brief Read the path for trusted Certificates from the Configuration.
+				 * \return A file object for the path
+				 */
+				const ibrcommon::File& getTrustedCAPath() const;
+
+				/*!
+				 * \brief Checks if Encryption in TLS shall be disabled.
+				 * \return true if encryption shall be disabled, false otherwise
+				 */
+				bool TLSEncryptionDisabled() const;
+
+			private:
+				ibrcommon::File _trustedCAPath;
+				bool _disableEncryption;
 #endif
 			};
 

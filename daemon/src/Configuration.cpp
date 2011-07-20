@@ -83,7 +83,7 @@ namespace dtn
 		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false) {};
 
 		Configuration::Security::Security()
-		 : _enabled(false)
+		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false)
 		{};
 
 		Configuration::Daemon::Daemon()
@@ -805,6 +805,67 @@ namespace dtn
 
 		void Configuration::Security::load(const ibrcommon::ConfigFile &conf)
 		{
+			bool withTLS = false;
+#ifdef WITH_TLS
+			withTLS = true;
+			/* enable TLS if the certificate path, a certificate and the private key was given */
+			bool activateTLS = true;
+
+			// load CA file
+			try {
+				_ca = conf.read<std::string>("security_ca");
+
+				if (!_ca.exists())
+				{
+					IBRCOMMON_LOGGER(warning) << "CA file " << _ca.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					activateTLS = false;
+				}
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+				activateTLS = false;
+			}
+
+			// load KEY file
+			try {
+				_key = conf.read<std::string>("security_key");
+
+				if (!_key.exists())
+				{
+					IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					activateTLS = false;
+				}
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+				activateTLS = false;
+			}
+
+			// read trustedCAPath
+			try{
+				_trustedCAPath = conf.read<std::string>("security_trusted_ca_path");
+				if(!_trustedCAPath.isDirectory()){
+					IBRCOMMON_LOGGER(warning) << "Trusted CA Path " << _trustedCAPath.getPath() << " does not exists or is no directory!" << IBRCOMMON_LOGGER_ENDL;
+					activateTLS = false;
+				}
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+				activateTLS = false;
+			}
+
+			// read if encryption should be disabled
+			try{
+				_disableEncryption = conf.read<bool>("security_tls_disable_encryption");
+			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+				_disableEncryption = false;
+			}
+
+			if(activateTLS){
+				_tlsEnabled = true;
+
+				/* read if TLS is required */
+				try{
+					_tlsRequired = conf.read<bool>("security_tls_required");
+				} catch (const ibrcommon::ConfigFile::key_not_found&) {
+				}
+			}
+#endif
+
 #ifdef WITH_BUNDLE_SECURITY
 			// enable security if the security path is set
 			try {
@@ -823,26 +884,28 @@ namespace dtn
 			// load level
 			_level = Level(conf.read<int>("security_level", 0));
 
-			// load CA file
-			try {
-				_ca = conf.read<std::string>("security_ca");
+			if ( !withTLS )
+			{
+				/* if TLS is enabled, the CA file and the key have been read earlier */
+				// load CA file
+				try {
+					_ca = conf.read<std::string>("security_ca");
 
-				if (!_ca.exists())
-				{
-					IBRCOMMON_LOGGER(warning) << "CA file " << _ca.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
-				}
-			} catch (const ibrcommon::ConfigFile::key_not_found&) {
-			}
+					if (!_ca.exists())
+					{
+						IBRCOMMON_LOGGER(warning) << "CA file " << _ca.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					}
+				} catch (const ibrcommon::ConfigFile::key_not_found&) { }
 
-			// load KEY file
-			try {
-				_ca = conf.read<std::string>("security_key");
+				// load KEY file
+				try {
+					_key = conf.read<std::string>("security_key");
 
-				if (!_ca.exists())
-				{
-					IBRCOMMON_LOGGER(warning) << "KEY file " << _ca.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
-				}
-			} catch (const ibrcommon::ConfigFile::key_not_found&) {
+					if (!_key.exists())
+					{
+						IBRCOMMON_LOGGER(warning) << "KEY file " << _key.getPath() << " does not exists!" << IBRCOMMON_LOGGER_ENDL;
+					}
+				} catch (const ibrcommon::ConfigFile::key_not_found&) { }
 			}
 
 			// load KEY file
@@ -865,20 +928,20 @@ namespace dtn
 			return _enabled;
 		}
 
+		bool Configuration::Security::doTLS() const
+		{
+			return _tlsEnabled;
+		}
+
+		bool Configuration::Security::TLSRequired() const
+		{
+			return _tlsRequired;
+		}
+
 #ifdef WITH_BUNDLE_SECURITY
 		const ibrcommon::File& Configuration::Security::getPath() const
 		{
 			return _path;
-		}
-
-		const ibrcommon::File& Configuration::Security::getCA() const
-		{
-			return _ca;
-		}
-
-		const ibrcommon::File& Configuration::Security::getKey() const
-		{
-			return _key;
 		}
 
 		Configuration::Security::Level Configuration::Security::getLevel() const
@@ -889,6 +952,28 @@ namespace dtn
 		const ibrcommon::File& Configuration::Security::getBABDefaultKey() const
 		{
 			return _bab_default_key;
+		}
+#endif
+#if defined WITH_BUNDLE_SECURITY || defined WITH_TLS
+		const ibrcommon::File& Configuration::Security::getCA() const
+		{
+			return _ca;
+		}
+
+		const ibrcommon::File& Configuration::Security::getKey() const
+		{
+			return _key;
+		}
+#endif
+#ifdef WITH_TLS
+		const ibrcommon::File& Configuration::Security::getTrustedCAPath() const
+		{
+			return _trustedCAPath;
+		}
+
+		bool Configuration::Security::TLSEncryptionDisabled() const
+		{
+			return _disableEncryption;
 		}
 #endif
 
