@@ -59,9 +59,6 @@ namespace dtn
 				stream->enableNoDelay();
 			}
 
-			stream->enableLinger(10);
-			stream->enableKeepalive();
-
 			// add default TCP connection
 			_node.add(dtn::core::Node::URI("0.0.0.0", Node::CONN_TCPIP));
 
@@ -317,9 +314,6 @@ namespace dtn
 				{
 					_tcpstream->enableNoDelay();
 				}
-
-				_tcpstream->enableLinger(10);
-				_tcpstream->enableKeepalive();
 			} catch (const ibrcommon::tcpclient::SocketException&) {
 				// error on open, requeue all bundles in the queue
 				IBRCOMMON_LOGGER(warning) << "connection to " << _node.toString() << " (" << address << ":" << port << ") failed" << IBRCOMMON_LOGGER_ENDL;
