@@ -3,10 +3,12 @@
 
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
-#include "ibrcommon/Exceptions.h"
+#include "net/LOWPANConnection.h"
 #include "net/DiscoveryServiceProvider.h"
 #include <ibrcommon/net/vinterface.h>
 #include "ibrcommon/net/lowpansocket.h"
+
+#include <list>
 
 using namespace dtn::data;
 
@@ -14,13 +16,14 @@ namespace dtn
 {
 	namespace net
 	{
+		class LOWPANConnection;
 		/**
 		 * This class implement a ConvergenceLayer for LOWPAN.
 		 */
-		class LOWPANConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider
+		class LOWPANConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider, public lowpanstream_callback
 		{
 		public:
-			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool broadcast = false, unsigned int mtu = 127);
+			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool broadcast = false, unsigned int mtu = 115); //MTU is actually 127...
 
 			virtual ~LOWPANConvergenceLayer();
 
@@ -33,12 +36,12 @@ namespace dtn
 
 			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
 
-			LOWPANConvergenceLayer& operator>>(dtn::data::Bundle&);
-
 			/**
 			 * @see Component::getName()
 			 */
 			virtual const std::string getName() const;
+
+			virtual void send_cb(char *buf, int len, unsigned int address);
 
 		protected:
 			virtual void componentUp();
@@ -51,9 +54,9 @@ namespace dtn
 
 			ibrcommon::vinterface _net;
 			int _panid;
-			int m_socket;
 
-			static const int DEFAULT_PANID;
+			std::list<LOWPANConnection*> ConnectionList;
+			LOWPANConnection* getConnection(unsigned short address);
 
 			unsigned int m_maxmsgsize;
 
