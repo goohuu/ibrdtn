@@ -82,7 +82,7 @@ public:
 	// The size of the input and output buffers.
 	static const size_t BUFF_SIZE = 5120;
 
-	BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, size_t buffer = 4096);
+	BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, size_t buffer = 4096, bool wait_seq_zero = false);
 	virtual ~BundleStreamBuf();
 
 	virtual void received(const dtn::api::Bundle &b);
@@ -121,12 +121,13 @@ private:
 	size_t _chunk_offset;
 
 	size_t _in_seq;
+	bool _streaming;
 };
 
 class BundleStream : public dtn::api::Client
 {
 public:
-	BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app = "stream", const dtn::data::EID &group = dtn::data::EID());
+	BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app = "stream", const dtn::data::EID &group = dtn::data::EID(), bool wait_seq_zero = false);
 	virtual ~BundleStream();
 
 	BundleStreamBuf& rdbuf();

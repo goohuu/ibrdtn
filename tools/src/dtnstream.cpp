@@ -115,9 +115,9 @@ size_t StreamBundle::getSequenceNumber(const StreamBundle &b)
 	}
 }
 
-BundleStreamBuf::BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, size_t buffer)
+BundleStreamBuf::BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, size_t buffer, bool wait_seq_zero)
  : _in_buf(new char[BUFF_SIZE]), _out_buf(new char[BUFF_SIZE]), _client(client), _chunk(chunk),
-   _buffer(buffer), _chunk_offset(0), _in_seq(0)
+   _buffer(buffer), _chunk_offset(0), _in_seq(0), _streaming(wait_seq_zero)
 {
 	// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 	setg(0, 0, 0);
@@ -208,7 +208,7 @@ int BundleStreamBuf::__underflow()
 	tm.start();
 
 	// while not the right sequence number received -> wait
-	while (_in_seq != (*_chunks.begin())._seq)
+	while ((_in_seq != (*_chunks.begin())._seq))
 	{
 		try {
 			// wait for the next bundle
@@ -216,10 +216,13 @@ int BundleStreamBuf::__underflow()
 		} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 
 		tm.stop();
-		if ((__timeout_receive__ > 0) && (tm.getSeconds() > __timeout_receive__))
+		if (((__timeout_receive__ > 0) && (tm.getSeconds() > __timeout_receive__)) || !_streaming)
 		{
 			// skip the missing bundles and proceed with the last received one
 			_in_seq = (*_chunks.begin())._seq;
+
+			// set streaming to active
+			_streaming = true;
 		}
 	}
 
@@ -293,8 +296,8 @@ bool BundleStreamBuf::Chunk::operator<(const Chunk& other) const
 	return (_seq < other._seq);
 }
 
-BundleStream::BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app, const dtn::data::EID &group)
- : dtn::api::Client(app, group, stream), _stream(stream), _buf(*this, _chunk, chunk_size)
+BundleStream::BundleStream(ibrcommon::tcpstream &stream, size_t chunk_size, const std::string &app, const dtn::data::EID &group, bool wait_seq_zero)
+ : dtn::api::Client(app, group, stream), _stream(stream), _buf(*this, _chunk, chunk_size, wait_seq_zero)
 {};
 
 BundleStream::~BundleStream() {};
@@ -318,18 +321,25 @@ void print_help()
 {
 	std::cout << "-- dtnstream (IBR-DTN) --" << std::endl;
 	std::cout << "Syntax: dtnstream [options]"  << std::endl;
-	std::cout << "* optional parameters *" << std::endl;
+	std::cout << "" << std::endl;
+	std::cout << "* common options *" << std::endl;
 	std::cout << " -h               display this text" << std::endl;
+	std::cout << " -U <socket>      use UNIX domain sockets" << std::endl;
+	std::cout << " -s <identifier>  set the source identifier (e.g. stream)" << std::endl;
+	std::cout << "" << std::endl;
+	std::cout << "* send options *" << std::endl;
 	std::cout << " -d <destination> set the destination eid (e.g. dtn://node/stream)" << std::endl;
 	std::cout << " -G               destination is a group" << std::endl;
-	std::cout << " -s <identifier>  set the source identifier (e.g. stream)" << std::endl;
-	std::cout << " -g <group>       join a destination group" << std::endl;
 	std::cout << " -c <bytes>       set the chunk size (max. size of each bundle)" << std::endl;
-	std::cout << " -t <seconds>     set the timeout of the buffer" << std::endl;
 	std::cout << " -l <seconds>     set the lifetime of stream chunks default: 30" << std::endl;
 	std::cout << " -E               request encryption on the bundle layer" << std::endl;
 	std::cout << " -S               request signature on the bundle layer" << std::endl;
-	std::cout << " -U <socket>      use UNIX domain sockets" << std::endl;
+	std::cout << "" << std::endl;
+	std::cout << "* receive options *" << std::endl;
+	std::cout << " -g <group>       join a destination group" << std::endl;
+	std::cout << " -t <seconds>     set the timeout of the buffer" << std::endl;
+	std::cout << " -w               wait for the bundle with seq zero" << std::endl;
+	std::cout << "" << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -343,9 +353,10 @@ int main(int argc, char *argv[])
 	bool _bundle_encryption = false;
 	bool _bundle_signed = false;
 	bool _bundle_group = false;
+	bool _wait_seq_zero = false;
 	ibrcommon::File _unixdomain;
 
-	while((opt = getopt(argc, argv, "hg:Gd:t:s:c:l:ESU:")) != -1)
+	while((opt = getopt(argc, argv, "hg:Gd:t:s:c:l:ESU:w")) != -1)
 	{
 		switch (opt)
 		{
@@ -393,6 +404,10 @@ int main(int argc, char *argv[])
 			_unixdomain = ibrcommon::File(optarg);
 			break;
 
+		case 'w':
+			_wait_seq_zero = true;
+			break;
+
 		default:
 			std::cout << "unknown command" << std::endl;
 			return -1;
@@ -419,7 +434,7 @@ int main(int argc, char *argv[])
 		}
 
 		// Initiate a derivated client
-		BundleStream bs(conn, _chunk_size, _source, _group);
+		BundleStream bs(conn, _chunk_size, _source, _group, _wait_seq_zero);
 
 		// Connect to the server. Actually, this function initiate the
 		// stream protocol by starting the thread and sending the contact header.
