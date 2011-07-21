@@ -34,6 +34,21 @@
 #include <iostream>
 #include <list>
 
+/* Header:
+ * +---------------+
+ * |7 6 5 4 3 2 1 0|
+ * +---------------+
+ * Bit 0-3: sequence number (0-16)
+ * Bit 4-5: 00 Middle segment
+ *	    01 Last segment
+ *	    10 First segment
+ *	    11 First and last segment
+ * Bit 6-7: 00 to be compatible with 6LoWPAN
+ */
+#define SEGMENT_FIRST	0x25
+#define SEGMENT_LAST	0x10
+#define SEGMENT_BOTH	0x30
+#define SEGMENT_MIDDLE	0x00
 
 using namespace dtn::data;
 
@@ -109,35 +124,88 @@ namespace dtn
 
 				std::string address = "0";
 				unsigned int pan = 0x00;
+				int length;
 
 				// read values
 				uri.decode(address, pan);
 
-				cout << "CL LOWPAN was asked to connect to " << hex << address << " in PAN " << hex << pan << endl;
-
 				serializer << bundle;
 				string data = ss.str();
 
-				// get a lowpan peer //FIXME should be getPan not getPort
+				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
 
-				// set write lock
-				ibrcommon::MutexLock l(m_writelock);
+				if (data.length() > 114) {
+					std::string chunk, tmp;
+					char header = 0;
+					int i, seq_num;
+					int chunks = ceil(data.length() / 114.0);
+					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
+					for (i = 0; i < chunks; i++) {
+						stringstream buf;
+						chunk = data.substr(i * 114, 114);
 
-				// send converted line back to client.
-				int ret = p.send(data.c_str(), data.length());
+						seq_num =  i % 16;
 
-				if (ret == -1)
-				{
-					// CL is busy, requeue bundle
-					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+						printf("Iteration %i with seq number %i, from %i chunks\n", i, seq_num, chunks);
+						if (i == 0) // First segment
+							header = SEGMENT_FIRST + seq_num;
+						else if (i == (chunks - 1)) // Last segment
+							header = SEGMENT_LAST + seq_num;
+						else
+							header = SEGMENT_MIDDLE+ seq_num;
 
-					return;
+						buf << header;
+						tmp = buf.str() + chunk; // Prepand header to chunk
+						chunk = "";
+						chunk = tmp;
+
+						// set write lock
+						ibrcommon::MutexLock l(m_writelock);
+
+						// send converted line back to client.
+						int ret = p.send(chunk.c_str(), chunk.length());
+
+						if (ret == -1)
+						{
+							// CL is busy, requeue bundle
+							dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+
+							return;
+						}
+					}
+					// raise bundle event
+					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+				} else {
+
+					std::string tmp;
+					stringstream buf;
+
+					buf << SEGMENT_BOTH;
+
+					tmp = buf.str() + data; // Prepand header to chunk
+					data = "";
+					data = tmp;
+
+					// set write lock
+					ibrcommon::MutexLock l(m_writelock);
+
+					// send converted line back to client.
+					int ret = p.send(data.c_str(), data.length());
+
+					if (ret == -1)
+					{
+						// CL is busy, requeue bundle
+						dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+
+						return;
+					}
+
+					// raise bundle event
+					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				}
-
-				// raise bundle event
-				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
 				dtn::net::TransferAbortedEvent::raise(EID(node.getEID()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
@@ -149,19 +217,31 @@ namespace dtn
 			ibrcommon::MutexLock l(m_readlock);
 
 			char data[m_maxmsgsize];
+			char header, tmp;
+			stringstream ss;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
 
-			if (len > 0)
-			{
-				// read all data into a stream
-				stringstream ss;
-				ss.write(data, len);
+			if (len <= 0)
+				return (*this);
 
-				// get the bundle
-				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
+			header = data[0];
+			header &= 0xF0; // Clear seq number bits
+			ss.write(data+1, len-1);
+
+			while (header != SEGMENT_LAST) {
+
+				len = _socket->receive(data, m_maxmsgsize);
+				header = data[0];
+				header &= 0xF0;
+
+				if (len > 0)
+					ss.write(data+1, len-1);
 			}
+
+			if (len > 0)
+				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 
 			return (*this);
 		}
