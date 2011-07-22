@@ -186,6 +186,8 @@ namespace dtn
 			} catch (const std::exception &ex) {
 				throw ConnectionException(ex.what());
 			}
+
+			throw ConnectionException();
 		}
 	}
 }
