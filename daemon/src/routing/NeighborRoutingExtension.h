@@ -12,7 +12,6 @@
 #include "routing/NeighborDatabase.h"
 #include "core/Node.h"
 
-#include <ibrdtn/data/BundleList.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include "ibrdtn/data/EID.h"
 #include <ibrcommon/thread/Queue.h>

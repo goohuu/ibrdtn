@@ -17,7 +17,6 @@
 #include <ibrdtn/data/Block.h>
 #include <ibrdtn/data/SDNV.h>
 #include <ibrdtn/data/BundleString.h>
-#include <ibrdtn/data/BundleList.h>
 
 #include <ibrcommon/thread/Queue.h>
 
