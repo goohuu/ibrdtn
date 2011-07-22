@@ -49,7 +49,6 @@ void term(int signal)
 		{
 			_client->close();
 			_conn->close();
-			exit(0);
 		}
 	}
 }

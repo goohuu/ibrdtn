@@ -46,7 +46,6 @@ void term(int signal)
 		{
 			_client->unblock_wait();
 			_conn->close();
-			exit(0);
 		}
 	}
 }

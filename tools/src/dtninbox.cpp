@@ -79,7 +79,6 @@ void term(int signal)
     {
         _running = false;
         if (_conn != NULL) _conn->close();
-        exit(0);
     }
 }
 

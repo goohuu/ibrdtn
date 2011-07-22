@@ -8,25 +8,7 @@
 #include "config.h"
 #include <ibrdtn/api/Client.h>
 #include <ibrcommon/net/tcpclient.h>
-
 #include <ibrcommon/data/File.h>
-
-/**
-#include "ibrcommon/thread/Mutex.h"
-#include "ibrcommon/thread/MutexLock.h"
-#include "ibrdtn/data/PayloadBlock.h"
-#include "ibrdtn/data/Bundle.h"
-#include "ibrcommon/data/BLOB.h"
-
-#include "ibrcommon/appstreambuf.h"
-
-#include <stdlib.h>
-#include <iostream>
-#include <map>
-#include <vector>
-
-#include <sys/types.h>
-*/
 
 #include <csignal>
 #include <ctype.h>
@@ -128,7 +110,6 @@ void term(int signal)
 	{
 		_running = false;
 		if (_conn != NULL) _conn->close();
-		exit(0);
 	}
 }
 
