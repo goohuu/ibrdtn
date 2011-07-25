@@ -123,10 +123,10 @@ namespace dtn
 
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
+//				length = data.length();
 				if (data.length() > 116) {
 					cout << "Bundle to big to fit into one packet. Need to split into segments" << endl;
-					dtn::net::TransferAbortedEvent::raise(EID(node.getEID()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
-//					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 				} else {
 
 					// set write lock
