@@ -125,7 +125,7 @@ namespace dtn
 
 				if (data.length() > 116) {
 					float counter = data.length() / 116;
-					cout << "Bundle to big to fit into one packet. Need to split into " << counter << " segments" << endl;
+					cout << "Bundle to big to fit into one packet. Need to split into " << fixed << counter << " segments" << endl;
 					//throw ConnectionInterruptedException();
 					return;
 				} else {
