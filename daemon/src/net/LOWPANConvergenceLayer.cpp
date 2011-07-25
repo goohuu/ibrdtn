@@ -117,27 +117,33 @@ namespace dtn
 				serializer << bundle;
 				string data = ss.str();
 
-				// get a lowpan peer //FIXME should be getPan not getPort
+				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
 
 				cout << "Send out bundle with length " << dec << data.length() << endl;
-				// set write lock
-				ibrcommon::MutexLock l(m_writelock);
 
-				// send converted line back to client.
-				int ret = p.send(data.c_str(), data.length());
+				if (data.length() > 116)
+					cout << "Bundle to big to fit into one packet. Need to split into segments" << endl;
+				else {
 
-				if (ret == -1)
-				{
-					// CL is busy, requeue bundle
-					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+					// set write lock
+					ibrcommon::MutexLock l(m_writelock);
 
-					return;
+					// send converted line back to client.
+					int ret = p.send(data.c_str(), data.length());
+
+					if (ret == -1)
+					{
+						// CL is busy, requeue bundle
+						dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+
+						return;
+					}
+
+					// raise bundle event
+					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				}
-
-				// raise bundle event
-				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
 				dtn::net::TransferAbortedEvent::raise(EID(node.getEID()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
