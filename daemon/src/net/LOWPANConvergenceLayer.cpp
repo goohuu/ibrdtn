@@ -131,8 +131,23 @@ namespace dtn
 					for (i = 0; i < data.length(); i += 116) {
 						chunk = data.substr(i, 116);
 						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
+						// set write lock
+						ibrcommon::MutexLock l(m_writelock);
+
+						// send converted line back to client.
+						int ret = p.send(chunk.c_str(), chunk.length());
+
+						if (ret == -1)
+						{
+							// CL is busy, requeue bundle
+							dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+
+							return;
+						}
 					}
-//					return;
+					// raise bundle event
+					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				} else {
 
 					// set write lock
