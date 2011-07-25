@@ -120,7 +120,7 @@ namespace dtn
 				// get a lowpan peer //FIXME should be getPan not getPort
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
 
-				cout << "Send out bundle with length " << data.length() << endl;
+				cout << "Send out bundle with length " << dec << data.length() << endl;
 				// set write lock
 				ibrcommon::MutexLock l(m_writelock);
 
