@@ -108,6 +108,7 @@ namespace dtn
 
 				std::string address = "0";
 				unsigned int pan = 0x00;
+				int length;
 
 				// read values
 				uri.decode(address, pan);
@@ -122,7 +123,8 @@ namespace dtn
 
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
-				if (data.length() > 116)
+				length = data.length();
+				if (length > 116)
 					cout << "Bundle to big to fit into one packet. Need to split into segments" << endl;
 				else {
 
