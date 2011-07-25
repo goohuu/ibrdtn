@@ -124,9 +124,14 @@ namespace dtn
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
 				if (data.length() > 116) {
-					int counter = ceil(data.length() / 116.0);
-					cout << "Bundle to big to fit into one packet. Need to split into " << dec << counter << " segments" << endl;
-					//throw ConnectionInterruptedException();
+					string chunk;
+					int i;
+					int chunks = ceil(data.length() / 116.0);
+					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
+					for (i = 0; i < data.length(); i + 116) {
+						chunk = data.substr(i, 116);
+						cout << "Chunk " << chunk << endl;
+					}
 					return;
 				} else {
 
