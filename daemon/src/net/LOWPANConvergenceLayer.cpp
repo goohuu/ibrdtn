@@ -128,7 +128,7 @@ namespace dtn
 					int i;
 					int chunks = ceil(data.length() / 116.0);
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
-					for (i = 0; i < data.length(); i + 116) {
+					for (i = 0; i < data.length(); i += 116) {
 						chunk = data.substr(i, 116);
 						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 					}
