@@ -130,9 +130,9 @@ namespace dtn
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
 					for (i = 0; i < data.length(); i + 116) {
 						chunk = data.substr(i, 116);
-						cout << "Chunk " << chunk << endl;
+						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 					}
-					return;
+//					return;
 				} else {
 
 					// set write lock
