@@ -123,10 +123,10 @@ namespace dtn
 
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
-//				length = data.length();
 				if (data.length() > 116) {
-					cout << "Bundle to big to fit into one packet. Need to split into segments" << endl;
-					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+					int counter = data.length() / 116;
+					cout << "Bundle to big to fit into one packet. Need to split into " << dec << counter << " segments" << endl;
+					throw ConnectionInterruptedException();
 				} else {
 
 					// set write lock
