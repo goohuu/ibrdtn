@@ -123,10 +123,11 @@ namespace dtn
 
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
-				length = data.length();
-				if (length > 116)
+//				length = data.length();
+				if (data.length() > 116) {
 					cout << "Bundle to big to fit into one packet. Need to split into segments" << endl;
-				else {
+					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+				} else {
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
