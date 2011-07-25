@@ -20,7 +20,7 @@ namespace dtn
 		class LOWPANConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider
 		{
 		public:
-			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool broadcast = false, unsigned int mtu = 127);
+			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool broadcast = false, unsigned int mtu = 1280); //MTU is actually 127...
 
 			virtual ~LOWPANConvergenceLayer();
 
