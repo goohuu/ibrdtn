@@ -183,6 +183,7 @@ namespace dtn
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
 
+			cout << "Chunk with length " << dec << len << " : " << data << endl;
 			if (len > 0)
 			{
 				// read all data into a stream
