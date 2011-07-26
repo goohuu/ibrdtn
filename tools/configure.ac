@@ -60,6 +60,13 @@ AC_TYPE_UINT8_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset])
 
+# check for linux interface, required for dtntunnel
+AC_CHECK_HEADER([linux/if.h], [
+	build_dtntunnel="yes"
+])
+
+AM_CONDITIONAL(DTNTUNNEL, test x$build_dtntunnel = xyes)
+
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
