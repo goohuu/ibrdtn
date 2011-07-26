@@ -137,23 +137,9 @@ namespace dtn
 			{
 				if (_destination.isMulticast())
 				{
-					__join_multicast_groups__(evt.getInterface());
+					ibrcommon::MulticastSocket ms(_fd);
+					ms.joinGroup(_destination, evt.getInterface());
 				}
-			}
-		}
-
-		void IPNDAgent::__join_multicast_groups__(const ibrcommon::vinterface &iface)
-		{
-			// get all FD of IPv4 sockets matching this interface
-			std::list<int> fds = _socket.get(iface, ibrcommon::vaddress::VADDRESS_INET);
-
-			// iterate through all socket FD
-			for (std::list<int>::const_iterator iter = fds.begin();
-					iter != fds.end(); iter++)
-			{
-				// enable multicasting on the socket
-				ibrcommon::MulticastSocket ms(*iter);
-				ms.joinGroup(_destination, iface);
 			}
 		}
 
@@ -173,30 +159,23 @@ namespace dtn
 				}
 			}
 
-			// only if the destination is a multicast address
-			if (_destination.isMulticast())
-			{
-				try {
-					// bind on the multicast address
-					_socket.bind(_destination, _port, SOCK_DGRAM);
+			try {
+				// bind on ALL interfaces
+				_fd = _socket.bind(_port, SOCK_DGRAM);
 
-					for (std::list<ibrcommon::vinterface>::const_iterator i_iter = _interfaces.begin(); i_iter != _interfaces.end(); i_iter++)
+				// only if the destination is a multicast address
+				if (_destination.isMulticast())
+				{
+					// enable multicasting on the socket
+					ibrcommon::MulticastSocket ms(_fd);
+
+					for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 					{
-						// enable multicast
-						__join_multicast_groups__(*i_iter);
+						ms.joinGroup(_destination, *iter);
 					}
-				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER(error) << "[IPND] bind on multicast address failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
-			}
-			else
-			{
-				try {
-					// bind on ALL interfaces
-					_socket.bind(_destination, _port, SOCK_DGRAM);
-				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER(error) << "[IPND] bind on broadcast address failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				}
+			} catch (const ibrcommon::Exception &ex) {
+				IBRCOMMON_LOGGER(error) << "[IPND] bind on broadcast address failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			// set this socket as listener to socket events

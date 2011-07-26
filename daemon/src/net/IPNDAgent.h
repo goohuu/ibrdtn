@@ -55,7 +55,6 @@ namespace dtn
 			bool __cancellation();
 
 		private:
-			void __join_multicast_groups__(const ibrcommon::vinterface &iface);
 			void send(const DiscoveryAnnouncement &a, const ibrcommon::vinterface &iface, const ibrcommon::vaddress &addr, const unsigned int port);
 
 			DiscoveryAnnouncement::DiscoveryVersion _version;
@@ -64,6 +63,7 @@ namespace dtn
 			std::list<ibrcommon::vinterface> _interfaces;
 
 			int _port;
+			int _fd;
 		};
 	}
 }
