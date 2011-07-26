@@ -179,6 +179,7 @@ namespace dtn
 			ibrcommon::MutexLock l(m_readlock);
 
 			char data[m_maxmsgsize];
+			stringstream ss;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
@@ -187,7 +188,15 @@ namespace dtn
 			if (len > 0)
 			{
 				// read all data into a stream
-				stringstream ss;
+				ss.write(data, len);
+			}
+
+			len = _socket->receive(data, m_maxmsgsize);
+
+			cout << "Chunk with length " << dec << len << " : " << data << endl;
+			if (len > 0)
+			{
+				// read all data into a stream
 				ss.write(data, len);
 
 				// get the bundle
