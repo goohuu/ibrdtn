@@ -162,29 +162,41 @@ namespace dtn
 			// create one socket for each interface
 			for (std::list<ibrcommon::vinterface>::const_iterator iter = _interfaces.begin(); iter != _interfaces.end(); iter++)
 			{
-				const ibrcommon::vinterface &iface = *iter;
-				if (!iface.empty())
-				{
-					_socket.bind(iface, 0, SOCK_DGRAM);
+				try {
+					const ibrcommon::vinterface &iface = *iter;
+					if (!iface.empty())
+					{
+						_socket.bind(iface, 0, SOCK_DGRAM);
+					}
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER(error) << "[IPND] bind failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 
 			// only if the destination is a multicast address
 			if (_destination.isMulticast())
 			{
-				// bind on the multicast address
-				_socket.bind(_destination, _port, SOCK_DGRAM);
+				try {
+					// bind on the multicast address
+					_socket.bind(_destination, _port, SOCK_DGRAM);
 
-				for (std::list<ibrcommon::vinterface>::const_iterator i_iter = _interfaces.begin(); i_iter != _interfaces.end(); i_iter++)
-				{
-					// enable multicast
-					__join_multicast_groups__(*i_iter);
+					for (std::list<ibrcommon::vinterface>::const_iterator i_iter = _interfaces.begin(); i_iter != _interfaces.end(); i_iter++)
+					{
+						// enable multicast
+						__join_multicast_groups__(*i_iter);
+					}
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER(error) << "[IPND] bind on multicast address failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 				}
 			}
 			else
 			{
-				// bind on ALL interfaces
-				_socket.bind(_destination, _port, SOCK_DGRAM);
+				try {
+					// bind on ALL interfaces
+					_socket.bind(_destination, _port, SOCK_DGRAM);
+				} catch (const ibrcommon::Exception &ex) {
+					IBRCOMMON_LOGGER(error) << "[IPND] bind on broadcast address failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				}
 			}
 
 			// set this socket as listener to socket events
