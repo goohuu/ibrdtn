@@ -1,0 +1,107 @@
+### Eclipse Workspace Patch 1.0
+#P ibrdtn-trunk
+Index: ibrcommon/ibrcommon/net/vsocket.h
+===================================================================
+--- ibrcommon/ibrcommon/net/vsocket.h	(Revision 42513)
++++ ibrcommon/ibrcommon/net/vsocket.h	(Arbeitskopie)
+@@ -21,6 +21,18 @@
+ 
+ namespace ibrcommon
+ {
++	/**
++	 * This select emulated the linux behavior of a select.
++	 * It measures the time being in the select call and decrement the given timeout value.
++	 * @param nfds
++	 * @param readfds
++	 * @param writefds
++	 * @param exceptfds
++	 * @param timeout
++	 * @return
++	 */
++	int __osx_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
++
+ 	class vsocket_exception : public Exception
+ 	{
+ 	public:
+Index: ibrcommon/ibrcommon/net/vsocket.cpp
+===================================================================
+--- ibrcommon/ibrcommon/net/vsocket.cpp	(Revision 42513)
++++ ibrcommon/ibrcommon/net/vsocket.cpp	(Arbeitskopie)
+@@ -6,6 +6,7 @@
+  */
+ 
+ #include "ibrcommon/net/vsocket.h"
++#include <ibrcommon/TimeMeasurement.h>
+ #include <ibrcommon/thread/MutexLock.h>
+ #include <ibrcommon/Logger.h>
+ #include <algorithm>
+@@ -24,6 +25,42 @@
+ 
+ namespace ibrcommon
+ {
++	int __osx_select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout)
++	{
++		if (timeout == NULL)
++		{
++			return ::select(nfds, readfds, writefds, exceptfds, NULL);
++		}
++
++		TimeMeasurement tm;
++
++		struct timeval to_copy;
++		::memcpy(&to_copy, timeout, sizeof to_copy);
++
++		tm.start();
++		int ret = ::select(nfds, readfds, writefds, exceptfds, &to_copy);
++		tm.stop();
++
++		uint64_t us = tm.getMicroseconds();
++
++		while ((us > 1000000) && (timeout->tv_sec > 0))
++		{
++			us -= 1000000;
++			timeout->tv_sec--;
++		}
++
++		if (us >= (uint64_t)timeout->tv_usec)
++		{
++			timeout->tv_usec = 0;
++		}
++		else
++		{
++			timeout->tv_usec -= us;
++		}
++
++		return ret;
++	}
++
+ 	void vsocket::set_non_blocking(int fd, bool nonblock)
+ 	{
+ 		int opts;
+@@ -446,7 +483,7 @@
+ 			if (fd_count == 0)
+ 				throw vsocket_exception("select error");
+ 
+-			int res = ::select(high_fd + 1, &fds_read, NULL, NULL, tv);
++			int res = __osx_select(high_fd + 1, &fds_read, NULL, NULL, tv);
+ 
+ 			if (res < 0)
+ 				throw vsocket_exception("select error");
+Index: ibrcommon/ibrcommon/net/tcpstream.cpp
+===================================================================
+--- ibrcommon/ibrcommon/net/tcpstream.cpp	(Revision 42513)
++++ ibrcommon/ibrcommon/net/tcpstream.cpp	(Arbeitskopie)
+@@ -185,11 +185,11 @@
+ 		{
+ 			if (timeout > 0)
+ 			{
+-				res = ::select(high_fd + 1, &fds_read, fdsp_write, fdsp_error, &tv);
++				res = __osx_select(high_fd + 1, &fds_read, fdsp_write, fdsp_error, &tv);
+ 			}
+ 			else
+ 			{
+-				res = ::select(high_fd + 1, &fds_read, fdsp_write, fdsp_error, NULL);
++				res = __osx_select(high_fd + 1, &fds_read, fdsp_write, fdsp_error, NULL);
+ 			}
+ 
+ 			// check for select error
