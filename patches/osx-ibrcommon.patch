@@ -1,0 +1,172 @@
+Index: ibrcommon/ibrcommon/TimeMeasurement.cpp
+===================================================================
+--- ibrcommon/ibrcommon/TimeMeasurement.cpp	(revision 42512)
++++ ibrcommon/ibrcommon/TimeMeasurement.cpp	(working copy)
+@@ -8,8 +8,9 @@
+ #include "ibrcommon/TimeMeasurement.h"
+ #include <iostream>
+ #include <iomanip>
+-#include <features.h>
++//#include <features.h>
+ #include <stdio.h>
++#include <mach/mach_time.h>
+ 
+ namespace ibrcommon
+ {
+@@ -25,7 +26,8 @@
+ 	void TimeMeasurement::start()
+ 	{
+ 		// set sending time
+-		clock_gettime(CLOCK_MONOTONIC, &_start);
++//		clock_gettime(CLOCK_MONOTONIC, &_start);
++		_start = mach_absolute_time();	
+ 	}
+ 
+ 	void TimeMeasurement::stop()
+@@ -33,7 +35,8 @@
+ 		//We are DOOOOMED
+ 		//http://www.wand.net.nz/~smr26/wordpress/2009/01/19/monotonic-time-in-mac-os-x/
+ 		// set receiving time
+-		clock_gettime(CLOCK_MONOTONIC, &_end);
++//		clock_gettime(CLOCK_MONOTONIC, &_end);
++		_end = mach_absolute_time();
+ 	}
+ 
+ 	float TimeMeasurement::getMilliseconds()
+@@ -112,9 +115,19 @@
+ 		return stream;
+ 	}
+ 
+-	int64_t TimeMeasurement::timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p)
++	uint64_t TimeMeasurement::timespecDiff(const uint64_t *stop, const uint64_t *start)
+ 	{
+-		//Casting to 64Bit, otherwise it caps out at ~ 5 secs for 32bit machines
+-	       return (   (  (int64_t)(timeA_p->tv_sec) * 1e9 + (int64_t)(timeA_p->tv_nsec)) -  ( (int64_t)(timeB_p->tv_sec) * 1e9 + (int64_t)(timeB_p->tv_nsec)) );
++		//Casting to 64Bit, otherwise it caps out at ~ 5 secs for 32bit machine
++		//return (   (  (int64_t)(timeA_p->tv_sec) * 1e9 + (int64_t)(timeA_p->tv_nsec)) -  ( (int64_t)(timeB_p->tv_sec) * 1e9 + (int64_t)(timeB_p->tv_nsec)) );
++		uint64_t duration = (*stop) - (*start);
++
++		mach_timebase_info_data_t info;
++		mach_timebase_info(&info);
++
++		/* Convert to nanoseconds */
++		duration *= info.numer;
++		duration /= info.denom;
++
++		return duration;
+ 	}
+ }
+Index: ibrcommon/ibrcommon/net/tcpstream.cpp
+===================================================================
+--- ibrcommon/ibrcommon/net/tcpstream.cpp	(revision 42512)
++++ ibrcommon/ibrcommon/net/tcpstream.cpp	(working copy)
+@@ -9,6 +9,7 @@
+ #include "ibrcommon/Logger.h"
+ #include "ibrcommon/net/tcpstream.h"
+ #include "ibrcommon/thread/MutexLock.h"
++#include "ibrcommon/TimeMeasurement.h"
+ #include <netinet/in.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
+@@ -176,15 +177,18 @@
+ 		int res = 0;
+ 
+ 		// set timeout
++		ibrcommon::TimeMeasurement tm;
++		tm.start();
+ 		struct timeval tv;
+-		tv.tv_sec = timeout;
+-		tv.tv_usec = 0;
+ 
+ 		bool _continue = true;
+ 		while (_continue)
+ 		{
+ 			if (timeout > 0)
+ 			{
++				tv.tv_sec = 0;
++				tv.tv_usec = 100000;
++
+ 				res = ::select(high_fd + 1, &fds_read, fdsp_write, fdsp_error, &tv);
+ 			}
+ 			else
+@@ -199,9 +203,14 @@
+ 			}
+ 
+ 			// check for timeout
+-			if (res == 0)
++			if ((res == 0) && (timeout > 0))
+ 			{
+-				throw select_exception(select_exception::SELECT_TIMEOUT);
++				tm.stop();
++
++				if (tm.getSeconds() > timeout)
++				{
++					throw select_exception(select_exception::SELECT_TIMEOUT);
++				}
+ 			}
+ 
+ 			if (FD_ISSET(int_pipe, &fds_read))
+@@ -268,7 +277,7 @@
+ 		size_t bytes = (iend - ibegin);
+ 
+ 		// send the data
+-		ssize_t ret = ::send(_socket, out_buf_, (iend - ibegin), MSG_NOSIGNAL);
++		ssize_t ret = ::send(_socket, out_buf_, (iend - ibegin), 0); //, MSG_NOSIGNAL);
+ 
+ 		if (ret < 0)
+ 		{
+Index: ibrcommon/ibrcommon/TimeMeasurement.h
+===================================================================
+--- ibrcommon/ibrcommon/TimeMeasurement.h	(revision 42512)
++++ ibrcommon/ibrcommon/TimeMeasurement.h	(working copy)
+@@ -44,10 +44,10 @@
+ 		static std::ostream& format(std::ostream &stream, const float value);
+ 
+ 	private:
+-		static int64_t timespecDiff(struct timespec *timeA_p, struct timespec *timeB_p);
++		static uint64_t timespecDiff(const uint64_t *stop, const uint64_t *start);
+ 
+-		struct timespec _start;
+-		struct timespec _end;
++		uint64_t _start;
++		uint64_t _end;
+ 	};
+ }
+ 
+Index: ibrcommon/ibrcommon/thread/Semaphore.h
+===================================================================
+--- ibrcommon/ibrcommon/thread/Semaphore.h	(revision 42512)
++++ ibrcommon/ibrcommon/thread/Semaphore.h	(working copy)
+@@ -2,6 +2,7 @@
+ #define IBRCOMMON_SEMAPHORE_H_
+ 
+ #include <semaphore.h>
++#include <sys/semaphore.h>
+ 
+ namespace ibrcommon
+ {
+Index: ibrcommon/ibrcommon/data/File.cpp
+===================================================================
+--- ibrcommon/ibrcommon/data/File.cpp	(revision 42512)
++++ ibrcommon/ibrcommon/data/File.cpp	(working copy)
+@@ -19,6 +19,8 @@
+ #include <cstring>
+ #include <cerrno>
+ 
++#include <libgen.h>
++
+ namespace ibrcommon
+ {
+ 	File::File()
+@@ -153,7 +155,10 @@
+ 
+ 	std::string File::getBasename() const
+ 	{
+-		return std::string(basename(_path.c_str()));
++		char path[_path.length()];
++		::memcpy(&path, _path.c_str(), _path.length());
++
++		return std::string(basename(path));
+ 	}
+ 
+ 	File File::get(string filename) const
