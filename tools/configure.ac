@@ -46,6 +46,9 @@ AC_CHECK_HEADERS([arpa/inet.h])
 AC_CHECK_HEADERS([fcntl.h])
 AC_CHECK_HEADERS([sys/ioctl.h])
 AC_CHECK_HEADERS([sys/socket.h])
+AC_CHECK_HEADER([linux/if.h], [
+        is_linux="yes"
+])
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -60,12 +63,7 @@ AC_TYPE_UINT8_T
 AC_FUNC_MALLOC
 AC_CHECK_FUNCS([memset])
 
-# check for linux interface, required for dtntunnel
-AC_CHECK_HEADER([linux/if.h], [
-	build_dtntunnel="yes"
-])
-
-AM_CONDITIONAL(DTNTUNNEL, test x$build_dtntunnel = xyes)
+AM_CONDITIONAL([LINUX], [test x$is_linux = xyes])
 
 dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
