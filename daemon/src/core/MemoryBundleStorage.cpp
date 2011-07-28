@@ -136,6 +136,7 @@ namespace dtn
 
 			// increment the storage size
 			_currentsize += size;
+			_bundle_lengths[bundle] = size;
 
 			// insert Container
 			pair<set<dtn::data::Bundle>::iterator,bool> ret = _bundles.insert( bundle );
@@ -201,7 +202,9 @@ namespace dtn
 					dtn::data::DefaultSerializer s(std::cout);
 
 					// decrement the storage size
-					_currentsize -= s.getLength(bundle);
+					ssize_t len = _bundle_lengths[bundle];
+					_bundle_lengths.erase(bundle);
+					_currentsize -= len;
 
 					// remove the container
 					_bundles.erase(iter);
@@ -225,6 +228,7 @@ namespace dtn
 			_bundles.clear();
 			_priority_index.clear();
 			dtn::data::BundleList::clear();
+			_bundle_lengths.clear();
 
 			// set the storage size to zero
 			_currentsize = 0;
@@ -242,7 +246,9 @@ namespace dtn
 					dtn::data::DefaultSerializer s(std::cout);
 
 					// decrement the storage size
-					_currentsize -= s.getLength(bundle);
+					ssize_t len = _bundle_lengths[bundle];
+					_bundle_lengths.erase(bundle);
+					_currentsize -= len;
 
 					_priority_index.erase(bundle);
 					_bundles.erase(iter);
