@@ -33,6 +33,21 @@
 #include <iostream>
 #include <list>
 
+/* Header:
+ * +---------------+
+ * |7 6 5 4 3 2 1 0|
+ * +---------------+
+ * Bit 0-3: sequence number (0-16)
+ * Bit 4-5: 00 Middle segment
+ *	    01 Last segment
+ *	    10 First segment
+ *	    11 First and last segment
+ * Bit 6-7: 00 to be compatible with 6LoWPAN
+ */
+#define SEGMENT_FIRST	0x20
+#define SEGMENT_LAST	0x10
+#define SEGMENT_BOTH	0x30
+#define SEGMENT_MIDDLE	0x00
 
 using namespace dtn::data;
 
@@ -124,12 +139,20 @@ namespace dtn
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
 				if (data.length() > 115) {
-					string chunk;
+					std::string chunk;
+					stringstream buf;
 					int i;
 					int chunks = ceil(data.length() / 115.0);
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
 					for (i = 0; i < data.length(); i += 115) {
 						chunk = data.substr(i, 115);
+						if (i == 0) // First segment
+							buf << SEGMENT_FIRST;
+						if (data.length() < 115) // Last segment
+							buf << SEGMENT_LAST;
+
+						chunk = buf.str() + chunk; // Prepand header to chunk
+
 						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 						// set write lock
 						ibrcommon::MutexLock l(m_writelock);
@@ -149,6 +172,11 @@ namespace dtn
 					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				} else {
+
+					stringstream buf;
+					buf << SEGMENT_BOTH;
+
+					data = buf.str() + data; // Prepand header
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
@@ -179,7 +207,8 @@ namespace dtn
 			ibrcommon::MutexLock l(m_readlock);
 
 			char data[m_maxmsgsize];
-			stringstream ss;
+			stringstream ss, ss2;
+			std::string buf;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
@@ -188,7 +217,11 @@ namespace dtn
 			if (len > 0)
 			{
 				// read all data into a stream
-				ss.write(data, len);
+				ss2.write(data, len);
+				buf = ss2.str();
+				buf.erase(1,1); // remove header byte
+				ss2.str("");
+				ss << buf;
 			}
 
 			len = _socket->receive(data, m_maxmsgsize);
@@ -197,7 +230,10 @@ namespace dtn
 			if (len > 0)
 			{
 				// read all data into a stream
-				ss.write(data, len);
+				ss2.write(data, len);
+				buf = ss2.str();
+				buf.erase(1,1); // remove header byte
+				ss << buf;
 
 				// get the bundle
 				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
