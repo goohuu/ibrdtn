@@ -139,19 +139,19 @@ namespace dtn
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
 				if (data.length() > 113) {
-					std::string chunk, tmp;
+					std::string chunk;
 					stringstream buf;
 					int i;
 					int chunks = ceil(data.length() / 113.0);
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
 					for (i = 0; i < data.length(); i += 113) {
-						tmp = data.substr(i, 113);
+						chunk = data.substr(i, 113);
 						if (i == 0) // First segment
-							buf << SEGMENT_FIRST;
+							//buf << SEGMENT_FIRST;
 						if (data.length() < 113) // Last segment
-							buf << SEGMENT_LAST;
+							//buf << SEGMENT_LAST;
 
-						chunk = buf.str() + tmp; // Prepand header to chunk
+						//chunk = buf.str() + chunk; // Prepand header to chunk
 
 						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 						// set write lock
@@ -173,10 +173,10 @@ namespace dtn
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				} else {
 
-					stringstream buf;
-					buf << SEGMENT_BOTH;
+					//stringstream buf;
+					//buf << SEGMENT_BOTH;
 
-					data = buf.str() + data; // Prepand header
+					//data = buf.str() + data; // Prepand header
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
