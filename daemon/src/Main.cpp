@@ -135,6 +135,9 @@ void sighandler(int signal)
 		// send shutdown signal to unbound threads
 		dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
 		break;
+	default:
+		// dummy handler
+		break;
 	}
 }
 
@@ -415,6 +418,7 @@ int __daemon_run(Configuration &conf)
 	signal(SIGQUIT, sighandler);
 	signal(SIGUSR1, sighandler);
 	signal(SIGUSR2, sighandler);
+	signal(SIGPIPE, sighandler);
 
 	// enable timestamps in logging if requested
 	if (conf.getLogger().display_timestamps())
