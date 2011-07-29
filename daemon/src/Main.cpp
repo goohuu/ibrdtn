@@ -418,7 +418,11 @@ int __daemon_run(Configuration &conf)
 	signal(SIGQUIT, sighandler);
 	signal(SIGUSR1, sighandler);
 	signal(SIGUSR2, sighandler);
-	signal(SIGPIPE, sighandler);
+
+	sigset_t blockset;
+	sigemptyset(&blockset);
+	sigaddset(&blockset, SIGPIPE);
+	::sigprocmask(SIG_BLOCK, &blockset, NULL);
 
 	// enable timestamps in logging if requested
 	if (conf.getLogger().display_timestamps())
