@@ -146,10 +146,10 @@ namespace dtn
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
 					for (i = 0; i < data.length(); i += 115) {
 						chunk = data.substr(i, 115);
-#if 0
+#if 1
 						if (i == 0) // First segment
 							buf << SEGMENT_FIRST;
-						if (data.length() < 115) // Last segment
+						if (data.length() < i + 115) // Last segment
 							buf << SEGMENT_LAST;
 
 						chunk = buf.str() + chunk; // Prepand header to chunk
