@@ -138,18 +138,18 @@ namespace dtn
 
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
-				if (data.length() > 115) {
+				if (data.length() > 113) {
 					std::string chunk, tmp;
 					stringstream buf;
 					int i;
-					int chunks = ceil(data.length() / 115.0);
+					int chunks = ceil(data.length() / 113.0);
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
-					for (i = 0; i < data.length(); i += 115) {
-						chunk = data.substr(i, 115);
+					for (i = 0; i < data.length(); i += 113) {
+						chunk = data.substr(i, 113);
 #if 1
 						if (i == 0) // First segment
 							buf << SEGMENT_FIRST;
-						if (data.length() < i + 115) // Last segment
+						if (data.length() < i + 113) // Last segment
 							buf << SEGMENT_LAST;
 
 						tmp = buf.str() + chunk; // Prepand header to chunk
