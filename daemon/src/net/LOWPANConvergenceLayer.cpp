@@ -140,22 +140,24 @@ namespace dtn
 
 				if (data.length() > 113) {
 					std::string chunk, tmp;
+					char header;
 					stringstream buf;
 					int i;
 					int chunks = ceil(data.length() / 113.0);
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
 					for (i = 0; i < data.length(); i += 113) {
 						chunk = data.substr(i, 113);
-#if 1
-						if (i == 0) // First segment
-							buf << SEGMENT_FIRST;
-						if (data.length() < i + 113) // Last segment
-							buf << SEGMENT_LAST;
 
+						if (i == 0) // First segment
+							header = SEGMENT_FIRST;
+						if (data.length() < i + 113) // Last segment
+							header = SEGMENT_LAST;
+
+						buf << header;
 						tmp = buf.str() + chunk; // Prepand header to chunk
 						chunk = "";
 						chunk = tmp;
-#endif
+
 						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 						// set write lock
 						ibrcommon::MutexLock l(m_writelock);
