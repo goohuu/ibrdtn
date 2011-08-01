@@ -139,7 +139,7 @@ namespace dtn
 				cout << "Send out bundle with length " << dec << data.length() << endl;
 
 				if (data.length() > 115) {
-					std::string chunk;
+					std::string chunk, tmp;
 					stringstream buf;
 					int i;
 					int chunks = ceil(data.length() / 115.0);
@@ -152,7 +152,9 @@ namespace dtn
 						if (data.length() < i + 115) // Last segment
 							buf << SEGMENT_LAST;
 
-				//		chunk = buf.str() + chunk; // Prepand header to chunk
+						tmp = buf.str() + chunk; // Prepand header to chunk
+						chunk = "";
+						chunk = tmp;
 #endif
 						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 						// set write lock
