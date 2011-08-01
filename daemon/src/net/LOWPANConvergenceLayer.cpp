@@ -222,7 +222,7 @@ namespace dtn
 				// read all data into a stream
 				ss2.write(data, len);
 				buf = ss2.str();
-				buf.erase(1,1); // remove header byte
+				buf.erase(1,2); // remove header byte
 				ss2.str("");
 				ss << buf;
 			}
@@ -235,7 +235,7 @@ namespace dtn
 				// read all data into a stream
 				ss2.write(data, len);
 				buf = ss2.str();
-				buf.erase(1,1); // remove header byte
+				buf.erase(1,2); // remove header byte
 				ss << buf;
 
 				// get the bundle
