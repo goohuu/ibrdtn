@@ -128,7 +128,7 @@ namespace dtn
 				// read values
 				uri.decode(address, pan);
 
-				cout << "CL LOWPAN was asked to connect to " << hex << address << " in PAN " << hex << pan << endl;
+				//cout << "CL LOWPAN was asked to connect to " << hex << address << " in PAN " << hex << pan << endl;
 
 				serializer << bundle;
 				string data = ss.str();
@@ -136,7 +136,7 @@ namespace dtn
 				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
 
-				cout << "Send out bundle with length " << dec << data.length() << endl;
+				//cout << "Send out bundle with length " << dec << data.length() << endl;
 
 				if (data.length() > 114) {
 					std::string chunk, tmp;
@@ -159,7 +159,7 @@ namespace dtn
 						chunk = "";
 						chunk = tmp;
 
-						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
+						//cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 						// set write lock
 						ibrcommon::MutexLock l(m_writelock);
 
@@ -219,7 +219,7 @@ namespace dtn
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
 
-			cout << "Chunk 1 with length " << dec << len << " : " << data << endl;
+			//cout << "Chunk 1 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
 			{
 				// read all data into a stream
@@ -231,7 +231,7 @@ namespace dtn
 
 			len = _socket->receive(data, m_maxmsgsize);
 
-			cout << "Chunk 2 with length " << dec << len << " : " << data << endl;
+			//cout << "Chunk 2 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
 			{
 				// read all data into a stream
