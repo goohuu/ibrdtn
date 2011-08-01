@@ -148,6 +148,7 @@ namespace dtn
 					for (i = 0; i < data.length(); i += 113) {
 						chunk = data.substr(i, 113);
 
+						header = 0;
 						if (i == 0) // First segment
 							header = SEGMENT_FIRST;
 						if (data.length() < i + 113) // Last segment
