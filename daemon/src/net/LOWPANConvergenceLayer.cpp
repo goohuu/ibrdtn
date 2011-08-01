@@ -152,7 +152,7 @@ namespace dtn
 						if (data.length() < i + 115) // Last segment
 							buf << SEGMENT_LAST;
 
-						chunk = buf.str() + chunk; // Prepand header to chunk
+				//		chunk = buf.str() + chunk; // Prepand header to chunk
 #endif
 						cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 						// set write lock
