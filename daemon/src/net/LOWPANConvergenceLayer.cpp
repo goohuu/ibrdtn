@@ -223,6 +223,7 @@ namespace dtn
 			char data[m_maxmsgsize];
 			stringstream ss, ss2;
 			std::string buf, header;
+			int foo;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
@@ -234,7 +235,8 @@ namespace dtn
 				ss2.write(data, len);
 				buf = ss2.str();
 				header = buf.substr(0,1);
-				cout << "Header: " << header << endl;
+				foo = atoi(header.c_str());
+				cout << "Header: " << hex << foo << endl;
 				buf.erase(0,1); // remove header byte
 				ss << buf;
 			}
@@ -249,7 +251,8 @@ namespace dtn
 				ss2.write(data, len);
 				buf = ss2.str();
 				header = buf.substr(0,1);
-				cout << "Header: " << header << endl;
+				foo = atoi(header.c_str());
+				cout << "Header: " << hex << foo << endl;
 				buf.erase(0,1); // remove header byte
 				ss << buf;
 
