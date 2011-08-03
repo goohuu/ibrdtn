@@ -145,13 +145,13 @@ namespace dtn
 					int i;
 					int chunks = ceil(data.length() / 114.0);
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
-					for (i = 0; i < data.length(); i += 114) {
-						chunk = data.substr(i, 114);
+					for (i = 0; i < chunks; i++) {
+						chunk = data.substr(i * 114, 114);
 
 						header = 0;
 						if (i == 0) // First segment
 							header = SEGMENT_FIRST;
-						if (data.length() < i + 114) // Last segment
+						if (i == (chunks - 1)) // Last segment
 							header = SEGMENT_LAST;
 
 						buf << header;
