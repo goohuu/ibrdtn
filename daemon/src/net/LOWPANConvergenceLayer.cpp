@@ -151,8 +151,10 @@ namespace dtn
 						header = 0;
 						if (i == 0) // First segment
 							header = SEGMENT_FIRST;
-						if (i == (chunks - 1)) // Last segment
+						else if (i == (chunks - 1)) // Last segment
 							header = SEGMENT_LAST;
+						else
+							header = SEGMENT_MIDDLE;
 
 						buf << header;
 						tmp = buf.str() + chunk; // Prepand header to chunk
