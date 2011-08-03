@@ -179,10 +179,14 @@ namespace dtn
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				} else {
 
-					//stringstream buf;
-					//buf << SEGMENT_BOTH;
+					std::string tmp;
+					stringstream buf;
 
-					//data = buf.str() + data; // Prepand header
+					buf << SEGMENT_BOTH;
+
+					tmp = buf.str() + data; // Prepand header to chunk
+					data = "";
+					data = tmp;
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
