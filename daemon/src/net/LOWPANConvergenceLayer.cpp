@@ -142,19 +142,21 @@ namespace dtn
 					std::string chunk, tmp;
 					char header;
 					stringstream buf;
-					int i;
+					int i, seq_num;
 					int chunks = ceil(data.length() / 114.0);
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
 					for (i = 0; i < chunks; i++) {
 						chunk = data.substr(i * 114, 114);
 
+						seq_num =  i % 16;
+
 						header = 0;
 						if (i == 0) // First segment
-							header = SEGMENT_FIRST;
+							header = SEGMENT_FIRST + seq_num;
 						else if (i == (chunks - 1)) // Last segment
-							header = SEGMENT_LAST;
+							header = SEGMENT_LAST + seq_num;
 						else
-							header = SEGMENT_MIDDLE;
+							header = SEGMENT_MIDDLE+ seq_num;
 
 						buf << header;
 						tmp = buf.str() + chunk; // Prepand header to chunk
@@ -220,7 +222,7 @@ namespace dtn
 
 			char data[m_maxmsgsize];
 			stringstream ss, ss2;
-			std::string buf;
+			std::string buf, header;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
@@ -231,6 +233,8 @@ namespace dtn
 				// read all data into a stream
 				ss2.write(data, len);
 				buf = ss2.str();
+				header = buf.substr(0,1);
+				cout << "Header: " << header << endl;
 				buf.erase(0,1); // remove header byte
 				ss << buf;
 			}
@@ -244,6 +248,8 @@ namespace dtn
 				ss2.str("");
 				ss2.write(data, len);
 				buf = ss2.str();
+				header = buf.substr(0,1);
+				cout << "Header: " << header << endl;
 				buf.erase(0,1); // remove header byte
 				ss << buf;
 
