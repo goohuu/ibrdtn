@@ -223,7 +223,7 @@ namespace dtn
 			char data[m_maxmsgsize];
 			stringstream ss, ss2;
 			std::string buf, header;
-			int foo;
+			char foo;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
@@ -234,6 +234,7 @@ namespace dtn
 				// read all data into a stream
 				ss2.write(data, len);
 				buf = ss2.str();
+				cout << "Full buffer: " << buf << endl;
 				header = buf.substr(0,1);
 				foo = atoi(header.c_str());
 				cout << "Header: " << hex << foo << endl;
@@ -250,6 +251,7 @@ namespace dtn
 				ss2.str("");
 				ss2.write(data, len);
 				buf = ss2.str();
+				cout << "Full buffer: " << buf << endl;
 				header = buf.substr(0,1);
 				foo = atoi(header.c_str());
 				cout << "Header: " << hex << foo << endl;
