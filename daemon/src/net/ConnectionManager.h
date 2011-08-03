@@ -45,6 +45,8 @@ namespace dtn
 			virtual ~ConnectionManager();
 
 			void addConnection(const dtn::core::Node &n);
+			void removeConnection(const dtn::core::Node &n);
+
 			void addConvergenceLayer(ConvergenceLayer *cl);
 
 			void queue(const dtn::data::EID &eid, const dtn::data::BundleID &b);

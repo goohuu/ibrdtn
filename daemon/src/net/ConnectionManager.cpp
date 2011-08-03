@@ -149,9 +149,28 @@ namespace dtn
 
 		void ConnectionManager::addConnection(const dtn::core::Node &n)
 		{
+			bool announce = false;
+
 			ibrcommon::MutexLock l(_node_lock);
+			if (!isNeighbor(n)) announce = true;
+
 			_static_nodes.insert(n);
-			dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
+
+			if (announce)
+			{
+				dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
+			}
+		}
+
+		void ConnectionManager::removeConnection(const dtn::core::Node &n)
+		{
+			ibrcommon::MutexLock l(_node_lock);
+			_static_nodes.erase(n);
+
+			if (!isNeighbor(n))
+			{
+				dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
+			}
 		}
 
 		void ConnectionManager::addConvergenceLayer(ConvergenceLayer *cl)
@@ -256,8 +275,8 @@ namespace dtn
 
 				if (IBRCOMMON_LOGGER_LEVEL >= 50)
 				{
-					IBRCOMMON_LOGGER_DEBUG(50) << "## static node list ##" << IBRCOMMON_LOGGER_ENDL;
-					for (std::set<dtn::core::Node>::const_iterator iter = _static_nodes.begin(); iter != _static_nodes.end(); iter++)
+					IBRCOMMON_LOGGER_DEBUG(50) << "## connected node list ##" << IBRCOMMON_LOGGER_ENDL;
+					for (std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.begin(); iter != _connected_nodes.end(); iter++)
 					{
 						const dtn::core::Node &n = (*iter);
 						IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
@@ -276,8 +295,8 @@ namespace dtn
 
 				if (IBRCOMMON_LOGGER_LEVEL >= 50)
 				{
-					IBRCOMMON_LOGGER_DEBUG(50) << "## connected node list ##" << IBRCOMMON_LOGGER_ENDL;
-					for (std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.begin(); iter != _connected_nodes.end(); iter++)
+					IBRCOMMON_LOGGER_DEBUG(50) << "## static node list ##" << IBRCOMMON_LOGGER_ENDL;
+					for (std::set<dtn::core::Node>::const_iterator iter = _static_nodes.begin(); iter != _static_nodes.end(); iter++)
 					{
 						const dtn::core::Node &n = (*iter);
 						IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;

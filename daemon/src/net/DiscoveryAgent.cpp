@@ -5,13 +5,13 @@
  *      Author: morgenro
  */
 
+#include "Configuration.h"
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryService.h"
 #include "net/DiscoveryAnnouncement.h"
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
 #include <ibrdtn/utils/Utils.h>
-#include "Configuration.h"
 #include <ibrcommon/Logger.h>
 
 using namespace dtn::core;
@@ -41,7 +41,7 @@ namespace dtn
 			_services.push_back(service);
 		}
 
-		void DiscoveryAgent::received(const DiscoveryAnnouncement &announcement)
+		void DiscoveryAgent::received(const DiscoveryAnnouncement &announcement, size_t timeout)
 		{
 			// calculating RTT with the service timestamp
 			size_t rtt = 2700;
@@ -53,7 +53,7 @@ namespace dtn
 			n.setEID(announcement.getEID());
 
 			// get configured timeout value
-			n.setTimeout( _config.timeout() );
+			n.setTimeout( (timeout == 0) ? _config.timeout() : timeout );
 
 			const list<DiscoveryService> services = announcement.getServices();
 			for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)

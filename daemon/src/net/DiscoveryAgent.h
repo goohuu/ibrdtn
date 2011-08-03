@@ -26,7 +26,7 @@ namespace dtn
 			DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config);
 			virtual ~DiscoveryAgent() = 0;
 
-			void received(const dtn::net::DiscoveryAnnouncement &announcement);
+			void received(const dtn::net::DiscoveryAnnouncement &announcement, size_t timeout = 0);
 
 			void addService(string name, string parameters);
 			void addService(dtn::net::DiscoveryServiceProvider *provider);

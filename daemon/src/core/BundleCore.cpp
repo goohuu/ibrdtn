@@ -1,9 +1,10 @@
 #include "config.h"
 #include "core/BundleCore.h"
 #include "core/GlobalEvent.h"
+#include "core/BundleEvent.h"
+#include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include "routing/QueueBundleEvent.h"
-#include "core/BundleEvent.h"
 
 #include <ibrcommon/data/BLOB.h>
 #include <ibrdtn/data/MetaBundle.h>
@@ -107,7 +108,7 @@ namespace dtn
 				_connectionmanager.queue(destination, bundle);
 			} catch (const dtn::net::NeighborNotAvailableException &ex) {
 				// signal interruption of the transfer
-				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
+				dtn::net::TransferAbortedEvent::raise(destination, bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
 			} catch (const dtn::net::ConnectionNotAvailableException &ex) {
 				// signal interruption of the transfer
 				dtn::routing::RequeueBundleEvent::raise(destination, bundle);
@@ -124,6 +125,11 @@ namespace dtn
 		void BundleCore::addConnection(const dtn::core::Node &n)
 		{
 			_connectionmanager.addConnection(n);
+		}
+
+		void BundleCore::removeConnection(const dtn::core::Node &n)
+		{
+			_connectionmanager.removeConnection(n);
 		}
 
 		const std::set<dtn::core::Node> BundleCore::getNeighbors()

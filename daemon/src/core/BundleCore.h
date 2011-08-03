@@ -45,6 +45,7 @@ namespace dtn
 			void addConvergenceLayer(dtn::net::ConvergenceLayer *cl);
 
 			void addConnection(const dtn::core::Node &n);
+			void removeConnection(const dtn::core::Node &n);
 
 			const std::set<dtn::core::Node> getNeighbors();
 
