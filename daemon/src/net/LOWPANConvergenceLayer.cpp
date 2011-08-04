@@ -44,7 +44,7 @@
  *	    11 First and last segment
  * Bit 6-7: 00 to be compatible with 6LoWPAN
  */
-#define SEGMENT_FIRST	0x20
+#define SEGMENT_FIRST	0x25
 #define SEGMENT_LAST	0x10
 #define SEGMENT_BOTH	0x30
 #define SEGMENT_MIDDLE	0x00
@@ -140,7 +140,7 @@ namespace dtn
 
 				if (data.length() > 114) {
 					std::string chunk, tmp;
-					char header;
+					char header = 0;
 					stringstream buf;
 					int i, seq_num;
 					int chunks = ceil(data.length() / 114.0);
@@ -150,7 +150,7 @@ namespace dtn
 
 						seq_num =  i % 16;
 
-						header = 0;
+						printf("Iteration %i with seq number %i\n", i, seq_num);
 						if (i == 0) // First segment
 							header = SEGMENT_FIRST + seq_num;
 						else if (i == (chunks - 1)) // Last segment
