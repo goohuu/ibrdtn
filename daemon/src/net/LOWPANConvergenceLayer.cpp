@@ -158,6 +158,7 @@ namespace dtn
 						else
 							header = SEGMENT_MIDDLE+ seq_num;
 
+						printf("WTF header: %i\n", header);
 						buf << header;
 						tmp = buf.str() + chunk; // Prepand header to chunk
 						chunk = "";
