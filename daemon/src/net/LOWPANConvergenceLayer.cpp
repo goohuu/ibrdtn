@@ -150,7 +150,7 @@ namespace dtn
 
 						seq_num =  i % 16;
 
-						printf("Iteration %i with seq number %i\n", i, seq_num);
+						printf("Iteration %i with seq number %i, from %i chunks\n", i, seq_num, chunks);
 						if (i == 0) // First segment
 							header = SEGMENT_FIRST + seq_num;
 						else if (i == (chunks - 1)) // Last segment
