@@ -141,11 +141,11 @@ namespace dtn
 				if (data.length() > 114) {
 					std::string chunk, tmp;
 					char header = 0;
-					stringstream buf;
 					int i, seq_num;
 					int chunks = ceil(data.length() / 114.0);
 					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
 					for (i = 0; i < chunks; i++) {
+						stringstream buf;
 						chunk = data.substr(i * 114, 114);
 
 						seq_num =  i % 16;
