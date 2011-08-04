@@ -448,6 +448,8 @@ namespace dtn
 			} catch (const ConfigFile::key_not_found&) {
 				throw ParameterNotSetException();
 			}
+
+			throw ParameterNotSetException();
 		}
 
 		std::string Configuration::getStorage() const
