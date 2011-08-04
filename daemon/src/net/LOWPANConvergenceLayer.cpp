@@ -128,15 +128,11 @@ namespace dtn
 				// read values
 				uri.decode(address, pan);
 
-				//cout << "CL LOWPAN was asked to connect to " << hex << address << " in PAN " << hex << pan << endl;
-
 				serializer << bundle;
 				string data = ss.str();
 
 				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
-
-				//cout << "Send out bundle with length " << dec << data.length() << endl;
 
 				if (data.length() > 114) {
 					std::string chunk, tmp;
@@ -158,13 +154,11 @@ namespace dtn
 						else
 							header = SEGMENT_MIDDLE+ seq_num;
 
-						printf("WTF header: %x\n", header);
 						buf << header;
 						tmp = buf.str() + chunk; // Prepand header to chunk
 						chunk = "";
 						chunk = tmp;
 
-						//cout << "Chunk with offset " << dec << i << " : " << chunk << endl;
 						// set write lock
 						ibrcommon::MutexLock l(m_writelock);
 
@@ -222,42 +216,25 @@ namespace dtn
 			ibrcommon::MutexLock l(m_readlock);
 
 			char data[m_maxmsgsize];
-			stringstream ss, ss2;
-			std::string buf, header;
-//			char foo;
+			stringstream ss;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
 			printf("Header first segment: %x\n", data[0]);
-			printf("Buffer from receive: %x\n", data[1]);
 
-			//cout << "Chunk 1 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
 			{
 				// read all data into a stream
 				ss.write(data+1, len-1);
-				//buf = ss2.str();
-				//header = buf.substr(0,1);
-				//foo = atoi(header.c_str());
-				//buf.erase(0,1); // remove header byte
-				//ss << buf;
 			}
 
 			len = _socket->receive(data, m_maxmsgsize);
 			printf("Header second segment: %x\n", data[0]);
-			printf("Buffer from receive: %x\n", data[1]);
 
-			//cout << "Chunk 2 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
 			{
 				// read all data into a stream
-				//ss2.str("");
 				ss.write(data+1, len-1);
-				//buf = ss2.str();
-				//header = buf.substr(0,1);
-				//foo = atoi(header.c_str());
-				//buf.erase(0,1); // remove header byte
-				//ss << buf;
 
 				// get the bundle
 				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
