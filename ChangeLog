@@ -1,3 +1,18 @@
+2011-08-01
+--------------------------------------------------------
+ * BLOB Provider mechanism
+ * SQLiteStorage provides own BLOBs and uses hard-links to copy bundle payload
+ * SQLiteStorage expiration fix
+ * Disable tcp linger and keepalive option on tcp connections
+ * Now IPND binds on any interface instead on the broadcast/multicast address
+ * Retransmission Module: Exponential back-off fix
+ * Now a transfer is aborted if the node is gone
+ * Renamed CONN_ZIGBEE to CONN_LOWPAN
+ * Group support for dtnsend, dtnrecv and dtnstream
+ * Fix for dtnping with bundle sizes < 4
+ * New dtnstream options "-w" wait for the bundle with the seq. no. zero.
+    By default, the stream starts with the first received bundle.
+
 2011-07-20
 --------------------------------------------------------
  * New API framework supports group destinations

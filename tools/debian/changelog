@@ -1,3 +1,12 @@
+ibrdtn-tools (0.6.4) stable; urgency=low
+
+  * Group support for dtnsend, dtnrecv and dtnstream
+  * Fix for dtnping with bundle sizes < 4
+  * New dtnstream options "-w" wait for the bundle with the seq. no. zero.
+    By default, the stream starts with the first received bundle.
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 01 Aug 2011 12:00:00 +0200
+
 ibrdtn-tools (0.6.3) stable; urgency=low
 
   * fd leak fixed

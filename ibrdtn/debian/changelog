@@ -1,3 +1,11 @@
+ibrdtn (0.6.4) stable; urgency=low
+
+  * New API framework
+  * TLS extensions by Stephen Röttger
+  * Support for BLOB Provider
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 01 Aug 2011 12:00:00 +0200
+
 ibrdtn (0.6.3) stable; urgency=low
 
   * fd leak fixed

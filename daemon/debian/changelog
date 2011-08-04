@@ -1,3 +1,17 @@
+ibrdtnd (0.6.4) stable; urgency=low
+
+  * TLS for TCP convergence layer by Stephen Röttger
+  * New API framework (supports Groups)
+  * SQLiteStorage provides own BLOBs and uses hard-links to copy bundle payload
+  * SQLiteStorage expiration fix
+  * Disable tcp linger and keepalive option on tcp connections
+  * Now IPND binds on any interface instead on the broadcast/multicast address
+  * Retransmission Module: Exponential back-off fix
+  * Now a transfer is aborted if the node is gone
+  * Renamed CONN_ZIGBEE to CONN_LOWPAN
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Mon, 01 Aug 2011 12:00:00 +0200
+
 ibrdtnd (0.6.3) stable; urgency=low
 
   * fd leak fixed
