@@ -158,7 +158,7 @@ namespace dtn
 						else
 							header = SEGMENT_MIDDLE+ seq_num;
 
-						printf("WTF header: %i\n", header);
+						printf("WTF header: %x\n", header);
 						buf << header;
 						tmp = buf.str() + chunk; // Prepand header to chunk
 						chunk = "";
@@ -229,7 +229,7 @@ namespace dtn
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
 			printf("Header first segment: %x\n", data[0]);
-//			printf("Buffer from receive: %x\n", data[1]);
+			printf("Buffer from receive: %x\n", data[1]);
 
 			//cout << "Chunk 1 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
@@ -245,7 +245,7 @@ namespace dtn
 
 			len = _socket->receive(data, m_maxmsgsize);
 			printf("Header second segment: %x\n", data[0]);
-//7			printf("Buffer from receive: %x\n", data[1]);
+			printf("Buffer from receive: %x\n", data[1]);
 
 			//cout << "Chunk 2 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
