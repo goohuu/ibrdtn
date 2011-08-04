@@ -235,12 +235,12 @@ namespace dtn
 			if (len > 0)
 			{
 				// read all data into a stream
-				ss2.write(data, len);
-				buf = ss2.str();
+				ss.write(data+1, len-1);
+				//buf = ss2.str();
 				//header = buf.substr(0,1);
 				//foo = atoi(header.c_str());
-				buf.erase(0,1); // remove header byte
-				ss << buf;
+				//buf.erase(0,1); // remove header byte
+				//ss << buf;
 			}
 
 			len = _socket->receive(data, m_maxmsgsize);
@@ -251,13 +251,13 @@ namespace dtn
 			if (len > 0)
 			{
 				// read all data into a stream
-				ss2.str("");
-				ss2.write(data, len);
-				buf = ss2.str();
+				//ss2.str("");
+				ss.write(data+1, len-1);
+				//buf = ss2.str();
 				//header = buf.substr(0,1);
 				//foo = atoi(header.c_str());
-				buf.erase(0,1); // remove header byte
-				ss << buf;
+				//buf.erase(0,1); // remove header byte
+				//ss << buf;
 
 				// get the bundle
 				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
