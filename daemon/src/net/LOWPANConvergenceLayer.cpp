@@ -223,12 +223,12 @@ namespace dtn
 			char data[m_maxmsgsize];
 			stringstream ss, ss2;
 			std::string buf, header;
-			char foo;
+//			char foo;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
-			printf("Buffer from receive: %x\n", data[0]);
-			printf("Buffer from receive: %x\n", data[1]);
+			printf("Header first segment: %x\n", data[0]);
+//			printf("Buffer from receive: %x\n", data[1]);
 
 			//cout << "Chunk 1 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
@@ -236,17 +236,15 @@ namespace dtn
 				// read all data into a stream
 				ss2.write(data, len);
 				buf = ss2.str();
-				cout << "Full buffer: " << buf << endl;
-				header = buf.substr(0,1);
-				foo = atoi(header.c_str());
-				cout << "Header: " << hex << foo << endl;
+				//header = buf.substr(0,1);
+				//foo = atoi(header.c_str());
 				buf.erase(0,1); // remove header byte
 				ss << buf;
 			}
 
 			len = _socket->receive(data, m_maxmsgsize);
-			printf("Buffer from receive: %x\n", data[0]);
-			printf("Buffer from receive: %x\n", data[1]);
+			printf("Header second segment: %x\n", data[0]);
+//7			printf("Buffer from receive: %x\n", data[1]);
 
 			//cout << "Chunk 2 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
@@ -255,10 +253,8 @@ namespace dtn
 				ss2.str("");
 				ss2.write(data, len);
 				buf = ss2.str();
-				cout << "Full buffer: " << buf << endl;
-				header = buf.substr(0,1);
-				foo = atoi(header.c_str());
-				cout << "Header: " << hex << foo << endl;
+				//header = buf.substr(0,1);
+				//foo = atoi(header.c_str());
 				buf.erase(0,1); // remove header byte
 				ss << buf;
 
