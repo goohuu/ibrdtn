@@ -227,7 +227,8 @@ namespace dtn
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
-			cout << "Buffer from receive: " << hex << data[0] << endl;
+			printf("Buffer from receive: %x\n", data[0]);
+			printf("Buffer from receive: %x\n", data[1]);
 
 			//cout << "Chunk 1 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
@@ -244,7 +245,8 @@ namespace dtn
 			}
 
 			len = _socket->receive(data, m_maxmsgsize);
-			cout << "Buffer from receive: " << hex << data[0] << endl;
+			printf("Buffer from receive: %x\n", data[0]);
+			printf("Buffer from receive: %x\n", data[1]);
 
 			//cout << "Chunk 2 with length " << dec << len << " : " << data << endl;
 			if (len > 0)
