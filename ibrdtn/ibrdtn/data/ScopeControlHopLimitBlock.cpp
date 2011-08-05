@@ -29,6 +29,7 @@ namespace dtn
 
 		size_t ScopeControlHopLimitBlock::getHopsToLive() const
 		{
+			if (_limit.getValue() < _count.getValue()) return 0;
 			return _limit.getValue() - _count.getValue();
 		}
 

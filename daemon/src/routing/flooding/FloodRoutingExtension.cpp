@@ -113,8 +113,14 @@ namespace dtn
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
-					// check Scope Control Block - do not forward bundles with hop limit <= 1
-					if (meta.hopcount <= 1)
+					// check Scope Control Block - do not forward bundles with hop limit == 0
+					if (meta.hopcount == 0)
+					{
+						return false;
+					}
+
+					// check Scope Control Block - do not forward non-group bundles with hop limit <= 1
+					if ((meta.hopcount <= 1) && (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)))
 					{
 						return false;
 					}

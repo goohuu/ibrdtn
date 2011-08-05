@@ -440,7 +440,7 @@ namespace dtn
 						mb.appdatalength = sqlite3_column_int64(getPayloadfiles, 9);
 						mb.expiretime = dtn::utils::Clock::getExpireTime(timestamp, mb.lifetime);
 
-						if (sqlite3_column_value(getPayloadfiles, 10) != NULL)
+						if (sqlite3_column_type(getPayloadfiles, 10) != SQLITE_NULL)
 						{
 							mb.hopcount = sqlite3_column_int64(getPayloadfiles, 10);
 						}
@@ -572,7 +572,7 @@ namespace dtn
 				bundle.appdatalength = sqlite3_column_int64(st, offset + 9);
 			}
 
-			if (sqlite3_column_value(st, offset + 10) != NULL)
+			if (sqlite3_column_type(st, offset + 10) != SQLITE_NULL)
 			{
 				bundle.hopcount = sqlite3_column_int64(st, 10);
 			}
