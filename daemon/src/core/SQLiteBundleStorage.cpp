@@ -14,6 +14,7 @@
 #include "core/BundleEvent.h"
 #include "core/BundleExpiredEvent.h"
 
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/Serializer.h>
@@ -56,7 +57,7 @@ namespace dtn
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +" WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 			"DELETE FROM "+ _tables[SQL_TABLE_BUNDLE] +";",
-			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source_id, timestamp, sequencenumber, fragmentoffset, source, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);",
+			"INSERT INTO "+ _tables[SQL_TABLE_BUNDLE] +" (source_id, timestamp, sequencenumber, fragmentoffset, source, destination, reportto, custodian, procflags, lifetime, appdatalength, expiretime, priority, hopcount) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset IS NULL;",
 			"UPDATE "+ _tables[SQL_TABLE_BUNDLE] +" SET custodian = ? WHERE source_id = ? AND timestamp = ? AND sequencenumber = ? AND fragmentoffset = ?;",
 
@@ -91,7 +92,7 @@ namespace dtn
 		const std::string SQLiteBundleStorage::_db_structure[10] =
 		{
 			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BLOCK] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `blocktype` INTEGER NOT NULL, `filename` TEXT NOT NULL, `ordernumber` INTEGER NOT NULL);",
-			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BUNDLE] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `source` TEXT NOT NULL, `destination` TEXT NOT NULL, `reportto` TEXT NOT NULL, `custodian` TEXT NOT NULL, `procflags` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `lifetime` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `appdatalength` INTEGER DEFAULT NULL, `expiretime` INTEGER NOT NULL, `priority` INTEGER NOT NULL);",
+			"CREATE TABLE IF NOT EXISTS `" + _tables[SQL_TABLE_BUNDLE] + "` ( `key` INTEGER PRIMARY KEY ASC, `source_id` TEXT NOT NULL, `source` TEXT NOT NULL, `destination` TEXT NOT NULL, `reportto` TEXT NOT NULL, `custodian` TEXT NOT NULL, `procflags` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `sequencenumber` INTEGER NOT NULL, `lifetime` INTEGER NOT NULL, `fragmentoffset` INTEGER DEFAULT NULL, `appdatalength` INTEGER DEFAULT NULL, `expiretime` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `hopcount` INTEGER DEFAULT NULL);",
 			"create table if not exists "+ _tables[SQL_TABLE_ROUTING] +" (INTEGER PRIMARY KEY ASC, Key int, Routing text);",
 			"create table if not exists "+ _tables[SQL_TABLE_BUNDLE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, BundleID text, Key int, Routing text);",
 			"create table if not exists "+ _tables[SQL_TABLE_NODE_ROUTING_INFO] +" (INTEGER PRIMARY KEY ASC, EID text, Key int, Routing text);",
@@ -403,7 +404,7 @@ namespace dtn
 			set<size_t> inconsistentTimestamp, inconsistentSeq_number;
 			set<string>::iterator file_it, consisten_it;
 
-			sqlite3_stmt *getPayloadfiles = prepare("SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength FROM "+_tables[SQL_TABLE_BUNDLE]+" WHERE fragmentoffset != NULL;");
+			sqlite3_stmt *getPayloadfiles = prepare("SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount FROM "+_tables[SQL_TABLE_BUNDLE]+" WHERE fragmentoffset != NULL;");
 
 			for(err = sqlite3_step(getPayloadfiles); err == SQLITE_ROW; err = sqlite3_step(getPayloadfiles))
 			{
@@ -438,8 +439,11 @@ namespace dtn
 						mb.custodian = custody;
 						mb.appdatalength = sqlite3_column_int64(getPayloadfiles, 9);
 						mb.expiretime = dtn::utils::Clock::getExpireTime(timestamp, mb.lifetime);
-						// TODO: store and restore hopcount
-						//mb.hopcount =
+
+						if (sqlite3_column_value(getPayloadfiles, 10) != NULL)
+						{
+							mb.hopcount = sqlite3_column_int64(getPayloadfiles, 10);
+						}
 
 						dtn::core::BundleEvent::raise(mb, BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 					}
@@ -567,6 +571,11 @@ namespace dtn
 				bundle.offset = sqlite3_column_int64(st, offset + 8);
 				bundle.appdatalength = sqlite3_column_int64(st, offset + 9);
 			}
+
+			if (sqlite3_column_value(st, offset + 10) != NULL)
+			{
+				bundle.hopcount = sqlite3_column_int64(st, 10);
+			}
 		}
 
 		void SQLiteBundleStorage::get(sqlite3_stmt *st, dtn::data::Bundle &bundle, size_t offset)
@@ -592,7 +601,7 @@ namespace dtn
 			std::list<dtn::data::MetaBundle> ret;
 
 			const std::string base_query =
-					"SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength FROM " + _tables[SQL_TABLE_BUNDLE];
+					"SELECT source, destination, reportto, custodian, procflags, timestamp, sequencenumber, lifetime, fragmentoffset, appdatalength, hopcount FROM " + _tables[SQL_TABLE_BUNDLE];
 
 			sqlite3_stmt *st = NULL;
 			size_t bind_offset = 1;
@@ -811,6 +820,13 @@ namespace dtn
 
 			sqlite3_bind_int64(_statements[BUNDLE_STORE], 12, TTL);
 			sqlite3_bind_int64(_statements[BUNDLE_STORE], 13, dtn::data::MetaBundle(bundle).getPriority());
+
+			try {
+				const dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<const dtn::data::ScopeControlHopLimitBlock>();
+				sqlite3_bind_int64(_statements[BUNDLE_STORE], 14, schl.getHopsToLive() );
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
+				sqlite3_bind_null(_statements[BUNDLE_STORE], 14 );
+			};
 
 			// start a transaction
 			sqlite3_exec(_database, "BEGIN TRANSACTION;", NULL, NULL, NULL);
