@@ -365,8 +365,6 @@ namespace dtn
 			 * of the list of files of the filesystem is deleted. if not the file is put in a seperate list. After this procedure there are 2 lists containing file
 			 * which are inconsistent and can be deleted.
 			 */
-			int err;
-			size_t timestamp, sequencenumber, offset, pFlags, appdata, lifetime;
 			set<string> blockFiles,payloadfiles;
 			string datei;
 
@@ -399,7 +397,7 @@ namespace dtn
 		void SQLiteBundleStorage::check_fragments(std::set<std::string> &payloadFiles)
 		{
 			int err;
-			size_t procFlags, timestamp, sequencenumber, appdatalength, lifetime;
+			size_t timestamp, sequencenumber, fragmentoffset;
 			string filename, source, dest, custody, repto;
 			set<string> consistenFiles, inconsistenSources;
 			set<size_t> inconsistentTimestamp, inconsistentSeq_number;
@@ -418,20 +416,31 @@ namespace dtn
 					consisten_it = consistenFiles.find(*file_it);
 
 					//inconsistent DB entry
-					if(consisten_it == consistenFiles.end()){
+					if(consisten_it == consistenFiles.end())
+					{
 						//Generate Report
-						source  = (const char*) sqlite3_column_text(getPayloadfiles,0);
-						dest    = (const char*) sqlite3_column_text(getPayloadfiles,1);
-						repto   = (const char*) sqlite3_column_text(getPayloadfiles,2);
-						custody = (const char*) sqlite3_column_text(getPayloadfiles,3);
-						procFlags = sqlite3_column_int64(getPayloadfiles,4);
-						timestamp = sqlite3_column_int64(getPayloadfiles,5);
-						sequencenumber = sqlite3_column_int64(getPayloadfiles,6);
-						lifetime  = sqlite3_column_int64(getPayloadfiles,7);
-						appdatalength  = sqlite3_column_int64(getPayloadfiles,9);
+						source  = (const char*) sqlite3_column_text(getPayloadfiles, 0);
+						dest    = (const char*) sqlite3_column_text(getPayloadfiles, 1);
+						repto   = (const char*) sqlite3_column_text(getPayloadfiles, 2);
+						custody = (const char*) sqlite3_column_text(getPayloadfiles, 3);
 
-						dtn::data::BundleID id(dtn::data::EID(source),timestamp,sequencenumber);
-						dtn::data::MetaBundle mb(id, lifetime, dtn::data::DTNTime(), dtn::data::EID(dest), dtn::data::EID(repto), dtn::data::EID(custody), appdatalength, procFlags);
+						timestamp = sqlite3_column_int64(getPayloadfiles, 5);
+						sequencenumber = sqlite3_column_int64(getPayloadfiles, 6);
+						fragmentoffset = sqlite3_column_int64(getPayloadfiles, 8);
+
+						dtn::data::BundleID id( dtn::data::EID(source), timestamp, sequencenumber, true, fragmentoffset );
+						dtn::data::MetaBundle mb(id);
+
+						mb.procflags = sqlite3_column_int64(getPayloadfiles, 4);
+						mb.lifetime = sqlite3_column_int64(getPayloadfiles, 7);
+						mb.destination = dest;
+						mb.reportto = repto;
+						mb.custodian = custody;
+						mb.appdatalength = sqlite3_column_int64(getPayloadfiles, 9);
+						mb.expiretime = dtn::utils::Clock::getExpireTime(timestamp, mb.lifetime);
+						// TODO: store and restore hopcount
+						//mb.hopcount =
+
 						dtn::core::BundleEvent::raise(mb, BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 					}
 				}
@@ -766,10 +775,6 @@ namespace dtn
 		void SQLiteBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
 			IBRCOMMON_LOGGER_DEBUG(25) << "store bundle " << bundle.toString() << IBRCOMMON_LOGGER_ENDL;
-
-			// determine if the bundle is for local delivery
-			bool local = (bundle._destination.sameHost(BundleCore::local)
-					&& (bundle._procflags & dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON));
 
 //			// if the bundle is a fragment store it as one
 //			if (bundle.get(dtn::data::Bundle::FRAGMENT) && local)

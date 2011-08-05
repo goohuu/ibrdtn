@@ -1,20 +1,21 @@
 #include "net/UDPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
-#include "core/BundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
-#include "routing/RequeueBundleEvent.h"
-#include <ibrcommon/net/UnicastSocket.h>
-#include <ibrcommon/net/vaddress.h>
-#include <ibrcommon/net/vinterface.h>
+#include "core/BundleEvent.h"
 #include "core/BundleCore.h"
-
-#include <ibrcommon/data/BLOB.h>
-#include <ibrcommon/Logger.h>
-#include <ibrcommon/thread/MutexLock.h>
+#include "routing/RequeueBundleEvent.h"
 
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/Serializer.h>
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
+
+#include <ibrcommon/net/UnicastSocket.h>
+#include <ibrcommon/net/vaddress.h>
+#include <ibrcommon/net/vinterface.h>
+#include <ibrcommon/data/BLOB.h>
+#include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 #include <sys/socket.h>
 #include <poll.h>
@@ -209,6 +210,12 @@ namespace dtn
 
 					// determine sender
 					EID sender;
+
+					// increment value in the scope control hop limit block
+					try {
+						dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+						schl.increment();
+					} catch (const std::bad_cast&) { };
 
 					// raise default bundle received event
 					dtn::net::BundleReceivedEvent::raise(sender, bundle);

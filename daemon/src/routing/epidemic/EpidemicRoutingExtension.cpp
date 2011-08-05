@@ -20,6 +20,7 @@
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/Logger.h>
@@ -146,6 +147,12 @@ namespace dtn
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
+					// check Scope Control Block - do not forward bundles with hop limit <= 1
+					if (meta.hopcount <= 1)
+					{
+						return false;
+					}
+
 					// do not forward any epidemic control message
 					// this is done by the neighbor routing module
 					if (meta.source == (dtn::core::BundleCore::local + "/routing/epidemic"))
@@ -416,7 +423,7 @@ namespace dtn
 			req._lifetime = 60;
 
 			// set high priority
-			req.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
+			req.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
 			req.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
 
 			dtn::data::PayloadBlock &p = req.push_back<PayloadBlock>();
@@ -427,6 +434,10 @@ namespace dtn
 				ibrcommon::BLOB::iostream ios = ref.iostream();
 				(*ios) << ecm;
 			}
+
+			// add a schl block
+			dtn::data::ScopeControlHopLimitBlock &schl = req.push_front<dtn::data::ScopeControlHopLimitBlock>();
+			schl.setLimit(1);
 
 			// send the bundle
 			transmit(req);
@@ -475,7 +486,7 @@ namespace dtn
 				answer._lifetime = 60;
 
 				// set high priority
-				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
+				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
 				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
 
 				dtn::data::PayloadBlock &p = answer.push_back<PayloadBlock>();
@@ -486,6 +497,10 @@ namespace dtn
 					ibrcommon::BLOB::iostream ios = ref.iostream();
 					(*ios) << response_ecm;
 				}
+
+				// add a schl block
+				dtn::data::ScopeControlHopLimitBlock &schl = answer.push_front<dtn::data::ScopeControlHopLimitBlock>();
+				schl.setLimit(1);
 
 				// transfer the bundle to the neighbor
 				_endpoint.send(answer);

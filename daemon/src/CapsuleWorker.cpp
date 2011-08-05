@@ -8,6 +8,7 @@
 #include "CapsuleWorker.h"
 #include <ibrdtn/data/PayloadBlock.h>
 #include "net/BundleReceivedEvent.h"
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
 
@@ -49,6 +50,12 @@ namespace dtn
 					{
 						// deserialize the next bundle
 						deserializer >> b;
+
+						// increment value in the scope control hop limit block
+						try {
+							dtn::data::ScopeControlHopLimitBlock &schl = b.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							schl.increment();
+						} catch (const std::bad_cast&) { };
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(capsule._source, b);

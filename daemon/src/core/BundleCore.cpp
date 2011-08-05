@@ -247,8 +247,7 @@ namespace dtn
 			}
 
 #ifdef WITH_BUNDLE_SECURITY
-			// lets see if signatures and hashes are correct and it decrypts if needed
-			// the const_cast is dangerous, but in BundleReceivedEvent::raise() bundle was not const, so I think it will be ok
+			// do a fast security check
 			try {
 				dtn::security::SecurityManager::getInstance().fastverify(b);
 			} catch (const dtn::security::SecurityManager::VerificationFailedException &ex) {

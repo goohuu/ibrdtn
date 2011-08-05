@@ -8,6 +8,7 @@
  */
 
 #include "net/HTTPConvergenceLayer.h"
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrcommon/AutoDelete.h>
 
 namespace dtn
@@ -251,6 +252,12 @@ namespace dtn
 					try  {
 						dtn::data::Bundle bundle;
 						dtn::data::DefaultDeserializer(_stream) >> bundle;
+
+						// increment value in the scope control hop limit block
+						try {
+							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							schl.increment();
+						} catch (const std::bad_cast&) { };
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle);

@@ -1,3 +1,9 @@
+2011-08-04
+--------------------------------------------------------
+ * Support for the Scope Control Hop Limit Block added
+   http://tools.ietf.org/html/draft-fall-dtnrg-schl-00
+   (uses extension block id 199 since number 9 is already reserved by BSP)
+
 2011-08-01
 --------------------------------------------------------
  * BLOB Provider mechanism

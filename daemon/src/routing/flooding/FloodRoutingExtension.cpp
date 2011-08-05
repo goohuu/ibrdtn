@@ -113,6 +113,12 @@ namespace dtn
 
 				virtual bool shouldAdd(const dtn::data::MetaBundle &meta) const
 				{
+					// check Scope Control Block - do not forward bundles with hop limit <= 1
+					if (meta.hopcount <= 1)
+					{
+						return false;
+					}
+
 					// do not forward to any blacklisted destination
 					const dtn::data::EID dest = meta.destination.getNode();
 					if (_blacklist.find(dest) != _blacklist.end())

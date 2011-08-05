@@ -10,6 +10,8 @@
 
 #include "ibrdtn/data/MetaBundle.h"
 #include "ibrdtn/utils/Clock.h"
+#include "ibrdtn/data/ScopeControlHopLimitBlock.h"
+#include <limits>
 
 namespace dtn
 {
@@ -17,24 +19,29 @@ namespace dtn
 	{
 		MetaBundle::MetaBundle()
 		 : BundleID(), received(), lifetime(0), destination(), reportto(),
-		   custodian(), appdatalength(0), procflags(0), expiretime(0)
+		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(std::numeric_limits<std::size_t>::max())
 		{
 		}
 
-		MetaBundle::MetaBundle(const dtn::data::BundleID &id, const size_t l,
-				const dtn::data::DTNTime recv, const dtn::data::EID d, const dtn::data::EID r,
-				const dtn::data::EID c, const size_t app, const size_t proc)
-		 : BundleID(id), received(recv), lifetime(l), destination(d), reportto(r),
-		   custodian(c), appdatalength(app), procflags(proc), expiretime(0)
+		MetaBundle::MetaBundle(const dtn::data::BundleID &id)
+		 : BundleID(id), received(), lifetime(0), destination(), reportto(),
+		   custodian(), appdatalength(0), procflags(0), expiretime(0), hopcount(std::numeric_limits<std::size_t>::max())
 		{
-			expiretime = dtn::utils::Clock::getExpireTime(id.getTimestamp(), l);
 		}
 
 		MetaBundle::MetaBundle(const dtn::data::Bundle &b)
 		 : BundleID(b), lifetime(b._lifetime), destination(b._destination), reportto(b._reportto),
-		   custodian(b._custodian), appdatalength(b._appdatalength), procflags(b._procflags), expiretime(0)
+		   custodian(b._custodian), appdatalength(b._appdatalength), procflags(b._procflags), expiretime(0), hopcount(std::numeric_limits<std::size_t>::max())
 		{
 			expiretime = dtn::utils::Clock::getExpireTime(b);
+
+			/**
+			 * read the hop limit
+			 */
+			try {
+				const dtn::data::ScopeControlHopLimitBlock &schl = b.getBlock<const dtn::data::ScopeControlHopLimitBlock>();
+				hopcount = schl.getHopsToLive();
+			} catch (const std::bad_cast&) { };
 		}
 
 		MetaBundle::~MetaBundle()

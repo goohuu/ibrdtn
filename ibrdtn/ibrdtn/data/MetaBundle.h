@@ -21,11 +21,7 @@ namespace dtn
 		{
 		public:
 			MetaBundle();
-
-			MetaBundle(const dtn::data::BundleID &id, const size_t lifetime, const dtn::data::DTNTime received = dtn::data::DTNTime(),
-					const dtn::data::EID destination = dtn::data::EID(), const dtn::data::EID reportto = dtn::data::EID(),
-					const dtn::data::EID custodian = dtn::data::EID(), const size_t appdatalength = 0, const size_t procflags = 0);
-
+			MetaBundle(const dtn::data::BundleID &id);
 			MetaBundle(const dtn::data::Bundle &b);
 			virtual ~MetaBundle();
 
@@ -40,6 +36,7 @@ namespace dtn
 			size_t appdatalength;
 			size_t procflags;
 			size_t expiretime;
+			size_t hopcount;
 		};
 	}
 }

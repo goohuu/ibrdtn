@@ -14,6 +14,7 @@
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/PayloadBlock.h>
 #include <ibrdtn/data/SDNV.h>
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/Logger.h>
 
@@ -266,7 +267,7 @@ namespace dtn
 					b._destination = peer + "/dtntp";
 
 					// set high priority
-					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
+					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
 					b.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
 
 					// set the the destination as singleton receiver
@@ -274,6 +275,10 @@ namespace dtn
 
 					// set the lifetime of the bundle to 60 seconds
 					b._lifetime = 60;
+
+					// add a schl block
+					dtn::data::ScopeControlHopLimitBlock &schl = b.push_front<dtn::data::ScopeControlHopLimitBlock>();
+					schl.setLimit(1);
 
 					transmit(b);
 				}
@@ -406,7 +411,7 @@ namespace dtn
 						response._destination = b._source;
 						
 						// set high priority
-						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, true);
+						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
 						response.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
 
 						// set the the destination as singleton receiver
@@ -436,6 +441,15 @@ namespace dtn
 
 						// add a second age block
 						response.push_front<dtn::data::AgeBlock>();
+
+						// modify the old schl block or add a new one
+						try {
+							dtn::data::ScopeControlHopLimitBlock &schl = response.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							schl.setLimit(1);
+						} catch (const std::bad_cast&) {
+							dtn::data::ScopeControlHopLimitBlock &schl = response.push_front<dtn::data::ScopeControlHopLimitBlock>();
+							schl.setLimit(1);
+						};
 
 						// send the response
 						transmit(response);

@@ -18,6 +18,7 @@
 #include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
 
+#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrcommon/net/tcpclient.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/vinterface.h>
@@ -346,6 +347,12 @@ namespace dtn
 							// invalid bundle!
 							throw dtn::data::Validator::RejectedException("destination or source EID is null");
 						}
+
+						// increment value in the scope control hop limit block
+						try {
+							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+							schl.increment();
+						} catch (const std::bad_cast&) { };
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle);
