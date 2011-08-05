@@ -936,8 +936,6 @@ namespace dtn
 
 				default:
 				{
-					IBRCOMMON_LOGGER_DEBUG(3) << "get extension block factory for " << (int)block_type << IBRCOMMON_LOGGER_ENDL;
-
 					// get a extension block factory
 					try {
 						ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
@@ -960,8 +958,6 @@ namespace dtn
 			_stream.get(obj._blocktype);
 			_stream >> procflags_sdnv;
 			obj._procflags = procflags_sdnv.getValue();
-
-			IBRCOMMON_LOGGER_DEBUG(3) << "read block: " << (int)obj.getType() << IBRCOMMON_LOGGER_ENDL;
 
 			// read EIDs
 			if ( obj.get(dtn::data::Block::BLOCK_CONTAINS_EIDS))
@@ -987,8 +983,6 @@ namespace dtn
 
 			// read the payload of the block
 			obj.deserialize(_stream, block_size.getValue());
-
-			IBRCOMMON_LOGGER_DEBUG(3) << "block deserialized: " << (int)obj.getType() << IBRCOMMON_LOGGER_ENDL;
 
 			return (*this);
 		}
