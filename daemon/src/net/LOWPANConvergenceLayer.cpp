@@ -216,29 +216,34 @@ namespace dtn
 			ibrcommon::MutexLock l(m_readlock);
 
 			char data[m_maxmsgsize];
+			char header, tmp;
 			stringstream ss;
 
 			// data waiting
 			int len = _socket->receive(data, m_maxmsgsize);
-			printf("Header first segment: %x\n", data[0]);
 
-			if (len > 0)
-			{
-				// read all data into a stream
-				ss.write(data+1, len-1);
+			if (len <= 0)
+				return (*this);
+
+			header = data[0];
+			printf("Segment header: %x\n", header);
+			ss.write(data+1, len-1);
+
+			header &= 0xF0;
+			printf("Header without seq num %x\n", header);
+
+			while (header != SEGMENT_LAST) {
+
+				len = _socket->receive(data, m_maxmsgsize);
+				header = data[0];
+				printf("Header second segment: %x\n", header);
+
+				if (len > 0)
+					ss.write(data+1, len-1);
 			}
 
-			len = _socket->receive(data, m_maxmsgsize);
-			printf("Header second segment: %x\n", data[0]);
-
 			if (len > 0)
-			{
-				// read all data into a stream
-				ss.write(data+1, len-1);
-
-				// get the bundle
 				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
-			}
 
 			return (*this);
 		}
