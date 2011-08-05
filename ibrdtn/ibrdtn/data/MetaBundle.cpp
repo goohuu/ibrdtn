@@ -41,7 +41,7 @@ namespace dtn
 			try {
 				const dtn::data::ScopeControlHopLimitBlock &schl = b.getBlock<const dtn::data::ScopeControlHopLimitBlock>();
 				hopcount = schl.getHopsToLive();
-			} catch (const std::bad_cast&) { };
+			} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 		}
 
 		MetaBundle::~MetaBundle()

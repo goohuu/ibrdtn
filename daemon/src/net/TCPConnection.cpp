@@ -352,7 +352,7 @@ namespace dtn
 						try {
 							dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
 							schl.increment();
-						} catch (const std::bad_cast&) { };
+						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { }
 
 						// raise default bundle received event
 						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle);

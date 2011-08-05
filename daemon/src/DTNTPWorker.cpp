@@ -446,7 +446,7 @@ namespace dtn
 						try {
 							dtn::data::ScopeControlHopLimitBlock &schl = response.getBlock<dtn::data::ScopeControlHopLimitBlock>();
 							schl.setLimit(1);
-						} catch (const std::bad_cast&) {
+						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
 							dtn::data::ScopeControlHopLimitBlock &schl = response.push_front<dtn::data::ScopeControlHopLimitBlock>();
 							schl.setLimit(1);
 						};
