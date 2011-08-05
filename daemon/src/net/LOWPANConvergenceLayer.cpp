@@ -237,6 +237,8 @@ namespace dtn
 				len = _socket->receive(data, m_maxmsgsize);
 				header = data[0];
 				printf("Header second segment: %x\n", header);
+				header &= 0xF0;
+				printf("Header without seq num %x\n", header);
 
 				if (len > 0)
 					ss.write(data+1, len-1);
