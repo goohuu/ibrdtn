@@ -16,8 +16,6 @@ sleep 5
 PING_OUTPUT=`dtnping --count 10 dtn://node03.dtn/echo`
 CHECK_TRANSMISSION=`echo ${PING_OUTPUT} | grep '10 bundles transmitted, 10 received'`
 
-echo "${PING_OUTPUT}"
-
 sleep 1
 kill ${DTND1_PID} >/dev/null 2>&1
 kill ${DTND2_PID} >/dev/null 2>&1
