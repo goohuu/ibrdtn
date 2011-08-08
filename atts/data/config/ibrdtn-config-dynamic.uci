@@ -1,0 +1,12 @@
+package 'ibrdtn'
+
+config 'daemon' 'main'
+	option 'routing' 'epidemic'
+
+config 'daemon' 'discovery'
+	option 'address' '224.0.0.5'
+
+config 'network'
+	option 'type' 'tcp'
+	option 'interface' 'ath0'
+
