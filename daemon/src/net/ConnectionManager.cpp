@@ -98,7 +98,7 @@ namespace dtn
 
 				if (timeevent.getAction() == TIME_SECOND_TICK)
 				{
-					check_discovered();
+					check_unavailable();
 				}
 			} catch (const std::bad_cast&) { }
 
@@ -111,14 +111,21 @@ namespace dtn
 					{
 						ibrcommon::MutexLock l(_node_lock);
 
-						// if this node was unknown before...
-						if (!isNeighbor(connection.node))
-						{
+						try {
+							dtn::core::Node &n = getNode(connection.peer);
+							n += connection.node;
+
+							IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes added: " << n << IBRCOMMON_LOGGER_ENDL;
+						} catch (const ibrcommon::Exception&) {
+							_nodes.push_back(connection.node);
+
+							IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << connection.node << IBRCOMMON_LOGGER_ENDL;
+
 							// announce the new node
 							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_AVAILABLE);
+
 						}
 
-						_connected_nodes.insert(connection.node);
 						break;
 					}
 
@@ -126,15 +133,11 @@ namespace dtn
 					{
 						ibrcommon::MutexLock l(_node_lock);
 
-						// remove the node from the connected list
-						_connected_nodes.erase(connection.node);
-
-						// if the node is unknown now ...
-						if (!isNeighbor(connection.node))
-						{
-							// announce the unavailable event
-							dtn::core::NodeEvent::raise(connection.node, dtn::core::NODE_UNAVAILABLE);
-						}
+						try {
+							// remove the node from the connected list
+							dtn::core::Node &n = getNode(connection.peer);
+							n -= connection.node;
+						} catch (const ibrcommon::Exception&) { };
 						break;
 					}
 
@@ -149,28 +152,35 @@ namespace dtn
 
 		void ConnectionManager::addConnection(const dtn::core::Node &n)
 		{
-			bool announce = false;
-
 			ibrcommon::MutexLock l(_node_lock);
-			if (!isNeighbor(n)) announce = true;
+			try {
+				dtn::core::Node &db = getNode(n.getEID());
 
-			_static_nodes.insert(n);
+				// add all attributes to the node in the database
+				db += n;
 
-			if (announce)
-			{
+				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes added: " << db << IBRCOMMON_LOGGER_ENDL;
+
+			} catch (const ibrcommon::Exception&) {
+				_nodes.push_back(n);
+
+				// announce the new node
 				dtn::core::NodeEvent::raise(n, dtn::core::NODE_AVAILABLE);
+				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << n << IBRCOMMON_LOGGER_ENDL;
 			}
 		}
 
 		void ConnectionManager::removeConnection(const dtn::core::Node &n)
 		{
 			ibrcommon::MutexLock l(_node_lock);
-			_static_nodes.erase(n);
+			try {
+				dtn::core::Node &db = getNode(n.getEID());
 
-			if (!isNeighbor(n))
-			{
-				dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
-			}
+				// erase all attributes to the node in the database
+				db -= n;
+
+				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes removed: " << db << IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::Exception&) { };
 		}
 
 		void ConnectionManager::addConvergenceLayer(ConvergenceLayer *cl)
@@ -186,43 +196,43 @@ namespace dtn
 
 			ibrcommon::MutexLock l(_node_lock);
 
-			// if this node was unknown before...
-			if (!isNeighbor(node))
-			{
+			try {
+				dtn::core::Node &db = getNode(node.getEID());
+
+				// add all attributes to the node in the database
+				db += node;
+
+				IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes added: " << db << IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::Exception&) {
+				_nodes.push_back(node);
+
 				// announce the new node
 				dtn::core::NodeEvent::raise(node, dtn::core::NODE_AVAILABLE);
+				IBRCOMMON_LOGGER_DEBUG(56) << "New node available: " << node << IBRCOMMON_LOGGER_ENDL;
 			}
-
-			_discovered_nodes.erase(node);
-			_discovered_nodes.insert(node);
 		}
 
-		void ConnectionManager::check_discovered()
+		void ConnectionManager::check_unavailable()
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
 			// search for outdated nodes
-			std::set<dtn::core::Node>::iterator iter = _discovered_nodes.begin();
-
-			while (iter != _discovered_nodes.end())
+			std::list<dtn::core::Node>::iterator iter = _nodes.begin();
+			while ( iter != _nodes.end() )
 			{
-				dtn::core::Node n = (*iter);
+				dtn::core::Node &n = (*iter);
 
-				// node is outdated -> remove it
-				_discovered_nodes.erase( iter++ );
-
-				if ( !n.decrementTimeout(1) )
+				if ( n.expire() )
 				{
-					// if the node is unknown now ...
-					if (!isNeighbor(n))
-					{
-						// announce the unavailable event
-						dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
-					}
+					// announce the unavailable event
+					dtn::core::NodeEvent::raise(n, dtn::core::NODE_UNAVAILABLE);
+
+					// remove the element
+					_nodes.erase( iter++ );
 				}
 				else
 				{
-					_discovered_nodes.insert(n);
+					iter++;
 				}
 			}
 		}
@@ -269,75 +279,30 @@ namespace dtn
 
 		void ConnectionManager::queue(const ConvergenceLayer::Job &job)
 		{
-			try {
-				ibrcommon::MutexLock l(_node_lock);
-				dtn::core::Node match(job._destination);
+			ibrcommon::MutexLock l(_node_lock);
 
-				if (IBRCOMMON_LOGGER_LEVEL >= 50)
+			if (IBRCOMMON_LOGGER_LEVEL >= 50)
+			{
+				IBRCOMMON_LOGGER_DEBUG(50) << "## node list ##" << IBRCOMMON_LOGGER_ENDL;
+				for (std::list<dtn::core::Node>::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
 				{
-					IBRCOMMON_LOGGER_DEBUG(50) << "## connected node list ##" << IBRCOMMON_LOGGER_ENDL;
-					for (std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.begin(); iter != _connected_nodes.end(); iter++)
-					{
-						const dtn::core::Node &n = (*iter);
-						IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
-					}
+					const dtn::core::Node &n = (*iter);
+					IBRCOMMON_LOGGER_DEBUG(2) << n << IBRCOMMON_LOGGER_ENDL;
 				}
+			}
 
-				if (IBRCOMMON_LOGGER_LEVEL >= 50)
+			IBRCOMMON_LOGGER_DEBUG(50) << "search for node " << job._destination.getString() << IBRCOMMON_LOGGER_ENDL;
+
+			// queue to a node
+			for (std::list<dtn::core::Node>::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+			{
+				const Node &n = (*iter);
+				if (n == job._destination)
 				{
-					IBRCOMMON_LOGGER_DEBUG(50) << "## dynamic node list ##" << IBRCOMMON_LOGGER_ENDL;
-					for (std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
-					{
-						const dtn::core::Node &n = (*iter);
-						IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
-					}
+					IBRCOMMON_LOGGER_DEBUG(2) << "next hop: " << n << IBRCOMMON_LOGGER_ENDL;
+					queue(n, job);
+					return;
 				}
-
-				if (IBRCOMMON_LOGGER_LEVEL >= 50)
-				{
-					IBRCOMMON_LOGGER_DEBUG(50) << "## static node list ##" << IBRCOMMON_LOGGER_ENDL;
-					for (std::set<dtn::core::Node>::const_iterator iter = _static_nodes.begin(); iter != _static_nodes.end(); iter++)
-					{
-						const dtn::core::Node &n = (*iter);
-						IBRCOMMON_LOGGER_DEBUG(50) << n.toString() << IBRCOMMON_LOGGER_ENDL;
-					}
-				}
-
-				IBRCOMMON_LOGGER_DEBUG(50) << "match for " << match.toString() << IBRCOMMON_LOGGER_ENDL;
-
-				try {
-					// queue to a static node
-					std::set<dtn::core::Node>::const_iterator iter = _static_nodes.find(match);
-
-					if (iter != _static_nodes.end())
-					{
-						throw (*iter);
-					}
-				} catch (const std::exception&) { }
-
-				try {
-					// queue to a dynamic discovered node
-					std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.find(match);
-
-					if (iter != _discovered_nodes.end())
-					{
-						throw (*iter);
-					}
-				} catch (const std::exception&) { }
-
-				try {
-					// queue to a connected node
-					std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.find(match);
-
-					if (iter != _connected_nodes.end())
-					{
-						throw (*iter);
-					}
-				} catch (const std::exception&) { }
-			} catch (const dtn::core::Node &next) {
-				IBRCOMMON_LOGGER_DEBUG(50) << "next hop: " << next.toString() << IBRCOMMON_LOGGER_ENDL;
-				queue(next, job);
-				return;
 			}
 
 			throw NeighborNotAvailableException("No active connection to this neighbor available!");
@@ -352,43 +317,25 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_node_lock);
 
-			std::set<dtn::core::Node> _nodes;
+			std::set<dtn::core::Node> ret;
 
-			for (std::set<dtn::core::Node>::const_iterator iter = _static_nodes.begin(); iter != _static_nodes.end(); iter++)
+			for (std::list<dtn::core::Node>::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
 			{
-				_nodes.insert( *iter );
+				const Node &n = (*iter);
+				if (n.isAvailable()) ret.insert( *iter );
 			}
 
-			for (std::set<dtn::core::Node>::const_iterator iter = _discovered_nodes.begin(); iter != _discovered_nodes.end(); iter++)
-			{
-				_nodes.insert( *iter );
-			}
-
-			for (std::set<dtn::core::Node>::const_iterator iter = _connected_nodes.begin(); iter != _connected_nodes.end(); iter++)
-			{
-				_nodes.insert( *iter );
-			}
-
-			return _nodes;
+			return ret;
 		}
 
 
-		bool ConnectionManager::isNeighbor(const dtn::core::Node &node)
+		bool ConnectionManager::isNeighbor(const dtn::core::Node &node) const
 		{
-			// search for the node in all sets
-			if (_static_nodes.find(node) != _static_nodes.end())
+			// search for the node in the node list
+			for (std::list<dtn::core::Node>::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
 			{
-				return true;
-			}
-
-			if (_discovered_nodes.find(node) != _discovered_nodes.end())
-			{
-				return true;
-			}
-
-			if (_connected_nodes.find(node) != _connected_nodes.end())
-			{
-				return true;
+				const Node &n = (*iter);
+				if ((n == node) && (n.isAvailable())) return true;
 			}
 
 			return false;
@@ -397,6 +344,17 @@ namespace dtn
 		const std::string ConnectionManager::getName() const
 		{
 			return "ConnectionManager";
+		}
+
+		dtn::core::Node& ConnectionManager::getNode(const dtn::data::EID &eid)
+		{
+			for (std::list<dtn::core::Node>::iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+			{
+				dtn::core::Node &n = (*iter);
+				if (n == eid) return n;
+			}
+
+			throw ibrcommon::Exception("neighbor not found");
 		}
 	}
 }

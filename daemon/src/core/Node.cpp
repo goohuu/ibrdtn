@@ -1,5 +1,6 @@
 #include "core/Node.h"
 #include "net/ConvergenceLayer.h"
+#include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Utils.h>
 #include <ibrcommon/Logger.h>
 
@@ -12,8 +13,8 @@ namespace dtn
 {
 	namespace core
 	{
-		Node::URI::URI(const std::string &uri, const Protocol p)
-		 : protocol(p), value(uri)
+		Node::URI::URI(const Node::Type t, const Node::Protocol p, const std::string &uri, const size_t to)
+		 : type(t), protocol(p), value(uri), expire((to == 0) ? 0 : dtn::utils::Clock::getTime() + to)
 		{
 		}
 
@@ -52,12 +53,15 @@ namespace dtn
 			if (protocol < other.protocol) return true;
 			if (protocol != other.protocol) return false;
 
+			if (type < other.type) return true;
+			if (type != other.type) return false;
+
 			return (value < other.value);
 		}
 
 		bool Node::URI::operator==(const URI &other) const
 		{
-			return ((protocol == other.protocol) && (value == other.value));
+			return ((type == other.type) && (protocol == other.protocol) && (value == other.value));
 		}
 
 		bool Node::URI::operator==(const Node::Protocol &p) const
@@ -65,8 +69,14 @@ namespace dtn
 			return (protocol == p);
 		}
 
-		Node::Attribute::Attribute(const std::string &n, const std::string &v)
-		 : name(n), value(v)
+		std::ostream& operator<<(std::ostream &stream, const Node::URI &u)
+		{
+			stream << Node::toString(u.type) << "#" << Node::toString(u.protocol) << "#" << u.value;
+			return stream;
+		}
+
+		Node::Attribute::Attribute(const Type t, const std::string &n, const std::string &v, const size_t to)
+		 : type(t), name(n), value(v), expire((to == 0) ? 0 : dtn::utils::Clock::getTime() + to)
 		{
 		}
 
@@ -79,12 +89,12 @@ namespace dtn
 			if (name < other.name) return true;
 			if (name != other.name) return false;
 
-			return (value < other.value);
+			return (type < other.type);
 		}
 
 		bool Node::Attribute::operator==(const Attribute &other) const
 		{
-			return ((name == other.name) && (value == other.value));
+			return ((type == other.type) && (name == other.name));
 		}
 
 		bool Node::Attribute::operator==(const std::string &n) const
@@ -92,30 +102,33 @@ namespace dtn
 			return (name == n);
 		}
 
-		Node::Node(Node::Type type, unsigned int rtt)
-		: _connect_immediately(false), _description(), _id("dtn:none"), _timeout(5), _rtt(rtt), _type(type)
+		std::ostream& operator<<(std::ostream &stream, const Node::Attribute &a)
 		{
+			stream << Node::toString(a.type) << "#" << a.name << "#" << a.value;
+			return stream;
 		}
 
-		Node::Node(const dtn::data::EID &id, Node::Type type, unsigned int rtt)
-		: _connect_immediately(false), _description(), _id(id), _timeout(5), _rtt(rtt), _type(type)
+		Node::Node(const dtn::data::EID &id)
+		: _connect_immediately(false), _id(id)
 		{
-
 		}
 
 		Node::~Node()
 		{
 		}
 
-		std::string Node::getTypeName(Node::Type type)
+		std::string Node::toString(Node::Type type)
 		{
 			switch (type)
 			{
-			case Node::NODE_FLOATING:
-				return "floating";
+			case Node::NODE_UNAVAILABLE:
+				return "unavailable";
 
-			case Node::NODE_PERMANENT:
-				return "permanent";
+			case Node::NODE_DISCOVERED:
+				return "discovered";
+
+			case Node::NODE_STATIC:
+				return "static";
 
 			case Node::NODE_CONNECTED:
 				return "connected";
@@ -124,7 +137,7 @@ namespace dtn
 			return "unknown";
 		}
 
-		std::string Node::getProtocolName(Node::Protocol proto)
+		std::string Node::toString(Node::Protocol proto)
 		{
 			switch (proto)
 			{
@@ -153,16 +166,6 @@ namespace dtn
 			return "unknown";
 		}
 
-		Node::Type Node::getType() const
-		{
-			return _type;
-		}
-
-		void Node::setType(Node::Type type)
-		{
-			_type = type;
-		}
-
 		bool Node::has(Node::Protocol proto) const
 		{
 			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
@@ -183,11 +186,13 @@ namespace dtn
 
 		void Node::add(const URI &u)
 		{
+			_uri_list.erase(u);
 			_uri_list.insert(u);
 		}
 
 		void Node::add(const Attribute &attr)
 		{
+			_attr_list.erase(attr);
 			_attr_list.insert(attr);
 		}
 
@@ -227,48 +232,96 @@ namespace dtn
 			return ret;
 		}
 
-		void Node::setDescription(string description)
-		{
-			_description = description;
-		}
-
-		string Node::getDescription() const
-		{
-			return _description;
-		}
-
-		void Node::setEID(const dtn::data::EID &id)
-		{
-			_id = id;
-		}
-
 		const dtn::data::EID& Node::getEID() const
 		{
 			return _id;
 		}
 
-		void Node::setTimeout(int timeout)
+		/**
+		 *
+		 * @return True, if all attributes are gone
+		 */
+		bool Node::expire()
 		{
-			_timeout = timeout;
+			// get the current timestamp
+			size_t ct = dtn::utils::Clock::getTime();
+
+			// walk though all Attribute elements and remove the expired ones
+			{
+				std::set<Attribute>::const_iterator iter = _attr_list.begin();
+				while ( iter != _attr_list.end() )
+				{
+					const Attribute &attr = (*iter);
+					if ((attr.expire > 0) && (attr.expire < ct))
+					{
+						// remove this attribute
+						_attr_list.erase(iter++);
+					}
+					else
+					{
+						iter++;
+					}
+				}
+			}
+
+			// walk though all URI elements and remove the expired ones
+			{
+				std::set<URI>::const_iterator iter = _uri_list.begin();
+				while ( iter != _uri_list.end() )
+				{
+					const URI &u = (*iter);
+					if ((u.expire > 0) && (u.expire < ct))
+					{
+						// remove this attribute
+						_uri_list.erase(iter++);
+					}
+					else
+					{
+						iter++;
+					}
+				}
+			}
+
+			return (_attr_list.empty() && _uri_list.empty());
 		}
 
-		int Node::getTimeout() const
+		const Node& Node::operator+=(const Node &other)
 		{
-			return _timeout;
+			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); iter++)
+			{
+				const Attribute &attr = (*iter);
+				add(attr);
+			}
+
+			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); iter++)
+			{
+				const URI &u = (*iter);
+				add(u);
+			}
+
+			return (*this);
 		}
 
-		unsigned int Node::getRoundTripTime() const
+		const Node& Node::operator-=(const Node &other)
 		{
-			return _rtt;
+			for (std::set<Attribute>::const_iterator iter = other._attr_list.begin(); iter != other._attr_list.end(); iter++)
+			{
+				const Attribute &attr = (*iter);
+				remove(attr);
+			}
+
+			for (std::set<URI>::const_iterator iter = other._uri_list.begin(); iter != other._uri_list.end(); iter++)
+			{
+				const URI &u = (*iter);
+				remove(u);
+			}
+
+			return (*this);
 		}
 
-		bool Node::decrementTimeout(int step)
+		bool Node::operator==(const dtn::data::EID &other) const
 		{
-			if (_type == NODE_PERMANENT) return true;
-
-			if (_timeout <= 0) return false;
-			_timeout -= step;
-			return true;
+			return (other == _id);
 		}
 
 		bool Node::operator==(const Node &other) const
@@ -285,7 +338,7 @@ namespace dtn
 
 		std::string Node::toString() const
 		{
-			std::stringstream ss; ss << getEID().getString() << " (" << Node::getTypeName(getType()) << ")";
+			std::stringstream ss; ss << getEID().getString();
 			return ss.str();
 		}
 
@@ -297,6 +350,30 @@ namespace dtn
 		void Node::setConnectImmediately(bool val)
 		{
 			_connect_immediately = val;
+		}
+
+		bool Node::isAvailable() const
+		{
+			return !_uri_list.empty();
+		}
+
+		std::ostream& operator<<(std::ostream &stream, const Node &node)
+		{
+			stream << "Node: " << node._id.getString() << " [ ";
+			for (std::set<Node::Attribute>::const_iterator iter = node._attr_list.begin(); iter != node._attr_list.end(); iter++)
+			{
+				const Node::Attribute &attr = (*iter);
+				stream << attr << "#expire=" << attr.expire << "; ";
+			}
+
+			for (std::set<Node::URI>::const_iterator iter = node._uri_list.begin(); iter != node._uri_list.end(); iter++)
+			{
+				const Node::URI &u = (*iter);
+				stream << u << "#expire=" << u.expire << "; ";
+			}
+			stream << " ]";
+
+			return stream;
 		}
 	}
 }

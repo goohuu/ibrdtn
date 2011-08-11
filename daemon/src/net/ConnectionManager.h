@@ -79,7 +79,7 @@ namespace dtn
 			 * @param
 			 * @return
 			 */
-			bool isNeighbor(const dtn::core::Node&);
+			bool isNeighbor(const dtn::core::Node&) const;
 
 			/**
 			 * @see Component::getName()
@@ -96,7 +96,7 @@ namespace dtn
 			/**
 			 * checks for timed out nodes
 			 */
-			void check_discovered();
+			void check_unavailable();
 
 			virtual void componentUp();
 			virtual void componentDown();
@@ -106,6 +106,11 @@ namespace dtn
 			 *  queue a bundle for delivery
 			 */
 			void queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job);
+
+			/**
+			 * get node
+			 */
+			dtn::core::Node& getNode(const dtn::data::EID &eid);
 
 			// if set to true, this module will shutdown
 			bool _shutdown;
@@ -119,14 +124,8 @@ namespace dtn
 			// mutex for the lists of nodes
 			ibrcommon::Mutex _node_lock;
 
-			// contains all static configured nodes
-			std::set<dtn::core::Node> _static_nodes;
-
-			// contains all dynamic discovered nodes
-			std::set<dtn::core::Node> _discovered_nodes;
-
-			// contains all connected nodes
-			std::set<dtn::core::Node> _connected_nodes;
+			// contains all nodes
+			std::list<dtn::core::Node> _nodes;
 		};
 	}
 }

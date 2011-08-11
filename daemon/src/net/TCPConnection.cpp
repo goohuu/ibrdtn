@@ -46,7 +46,7 @@ namespace dtn
 		 */
 		TCPConnection::TCPConnection(TCPConvergenceLayer & tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID & name, const size_t timeout)
 #ifdef WITH_TLS
-		 : _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _tlsstream(stream), _stream(*this, _tlsstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
+		 : _peer(), _node(name), _tcpstream(stream), _tlsstream(stream), _stream(*this, _tlsstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
 		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
 #else
 		 : _peer(), _node(Node::NODE_CONNECTED), _tcpstream(stream), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
@@ -61,7 +61,7 @@ namespace dtn
 			}
 
 			// add default TCP connection
-			_node.add(dtn::core::Node::URI("0.0.0.0", Node::CONN_TCPIP));
+			_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, "0.0.0.0") );
 
 			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
 			_flags |= dtn::streams::StreamContactHeader::REQUEST_NEGATIVE_ACKNOWLEDGMENTS;
@@ -133,7 +133,12 @@ namespace dtn
 		void TCPConnection::eventConnectionUp(const StreamContactHeader &header)
 		{
 			_peer = header;
-			_node.setEID(header._localeid);
+
+			// copy old attributes and urls to the new node object
+			Node n_old = _node;
+			_node = Node(header._localeid);
+			_node += n_old;
+
 			_keepalive_timeout = header._keepalive * 1000;
 
 #ifdef WITH_TLS
@@ -302,22 +307,36 @@ namespace dtn
 			// try to connect to the other side
 			try {
 				const std::list<dtn::core::Node::URI> uri_list = _node.get(dtn::core::Node::CONN_TCPIP);
-				if (uri_list.empty()) throw ibrcommon::tcpclient::SocketException("no address available to connect");
 
-				// decode address and port
-				const dtn::core::Node::URI &uri = uri_list.front();
-				uri.decode(address, port);
-
-				ibrcommon::tcpclient &client = dynamic_cast<ibrcommon::tcpclient&>(*_tcpstream);
-				client.open(address, port, _timeout);
-
-				if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
+				for (std::list<dtn::core::Node::URI>::const_iterator iter = uri_list.begin(); iter != uri_list.end(); iter++)
 				{
-					_tcpstream->enableNoDelay();
+					try {
+						// decode address and port
+						const dtn::core::Node::URI &uri = uri_list.front();
+						uri.decode(address, port);
+
+						ibrcommon::tcpclient &client = dynamic_cast<ibrcommon::tcpclient&>(*_tcpstream);
+						client.open(address, port, _timeout);
+
+						if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
+						{
+							_tcpstream->enableNoDelay();
+						}
+
+						// add TCP connection descriptor to the node object
+						_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri.value) );
+
+						// connection successful
+						return;
+					} catch (const ibrcommon::tcpclient::SocketException&) { };
 				}
+
+				// no connection has been established
+				throw ibrcommon::tcpclient::SocketException("no address available to connect");
+
 			} catch (const ibrcommon::tcpclient::SocketException&) {
 				// error on open, requeue all bundles in the queue
-				IBRCOMMON_LOGGER(warning) << "connection to " << _node.toString() << " (" << address << ":" << port << ") failed" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER(warning) << "connection to " << _node.toString() << " failed" << IBRCOMMON_LOGGER_ENDL;
 				_stream.shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
 				throw;
 			} catch (const bad_cast&) { };

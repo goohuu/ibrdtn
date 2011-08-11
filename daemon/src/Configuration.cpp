@@ -512,8 +512,8 @@ namespace dtn
 
 					if (n.getEID() == node_eid)
 					{
-						n.add( dtn::core::Node::URI( ss.str(), p ) );
-						//n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
+						n.add( dtn::core::Node::URI( dtn::core::Node::NODE_STATIC, p, ss.str() ) );
+						n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
 						node_exists = true;
 						break;
 					}
@@ -521,9 +521,8 @@ namespace dtn
 
 				if (!node_exists)
 				{
-					Node n(Node::NODE_PERMANENT);
-					n.setEID( node_eid );
-					n.add( dtn::core::Node::URI( ss.str(), p ) );
+					Node n(node_eid);
+					n.add( dtn::core::Node::URI( dtn::core::Node::NODE_STATIC, p, ss.str() ) );
 					n.setConnectImmediately( conf.read<std::string>(prefix + "immediately", "no") == "yes" );
 					_nodes.push_back(n);
 				}

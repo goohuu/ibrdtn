@@ -43,34 +43,27 @@ namespace dtn
 
 		void DiscoveryAgent::received(const DiscoveryAnnouncement &announcement, size_t timeout)
 		{
-			// calculating RTT with the service timestamp
-			size_t rtt = 2700;
-
 			// convert the announcement into NodeEvents
-			Node n(Node::NODE_FLOATING, rtt);
+			Node n(announcement.getEID());
 
-			// set the EID and some parameters of this Node
-			n.setEID(announcement.getEID());
-
-			// get configured timeout value
-			n.setTimeout( (timeout == 0) ? _config.timeout() : timeout );
-
-			const list<DiscoveryService> services = announcement.getServices();
-			for (list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+			const std::list<DiscoveryService> services = announcement.getServices();
+			for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
 			{
+				size_t to_value = (timeout == 0) ? _config.timeout() : timeout;
+
 				const DiscoveryService &s = (*iter);
 
 				if (s.getName() == "tcpcl")
 				{
-					n.add(Node::URI(s.getParameters(), Node::CONN_TCPIP));
+					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_TCPIP, s.getParameters(), to_value));
 				}
 				else if (s.getName() == "udpcl")
 				{
-					n.add(Node::URI(s.getParameters(), Node::CONN_UDPIP));
+					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_UDPIP, s.getParameters(), to_value));
 				}
 				else
 				{
-					n.add(Node::Attribute(s.getName(), s.getParameters()));
+					n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value));
 				}
 			}
 
