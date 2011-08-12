@@ -16,6 +16,7 @@
 #include "core/TimeEvent.h"
 #include "core/Node.h"
 #include "net/ConnectionManager.h"
+#include "net/ConnectionEvent.h"
 #include "Configuration.h"
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
@@ -103,6 +104,17 @@ namespace dtn
 					_taskqueue.push( new QuerySummaryVectorTask( (**this).getNeighborDB(), n.getEID(), _endpoint ) );
 				}
 
+				return;
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
+
+				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
+				{
+					// query a new summary vector from this neighbor
+					_taskqueue.push( new QuerySummaryVectorTask( (**this).getNeighborDB(), ce.peer, _endpoint ) );
+				}
 				return;
 			} catch (const std::bad_cast&) { };
 

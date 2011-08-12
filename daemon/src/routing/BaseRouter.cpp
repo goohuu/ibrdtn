@@ -12,6 +12,7 @@
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/BundleReceivedEvent.h"
+#include "net/ConnectionEvent.h"
 #include "routing/QueueBundleEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include "core/BundleStorage.h"
@@ -138,6 +139,7 @@ namespace dtn
 			bindEvent(dtn::core::BundleExpiredEvent::className);
 			bindEvent(dtn::core::TimeEvent::className);
 			bindEvent(dtn::core::BundleGeneratedEvent::className);
+			bindEvent(dtn::net::ConnectionEvent::className);
 
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)
 			{
@@ -166,6 +168,7 @@ namespace dtn
 			unbindEvent(dtn::core::BundleExpiredEvent::className);
 			unbindEvent(dtn::core::TimeEvent::className);
 			unbindEvent(dtn::core::BundleGeneratedEvent::className);
+			unbindEvent(dtn::net::ConnectionEvent::className);
 
 			// delete all extensions
 			for (std::list<BaseRouter::Extension*>::iterator iter = _extensions.begin(); iter != _extensions.end(); iter++)

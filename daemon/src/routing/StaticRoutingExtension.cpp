@@ -9,6 +9,7 @@
 #include "routing/QueueBundleEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "net/TransferCompletedEvent.h"
+#include "net/ConnectionEvent.h"
 #include "routing/RequeueBundleEvent.h"
 #include "core/NodeEvent.h"
 #include "core/SimpleBundleStorage.h"
@@ -206,6 +207,17 @@ namespace dtn
 				if (nodeevent.getAction() == NODE_AVAILABLE)
 				{
 					_taskqueue.push( new SearchNextBundleTask(n.getEID()) );
+				}
+				return;
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::net::ConnectionEvent &ce = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
+
+				if (ce.state == dtn::net::ConnectionEvent::CONNECTION_UP)
+				{
+					// send all (multi-hop) bundles in the storage to the neighbor
+					_taskqueue.push( new SearchNextBundleTask(ce.peer) );
 				}
 				return;
 			} catch (const std::bad_cast&) { };
