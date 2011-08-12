@@ -129,6 +129,12 @@ net_interfaces = lan0
 #net_rebind = yes
 
 #
+# Try to connect to other nodes each x seconds.
+# This option keeps connections up all the time.
+#
+#net_autoconnect = 60
+
+#
 # configuration for a convergence layer named lan0
 #
 net_lan0_type = tcp					# we want to use TCP as protocol

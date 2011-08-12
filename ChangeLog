@@ -1,3 +1,9 @@
+2011-08-12
+--------------------------------------------------------
+ * New config option: "net_autoconnect" to keep up / reconnect
+   to available TCP connections
+ * Improved neighbor database
+ 
 2011-08-05
 --------------------------------------------------------
  * Support for the Scope Control Hop Limit Block added
