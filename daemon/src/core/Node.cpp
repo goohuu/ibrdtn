@@ -69,6 +69,11 @@ namespace dtn
 			return (protocol == p);
 		}
 
+		bool Node::URI::operator==(const Node::Type &t) const
+		{
+			return (type == t);
+		}
+
 		std::ostream& operator<<(std::ostream &stream, const Node::URI &u)
 		{
 			stream << Node::toString(u.type) << "#" << Node::toString(u.protocol) << "#" << u.value;
@@ -218,6 +223,16 @@ namespace dtn
 			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
 			{
 				if ((*iter) == proto) ret.push_back(*iter);
+			}
+			return ret;
+		}
+
+		std::list<Node::URI> Node::get(Node::Type type, Node::Protocol proto) const
+		{
+			std::list<URI> ret;
+			for (std::set<URI>::const_iterator iter = _uri_list.begin(); iter != _uri_list.end(); iter++)
+			{
+				if (((*iter) == proto) && ((*iter) == type)) ret.push_back(*iter);
 			}
 			return ret;
 		}

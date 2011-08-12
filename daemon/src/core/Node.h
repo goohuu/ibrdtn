@@ -64,6 +64,7 @@ namespace dtn
 				bool operator==(const URI &other) const;
 
 				bool operator==(const Node::Protocol &p) const;
+				bool operator==(const Node::Type &t) const;
 
 				friend std::ostream& operator<<(std::ostream&, const Node::URI&);
 			};
@@ -135,6 +136,7 @@ namespace dtn
 			 * @return
 			 */
 			std::list<URI> get(Node::Protocol proto) const;
+			std::list<URI> get(Node::Type type, Node::Protocol proto) const;
 
 			/**
 			 * get a list of attributes match the given name
