@@ -321,6 +321,7 @@ namespace dtn
 				ibrcommon::vinterface _default_net;
 				bool _use_default_net;
 				bool _dynamic_rebind;
+				size_t _auto_connect;
 
 			public:
 				/**
@@ -363,6 +364,11 @@ namespace dtn
 				 * @return True, if the dynamic rebind feature is requested.
 				 */
 				bool doDynamicRebind() const;
+
+				/**
+				 * @return Each x seconds try to connect to all available nodes.
+				 */
+				size_t getAutoConnect() const;
 			};
 
 			class Security : public Configuration::Extension

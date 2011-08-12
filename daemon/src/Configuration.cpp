@@ -80,7 +80,7 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false) {};
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false) {};
+		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false), _auto_connect(0) {};
 
 		Configuration::Security::Security()
 		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false)
@@ -619,6 +619,11 @@ namespace dtn
 			 * dynamic rebind
 			 */
 			_dynamic_rebind = (conf.read<std::string>("net_rebind", "no") == "yes");
+
+			/**
+			 * auto connect interval
+			 */
+			_auto_connect = conf.read<size_t>("net_autoconnect", 0);
 		}
 
 		const list<dtn::routing::StaticRoutingExtension::StaticRoute>& Configuration::Network::getStaticRoutes() const
@@ -737,6 +742,11 @@ namespace dtn
 		bool Configuration::Network::doDynamicRebind() const
 		{
 			return _dynamic_rebind;
+		}
+
+		size_t Configuration::Network::getAutoConnect() const
+		{
+			return _auto_connect;
 		}
 
 		bool Configuration::Statistic::enabled() const

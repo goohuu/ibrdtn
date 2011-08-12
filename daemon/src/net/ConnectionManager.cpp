@@ -5,26 +5,28 @@
  *      Author: morgenro
  */
 
+#include "Configuration.h"
 #include "net/ConnectionManager.h"
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
 #include "net/BundleReceivedEvent.h"
+#include "net/ConnectionEvent.h"
 #include "core/NodeEvent.h"
 #include "core/BundleEvent.h"
-#include "ibrcommon/net/tcpserver.h"
 #include "core/BundleCore.h"
-#include "routing/RequeueBundleEvent.h"
-#include "net/ConnectionEvent.h"
-
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
+#include "routing/RequeueBundleEvent.h"
+
+#include <ibrdtn/utils/Clock.h>
+#include <ibrcommon/net/tcpserver.h>
+#include <ibrcommon/Logger.h>
 
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
 #include <functional>
 #include <typeinfo>
-#include <ibrcommon/Logger.h>
 
 using namespace dtn::core;
 
@@ -40,7 +42,7 @@ namespace dtn
 		};
 
 		ConnectionManager::ConnectionManager()
-		 : _shutdown(false)
+		 : _shutdown(false), _next_autoconnect(0)
 		{
 		}
 
@@ -53,6 +55,13 @@ namespace dtn
 			bindEvent(TimeEvent::className);
 			bindEvent(NodeEvent::className);
 			bindEvent(ConnectionEvent::className);
+
+			// set next auto connect
+			const dtn::daemon::Configuration::Network &nc = dtn::daemon::Configuration::getInstance().getNetwork();
+			if (nc.getAutoConnect() != 0)
+			{
+				_next_autoconnect = dtn::utils::Clock::getTime() + nc.getAutoConnect();
+			}
 		}
 
 		void ConnectionManager::componentDown()
@@ -99,6 +108,7 @@ namespace dtn
 				if (timeevent.getAction() == TIME_SECOND_TICK)
 				{
 					check_unavailable();
+					check_autoconnect();
 				}
 			} catch (const std::bad_cast&) { }
 
@@ -137,6 +147,8 @@ namespace dtn
 							// remove the node from the connected list
 							dtn::core::Node &n = getNode(connection.peer);
 							n -= connection.node;
+
+							IBRCOMMON_LOGGER_DEBUG(56) << "Node attributes removed: " << n << IBRCOMMON_LOGGER_ENDL;
 						} catch (const ibrcommon::Exception&) { };
 						break;
 					}
@@ -234,6 +246,36 @@ namespace dtn
 				{
 					iter++;
 				}
+			}
+		}
+
+		void ConnectionManager::check_autoconnect()
+		{
+			std::queue<dtn::core::Node> _connect_nodes;
+
+			if (_next_autoconnect < dtn::utils::Clock::getTime())
+			{
+				// search for non-connected but available nodes
+				ibrcommon::MutexLock l(_cl_lock);
+				for (std::list<dtn::core::Node>::const_iterator iter = _nodes.begin(); iter != _nodes.end(); iter++)
+				{
+					const Node &n = (*iter);
+					std::list<Node::URI> ul = n.get(Node::NODE_CONNECTED, Node::CONN_TCPIP);
+
+					if (ul.empty() && n.isAvailable())
+					{
+						_connect_nodes.push(n);
+					}
+				}
+
+				// set the next check time
+				_next_autoconnect = dtn::utils::Clock::getTime() + dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
+			}
+
+			while (!_connect_nodes.empty())
+			{
+				open(_connect_nodes.front());
+				_connect_nodes.pop();
 			}
 		}
 

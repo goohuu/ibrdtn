@@ -93,11 +93,6 @@ namespace dtn
 			 */
 			void discovered(const dtn::core::Node &node);
 
-			/**
-			 * checks for timed out nodes
-			 */
-			void check_unavailable();
-
 			virtual void componentUp();
 			virtual void componentDown();
 
@@ -106,6 +101,16 @@ namespace dtn
 			 *  queue a bundle for delivery
 			 */
 			void queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job);
+
+			/**
+			 * checks for timed out nodes
+			 */
+			void check_unavailable();
+
+			/**
+			 * auto connect to available nodes
+			 */
+			void check_autoconnect();
 
 			/**
 			 * get node
@@ -126,6 +131,9 @@ namespace dtn
 
 			// contains all nodes
 			std::list<dtn::core::Node> _nodes;
+
+			// next timestamp for autoconnect check
+			size_t _next_autoconnect;
 		};
 	}
 }
