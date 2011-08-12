@@ -61,6 +61,7 @@ namespace dtn
 			}
 
 			// add default TCP connection
+			_node.clear();
 			_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, "0.0.0.0") );
 
 			_flags |= dtn::streams::StreamContactHeader::REQUEST_ACKNOWLEDGMENTS;
@@ -324,6 +325,7 @@ namespace dtn
 						}
 
 						// add TCP connection descriptor to the node object
+						_node.clear();
 						_node.add( dtn::core::Node::URI(Node::NODE_CONNECTED, Node::CONN_TCPIP, uri.value) );
 
 						// connection successful
