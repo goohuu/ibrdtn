@@ -48,7 +48,8 @@ namespace dtn
 
 			ibrcommon::Mutex _receiverlock;
 			std::map<std::string,std::list<EventReceiver*> > _list;
-			ibrcommon::Queue<dtn::core::Event*> _queue;
+			//ibrcommon::Queue<dtn::core::Event*> _queue;
+
 			bool _running;
 
 			// create event debugger
@@ -60,6 +61,35 @@ namespace dtn
 			 * @see Component::getName()
 			 */
 			virtual const std::string getName() const;
+
+			class Task
+			{
+			public:
+				Task();
+				Task(EventReceiver *er, dtn::core::Event *evt);
+				~Task();
+
+				EventReceiver *receiver;
+				dtn::core::Event *event;
+			};
+
+			class Worker : public ibrcommon::JoinableThread
+			{
+			public:
+				Worker(EventSwitch &sw);
+				~Worker();
+
+			protected:
+				void run();
+
+			private:
+				EventSwitch &_switch;
+			};
+
+			ibrcommon::Conditional _queue_cond;
+			std::queue<Task*> _queue;
+
+			void process();
 
 		protected:
 			virtual void componentUp();
@@ -74,8 +104,10 @@ namespace dtn
 
 		public:
 			static EventSwitch& getInstance();
-			void loop();
+			void loop(size_t threads = 0);
 			void clear();
+
+			friend class Worker;
 		};
 	}
 }

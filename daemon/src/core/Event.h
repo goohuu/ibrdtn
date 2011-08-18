@@ -9,6 +9,7 @@
 #define EVENT_H_
 
 #include "core/EventReceiver.h"
+#include <ibrcommon/thread/Mutex.h>
 
 namespace dtn
 {
@@ -22,8 +23,15 @@ namespace dtn
 
 			virtual std::string toString() const = 0;
 
+			void set_ref_count(size_t c);
+			bool decrement_ref_count();
+
 		protected:
 			static void raiseEvent(Event *evt);
+
+		private:
+			ibrcommon::Mutex _ref_count_mutex;
+			size_t _ref_count;
 		};
 	}
 }
