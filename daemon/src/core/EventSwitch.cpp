@@ -33,16 +33,18 @@ namespace dtn
 
 		void EventSwitch::componentDown()
 		{
-			ibrcommon::MutexLock l(_queue_cond);
-			_running = false;
+			try {
+				ibrcommon::MutexLock l(_queue_cond);
+				_running = false;
 
-			// wait until the queue is empty
-			while (!_queue.empty())
-			{
-				_queue_cond.wait();
-			}
+				// wait until the queue is empty
+				while (!_queue.empty())
+				{
+					_queue_cond.wait();
+				}
 
-			_queue_cond.abort();
+				_queue_cond.abort();
+			} catch (const ibrcommon::Conditional::ConditionalAbortException&) {};
 		}
 
 		void EventSwitch::process()
@@ -90,7 +92,7 @@ namespace dtn
 				{
 					process();
 				}
-			} catch (const ibrcommon::QueueUnblockedException&) { };
+			} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 
 			for (std::list<Worker*>::iterator iter = wlist.begin(); iter != wlist.end(); iter++)
 			{
@@ -147,7 +149,7 @@ namespace dtn
 				if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
 				{
 					// stop receiving events
-					s._running = false;
+					s.componentDown();
 				}
 			} catch (const std::bad_cast&) { }
 
@@ -220,7 +222,7 @@ namespace dtn
 			try {
 				while (true)
 					_switch.process();
-			} catch (const ibrcommon::QueueUnblockedException&) { };
+			} catch (const ibrcommon::Conditional::ConditionalAbortException&) { };
 		}
 	}
 }
