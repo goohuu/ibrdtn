@@ -18,7 +18,7 @@ namespace dtn
 	namespace core
 	{
 		EventSwitch::EventSwitch()
-		 : _running(false)
+		 : _running(true)
 		{
 		}
 
@@ -74,9 +74,6 @@ namespace dtn
 
 		void EventSwitch::loop(size_t threads)
 		{
-			// set running mode to true
-			_running = true;
-
 			// create worker threads
 			std::list<Worker*> wlist;
 
