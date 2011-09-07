@@ -77,26 +77,31 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
 		{
-			if (iface == _net) throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			if (iface == _net)
+			{
+				name = "lowpancl";
+				stringstream service;
 
-			name = "lowpancl";
-			stringstream service;
-
-			try {
-				std::list<ibrcommon::vaddress> list = _net.getAddresses();
-				if (!list.empty())
-				{
-					 service << "short address=" << list.front().get(false) << ";panid=" << _panid << ";";
-				}
-				else
-				{
+				try {
+					std::list<ibrcommon::vaddress> list = _net.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
+					if (!list.empty())
+					{
+						 service << "short address=" << list.front().get(false) << ";panid=" << _panid << ";";
+					}
+					else
+					{
+						service << "panid=" << _panid << ";";
+					}
+				} catch (const ibrcommon::vinterface::interface_not_set&) {
 					service << "panid=" << _panid << ";";
-				}
-			} catch (const ibrcommon::vinterface::interface_not_set&) {
-				service << "panid=" << _panid << ";";
-			};
+				};
 
-			params = service.str();
+				params = service.str();
+			}
+			else
+			{
+				 throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
+			}
 		}
 
 		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
