@@ -265,6 +265,7 @@ namespace dtn
 		{
 			_running = false;
 			_socket->shutdown();
+			// stop(); needed here?
 			join();
 		}
 
