@@ -42,6 +42,7 @@ namespace dtn
 			std::list<Neighbor> _neighbors;
 			u_int16_t _sn;
 			std::list<dtn::net::DiscoveryService> _services;
+			size_t _last_announce_sent;
 		};
 	}
 }

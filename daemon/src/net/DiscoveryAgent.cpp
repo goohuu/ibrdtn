@@ -12,6 +12,7 @@
 #include "core/TimeEvent.h"
 #include "core/NodeEvent.h"
 #include <ibrdtn/utils/Utils.h>
+#include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/Logger.h>
 
 using namespace dtn::core;
@@ -21,7 +22,7 @@ namespace dtn
 	namespace net
 	{
 		DiscoveryAgent::DiscoveryAgent(const dtn::daemon::Configuration::Discovery &config)
-		 : _config(config), _sn(0)
+		 : _config(config), _sn(0), _last_announce_sent(0)
 		{
 		}
 
@@ -69,6 +70,24 @@ namespace dtn
 
 			// create and raise a new event
 			dtn::core::NodeEvent::raise(n, NODE_INFO_UPDATED);
+
+			// if continuous announcements are disabled, then reply to this message
+			if (!_config.announce())
+			{
+				// first check if another announcement was sent during the same seconds
+				if (_last_announce_sent != dtn::utils::Clock::getTime())
+				{
+					IBRCOMMON_LOGGER_DEBUG(25) << "reply with discovery announcement" << IBRCOMMON_LOGGER_ENDL;
+
+					sendAnnoucement(_sn, _services);
+
+					// increment sequencenumber
+					_sn++;
+
+					// save the time of the last sent announcement
+					_last_announce_sent = dtn::utils::Clock::getTime();
+				}
+			}
 		}
 
 		void DiscoveryAgent::timeout()
