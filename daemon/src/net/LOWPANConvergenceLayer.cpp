@@ -36,17 +36,32 @@
  * +---------------+
  * |7 6 5 4 3 2 1 0|
  * +---------------+
- * Bit 0-3: sequence number (0-16)
- * Bit 4-5: 00 Middle segment
+ * Bit 7-6: 00 to be compatible with 6LoWPAN
+ * Bit 5-4: 00 Middle segment
  *	    01 Last segment
  *	    10 First segment
  *	    11 First and last segment
- * Bit 6-7: 00 to be compatible with 6LoWPAN
+ * Bit 3:   0 Extended frame not available
+ *          1 Extended frame available
+ * Bit 2-0: sequence number (0-7)
+ *
+ * Extended header (only if extended frame available)
+ * +---------------+
+ * |7 6 5 4 3 2 1 0|
+ * +---------------+
+ * Bit 7:   0 No discovery frame
+ *          1 Discovery frame
+ * Bit 6-0: Reserved
+ *
+ * Two bytes at the end of the frame are reserved for the short address of the
+ * sender. This is a workaround until recvfrom() gets fixed.
  */
+
 #define SEGMENT_FIRST	0x25
 #define SEGMENT_LAST	0x10
 #define SEGMENT_BOTH	0x30
 #define SEGMENT_MIDDLE	0x00
+#define EXTENDED_MASK	0x04
 
 using namespace dtn::data;
 
@@ -220,32 +235,54 @@ namespace dtn
 			ibrcommon::MutexLock l(m_readlock);
 
 			char data[m_maxmsgsize];
-			char header, tmp;
+			char header, extended_header;
+			int address;
 			stringstream ss;
 
-			// data waiting
+			/* This worker needs to take care of all incoming frames
+			 * and puts them into the right channels
+			 */
+
+			// Receive full frame from socket
 			int len = _socket->receive(data, m_maxmsgsize);
 
 			if (len <= 0)
 				return (*this);
 
+			// Retrieve header of frame
 			header = data[0];
-			header &= 0xF0; // Clear seq number bits
-			ss.write(data+1, len-1);
 
+			// Check for extended header and retrieve
+			if ((header & EXTENDED_MASK) == 0x04)
+				extended_header = data[1];
+
+			// Retrieve sender address from the end of the frame
+			address = (data[len-2] << 8) + data[len-1];
+
+			// Put the data frame in the queue corresponding to its sender address
+			/* FIXME here we need a list with the connection objects
+			 * and the queues we can write into */
+
+			ss.write(data, len-2); // remove the last two bytes with the address
+
+			// Send off discovery frame
+			if (extended_header == 0x80)
+				;// Here we send of the discovery frame
+
+#if 0
 			while (header != SEGMENT_LAST) {
 
 				len = _socket->receive(data, m_maxmsgsize);
 				header = data[0];
-				header &= 0xF0;
+				//header &= 0xF0;
 
 				if (len > 0)
 					ss.write(data+1, len-1);
 			}
 
 			if (len > 0)
-				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
-
+				//dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
+#endif
 			return (*this);
 		}
 
