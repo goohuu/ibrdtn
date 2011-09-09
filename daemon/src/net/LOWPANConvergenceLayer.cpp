@@ -143,6 +143,7 @@ namespace dtn
 				std::string address = "0";
 				unsigned int pan = 0x00;
 				int length;
+				string tmp;
 
 				// read values
 				uri.decode(address, pan);
@@ -153,6 +154,13 @@ namespace dtn
 				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
 
+				/* Get frame from connection, add own address at
+				 * the end and send it off */
+				tmp = data + address;
+				data = tmp;
+				int ret = p.send(data.c_str(), data.length());
+
+#if 0
 				if (data.length() > 114) {
 					std::string chunk, tmp;
 					char header = 0;
@@ -224,6 +232,7 @@ namespace dtn
 					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				}
+#endif
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
 				dtn::net::TransferAbortedEvent::raise(EID(node.getEID()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
