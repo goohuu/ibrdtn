@@ -77,6 +77,11 @@ namespace dtn
 			unsigned int getLifetime() const;
 
 			/**
+			 * Returns the timestamp of the bundle.
+			 */
+			time_t getTimestamp() const;
+
+			/**
 			 * Set the request delivery report bit in the bundle processing flags.
 			 * This triggers an delivered report, if the bundle is delivered to an application.
 			 */

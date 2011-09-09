@@ -50,6 +50,11 @@ namespace dtn
 			return _b._lifetime;
 		}
 
+		time_t Bundle::getTimestamp() const
+		{
+			return _b._timestamp;
+		}
+
 		void Bundle::requestDeliveredReport()
 		{
 			_b.set(dtn::data::PrimaryBlock::REQUEST_REPORT_OF_BUNDLE_DELIVERY, true);
