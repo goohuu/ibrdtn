@@ -23,6 +23,8 @@ namespace dtn
 
 			unsigned int address;
 
+			void run();
+
 			void queue(const dtn::core::Node &n);
 
 			LOWPANConnection& operator>>(dtn::data::Bundle&);

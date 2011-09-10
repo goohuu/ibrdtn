@@ -1,4 +1,5 @@
 #include "net/LOWPANConvergenceLayer.h"
+#include "net/LOWPANConnection.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include "net/TransferCompletedEvent.h"
@@ -271,6 +272,13 @@ namespace dtn
 			// Put the data frame in the queue corresponding to its sender address
 			/* FIXME here we need a list with the connection objects
 			 * and the queues we can write into */
+
+			LOWPANConnection *connection = new LOWPANConnection(_net);
+
+			std::list<int>::iterator i;
+			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
+				cout << *i << " ";
+			cout << endl;
 
 			ss.write(data, len-2); // remove the last two bytes with the address
 

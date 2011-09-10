@@ -80,6 +80,10 @@ namespace dtn
 		{
 		}
 
+		void LOWPANConnection::run()
+		{
+		}
+
 		LOWPANConnection& LOWPANConnection::operator>>(dtn::data::Bundle &bundle)
 		{
 			return (*this);

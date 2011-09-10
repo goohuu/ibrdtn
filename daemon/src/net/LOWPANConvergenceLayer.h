@@ -3,10 +3,13 @@
 
 #include "Component.h"
 #include "net/ConvergenceLayer.h"
+#include "net/LOWPANConnection.h"
 #include "ibrcommon/Exceptions.h"
 #include "net/DiscoveryServiceProvider.h"
 #include <ibrcommon/net/vinterface.h>
 #include "ibrcommon/net/lowpansocket.h"
+
+#include <list>
 
 using namespace dtn::data;
 
@@ -52,6 +55,9 @@ namespace dtn
 			ibrcommon::vinterface _net;
 			int _panid;
 			int m_socket;
+
+			std::list<int> ConnectionList;
+			//std::list<LOWPANConnection> ConnectionList;
 
 			static const int DEFAULT_PANID;
 
