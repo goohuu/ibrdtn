@@ -208,8 +208,10 @@ namespace dtn
 #endif
 					std::string tmp;
 					stringstream buf;
+					char header = 0;
 
-					buf << SEGMENT_BOTH;
+					header = SEGMENT_BOTH;
+					buf << header;
 
 					tmp = buf.str() + data; // Prepand header to chunk
 					data = "";
