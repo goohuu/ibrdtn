@@ -161,7 +161,7 @@ namespace dtn
 //				data = tmp;
 //				int ret = p.send(data.c_str(), data.length());
 
-#if 1
+#if 0
 				if (data.length() > 114) {
 					std::string chunk, tmp;
 					char header = 0;
@@ -234,7 +234,7 @@ namespace dtn
 					// raise bundle event
 					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-				}
+//				}
 
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
