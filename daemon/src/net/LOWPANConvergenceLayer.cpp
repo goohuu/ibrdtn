@@ -297,10 +297,10 @@ namespace dtn
 				if (len > 0)
 					ss.write(data+1, len-1);
 			}
+#endif
 
 			if (len > 0)
-				//dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
-#endif
+				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 			return (*this);
 		}
 
