@@ -144,7 +144,7 @@ namespace dtn
 				std::string address = "0";
 				unsigned int pan = 0x00;
 				int length;
-				string tmp;
+				//string tmp;
 
 				// read values
 				uri.decode(address, pan);
@@ -157,9 +157,9 @@ namespace dtn
 
 				/* Get frame from connection, add own address at
 				 * the end and send it off */
-				tmp = data + address;
-				data = tmp;
-				int ret = p.send(data.c_str(), data.length());
+//				tmp = data + address; // We need our own address not the dst address here
+//				data = tmp;
+//				int ret = p.send(data.c_str(), data.length());
 
 #if 0
 				if (data.length() > 114) {
@@ -205,7 +205,7 @@ namespace dtn
 					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				} else {
-
+#endif
 					std::string tmp;
 					stringstream buf;
 
@@ -232,8 +232,8 @@ namespace dtn
 					// raise bundle event
 					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-				}
-#endif
+//				}
+
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
 				dtn::net::TransferAbortedEvent::raise(EID(node.getEID()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
@@ -267,20 +267,21 @@ namespace dtn
 				extended_header = data[1];
 
 			// Retrieve sender address from the end of the frame
-			address = (data[len-2] << 8) + data[len-1];
+			//address = (data[len-2] << 8) + data[len-1];
 
 			// Put the data frame in the queue corresponding to its sender address
 			/* FIXME here we need a list with the connection objects
 			 * and the queues we can write into */
-
+#if 0
 			LOWPANConnection *connection = new LOWPANConnection(_net);
 
 			std::list<int>::iterator i;
 			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
 				cout << *i << " ";
 			cout << endl;
-
-			ss.write(data, len-2); // remove the last two bytes with the address
+#endif
+			//ss.write(data, len-2); // remove the last two bytes with the address
+			ss.write(data+1, len-1);
 
 			// Send off discovery frame
 			if (extended_header == 0x80)
