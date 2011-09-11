@@ -209,11 +209,11 @@ namespace dtn
 					std::string tmp;
 					stringstream buf;
 
-				//	buf << SEGMENT_BOTH;
+					buf << SEGMENT_BOTH;
 
-				//	tmp = buf.str() + data; // Prepand header to chunk
-				//	data = "";
-				//	data = tmp;
+					tmp = buf.str() + data; // Prepand header to chunk
+					data = "";
+					data = tmp;
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
@@ -260,7 +260,7 @@ namespace dtn
 				return (*this);
 
 			// Retrieve header of frame
-		//	header = data[0];
+			header = data[0];
 
 			// Check for extended header and retrieve
 		//	if ((header & EXTENDED_MASK) == 0x04)
@@ -281,8 +281,8 @@ namespace dtn
 			cout << endl;
 #endif
 			//ss.write(data, len-2); // remove the last two bytes with the address
-		//	ss.write(data+1, len-1);
-			ss.write(data, len);
+			ss.write(data+1, len-1);
+		//	ss.write(data, len);
 
 			// Send off discovery frame
 //			if (extended_header == 0x80)
