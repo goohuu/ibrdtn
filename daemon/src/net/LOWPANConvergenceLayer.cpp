@@ -265,8 +265,8 @@ namespace dtn
 			header = data[0];
 
 			// Check for extended header and retrieve
-		//	if ((header & EXTENDED_MASK) == 0x04)
-		//		extended_header = data[1];
+			if ((header & EXTENDED_MASK) == 0x04)
+				extended_header = data[1];
 
 			// Retrieve sender address from the end of the frame
 			//address = (data[len-2] << 8) + data[len-1];
@@ -284,11 +284,10 @@ namespace dtn
 #endif
 			//ss.write(data, len-2); // remove the last two bytes with the address
 			ss.write(data+1, len-1);
-		//	ss.write(data, len);
 
 			// Send off discovery frame
-//			if (extended_header == 0x80)
-//				;// Here we send of the discovery frame
+			if (extended_header == 0x80)
+				cout << "Received beacon frame for LoWPAN discovery" << endl;
 
 #if 0
 			while (header != SEGMENT_LAST) {
