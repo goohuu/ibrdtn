@@ -230,7 +230,7 @@ namespace dtn
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
 
-					cout << "Sending following data stream: " << data << endl;
+					cout << "Sending following data stream: " << hex << data << endl;
 
 					// send converted line back to client.
 					ret = p.send(data.c_str(), data.length());
@@ -283,6 +283,8 @@ namespace dtn
 			// Retrieve sender address from the end of the frame
 			address = (data[len-2] << 8) | data[len-1];
 			cout << "Received sender address " << hex << address << endl;
+
+
 
 			stringstream output;
 			output.write(data, len);
