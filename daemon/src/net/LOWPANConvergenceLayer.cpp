@@ -157,21 +157,19 @@ namespace dtn
 
 				/* Get frame from connection, add own address at
 				 * the end and send it off */
-#if 1
 				struct sockaddr_ieee802154 _sockaddr;
 
 				// Get address via netlink
 				_socket->getAddress(&_sockaddr.addr, _net);
-				cout << "Sender address set to " << hex << _sockaddr.addr.short_addr << endl;
+				cout << "Sender address set to " << hex << (short)_sockaddr.addr.short_addr << endl;
 
 				stringstream buf;
-				buf << _sockaddr.addr.short_addr;
+				buf << (short)_sockaddr.addr.short_addr;
 
 				tmp = "";
 				tmp = data + buf.str(); // Append address
 				data = "";
 				data = tmp;
-#endif
 #if 0
 				if (data.length() > 114) {
 					std::string chunk, tmp;
