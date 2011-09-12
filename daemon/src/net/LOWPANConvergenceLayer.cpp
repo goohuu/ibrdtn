@@ -143,8 +143,8 @@ namespace dtn
 
 				std::string address = "0";
 				unsigned int pan = 0x00;
-				int length;
-				//string tmp;
+				int length, ret;
+				std::string tmp;
 
 				// read values
 				uri.decode(address, pan);
@@ -157,10 +157,21 @@ namespace dtn
 
 				/* Get frame from connection, add own address at
 				 * the end and send it off */
-//				tmp = data + address; // We need our own address not the dst address here
-//				data = tmp;
-//				int ret = p.send(data.c_str(), data.length());
+#if 1
+				struct sockaddr_ieee802154 _sockaddr;
 
+				// Get address via netlink
+				_socket->getAddress(&_sockaddr.addr, _net);
+				cout << "Sender address set to " << hex << _sockaddr.addr.short_addr << endl;
+
+				stringstream buf;
+				buf << _sockaddr.addr.short_addr;
+
+				tmp = "";
+				tmp = data + buf.str(); // Append address
+				data = "";
+				data = tmp;
+#endif
 #if 0
 				if (data.length() > 114) {
 					std::string chunk, tmp;
@@ -206,14 +217,14 @@ namespace dtn
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				} else {
 #endif
-					std::string tmp;
-					stringstream buf;
+					stringstream buf2;
 					char header = 0;
 
 					header = SEGMENT_BOTH;
 					buf << header;
 
-					tmp = buf.str() + data; // Prepand header to chunk
+					tmp = "";
+					tmp = buf2.str() + data; // Prepand header to chunk
 					data = "";
 					data = tmp;
 
@@ -221,7 +232,7 @@ namespace dtn
 					ibrcommon::MutexLock l(m_writelock);
 
 					// send converted line back to client.
-					int ret = p.send(data.c_str(), data.length());
+					ret = p.send(data.c_str(), data.length());
 
 					if (ret == -1)
 					{
@@ -248,7 +259,7 @@ namespace dtn
 
 			char data[m_maxmsgsize];
 			char header, extended_header;
-			int address;
+			short address;
 			stringstream ss;
 
 			/* This worker needs to take care of all incoming frames
@@ -269,7 +280,8 @@ namespace dtn
 				extended_header = data[1];
 
 			// Retrieve sender address from the end of the frame
-			//address = (data[len-2] << 8) + data[len-1];
+			address = (data[len-2] << 8) + data[len-1];
+			cout << "Received sender address " << hex << address << endl;
 
 			// Put the data frame in the queue corresponding to its sender address
 			/* FIXME here we need a list with the connection objects
@@ -282,8 +294,8 @@ namespace dtn
 				cout << *i << " ";
 			cout << endl;
 #endif
-			//ss.write(data, len-2); // remove the last two bytes with the address
-			ss.write(data+1, len-1);
+			ss.write(data+1, len-3); // remove header and address "footer)
+			//ss.write(data+1, len-1);
 
 			// Send off discovery frame
 			if (extended_header == 0x80)
