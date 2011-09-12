@@ -281,7 +281,7 @@ namespace dtn
 				extended_header = data[1];
 
 			// Retrieve sender address from the end of the frame
-			address = (data[len-2] << 8) + data[len-1];
+			address = (data[len-2] << 8) | data[len-1];
 			cout << "Received sender address " << hex << address << endl;
 
 			stringstream output;
