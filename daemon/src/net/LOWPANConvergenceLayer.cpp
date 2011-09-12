@@ -219,7 +219,7 @@ namespace dtn
 					char header = 0;
 
 					header = SEGMENT_BOTH;
-					buf << header;
+					buf2 << header;
 
 					tmp = "";
 					tmp = buf2.str() + data; // Prepand header to chunk
@@ -292,8 +292,8 @@ namespace dtn
 				cout << *i << " ";
 			cout << endl;
 #endif
-			//ss.write(data+1, len-3); // remove header and address "footer"
-			ss.write(data+1, len-1);
+			ss.write(data+1, len-3); // remove header and address "footer"
+			//ss.write(data+1, len-1);
 
 			// Send off discovery frame
 			if (extended_header == 0x80)
