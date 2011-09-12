@@ -286,9 +286,9 @@ namespace dtn
 			/* FIXME here we need a list with the connection objects
 			 * and the queues we can write into */
 #if 0
-			LOWPANConnection *connection = new LOWPANConnection(_net);
+			LOWPANConnection *connection = new LOWPANConnection(address, LOWPANConvergenceLayer &cl);
 
-			std::list<int>::iterator i;
+			std::list<LOWPANConnection*>::iterator i;
 			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
 				cout << *i << " ";
 			cout << endl;

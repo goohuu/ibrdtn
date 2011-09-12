@@ -4,6 +4,7 @@
 #include "Component.h"
 #include "ibrcommon/Exceptions.h"
 #include <ibrcommon/net/vinterface.h>
+#include <ibrcommon/net/lowpanstream.h>
 
 #include "ibrdtn/data/BundleID.h"
 #include "core/Node.h"
@@ -14,45 +15,37 @@ namespace dtn
 {
 	namespace net
 	{
+		class LOWPANConvergenceLayer;
 		class LOWPANConnection : public ibrcommon::JoinableThread
 		{
 		public:
-			LOWPANConnection(ibrcommon::vinterface net);
+			LOWPANConnection(unsigned int address, LOWPANConvergenceLayer &cl);
 
 			virtual ~LOWPANConnection();
 
 			unsigned int address;
 
+//			ibrcommon::lowpanstream& getStream();
+
 			void run();
-
-			void queue(const dtn::core::Node &n);
-
-			LOWPANConnection& operator>>(dtn::data::Bundle&);
-
-			virtual const std::string getName() const;
 #if 0
-			class LOWPANConnectionSender : public LOWPANConnection
+			class LOWPANConnectionSender : public ibrcommon::JoinableThread
 			{
 				public:
-					send(BundleID &id);
+					LOWPANConnectionSender(ibrcommon::lowpanstream &stream);
+					virtual ~LOWPANConnectionSender();
 
-					queue();
+					void send(BundleID &id);
+					void run();
+				private:
+					ibrcommon::lowpanstream &stream;
 			};
 #endif
 		protected:
-			virtual void componentUp();
-			virtual void componentRun();
-			virtual void componentDown();
 
 		private:
-			ibrcommon::vinterface _net;
-
-			unsigned int m_maxmsgsize;
-
-			ibrcommon::Mutex m_writelock;
-			ibrcommon::Mutex m_readlock;
-
 			bool _running;
+//			ibrcommon::lowpanstream _stream;
 		};
 	}
 }

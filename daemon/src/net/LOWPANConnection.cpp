@@ -67,72 +67,23 @@ namespace dtn
 {
 	namespace net
 	{
-		LOWPANConnection::LOWPANConnection(ibrcommon::vinterface net)
+		LOWPANConnection::LOWPANConnection(unsigned int address, LOWPANConvergenceLayer &cl)
+		 : address(address)
 		{
 		}
 
 		LOWPANConnection::~LOWPANConnection()
 		{
-			componentDown();
 		}
 
-		void LOWPANConnection::queue(const dtn::core::Node &n)
+#if 0
+		ibrcommon::lowpanstream& LOWPANConnection::getStream()
 		{
 		}
-
+#endif
 		void LOWPANConnection::run()
 		{
 		}
 
-		LOWPANConnection& LOWPANConnection::operator>>(dtn::data::Bundle &bundle)
-		{
-			return (*this);
-		}
-
-		void LOWPANConnection::componentUp()
-		{
-		}
-
-		void LOWPANConnection::componentDown()
-		{
-			_running = false;
-			join();
-		}
-
-		void LOWPANConnection::componentRun()
-		{
-			_running = true;
-
-			while (_running)
-			{
-				try {
-					dtn::data::Bundle bundle;
-					(*this) >> bundle;
-
-					// determine sender
-					EID sender;
-
-					// increment value in the scope control hop limit block
-					try {
-						dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
-						schl.increment();
-					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
-
-					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(sender, bundle);
-
-				} catch (const dtn::InvalidDataException &ex) {
-					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				} catch (const ibrcommon::IOException&) {
-
-				}
-				yield();
-			}
-		}
-
-		const std::string LOWPANConnection::getName() const
-		{
-			return "LOWPANConnection";
-		}
 	}
 }
