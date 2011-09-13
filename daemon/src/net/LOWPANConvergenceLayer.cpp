@@ -232,6 +232,15 @@ namespace dtn
 
 					cout << "Sending following data stream: " << hex << data << endl;
 
+					const char *foo;
+					foo = data.c_str();
+					printf("Sendeing frame: ");
+					for (int i = 0; i < data.length(); i++)
+						printf("%X ", foo[i]);
+
+					printf("\n");
+
+
 					// send converted line back to client.
 					ret = p.send(data.c_str(), data.length());
 
