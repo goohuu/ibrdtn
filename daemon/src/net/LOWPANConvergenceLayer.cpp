@@ -161,11 +161,11 @@ namespace dtn
 
 				// Get address via netlink
 				_socket->getAddress(&_sockaddr.addr, _net);
-				_sockaddr.addr.short_addr = 0x1234; // HACK
-				cout << "Sender address set to " << (short)_sockaddr.addr.short_addr << endl;
+				//_sockaddr.addr.short_addr = 0x1234; // HACK
 
 				stringstream buf;
 				buf << (short)_sockaddr.addr.short_addr;
+				cout << "Sender address set to " << buf << endl;
 
 				tmp = "";
 				tmp = data + buf.str(); // Append address
