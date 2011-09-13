@@ -230,16 +230,7 @@ namespace dtn
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
 
-					cout << "Sending following data stream: " << hex << data << endl;
-
-					const char *foo;
-					foo = data.c_str();
-					printf("Sendeing frame: ");
-					for (int i = 0; i < data.length(); i++)
-						printf("%X ", foo[i]);
-
-					printf("\n");
-
+					cout << "Sending following data stream: " << data << endl;
 
 					// send converted line back to client.
 					ret = p.send(data.c_str(), data.length());
@@ -283,12 +274,6 @@ namespace dtn
 			if (len <= 0)
 				return (*this);
 
-			printf("Frame received: ");
-			for (int i = 0; i < len; i++)
-				printf("%X ", data[i]);
-
-			printf("\n");
-
 			// Retrieve header of frame
 			header = data[0];
 
@@ -298,8 +283,6 @@ namespace dtn
 
 			// Retrieve sender address from the end of the frame
 			//address = (data[len-2] << 8) | data[len-1];
-			//cout << "Received sender address " << hex << address << endl;
-			//printf("Received sender address %X\n", address);
 
 
 			// Put the data frame in the queue corresponding to its sender address
@@ -316,6 +299,7 @@ namespace dtn
 			//ss.write(data+1, len-3); // remove header and address "footer"
 			tmp.write(data+1, len-1);
 			payload = tmp.str();
+			cout << "Received frame: " << payload << endl;
 			address = payload.substr (payload.length()-4,4);
 			cout << "Received address " << address << endl;
 			payload.erase(payload.length()-4,4);
