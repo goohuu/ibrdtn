@@ -158,19 +158,24 @@ namespace dtn
 				/* Get frame from connection, add own address at
 				 * the end and send it off */
 
+				stringstream buf;
+				char header;
+				header = SEGMENT_BOTH;
+
+				buf.put(header);
+				buf << data;
+
 				// Get address via netlink
 				struct sockaddr_ieee802154 _sockaddr;
 				_socket->getAddress(&_sockaddr.addr, _net);
 				_sockaddr.addr.short_addr = 0x1234; // HACK
 
-				stringstream buf;
 				buf.write((char *)&_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
-				cout << "Sender address set to " << buf << endl;
+				cout << "Sender address set to " << hex << _sockaddr.addr.short_addr << endl;
 
-				tmp = "";
-				tmp = data + buf.str(); // Append address
-				data = "";
-				data = tmp;
+				data = buf.str();
+				cout << "Sending following data stream: " << data << endl;
+
 #if 0
 				if (data.length() > 114) {
 					std::string chunk, tmp;
@@ -216,21 +221,10 @@ namespace dtn
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 				} else {
 #endif
-					stringstream buf2;
-					char header = 0;
-
-					header = SEGMENT_BOTH;
-					buf2 << header;
-
-					tmp = "";
-					tmp = buf2.str() + data; // Prepand header to chunk
-					data = "";
-					data = tmp;
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
 
-					cout << "Sending following data stream: " << data << endl;
 
 					// send converted line back to client.
 					ret = p.send(data.c_str(), data.length());
