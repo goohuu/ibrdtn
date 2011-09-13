@@ -254,7 +254,7 @@ namespace dtn
 
 			char data[m_maxmsgsize];
 			char header, extended_header;
-			string address;
+			short address;
 			stringstream ss, tmp;
 			string payload;
 
@@ -277,7 +277,7 @@ namespace dtn
 
 			// Retrieve sender address from the end of the frame
 			address = (data[len-2] << 8) | data[len-1];
-			cout << "Received address " << address << endl;
+			cout << "Received address " << hex << address << endl;
 
 			// Put the data frame in the queue corresponding to its sender address
 			/* FIXME here we need a list with the connection objects
