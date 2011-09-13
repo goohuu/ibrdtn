@@ -168,7 +168,7 @@ namespace dtn
 				// Get address via netlink
 				struct sockaddr_ieee802154 _sockaddr;
 				_socket->getAddress(&_sockaddr.addr, _net);
-				_sockaddr.addr.short_addr = 0x1234; // HACK
+//				_sockaddr.addr.short_addr = 0x1234; // HACK
 
 				buf.write((char *)&_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
 				cout << "Sender address set to " << hex << _sockaddr.addr.short_addr << endl;
@@ -224,7 +224,6 @@ namespace dtn
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
-
 
 					// send converted line back to client.
 					ret = p.send(data.c_str(), data.length());
@@ -290,14 +289,7 @@ namespace dtn
 				cout << *i << " ";
 			cout << endl;
 #endif
-			cout << "Received frame: " << data << endl;
 			ss.write(data+1, len-3); // remove header and address "footer"
-			//tmp.write(data+1, len-1);
-			//payload = tmp.str();
-			//address = payload.substr (payload.length()-4,4);
-			//payload.erase(payload.length()-4,4);
-
-//			ss << payload;
 
 			// Send off discovery frame
 			if (extended_header == 0x80)
