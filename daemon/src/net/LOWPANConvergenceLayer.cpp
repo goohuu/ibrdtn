@@ -141,10 +141,9 @@ namespace dtn
 
 				const dtn::core::Node::URI &uri = uri_list.front();
 
-				std::string address = "0";
-				unsigned int pan = 0x00;
-				int length, ret;
-				std::string tmp;
+				std::string address;
+				unsigned int pan;
+				int ret;
 				stringstream buf;
 				char header;
 
@@ -200,8 +199,7 @@ namespace dtn
 			char data[m_maxmsgsize];
 			char header, extended_header;
 			short address;
-			stringstream ss, tmp;
-			string payload;
+			stringstream ss;
 
 			/* This worker needs to take care of all incoming frames
 			 * and puts them into the right channels
@@ -240,18 +238,6 @@ namespace dtn
 			if (extended_header == 0x80)
 				cout << "Received beacon frame for LoWPAN discovery" << endl;
 
-#if 0
-			while (header != SEGMENT_LAST) {
-
-				len = _socket->receive(data, m_maxmsgsize);
-				header = data[0];
-				//header &= 0xF0;
-
-				if (len > 0)
-					ss.write(data+1, len-1);
-			}
-#endif
-
 			if (len > 0)
 				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 			return (*this);
@@ -276,7 +262,6 @@ namespace dtn
 		{
 			_running = false;
 			_socket->shutdown();
-			// stop(); needed here?
 			join();
 		}
 
