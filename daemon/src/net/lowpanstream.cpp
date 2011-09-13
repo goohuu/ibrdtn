@@ -7,7 +7,7 @@
 
 #include "ibrcommon/config.h"
 #include "ibrcommon/Logger.h"
-#include "ibrcommon/net/lowpanstream.h"
+#include "lowpanstream.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include <netinet/in.h>
 #include <sys/types.h>

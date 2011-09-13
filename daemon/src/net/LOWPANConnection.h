@@ -4,7 +4,7 @@
 #include "Component.h"
 #include "ibrcommon/Exceptions.h"
 #include <ibrcommon/net/vinterface.h>
-#include <ibrcommon/net/lowpanstream.h>
+#include "lowpanstream.h"
 
 #include "ibrdtn/data/BundleID.h"
 #include "core/Node.h"
