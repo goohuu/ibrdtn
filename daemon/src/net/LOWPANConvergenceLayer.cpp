@@ -169,70 +169,23 @@ namespace dtn
 
 				buf.write((char *)&_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
 				data = buf.str();
-#if 0
-				if (data.length() > 114) {
-					std::string chunk, tmp;
-					char header = 0;
-					int i, seq_num;
-					int chunks = ceil(data.length() / 114.0);
-					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
-					for (i = 0; i < chunks; i++) {
-						stringstream buf;
-						chunk = data.substr(i * 114, 114);
 
-						seq_num =  i % 16;
+				// set write lock
+				ibrcommon::MutexLock l(m_writelock);
 
-						printf("Iteration %i with seq number %i, from %i chunks\n", i, seq_num, chunks);
-						if (i == 0) // First segment
-							header = SEGMENT_FIRST + seq_num;
-						else if (i == (chunks - 1)) // Last segment
-							header = SEGMENT_LAST + seq_num;
-						else
-							header = SEGMENT_MIDDLE+ seq_num;
+				// send converted line back to client.
+				ret = p.send(data.c_str(), data.length());
 
-						buf << header;
-						tmp = buf.str() + chunk; // Prepand header to chunk
-						chunk = "";
-						chunk = tmp;
+				if (ret == -1)
+				{
+					// CL is busy, requeue bundle
+					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+					return;
+				}
 
-						// set write lock
-						ibrcommon::MutexLock l(m_writelock);
-
-						// send converted line back to client.
-						int ret = p.send(chunk.c_str(), chunk.length());
-
-						if (ret == -1)
-						{
-							// CL is busy, requeue bundle
-							dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-
-							return;
-						}
-					}
-					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-				} else {
-#endif
-
-					// set write lock
-					ibrcommon::MutexLock l(m_writelock);
-
-					// send converted line back to client.
-					ret = p.send(data.c_str(), data.length());
-
-					if (ret == -1)
-					{
-						// CL is busy, requeue bundle
-						dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-
-						return;
-					}
-
-					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-//				}
+				// raise bundle event
+				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
