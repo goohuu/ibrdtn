@@ -1,12 +1,9 @@
 /*
  * lowpanstream.h
- *
- *  Created on: 29.07.2009
- *      Author: morgenro
  */
 
-#ifndef IBRCOMMON_TCPSTREAM_H_
-#define IBRCOMMON_TCPSTREAM_H_
+#ifndef IBRCOMMON_LOWPANSTREAM_H_
+#define IBRCOMMON_LOWPANSTREAM_H_
 
 #include "ibrcommon/Exceptions.h"
 #include <streambuf>
@@ -56,4 +53,4 @@ namespace ibrcommon
 	};
 }
 
-#endif /* TCPSTREAM_H_ */
+#endif /* LOWPANSTREAM_H_ */

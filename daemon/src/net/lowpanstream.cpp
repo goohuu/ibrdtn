@@ -1,8 +1,5 @@
 /*
  * lowpanstream.cpp
- *
- *  Created on: 29.07.2009
- *      Author: morgenro
  */
 
 #include "ibrcommon/config.h"
@@ -21,7 +18,6 @@
 Use recv and send functionality from CL
 Use this stream in CL
 */
-
 namespace ibrcommon
 {
 	lowpanstream::lowpanstream(lowpanstream_callback &callback, unsigned int address) :
@@ -79,10 +75,6 @@ namespace ibrcommon
 
 			// bytes to send
 			size_t bytes = (iend - ibegin);
-
-			// send the data
-			//ssize_t ret = ::send(_socket, out_buf_, (iend - ibegin), 0);
-
 #if 0
 				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
@@ -154,10 +146,6 @@ namespace ibrcommon
 						return;
 					}
 
-					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-
 			if (ret < 0)
 			{
 				// failure
@@ -203,8 +191,6 @@ namespace ibrcommon
 			char header, tmp;
 			stringstream ss;
 
-			// read some bytes
-			//int bytes = ::recv(_socket, in_buf_, BUFF_SIZE, 0);
 			int bytes = _socket->receive(in_buf_, BUFF_SIZE);
 
 			if (len <= 0)
@@ -223,9 +209,6 @@ namespace ibrcommon
 				if (len > 0)
 					ss.write(data+1, len-1);
 			}
-
-			if (len > 0)
-				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 #endif
 
 			// end of stream
