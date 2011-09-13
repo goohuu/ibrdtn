@@ -302,7 +302,7 @@ namespace dtn
 			tmp.write(data+1, len-1);
 			payload = tmp.str();
 			cout << "Received frame: " << payload << endl;
-			address = payload.substr (payload.length()-2,2);
+			address = payload.substr (payload.length()-4,4);
 			cout << "Received address " << address << endl;
 			payload.erase(payload.length()-4,4);
 
