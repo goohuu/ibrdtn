@@ -144,7 +144,6 @@ namespace dtn
 				std::string address = "0";
 				unsigned int pan = 0x00;
 				int length, ret;
-				short addr;
 				std::string tmp;
 
 				// read values
@@ -165,8 +164,7 @@ namespace dtn
 				_sockaddr.addr.short_addr = 0x1234; // HACK
 
 				stringstream buf;
-				addr = _sockaddr.addr.short_addr;
-				buf << addr;
+				buf.write((char *)&_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
 				cout << "Sender address set to " << buf << endl;
 
 				tmp = "";
@@ -284,8 +282,8 @@ namespace dtn
 				extended_header = data[1];
 
 			// Retrieve sender address from the end of the frame
-			//address = (data[len-2] << 8) | data[len-1];
-
+			address = (data[len-2] << 8) | data[len-1];
+			cout << "Received address " << address << endl;
 
 			// Put the data frame in the queue corresponding to its sender address
 			/* FIXME here we need a list with the connection objects
@@ -298,15 +296,14 @@ namespace dtn
 				cout << *i << " ";
 			cout << endl;
 #endif
-			//ss.write(data+1, len-3); // remove header and address "footer"
-			tmp.write(data+1, len-1);
-			payload = tmp.str();
-			cout << "Received frame: " << payload << endl;
-			address = payload.substr (payload.length()-4,4);
-			cout << "Received address " << address << endl;
-			payload.erase(payload.length()-4,4);
+			cout << "Received frame: " << data << endl;
+			ss.write(data+1, len-3); // remove header and address "footer"
+			//tmp.write(data+1, len-1);
+			//payload = tmp.str();
+			//address = payload.substr (payload.length()-4,4);
+			//payload.erase(payload.length()-4,4);
 
-			ss << payload;
+//			ss << payload;
 
 			// Send off discovery frame
 			if (extended_header == 0x80)
