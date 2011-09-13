@@ -144,6 +144,7 @@ namespace dtn
 				std::string address = "0";
 				unsigned int pan = 0x00;
 				int length, ret;
+				short addr;
 				std::string tmp;
 
 				// read values
@@ -157,14 +158,15 @@ namespace dtn
 
 				/* Get frame from connection, add own address at
 				 * the end and send it off */
-				struct sockaddr_ieee802154 _sockaddr;
 
 				// Get address via netlink
+				struct sockaddr_ieee802154 _sockaddr;
 				_socket->getAddress(&_sockaddr.addr, _net);
 				//_sockaddr.addr.short_addr = 0x1234; // HACK
 
 				stringstream buf;
-				buf << (short)_sockaddr.addr.short_addr;
+				addr = _sockaddr.addr.short_addr;
+				buf << addr;
 				cout << "Sender address set to " << buf << endl;
 
 				tmp = "";
