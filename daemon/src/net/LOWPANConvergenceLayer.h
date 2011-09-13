@@ -56,8 +56,8 @@ namespace dtn
 			int _panid;
 			int m_socket;
 
-			//std::list<int> ConnectionList;
 			std::list<LOWPANConnection*> ConnectionList;
+			LOWPANConnection* getConnection(unsigned short address);
 
 			static const int DEFAULT_PANID;
 

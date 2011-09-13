@@ -19,11 +19,12 @@ namespace dtn
 		class LOWPANConnection : public ibrcommon::JoinableThread
 		{
 		public:
-			LOWPANConnection(unsigned int address, LOWPANConvergenceLayer &cl);
+			//LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl);
+			LOWPANConnection(unsigned short address);
 
 			virtual ~LOWPANConnection();
 
-			unsigned int address;
+			unsigned short address;
 
 //			lowpanstream& getStream();
 

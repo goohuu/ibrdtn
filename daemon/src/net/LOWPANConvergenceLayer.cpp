@@ -198,7 +198,7 @@ namespace dtn
 
 			char data[m_maxmsgsize];
 			char header, extended_header;
-			short address;
+			unsigned short address;
 			stringstream ss;
 
 			/* This worker needs to take care of all incoming frames
@@ -221,26 +221,43 @@ namespace dtn
 			// Retrieve sender address from the end of the frame
 			address = (data[len-1] << 8) | data[len-2];
 
-			// Put the data frame in the queue corresponding to its sender address
-			/* FIXME here we need a list with the connection objects
-			 * and the queues we can write into */
-#if 0
-			LOWPANConnection *connection = new LOWPANConnection(address, LOWPANConvergenceLayer &cl);
-
-			std::list<LOWPANConnection*>::iterator i;
-			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
-				cout << *i << " ";
-			cout << endl;
-#endif
-			ss.write(data+1, len-3); // remove header and address "footer"
-
-			// Send off discovery frame
+			// Received discovery frame?
 			if (extended_header == 0x80)
 				cout << "Received beacon frame for LoWPAN discovery" << endl;
+
+			/* Decide in which queue to write based on the src address */
+			/* Get matching connection and queue the data */
+			LOWPANConnection *connection = getConnection(address);
+//			Get stream from connection
+//			stream.queue(data+1, len-3);
+			ss.write(data+1, len-3); // remove header and address "footer"
 
 			if (len > 0)
 				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 			return (*this);
+		}
+
+		LOWPANConnection* LOWPANConvergenceLayer::getConnection(unsigned short address)
+		{
+			//LOWPANConvergenceLayer cl;
+			/* 1. Test if we have an connection for this address
+			   2. Create new connection if we don't have one and put it into the list
+			   3. Get connection by address from list
+			*/
+
+			// overload for address search
+			std::list<LOWPANConnection*>::iterator i;
+			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
+				// return connection if found
+				cout << *i << " ";
+			cout << endl;
+
+			//LOWPANConnection *connection = new LOWPANConnection(address, cl);
+			LOWPANConnection *connection = new LOWPANConnection(address);
+
+			// append to list
+			// retrun connection
+
 		}
 
 		void LOWPANConvergenceLayer::componentUp()
