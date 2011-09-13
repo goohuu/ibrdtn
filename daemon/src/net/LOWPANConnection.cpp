@@ -77,7 +77,7 @@ namespace dtn
 		}
 
 #if 0
-		ibrcommon::lowpanstream& LOWPANConnection::getStream()
+		lowpanstream& LOWPANConnection::getStream()
 		{
 		}
 #endif
