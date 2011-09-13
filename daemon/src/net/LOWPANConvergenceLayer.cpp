@@ -273,6 +273,12 @@ namespace dtn
 			if (len <= 0)
 				return (*this);
 
+			printf("Frame received: ");
+			for (int i = 0; i < len; i++)
+				printf("%02X ", data[i]);
+
+			printf("\n");
+
 			// Retrieve header of frame
 			header = data[0];
 
@@ -282,8 +288,8 @@ namespace dtn
 
 			// Retrieve sender address from the end of the frame
 			address = (data[len-2] << 8) | data[len-1];
-			cout << "Received sender address " << hex << address << endl;
-
+			//cout << "Received sender address " << hex << address << endl;
+			printf("Received sender address %02X\n", address);
 
 
 			stringstream output;
