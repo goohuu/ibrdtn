@@ -269,8 +269,9 @@ namespace dtn
 
 			char data[m_maxmsgsize];
 			char header, extended_header;
-			short address;
-			stringstream ss;
+			string address;
+			stringstream ss, tmp;
+			string payload;
 
 			/* This worker needs to take care of all incoming frames
 			 * and puts them into the right channels
@@ -296,9 +297,9 @@ namespace dtn
 				extended_header = data[1];
 
 			// Retrieve sender address from the end of the frame
-			address = (data[len-2] << 8) | data[len-1];
+			//address = (data[len-2] << 8) | data[len-1];
 			//cout << "Received sender address " << hex << address << endl;
-			printf("Received sender address %X\n", address);
+			//printf("Received sender address %X\n", address);
 
 
 			// Put the data frame in the queue corresponding to its sender address
@@ -312,8 +313,14 @@ namespace dtn
 				cout << *i << " ";
 			cout << endl;
 #endif
-			ss.write(data+1, len-3); // remove header and address "footer"
-			//ss.write(data+1, len-1);
+			//ss.write(data+1, len-3); // remove header and address "footer"
+			tmp.write(data+1, len-1);
+			payload = tmp.str();
+			address = payload.substr (payload.length()-2,2);
+			cout << "Received address " << address << endl;
+			payload.erase(payload.length()-2,2);
+
+			ss << payload;
 
 			// Send off discovery frame
 			if (extended_header == 0x80)
