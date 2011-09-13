@@ -145,6 +145,8 @@ namespace dtn
 				unsigned int pan = 0x00;
 				int length, ret;
 				std::string tmp;
+				stringstream buf;
+				char header;
 
 				// read values
 				uri.decode(address, pan);
@@ -157,11 +159,7 @@ namespace dtn
 
 				/* Get frame from connection, add own address at
 				 * the end and send it off */
-
-				stringstream buf;
-				char header;
 				header = SEGMENT_BOTH;
-
 				buf.put(header);
 				buf << data;
 
@@ -170,8 +168,6 @@ namespace dtn
 				_socket->getAddress(&_sockaddr.addr, _net);
 
 				buf.write((char *)&_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
-				cout << "Sender address set to " << hex << _sockaddr.addr.short_addr << endl;
-
 				data = buf.str();
 #if 0
 				if (data.length() > 114) {
@@ -273,7 +269,6 @@ namespace dtn
 
 			// Retrieve sender address from the end of the frame
 			address = (data[len-1] << 8) | data[len-2];
-			cout << "Received address " << hex << address << endl;
 
 			// Put the data frame in the queue corresponding to its sender address
 			/* FIXME here we need a list with the connection objects
