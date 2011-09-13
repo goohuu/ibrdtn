@@ -275,7 +275,7 @@ namespace dtn
 
 			printf("Frame received: ");
 			for (int i = 0; i < len; i++)
-				printf("%02X ", data[i]);
+				printf("%X ", data[i]);
 
 			printf("\n");
 
@@ -289,12 +289,8 @@ namespace dtn
 			// Retrieve sender address from the end of the frame
 			address = (data[len-2] << 8) | data[len-1];
 			//cout << "Received sender address " << hex << address << endl;
-			printf("Received sender address %02X\n", address);
+			printf("Received sender address %X\n", address);
 
-
-			stringstream output;
-			output.write(data, len);
-			cout << "Received folling data stream: " << output << endl;
 
 			// Put the data frame in the queue corresponding to its sender address
 			/* FIXME here we need a list with the connection objects
