@@ -162,7 +162,7 @@ namespace dtn
 				// Get address via netlink
 				_socket->getAddress(&_sockaddr.addr, _net);
 				_sockaddr.addr.short_addr = 0x1234; // HACK
-				cout << "Sender address set to " << hex << (short)_sockaddr.addr.short_addr << endl;
+				cout << "Sender address set to " << (short)_sockaddr.addr.short_addr << endl;
 
 				stringstream buf;
 				buf << (short)_sockaddr.addr.short_addr;
@@ -316,9 +316,9 @@ namespace dtn
 			//ss.write(data+1, len-3); // remove header and address "footer"
 			tmp.write(data+1, len-1);
 			payload = tmp.str();
-			address = payload.substr (payload.length()-2,2);
+			address = payload.substr (payload.length()-4,4);
 			cout << "Received address " << address << endl;
-			payload.erase(payload.length()-2,2);
+			payload.erase(payload.length()-4,4);
 
 			ss << payload;
 
