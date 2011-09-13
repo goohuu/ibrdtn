@@ -168,14 +168,11 @@ namespace dtn
 				// Get address via netlink
 				struct sockaddr_ieee802154 _sockaddr;
 				_socket->getAddress(&_sockaddr.addr, _net);
-//				_sockaddr.addr.short_addr = 0x1234; // HACK
 
 				buf.write((char *)&_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
 				cout << "Sender address set to " << hex << _sockaddr.addr.short_addr << endl;
 
 				data = buf.str();
-				cout << "Sending following data stream: " << data << endl;
-
 #if 0
 				if (data.length() > 114) {
 					std::string chunk, tmp;
