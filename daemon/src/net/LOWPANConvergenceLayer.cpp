@@ -162,7 +162,7 @@ namespace dtn
 				// Get address via netlink
 				struct sockaddr_ieee802154 _sockaddr;
 				_socket->getAddress(&_sockaddr.addr, _net);
-				//_sockaddr.addr.short_addr = 0x1234; // HACK
+				_sockaddr.addr.short_addr = 0x1234; // HACK
 
 				stringstream buf;
 				addr = _sockaddr.addr.short_addr;
@@ -302,7 +302,7 @@ namespace dtn
 			tmp.write(data+1, len-1);
 			payload = tmp.str();
 			cout << "Received frame: " << payload << endl;
-			address = payload.substr (payload.length()-4,4);
+			address = payload.substr (payload.length()-2,2);
 			cout << "Received address " << address << endl;
 			payload.erase(payload.length()-4,4);
 
