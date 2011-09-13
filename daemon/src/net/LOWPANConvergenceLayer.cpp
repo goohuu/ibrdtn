@@ -276,7 +276,7 @@ namespace dtn
 				extended_header = data[1];
 
 			// Retrieve sender address from the end of the frame
-			address = data[len-1] | (data[len-2] << 8);
+			address = (data[len-1] << 8) | data[len-2];
 			cout << "Received address " << hex << address << endl;
 
 			// Put the data frame in the queue corresponding to its sender address
