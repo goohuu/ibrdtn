@@ -85,8 +85,8 @@ namespace dtn
 
 		bool Clock::__isExpired(size_t timestamp, size_t lifetime)
 		{
-			// if the quality of time is zero, then never expire a bundle
-			if (Clock::quality == 0) return false;
+			// if the quality of time is zero or the clock is bad, then never expire a bundle
+			if ((Clock::quality == 0) || dtn::utils::Clock::badclock) return false;
 
 			// calculate sigma based on the quality of time and the original lifetime
 			size_t sigma = lifetime * (1 - Clock::quality);
