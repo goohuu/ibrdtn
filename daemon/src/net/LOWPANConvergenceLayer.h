@@ -17,6 +17,7 @@ namespace dtn
 {
 	namespace net
 	{
+		class LOWPANConnection;
 		/**
 		 * This class implement a ConvergenceLayer for LOWPAN.
 		 */

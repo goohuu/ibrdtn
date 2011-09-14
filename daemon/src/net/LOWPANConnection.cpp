@@ -67,8 +67,7 @@ namespace dtn
 {
 	namespace net
 	{
-		//LOWPANConnection::LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl)
-		LOWPANConnection::LOWPANConnection(unsigned short address)
+		LOWPANConnection::LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl)
 		 : address(address)
 		{
 		}

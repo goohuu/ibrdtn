@@ -239,7 +239,6 @@ namespace dtn
 
 		LOWPANConnection* LOWPANConvergenceLayer::getConnection(unsigned short address)
 		{
-			//LOWPANConvergenceLayer cl;
 			// Test if connection for this address already exist
 			std::list<LOWPANConnection*>::iterator i;
 			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
@@ -251,8 +250,7 @@ namespace dtn
 			}
 
 			// Connection does not exist, create one and put it into the list
-			//LOWPANConnection *connection = new LOWPANConnection(address, cl);
-			LOWPANConnection *connection = new LOWPANConnection(address);
+			LOWPANConnection *connection = new LOWPANConnection(address, (*this));
 
 			ConnectionList.push_back(connection);
 			return connection;

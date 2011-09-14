@@ -3,6 +3,7 @@
 
 #include "ibrcommon/Exceptions.h"
 #include "lowpanstream.h"
+#include "net/LOWPANConvergenceLayer.h"
 
 #include "ibrdtn/data/BundleID.h"
 
@@ -17,9 +18,7 @@ namespace dtn
 		class LOWPANConnection : public ibrcommon::JoinableThread
 		{
 		public:
-			// Why does it fail with the seond param?
-			//LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl);
-			LOWPANConnection(unsigned short address);
+			LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl);
 
 			virtual ~LOWPANConnection();
 
