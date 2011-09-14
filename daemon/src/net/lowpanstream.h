@@ -20,6 +20,7 @@ namespace dtn
 		class lowpanstream_callback
 		{
 		public:
+			/* Missing constructor and destructor? */
 			virtual void send(char *buf, int len, unsigned int address) = 0;
 		};
 
