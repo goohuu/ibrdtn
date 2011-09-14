@@ -228,7 +228,7 @@ namespace dtn
 			/* Decide in which queue to write based on the src address */
 			/* Get matching connection and queue the data */
 			LOWPANConnection *connection = getConnection(address);
-//			Get stream from connection
+//			stream = connection.getStream();
 //			stream.queue(data+1, len-3);
 			ss.write(data+1, len-3); // remove header and address "footer"
 
@@ -240,24 +240,22 @@ namespace dtn
 		LOWPANConnection* LOWPANConvergenceLayer::getConnection(unsigned short address)
 		{
 			//LOWPANConvergenceLayer cl;
-			/* 1. Test if we have an connection for this address
-			   2. Create new connection if we don't have one and put it into the list
-			   3. Get connection by address from list
-			*/
-
-			// overload for address search
+			// Test if connection for this address already exist
 			std::list<LOWPANConnection*>::iterator i;
 			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
-				// return connection if found
-				cout << *i << " ";
-			cout << endl;
+			{
+				cout << "Searched address: " << address << endl;
+				cout << "Connection address: " << (*i)->address << endl;
+				if ((*i)->address == address)
+					return (*i);
+			}
 
+			// Connection does not exist, create one and put it into the list
 			//LOWPANConnection *connection = new LOWPANConnection(address, cl);
 			LOWPANConnection *connection = new LOWPANConnection(address);
 
-			// append to list
-			// retrun connection
-
+			ConnectionList.push_back(connection);
+			return connection;
 		}
 
 		void LOWPANConvergenceLayer::componentUp()
