@@ -14,10 +14,6 @@
 #include <fcntl.h>
 #include <string.h>
 
-/* TODO
-Use recv and send functionality from CL
-Use this stream in CL
-*/
 namespace dtn
 {
 	namespace net
@@ -41,6 +37,14 @@ namespace dtn
 
 		void lowpanstream::queue(char *buf, int len)
 		{
+			ibrcommon::MutexLock l(in_buf_cond);
+
+			while (!in_buf_free)
+			{
+				in_buf_cond.wait();
+			}
+			// Buffer füllen
+			in_buf_free = false;
 		}
 
 		void lowpanstream::close()
@@ -188,54 +192,37 @@ namespace dtn
 
 		int lowpanstream::underflow()
 		{
-				bool read = true;
-				bool write = false;
-				bool error = false;
+			ibrcommon::MutexLock l(in_buf_cond);
 
-				int bytes;
-#if 0
-			char header, tmp;
-			stringstream ss;
-
-			int bytes = _socket->receive(in_buf_, BUFF_SIZE);
-
-			if (len <= 0)
-				return (*this);
-
-			header = data[0];
-			header &= 0xF0; // Clear seq number bits
-			ss.write(data+1, len-1);
-
-			while (header != SEGMENT_LAST) {
-
-				len = _socket->receive(data, m_maxmsgsize);
-				header = data[0];
-				header &= 0xF0;
-
-				if (len > 0)
-					ss.write(data+1, len-1);
+			while (in_buf_free)
+			{
+				in_buf_cond.wait();
 			}
+			// Buffer leeren
+			in_buf_free = true;
+
+#if 0
+			// end of stream
+			int bytes;
+
+			if (bytes == 0)
+			{
+				close();
+				IBRCOMMON_LOGGER_DEBUG(40) << "<lowpanstream> recv() returned zero: " << errno << IBRCOMMON_LOGGER_ENDL;
+				return std::char_traits<char>::eof();
+			}
+			else if (bytes < 0)
+			{
+				close();
+				IBRCOMMON_LOGGER_DEBUG(40) << "<lowpanstream> recv() failed: " << errno << IBRCOMMON_LOGGER_ENDL;
+				return std::char_traits<char>::eof();
+			}
+
+			// Since the input buffer content is now valid (or is new)
+			// the get pointer should be initialized (or reset).
+			setg(in_buf_, in_buf_, in_buf_ + bytes);
 #endif
-
-				// end of stream
-				if (bytes == 0)
-				{
-					close();
-					IBRCOMMON_LOGGER_DEBUG(40) << "<lowpanstream> recv() returned zero: " << errno << IBRCOMMON_LOGGER_ENDL;
-					return std::char_traits<char>::eof();
-				}
-				else if (bytes < 0)
-				{
-					close();
-					IBRCOMMON_LOGGER_DEBUG(40) << "<lowpanstream> recv() failed: " << errno << IBRCOMMON_LOGGER_ENDL;
-					return std::char_traits<char>::eof();
-				}
-
-				// Since the input buffer content is now valid (or is new)
-				// the get pointer should be initialized (or reset).
-				setg(in_buf_, in_buf_, in_buf_ + bytes);
-
-				return std::char_traits<char>::not_eof(in_buf_[0]);
+			return std::char_traits<char>::not_eof(in_buf_[0]);
 		}
 	}
 }

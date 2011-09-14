@@ -46,9 +46,11 @@ namespace dtn
 
 			unsigned int _address;
 
+			char *in_buf_stream;
 		private:
 			// Input buffer
 			char *in_buf_;
+			char *in_buf_stream_;
 			bool in_buf_free;
 
 			// Output buffer

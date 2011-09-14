@@ -229,7 +229,7 @@ namespace dtn
 			/* Decide in which queue to write based on the src address */
 			/* Get matching connection and queue the data */
 			LOWPANConnection *connection = getConnection(address);
-			//connection->getStream().queue(data+1, len-3);
+			connection->getStream().queue(data+1, len-3);
 			ss.write(data+1, len-3); // remove header and address "footer"
 
 			if (len > 0)
