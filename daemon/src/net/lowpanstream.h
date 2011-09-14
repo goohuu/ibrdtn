@@ -21,6 +21,8 @@ namespace dtn
 		{
 		public:
 			/* Missing constructor and destructor? */
+			//lowpanstream_callback();
+			//virtual ~lowpanstream_callback();
 			virtual void send(char *buf, int len, unsigned int address) = 0;
 		};
 

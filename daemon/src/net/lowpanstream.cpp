@@ -39,6 +39,10 @@ namespace dtn
 			close();
 		}
 
+		void lowpanstream::queue(char *buf, int len)
+		{
+		}
+
 		void lowpanstream::close()
 		{
 			static ibrcommon::Mutex close_lock;

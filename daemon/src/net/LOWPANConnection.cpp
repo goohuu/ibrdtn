@@ -77,11 +77,10 @@ namespace dtn
 		{
 		}
 
-#if 0
 		lowpanstream& LOWPANConnection::getStream()
 		{
+			return *_stream;
 		}
-#endif
 		void LOWPANConnection::run()
 		{
 		}

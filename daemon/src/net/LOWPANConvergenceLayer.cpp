@@ -1,5 +1,6 @@
 #include "net/LOWPANConvergenceLayer.h"
 #include "net/LOWPANConnection.h"
+#include "net/lowpanstream.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include "net/TransferCompletedEvent.h"
@@ -228,8 +229,7 @@ namespace dtn
 			/* Decide in which queue to write based on the src address */
 			/* Get matching connection and queue the data */
 			LOWPANConnection *connection = getConnection(address);
-//			lowpanstream stream = connection.getStream();
-//			stream.queue(data+1, len-3);
+			//connection->getStream().queue(data+1, len-3);
 			ss.write(data+1, len-3); // remove header and address "footer"
 
 			if (len > 0)
