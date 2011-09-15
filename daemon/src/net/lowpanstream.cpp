@@ -51,7 +51,7 @@ namespace dtn
 	namespace net
 	{
 		lowpanstream::lowpanstream(lowpanstream_callback &callback, unsigned int address) :
-			std::iostream(this), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]), out2_buf_(new char[BUFF_SIZE]), _address(address), callback(callback)
+			std::iostream(this), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]), out2_buf_(new char[BUFF_SIZE]), _address(address), callback(callback), in_seq_num_(0), out_seq_num_(0)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -114,10 +114,11 @@ namespace dtn
 				return std::char_traits<char>::not_eof(c);
 			}
 
-			int seq_num;
-			//seq_num =  i % 16; How to handle seq now?
+			out_seq_num_++;
+			if (out_seq_num_ == 8)
+				out_seq_num_ = 0;
 
-			out_buf_[0] = SEGMENT_MIDDLE+ seq_num;
+			out_buf_[0] = SEGMENT_MIDDLE+ out_seq_num_;
 
 			// set write lock
 			ibrcommon::MutexLock l(m_writelock);

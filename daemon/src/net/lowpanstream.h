@@ -53,6 +53,10 @@ namespace dtn
 			char *out_buf_;
 			char *out2_buf_;
 
+			// sequence numbers
+			int in_seq_num_;
+			int out_seq_num_;
+
 			lowpanstream_callback &callback;
 
 			ibrcommon::Conditional in_buf_cond;
