@@ -643,6 +643,11 @@ namespace dtn
 					sqlite3_bind_int64(st, bind_offset, offset);
 					sqlite3_bind_int64(st, bind_offset + 1, cb.limit());
 				}
+				else if (st == _statements[BUNDLE_GET_FILTER])
+				{
+					sqlite3_bind_int64(st, bind_offset, offset);
+					sqlite3_bind_int64(st, bind_offset + 1, 10);
+				}
 
 				if (sqlite3_step(st) == SQLITE_DONE)
 				{
@@ -687,6 +692,13 @@ namespace dtn
 
 					// abort if enough bundles are found
 					if (ret.size() >= cb.limit()) break;
+				}
+				else if (st == _statements[BUNDLE_GET_FILTER])
+				{
+					if (cb.limit() == 0)
+					{
+						offset += 10;
+					}
 				}
 				else
 				{
