@@ -30,37 +30,6 @@
 #include <iostream>
 #include <list>
 
-/* Header:
- * +---------------+
- * |7 6 5 4 3 2 1 0|
- * +---------------+
- * Bit 7-6: 00 to be compatible with 6LoWPAN
- * Bit 5-4: 00 Middle segment
- *	    01 Last segment
- *	    10 First segment
- *	    11 First and last segment
- * Bit 3:   0 Extended frame not available
- *          1 Extended frame available
- * Bit 2-0: sequence number (0-7)
- *
- * Extended header (only if extended frame available)
- * +---------------+
- * |7 6 5 4 3 2 1 0|
- * +---------------+
- * Bit 7:   0 No discovery frame
- *          1 Discovery frame
- * Bit 6-0: Reserved
- *
- * Two bytes at the end of the frame are reserved for the short address of the
- * sender. This is a workaround until recvfrom() gets fixed.
- */
-
-#define SEGMENT_FIRST	0x25
-#define SEGMENT_LAST	0x10
-#define SEGMENT_BOTH	0x30
-#define SEGMENT_MIDDLE	0x00
-#define EXTENDED_MASK	0x04
-
 using namespace dtn::data;
 
 namespace dtn
@@ -74,15 +43,52 @@ namespace dtn
 
 		LOWPANConnection::~LOWPANConnection()
 		{
+
 		}
 
 		lowpanstream& LOWPANConnection::getStream()
 		{
 			return *_stream;
 		}
+
 		void LOWPANConnection::run()
 		{
 		}
 
+		// class LOWPANConnectionSender
+		LOWPANConnectionSender::LOWPANConnectionSender(lowpanstream &stream)
+		: stream(stream)
+		{
+		}
+
+		LOWPANConnectionSender::~LOWPANConnectionSender()
+		{
+		}
+
+		void LOWPANConnectionSender::queue(const BundleID &id)
+		{
+			dtn::data::DefaultSerializer serializer(stream);
+
+			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
+			// read the bundle out of the storage
+			const dtn::data::Bundle bundle = storage.get(id);
+
+			unsigned int size = serializer.getLength(bundle);
+
+			//const dtn::core::Node::URI &uri = uri_list.front();
+			//std::string address;
+			//unsigned int pan;
+			// read values
+			//uri.decode(address, pan);
+
+			// Put bundle into stringstream
+			serializer << bundle;
+			// Call sync() to make sure the stream knows about the last segment
+		}
+
+		void LOWPANConnectionSender::run()
+		{
+		}
 	}
 }

@@ -21,7 +21,7 @@ namespace dtn
 		/**
 		 * This class implement a ConvergenceLayer for LOWPAN.
 		 */
-		class LOWPANConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider
+		class LOWPANConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent, public DiscoveryServiceProvider, public lowpanstream_callback
 		{
 		public:
 			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool broadcast = false, unsigned int mtu = 1280); //MTU is actually 127...
@@ -44,6 +44,8 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
+                        virtual void send_cb(char *buf, int len, unsigned int address, unsigned int pan);
+
 		protected:
 			virtual void componentUp();
 			virtual void componentRun();
@@ -59,8 +61,6 @@ namespace dtn
 
 			std::list<LOWPANConnection*> ConnectionList;
 			LOWPANConnection* getConnection(unsigned short address);
-
-			static const int DEFAULT_PANID;
 
 			unsigned int m_maxmsgsize;
 

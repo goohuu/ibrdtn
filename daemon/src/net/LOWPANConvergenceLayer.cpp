@@ -34,35 +34,6 @@
 #include <iostream>
 #include <list>
 
-/* Header:
- * +---------------+
- * |7 6 5 4 3 2 1 0|
- * +---------------+
- * Bit 7-6: 00 to be compatible with 6LoWPAN
- * Bit 5-4: 00 Middle segment
- *	    01 Last segment
- *	    10 First segment
- *	    11 First and last segment
- * Bit 3:   0 Extended frame not available
- *          1 Extended frame available
- * Bit 2-0: sequence number (0-7)
- *
- * Extended header (only if extended frame available)
- * +---------------+
- * |7 6 5 4 3 2 1 0|
- * +---------------+
- * Bit 7:   0 No discovery frame
- *          1 Discovery frame
- * Bit 6-0: Reserved
- *
- * Two bytes at the end of the frame are reserved for the short address of the
- * sender. This is a workaround until recvfrom() gets fixed.
- */
-
-#define SEGMENT_FIRST	0x25
-#define SEGMENT_LAST	0x10
-#define SEGMENT_BOTH	0x30
-#define SEGMENT_MIDDLE	0x00
 #define EXTENDED_MASK	0x04
 
 using namespace dtn::data;
@@ -71,8 +42,6 @@ namespace dtn
 {
 	namespace net
 	{
-		const int LOWPANConvergenceLayer::DEFAULT_PANID = 0x780;
-
 		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool broadcast, unsigned int mtu)
 			: _socket(NULL), _net(net), _panid(panid), m_maxmsgsize(mtu), _running(false)
 		{
@@ -119,73 +88,49 @@ namespace dtn
 			}
 		}
 
+		// Umbauen zum lowpanstream_callback "interface"
+		void LOWPANConvergenceLayer::send_cb(char *buf, int len, unsigned int address, unsigned int pan)
+		{
+			// get a lowpan peer
+			ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
+			// Add own address at the end
+			struct sockaddr_ieee802154 _sockaddr;
+			_socket->getAddress(&_sockaddr.addr, _net);
+
+			memcpy(&buf, &_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
+
+			// set write lock
+			ibrcommon::MutexLock l(m_writelock);
+
+			// send converted line
+			int ret = p.send(buf, len + 2);
+
+			if (ret == -1)
+			{
+				// CL is busy, requeue bundle
+				//dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+				return;
+			}
+			// raise bundle event
+			//dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+			//dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+		}
+
 		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
 			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_LOWPAN);
 			if (uri_list.empty()) return;
 
-			std::stringstream ss;
-			dtn::data::DefaultSerializer serializer(ss);
-
-			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-
 			try {
-				// read the bundle out of the storage
-				const dtn::data::Bundle bundle = storage.get(job._bundle);
-
-				unsigned int size = serializer.getLength(bundle);
-
-				if (size > m_maxmsgsize)
-				{
-					throw ConnectionInterruptedException();
-				}
-
 				const dtn::core::Node::URI &uri = uri_list.front();
 
 				std::string address;
 				unsigned int pan;
-				int ret;
-				stringstream buf;
-				char header;
 
 				// read values
 				uri.decode(address, pan);
 
-				serializer << bundle;
-				string data = ss.str();
-
-				// get a lowpan peer
-				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
-
-				/* Get frame from connection, add own address at
-				 * the end and send it off */
-				header = SEGMENT_BOTH;
-				buf.put(header);
-				buf << data;
-
-				// Get address via netlink
-				struct sockaddr_ieee802154 _sockaddr;
-				_socket->getAddress(&_sockaddr.addr, _net);
-
-				buf.write((char *)&_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
-				data = buf.str();
-
-				// set write lock
-				ibrcommon::MutexLock l(m_writelock);
-
-				// send converted line back to client.
-				ret = p.send(data.c_str(), data.length());
-
-				if (ret == -1)
-				{
-					// CL is busy, requeue bundle
-					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-					return;
-				}
-
-				// raise bundle event
-				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+				getConnection(atoi(address.c_str()))->_sender->queue(job._bundle);
 
 			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 				// send transfer aborted event
@@ -200,11 +145,6 @@ namespace dtn
 			char data[m_maxmsgsize];
 			char header, extended_header;
 			unsigned short address;
-			stringstream ss;
-
-			/* This worker needs to take care of all incoming frames
-			 * and puts them into the right channels
-			 */
 
 			// Receive full frame from socket
 			int len = _socket->receive(data, m_maxmsgsize);
@@ -215,7 +155,7 @@ namespace dtn
 			// Retrieve header of frame
 			header = data[0];
 
-			// Check for extended header and retrieve
+			// Check for extended header and retrieve if available
 			if ((header & EXTENDED_MASK) == 0x04)
 				extended_header = data[1];
 
@@ -230,10 +170,7 @@ namespace dtn
 			/* Get matching connection and queue the data */
 			LOWPANConnection *connection = getConnection(address);
 			connection->getStream().queue(data+1, len-3);
-			ss.write(data+1, len-3); // remove header and address "footer"
 
-			if (len > 0)
-				dtn::data::DefaultDeserializer(ss, dtn::core::BundleCore::getInstance()) >> bundle;
 			return (*this);
 		}
 
@@ -319,5 +256,6 @@ namespace dtn
 		{
 			return "LOWPANConvergenceLayer";
 		}
+
 	}
 }

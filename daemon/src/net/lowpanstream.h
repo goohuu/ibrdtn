@@ -20,7 +20,7 @@ namespace dtn
 		class lowpanstream_callback
 		{
 		public:
-			virtual void send(char *buf, int len, unsigned int address) = 0;
+			virtual void send_cb(char *buf, int len, unsigned int address, unsigned int pan) = 0;
 		};
 
 		class lowpanstream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
@@ -52,6 +52,8 @@ namespace dtn
 			// Output buffer
 			char *out_buf_;
 			char *out2_buf_;
+
+			lowpanstream_callback &callback;
 
 			ibrcommon::Conditional in_buf_cond;
 			ibrcommon::Mutex m_writelock;

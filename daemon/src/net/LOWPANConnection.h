@@ -15,6 +15,7 @@ namespace dtn
 	{
 		class LOWPANConvergenceLayer;
 		class lowpanstream;
+		class LOWPANConnectionSender;
 		class LOWPANConnection : public ibrcommon::JoinableThread
 		{
 		public:
@@ -28,23 +29,25 @@ namespace dtn
 
 			void run();
 
-			class LOWPANConnectionSender : public ibrcommon::JoinableThread
-			{
-				public:
-					LOWPANConnectionSender(lowpanstream &stream);
-					virtual ~LOWPANConnectionSender();
-
-					void send(BundleID &id);
-					void run();
-				private:
-					lowpanstream &stream;
-			};
+			LOWPANConnectionSender *_sender;
 
 		protected:
 
 		private:
 			bool _running;
 			lowpanstream *_stream;
+		};
+
+		class LOWPANConnectionSender : public ibrcommon::JoinableThread
+		{
+			public:
+				LOWPANConnectionSender(lowpanstream &stream);
+				virtual ~LOWPANConnectionSender();
+
+				void queue(const BundleID &id);
+				void run();
+			private:
+				lowpanstream &stream;
 		};
 	}
 }
