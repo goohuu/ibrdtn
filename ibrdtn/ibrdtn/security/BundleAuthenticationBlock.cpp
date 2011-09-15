@@ -142,7 +142,7 @@ namespace dtn
 			std::string hmac_key = key.getData();
 			ibrcommon::HMacStream hms((const unsigned char*)hmac_key.c_str(), hmac_key.length());
 			dtn::security::StrictSerializer ss(hms, BUNDLE_AUTHENTICATION_BLOCK, with_correlator, correlator);
-			ss << bundle;
+			(dtn::data::DefaultSerializer&)ss << bundle;
 			hms << std::flush;
 
 			return ibrcommon::HashStream::extract(hms);

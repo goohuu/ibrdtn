@@ -71,7 +71,7 @@ namespace dtn
 
 			// serialize the bundle in the mutable form
 			dtn::security::MutualSerializer ms(rs2s, &ignore);
-			ms << bundle; rs2s << std::flush;
+			(dtn::data::DefaultSerializer&)ms << bundle; rs2s << std::flush;
 
 			int return_code = rs2s.getSign().first;
 			std::string sign_string = rs2s.getSign().second;
@@ -111,7 +111,7 @@ namespace dtn
 
 			// serialize the bundle in the mutable form
 			dtn::security::MutualSerializer ms(rs2s, &sb);
-			ms << bundle; rs2s << std::flush;
+			(dtn::data::DefaultSerializer&)ms << bundle; rs2s << std::flush;
 
 			int ret = rs2s.getVerification(sb._security_result.get(SecurityBlock::integrity_signature));
 			SecurityKey::free(pkey);
