@@ -88,7 +88,6 @@ namespace dtn
 			}
 		}
 
-		// Umbauen zum lowpanstream_callback "interface"
 		void LOWPANConvergenceLayer::send_cb(char *buf, int len, unsigned int address, unsigned int pan)
 		{
 			// get a lowpan peer
@@ -97,7 +96,8 @@ namespace dtn
 			struct sockaddr_ieee802154 _sockaddr;
 			_socket->getAddress(&_sockaddr.addr, _net);
 
-			memcpy(&buf, &_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
+			// Add own address at the end
+			memcpy(&buf[len], &_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
 
 			// set write lock
 			ibrcommon::MutexLock l(m_writelock);
@@ -144,7 +144,7 @@ namespace dtn
 
 			char data[m_maxmsgsize];
 			char header, extended_header;
-			unsigned short address;
+			unsigned int address;
 
 			// Receive full frame from socket
 			int len = _socket->receive(data, m_maxmsgsize);
@@ -155,21 +155,19 @@ namespace dtn
 			// Retrieve header of frame
 			header = data[0];
 
-			// Check for extended header and retrieve if available
-			if ((header & EXTENDED_MASK) == 0x04)
-				extended_header = data[1];
-
 			// Retrieve sender address from the end of the frame
 			address = (data[len-1] << 8) | data[len-2];
+
+			// Check for extended header and retrieve if available
+			if (header & EXTENDED_MASK)
+				extended_header = data[1];
 
 			// Received discovery frame?
 			if (extended_header == 0x80)
 				cout << "Received beacon frame for LoWPAN discovery" << endl;
 
-			/* Decide in which queue to write based on the src address */
-			/* Get matching connection and queue the data */
-			LOWPANConnection *connection = getConnection(address);
-			connection->getStream().queue(data+1, len-3);
+			// Decide in which queue to write based on the src address
+			getConnection(address)->getStream().queue(data+1, len-3); // Cut off address from end
 
 			return (*this);
 		}
@@ -256,6 +254,5 @@ namespace dtn
 		{
 			return "LOWPANConvergenceLayer";
 		}
-
 	}
 }
