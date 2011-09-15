@@ -20,9 +20,6 @@ namespace dtn
 		class lowpanstream_callback
 		{
 		public:
-			/* Missing constructor and destructor? */
-			//lowpanstream_callback();
-			//virtual ~lowpanstream_callback();
 			virtual void send(char *buf, int len, unsigned int address) = 0;
 		};
 
@@ -46,19 +43,20 @@ namespace dtn
 
 			unsigned int _address;
 
-			char *in_buf_stream;
 		private:
 			// Input buffer
 			char *in_buf_;
-			char *in_buf_stream_;
+			int in_buf_len;
 			bool in_buf_free;
 
 			// Output buffer
 			char *out_buf_;
+			char *out2_buf_;
 
 			ibrcommon::Conditional in_buf_cond;
+			ibrcommon::Mutex m_writelock;
+			ibrcommon::Mutex m_readlock;
 		};
 	}
 }
-
 #endif /* LOWPANSTREAM_H_ */

@@ -13,13 +13,20 @@
 #include <signal.h>
 #include <fcntl.h>
 #include <string.h>
+#include <math.h>
+
+#define SEGMENT_FIRST   0x25
+#define SEGMENT_LAST    0x10
+#define SEGMENT_BOTH    0x30
+#define SEGMENT_MIDDLE  0x00
+#define EXTENDED_MASK   0x04
 
 namespace dtn
 {
 	namespace net
 	{
 		lowpanstream::lowpanstream(lowpanstream_callback &callback, unsigned int address) :
-			std::iostream(this), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE])
+			std::iostream(this), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]), out2_buf_(new char[BUFF_SIZE]), _address(address)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -30,27 +37,20 @@ namespace dtn
 		{
 			delete[] in_buf_;
 			delete[] out_buf_;
-
-			// finally, close the socket
-			close();
 		}
 
 		void lowpanstream::queue(char *buf, int len)
 		{
 			ibrcommon::MutexLock l(in_buf_cond);
+			in_buf_len = len;
 
 			while (!in_buf_free)
 			{
 				in_buf_cond.wait();
 			}
-			// Buffer füllen
+			memcpy(in_buf_, buf, len);
 			in_buf_free = false;
-		}
-
-		void lowpanstream::close()
-		{
-			static ibrcommon::Mutex close_lock;
-			ibrcommon::MutexLock l(close_lock);
+			in_buf_cond.signal();
 		}
 
 		int lowpanstream::sync()
@@ -58,7 +58,7 @@ namespace dtn
 			int ret = std::char_traits<char>::eq_int_type(this->overflow(
 					std::char_traits<char>::eof()), std::char_traits<char>::eof()) ? -1
 					: 0;
-
+			//Header vorbereiten. Hier alknde ich wenn das letzte Segment kommt
 			return ret;
 		}
 
@@ -81,91 +81,84 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(90) << "lowpanstream::overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
 				return std::char_traits<char>::not_eof(c);
 			}
-				bool read = false, write = true, error = false;
 
-				// bytes to send
-				size_t bytes = (iend - ibegin);
-#if 0
-				// get a lowpan peer
-				ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
+			bool read = false, write = true, error = false;
 
-				if (data.length() > 114) {
-					std::string chunk, tmp;
-					char header = 0;
-					int i, seq_num;
-					int chunks = ceil(data.length() / 114.0);
-					cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
-					for (i = 0; i < chunks; i++) {
-						stringstream buf;
-						chunk = data.substr(i * 114, 114);
+			// bytes to send
+			size_t bytes = (iend - ibegin);
 
-						seq_num =  i % 16;
-
-						printf("Iteration %i with seq number %i, from %i chunks\n", i, seq_num, chunks);
-						if (i == 0) // First segment
-							header = SEGMENT_FIRST + seq_num;
-						else if (i == (chunks - 1)) // Last segment
-							header = SEGMENT_LAST + seq_num;
-						else
-							header = SEGMENT_MIDDLE+ seq_num;
-
-						buf << header;
-						tmp = buf.str() + chunk; // Prepand header to chunk
-						chunk = "";
-						chunk = tmp;
-
-						// set write lock
-						ibrcommon::MutexLock l(m_writelock);
-
-						// send converted line back to client.
-						int ret = p.send(chunk.c_str(), chunk.length());
-
-						if (ret == -1)
-						{
-							// CL is busy, requeue bundle
-							dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-
-							return;
-						}
-					}
-					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-				} else {
-
-					std::string tmp;
+			if (bytes > 114) {
+				std::string chunk, tmp;
+				char header = 0;
+				int i, seq_num;
+				int chunks = ceil(bytes / 114.0);
+				cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
+				for (i = 0; i < chunks; i++) {
 					stringstream buf;
+					//chunk = data.substr(i * 114, 114);
+					seq_num =  i % 16;
 
-					buf << SEGMENT_BOTH;
+					printf("Iteration %i with seq number %i, from %i chunks\n", i, seq_num, chunks);
+					if (i == 0) // First segment
+						header = SEGMENT_FIRST + seq_num;
+					else if (i == (chunks - 1)) // Last segment
+						header = SEGMENT_LAST + seq_num;
+					else
+						header = SEGMENT_MIDDLE+ seq_num;
 
-					tmp = buf.str() + data; // Prepand header to chunk
-					data = "";
-					data = tmp;
+					buf << header;
+					tmp = buf.str() + chunk; // Prepand header to chunk
+					chunk = "";
+					chunk = tmp;
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
 
-					// send converted line back to client.
-					int ret = p.send(data.c_str(), data.length());
+					// Send segment to CL, use callback
+					// interface
+					int ret;
+//					int ret = callback::send(chunk.c_str(), chunk.length(), _address);
 
 					if (ret == -1)
 					{
 						// CL is busy, requeue bundle
-						dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-
-						return;
+						//dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+						return ret;
 					}
+				}
+				// raise bundle event
+				//dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+				//dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+			} else {
+				std::string tmp;
+				stringstream buf;
 
-			if (ret < 0)
-			{
-				// failure
-				close();
-				std::stringstream ss; ss << "<lowpanstream> send() in lowpanstream failed: " << errno;
-				throw ConnectionClosedException(ss.str());
-			}
-			else
-#endif
+				buf << SEGMENT_BOTH;
+
+				//tmp = buf.str() + data; // Prepand header to chunk
+				//data = "";
+				//data = tmp;
+
+				// set write lock
+				ibrcommon::MutexLock l(m_writelock);
+
+				// send converted line back to client.
+				int ret;
+				//int ret = lowpanstream_callback::send(data.c_str(), data.length(), _address);
+
+				if (ret == -1)
 				{
+					// CL is busy, requeue bundle
+					//dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+					return ret;
+				}
+
+				if (ret < 0)
+				{
+					// failure
+					close();
+					std::stringstream ss; ss << "<lowpanstream> send() in lowpanstream failed: " << errno;
+				} else {
 					int ret;
 					// check how many bytes are sent
 					if ((size_t)ret < bytes)
@@ -187,6 +180,7 @@ namespace dtn
 						setp(buffer_begin, out_buf_ + BUFF_SIZE - 1);
 					}
 				}
+			}
 			return std::char_traits<char>::not_eof(c);
 		}
 
@@ -198,31 +192,15 @@ namespace dtn
 			{
 				in_buf_cond.wait();
 			}
-			// Buffer leeren
+			memcpy(out2_buf_ ,in_buf_, in_buf_len);
 			in_buf_free = true;
-
-#if 0
-			// end of stream
-			int bytes;
-
-			if (bytes == 0)
-			{
-				close();
-				IBRCOMMON_LOGGER_DEBUG(40) << "<lowpanstream> recv() returned zero: " << errno << IBRCOMMON_LOGGER_ENDL;
-				return std::char_traits<char>::eof();
-			}
-			else if (bytes < 0)
-			{
-				close();
-				IBRCOMMON_LOGGER_DEBUG(40) << "<lowpanstream> recv() failed: " << errno << IBRCOMMON_LOGGER_ENDL;
-				return std::char_traits<char>::eof();
-			}
+			in_buf_cond.signal();
 
 			// Since the input buffer content is now valid (or is new)
 			// the get pointer should be initialized (or reset).
-			setg(in_buf_, in_buf_, in_buf_ + bytes);
-#endif
-			return std::char_traits<char>::not_eof(in_buf_[0]);
+			setg(out2_buf_, out2_buf_, out2_buf_ + in_buf_len);
+
+			return std::char_traits<char>::not_eof(out2_buf_[0]);
 		}
 	}
 }
