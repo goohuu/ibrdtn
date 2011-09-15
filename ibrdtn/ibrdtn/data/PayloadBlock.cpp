@@ -47,6 +47,7 @@ namespace dtn
 
 			try {
 				ibrcommon::BLOB::copy(stream, *io, io.size());
+				length += io.size();
 			} catch (const ibrcommon::IOException &ex) {
 				throw dtn::SerializationFailedException(ex.what());
 			}
