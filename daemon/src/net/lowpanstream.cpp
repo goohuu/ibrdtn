@@ -75,8 +75,11 @@ namespace dtn
 				*iend++ = std::char_traits<char>::to_char_type(c);
 			}
 
+			// bytes to send
+			size_t bytes = (iend - ibegin);
+
 			// if there is nothing to send, just return
-			if ((iend - ibegin) == 0)
+			if (bytes == 0)
 			{
 				IBRCOMMON_LOGGER_DEBUG(90) << "lowpanstream::overflow() nothing to sent" << IBRCOMMON_LOGGER_ENDL;
 				return std::char_traits<char>::not_eof(c);
@@ -84,18 +87,16 @@ namespace dtn
 
 			bool read = false, write = true, error = false;
 
-			// bytes to send
-			size_t bytes = (iend - ibegin);
-
 			if (bytes > 114) {
-				std::string chunk, tmp;
+				char chunk[115];
 				char header = 0;
-				int i, seq_num;
+				int i, seq_num, offset;
 				int chunks = ceil(bytes / 114.0);
 				cout << "Bundle to big to fit into one packet. Need to split into " << dec << chunks << " segments" << endl;
 				for (i = 0; i < chunks; i++) {
 					stringstream buf;
-					//chunk = data.substr(i * 114, 114);
+					offset = i * 114;
+					memcpy(&chunk+1, ibegin + offset, 114);
 					seq_num =  i % 16;
 
 					printf("Iteration %i with seq number %i, from %i chunks\n", i, seq_num, chunks);
@@ -106,18 +107,13 @@ namespace dtn
 					else
 						header = SEGMENT_MIDDLE+ seq_num;
 
-					buf << header;
-					tmp = buf.str() + chunk; // Prepand header to chunk
-					chunk = "";
-					chunk = tmp;
+					memcpy(&chunk, &header, 1);
 
 					// set write lock
 					ibrcommon::MutexLock l(m_writelock);
 
-					// Send segment to CL, use callback
-					// interface
-					int ret;
-//					int ret = callback::send(chunk.c_str(), chunk.length(), _address);
+					// Send segment to CL, use callback interface
+					int ret; //= callback::send(chunk.c_str(), chunk.length(), _address);
 
 					if (ret == -1)
 					{
@@ -130,21 +126,16 @@ namespace dtn
 				//dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
 				//dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 			} else {
-				std::string tmp;
-				stringstream buf;
-
-				buf << SEGMENT_BOTH;
-
-				//tmp = buf.str() + data; // Prepand header to chunk
-				//data = "";
-				//data = tmp;
+				char chunk[115];
+				int header = SEGMENT_BOTH;
+				memcpy(&chunk, &header, 1);
+				memcpy(&chunk+1, ibegin, bytes);
 
 				// set write lock
 				ibrcommon::MutexLock l(m_writelock);
 
 				// send converted line back to client.
-				int ret;
-				//int ret = lowpanstream_callback::send(data.c_str(), data.length(), _address);
+				int ret; //= lowpanstream_callback::send(data.c_str(), data.length(), _address);
 
 				if (ret == -1)
 				{
