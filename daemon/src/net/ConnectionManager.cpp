@@ -253,6 +253,9 @@ namespace dtn
 		{
 			std::queue<dtn::core::Node> _connect_nodes;
 
+			size_t interval = dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
+			if (interval == 0) return;
+
 			if (_next_autoconnect < dtn::utils::Clock::getTime())
 			{
 				// search for non-connected but available nodes
@@ -269,7 +272,7 @@ namespace dtn
 				}
 
 				// set the next check time
-				_next_autoconnect = dtn::utils::Clock::getTime() + dtn::daemon::Configuration::getInstance().getNetwork().getAutoConnect();
+				_next_autoconnect = dtn::utils::Clock::getTime() + interval;
 			}
 
 			while (!_connect_nodes.empty())
