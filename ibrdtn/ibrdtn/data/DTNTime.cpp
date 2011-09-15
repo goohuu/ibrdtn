@@ -49,7 +49,7 @@ namespace dtn
 			return _seconds.getLength() + _nanoseconds.getLength();
 		}
 
-		SDNV DTNTime::getTimestamp()
+		SDNV DTNTime::getTimestamp() const
 		{
 			return _seconds;
 		}

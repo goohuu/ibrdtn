@@ -22,7 +22,7 @@ namespace dtn
 			DTNTime(SDNV seconds, SDNV nanoseconds);
 			virtual ~DTNTime();
 
-			SDNV getTimestamp();
+			SDNV getTimestamp() const;
 
 			/**
 			 * set the DTNTime to the current time
