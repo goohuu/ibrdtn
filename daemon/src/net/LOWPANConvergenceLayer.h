@@ -44,7 +44,7 @@ namespace dtn
 			 */
 			virtual const std::string getName() const;
 
-                        virtual void send_cb(char *buf, int len, unsigned int address, unsigned int pan);
+			virtual void send_cb(char *buf, int len, unsigned int address);
 
 		protected:
 			virtual void componentUp();

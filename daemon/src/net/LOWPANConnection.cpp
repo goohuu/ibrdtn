@@ -46,6 +46,7 @@ namespace dtn
 
 		void LOWPANConnection::run()
 		{
+			//Waiting here for new bundles to arrive?
 		}
 
 		// class LOWPANConnectionSender

@@ -78,13 +78,14 @@ namespace dtn
 			}
 		}
 
-		void LOWPANConvergenceLayer::send_cb(char *buf, int len, unsigned int address, unsigned int pan)
+		void LOWPANConvergenceLayer::send_cb(char *buf, int len, unsigned int address)
 		{
-			// get a lowpan peer
-			ibrcommon::lowpansocket::peer p = _socket->getPeer(address, pan);
 			// Add own address at the end
 			struct sockaddr_ieee802154 _sockaddr;
 			_socket->getAddress(&_sockaddr.addr, _net);
+
+			// get a lowpan peer
+			ibrcommon::lowpansocket::peer p = _socket->getPeer(address, _sockaddr.addr.pan_id);
 
 			// Add own address at the end
 			memcpy(&buf[len], &_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));

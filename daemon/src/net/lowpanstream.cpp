@@ -5,6 +5,7 @@
 #include "ibrcommon/config.h"
 #include "ibrcommon/Logger.h"
 #include "lowpanstream.h"
+#include "net/LOWPANConvergenceLayer.h"
 #include "ibrcommon/thread/MutexLock.h"
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -73,7 +74,6 @@ namespace dtn
 			while (!in_buf_free)
 			{
 				in_buf_cond.wait();
-
 			}
 			memcpy(in_buf_, buf, len);
 			in_buf_free = false;
@@ -123,7 +123,7 @@ namespace dtn
 			ibrcommon::MutexLock l(m_writelock);
 
 			// Send segment to CL, use callback interface
-			int ret;// = callback::send_cb(out_buf_, bytes + 1, _address);
+			int ret;// = LOWPANConvergenceLayer::send_cb(out_buf_, bytes + 1, _address);
 
 			if (ret == -1)
 			{

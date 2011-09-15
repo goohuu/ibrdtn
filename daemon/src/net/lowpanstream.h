@@ -27,7 +27,7 @@ namespace dtn
 		{
 		public:
 			// The size of the input and output buffers.
-			static const size_t BUFF_SIZE = 115;
+			static const size_t BUFF_SIZE = 113;
 
 			lowpanstream(lowpanstream_callback &callback, unsigned int address);
 			virtual ~lowpanstream();
