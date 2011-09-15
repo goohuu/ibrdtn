@@ -67,14 +67,6 @@ namespace dtn
 			// read the bundle out of the storage
 			const dtn::data::Bundle bundle = storage.get(id);
 
-			unsigned int size = serializer.getLength(bundle);
-
-			//const dtn::core::Node::URI &uri = uri_list.front();
-			//std::string address;
-			//unsigned int pan;
-			// read values
-			//uri.decode(address, pan);
-
 			// Put bundle into stringstream
 			serializer << bundle;
 			// Call sync() to make sure the stream knows about the last segment
