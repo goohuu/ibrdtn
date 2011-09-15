@@ -4,8 +4,6 @@
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
 #include "routing/RequeueBundleEvent.h"
-#include <ibrcommon/net/vaddress.h>
-#include <ibrcommon/net/vinterface.h>
 #include "core/BundleCore.h"
 
 #include <ibrcommon/data/BLOB.h>
@@ -16,16 +14,11 @@
 #include <ibrdtn/utils/Utils.h>
 #include <ibrdtn/data/Serializer.h>
 
-#include <poll.h>
-#include <errno.h>
-
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <fcntl.h>
-#include <limits.h>
 
 #include <iostream>
 #include <list>
