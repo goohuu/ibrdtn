@@ -46,7 +46,7 @@ namespace dtn
 			(*this) << dtn::data::SDNV(obj._procflags & 0x0000000007C1BE);
 
 			// length of header
-			(*this) << dtn::data::SDNV(getLength(obj));
+			(*this) << (u_int32_t)getLength(obj);
 
 			// dest, source, report to id
 			(*this) << obj._destination;
@@ -197,8 +197,9 @@ namespace dtn
 
 		dtn::data::Serializer& MutualSerializer::operator<<(const dtn::data::EID& value)
 		{
-			dtn::data::BundleString bs(value.getString());
-			_stream << bs;
+			u_int32_t length = value.getString().length();
+			(*this) << length;
+			_stream << value.getString();
 
 			return *this;
 		}
