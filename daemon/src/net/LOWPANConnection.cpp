@@ -87,6 +87,7 @@ namespace dtn
 
 		void LOWPANConnectionSender::queue(const ConvergenceLayer::Job &job)
 		{
+			IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConnectionSender::queue"<< IBRCOMMON_LOGGER_ENDL;
 			_queue.push(job);
 		}
 
@@ -97,7 +98,7 @@ namespace dtn
 				ConvergenceLayer::Job job = _queue.getnpop();
 				dtn::data::DefaultSerializer serializer(stream);
 
-				IBRCOMMON_LOGGER(error) << "      :LOWPANConnectionSender::run"<< IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConnectionSender::run"<< IBRCOMMON_LOGGER_ENDL;
 
 				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
