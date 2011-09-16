@@ -44,6 +44,11 @@ namespace dtn
 			return _stream;
 		}
 
+		void LOWPANConnection::setup()
+		{
+			_sender.start();
+		}
+
 		void LOWPANConnection::run()
 		{
 			while(_stream.good())

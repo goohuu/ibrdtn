@@ -24,6 +24,7 @@ namespace dtn
 
 				void queue(const ConvergenceLayer::Job &job);
 				void run();
+
 			private:
 				lowpanstream &stream;
 				ibrcommon::Queue<ConvergenceLayer::Job> _queue;
@@ -40,6 +41,7 @@ namespace dtn
 			lowpanstream& getStream();
 
 			void run();
+			void setup();
 
 			LOWPANConnectionSender _sender;
 
