@@ -105,7 +105,7 @@ namespace dtn
 			try {
 			while(stream.good())
 			{
-				ConvergenceLayer::Job job = _queue.getnpop();
+				ConvergenceLayer::Job job = _queue.getnpop(true);
 				dtn::data::DefaultSerializer serializer(stream);
 
 				IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConnectionSender::run"<< IBRCOMMON_LOGGER_ENDL;
