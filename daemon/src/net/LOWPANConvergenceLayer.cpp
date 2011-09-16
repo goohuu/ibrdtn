@@ -169,8 +169,6 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentRun()
 		{
-
-
 			_running = true;
 
 			while (_running)
@@ -204,8 +202,6 @@ namespace dtn
 
 					// Decide in which queue to write based on the src address
 					getConnection(address)->getStream().queue(data+1, len-3); // Cut off address from end
-					dtn::data::Bundle bundle;
-					(*this) >> bundle;
 
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
