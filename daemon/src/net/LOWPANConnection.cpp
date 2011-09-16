@@ -118,6 +118,8 @@ namespace dtn
 			}
 			// FIXME: Exit strategy when sending on socket failed. Like destroying the connection object
 			// Also check what needs to be done when the node is not reachable (transfer requeue...)
+
+			IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConnectionSender::run stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
 		}
 	}
 }
