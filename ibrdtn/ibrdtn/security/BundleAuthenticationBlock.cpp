@@ -31,6 +31,7 @@ namespace dtn
 		void BundleAuthenticationBlock::auth(dtn::data::Bundle &bundle, const dtn::security::SecurityKey &key)
 		{
 			BundleAuthenticationBlock& bab_begin = bundle.push_front<BundleAuthenticationBlock>();
+			bab_begin.set(dtn::data::Block::DISCARD_IF_NOT_PROCESSED, true);
 
 			// set security source
 			if (key.reference != bundle._source.getNode()) bab_begin.setSecuritySource( key.reference );
@@ -40,6 +41,8 @@ namespace dtn
 			bab_begin.setCiphersuiteId(BAB_HMAC);
 
 			BundleAuthenticationBlock& bab_end = bundle.push_back<BundleAuthenticationBlock>();
+			bab_end.set(dtn::data::Block::DISCARD_IF_NOT_PROCESSED, true);
+
 			bab_end.setCorrelator(correlator);
 			bab_end._ciphersuite_flags |= CONTAINS_SECURITY_RESULT;
 
