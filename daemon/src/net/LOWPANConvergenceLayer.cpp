@@ -117,6 +117,8 @@ namespace dtn
 			// read values
 			uri.decode(address, pan);
 
+			IBRCOMMON_LOGGER(error) << "      :LOWPANConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
+
 			getConnection(atoi(address.c_str()))->_sender.queue(job);
 		}
 
@@ -136,6 +138,7 @@ namespace dtn
 			LOWPANConnection *connection = new LOWPANConnection(address, (*this));
 
 			ConnectionList.push_back(connection);
+			IBRCOMMON_LOGGER(error) << "      :LOWPANConvergenceLayer::getConnection "<< connection->address << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return connection;
 		}
@@ -176,6 +179,8 @@ namespace dtn
 
 				// Receive full frame from socket
 				int len = _socket->receive(data, m_maxmsgsize);
+
+				IBRCOMMON_LOGGER(error) << "      :LOWPANConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
 
 				if (len <= 0)
 					continue;

@@ -53,7 +53,7 @@ namespace dtn
 					dtn::data::Bundle bundle;
 					deserializer >> bundle;
 
-
+					IBRCOMMON_LOGGER(error) << "      :LOWPANConnection::run"<< IBRCOMMON_LOGGER_ENDL;
 
 					// determine sender
 					EID sender;
@@ -96,6 +96,8 @@ namespace dtn
 			{
 				ConvergenceLayer::Job job = _queue.getnpop();
 				dtn::data::DefaultSerializer serializer(stream);
+
+				IBRCOMMON_LOGGER(error) << "      :LOWPANConnectionSender::run"<< IBRCOMMON_LOGGER_ENDL;
 
 				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
