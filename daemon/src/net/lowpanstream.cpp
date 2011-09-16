@@ -51,7 +51,7 @@ namespace dtn
 	namespace net
 	{
 		lowpanstream::lowpanstream(lowpanstream_callback &callback, unsigned int address) :
-			std::iostream(this), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE]), out2_buf_(new char[BUFF_SIZE]), _address(address), callback(callback), in_seq_num_(0), out_seq_num_(0)
+			std::iostream(this), in_buf_(new char[BUFF_SIZE]), out_buf_(new char[BUFF_SIZE+2]), out2_buf_(new char[BUFF_SIZE]), _address(address), callback(callback), in_seq_num_(0), out_seq_num_(0)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -97,7 +97,7 @@ namespace dtn
 			char *iend = pptr();
 
 			// mark the buffer as free
-			setp(out_buf_, out_buf_ + BUFF_SIZE - 1);
+			setp(out_buf_ + 1, out_buf_ + BUFF_SIZE - 2);
 
 			if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 			{
@@ -120,50 +120,8 @@ namespace dtn
 
 			out_buf_[0] = SEGMENT_MIDDLE+ out_seq_num_;
 
-			// set write lock
-			ibrcommon::MutexLock l(m_writelock);
-
 			// Send segment to CL, use callback interface
-			//int ret;// = LOWPANConvergenceLayer::send_cb(out_buf_, bytes + 1, _address);
-			callback.send_cb(out_buf_, bytes + 1, _address);
-#if 0
-			if (ret == -1)
-			{
-				// CL is busy, requeue bundle
-				//dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-				return ret;
-			}
-			if (ret < 0)
-			{
-				// failure
-				close();
-				std::stringstream ss; ss << "<lowpanstream> send() in lowpanstream failed: " << errno;
-			} else {
-				// check how many bytes are sent
-				if ((size_t)ret < bytes)
-				{
-					// we did not sent all bytes
-					char *resched_begin = ibegin + ret;
-					char *resched_end = iend;
-
-					// bytes left to send
-					size_t bytes_left = resched_end - resched_begin;
-
-					// move the data to the begin of the buffer
-					::memcpy(ibegin, resched_begin, bytes_left);
-
-					// new free buffer
-					char *buffer_begin = ibegin + bytes_left;
-
-					// mark the buffer as free
-					setp(buffer_begin, out_buf_ + BUFF_SIZE - 1);
-				}
-			}
-#endif
-
-			// raise bundle event
-			//dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-			//dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+			callback.send_cb(out_buf_, bytes, _address);
 
 			return std::char_traits<char>::not_eof(c);
 	}

@@ -30,7 +30,7 @@ namespace dtn
 	namespace net
 	{
 		LOWPANConnection::LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl)
-		 : address(address)
+			: address(address), _stream(cl, address)
 		{
 		}
 
@@ -41,12 +41,29 @@ namespace dtn
 
 		lowpanstream& LOWPANConnection::getStream()
 		{
-			return *_stream;
+			return _stream;
 		}
 
 		void LOWPANConnection::run()
 		{
-			//Waiting here for new bundles to arrive?
+			while(_stream.good())
+			{
+				dtn::data::DefaultDeserializer deserializer(_stream);
+				dtn::data::Bundle bundle;
+				deserializer >> bundle;
+
+				// determine sender
+				EID sender;
+
+				// increment value in the scope control hop limit block
+				try {
+					dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+					schl.increment();
+				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+
+				// raise default bundle received event
+				dtn::net::BundleReceivedEvent::raise(sender, bundle);
+			}
 		}
 
 		// class LOWPANConnectionSender
@@ -59,22 +76,31 @@ namespace dtn
 		{
 		}
 
-		void LOWPANConnectionSender::queue(const BundleID &id)
+		void LOWPANConnectionSender::queue(const ConvergenceLayer::Job &job)
 		{
-			dtn::data::DefaultSerializer serializer(stream);
-
-			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
-
-			// read the bundle out of the storage
-			const dtn::data::Bundle bundle = storage.get(id);
-
-			// Put bundle into stringstream
-			serializer << bundle;
-			// Call sync() to make sure the stream knows about the last segment
+			_queue.push(job);
 		}
 
 		void LOWPANConnectionSender::run()
 		{
+			while(stream.good())
+			{
+				ConvergenceLayer::Job job = _queue.getnpop();
+				dtn::data::DefaultSerializer serializer(stream);
+
+				dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
+				// read the bundle out of the storage
+				const dtn::data::Bundle bundle = storage.get(job._bundle);
+
+				// Put bundle into stringstream
+				serializer << bundle; stream.flush();
+				// raise bundle event
+				dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+				dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+			}
+			// FIXME: Exit strategy when sending on socket failed. Like destroying the connection object
+			// Also check what needs to be done when the node is not reachable (transfer requeue...)
 		}
 	}
 }

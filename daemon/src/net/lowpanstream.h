@@ -60,8 +60,6 @@ namespace dtn
 			lowpanstream_callback &callback;
 
 			ibrcommon::Conditional in_buf_cond;
-			ibrcommon::Mutex m_writelock;
-			ibrcommon::Mutex m_readlock;
 		};
 	}
 }

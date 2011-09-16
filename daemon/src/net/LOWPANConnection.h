@@ -2,6 +2,7 @@
 #define LOWPANCONNECTION_H_
 
 #include "ibrcommon/Exceptions.h"
+#include "ibrcommon/thread/Queue.h"
 #include "lowpanstream.h"
 #include "net/LOWPANConvergenceLayer.h"
 
@@ -35,7 +36,7 @@ namespace dtn
 
 		private:
 			bool _running;
-			lowpanstream *_stream;
+			lowpanstream _stream;
 		};
 
 		class LOWPANConnectionSender : public ibrcommon::JoinableThread
@@ -44,10 +45,11 @@ namespace dtn
 				LOWPANConnectionSender(lowpanstream &stream);
 				virtual ~LOWPANConnectionSender();
 
-				void queue(const BundleID &id);
+				void queue(const ConvergenceLayer::Job &job);
 				void run();
 			private:
 				lowpanstream &stream;
+				ibrcommon::Queue<ConvergenceLayer::Job> _queue;
 		};
 	}
 }

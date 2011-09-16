@@ -99,12 +99,9 @@ namespace dtn
 			if (ret == -1)
 			{
 				// CL is busy, requeue bundle
-				//dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
-				return;
+				throw(ibrcommon::Exception("Send on socket failed"));
 			}
-			// raise bundle event
-			//dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-			//dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+
 		}
 
 		void LOWPANConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
@@ -112,54 +109,19 @@ namespace dtn
 			const std::list<dtn::core::Node::URI> uri_list = node.get(dtn::core::Node::CONN_LOWPAN);
 			if (uri_list.empty()) return;
 
-			try {
-				const dtn::core::Node::URI &uri = uri_list.front();
+			const dtn::core::Node::URI &uri = uri_list.front();
 
-				std::string address;
-				unsigned int pan;
+			std::string address;
+			unsigned int pan;
 
-				// read values
-				uri.decode(address, pan);
+			// read values
+			uri.decode(address, pan);
 
-				getConnection(atoi(address.c_str()))->_sender->queue(job._bundle);
-
-			} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(EID(node.getEID()), job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
-			}
+			getConnection(atoi(address.c_str()))->_sender->queue(job);
 		}
 
 		LOWPANConvergenceLayer& LOWPANConvergenceLayer::operator>>(dtn::data::Bundle &bundle)
 		{
-			ibrcommon::MutexLock l(m_readlock);
-
-			char data[m_maxmsgsize];
-			char header, extended_header;
-			unsigned int address;
-
-			// Receive full frame from socket
-			int len = _socket->receive(data, m_maxmsgsize);
-
-			if (len <= 0)
-				return (*this);
-
-			// Retrieve header of frame
-			header = data[0];
-
-			// Retrieve sender address from the end of the frame
-			address = (data[len-1] << 8) | data[len-2];
-
-			// Check for extended header and retrieve if available
-			if (header & EXTENDED_MASK)
-				extended_header = data[1];
-
-			// Received discovery frame?
-			if (extended_header == 0x80)
-				cout << "Received beacon frame for LoWPAN discovery" << endl;
-
-			// Decide in which queue to write based on the src address
-			getConnection(address)->getStream().queue(data+1, len-3); // Cut off address from end
-
 			return (*this);
 		}
 
@@ -179,6 +141,7 @@ namespace dtn
 			LOWPANConnection *connection = new LOWPANConnection(address, (*this));
 
 			ConnectionList.push_back(connection);
+			connection->start();
 			return connection;
 		}
 
@@ -206,25 +169,43 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentRun()
 		{
+
+
 			_running = true;
 
 			while (_running)
 			{
 				try {
+					ibrcommon::MutexLock l(m_readlock);
+
+					char data[m_maxmsgsize];
+					char header, extended_header;
+					unsigned int address;
+
+					// Receive full frame from socket
+					int len = _socket->receive(data, m_maxmsgsize);
+
+					//if (len <= 0)
+					//	return (*this);
+
+					// Retrieve header of frame
+					header = data[0];
+
+					// Retrieve sender address from the end of the frame
+					address = (data[len-1] << 8) | data[len-2];
+
+					// Check for extended header and retrieve if available
+					if (header & EXTENDED_MASK)
+						extended_header = data[1];
+
+					// Received discovery frame?
+					if (extended_header == 0x80)
+						cout << "Received beacon frame for LoWPAN discovery" << endl;
+
+					// Decide in which queue to write based on the src address
+					getConnection(address)->getStream().queue(data+1, len-3); // Cut off address from end
 					dtn::data::Bundle bundle;
 					(*this) >> bundle;
-
-					// determine sender
-					EID sender;
-
-					// increment value in the scope control hop limit block
-					try {
-						dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
-						schl.increment();
-					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
-
-					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(sender, bundle);
 
 				} catch (const dtn::InvalidDataException &ex) {
 					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
