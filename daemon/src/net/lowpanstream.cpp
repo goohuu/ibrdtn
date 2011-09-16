@@ -69,7 +69,7 @@ namespace dtn
 			ibrcommon::MutexLock l(in_buf_cond);
 			in_buf_len = len;
 
-			IBRCOMMON_LOGGER(error) << "      :lowpanstream::queue"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::queue"<< IBRCOMMON_LOGGER_ENDL;
 
 			while (!in_buf_free)
 			{
@@ -87,7 +87,7 @@ namespace dtn
 			int ret = std::char_traits<char>::eq_int_type(this->overflow(
 					std::char_traits<char>::eof()), std::char_traits<char>::eof()) ? -1
 					: 0;
-			IBRCOMMON_LOGGER(error) << "      :lowpanstream::sync"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER(error) << "lowpanstream::sync"<< IBRCOMMON_LOGGER_ENDL;
 			//Header vorbereiten. Hier erkenne ich wenn das letzte Segment kommt
 			return ret;
 		}
@@ -97,7 +97,7 @@ namespace dtn
 			char *ibegin = out_buf_;
 			char *iend = pptr();
 
-			IBRCOMMON_LOGGER(error) << "      :lowpanstream::overflow"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::overflow"<< IBRCOMMON_LOGGER_ENDL;
 
 			// mark the buffer as free
 			setp(out_buf_ + 1, out_buf_ + BUFF_SIZE - 2);
@@ -133,7 +133,7 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(in_buf_cond);
 
-			IBRCOMMON_LOGGER(error) << "      :lowpanstream::underflow"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "lowpanstream::underflow"<< IBRCOMMON_LOGGER_ENDL;
 
 			while (in_buf_free)
 			{
