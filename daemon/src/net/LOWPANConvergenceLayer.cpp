@@ -138,7 +138,7 @@ namespace dtn
 			LOWPANConnection *connection = new LOWPANConnection(address, (*this));
 
 			ConnectionList.push_back(connection);
-			IBRCOMMON_LOGGER(error) << "      :LOWPANConvergenceLayer::getConnection "<< connection->address << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::getConnection "<< connection->address << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return connection;
 		}
@@ -180,7 +180,7 @@ namespace dtn
 				// Receive full frame from socket
 				int len = _socket->receive(data, m_maxmsgsize);
 
-				IBRCOMMON_LOGGER(error) << "      :LOWPANConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
 
 				if (len <= 0)
 					continue;
