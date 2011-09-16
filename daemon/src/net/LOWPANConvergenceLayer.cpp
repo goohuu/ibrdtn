@@ -117,12 +117,7 @@ namespace dtn
 			// read values
 			uri.decode(address, pan);
 
-			getConnection(atoi(address.c_str()))->_sender->queue(job);
-		}
-
-		LOWPANConvergenceLayer& LOWPANConvergenceLayer::operator>>(dtn::data::Bundle &bundle)
-		{
-			return (*this);
+			getConnection(atoi(address.c_str()))->_sender.queue(job);
 		}
 
 		LOWPANConnection* LOWPANConvergenceLayer::getConnection(unsigned short address)
@@ -173,41 +168,35 @@ namespace dtn
 
 			while (_running)
 			{
-				try {
-					ibrcommon::MutexLock l(m_readlock);
+				ibrcommon::MutexLock l(m_readlock);
 
-					char data[m_maxmsgsize];
-					char header, extended_header;
-					unsigned int address;
+				char data[m_maxmsgsize];
+				char header, extended_header;
+				unsigned int address;
 
-					// Receive full frame from socket
-					int len = _socket->receive(data, m_maxmsgsize);
+				// Receive full frame from socket
+				int len = _socket->receive(data, m_maxmsgsize);
 
-					//if (len <= 0)
-					//	return (*this);
+				if (len <= 0)
+					continue;
 
-					// Retrieve header of frame
-					header = data[0];
+				// Retrieve header of frame
+				header = data[0];
 
-					// Retrieve sender address from the end of the frame
-					address = (data[len-1] << 8) | data[len-2];
+				// Retrieve sender address from the end of the frame
+				address = (data[len-1] << 8) | data[len-2];
 
-					// Check for extended header and retrieve if available
-					if (header & EXTENDED_MASK)
-						extended_header = data[1];
+				// Check for extended header and retrieve if available
+				if (header & EXTENDED_MASK)
+					extended_header = data[1];
 
-					// Received discovery frame?
-					if (extended_header == 0x80)
-						cout << "Received beacon frame for LoWPAN discovery" << endl;
+				// Received discovery frame?
+				if (extended_header == 0x80)
+					cout << "Received beacon frame for LoWPAN discovery" << endl;
 
-					// Decide in which queue to write based on the src address
-					getConnection(address)->getStream().queue(data+1, len-3); // Cut off address from end
+				// Decide in which queue to write based on the src address
+				getConnection(address)->getStream().queue(data+1, len-3); // Cut off address from end
 
-				} catch (const dtn::InvalidDataException &ex) {
-					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				} catch (const ibrcommon::IOException&) {
-
-				}
 				yield();
 			}
 		}

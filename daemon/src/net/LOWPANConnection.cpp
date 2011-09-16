@@ -30,7 +30,7 @@ namespace dtn
 	namespace net
 	{
 		LOWPANConnection::LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl)
-			: address(address), _stream(cl, address)
+			: address(address), _stream(cl, address), _sender(_stream)
 		{
 		}
 
@@ -48,21 +48,30 @@ namespace dtn
 		{
 			while(_stream.good())
 			{
-				dtn::data::DefaultDeserializer deserializer(_stream);
-				dtn::data::Bundle bundle;
-				deserializer >> bundle;
-
-				// determine sender
-				EID sender;
-
-				// increment value in the scope control hop limit block
 				try {
-					dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
-					schl.increment();
-				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+					dtn::data::DefaultDeserializer deserializer(_stream);
+					dtn::data::Bundle bundle;
+					deserializer >> bundle;
 
-				// raise default bundle received event
-				dtn::net::BundleReceivedEvent::raise(sender, bundle);
+
+
+					// determine sender
+					EID sender;
+
+					// increment value in the scope control hop limit block
+					try {
+						dtn::data::ScopeControlHopLimitBlock &schl = bundle.getBlock<dtn::data::ScopeControlHopLimitBlock>();
+						schl.increment();
+					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
+
+					// raise default bundle received event
+					dtn::net::BundleReceivedEvent::raise(sender, bundle);
+
+				} catch (const dtn::InvalidDataException &ex) {
+					IBRCOMMON_LOGGER(warning) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				} catch (const ibrcommon::IOException&) {
+
+				}
 			}
 		}
 

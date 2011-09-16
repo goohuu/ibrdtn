@@ -37,8 +37,6 @@ namespace dtn
 
 			void queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job);
 
-			LOWPANConvergenceLayer& operator>>(dtn::data::Bundle&);
-
 			/**
 			 * @see Component::getName()
 			 */
