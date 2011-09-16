@@ -124,8 +124,9 @@ namespace dtn
 			ibrcommon::MutexLock l(m_writelock);
 
 			// Send segment to CL, use callback interface
-			int ret;// = LOWPANConvergenceLayer::send_cb(out_buf_, bytes + 1, _address);
-
+			//int ret;// = LOWPANConvergenceLayer::send_cb(out_buf_, bytes + 1, _address);
+			callback.send_cb(out_buf_, bytes + 1, _address);
+#if 0
 			if (ret == -1)
 			{
 				// CL is busy, requeue bundle
@@ -158,6 +159,7 @@ namespace dtn
 					setp(buffer_begin, out_buf_ + BUFF_SIZE - 1);
 				}
 			}
+#endif
 
 			// raise bundle event
 			//dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
