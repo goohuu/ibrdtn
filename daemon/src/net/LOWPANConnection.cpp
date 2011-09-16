@@ -51,6 +51,7 @@ namespace dtn
 
 		void LOWPANConnection::run()
 		{
+			try {
 			while(_stream.good())
 			{
 				try {
@@ -78,6 +79,9 @@ namespace dtn
 
 				}
 			}
+			} catch (std::exception &ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
 		// class LOWPANConnectionSender
@@ -98,6 +102,7 @@ namespace dtn
 
 		void LOWPANConnectionSender::run()
 		{
+			try {
 			while(stream.good())
 			{
 				ConvergenceLayer::Job job = _queue.getnpop();
@@ -120,6 +125,9 @@ namespace dtn
 			// Also check what needs to be done when the node is not reachable (transfer requeue...)
 
 			IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConnectionSender::run stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
+			} catch (std::exception &ex) {
+				IBRCOMMON_LOGGER_DEBUG(10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 	}
 }
