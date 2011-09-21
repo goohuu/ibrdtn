@@ -46,7 +46,7 @@ namespace dtn
 		}
 
 		BundleCore::BundleCore()
-		 : _clock(1), _storage(NULL)
+		 : _clock(1), _storage(NULL), _router(NULL)
 		{
 			/**
 			 * evaluate the current local time
@@ -86,6 +86,21 @@ namespace dtn
 		void BundleCore::setStorage(dtn::core::BundleStorage *storage)
 		{
 			_storage = storage;
+		}
+
+		void BundleCore::setRouter(dtn::routing::BaseRouter *router)
+		{
+			_router = router;
+		}
+
+		dtn::routing::BaseRouter& BundleCore::getRouter() const
+		{
+			if (_router == NULL)
+			{
+				throw ibrcommon::Exception("router not set");
+			}
+
+			return *_router;
 		}
 
 		dtn::core::BundleStorage& BundleCore::getStorage()

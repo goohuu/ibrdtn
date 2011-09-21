@@ -575,6 +575,9 @@ int __daemon_run(Configuration &conf)
 	// create the base router
 	dtn::routing::BaseRouter *router = new dtn::routing::BaseRouter(core.getStorage());
 
+	// make the router globally available
+	core.setRouter(router);
+
 	// add routing extensions
 	switch (conf.getNetwork().getRoutingExtension())
 	{

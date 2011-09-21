@@ -7,6 +7,7 @@
 #include "core/StatusReportGenerator.h"
 #include "core/BundleStorage.h"
 #include "core/WallClock.h"
+#include "routing/BaseRouter.h"
 
 #include "net/ConnectionManager.h"
 #include "net/ConvergenceLayer.h"
@@ -39,6 +40,9 @@ namespace dtn
 
 			void setStorage(dtn::core::BundleStorage *storage);
 			dtn::core::BundleStorage& getStorage();
+
+			void setRouter(dtn::routing::BaseRouter *router);
+			dtn::routing::BaseRouter& getRouter() const;
 
 			void transferTo(const dtn::data::EID &destination, const dtn::data::BundleID &bundle);
 
@@ -98,6 +102,7 @@ namespace dtn
 			WallClock _clock;
 
 			dtn::core::BundleStorage *_storage;
+			dtn::routing::BaseRouter *_router;
 
 			// generator for statusreports
 			StatusReportGenerator _statusreportgen;

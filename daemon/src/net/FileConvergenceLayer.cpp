@@ -13,6 +13,7 @@
 #include "core/BundleCore.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
+#include "routing/BaseRouter.h"
 #include "routing/epidemic/EpidemicControlMessage.h"
 #include "routing/RequeueBundleEvent.h"
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
@@ -230,6 +231,9 @@ namespace dtn
 			// list all files in the folder
 			getPath(n).getFiles(files);
 
+			// get a reference to the router
+			dtn::routing::BaseRouter &router = dtn::core::BundleCore::getInstance().getRouter();
+
 			for (std::list<ibrcommon::File>::const_iterator iter = files.begin(); iter != files.end(); iter++)
 			{
 				const ibrcommon::File &f = (*iter);
@@ -242,19 +246,38 @@ namespace dtn
 					std::fstream fs(f.getPath().c_str(), std::fstream::in);
 
 					// get a deserializer
+					dtn::data::DefaultDeserializer d(fs);
+
+					dtn::data::MetaBundle bundle;
+
+					// load meta data
+					d >> bundle;
+
+					// check the bundle
+					if ( ( bundle.destination == EID() ) || ( bundle.source == EID() ) )
+					{
+						// invalid bundle!
+						throw dtn::data::Validator::RejectedException("destination or source EID is null");
+					}
+
+					// ask if the bundle is already known
+					if ( router.isKnown(bundle) ) continue;
+				} catch (const std::exception&) {
+					// bundle could not be read
+					continue;
+				}
+
+				try {
+					// open the file
+					std::fstream fs(f.getPath().c_str(), std::fstream::in);
+
+					// get a deserializer
 					dtn::data::DefaultDeserializer d(fs, dtn::core::BundleCore::getInstance());
 
 					dtn::data::Bundle bundle;
 
 					// load meta data
 					d >> bundle;
-
-					// check the bundle
-					if ( ( bundle._destination == EID() ) || ( bundle._source == EID() ) )
-					{
-						// invalid bundle!
-						throw dtn::data::Validator::RejectedException("destination or source EID is null");
-					}
 
 					// increment value in the scope control hop limit block
 					try {
