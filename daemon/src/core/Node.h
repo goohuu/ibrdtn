@@ -31,7 +31,8 @@ namespace dtn
 				CONN_UDPIP = 2,
 				CONN_LOWPAN = 3,
 				CONN_BLUETOOTH = 4,
-				CONN_HTTP = 5
+				CONN_HTTP = 5,
+				CONN_FILE = 6
 			};
 
 			/**

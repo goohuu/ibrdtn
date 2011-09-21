@@ -166,6 +166,9 @@ namespace dtn
 
 			case Node::CONN_HTTP:
 				return "HTTP";
+
+			case Node::CONN_FILE:
+				return "FILE";
 			}
 
 			return "unknown";

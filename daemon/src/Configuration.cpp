@@ -502,6 +502,7 @@ namespace dtn
 				if (protocol == "zigbee") p = Node::CONN_LOWPAN; //Legacy: Stay compatible with older config files
 				if (protocol == "bluetooth") p = Node::CONN_BLUETOOTH;
 				if (protocol == "http") p = Node::CONN_HTTP;
+				if (protocol == "file") p = Node::CONN_FILE;
 
 				bool node_exists = false;
 
@@ -573,6 +574,7 @@ namespace dtn
 					if (type_name == "udp") type = Configuration::NetConfig::NETWORK_UDP;
 					if (type_name == "http") type = Configuration::NetConfig::NETWORK_HTTP;
 					if (type_name == "lowpan") type = Configuration::NetConfig::NETWORK_LOWPAN;
+					if (type_name == "file") type = Configuration::NetConfig::NETWORK_FILE;
 
 					switch (type)
 					{

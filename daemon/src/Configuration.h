@@ -35,7 +35,8 @@ namespace dtn
 					NETWORK_TCP = 1,
 					NETWORK_UDP = 2,
 					NETWORK_HTTP = 3,
-					NETWORK_LOWPAN = 4
+					NETWORK_LOWPAN = 4,
+					NETWORK_FILE = 5
 				};
 
 				NetConfig(std::string name, NetType type, const std::string &url, bool discovery = true);
