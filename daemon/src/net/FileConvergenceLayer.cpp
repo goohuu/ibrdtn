@@ -191,7 +191,7 @@ namespace dtn
 					const dtn::core::Node &n = node.getNode();
 					if ( n.has(dtn::core::Node::CONN_FILE) )
 					{
-						//_tasks.push(new Task(Task::TASK_LOAD, n));
+						_tasks.push(new Task(Task::TASK_LOAD, n));
 					}
 				}
 			} catch (const std::bad_cast&) { };
