@@ -14,6 +14,7 @@
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "routing/epidemic/EpidemicControlMessage.h"
+#include "routing/RequeueBundleEvent.h"
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/data/File.h>
@@ -165,8 +166,8 @@ namespace dtn
 										// send transfer aborted event
 										dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 									} catch (const ibrcommon::Exception&) {
-										// send transfer aborted event
-										dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+										// something went wrong - requeue transfer for later
+										dtn::routing::RequeueBundleEvent::raise(sbt.node.getEID(), sbt.job._bundle);
 									}
 
 								} catch (const std::bad_cast&) { }
