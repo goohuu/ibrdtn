@@ -9,6 +9,9 @@
 #include "net/ConvergenceLayer.h"
 #include "core/Node.h"
 #include "core/EventReceiver.h"
+#include <ibrdtn/data/BundleList.h>
+#include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/Queue.h>
 
 #ifndef FILECONVERGENCELAYER_H_
 #define FILECONVERGENCELAYER_H_
@@ -18,7 +21,7 @@ namespace dtn
 	namespace net
 	{
 
-		class FileConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IntegratedComponent, public dtn::core::EventReceiver
+		class FileConvergenceLayer : public dtn::net::ConvergenceLayer, public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver
 		{
 		public:
 			FileConvergenceLayer();
@@ -35,9 +38,43 @@ namespace dtn
 
 		protected:
 			void componentUp();
+			void componentRun();
 			void componentDown();
 
+			bool __cancellation();
+
 		private:
+			class Task
+			{
+			public:
+				enum Action
+				{
+					TASK_LOAD,
+					TASK_STORE
+				};
+
+				Task(Action a, const dtn::core::Node &n);
+				virtual ~Task();
+
+				const Action action;
+				const dtn::core::Node node;
+			};
+
+			class StoreBundleTask : public Task
+			{
+			public:
+				StoreBundleTask(const dtn::core::Node &n, const ConvergenceLayer::Job &j);
+				virtual ~StoreBundleTask();
+
+				const ConvergenceLayer::Job job;
+			};
+
+			void replyECM(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle>&);
+
+			ibrcommon::Mutex _blacklist_mutex;
+			dtn::data::BundleList _blacklist;
+			ibrcommon::Queue<Task*> _tasks;
+
 			static ibrcommon::File getPath(const dtn::core::Node&);
 			static std::list<dtn::data::MetaBundle> scan(const ibrcommon::File &path);
 			static void load(const dtn::core::Node&);

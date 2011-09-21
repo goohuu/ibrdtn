@@ -8,19 +8,40 @@
 #include "net/FileConvergenceLayer.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
+#include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include "core/BundleCore.h"
 #include "core/NodeEvent.h"
+#include "core/TimeEvent.h"
+#include "routing/epidemic/EpidemicControlMessage.h"
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
-#include "net/BundleReceivedEvent.h"
 #include <ibrdtn/utils/Clock.h>
 #include <ibrcommon/data/File.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/MutexLock.h>
 
 namespace dtn
 {
 	namespace net
 	{
+		FileConvergenceLayer::Task::Task(FileConvergenceLayer::Task::Action a, const dtn::core::Node &n)
+		 : action(a), node(n)
+		{
+		}
+
+		FileConvergenceLayer::Task::~Task()
+		{
+		}
+
+		FileConvergenceLayer::StoreBundleTask::StoreBundleTask(const dtn::core::Node &n, const ConvergenceLayer::Job &j)
+		 : FileConvergenceLayer::Task(TASK_STORE, n), job(j)
+		{
+		}
+
+		FileConvergenceLayer::StoreBundleTask::~StoreBundleTask()
+		{
+		}
+
 		FileConvergenceLayer::FileConvergenceLayer()
 		{
 		}
@@ -32,11 +53,135 @@ namespace dtn
 		void FileConvergenceLayer::componentUp()
 		{
 			bindEvent(dtn::core::NodeEvent::className);
+			bindEvent(dtn::core::TimeEvent::className);
 		}
 
 		void FileConvergenceLayer::componentDown()
 		{
 			unbindEvent(dtn::core::NodeEvent::className);
+			unbindEvent(dtn::core::TimeEvent::className);
+		}
+
+		bool FileConvergenceLayer::__cancellation()
+		{
+			_tasks.abort();
+			return true;
+		}
+
+		void FileConvergenceLayer::componentRun()
+		{
+			try {
+				while (true)
+				{
+					Task *t = _tasks.getnpop(true);
+
+					try {
+						switch (t->action)
+						{
+							case Task::TASK_LOAD:
+							{
+								// scan and delete expired bundles
+								//scan(getPath(t->node));
+
+								// load bundles (receive)
+								load(t->node);
+								break;
+							}
+
+							case Task::TASK_STORE:
+							{
+								try {
+									const StoreBundleTask &sbt = dynamic_cast<const StoreBundleTask&>(*t);
+									dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+
+									// get the file path of the node
+									ibrcommon::File path = getPath(sbt.node);
+
+									// scan for bundles
+									std::list<dtn::data::MetaBundle> bundles = scan(path);
+
+									try {
+										// check if bundle is a epidemic routing bundle
+										if (sbt.job._bundle.source == (dtn::core::BundleCore::local + "/routing/epidemic"))
+										{
+											// read the bundle out of the storage
+											const dtn::data::Bundle bundle = storage.get(sbt.job._bundle);
+
+											if (bundle._destination == (sbt.node.getEID() + "/routing/epidemic"))
+											{
+												// add this bundle to the blacklist
+												{
+													ibrcommon::MutexLock l(_blacklist_mutex);
+													if (_blacklist.find(bundle) != _blacklist.end())
+													{
+														// send transfer aborted event
+														dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
+														continue;
+													}
+													_blacklist.add(bundle);
+												}
+
+												// create ECM reply
+												replyECM(bundle, bundles);
+
+												// raise bundle event
+												dtn::net::TransferCompletedEvent::raise(sbt.job._destination, sbt.job._bundle);
+												dtn::core::BundleEvent::raise(sbt.job._bundle, dtn::core::BUNDLE_FORWARDED);
+												continue;
+											}
+										}
+
+										// check if bundle is already in the path
+										for (std::list<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+										{
+											if ((*iter) == sbt.job._bundle)
+											{
+												// send transfer aborted event
+												dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
+												continue;
+											}
+										}
+
+										ibrcommon::TemporaryFile filename(path, "bundle");
+
+										try {
+											// read the bundle out of the storage
+											const dtn::data::Bundle bundle = storage.get(sbt.job._bundle);
+
+											std::fstream fs(filename.getPath().c_str(), std::fstream::out);
+
+											IBRCOMMON_LOGGER(info) << "write bundle " << sbt.job._bundle.toString() << " to file " << filename.getPath() << IBRCOMMON_LOGGER_ENDL;
+
+											dtn::data::DefaultSerializer s(fs);
+
+											// serialize the bundle
+											s << bundle;
+
+											// raise bundle event
+											dtn::net::TransferCompletedEvent::raise(sbt.job._destination, bundle);
+											dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+										} catch (const ibrcommon::Exception&) {
+											filename.remove();
+											throw;
+										}
+									} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+										// send transfer aborted event
+										dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
+									} catch (const ibrcommon::Exception&) {
+										// send transfer aborted event
+										dtn::net::TransferAbortedEvent::raise(sbt.node.getEID(), sbt.job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+									}
+
+								} catch (const std::bad_cast&) { }
+								break;
+							}
+						}
+					} catch (const std::exception &ex) {
+						IBRCOMMON_LOGGER(error) << "error while processing file convergencelayer task: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+					delete t;
+				}
+			} catch (const ibrcommon::QueueUnblockedException &ex) { };
 		}
 
 		void FileConvergenceLayer::raiseEvent(const dtn::core::Event *evt)
@@ -49,12 +194,18 @@ namespace dtn
 					const dtn::core::Node &n = node.getNode();
 					if ( n.has(dtn::core::Node::CONN_FILE) )
 					{
-						// scan and delete expired bundles
-						scan(getPath(n));
-
-						// load bundles (receive)
-						load(n);
+						//_tasks.push(new Task(Task::TASK_LOAD, n));
 					}
+				}
+			} catch (const std::bad_cast&) { };
+
+			try {
+				const dtn::core::TimeEvent &time = dynamic_cast<const dtn::core::TimeEvent&>(*evt);
+
+				if (time.getAction() == dtn::core::TIME_SECOND_TICK)
+				{
+					ibrcommon::MutexLock l(_blacklist_mutex);
+					_blacklist.expire(time.getTimestamp());
 				}
 			} catch (const std::bad_cast&) { };
 		}
@@ -179,7 +330,7 @@ namespace dtn
 					// put the meta bundle in the list
 					ret.push_back(meta);
 				} catch (const std::exception&) {
-					IBRCOMMON_LOGGER(error) << "bundle in file " << f.getPath() << " invalid or expired" << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER_DEBUG(34) << "bundle in file " << f.getPath() << " invalid or expired" << IBRCOMMON_LOGGER_ENDL;
 
 					// delete the file
 					ibrcommon::File(f).remove();
@@ -191,49 +342,86 @@ namespace dtn
 
 		void FileConvergenceLayer::queue(const dtn::core::Node &n, const ConvergenceLayer::Job &job)
 		{
-			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
+			_tasks.push(new StoreBundleTask(n, job));
+		}
 
-			try {
-				ibrcommon::File path = getPath(n);
+		void FileConvergenceLayer::replyECM(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle> &bl)
+		{
+			// read the ecm
+			const dtn::data::PayloadBlock &p = bundle.getBlock<dtn::data::PayloadBlock>();
+			ibrcommon::BLOB::Reference ref = p.getBLOB();
+			dtn::routing::EpidemicControlMessage ecm;
 
-				// scan for bundles
-				std::list<dtn::data::MetaBundle> bundles = scan(path);
+			// locked within this region
+			{
+				ibrcommon::BLOB::iostream s = ref.iostream();
+				(*s) >> ecm;
+			}
 
-				for (std::list<dtn::data::MetaBundle>::const_iterator iter = bundles.begin(); iter != bundles.end(); iter++)
+			// if this is a request answer with an summary vector
+			if (ecm.type == dtn::routing::EpidemicControlMessage::ECM_QUERY_SUMMARY_VECTOR)
+			{
+				// create a new request for the summary vector of the neighbor
+				dtn::routing::EpidemicControlMessage response_ecm;
+
+				// set message type
+				response_ecm.type = dtn::routing::EpidemicControlMessage::ECM_RESPONSE;
+
+				// add own summary vector to the message
+				dtn::routing::SummaryVector vec;
+
+				// add bundles in the path
+				for (std::list<dtn::data::MetaBundle>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
 				{
-					if ((*iter) == job._bundle)
+					vec.add(*iter);
+				}
+
+				// add bundles from the blacklist
+				{
+					ibrcommon::MutexLock l(_blacklist_mutex);
+					for (std::set<dtn::data::MetaBundle>::const_iterator iter = _blacklist.begin(); iter != _blacklist.end(); iter++)
 					{
-						// send transfer aborted event
-						dtn::net::TransferAbortedEvent::raise(n.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_REFUSED);
-						return;
+						vec.add(*iter);
 					}
 				}
 
-				ibrcommon::TemporaryFile filename(path, "bundle");
+				response_ecm.setSummaryVector(vec);
 
-				try {
-					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(job._bundle);
+				// add own purge vector to the message
+				//response_ecm.setPurgeVector(_purge_vector);
 
-					IBRCOMMON_LOGGER(info) << "write bundle " << job._bundle.toString() << " to file " << filename.getPath() << IBRCOMMON_LOGGER_ENDL;
+				// create a new bundle
+				dtn::data::Bundle answer;
 
-					std::fstream fs(filename.getPath().c_str(), std::fstream::out);
+				// set the source of the bundle
+				answer._source = bundle._destination;
 
-					dtn::data::DefaultSerializer s(fs);
+				// set the destination of the bundle
+				answer.set(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON, true);
+				answer._destination = bundle._source;
 
-					// serialize the bundle
-					s << bundle;
+				// limit the lifetime to 60 seconds
+				answer._lifetime = 60;
 
-					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
-					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
-				} catch (const ibrcommon::Exception&) {
-					filename.remove();
-					throw;
+				// set high priority
+				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT1, false);
+				answer.set(dtn::data::PrimaryBlock::PRIORITY_BIT2, true);
+
+				dtn::data::PayloadBlock &p = answer.push_back<PayloadBlock>();
+				ibrcommon::BLOB::Reference ref = p.getBLOB();
+
+				// serialize the request into the payload
+				{
+					ibrcommon::BLOB::iostream ios = ref.iostream();
+					(*ios) << response_ecm;
 				}
-			} catch (const ibrcommon::Exception&) {
-				// send transfer aborted event
-				dtn::net::TransferAbortedEvent::raise(n.getEID(), job._bundle, dtn::net::TransferAbortedEvent::REASON_CONNECTION_DOWN);
+
+				// add a schl block
+				dtn::data::ScopeControlHopLimitBlock &schl = answer.push_front<dtn::data::ScopeControlHopLimitBlock>();
+				schl.setLimit(1);
+
+				// raise default bundle received event
+				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer);
 			}
 		}
 	} /* namespace net */
