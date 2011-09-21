@@ -80,9 +80,6 @@ namespace dtn
 						{
 							case Task::TASK_LOAD:
 							{
-								// scan and delete expired bundles
-								//scan(getPath(t->node));
-
 								// load bundles (receive)
 								load(t->node);
 								break;
@@ -125,8 +122,8 @@ namespace dtn
 												replyECM(bundle, bundles);
 
 												// raise bundle event
-												dtn::net::TransferCompletedEvent::raise(sbt.job._destination, sbt.job._bundle);
-												dtn::core::BundleEvent::raise(sbt.job._bundle, dtn::core::BUNDLE_FORWARDED);
+												dtn::net::TransferCompletedEvent::raise(sbt.node.getEID(), bundle);
+												dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 												continue;
 											}
 										}
@@ -158,7 +155,7 @@ namespace dtn
 											s << bundle;
 
 											// raise bundle event
-											dtn::net::TransferCompletedEvent::raise(sbt.job._destination, bundle);
+											dtn::net::TransferCompletedEvent::raise(sbt.node.getEID(), bundle);
 											dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
 										} catch (const ibrcommon::Exception&) {
 											filename.remove();
