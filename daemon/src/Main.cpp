@@ -29,6 +29,7 @@
 
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
+#include "net/FileConvergenceLayer.h"
 
 #ifdef HAVE_SQLITE
 #include "core/SQLiteBundleStorage.h"
@@ -320,6 +321,18 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 		try {
 			switch (net.type)
 			{
+				case Configuration::NetConfig::NETWORK_FILE:
+				{
+					try {
+						FileConvergenceLayer *filecl = new FileConvergenceLayer();
+						core.addConvergenceLayer(filecl);
+						components.push_back(filecl);
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER(error) << "Failed to add FileConvergenceLayer: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+					break;
+				}
+
 				case Configuration::NetConfig::NETWORK_UDP:
 				{
 					try {
@@ -423,6 +436,9 @@ int __daemon_run(Configuration &conf)
 	sigemptyset(&blockset);
 	sigaddset(&blockset, SIGPIPE);
 	::sigprocmask(SIG_BLOCK, &blockset, NULL);
+
+	// enable ring-buffer
+	ibrcommon::Logger::enableBuffer(200);
 
 	// enable timestamps in logging if requested
 	if (conf.getLogger().display_timestamps())
@@ -735,7 +751,7 @@ int __daemon_run(Configuration &conf)
 	DevNull devnull;
 
 	// announce static nodes, create a list of static nodes
-	list<Node> static_nodes = conf.getNetwork().getStaticNodes();
+	std::list<Node> static_nodes = conf.getNetwork().getStaticNodes();
 
 	for (list<Node>::iterator iter = static_nodes.begin(); iter != static_nodes.end(); iter++)
 	{
