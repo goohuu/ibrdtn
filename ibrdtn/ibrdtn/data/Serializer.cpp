@@ -6,6 +6,8 @@
 #include "ibrdtn/data/CustodySignalBlock.h"
 #include "ibrdtn/data/ExtensionBlock.h"
 #include "ibrdtn/data/PayloadBlock.h"
+#include "ibrdtn/data/MetaBundle.h"
+#include "ibrdtn/utils/Clock.h"
 #include <ibrcommon/refcnt_ptr.h>
 #include <ibrcommon/Logger.h>
 #include <list>
@@ -642,6 +644,29 @@ namespace dtn
 
 			// validate this bundle
 			_validator.validate(obj);
+
+			return (*this);
+		}
+
+		Deserializer& DefaultDeserializer::operator>>(dtn::data::MetaBundle &obj)
+		{
+			dtn::data::PrimaryBlock pb;
+			(*this) >> pb;
+
+			obj.appdatalength = pb._appdatalength;
+			obj.custodian = pb._custodian;
+			obj.destination = pb._destination;
+			obj.expiretime = dtn::utils::Clock::getExpireTime(pb._timestamp, pb._lifetime);
+			obj.fragment = pb.get(dtn::data::PrimaryBlock::FRAGMENT);
+			obj.hopcount = 0;
+			obj.lifetime = pb._lifetime;
+			obj.offset = pb._fragmentoffset;
+			obj.procflags = pb._procflags;
+			obj.received = 0;
+			obj.reportto = pb._reportto;
+			obj.sequencenumber = pb._sequencenumber;
+			obj.source = pb._source;
+			obj.timestamp = pb._timestamp;
 
 			return (*this);
 		}

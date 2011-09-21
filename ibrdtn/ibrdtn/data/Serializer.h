@@ -23,6 +23,7 @@ namespace dtn
 		class Block;
 		class PrimaryBlock;
 		class PayloadBlock;
+		class MetaBundle;
 
 		class Serializer
 		{
@@ -157,6 +158,7 @@ namespace dtn
 			virtual Deserializer &operator>>(dtn::data::Bundle &obj);
 			virtual Deserializer &operator>>(dtn::data::PrimaryBlock &obj);
 			virtual Deserializer &operator>>(dtn::data::Block &obj);
+			virtual Deserializer &operator>>(dtn::data::MetaBundle &obj);
 
 		protected:
 			std::istream &_stream;
