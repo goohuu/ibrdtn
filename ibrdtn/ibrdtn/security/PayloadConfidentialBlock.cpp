@@ -104,7 +104,7 @@ namespace dtn
 			pcb._ciphersuite_params.set(SecurityBlock::initialization_vector, iv, ibrcommon::AES128Stream::iv_len);
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_CIPHERSUITE_PARAMS;
 
-			pcb._security_result.set(SecurityBlock::integrity_signature, tag, ibrcommon::AES128Stream::tag_len);
+			pcb._security_result.set(SecurityBlock::PCB_integrity_check_value, tag, ibrcommon::AES128Stream::tag_len);
 			pcb._ciphersuite_flags |= SecurityBlock::CONTAINS_SECURITY_RESULT;
 
 			// create correlator
@@ -245,7 +245,7 @@ namespace dtn
 
 			// the array for the extracted tag
 			unsigned char tag[ibrcommon::AES128Stream::tag_len];
-			pcb._security_result.get(SecurityBlock::integrity_signature, tag, ibrcommon::AES128Stream::tag_len);
+			pcb._security_result.get(SecurityBlock::PCB_integrity_check_value, tag, ibrcommon::AES128Stream::tag_len);
 
 			// get the reference to the corresponding BLOB object
 			ibrcommon::BLOB::Reference blobref = plb.getBLOB();
