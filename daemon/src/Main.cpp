@@ -540,7 +540,8 @@ int __daemon_run(Configuration &conf)
 		for (std::list<Configuration::NetConfig>::const_iterator iter = nets.begin(); iter != nets.end(); iter++)
 		{
 			const Configuration::NetConfig &net = (*iter);
-			interfaces.insert(net.interface);
+			if (!net.interface.empty())
+				interfaces.insert(net.interface);
 		}
 
 		try {

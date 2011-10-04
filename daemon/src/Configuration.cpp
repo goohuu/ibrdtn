@@ -566,6 +566,7 @@ namespace dtn
 					std::string key_interface = "net_" + netname + "_interface";
 					std::string key_address = "net_" + netname + "_address";
 					std::string key_discovery = "net_" + netname + "_discovery";
+					std::string key_path = "net_" + netname + "_path";
 
 					std::string type_name = conf.read<string>(key_type, "tcp");
 					Configuration::NetConfig::NetType type = Configuration::NetConfig::NETWORK_UNKNOWN;
@@ -582,6 +583,16 @@ namespace dtn
 						{
 							Configuration::NetConfig nc(netname, type,
 									conf.read<std::string>(key_address, "http://localhost/"),
+									conf.read<std::string>(key_discovery, "yes") == "no");
+
+							_interfaces.push_back(nc);
+							break;
+						}
+
+						case Configuration::NetConfig::NETWORK_FILE:
+						{
+							Configuration::NetConfig nc(netname, type,
+									"file://" + conf.read<std::string>(key_path, ""),
 									conf.read<std::string>(key_discovery, "yes") == "no");
 
 							_interfaces.push_back(nc);
