@@ -153,6 +153,9 @@ namespace dtn
 					try {
 						const PayloadConfidentialBlock &pcb = dynamic_cast<const PayloadConfidentialBlock&>(**it);
 
+						// get salt and key
+						u_int32_t salt = getSalt(pcb._ciphersuite_params);
+
 						// decrypt related blocks
 						if (decrypt_related)
 						{
@@ -174,9 +177,6 @@ namespace dtn
 						else if (pcb.isSecurityDestination(bundle, long_key.reference) &&
 							(pcb._ciphersuite_id == SecurityBlock::PCB_RSA_AES128_PAYLOAD_PIB_PCB))
 						{
-							// get salt and key
-							u_int32_t salt = getSalt(pcb._ciphersuite_params);
-
 							// try to decrypt the symmetric AES key
 							if (!getKey(pcb._ciphersuite_params, key, ibrcommon::AES128Stream::key_size_in_bytes, rsa_key))
 							{
