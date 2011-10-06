@@ -614,14 +614,6 @@ namespace dtn
 							dtn::data::Block &block = obj.push_back(f);
 							(*this) >> block;
 							lastblock = block.get(Block::LAST_BLOCK);
-
-							if (block.get(dtn::data::Block::DISCARD_IF_NOT_PROCESSED))
-							{
-								IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
-
-								// remove the block
-								obj.remove(block);
-							}
 						}
 						catch (const ibrcommon::Exception &ex)
 						{
