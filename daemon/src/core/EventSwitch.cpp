@@ -61,6 +61,7 @@ namespace dtn
 
 				t = _queue.front();
 				_queue.pop();
+				_queue_cond.signal(true);
 			}
 
 			try {
@@ -85,7 +86,7 @@ namespace dtn
 			}
 
 			try {
-				while (_running)
+				while (_running || (!_queue.empty()))
 				{
 					process();
 				}

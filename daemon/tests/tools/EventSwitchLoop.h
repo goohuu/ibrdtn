@@ -25,7 +25,6 @@ namespace ibrtest
 
 		virtual ~EventSwitchLoop()
 		{
-			dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
 			join();
 		};
 
