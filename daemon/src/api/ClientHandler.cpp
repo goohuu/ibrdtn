@@ -12,6 +12,7 @@
 #include "core/BundleCore.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/utils/Utils.h>
+#include <ibrcommon/net/LinkManager.h>
 
 namespace dtn
 {
@@ -264,6 +265,52 @@ namespace dtn
 							(*_stream) << (*iter).getEID().getString() << std::endl;
 						}
 						(*_stream) << std::endl;
+					}
+					else
+					{
+						ibrcommon::MutexLock l(_write_lock);
+						(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+					}
+				}
+				else if (cmd[0] == "interface")
+				{
+					if (cmd[1] == "address")
+					{
+						try {
+							ibrcommon::DefaultLinkManager &lm = dynamic_cast<ibrcommon::DefaultLinkManager&>(ibrcommon::LinkManager::getInstance());
+
+							ibrcommon::vaddress::Family f = ibrcommon::vaddress::VADDRESS_UNSPEC;
+
+							if (cmd[4] == "ipv4")	f = ibrcommon::vaddress::VADDRESS_INET;
+							if (cmd[4] == "ipv6")	f = ibrcommon::vaddress::VADDRESS_INET6;
+
+							ibrcommon::vinterface iface(cmd[3]);
+							ibrcommon::vaddress addr(ibrcommon::vaddress::VADDRESS_INET, cmd[5]);
+
+							if (cmd[2] == "add")
+							{
+								lm.addressAdded(iface, addr);
+
+								ibrcommon::MutexLock l(_write_lock);
+								(*_stream) << API_STATUS_OK << " ADDRESS ADDED" << std::endl;
+
+							}
+							else if (cmd[2] == "del")
+							{
+								lm.addressRemoved(iface, addr);
+
+								ibrcommon::MutexLock l(_write_lock);
+								(*_stream) << API_STATUS_OK << " ADDRESS REMOVED" << std::endl;
+							}
+							else
+							{
+								ibrcommon::MutexLock l(_write_lock);
+								(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							}
+						} catch (const std::bad_cast&) {
+							ibrcommon::MutexLock l(_write_lock);
+							(*_stream) << API_STATUS_NOT_ALLOWED << " FEATURE NOT AVAILABLE" << std::endl;
+						};
 					}
 					else
 					{
