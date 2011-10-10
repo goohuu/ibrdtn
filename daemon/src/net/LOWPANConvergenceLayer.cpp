@@ -1,15 +1,18 @@
 #include "net/LOWPANConvergenceLayer.h"
 #include "net/LOWPANConnection.h"
 #include "net/lowpanstream.h"
+#include "core/BundleCore.h"
+#include "core/TimeEvent.h"
 #include <ibrcommon/net/UnicastSocketLowpan.h>
+#include <ibrcommon/net/lowpansocket.h>
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
+#include <ibrcommon/TimeMeasurement.h>
 
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 
 #include <sys/socket.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,7 +20,8 @@
 #include <iostream>
 #include <list>
 
-#define EXTENDED_MASK	0x04
+#define EXTENDED_MASK	0x08
+#define SEQ_NUM_MASK	0x07
 
 using namespace dtn::data;
 
@@ -25,8 +29,9 @@ namespace dtn
 {
 	namespace net
 	{
-		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, bool broadcast, unsigned int mtu)
-			: _socket(NULL), _net(net), _panid(panid), m_maxmsgsize(mtu), _running(false)
+		LOWPANConvergenceLayer::LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu)
+			: DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()),
+			  _socket(NULL), _net(net), _panid(panid), m_maxmsgsize(mtu), _running(false), _ipnd_buf_len(0), _ipnd_buf(new char[BUFF_SIZE+2])
 		{
 			_socket = new ibrcommon::UnicastSocketLowpan();
 		}
@@ -49,19 +54,15 @@ namespace dtn
 				name = "lowpancl";
 				stringstream service;
 
-				try {
-					std::list<ibrcommon::vaddress> list = _net.getAddresses(ibrcommon::vaddress::VADDRESS_INET);
-					if (!list.empty())
-					{
-						 service << "short address=" << list.front().get(false) << ";panid=" << _panid << ";";
-					}
-					else
-					{
-						service << "panid=" << _panid << ";";
-					}
-				} catch (const ibrcommon::vinterface::interface_not_set&) {
-					service << "panid=" << _panid << ";";
-				};
+				struct sockaddr_ieee802154 address;
+				address.addr.addr_type = IEEE802154_ADDR_SHORT;
+				address.addr.pan_id = _panid;
+
+				// Get address via netlink
+				ibrcommon::lowpansocket::getAddress(&address.addr, iface);
+
+				//FIXME better naming for address and panid. This will need updates to the service parser.
+				service << "ip=" << address.addr.short_addr << ";port=" << _panid << ";";
 
 				params = service.str();
 			}
@@ -75,13 +76,19 @@ namespace dtn
 		{
 			// Add own address at the end
 			struct sockaddr_ieee802154 _sockaddr;
+			unsigned short local_addr;
+
 			_socket->getAddress(&_sockaddr.addr, _net);
+
+			local_addr = _sockaddr.addr.short_addr;
 
 			// get a lowpan peer
 			ibrcommon::lowpansocket::peer p = _socket->getPeer(address, _sockaddr.addr.pan_id);
+			if (len > 113)
+				IBRCOMMON_LOGGER(error) << "LOWPANConvergenceLayer::send_cb buffer to big to be transferred (" << len << ")."<< IBRCOMMON_LOGGER_ENDL;
 
 			// Add own address at the end
-			memcpy(&buf[len], &_sockaddr.addr.short_addr, sizeof(_sockaddr.addr.short_addr));
+			memcpy(&buf[len], &local_addr, 2);
 
 			// set write lock
 			ibrcommon::MutexLock l(m_writelock);
@@ -106,11 +113,11 @@ namespace dtn
 			std::string address;
 			unsigned int pan;
 
-			// read values
 			uri.decode(address, pan);
 
 			IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
 
+			ibrcommon::MutexLock lc(_connection_lock);
 			getConnection(atoi(address.c_str()))->_sender.queue(job);
 		}
 
@@ -134,12 +141,30 @@ namespace dtn
 			return connection;
 		}
 
+		void LOWPANConvergenceLayer::remove(const LOWPANConnection *conn)
+		{
+			ibrcommon::MutexLock lc(_connection_lock);
+
+			std::list<LOWPANConnection*>::iterator i;
+			for(i = ConnectionList.begin(); i != ConnectionList.end(); ++i)
+			{
+				if ((*i) == conn)
+				{
+					ConnectionList.erase(i);
+					return;
+				}
+			}
+		}
+
 		void LOWPANConvergenceLayer::componentUp()
 		{
+			bindEvent(dtn::core::TimeEvent::className);
 			try {
 				try {
 					ibrcommon::UnicastSocketLowpan &sock = dynamic_cast<ibrcommon::UnicastSocketLowpan&>(*_socket);
 					sock.bind(_panid, _net);
+
+					addService(this);
 				} catch (const std::bad_cast&) {
 
 				}
@@ -151,9 +176,55 @@ namespace dtn
 
 		void LOWPANConvergenceLayer::componentDown()
 		{
+			unbindEvent(dtn::core::TimeEvent::className);
 			_running = false;
 			_socket->shutdown();
 			join();
+		}
+
+		void LOWPANConvergenceLayer::sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryService> &services)
+		{
+			IBRCOMMON_LOGGER(notice) << "LOWPAN IPND beacon send started" << IBRCOMMON_LOGGER_ENDL;
+
+			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
+
+			// set sequencenumber
+			announcement.setSequencenumber(sn);
+
+			// clear all services
+			announcement.clearServices();
+
+			// add services
+			for (std::list<DiscoveryService>::iterator iter = services.begin(); iter != services.end(); iter++)
+			{
+				DiscoveryService &service = (*iter);
+
+				try {
+					// update service information
+					service.update(_net);
+
+					// add service to discovery message
+					announcement.addService(service);
+				} catch (const dtn::net::DiscoveryServiceProvider::NoServiceHereException&) {
+
+				}
+			}
+			// Set extended header bit. Everything else 0
+			_ipnd_buf[0] =  0x08;
+			// Set discovery bit in extended header
+			_ipnd_buf[1] = 0x80;
+
+			// serialize announcement
+			stringstream ss;
+			ss << announcement;
+
+			int len = ss.str().size();
+			if (len > 111)
+				IBRCOMMON_LOGGER(error) << "Discovery announcement to big (" << len << ")" << IBRCOMMON_LOGGER_ENDL;
+
+			memcpy(_ipnd_buf+2, ss.str().c_str(), len);
+
+			send_cb(_ipnd_buf, len + 2, 0xffff);
 		}
 
 		void LOWPANConvergenceLayer::componentRun()
@@ -165,13 +236,14 @@ namespace dtn
 				ibrcommon::MutexLock l(m_readlock);
 
 				char data[m_maxmsgsize];
-				char header, extended_header;
-				unsigned int address;
+				char header;
+				unsigned short address;
 
+				IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::componentRun early" << IBRCOMMON_LOGGER_ENDL;
 				// Receive full frame from socket
 				int len = _socket->receive(data, m_maxmsgsize);
 
-				IBRCOMMON_LOGGER_DEBUG(10) << ":LOWPANConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << "LOWPANConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
 
 				// We got nothing from the socket, keep reading
 				if (len <= 0)
@@ -181,21 +253,42 @@ namespace dtn
 				header = data[0];
 
 				// Retrieve sender address from the end of the frame
-				address = (data[len-1] << 8) | data[len-2];
+				address = ((char)data[len-1] << 8) | data[len-2];
+
+				IBRCOMMON_LOGGER(notice) << "ADDRESS " << address << IBRCOMMON_LOGGER_ENDL;
 
 				// Check for extended header and retrieve if available
-				if (header & EXTENDED_MASK)
-					extended_header = data[1];
+				if ((header & EXTENDED_MASK) && (data[1] & 0x80)) {
+					IBRCOMMON_LOGGER(notice) << "Received announcement for LoWPAN discovery" << IBRCOMMON_LOGGER_ENDL;
+					DiscoveryAnnouncement announce;
+					stringstream ss;
+					ss.write(data+2, len-4);
+					ss >> announce;
+					DiscoveryAgent::received(announce, 30);
+					continue;
+				}
 
-				// Received discovery frame?
-				if (extended_header == 0x80)
-					IBRCOMMON_LOGGER_DEBUG(10) << "Received beacon frame for LoWPAN discovery" << IBRCOMMON_LOGGER_ENDL;
+				ibrcommon::MutexLock lc(_connection_lock);
+
+				// Connection instance for this address
+				LOWPANConnection* connection = getConnection(address);
 
 				// Decide in which queue to write based on the src address
-				getConnection(address)->getStream().queue(data+1, len-3); // Cut off address from end
+				connection->getStream().queue(data, len-2); // Cut off address from end
 
 				yield();
 			}
+		}
+
+		void LOWPANConvergenceLayer::raiseEvent(const Event *evt)
+		{
+			try {
+				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);
+				if (time.getAction() == TIME_SECOND_TICK)
+					if (time.getTimestamp()%5 == 0)
+						timeout();
+			} catch (const std::bad_cast&)
+			{}
 		}
 
 		bool LOWPANConvergenceLayer::__cancellation()

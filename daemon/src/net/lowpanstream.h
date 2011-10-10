@@ -1,8 +1,9 @@
 #ifndef LOWPANSTREAM_H_
 #define LOWPANSTREAM_H_
 
-#include <streambuf>
 #include "ibrcommon/thread/Conditional.h"
+#include <streambuf>
+#include <stdint.h>
 
 namespace dtn
 {
@@ -11,19 +12,32 @@ namespace dtn
 		class lowpanstream_callback
 		{
 		public:
+			/**
+			 * Callback interface implementation from LoWPAN CL
+			 * @see LOWPANConvergenceLayer
+			 */
 			virtual void send_cb(char *buf, int len, unsigned int address) = 0;
 		};
 
 		class lowpanstream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
 		{
 		public:
-			// The size of the input and output buffers.
+			/**
+			 * Size of the input and output buffers.
+			 */
 			static const size_t BUFF_SIZE = 113;
 
 			lowpanstream(lowpanstream_callback &callback, unsigned int address);
 			virtual ~lowpanstream();
 
+			/**
+			 * Queueing data received from the CL worker thread for the LOWPANConnection
+			 * @param buf Buffer with received data
+			 * @param len Length of the buffer
+			 */
 			void queue(char *buf, int len);
+
+			void abort();
 
 			void close();
 
@@ -35,6 +49,9 @@ namespace dtn
 			unsigned int _address;
 
 		private:
+			bool _in_first_segment;
+			char _out_stat;
+
 			// Input buffer
 			char *in_buf_;
 			int in_buf_len;
@@ -44,9 +61,12 @@ namespace dtn
 			char *out_buf_;
 			char *out2_buf_;
 
-			// sequence numbers
-			int in_seq_num_;
-			int out_seq_num_;
+			// sequence number
+			uint8_t in_seq_num_;
+			uint8_t out_seq_num_;
+			long out_seq_num_global;
+
+			bool _abort;
 
 			lowpanstream_callback &callback;
 

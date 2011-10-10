@@ -18,8 +18,13 @@ namespace dtn
 				LOWPANConnectionSender(lowpanstream &_stream);
 				virtual ~LOWPANConnectionSender();
 
+				/**
+				 * Queueing a job, originally coming from the DTN core, to work its way down to the CL through the lowpanstream
+				 * @param job Reference to the job conatining EID and bundle
+				 */
 				void queue(const ConvergenceLayer::Job &job);
 				void run();
+				bool __cancellation();
 
 			private:
 				lowpanstream &_stream;
@@ -27,27 +32,42 @@ namespace dtn
 		};
 
 		class LOWPANConvergenceLayer;
-		class LOWPANConnection : public ibrcommon::JoinableThread
+		class LOWPANConnection : public ibrcommon::DetachedThread
 		{
 		public:
+			/**
+			 * LOWPANConnection constructor
+			 * @param _address IEEE 802.15.4 short address to identfy the connection
+			 * @param LOWPANConvergenceLayer reference
+			 */
 			LOWPANConnection(unsigned short _address, LOWPANConvergenceLayer &cl);
 
 			virtual ~LOWPANConnection();
 
+			/**
+			 * IEEE 802.15.4 short address of the node this connection handles data for.
+			 */
 			unsigned short _address;
 
+			/**
+			 * Getting the lowpanstream connected with the LOWPANConnection
+			 * @return lowpanstream reference
+			 */
 			lowpanstream& getStream();
 
 			void run();
 			void setup();
+			void finally();
 
+			/**
+			 * Instance of the LOWPANConnectionSender
+			 */
 			LOWPANConnectionSender _sender;
-
-		protected:
 
 		private:
 			bool _running;
 			lowpanstream _stream;
+			LOWPANConvergenceLayer &_cl;
 		};
 	}
 }

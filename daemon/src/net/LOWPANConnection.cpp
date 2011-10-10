@@ -28,13 +28,12 @@ namespace dtn
 	namespace net
 	{
 		LOWPANConnection::LOWPANConnection(unsigned short address, LOWPANConvergenceLayer &cl)
-			: _address(address), _stream(cl, address), _sender(_stream)
+			: _address(address), _stream(cl, address), _sender(_stream), _cl(cl)
 		{
 		}
 
 		LOWPANConnection::~LOWPANConnection()
 		{
-
 		}
 
 		lowpanstream& LOWPANConnection::getStream()
@@ -45,6 +44,15 @@ namespace dtn
 		void LOWPANConnection::setup()
 		{
 			_sender.start();
+		}
+
+		void LOWPANConnection::finally()
+		{
+			_sender.stop();
+			_sender.join();
+
+			// remove this connection from the connection list
+			_cl.remove(this);
 		}
 
 		void LOWPANConnection::run()
@@ -126,6 +134,12 @@ namespace dtn
 			} catch (std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
+		}
+
+		bool LOWPANConnectionSender::__cancellation()
+		{
+			_queue.abort();
+			return true;
 		}
 	}
 }

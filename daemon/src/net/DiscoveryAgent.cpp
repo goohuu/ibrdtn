@@ -62,6 +62,10 @@ namespace dtn
 				{
 					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_UDPIP, s.getParameters(), to_value));
 				}
+				else if (s.getName() == "lowpancl")
+				{
+					n.add(Node::URI(Node::NODE_DISCOVERED, Node::CONN_LOWPAN, s.getParameters(), to_value));
+				}
 				else
 				{
 					n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value));
