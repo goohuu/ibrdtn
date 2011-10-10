@@ -285,7 +285,7 @@ namespace dtn
 							if (cmd[4] == "ipv6")	f = ibrcommon::vaddress::VADDRESS_INET6;
 
 							ibrcommon::vinterface iface(cmd[3]);
-							ibrcommon::vaddress addr(ibrcommon::vaddress::VADDRESS_INET, cmd[5]);
+							ibrcommon::vaddress addr(f, cmd[5]);
 
 							if (cmd[2] == "add")
 							{
