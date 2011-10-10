@@ -16,6 +16,7 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>
+#include <netinet/in.h>
 
 #ifdef __DEVELOPMENT_ASSERTIONS__
 #include <cassert>
@@ -568,22 +569,17 @@ namespace dtn
 				to.addEID(*it);
 		}
 
-		void SecurityBlock::addSalt(TLVList& security_parameters, u_int32_t salt)
+		void SecurityBlock::addSalt(TLVList& security_parameters, const u_int32_t &salt)
 		{
-			std::stringstream salt_stream;
-			salt_stream << salt;
-			security_parameters.set(SecurityBlock::salt, salt_stream.str());
+			u_int32_t nsalt = htonl(salt);
+			security_parameters.set(SecurityBlock::salt, (const unsigned char*)&nsalt, sizeof(nsalt));
 		}
 
 		u_int32_t SecurityBlock::getSalt(const TLVList& security_parameters)
 		{
-			// get salt, convert with stringstream
-			std::string salt_string = security_parameters.get(SecurityBlock::salt);
-			std::stringstream salt_stream;
-			salt_stream << salt_string;
-			u_int32_t salt;
-			salt_stream >> salt;
-			return salt;
+			u_int32_t nsalt = 0;
+			security_parameters.get(SecurityBlock::salt, (unsigned char*)&nsalt, sizeof(nsalt));
+			return ntohl(nsalt);
 		}
 
 		void SecurityBlock::decryptBlock(dtn::data::Bundle& bundle, const dtn::security::SecurityBlock &block, u_int32_t salt, const unsigned char key[ibrcommon::AES128Stream::key_size_in_bytes])

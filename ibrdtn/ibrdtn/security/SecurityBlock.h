@@ -338,7 +338,7 @@ namespace dtn
 			@param security_parameters the string
 			@param salt the salt which shall be added
 			*/
-			static void addSalt(TLVList& security_parameters, u_int32_t salt);
+			static void addSalt(TLVList& security_parameters, const u_int32_t &salt);
 
 			/**
 			Reads a salt TLV from a string containing TLVs
