@@ -32,6 +32,7 @@ namespace dtn
 		}
 
 		EID::EID(std::string value)
+		: _scheme(DEFAULT_SCHEME), _ssp("none")
 		{
 			dtn::utils::Utils::trim(value);
 
@@ -51,25 +52,21 @@ namespace dtn
 				_ssp = value.substr(startofssp, value.length() - startofssp);
 
 				// TODO: do syntax check
-			} catch (...) {
+			} catch (const std::exception&) {
 				_scheme = DEFAULT_SCHEME;
 				_ssp = "none";
 			}
 		}
 
 		EID::EID(size_t node, size_t application)
-		 : _scheme(EID::CBHE_SCHEME), _ssp()
+		 : _scheme(EID::DEFAULT_SCHEME), _ssp("none")
 		{
-			if (node == 0)
-			{
-				_scheme = DEFAULT_SCHEME;
-				_ssp = "none";
-				return;
-			}
+			if (node == 0)	return;
 
 			std::stringstream ss_ssp;
 			ss_ssp << node << "." << application;
 			_ssp = ss_ssp.str();
+			_scheme = CBHE_SCHEME;
 		}
 
 		EID::~EID()
@@ -197,6 +194,11 @@ namespace dtn
 		std::string EID::getScheme() const
 		{
 			return _scheme;
+		}
+
+		std::string EID::getSSP() const
+		{
+			return _ssp;
 		}
 
 		EID EID::getNode() const throw (ibrcommon::Exception)
