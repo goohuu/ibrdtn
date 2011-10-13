@@ -30,7 +30,7 @@ namespace dtn
 		 : _conf(dtn::daemon::Configuration::getInstance().getTimeSync()), _qot_current_tic(0), _sigma(_conf.getSigma()),
 		   _epsilon(1 / _sigma), _quality_diff(1 - _conf.getSyncLevel()), _sync_age(0)
 		{
-			AbstractWorker::initialize("/dtntp", true);
+			AbstractWorker::initialize("/dtntp", 60, true);
 
 			if (_conf.hasReference())
 			{

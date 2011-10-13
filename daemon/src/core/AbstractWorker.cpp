@@ -42,9 +42,21 @@ namespace dtn
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 
+				// check for bundle destination
 				if (queued.bundle.destination == _worker._eid)
 				{
 					_receive_bundles.push(queued.bundle);
+					return;
+				}
+
+				// if the bundle is a singleton, stop here
+				if (queued.bundle.procflags & dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON) return;
+
+				// check for subscribed groups
+				if (_worker._groups.find(queued.bundle.destination) != _worker._groups.end())
+				{
+					_receive_bundles.push(queued.bundle);
+					return;
 				}
 			} catch (const std::bad_cast&) { }
 		}
@@ -104,9 +116,27 @@ namespace dtn
 		{
 		};
 
-		void AbstractWorker::initialize(const string uri, bool async)
+		void AbstractWorker::subscribe(const dtn::data::EID &endpoint)
 		{
-			_eid = BundleCore::local + uri;
+			_groups.insert(endpoint);
+		}
+
+		void AbstractWorker::unsubscribe(const dtn::data::EID &endpoint)
+		{
+			_groups.erase(endpoint);
+		}
+
+		void AbstractWorker::initialize(const string uri, const size_t cbhe, bool async)
+		{
+			if (BundleCore::local.getScheme() == dtn::data::EID::CBHE_SCHEME)
+			{
+				std::stringstream cbhe_id; cbhe_id << cbhe;
+				_eid = BundleCore::local + "." + cbhe_id.str();
+			}
+			else
+			{
+				_eid = BundleCore::local + uri;
+			}
 
 			try {
 				if (async) _thread.start();

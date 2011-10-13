@@ -11,6 +11,7 @@
 #include "net/ConvergenceLayer.h"
 
 #include <ibrcommon/thread/Queue.h>
+#include <set>
 
 using namespace dtn::data;
 
@@ -52,15 +53,26 @@ namespace dtn
 				virtual void callbackBundleReceived(const Bundle &b) = 0;
 
 			protected:
-				void initialize(const string uri, bool async = false);
+				void initialize(const string uri, const size_t cbhe, bool async);
 				void transmit(const Bundle &bundle);
 
 				EID _eid;
 
 				void shutdown();
 
+				/**
+				 * subscribe to a end-point
+				 */
+				void subscribe(const dtn::data::EID &endpoint);
+
+				/**
+				 * unsubscribe to a end-point
+				 */
+				void unsubscribe(const dtn::data::EID &endpoint);
+
 			private:
 				AbstractWorkerAsync _thread;
+				std::set<dtn::data::EID> _groups;
 		};
 	}
 }

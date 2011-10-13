@@ -22,7 +22,7 @@ namespace dtn
 		public:
 			DevNull()
 			{
-				AbstractWorker::initialize("/null", true);
+				AbstractWorker::initialize("/null", 0, true);
 			};
 			virtual ~DevNull() {};
 

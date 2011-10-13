@@ -402,7 +402,7 @@ namespace dtn
 		EpidemicRoutingExtension::EpidemicEndpoint::EpidemicEndpoint(ibrcommon::Queue<EpidemicRoutingExtension::Task* > &queue, dtn::routing::BundleSummary &purge)
 		 : _taskqueue(queue), _purge_vector(purge)
 		{
-			AbstractWorker::initialize("/routing/epidemic", true);
+			AbstractWorker::initialize("/routing/epidemic", 50, true);
 		}
 
 		EpidemicRoutingExtension::EpidemicEndpoint::~EpidemicEndpoint()
