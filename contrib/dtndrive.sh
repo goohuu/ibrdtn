@@ -2,10 +2,15 @@
 #
 #
 
+if [ -z ${1} ]; then
+	echo "please specify the mount directory as first parameter"
+	exit 1;
+fi
+
 MOUNTDIR=${1}
 
 while [ 1 == 1 ]; do
-	inotifywait -e create -e delete /media
+	inotifywait -e create -e delete ${MOUNTDIR}
 	FILES=`find ${MOUNTDIR} -maxdepth 2 -type f -name '.dtndrive'`
 	for DESC in $FILES; do
 		DTNPATH=`dirname ${DESC}`
