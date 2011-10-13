@@ -22,7 +22,9 @@ namespace dtn
 				GLOBAL_SHUTDOWN = 0,
 				GLOBAL_RELOAD = 1,
 				GLOBAL_IDLE = 2,
-				GLOBAL_BUSY = 3
+				GLOBAL_BUSY = 3,
+				GLOBAL_SUSPEND = 4,
+				GLOBAL_POWERSAVE = 5
 			};
 
 			virtual ~GlobalEvent();
