@@ -8,6 +8,8 @@ api_SOURCES = \
 		ApiServer.cpp \
 		ClientHandler.cpp \
 		ClientHandler.h \
+		ExtendedApiHandler.cpp \
+		ExtendedApiHandler.h \
 		Registration.h \
 		Registration.cpp \
 		BinaryStreamClient.h \

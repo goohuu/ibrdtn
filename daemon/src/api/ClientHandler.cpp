@@ -12,6 +12,7 @@
 #include "core/BundleCore.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/utils/Utils.h>
+#include "ExtendedApiHandler.h"
 #include <ibrcommon/net/LinkManager.h>
 
 namespace dtn
@@ -88,6 +89,12 @@ namespace dtn
 						{
 							// switch to binary protocol (old style api)
 							_handler = new BinaryStreamClient(*this, *_stream);
+							continue;
+						}
+						else if (cmd[1] == "extended")
+						{
+							// switch to the extended api
+							_handler = new ExtendedApiHandler(*this, *_stream);
 							continue;
 						}
 						else
@@ -325,6 +332,7 @@ namespace dtn
 					// <eid> [tcp] [add|del] <ip> <port>
 					dtn::core::Node n(cmd[1]);
 
+					/* FIXME cmd len check */
 					if (cmd[2] == "tcp")
 					{
 						if (cmd[3] == "add")
@@ -394,6 +402,8 @@ namespace dtn
 				}
 				else if (cmd[0] == "bundle")
 				{
+					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
 					if (cmd[1] == "list")
 					{
 						// get storage object
@@ -411,7 +421,7 @@ namespace dtn
 						}
 					}
 
-//					if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+//
 //
 //					if (cmd[1] == "get")
 //					{

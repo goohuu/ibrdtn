@@ -186,6 +186,9 @@ namespace dtn
 				// read the block type (first line)
 				getline(_stream, buffer);
 
+				std::string::reverse_iterator iter = buffer.rbegin();
+				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
+
 //				// strip off the last char
 //				buffer.erase(buffer.size() - 1);
 
@@ -219,6 +222,7 @@ namespace dtn
 						{
 							// create a temporary block
 							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
+							block.set(dtn::data::Block::LAST_BLOCK, false);
 
 							// read the block data
 							(*this) >> block;
@@ -243,6 +247,7 @@ namespace dtn
 								case 1:
 								{
 									dtn::data::StatusReportBlock &block = obj.push_back<dtn::data::StatusReportBlock>();
+									block.set(dtn::data::Block::LAST_BLOCK, false);
 									deserializer >> block;
 									lastblock = block.get(dtn::data::Block::LAST_BLOCK);
 									break;
@@ -251,6 +256,7 @@ namespace dtn
 								case 2:
 								{
 									dtn::data::CustodySignalBlock &block = obj.push_back<dtn::data::CustodySignalBlock>();
+									block.set(dtn::data::Block::LAST_BLOCK, false);
 									deserializer >> block;
 									lastblock = block.get(dtn::data::Block::LAST_BLOCK);
 									break;
@@ -267,6 +273,7 @@ namespace dtn
 						else
 						{
 							dtn::data::PayloadBlock &block = obj.push_back<dtn::data::PayloadBlock>();
+							block.set(dtn::data::Block::LAST_BLOCK, false);
 							(*this) >> block;
 
 							lastblock = block.get(dtn::data::Block::LAST_BLOCK);
@@ -281,6 +288,7 @@ namespace dtn
 							dtn::data::ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get(block_type);
 
 							dtn::data::Block &block = obj.push_back(f);
+							block.set(dtn::data::Block::LAST_BLOCK, false);
 							(*this) >> block;
 							lastblock = block.get(dtn::data::Block::LAST_BLOCK);
 
@@ -295,6 +303,7 @@ namespace dtn
 						catch (const ibrcommon::Exception &ex)
 						{
 							dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
+							block.set(dtn::data::Block::LAST_BLOCK, false);
 							(*this) >> block;
 							lastblock = block.get(dtn::data::Block::LAST_BLOCK);
 
@@ -323,6 +332,9 @@ namespace dtn
 			{
 				std::stringstream ss;
 				getline(_stream, data);
+
+				std::string::reverse_iterator iter = data.rbegin();
+				if ( (*iter) == '\r' ) data = data.substr(0, data.length() - 1);
 
 //				// strip off the last char
 //				data.erase(data.size() - 1);
@@ -398,6 +410,9 @@ namespace dtn
 			{
 				getline(_stream, data);
 
+				std::string::reverse_iterator iter = data.rbegin();
+				if ( (*iter) == '\r' ) data = data.substr(0, data.length() - 1);
+
 //				// strip off the last char
 //				data.erase(data.size() - 1);
 
@@ -456,10 +471,18 @@ namespace dtn
 			ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
 			obj.deserialize(base64_decoder, blocksize);
 
-			// read the final empty line
 			std::string buffer;
-			getline(_stream, buffer);
 
+			// read the appended newline character
+			getline(_stream, buffer);
+			std::string::reverse_iterator iter = buffer.rbegin();
+			if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
+			if (buffer.size() != 0) throw dtn::InvalidDataException("last line not empty");
+
+			// read the final empty line
+			getline(_stream, buffer);
+			iter = buffer.rbegin();
+			if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 			if (buffer.size() != 0) throw dtn::InvalidDataException("last line not empty");
 
 			return (*this);
@@ -473,6 +496,9 @@ namespace dtn
 			while (b64.good())
 			{
 				getline(_stream, data);
+
+				std::string::reverse_iterator iter = data.rbegin();
+				if ( (*iter) == '\r' ) data = data.substr(0, data.length() - 1);
 
 //				// strip off the last char
 //				data.erase(data.size() - 1);

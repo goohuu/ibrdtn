@@ -139,6 +139,29 @@ namespace dtn
 			throw dtn::core::BundleStorage::NoBundleFoundException();
 		}
 
+		dtn::data::MetaBundle Registration::receiveMetaBundle() throw (dtn::core::BundleStorage::NoBundleFoundException)
+		{
+			ibrcommon::MutexLock l(_receive_lock);
+			while(true)
+			{
+				try {
+					// get the first bundle in the queue
+					dtn::data::MetaBundle b = _queue.getnpop(false);
+					return b;
+				}
+				catch(const ibrcommon::QueueUnblockedException & e){
+					if(e.reason == ibrcommon::QueueUnblockedException::QUEUE_ABORT){
+						// query for new bundles
+						underflow();
+					}
+				}
+				catch(const dtn::core::BundleStorage::NoBundleFoundException & ){
+				}
+			}
+
+			throw dtn::core::BundleStorage::NoBundleFoundException();
+		}
+
 		void Registration::underflow()
 		{
 			// expire outdated bundles in the list

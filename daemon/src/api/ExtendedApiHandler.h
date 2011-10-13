@@ -1,16 +1,16 @@
 /*
- * ExtendedApiConnection.h
+ * ExtendedApiHandler.h
  *
- *  Created on: 15.06.2011
- *      Author: morgenro
+ *  Created on: 10.10.2011
+ *      Author: morgenro,roettger
  */
 
-#ifndef EXTENDEDAPICONNECTION_H_
-#define EXTENDEDAPICONNECTION_H_
+#ifndef EXTENDEDAPIHANDLER_H_
+#define EXTENDEDAPIHANDLER_H_
 
-#include "api/ExtendedApiServer.h"
 #include "api/Registration.h"
 #include "core/Node.h"
+#include "api/ClientHandler.h"
 
 #include <ibrdtn/data/Bundle.h>
 #include <ibrcommon/thread/Thread.h>
@@ -22,7 +22,7 @@ namespace dtn
 {
 	namespace api
 	{
-		class ExtendedApiConnection : public ibrcommon::DetachedThread
+		class ExtendedApiHandler : public ProtocolHandler
 		{
 		public:
 			enum STATUS_CODES
@@ -48,26 +48,25 @@ namespace dtn
 				API_STATUS_NOTIFY_BUNDLE = 602,
 			};
 
-			ExtendedApiConnection(ExtendedApiServer &server, Registration &registration, ibrcommon::tcpstream *conn);
-			virtual ~ExtendedApiConnection();
+			ExtendedApiHandler(ClientHandler &client, ibrcommon::tcpstream &stream);
+			virtual ~ExtendedApiHandler();
+
+			virtual void run();
+			virtual void finally();
+			virtual bool __cancellation();
 
 			Registration& getRegistration();
 
-			void eventNodeAvailable(const dtn::core::Node &node);
-			void eventNodeUnavailable(const dtn::core::Node &node);
-
-		protected:
-			void run();
-			void finally();
-			void setup();
-			bool __cancellation();
 			bool good() const;
+
+//			void eventNodeAvailable(const dtn::core::Node &node);
+//			void eventNodeUnavailable(const dtn::core::Node &node);
 
 		private:
 			class Sender : public ibrcommon::JoinableThread
 			{
 			public:
-				Sender(ExtendedApiConnection &conn);
+				Sender(ExtendedApiHandler &conn);
 				virtual ~Sender();
 
 			protected:
@@ -76,7 +75,7 @@ namespace dtn
 				bool __cancellation();
 
 			private:
-				ExtendedApiConnection &_conn;
+				ExtendedApiHandler &_handler;
 			} _sender;
 
 			static void sayBundleID(ostream &stream, const dtn::data::BundleID &id);
@@ -84,9 +83,7 @@ namespace dtn
 
 			void processIncomingBundle(dtn::data::Bundle &b);
 
-			ExtendedApiServer &_server;
 			Registration &_registration;
-			ibrcommon::tcpstream *_stream;
 			ibrcommon::Mutex _write_lock;
 
 			dtn::data::Bundle _bundle_reg;

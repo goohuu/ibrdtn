@@ -101,6 +101,8 @@ namespace dtn
 			 */
 			dtn::data::Bundle receive() throw (dtn::core::BundleStorage::NoBundleFoundException);
 
+			dtn::data::MetaBundle receiveMetaBundle() throw (dtn::core::BundleStorage::NoBundleFoundException);
+
 			/**
 			 * notify a bundle as delivered (and delete it if singleton destination)
 			 * @param id

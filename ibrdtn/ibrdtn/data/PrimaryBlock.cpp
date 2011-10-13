@@ -62,6 +62,10 @@ namespace dtn
 				if (other._fragmentoffset != _fragmentoffset) return false;
 				if (other._appdatalength != _appdatalength) return false;
 			}
+			else if (get(PrimaryBlock::FRAGMENT))
+			{
+				return false;
+			}
 
 			return true;
 		}

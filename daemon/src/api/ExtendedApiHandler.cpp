@@ -1,13 +1,13 @@
 /*
- * ExtendedApiConnection.cpp
+ * ExtendedApiHandler.cpp
  *
- *  Created on: 15.06.2011
- *      Author: morgenro
+ *  Created on: 10.10.2011
+ *      Author: morgenro,roettger
  */
 
 #include "config.h"
 #include "Configuration.h"
-#include "api/ExtendedApiConnection.h"
+#include "api/ExtendedApiHandler.h"
 #include "net/BundleReceivedEvent.h"
 #include "core/BundleEvent.h"
 #include <ibrcommon/Logger.h>
@@ -28,74 +28,72 @@ namespace dtn
 {
 	namespace api
 	{
-		ExtendedApiConnection::ExtendedApiConnection(ExtendedApiServer &server, Registration &registration, ibrcommon::tcpstream *conn)
-		 : _sender(*this), _server(server), _registration(registration), _stream(conn), _endpoint(dtn::core::BundleCore::local)
+		ExtendedApiHandler::ExtendedApiHandler(ClientHandler &client, ibrcommon::tcpstream &stream)
+		 : ProtocolHandler(client, stream), _sender(*this), _registration(client.getRegistration()), _endpoint(dtn::core::BundleCore::local)
 		{
-			_stream->exceptions(std::ios::badbit | std::ios::eofbit);
-
-			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
-			{
-				_stream->enableNoDelay();
-			}
 		}
 
-		ExtendedApiConnection::~ExtendedApiConnection()
+		ExtendedApiHandler::~ExtendedApiHandler()
 		{
+			_registration.abort();
 			_sender.join();
-			delete _stream;
 		}
 
-		Registration& ExtendedApiConnection::getRegistration()
+		Registration& ExtendedApiHandler::getRegistration()
 		{
 			return _registration;
 		}
 
-		void ExtendedApiConnection::setup()
-		{
-			_sender.start();
+		bool ExtendedApiHandler::good() const{
+			return _stream.good();
 		}
 
-		bool ExtendedApiConnection::__cancellation()
+		bool ExtendedApiHandler::__cancellation()
 		{
 			// close the stream
 			try {
-				(*_stream).close();
+				_stream.close();
 			} catch (const ibrcommon::ConnectionClosedException&) { };
 
 			return true;
 		}
 
-		void ExtendedApiConnection::finally()
+		void ExtendedApiHandler::finally()
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			// remove the client from the list in ApiServer
-			_server.connectionDown(this);
+//			_server.connectionDown(this);
 
-			_registration.getQueue().abort();
-			_server.freeRegistration(_registration);
+			_registration.abort();
+//			_server.freeRegistration(_registration);
 
 			// close the stream
 			try {
-				(*_stream).close();
+				_stream.close();
 			} catch (const ibrcommon::ConnectionClosedException&) { };
 
-//			try {
-//				// shutdown the sender thread
-//				_sender.stop();
-//			} catch (const std::exception&) { };
+			try {
+				// shutdown the sender thread
+				_sender.stop();
+			} catch (const std::exception&) { };
 		}
 
-		void ExtendedApiConnection::run()
+		void ExtendedApiHandler::run()
 		{
 			// signal the active connection to the server
-			_server.connectionUp(this);
+//			_server.connectionUp(this);
+
+			_sender.start();
 
 			std::string buffer;
 
-			while (_stream->good())
+			while (_stream.good())
 			{
-				getline(*_stream, buffer);
+				getline(_stream, buffer);
+
+				std::string::reverse_iterator iter = buffer.rbegin();
+				if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
 
 				std::vector<std::string> cmd = dtn::utils::Utils::tokenize(" ", buffer);
 				if (cmd.size() == 0) continue;
@@ -115,19 +113,19 @@ namespace dtn
 							// error checking
 							if (_endpoint == dtn::data::EID())
 							{
-								(*_stream) << API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
+								_stream << API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
 								_endpoint = dtn::core::BundleCore::local;
 							}
 							else
 							{
 								_registration.subscribe(_endpoint);
-								(*_stream) << API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << API_STATUS_ACCEPTED << " OK" << std::endl;
 							}
 						}
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 						}
 					}
 					else if (cmd[0] == "registration")
@@ -144,12 +142,12 @@ namespace dtn
 							// error checking
 							if (endpoint == dtn::data::EID())
 							{
-								(*_stream) << API_STATUS_NOT_ACCEPTABLE << " INVALID EID" << std::endl;
+								_stream << API_STATUS_NOT_ACCEPTABLE << " INVALID EID" << std::endl;
 							}
 							else
 							{
 								_registration.subscribe(endpoint);
-								(*_stream) << API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << API_STATUS_ACCEPTED << " OK" << std::endl;
 							}
 						}
 						else if (cmd[1] == "del")
@@ -162,12 +160,12 @@ namespace dtn
 							// error checking
 							if (endpoint == dtn::data::EID())
 							{
-								(*_stream) << API_STATUS_NOT_ACCEPTABLE << " INVALID EID" << std::endl;
+								_stream << API_STATUS_NOT_ACCEPTABLE << " INVALID EID" << std::endl;
 							}
 							else
 							{
 								_registration.unsubscribe(endpoint);
-								(*_stream) << API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << API_STATUS_ACCEPTED << " OK" << std::endl;
 							}
 						}
 						else if (cmd[1] == "list")
@@ -175,17 +173,17 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							const std::set<dtn::data::EID> &list = _registration.getSubscriptions();
 
-							(*_stream) << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
+							_stream << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
 							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 							{
-								(*_stream) << (*iter).getString() << std::endl;
+								_stream << (*iter).getString() << std::endl;
 							}
-							(*_stream) << std::endl;
+							_stream << std::endl;
 						}
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 						}
 					}
 					else if (cmd[0] == "neighbor")
@@ -197,17 +195,17 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getNeighbors();
 
-							(*_stream) << API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
+							_stream << API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
 							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
 							{
-								(*_stream) << (*iter).getEID().getString() << std::endl;
+								_stream << (*iter).getEID().getString() << std::endl;
 							}
-							(*_stream) << std::endl;
+							_stream << std::endl;
 						}
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 						}
 					}
 					else if (cmd[0] == "bundle")
@@ -221,26 +219,26 @@ namespace dtn
 
 							if (cmd.size() == 2)
 							{
-								(*_stream) << API_STATUS_OK << " BUNDLE GET "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
-								PlainSerializer(*_stream) << _bundle_reg;
+								_stream << API_STATUS_OK << " BUNDLE GET "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
+								PlainSerializer(_stream) << _bundle_reg;
 							}
 							else if (cmd[2] == "binary")
 							{
-								(*_stream) << API_STATUS_OK << " BUNDLE GET BINARY "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
-								dtn::data::DefaultSerializer(*_stream) << _bundle_reg; (*_stream) << std::flush;
+								_stream << API_STATUS_OK << " BUNDLE GET BINARY "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
+								dtn::data::DefaultSerializer(_stream) << _bundle_reg; _stream << std::flush;
 							}
 							else if (cmd[2] == "plain")
 							{
-								(*_stream) << API_STATUS_OK << " BUNDLE GET PLAIN "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
-								PlainSerializer(*_stream) << _bundle_reg;
+								_stream << API_STATUS_OK << " BUNDLE GET PLAIN "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
+								PlainSerializer(_stream) << _bundle_reg;
 							}
 							else if (cmd[2] == "xml")
 							{
-								(*_stream) << API_STATUS_NOT_IMPLEMENTED << " FORMAT NOT IMPLEMENTED" << std::endl;
+								_stream << API_STATUS_NOT_IMPLEMENTED << " FORMAT NOT IMPLEMENTED" << std::endl;
 							}
 							else
 							{
-								(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN FORMAT" << std::endl;
+								_stream << API_STATUS_BAD_REQUEST << " UNKNOWN FORMAT" << std::endl;
 							}
 						}
 						else if (cmd[1] == "put")
@@ -250,34 +248,34 @@ namespace dtn
 
 							if (cmd.size() < 2)
 							{
-								(*_stream) << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
+								_stream << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
 							}
 							else if (cmd[2] == "plain")
 							{
-								(*_stream) << API_STATUS_CONTINUE << " PUT BUNDLE PLAIN" << std::endl;
+								_stream << API_STATUS_CONTINUE << " PUT BUNDLE PLAIN" << std::endl;
 
 								try {
-									PlainDeserializer(*_stream) >> _bundle_reg;
-									(*_stream) << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
+									PlainDeserializer(_stream) >> _bundle_reg;
+									_stream << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
 								} catch (const std::exception&) {
-									(*_stream) << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
+									_stream << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
 
 								}
 							}
 							else if (cmd[2] == "binary")
 							{
-								(*_stream) << API_STATUS_CONTINUE << " PUT BUNDLE BINARY" << std::endl;
+								_stream << API_STATUS_CONTINUE << " PUT BUNDLE BINARY" << std::endl;
 
 								try {
-									dtn::data::DefaultDeserializer(*_stream) >> _bundle_reg;
-									(*_stream) << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
+									dtn::data::DefaultDeserializer(_stream) >> _bundle_reg;
+									_stream << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
 								} catch (const std::exception&) {
-									(*_stream) << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
+									_stream << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
 								}
 							}
 							else
 							{
-								(*_stream) << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
+								_stream << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
 							}
 						}
 						else if (cmd[1] == "load")
@@ -301,10 +299,10 @@ namespace dtn
 								_bundle_reg = dtn::core::BundleCore::getInstance().getStorage().get(id);
 
 								ibrcommon::MutexLock l(_write_lock);
-								(*_stream) << API_STATUS_OK << " BUNDLE LOADED "; sayBundleID(*_stream, id); (*_stream) << std::endl;
+								_stream << API_STATUS_OK << " BUNDLE LOADED "; sayBundleID(_stream, id); _stream << std::endl;
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
-								(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
+								_stream << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
 							}
 						}
 						else if (cmd[1] == "clear")
@@ -312,7 +310,7 @@ namespace dtn
 							_bundle_reg = dtn::data::Bundle();
 
 							ibrcommon::MutexLock l(_write_lock);
-							(*_stream) << API_STATUS_OK << " BUNDLE CLEARED" << std::endl;
+							_stream << API_STATUS_OK << " BUNDLE CLEARED" << std::endl;
 						}
 						else if (cmd[1] == "free")
 						{
@@ -320,15 +318,15 @@ namespace dtn
 								dtn::core::BundleCore::getInstance().getStorage().remove(_bundle_reg);
 								_bundle_reg = dtn::data::Bundle();
 								ibrcommon::MutexLock l(_write_lock);
-								(*_stream) << API_STATUS_OK << " BUNDLE FREE SUCCESSFUL" << std::endl;
+								_stream << API_STATUS_OK << " BUNDLE FREE SUCCESSFUL" << std::endl;
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
-								(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
+								_stream << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
 							}
 						}
 						else if (cmd[1] == "delivered")
 						{
-							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+							if (cmd.size() < 5) throw ibrcommon::Exception("not enough parameters");
 
 							try {
 								// construct bundle id
@@ -345,10 +343,10 @@ namespace dtn
 								}
 
 								ibrcommon::MutexLock l(_write_lock);
-								(*_stream) << API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;
+								_stream << API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
-								(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
+								_stream << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
 							}
 						}
 						else if (cmd[1] == "store")
@@ -357,10 +355,10 @@ namespace dtn
 							try {
 								dtn::core::BundleCore::getInstance().getStorage().store(_bundle_reg);
 								ibrcommon::MutexLock l(_write_lock);
-								(*_stream) << API_STATUS_OK << " BUNDLE STORE SUCCESSFUL" << std::endl;
+								_stream << API_STATUS_OK << " BUNDLE STORE SUCCESSFUL" << std::endl;
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
-								(*_stream) << API_STATUS_INTERNAL_ERROR << " BUNDLE STORE FAILED" << std::endl;
+								_stream << API_STATUS_INTERNAL_ERROR << " BUNDLE STORE FAILED" << std::endl;
 							}
 						}
 						else if (cmd[1] == "send")
@@ -368,86 +366,83 @@ namespace dtn
 							processIncomingBundle(_bundle_reg);
 
 							ibrcommon::MutexLock l(_write_lock);
-							(*_stream) << API_STATUS_OK << " BUNDLE SENT" << std::endl;
+							_stream << API_STATUS_OK << " BUNDLE SENT" << std::endl;
 						}
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 						}
 					}
 					else
 					{
 						ibrcommon::MutexLock l(_write_lock);
-						(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+						_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 					}
 				} catch (const std::exception&) {
 					ibrcommon::MutexLock l(_write_lock);
-					(*_stream) << API_STATUS_BAD_REQUEST << " ERROR" << std::endl;
+					_stream << API_STATUS_BAD_REQUEST << " ERROR" << std::endl;
 				}
 			}
 		}
 
-		void ExtendedApiConnection::eventNodeAvailable(const dtn::core::Node &node)
+//		void ExtendedApiConnection::eventNodeAvailable(const dtn::core::Node &node)
+//		{
+//			ibrcommon::MutexLock l(_write_lock);
+//			_stream << API_STATUS_NOTIFY_NEIGHBOR << " NOTIFY NODE AVAILABLE " << node.getEID().getString() << std::endl;
+//		}
+
+//		void ExtendedApiConnection::eventNodeUnavailable(const dtn::core::Node &node)
+//		{
+//			ibrcommon::MutexLock l(_write_lock);
+//			_stream << API_STATUS_NOTIFY_NEIGHBOR << " NOTIFY NODE UNAVAILABLE " << node.getEID().getString() << std::endl;
+//		}
+
+		ExtendedApiHandler::Sender::Sender(ExtendedApiHandler &conn)
+		 : _handler(conn)
 		{
-			ibrcommon::MutexLock l(_write_lock);
-			(*_stream) << API_STATUS_NOTIFY_NEIGHBOR << " NOTIFY NODE AVAILABLE " << node.getEID().getString() << std::endl;
 		}
 
-		void ExtendedApiConnection::eventNodeUnavailable(const dtn::core::Node &node)
-		{
-			ibrcommon::MutexLock l(_write_lock);
-			(*_stream) << API_STATUS_NOTIFY_NEIGHBOR << " NOTIFY NODE UNAVAILABLE " << node.getEID().getString() << std::endl;
-		}
-
-		ExtendedApiConnection::Sender::Sender(ExtendedApiConnection &conn)
-		 : _conn(conn)
-		{
-		}
-
-		ExtendedApiConnection::Sender::~Sender()
+		ExtendedApiHandler::Sender::~Sender()
 		{
 			ibrcommon::JoinableThread::join();
 		}
 
-		bool ExtendedApiConnection::Sender::__cancellation()
+		bool ExtendedApiHandler::Sender::__cancellation()
 		{
 			// cancel the main thread in here
-			//_conn.getRegistration().getQueue().abort();
+//			_handler.getRegistration().abort();
 
 			return true;
 		}
 
-		void ExtendedApiConnection::Sender::finally()
+		void ExtendedApiHandler::Sender::finally()
 		{
-			//_conn._server.freeRegistration(_conn.getRegistration());
+			_handler.getRegistration().abort();
+//			_handler._server.freeRegistration(_handler.getRegistration());
 		}
 
-		void ExtendedApiConnection::Sender::run()
+		void ExtendedApiHandler::Sender::run()
 		{
-			ibrcommon::Queue<dtn::data::BundleID> &queue = _conn.getRegistration().getQueue();
+			Registration &reg = _handler.getRegistration();
+			try{
+				while(_handler.good()){
+					try{
+						dtn::data::MetaBundle id = reg.receiveMetaBundle();
+						_handler._bundle_queue.push(id);
+						ibrcommon::MutexLock l(_handler._write_lock);
+						_handler._stream << API_STATUS_NOTIFY_BUNDLE << " NOTIFY BUNDLE ";
+						sayBundleID(_handler._stream, id);
+						_handler._stream << std::endl;
 
-			try {
-				while (_conn._stream->good())
-				{
-					dtn::data::BundleID id = queue.getnpop(true);
-
-					// move the bundle to the local bundle queue
-					_conn._bundle_queue.push(id);
-
-					// notify the client about the new bundle
-					{
-						ibrcommon::MutexLock l(_conn._write_lock);
-						(*_conn._stream) << API_STATUS_NOTIFY_BUNDLE << " NOTIFY BUNDLE ";
-						sayBundleID(*_conn._stream, id);
-						(*_conn._stream) << std::endl;
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+						reg.wait_for_bundle();
 					}
 
-					// idle a little bit
 					yield();
 				}
 			} catch (const ibrcommon::QueueUnblockedException &ex) {
-				IBRCOMMON_LOGGER_DEBUG(40) << "ClientHandler::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(40) << "ExtendedApiHandler::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
 				return;
 			} catch (const ibrcommon::IOException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "API: IOException says " << ex.what() << IBRCOMMON_LOGGER_ENDL;
@@ -457,14 +452,15 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
-//			try {
-//				_conn.stop();
-//			} catch (const ibrcommon::ThreadException &ex) {
-//				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): ThreadException (" << ex.what() << ") on termination" << IBRCOMMON_LOGGER_ENDL;
-//			}
+			try {
+				//FIXME
+//				_handler.stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): ThreadException (" << ex.what() << ") on termination" << IBRCOMMON_LOGGER_ENDL;
+			}
 		}
 
-		void ExtendedApiConnection::processIncomingBundle(dtn::data::Bundle &bundle)
+		void ExtendedApiHandler::processIncomingBundle(dtn::data::Bundle &bundle)
 		{
 			// create a new sequence number
 			bundle.relabel();
@@ -479,7 +475,7 @@ namespace dtn
 			if (bundle._reportto == clienteid) bundle._reportto = _endpoint;
 			if (bundle._custodian == clienteid) bundle._custodian = _endpoint;
 
-			// if the timestamp is not set, add a ageblock
+			// if the timestamp is not set, add an ageblock
 			if (bundle._timestamp == 0)
 			{
 				// check for ageblock
@@ -537,7 +533,7 @@ namespace dtn
 			dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + getRegistration().getHandle(), bundle, true);
 		}
 
-		void ExtendedApiConnection::sayBundleID(ostream &stream, const dtn::data::BundleID &id)
+		void ExtendedApiHandler::sayBundleID(ostream &stream, const dtn::data::BundleID &id)
 		{
 			stream << id.timestamp << " " << id.sequencenumber << " ";
 
@@ -549,7 +545,7 @@ namespace dtn
 			stream << id.source.getString();
 		}
 
-		dtn::data::BundleID ExtendedApiConnection::readBundleID(const std::vector<std::string> &data, const size_t start)
+		dtn::data::BundleID ExtendedApiHandler::readBundleID(const std::vector<std::string> &data, const size_t start)
 		{
 			// load bundle id
 			std::stringstream ss;
@@ -557,6 +553,11 @@ namespace dtn
 			size_t sequencenumber = 0;
 			bool fragment = false;
 			size_t offset = 0;
+
+			if ((data.size() - start) < 3)
+			{
+				throw ibrcommon::Exception("not enough parameters");
+			}
 
 			// read timestamp
 			 ss.clear(); ss.str(data[start]); ss >> timestamp;
