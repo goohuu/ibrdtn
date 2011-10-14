@@ -9,10 +9,12 @@
 #include "Configuration.h"
 #include "api/ClientHandler.h"
 #include "api/BinaryStreamClient.h"
+#include "api/ManagementConnection.h"
+#include "api/EventConnection.h"
+#include "api/ExtendedApiHandler.h"
 #include "core/BundleCore.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/utils/Utils.h>
-#include "ExtendedApiHandler.h"
 #include <ibrcommon/net/LinkManager.h>
 
 namespace dtn
@@ -68,8 +70,13 @@ namespace dtn
 				{
 					_handler->setup();
 					_handler->run();
+					_handler->finally();
 					delete _handler;
 					_handler = NULL;
+
+					// end this stream, return to the previous stage
+					(*_stream) << ClientHandler::API_STATUS_OK << " SWITCHED TO LEVEL 0" << std::endl;
+
 					continue;
 				}
 
@@ -89,6 +96,18 @@ namespace dtn
 						{
 							// switch to binary protocol (old style api)
 							_handler = new BinaryStreamClient(*this, *_stream);
+							continue;
+						}
+						else if (cmd[1] == "management")
+						{
+							// switch to the management protocol
+							_handler = new ManagementConnection(*this, *_stream);
+							continue;
+						}
+						else if (cmd[1] == "event")
+						{
+							// switch to the management protocol
+							_handler = new EventConnection(*this, *_stream);
 							continue;
 						}
 						else if (cmd[1] == "extended")
@@ -420,170 +439,6 @@ namespace dtn
 							(*_stream) << b.toString() << std::endl;
 						}
 					}
-
-//
-//
-//					if (cmd[1] == "get")
-//					{
-//						// transfer bundle data
-//						ibrcommon::MutexLock l(_write_lock);
-//
-//						if (cmd.size() == 2)
-//						{
-//							(*_stream) << API_STATUS_OK << " BUNDLE GET "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
-//							PlainSerializer(*_stream) << _bundle_reg;
-//						}
-//						else if (cmd[2] == "binary")
-//						{
-//							(*_stream) << API_STATUS_OK << " BUNDLE GET BINARY "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
-//							dtn::data::DefaultSerializer(*_stream) << _bundle_reg; (*_stream) << std::flush;
-//						}
-//						else if (cmd[2] == "plain")
-//						{
-//							(*_stream) << API_STATUS_OK << " BUNDLE GET PLAIN "; sayBundleID(*_stream, _bundle_reg); (*_stream) << std::endl;
-//							PlainSerializer(*_stream) << _bundle_reg;
-//						}
-//						else if (cmd[2] == "xml")
-//						{
-//							(*_stream) << API_STATUS_NOT_IMPLEMENTED << " FORMAT NOT IMPLEMENTED" << std::endl;
-//						}
-//						else
-//						{
-//							(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN FORMAT" << std::endl;
-//						}
-//					}
-//					else if (cmd[1] == "put")
-//					{
-//						// lock the stream during reception of bundle data
-//						ibrcommon::MutexLock l(_write_lock);
-//
-//						if (cmd.size() < 2)
-//						{
-//							(*_stream) << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
-//						}
-//						else if (cmd[2] == "plain")
-//						{
-//							(*_stream) << API_STATUS_CONTINUE << " PUT BUNDLE PLAIN" << std::endl;
-//
-//							try {
-//								PlainDeserializer(*_stream) >> _bundle_reg;
-//								(*_stream) << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
-//							} catch (const std::exception&) {
-//								(*_stream) << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
-//
-//							}
-//						}
-//						else if (cmd[2] == "binary")
-//						{
-//							(*_stream) << API_STATUS_CONTINUE << " PUT BUNDLE BINARY" << std::endl;
-//
-//							try {
-//								dtn::data::DefaultDeserializer(*_stream) >> _bundle_reg;
-//								(*_stream) << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
-//							} catch (const std::exception&) {
-//								(*_stream) << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
-//							}
-//						}
-//						else
-//						{
-//							(*_stream) << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
-//						}
-//					}
-//					else if (cmd[1] == "load")
-//					{
-//						if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
-//
-//						dtn::data::BundleID id;
-//
-//						if (cmd[2] == "queue")
-//						{
-//							id = _bundle_queue.getnpop();
-//						}
-//						else
-//						{
-//							// construct bundle id
-//							id = readBundleID(cmd, 2);
-//						}
-//
-//						// load the bundle
-//						try {
-//							_bundle_reg = dtn::core::BundleCore::getInstance().getStorage().get(id);
-//
-//							ibrcommon::MutexLock l(_write_lock);
-//							(*_stream) << API_STATUS_OK << " BUNDLE LOADED "; sayBundleID(*_stream, id); (*_stream) << std::endl;
-//						} catch (const ibrcommon::Exception&) {
-//							ibrcommon::MutexLock l(_write_lock);
-//							(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
-//						}
-//					}
-//					else if (cmd[1] == "clear")
-//					{
-//						_bundle_reg = dtn::data::Bundle();
-//
-//						ibrcommon::MutexLock l(_write_lock);
-//						(*_stream) << API_STATUS_OK << " BUNDLE CLEARED" << std::endl;
-//					}
-//					else if (cmd[1] == "free")
-//					{
-//						try {
-//							dtn::core::BundleCore::getInstance().getStorage().remove(_bundle_reg);
-//							_bundle_reg = dtn::data::Bundle();
-//							ibrcommon::MutexLock l(_write_lock);
-//							(*_stream) << API_STATUS_OK << " BUNDLE FREE SUCCESSFUL" << std::endl;
-//						} catch (const ibrcommon::Exception&) {
-//							ibrcommon::MutexLock l(_write_lock);
-//							(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
-//						}
-//					}
-//					else if (cmd[1] == "delivered")
-//					{
-//						if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
-//
-//						try {
-//							// construct bundle id
-//							dtn::data::BundleID id = readBundleID(cmd, 2);
-//							dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
-//
-//							// raise bundle event
-//							dtn::core::BundleEvent::raise(meta, BUNDLE_DELIVERED);
-//
-//							// delete it if it was a singleton
-//							if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
-//							{
-//								dtn::core::BundleCore::getInstance().getStorage().remove(id);
-//							}
-//
-//							ibrcommon::MutexLock l(_write_lock);
-//							(*_stream) << API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;
-//						} catch (const ibrcommon::Exception&) {
-//							ibrcommon::MutexLock l(_write_lock);
-//							(*_stream) << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
-//						}
-//					}
-//					else if (cmd[1] == "store")
-//					{
-//						// store the bundle in the storage
-//						try {
-//							dtn::core::BundleCore::getInstance().getStorage().store(_bundle_reg);
-//							ibrcommon::MutexLock l(_write_lock);
-//							(*_stream) << API_STATUS_OK << " BUNDLE STORE SUCCESSFUL" << std::endl;
-//						} catch (const ibrcommon::Exception&) {
-//							ibrcommon::MutexLock l(_write_lock);
-//							(*_stream) << API_STATUS_INTERNAL_ERROR << " BUNDLE STORE FAILED" << std::endl;
-//						}
-//					}
-//					else if (cmd[1] == "send")
-//					{
-//						processIncomingBundle(_bundle_reg);
-//
-//						ibrcommon::MutexLock l(_write_lock);
-//						(*_stream) << API_STATUS_OK << " BUNDLE SENT" << std::endl;
-//					}
-//					else
-//					{
-//						ibrcommon::MutexLock l(_write_lock);
-//						(*_stream) << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
-//					}
 				}
 				else
 				{

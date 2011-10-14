@@ -13,7 +13,11 @@ api_SOURCES = \
 		Registration.h \
 		Registration.cpp \
 		BinaryStreamClient.h \
-		BinaryStreamClient.cpp
+		BinaryStreamClient.cpp \
+		ManagementConnection.h \
+		ManagementConnection.cpp \
+		EventConnection.h \
+		EventConnection.cpp
 		
 noinst_LTLIBRARIES = libapi.la
 libapi_la_SOURCES= $(api_SOURCES)
