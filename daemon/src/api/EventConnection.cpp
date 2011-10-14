@@ -210,7 +210,7 @@ namespace dtn
 		void EventConnection::finally()
 		{
 			// send xml closer
-			_stream << "</stream>" << std::endl;
+			_stream << "</stream:stream>" << std::endl;
 
 			// unbind to events
 			unbindEvent(dtn::core::NodeEvent::className);
