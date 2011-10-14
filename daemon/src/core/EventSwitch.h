@@ -14,12 +14,10 @@
 #include <ibrcommon/Exceptions.h>
 #include <ibrcommon/thread/Mutex.h>
 #include <ibrcommon/thread/Conditional.h>
-#include <ibrcommon/thread/Queue.h>
 #include "core/EventDebugger.h"
 
 #include <list>
 #include <map>
-#include <queue>
 
 namespace dtn
 {
@@ -47,8 +45,7 @@ namespace dtn
 			virtual ~EventSwitch();
 
 			ibrcommon::Mutex _receiverlock;
-			std::map<std::string,std::list<EventReceiver*> > _list;
-			//ibrcommon::Queue<dtn::core::Event*> _queue;
+			std::map<std::string, std::list<EventReceiver*> > _list;
 
 			bool _running;
 
@@ -87,9 +84,18 @@ namespace dtn
 			};
 
 			ibrcommon::Conditional _queue_cond;
-			std::queue<Task*> _queue;
+			std::list<Task*> _queue;
+
+			ibrcommon::Conditional _active_cond;
+			size_t _active_worker;
+			bool _pause;
 
 			void process();
+
+			void pause();
+			void unpause();
+
+			void unregister(std::string eventName, EventReceiver *receiver);
 
 		protected:
 			virtual void componentUp();
