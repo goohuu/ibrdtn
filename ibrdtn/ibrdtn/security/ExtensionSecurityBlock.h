@@ -62,7 +62,7 @@ namespace dtn
 				replaced, false otherwise. when false the encrypted block will remain as
 				it was
 				*/
-				void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::security::ExtensionSecurityBlock &block);
+				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, const dtn::security::ExtensionSecurityBlock &block);
 
 				/**
 				Decrypts all blocks in the bundle which have correlator as their
@@ -76,7 +76,7 @@ namespace dtn
 				block will remain encrypted inside the bundle. the other blocks will 
 				decrypted, so recovering the failed block may be impossible.
 				*/
-				void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, u_int64_t correlator = 0);
+				static void decrypt(dtn::data::Bundle& bundle, const SecurityKey &key, u_int64_t correlator = 0);
 
 			protected:
 				/**
