@@ -42,7 +42,8 @@ namespace dtn
 				if (node.getAction() == dtn::core::NODE_INFO_UPDATED) return;
 
 				// start with the event tag
-				_stream << "<event name=\"" << node.getName() << "\" action=\"";
+				_stream << "Event: " << node.getName() << std::endl;
+				_stream << "Action: ";
 
 				switch (node.getAction())
 				{
@@ -56,20 +57,21 @@ namespace dtn
 					break;
 				}
 
-				_stream << "\">";
+				_stream << std::endl;
 
 				// write the node eid
-				_stream << "<eid>" << node.getNode().getEID().getString() << "</eid>";
+				_stream << "EID: " << node.getNode().getEID().getString() << std::endl;
 
 				// close the event
-				_stream << "</event>" << std::flush;
+				_stream << std::endl;
 			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::core::GlobalEvent &global = dynamic_cast<const dtn::core::GlobalEvent&>(*evt);
 
 				// start with the event tag
-				_stream << "<event name=\"" << global.getName() << "\" action=\"";
+				_stream << "Event: " << global.getName() << std::endl;
+				_stream << "Action: ";
 
 				switch (global.getAction())
 				{
@@ -94,9 +96,10 @@ namespace dtn
 				default:
 					break;
 				}
+				_stream << std::endl;
 
 				// close the event
-				_stream << "\" />" << std::flush;
+				_stream << std::endl;
 			} catch (const std::bad_cast&) { };
 
 			try {
@@ -118,7 +121,8 @@ namespace dtn
 				const dtn::net::ConnectionEvent &connection = dynamic_cast<const dtn::net::ConnectionEvent&>(*evt);
 
 				// start with the event tag
-				_stream << "<event name=\"" << connection.getName() << "\" action=\"";
+				_stream << "Event: " << connection.getName() << std::endl;
+				_stream << "Action: ";
 
 				switch (connection.state)
 				{
@@ -137,40 +141,42 @@ namespace dtn
 				default:
 					break;
 				}
-
-				_stream << "\">";
+				_stream << std::endl;
 
 				// write the peer eid
-				_stream << "<peer>" << connection.peer.getString() << "</peer>";
+				_stream << "Peer: " << connection.peer.getString() << std::endl;
 
 				// close the event
-				_stream << "</event>" << std::flush;
+				_stream << std::endl;
 			} catch (const std::bad_cast&) { };
 
 			try {
 				const dtn::routing::QueueBundleEvent &queued = dynamic_cast<const dtn::routing::QueueBundleEvent&>(*evt);
 
 				// start with the event tag
-				_stream << "<event name=\"" << queued.getName() << "\">";
+				_stream << "Event: " << queued.getName() << std::endl;
 
 				// write the bundle data
-				_stream << "<source>" << queued.bundle.source.getString() << "</source>";
-				_stream << "<timestamp>" << queued.bundle.timestamp << "</timestamp>";
-				_stream << "<sequencenumber>" << queued.bundle.sequencenumber << "</sequencenumber>";
-				_stream << "<lifetime>" << queued.bundle.lifetime << "</lifetime>";
-				_stream << "<procflags>" << queued.bundle.procflags << "</procflags>";
+				_stream << "Source: " << queued.bundle.source.getString() << std::endl;
+				_stream << "Timestamp: " << queued.bundle.timestamp << std::endl;
+				_stream << "Sequencenumber: " << queued.bundle.sequencenumber << std::endl;
+				_stream << "Lifetime: " << queued.bundle.lifetime << std::endl;
+				_stream << "Procflags: " << queued.bundle.procflags << std::endl;
 
 				// write the destination eid
-				_stream << "<destination>" << queued.bundle.destination.getString() << "</destination>";
+				_stream << "Destination: " << queued.bundle.destination.getString() << std::endl;
 
 				// close the event
-				_stream << "</event>" << std::flush;
+				_stream << std::endl;
 			} catch (const std::bad_cast&) { };
 		}
 
 		void EventConnection::run()
 		{
 			std::string buffer;
+
+			// announce protocol change
+			_stream << ClientHandler::API_STATUS_OK << " SWITCHED TO EVENT" << std::endl;
 
 			// run as long the stream is ok
 			while (_stream.good())
@@ -202,16 +208,10 @@ namespace dtn
 			bindEvent(dtn::net::TransferCompletedEvent::className);
 			bindEvent(dtn::net::ConnectionEvent::className);
 			bindEvent(dtn::routing::QueueBundleEvent::className);
-
-			// send xml header
-			_stream << "<?xml version='1.0' encoding='UTF-8' ?>" << "<stream:stream xmlns='ibrdtn:api:event'>" << std::flush;
 		}
 
 		void EventConnection::finally()
 		{
-			// send xml closer
-			_stream << "</stream:stream>" << std::endl;
-
 			// unbind to events
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::GlobalEvent::className);
