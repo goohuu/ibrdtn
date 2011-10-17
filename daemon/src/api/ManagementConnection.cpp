@@ -114,7 +114,7 @@ namespace dtn
 					if (cmd[1] == "address")
 					{
 						try {
-							ibrcommon::DefaultLinkManager &lm = dynamic_cast<ibrcommon::DefaultLinkManager&>(ibrcommon::LinkManager::getInstance());
+							ibrcommon::LinkManager &lm = ibrcommon::LinkManager::getInstance();
 
 							ibrcommon::vaddress::Family f = ibrcommon::vaddress::VADDRESS_UNSPEC;
 
