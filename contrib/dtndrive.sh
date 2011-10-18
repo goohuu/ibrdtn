@@ -28,7 +28,7 @@ while [ 1 == 1 ]; do
 			. ${DESC}
 
 			# announce node to the dtnd
-			echo "connection ${EID} file add file://${DTNPATH}/${STORAGE}" | netcat localhost 4550 > /dev/null
+			echo -e "protocol management\nconnection ${EID} file add file://${DTNPATH}/${STORAGE}" | netcat localhost 4550 > /dev/null
 		fi
 	done
 
@@ -42,7 +42,7 @@ while [ 1 == 1 ]; do
 			rm ${L}
 
 			# announce node to the dtnd
-			echo "connection ${EID} file del file://${DTNPATH}/${STORAGE}" | netcat localhost 4550  > /dev/null
+			echo -e "protocol management\nconnection ${EID} file del file://${DTNPATH}/${STORAGE}" | netcat localhost 4550  > /dev/null
 		fi
 	done
 done

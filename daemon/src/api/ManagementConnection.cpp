@@ -98,6 +98,7 @@ namespace dtn
 					{
 						const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getNeighbors();
 
+						_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
 						for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
 						{
 							_stream << (*iter).getEID().getString() << std::endl;
