@@ -87,6 +87,7 @@ namespace dtn
 			_sender.start();
 
 			std::string buffer;
+			_stream << ClientHandler::API_STATUS_OK << " SWITCHED TO EXTENDED" << std::endl;
 
 			while (_stream.good())
 			{
@@ -113,19 +114,19 @@ namespace dtn
 							// error checking
 							if (_endpoint == dtn::data::EID())
 							{
-								_stream << API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
+								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID ENDPOINT" << std::endl;
 								_endpoint = dtn::core::BundleCore::local;
 							}
 							else
 							{
 								_registration.subscribe(_endpoint);
-								_stream << API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << ClientHandler::API_STATUS_ACCEPTED << " OK" << std::endl;
 							}
 						}
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 						}
 					}
 					else if (cmd[0] == "registration")
@@ -142,12 +143,12 @@ namespace dtn
 							// error checking
 							if (endpoint == dtn::data::EID())
 							{
-								_stream << API_STATUS_NOT_ACCEPTABLE << " INVALID EID" << std::endl;
+								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID EID" << std::endl;
 							}
 							else
 							{
 								_registration.subscribe(endpoint);
-								_stream << API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << ClientHandler::API_STATUS_ACCEPTED << " OK" << std::endl;
 							}
 						}
 						else if (cmd[1] == "del")
@@ -160,12 +161,12 @@ namespace dtn
 							// error checking
 							if (endpoint == dtn::data::EID())
 							{
-								_stream << API_STATUS_NOT_ACCEPTABLE << " INVALID EID" << std::endl;
+								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " INVALID EID" << std::endl;
 							}
 							else
 							{
 								_registration.unsubscribe(endpoint);
-								_stream << API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << ClientHandler::API_STATUS_ACCEPTED << " OK" << std::endl;
 							}
 						}
 						else if (cmd[1] == "list")
@@ -173,7 +174,7 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							const std::set<dtn::data::EID> &list = _registration.getSubscriptions();
 
-							_stream << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
+							_stream << ClientHandler::API_STATUS_OK << " REGISTRATION LIST" << std::endl;
 							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
 							{
 								_stream << (*iter).getString() << std::endl;
@@ -183,7 +184,7 @@ namespace dtn
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 						}
 					}
 					else if (cmd[0] == "neighbor")
@@ -195,7 +196,7 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							const std::set<dtn::core::Node> nlist = dtn::core::BundleCore::getInstance().getNeighbors();
 
-							_stream << API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
+							_stream << ClientHandler::API_STATUS_OK << " NEIGHBOR LIST" << std::endl;
 							for (std::set<dtn::core::Node>::const_iterator iter = nlist.begin(); iter != nlist.end(); iter++)
 							{
 								_stream << (*iter).getEID().getString() << std::endl;
@@ -205,7 +206,7 @@ namespace dtn
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 						}
 					}
 					else if (cmd[0] == "bundle")
@@ -219,26 +220,26 @@ namespace dtn
 
 							if (cmd.size() == 2)
 							{
-								_stream << API_STATUS_OK << " BUNDLE GET "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " BUNDLE GET "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
 								PlainSerializer(_stream) << _bundle_reg;
 							}
 							else if (cmd[2] == "binary")
 							{
-								_stream << API_STATUS_OK << " BUNDLE GET BINARY "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " BUNDLE GET BINARY "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
 								dtn::data::DefaultSerializer(_stream) << _bundle_reg; _stream << std::flush;
 							}
 							else if (cmd[2] == "plain")
 							{
-								_stream << API_STATUS_OK << " BUNDLE GET PLAIN "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " BUNDLE GET PLAIN "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
 								PlainSerializer(_stream) << _bundle_reg;
 							}
 							else if (cmd[2] == "xml")
 							{
-								_stream << API_STATUS_NOT_IMPLEMENTED << " FORMAT NOT IMPLEMENTED" << std::endl;
+								_stream << ClientHandler::API_STATUS_NOT_IMPLEMENTED << " FORMAT NOT IMPLEMENTED" << std::endl;
 							}
 							else
 							{
-								_stream << API_STATUS_BAD_REQUEST << " UNKNOWN FORMAT" << std::endl;
+								_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN FORMAT" << std::endl;
 							}
 						}
 						else if (cmd[1] == "put")
@@ -246,36 +247,36 @@ namespace dtn
 							// lock the stream during reception of bundle data
 							ibrcommon::MutexLock l(_write_lock);
 
-							if (cmd.size() < 2)
+							if (cmd.size() < 3)
 							{
-								_stream << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
+								_stream << ClientHandler::API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
 							}
 							else if (cmd[2] == "plain")
 							{
-								_stream << API_STATUS_CONTINUE << " PUT BUNDLE PLAIN" << std::endl;
+								_stream << ClientHandler::API_STATUS_CONTINUE << " PUT BUNDLE PLAIN" << std::endl;
 
 								try {
 									PlainDeserializer(_stream) >> _bundle_reg;
-									_stream << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
+									_stream << ClientHandler::API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
 								} catch (const std::exception&) {
-									_stream << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
+									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
 
 								}
 							}
 							else if (cmd[2] == "binary")
 							{
-								_stream << API_STATUS_CONTINUE << " PUT BUNDLE BINARY" << std::endl;
+								_stream << ClientHandler::API_STATUS_CONTINUE << " PUT BUNDLE BINARY" << std::endl;
 
 								try {
 									dtn::data::DefaultDeserializer(_stream) >> _bundle_reg;
-									_stream << API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
+									_stream << ClientHandler::API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
 								} catch (const std::exception&) {
-									_stream << API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
+									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
 								}
 							}
 							else
 							{
-								_stream << API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
+								_stream << ClientHandler::API_STATUS_BAD_REQUEST << " PLEASE DEFINE THE FORMAT" << std::endl;
 							}
 						}
 						else if (cmd[1] == "load")
@@ -299,10 +300,10 @@ namespace dtn
 								_bundle_reg = dtn::core::BundleCore::getInstance().getStorage().get(id);
 
 								ibrcommon::MutexLock l(_write_lock);
-								_stream << API_STATUS_OK << " BUNDLE LOADED "; sayBundleID(_stream, id); _stream << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " BUNDLE LOADED "; sayBundleID(_stream, id); _stream << std::endl;
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
-								_stream << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
+								_stream << ClientHandler::API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
 							}
 						}
 						else if (cmd[1] == "clear")
@@ -310,7 +311,7 @@ namespace dtn
 							_bundle_reg = dtn::data::Bundle();
 
 							ibrcommon::MutexLock l(_write_lock);
-							_stream << API_STATUS_OK << " BUNDLE CLEARED" << std::endl;
+							_stream << ClientHandler::API_STATUS_OK << " BUNDLE CLEARED" << std::endl;
 						}
 						else if (cmd[1] == "free")
 						{
@@ -318,10 +319,10 @@ namespace dtn
 								dtn::core::BundleCore::getInstance().getStorage().remove(_bundle_reg);
 								_bundle_reg = dtn::data::Bundle();
 								ibrcommon::MutexLock l(_write_lock);
-								_stream << API_STATUS_OK << " BUNDLE FREE SUCCESSFUL" << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " BUNDLE FREE SUCCESSFUL" << std::endl;
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
-								_stream << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
+								_stream << ClientHandler::API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
 							}
 						}
 						else if (cmd[1] == "delivered")
@@ -343,10 +344,10 @@ namespace dtn
 								}
 
 								ibrcommon::MutexLock l(_write_lock);
-								_stream << API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
-								_stream << API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
+								_stream << ClientHandler::API_STATUS_NOT_FOUND << " BUNDLE NOT FOUND" << std::endl;
 							}
 						}
 						else if (cmd[1] == "store")
@@ -355,10 +356,10 @@ namespace dtn
 							try {
 								dtn::core::BundleCore::getInstance().getStorage().store(_bundle_reg);
 								ibrcommon::MutexLock l(_write_lock);
-								_stream << API_STATUS_OK << " BUNDLE STORE SUCCESSFUL" << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " BUNDLE STORE SUCCESSFUL" << std::endl;
 							} catch (const ibrcommon::Exception&) {
 								ibrcommon::MutexLock l(_write_lock);
-								_stream << API_STATUS_INTERNAL_ERROR << " BUNDLE STORE FAILED" << std::endl;
+								_stream << ClientHandler::API_STATUS_INTERNAL_ERROR << " BUNDLE STORE FAILED" << std::endl;
 							}
 						}
 						else if (cmd[1] == "send")
@@ -366,22 +367,22 @@ namespace dtn
 							processIncomingBundle(_bundle_reg);
 
 							ibrcommon::MutexLock l(_write_lock);
-							_stream << API_STATUS_OK << " BUNDLE SENT" << std::endl;
+							_stream << ClientHandler::API_STATUS_OK << " BUNDLE SENT" << std::endl;
 						}
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 						}
 					}
 					else
 					{
 						ibrcommon::MutexLock l(_write_lock);
-						_stream << API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+						_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
 					}
 				} catch (const std::exception&) {
 					ibrcommon::MutexLock l(_write_lock);
-					_stream << API_STATUS_BAD_REQUEST << " ERROR" << std::endl;
+					_stream << ClientHandler::API_STATUS_BAD_REQUEST << " ERROR" << std::endl;
 				}
 			}
 		}
