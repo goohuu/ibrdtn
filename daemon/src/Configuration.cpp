@@ -354,6 +354,9 @@ namespace dtn
 			_qot_tick = conf.read<int>("time_qot_tick", 0);
 			_sigma = conf.read<float>("time_sigma", 1.001);
 			_sync_level = conf.read<float>("time_sync_level", 0.15);
+
+			// enable the clock modify feature
+			dtn::utils::Clock::modify_clock = (conf.read<std::string>("time_set_clock", "no") == "yes");
 		}
 
 		bool Configuration::Debug::quiet() const

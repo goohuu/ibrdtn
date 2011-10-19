@@ -35,13 +35,10 @@ namespace dtn
 
 		void DTNTime::set()
 		{
-			_seconds = dtn::utils::Clock::getTime();
 			timeval tv;
-
-			if ( gettimeofday(&tv, NULL) )
-			{
-				_nanoseconds = SDNV(tv.tv_usec * 1000);
-			}
+			dtn::utils::Clock::gettimeofday(&tv);
+			_seconds = tv.tv_sec;
+			_nanoseconds = SDNV(tv.tv_usec * 1000);
 		}
 
 		size_t DTNTime::getLength() const

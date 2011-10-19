@@ -9,6 +9,8 @@
 #define CLOCK_H_
 
 #include <sys/types.h>
+#include <sys/time.h>
+
 #include "ibrdtn/data/Bundle.h"
 
 namespace dtn
@@ -18,9 +20,6 @@ namespace dtn
 		class Clock
 		{
 		public:
-			Clock();
-			virtual ~Clock();
-
 			static size_t getTime();
 
 			static bool isExpired(const dtn::data::Bundle &b);
@@ -47,6 +46,24 @@ namespace dtn
 			 */
 			static size_t getExpireTime(size_t lifetime);
 
+			/**
+			 * Tells the internal clock the offset to the common network time.
+			 */
+			static void settimeofday(struct timeval *tv);
+
+			/**
+			 * Get the time of the day like ::gettimeofday(), but
+			 * correct the value by the known clock offset.
+			 * @param tv
+			 */
+			static void gettimeofday(struct timeval *tv);
+
+			/**
+			 * set the local offset of the clock
+			 * @param tv
+			 */
+			static void setOffset(struct timeval &tv);
+
 			static int timezone;
 
 			static u_int32_t TIMEVAL_CONVERSION;
@@ -64,10 +81,21 @@ namespace dtn
 			 */
 			static bool badclock;
 
+			/**
+			 * if set to true, the function settimeofday() and setOffset() will modify the clock of the host
+			 * instead of storing the local offset.
+			 */
+			static bool modify_clock;
+
 		private:
+			Clock();
+			virtual ~Clock();
+
 			static bool __isExpired(size_t timestamp, size_t lifetime = 0);
 			static size_t __getExpireTime(size_t timestamp, size_t lifetime);
 
+			static struct timeval _offset;
+			static bool _offset_init;
 		};
 	}
 }

@@ -70,8 +70,7 @@ namespace dtn
 			timerclear(&origin_timestamp);
 			timerclear(&peer_timestamp);
 
-			struct timezone tz;
-			gettimeofday(&origin_timestamp, &tz);
+			dtn::utils::Clock::gettimeofday(&origin_timestamp);
 		}
 
 		DTNTPWorker::TimeSyncMessage::~TimeSyncMessage()
@@ -361,7 +360,7 @@ namespace dtn
 //			}
 //		}
 
-		void DTNTPWorker::sync(const TimeSyncMessage &msg, struct timeval &tv)
+		void DTNTPWorker::sync(const TimeSyncMessage &msg, struct timeval &offset)
 		{
 			// do not sync if we are a reference
 			if (_conf.hasReference()) return;
@@ -375,7 +374,7 @@ namespace dtn
 			dtn::utils::Clock::quality = msg.peer_quality * _epsilon;
 
 			// set the local clock to the new timestamp
-			::settimeofday(&tv, NULL);
+			dtn::utils::Clock::setOffset(offset);
 
 			IBRCOMMON_LOGGER(info) << "time adjusted to " << msg.peer_timestamp.tv_sec << "." << msg.peer_timestamp.tv_usec << "; quality: " << dtn::utils::Clock::quality << IBRCOMMON_LOGGER_ENDL;
 
@@ -432,8 +431,7 @@ namespace dtn
 							// fill in the own values
 							msg.type = TimeSyncMessage::TIMESYNC_RESPONSE;
 							msg.peer_quality = dtn::utils::Clock::quality;
-							struct timezone tz;
-							gettimeofday(&msg.peer_timestamp, &tz);
+							dtn::utils::Clock::gettimeofday(&msg.peer_timestamp);
 
 							// write the response
 							(*stream) << msg;
@@ -472,8 +470,7 @@ namespace dtn
 						TimeSyncMessage msg; (*stream) >> msg;
 
 						timeval tv_local, rtt;
-						struct timezone tz;
-						gettimeofday(&tv_local, &tz);
+						dtn::utils::Clock::gettimeofday(&tv_local);
 
 						// get the RTT
 						timersub(&tv_local, &msg.origin_timestamp, &rtt);
@@ -500,7 +497,7 @@ namespace dtn
 						IBRCOMMON_LOGGER(info) << "DT-NTP bundle received; rtt = " << rtt.tv_sec << "s " << rtt.tv_usec << "us; prop. delay = " << prop_delay.tv_sec << "s " << prop_delay.tv_usec << "us; clock of " << b._source.getNode().getString() << " has a offset of " << offset.tv_sec << "s " << offset.tv_usec << "us" << IBRCOMMON_LOGGER_ENDL;
 
 						// sync to this time message
-						sync(msg, peer_timestamp);
+						sync(msg, offset);
 
 						// remove the blacklist entry
 						ibrcommon::MutexLock l(_blacklist_lock);

@@ -7,7 +7,8 @@
 
 #include "ibrdtn/utils/Clock.h"
 #include "ibrdtn/data/AgeBlock.h"
-#include <sys/time.h>
+
+#include <ibrcommon/Logger.h>
 
 namespace dtn
 {
@@ -16,6 +17,11 @@ namespace dtn
 		int Clock::timezone = 0;
 		float Clock::quality = 0;
 		bool Clock::badclock = false;
+
+		struct timeval Clock::_offset;
+		bool Clock::_offset_init = false;
+
+		bool Clock::modify_clock = false;
 
 		/**
 		 * The number of seconds between 1/1/1970 and 1/1/2000.
@@ -100,7 +106,7 @@ namespace dtn
 		size_t Clock::getTime()
 		{
 			struct timeval now;
-			::gettimeofday(&now, 0);
+			Clock::gettimeofday(&now);
 
 			// timezone
 			int offset = Clock::timezone * 3600;
@@ -112,6 +118,73 @@ namespace dtn
 			}
 
 			return (now.tv_sec - TIMEVAL_CONVERSION) + offset;
+		}
+
+		void Clock::setOffset(struct timeval &tv)
+		{
+			if (!modify_clock)
+			{
+				if (!Clock::_offset_init)
+				{
+					timerclear(&Clock::_offset);
+					Clock::_offset_init = true;
+				}
+				timeradd(&Clock::_offset, &tv, &Clock::_offset);
+				IBRCOMMON_LOGGER(info) << "[Clock] new local offset: " << _offset.tv_sec << " seconds and " << _offset.tv_usec << " microseconds" << IBRCOMMON_LOGGER_ENDL;
+			}
+			else
+			{
+				struct timezone tz;
+				struct timeval now;
+				::gettimeofday(&now, &tz);
+
+				// adjust by the offset
+				timersub(&now, &tv, &now);
+
+				// set the local clock to the new timestamp
+				::settimeofday(&now, &tz);
+			}
+		}
+
+		void Clock::settimeofday(struct timeval *tv)
+		{
+			struct timezone tz;
+			struct timeval now;
+			::gettimeofday(&now, &tz);
+
+			if (!modify_clock)
+			{
+				if (!Clock::_offset_init)
+				{
+					timerclear(&Clock::_offset);
+					Clock::_offset_init = true;
+				}
+				timersub(&now, tv, &Clock::_offset);
+				IBRCOMMON_LOGGER(info) << "[Clock] new local offset: " << _offset.tv_sec << " seconds and " << _offset.tv_usec << " microseconds" << IBRCOMMON_LOGGER_ENDL;
+			}
+			else
+			{
+				// set the local clock to the new timestamp
+				::settimeofday(tv, &tz);
+			}
+		}
+
+		void Clock::gettimeofday(struct timeval *tv)
+		{
+			struct timezone tz;
+			::gettimeofday(tv, &tz);
+
+			// correct by the local offset
+			if (!modify_clock)
+			{
+				if (!Clock::_offset_init)
+				{
+					timerclear(&Clock::_offset);
+					Clock::_offset_init = true;
+				}
+				// add offset
+				timersub(tv, &Clock::_offset, tv);
+			}
 		}
 	}
 }
