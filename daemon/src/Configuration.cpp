@@ -87,7 +87,7 @@ namespace dtn
 		{};
 
 		Configuration::Daemon::Daemon()
-		 : _daemonize(false), _kill(false)
+		 : _daemonize(false), _kill(false), _threads(0)
 		{};
 
 		Configuration::TimeSync::TimeSync()
@@ -186,7 +186,7 @@ namespace dtn
 				int option_index = 0;
 
 #ifdef HAVE_LIBDAEMON
-				c = getopt_long (argc, argv, "qhDkp:vi:c:d:",
+				c = getopt_long (argc, argv, "qhDkp:vi:c:d:t:",
 						long_options, &option_index);
 #else
 				c = getopt_long (argc, argv, "qhvi:c:d:",
@@ -222,6 +222,7 @@ namespace dtn
 					std::cout << " -i <interface>  interface to bind on (e.g. eth0)" << std::endl;
 					std::cout << " -d <level>      enable debugging and set a verbose level" << std::endl;
 					std::cout << " -q              enables the quiet mode (no logging to the console)" << std::endl;
+					std::cout << " -t <threads>    specify a number of threads for parallel event processing" << std::endl;
 					std::cout << " --noapi         disable API module" << std::endl;
 					std::cout << " --nodiscovery   disable discovery module" << std::endl;
 					std::cout << " --badclock      assume a bad clock on the system (use AgeBlock)" << std::endl;
@@ -265,6 +266,9 @@ namespace dtn
 				case 'p':
 					_daemon._pidfile = std::string(optarg);
 					break;
+
+				case 't':
+					_daemon._threads = atoi(optarg);
 
 				case '?':
 					/* getopt_long already printed an error message. */
@@ -1032,6 +1036,11 @@ namespace dtn
 		bool Configuration::Daemon::kill_daemon() const
 		{
 			return _kill;
+		}
+
+		size_t Configuration::Daemon::getThreads() const
+		{
+			return _threads;
 		}
 
 		const ibrcommon::File& Configuration::Daemon::getPidFile() const

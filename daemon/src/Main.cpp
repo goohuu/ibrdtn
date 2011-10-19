@@ -772,7 +772,14 @@ int __daemon_run(Configuration &conf)
 #endif
 
 	// run the event switch loop forever
-	esw.loop();
+	if (conf.getDaemon().getThreads() > 0)
+	{
+		esw.loop( conf.getDaemon().getThreads() );
+	}
+	else
+	{
+		esw.loop();
+	}
 
 	IBRCOMMON_LOGGER(info) << "shutdown dtn node" << IBRCOMMON_LOGGER_ENDL;
 

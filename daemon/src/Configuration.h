@@ -458,6 +458,7 @@ namespace dtn
 				bool _daemonize;
 				ibrcommon::File _pidfile;
 				bool _kill;
+				size_t _threads;
 
 			protected:
 				Daemon();
@@ -468,6 +469,7 @@ namespace dtn
 				bool daemonize() const;
 				const ibrcommon::File& getPidFile() const;
 				bool kill_daemon() const;
+				size_t getThreads() const;
 			};
 
 			class TimeSync : public Configuration::Extension
