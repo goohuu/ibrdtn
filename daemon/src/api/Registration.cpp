@@ -273,7 +273,11 @@ namespace dtn
 
 		void Registration::subscribe(const dtn::data::EID &endpoint)
 		{
+			// add endpoint to the local set
 			_endpoints.insert(endpoint);
+
+			// trigger the search for new bundles
+			notify(NOTIFY_BUNDLE_AVAILABLE);
 		}
 
 		void Registration::unsubscribe(const dtn::data::EID &endpoint)
