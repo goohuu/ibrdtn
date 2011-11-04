@@ -1,3 +1,33 @@
+2011-11-04
+--------------------------------------------------------
+ * Common fixes
+   * Connection down deletes all static routes
+   * Reconnect mechnism tries to connect each second
+   * Some shutdown issues
+   * Extension block discard issue
+   * Wrong CBHE parsing 
+
+ * Bundle Security Protocol
+   * Serialization fixed
+   * PCB: Store the integrity check value in the right TLV
+   * Handle the salt as binary not as string
+   
+ * Connection up now triggers all routing modules to look for bundles to transfer
+ * Disable autoconnect feature if not specified
+ * CBHE and group support for internal apps
+ * Configurable parallel event processing
+   Set the "-t" parameter on daemon startup to enable this feature.
+ 
+ * Extended API
+   * Plain text API for clients
+   * Some management routines
+   * Event / Log dumping
+   * Add and remove IP addresses dynamically via API for non-netlink systems
+   
+ * File Convergence Layer added. Use the USB Key as intermittent node!
+ * New LoWPAN CL architecture - Multiple connections, larger bundles and discovery
+ * C++ API: Added method to get the timestamp of a bundle
+
 2011-08-12
 --------------------------------------------------------
  * New config option: "net_autoconnect" to keep up / reconnect
