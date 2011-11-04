@@ -40,13 +40,13 @@ size_t StreamBlock::getLength() const
 	return _seq.getLength();
 }
 
-std::ostream& StreamBlock::serialize(std::ostream &stream, size_t &length) const
+std::ostream& StreamBlock::serialize(std::ostream &stream, size_t&) const
 {
 	stream << _seq;
 	return stream;
 }
 
-std::istream& StreamBlock::deserialize(std::istream &stream, const size_t length)
+std::istream& StreamBlock::deserialize(std::istream &stream, const size_t)
 {
 	stream >> _seq;
 	return stream;
@@ -110,9 +110,9 @@ size_t StreamBundle::getSequenceNumber(const StreamBundle &b)
 	try {
 		const StreamBlock &block = b._b.getBlock<StreamBlock>();
 		return block.getSequenceNumber();
-	} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
-		return 0;
-	}
+	} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { }
+
+	return 0;
 }
 
 BundleStreamBuf::BundleStreamBuf(dtn::api::Client &client, StreamBundle &chunk, size_t buffer, bool wait_seq_zero)

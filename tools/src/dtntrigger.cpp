@@ -69,6 +69,7 @@ int init(int argc, char** argv)
 		default:
 			print_help();
 			abort();
+			break;
 	}
 
 	int optindex = 0;

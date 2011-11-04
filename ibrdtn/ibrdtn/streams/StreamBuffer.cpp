@@ -106,6 +106,8 @@ namespace dtn
 		 */
 		const StreamContactHeader StreamConnection::StreamBuffer::handshake(const StreamContactHeader &header)
 		{
+			StreamContactHeader peer;
+
 			try {
 				// make the send-call atomic
 				{
@@ -116,7 +118,6 @@ namespace dtn
 				}
 
 				// receive the remote header
-				StreamContactHeader peer;
 				_stream >> peer;
 
 				// enable/disable ACK/NACK support
@@ -133,9 +134,6 @@ namespace dtn
 				// set handshake completed bit
 				set(STREAM_HANDSHAKE);
 
-				// return the received header
-				return peer;
-
 			} catch (const std::exception&) {
 				// set failed bit
 				set(STREAM_FAILED);
@@ -149,6 +147,9 @@ namespace dtn
 				// forward the catched exception
 				throw StreamErrorException("handshake not completed");
 			}
+
+			// return the received header
+			return peer;
 		}
 
 		/**

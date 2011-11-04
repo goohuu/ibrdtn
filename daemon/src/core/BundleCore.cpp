@@ -321,6 +321,7 @@ namespace dtn
 							// decrypt failed
 							IBRCOMMON_LOGGER(warning) << "Decryption of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 						}
+						break;
 					}
 #endif
 
@@ -331,6 +332,7 @@ namespace dtn
 						try {
 							dtn::data::CompressedPayloadBlock::extract(b);
 						} catch (const ibrcommon::Exception&) { };
+						break;
 					}
 #endif
 				}

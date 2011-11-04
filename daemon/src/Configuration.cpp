@@ -269,13 +269,15 @@ namespace dtn
 
 				case 't':
 					_daemon._threads = atoi(optarg);
+					break;
 
 				case '?':
 					/* getopt_long already printed an error message. */
 					break;
 
 				default:
-					abort ();
+					abort();
+					break;
 				}
 			}
 
@@ -378,7 +380,7 @@ namespace dtn
 			return _level;
 		}
 
-		string Configuration::getNodename()
+		std::string Configuration::getNodename()
 		{
 			try {
 				return _conf.read<string>("local_uri");
