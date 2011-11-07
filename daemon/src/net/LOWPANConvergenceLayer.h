@@ -8,6 +8,7 @@
 #include "net/DiscoveryServiceProvider.h"
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/lowpansocket.h>
+#include <ibrcommon/net/lowpanstream.h>
 
 #include <list>
 

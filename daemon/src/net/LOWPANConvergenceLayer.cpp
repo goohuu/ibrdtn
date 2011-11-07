@@ -1,8 +1,8 @@
 #include "net/LOWPANConvergenceLayer.h"
 #include "net/LOWPANConnection.h"
-#include "net/lowpanstream.h"
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
+#include <ibrcommon/net/lowpanstream.h>
 #include <ibrcommon/net/UnicastSocketLowpan.h>
 #include <ibrcommon/net/lowpansocket.h>
 

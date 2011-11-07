@@ -1,9 +1,10 @@
 #ifndef LOWPANCONNECTION_H_
 #define LOWPANCONNECTION_H_
 
-#include "ibrcommon/thread/Queue.h"
-#include "lowpanstream.h"
 #include "net/LOWPANConvergenceLayer.h"
+
+#include <ibrcommon/thread/Queue.h>
+#include <ibrcommon/net/lowpanstream.h>
 
 using namespace dtn::data;
 

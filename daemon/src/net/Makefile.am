@@ -36,7 +36,7 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 				FileConvergenceLayer.h
 
 if LOWPAN
-net_SOURCES += LOWPANConvergenceLayer.cpp LOWPANConvergenceLayer.h LOWPANConnection.cpp LOWPANConnection.h lowpanstream.cpp lowpanstream.h
+net_SOURCES += LOWPANConvergenceLayer.cpp LOWPANConvergenceLayer.h LOWPANConnection.cpp LOWPANConnection.h
 endif
 				
 if CURL
