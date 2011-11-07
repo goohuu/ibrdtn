@@ -1,3 +1,14 @@
+ibrdtn (0.6.5) stable; urgency=low
+
+  * Wrong CBHE parsing fixed.
+  * C++ API: Added method to get the timestamp of a bundle
+  * Bundle Security Protocol
+    * Serialization fixed
+    * PCB: Store the integrity check value in the right TLV
+    * Handle the salt as binary not as string
+
+ -- Johannes Morgenroth <morgenro@syrah.ibr.cs.tu-bs.de>  Fri, 04 Nov 2011 12:00:00 +0200
+
 ibrdtn (0.6.4) stable; urgency=low
 
   * Support for the Scope Control Hop Limit Block added
