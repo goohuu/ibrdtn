@@ -1,7 +1,7 @@
 #ifndef LOWPANSTREAM_H_
 #define LOWPANSTREAM_H_
 
-#include "ibrcommon/thread/Conditional.h"
+#include <ibrcommon/thread/Conditional.h>
 #include <streambuf>
 #include <stdint.h>
 

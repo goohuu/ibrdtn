@@ -1,8 +1,8 @@
-#include "ibrcommon/config.h"
-#include "ibrcommon/Logger.h"
-#include "lowpanstream.h"
+#include "net/lowpanstream.h"
 #include "net/LOWPANConvergenceLayer.h"
-#include "ibrcommon/thread/MutexLock.h"
+
+#include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/MutexLock.h>
 #include <signal.h>
 #include <string.h>
 #include <math.h>
