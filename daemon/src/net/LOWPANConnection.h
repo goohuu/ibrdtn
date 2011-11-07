@@ -12,11 +12,10 @@ namespace dtn
 {
 	namespace net
 	{
-		class lowpanstream;
 		class LOWPANConnectionSender : public ibrcommon::JoinableThread
 		{
 			public:
-				LOWPANConnectionSender(lowpanstream &_stream);
+				LOWPANConnectionSender(ibrcommon::lowpanstream &_stream);
 				virtual ~LOWPANConnectionSender();
 
 				/**
@@ -28,7 +27,7 @@ namespace dtn
 				bool __cancellation();
 
 			private:
-				lowpanstream &_stream;
+				ibrcommon::lowpanstream &_stream;
 				ibrcommon::Queue<ConvergenceLayer::Job> _queue;
 		};
 
@@ -54,7 +53,7 @@ namespace dtn
 			 * Getting the lowpanstream connected with the LOWPANConnection
 			 * @return lowpanstream reference
 			 */
-			lowpanstream& getStream();
+			ibrcommon::lowpanstream& getStream();
 
 			void run();
 			void setup();
@@ -67,7 +66,7 @@ namespace dtn
 
 		private:
 			bool _running;
-			lowpanstream _stream;
+			ibrcommon::lowpanstream _stream;
 			LOWPANConvergenceLayer &_cl;
 		};
 	}

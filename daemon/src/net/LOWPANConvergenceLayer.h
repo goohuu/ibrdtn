@@ -22,7 +22,7 @@ namespace dtn
 		/**
 		 * This class implements a ConvergenceLayer for LOWPAN.
 		 */
-		class LOWPANConvergenceLayer : public DiscoveryAgent, public ConvergenceLayer, public dtn::daemon::IndependentComponent, public lowpanstream_callback, public EventReceiver, public DiscoveryServiceProvider
+		class LOWPANConvergenceLayer : public DiscoveryAgent, public ConvergenceLayer, public dtn::daemon::IndependentComponent, public ibrcommon::lowpanstream_callback, public EventReceiver, public DiscoveryServiceProvider
 		{
 		public:
 			LOWPANConvergenceLayer(ibrcommon::vinterface net, int panid, unsigned int mtu = 115); //MTU is actually 127...

@@ -36,7 +36,7 @@ namespace dtn
 		{
 		}
 
-		lowpanstream& LOWPANConnection::getStream()
+		ibrcommon::lowpanstream& LOWPANConnection::getStream()
 		{
 			return _stream;
 		}
@@ -91,7 +91,7 @@ namespace dtn
 		}
 
 		// class LOWPANConnectionSender
-		LOWPANConnectionSender::LOWPANConnectionSender(lowpanstream &stream)
+		LOWPANConnectionSender::LOWPANConnectionSender(ibrcommon::lowpanstream &stream)
 		: _stream(stream)
 		{
 		}
