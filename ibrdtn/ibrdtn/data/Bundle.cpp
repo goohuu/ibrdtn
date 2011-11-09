@@ -38,6 +38,17 @@ namespace dtn
 		{
 		}
 
+		Bundle::BlockList& Bundle::BlockList::operator=(const Bundle::BlockList &ref)
+		{
+			_blocks.clear();
+			for (std::list<refcnt_ptr<Block> >::const_iterator iter = ref._blocks.begin(); iter != ref._blocks.end(); iter++)
+			{
+				const refcnt_ptr<Block> &obj = (*iter);
+				_blocks.push_back(obj);
+			}
+			return *this;
+		}
+
 		void Bundle::BlockList::push_front(Block *block)
 		{
 			if (_blocks.empty())

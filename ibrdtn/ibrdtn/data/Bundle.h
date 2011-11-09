@@ -63,6 +63,8 @@ namespace dtn
 				BlockList();
 				virtual ~BlockList();
 
+				BlockList& operator=(const BlockList &ref);
+
 				void push_front(Block *block);
 				void push_back(Block *block);
 				void insert(Block *block, const Block *before);
