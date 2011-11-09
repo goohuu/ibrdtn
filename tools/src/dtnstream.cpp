@@ -274,7 +274,7 @@ int BundleStreamBuf::__underflow()
 	// the get pointer should be initialized (or reset).
 	setg(_out_buf, _out_buf, _out_buf + bytes);
 
-	return std::char_traits<char>::not_eof(_out_buf[0]);
+	return std::char_traits<char>::not_eof((unsigned char) _out_buf[0]);
 }
 
 BundleStreamBuf::Chunk::Chunk(const dtn::api::Bundle &b)
