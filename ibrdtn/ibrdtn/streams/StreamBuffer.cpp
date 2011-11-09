@@ -588,7 +588,7 @@ namespace dtn
 				// the get pointer should be initialized (or reset).
 				setg(in_buf_, in_buf_, in_buf_ + readsize);
 
-				return traits_type::not_eof(in_buf_[0]);
+				return traits_type::not_eof((unsigned char)in_buf_[0]);
 
 			} catch (const StreamClosedException&) {
 				// set failed bit
