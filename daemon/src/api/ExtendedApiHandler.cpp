@@ -258,7 +258,8 @@ namespace dtn
 								try {
 									PlainDeserializer(_stream) >> _bundle_reg;
 									_stream << ClientHandler::API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
-								} catch (const std::exception&) {
+								} catch (const std::exception &ex) {
+									IBRCOMMON_LOGGER_DEBUG(20) << "API put failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
 
 								}
@@ -270,7 +271,8 @@ namespace dtn
 								try {
 									dtn::data::DefaultDeserializer(_stream) >> _bundle_reg;
 									_stream << ClientHandler::API_STATUS_OK << " BUNDLE IN REGISTER" << std::endl;
-								} catch (const std::exception&) {
+								} catch (const std::exception &ex) {
+									IBRCOMMON_LOGGER_DEBUG(20) << "API put failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PUT FAILED" << std::endl;
 								}
 							}

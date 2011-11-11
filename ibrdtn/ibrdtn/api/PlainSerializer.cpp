@@ -468,6 +468,7 @@ namespace dtn
 			}
 
 			// then read the payload
+			IBRCOMMON_LOGGER_DEBUG(20) << "API expecting payload size of " << blocksize << IBRCOMMON_LOGGER_ENDL;
 			ibrcommon::Base64Reader base64_decoder(_stream, blocksize);
 			obj.deserialize(base64_decoder, blocksize);
 
