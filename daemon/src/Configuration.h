@@ -50,6 +50,7 @@ namespace dtn
 				std::string url;
 				ibrcommon::vinterface interface;
 				ibrcommon::vaddress address;
+				int mtu;
 				int port;
 				bool discovery;
 			};

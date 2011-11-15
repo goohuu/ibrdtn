@@ -336,7 +336,7 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 				case Configuration::NetConfig::NETWORK_UDP:
 				{
 					try {
-						UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net.interface, net.port );
+						UDPConvergenceLayer *udpcl = new UDPConvergenceLayer( net.interface, net.port, net.mtu );
 						core.addConvergenceLayer(udpcl);
 						components.push_back(udpcl);
 						if (ipnd != NULL) ipnd->addService(udpcl);

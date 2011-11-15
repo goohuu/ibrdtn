@@ -26,7 +26,7 @@ namespace dtn
 	namespace daemon
 	{
 		Configuration::NetConfig::NetConfig(std::string n, NetType t, const std::string &u, bool d)
-		 : name(n), type(t), url(u), port(0), discovery(d)
+		 : name(n), type(t), url(u), mtu(0), port(0), discovery(d)
 		{
 		}
 
@@ -576,6 +576,7 @@ namespace dtn
 					std::string key_address = "net_" + netname + "_address";
 					std::string key_discovery = "net_" + netname + "_discovery";
 					std::string key_path = "net_" + netname + "_path";
+					std::string key_mtu = "net_" + netname + "_mtu";
 
 					std::string type_name = conf.read<string>(key_type, "tcp");
 					Configuration::NetConfig::NetType type = Configuration::NetConfig::NETWORK_UNKNOWN;
@@ -612,14 +613,17 @@ namespace dtn
 						{
 							int port = conf.read<int>(key_port, 4556);
 							bool discovery = (conf.read<std::string>(key_discovery, "yes") == "yes");
+							int mtu = conf.read<int>(key_mtu, 1280);
 
 							try {
 								ibrcommon::vinterface interface(conf.read<std::string>(key_interface));
 								Configuration::NetConfig nc(netname, type, interface, port, discovery);
+								nc.mtu = mtu;
 								_interfaces.push_back(nc);
 							} catch (const ConfigFile::key_not_found&) {
 								ibrcommon::vaddress addr;
 								Configuration::NetConfig nc(netname, type, addr, port, discovery);
+								nc.mtu = mtu;
 								_interfaces.push_back(nc);
 							}
 
