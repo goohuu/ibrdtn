@@ -21,6 +21,7 @@
 #include "core/BundleCore.h"
 #include "core/BundleEvent.h"
 
+#include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/data/MetaBundle.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -457,6 +458,9 @@ namespace dtn
 			dtn::data::ScopeControlHopLimitBlock &schl = req.push_front<dtn::data::ScopeControlHopLimitBlock>();
 			schl.setLimit(1);
 
+			// add an age block (to prevent expiring due to wrong clocks)
+			req.push_front<dtn::data::AgeBlock>();
+
 			// send the bundle
 			transmit(req);
 		}
@@ -519,6 +523,9 @@ namespace dtn
 				// add a schl block
 				dtn::data::ScopeControlHopLimitBlock &schl = answer.push_front<dtn::data::ScopeControlHopLimitBlock>();
 				schl.setLimit(1);
+
+				// add an age block (to prevent expiring due to wrong clocks)
+				answer.push_front<dtn::data::AgeBlock>();
 
 				// transfer the bundle to the neighbor
 				_endpoint.send(answer);
