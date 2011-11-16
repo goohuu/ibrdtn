@@ -65,6 +65,16 @@ namespace dtn
 			static size_t blocksizelimit;
 
 			/**
+			 * Define the maximum lifetime for accepted bundles
+			 */
+			static size_t max_lifetime;
+
+			/**
+			 * Define the maximum offset for the timestamp of pre-dated bundles
+			 */
+			static size_t max_timestamp_future;
+
+			/**
 			 * Define if forwarding is allowed. If set to false, this daemon only accepts bundles for local applications.
 			 */
 			static bool forwarding;

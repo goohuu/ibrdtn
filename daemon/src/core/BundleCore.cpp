@@ -36,7 +36,11 @@ namespace dtn
 	namespace core
 	{
 		dtn::data::EID BundleCore::local;
+
 		size_t BundleCore::blocksizelimit = 0;
+		size_t BundleCore::max_lifetime = 0;
+		size_t BundleCore::max_timestamp_future = 0;
+
 		bool BundleCore::forwarding = true;
 
 		BundleCore& BundleCore::getInstance()
@@ -220,6 +224,31 @@ namespace dtn
 					IBRCOMMON_LOGGER(warning) << "non-local bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
 					throw dtn::data::Validator::RejectedException("bundle is not local");
 				}
+			}
+
+			// check if the lifetime of the bundle is too long
+			if (BundleCore::max_lifetime > 0)
+			{
+				if (p._lifetime > BundleCore::max_lifetime)
+				{
+					// ... we reject bundles with such a long lifetime
+					IBRCOMMON_LOGGER(warning) << "lifetime of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+					throw dtn::data::Validator::RejectedException("lifetime of the bundle is too long");
+				}
+			}
+
+			// check if the timestamp is in the future
+			if (BundleCore::max_timestamp_future > 0)
+			{
+				// first check if the local clock is reliable
+				if (dtn::utils::Clock::quality > 0)
+					// then check the timestamp
+					if ((dtn::utils::Clock::getTime() + BundleCore::max_timestamp_future) < p._timestamp)
+					{
+						// ... we reject bundles with a timestamp so far in the future
+						IBRCOMMON_LOGGER(warning) << "timestamp of bundle rejected: " << p.toString() << IBRCOMMON_LOGGER_ENDL;
+						throw dtn::data::Validator::RejectedException("timestamp is too far in the future");
+					}
 			}
 		}
 

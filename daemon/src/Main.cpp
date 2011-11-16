@@ -174,19 +174,33 @@ void switchUser(Configuration &config)
 
 void setGlobalVars(Configuration &config)
 {
-    // set the timezone
-    dtn::utils::Clock::timezone = config.getTimezone();
+	// set the timezone
+	dtn::utils::Clock::timezone = config.getTimezone();
 
-    // set local eid
-    dtn::core::BundleCore::local = config.getNodename();
-    IBRCOMMON_LOGGER(info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
+	// set local eid
+	dtn::core::BundleCore::local = config.getNodename();
+	IBRCOMMON_LOGGER(info) << "Local node name: " << config.getNodename() << IBRCOMMON_LOGGER_ENDL;
 
-    // set block size limit
-    dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
-    if (dtn::core::BundleCore::blocksizelimit > 0)
-    {
-    	IBRCOMMON_LOGGER(info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
-    }
+	// set block size limit
+	dtn::core::BundleCore::blocksizelimit = config.getLimit("blocksize");
+	if (dtn::core::BundleCore::blocksizelimit > 0)
+	{
+		IBRCOMMON_LOGGER(info) << "Block size limited to " << dtn::core::BundleCore::blocksizelimit << " bytes" << IBRCOMMON_LOGGER_ENDL;
+	}
+
+	// set the lifetime limit
+	dtn::core::BundleCore::max_lifetime = config.getLimit("lifetime");
+	if (dtn::core::BundleCore::max_lifetime > 0)
+	{
+		IBRCOMMON_LOGGER(info) << "Lifetime limited to " << dtn::core::BundleCore::max_lifetime << " seconds" << IBRCOMMON_LOGGER_ENDL;
+	}
+
+	// set the timestamp limit
+	dtn::core::BundleCore::max_timestamp_future = config.getLimit("predated_timestamp");
+	if (dtn::core::BundleCore::max_timestamp_future > 0)
+	{
+		IBRCOMMON_LOGGER(info) << "Pre-dated timestamp limited to " << dtn::core::BundleCore::max_timestamp_future << " seconds in the future" << IBRCOMMON_LOGGER_ENDL;
+	}
 }
 
 void initialize_blobs(Configuration &config)

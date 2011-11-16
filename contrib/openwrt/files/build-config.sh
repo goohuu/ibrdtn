@@ -66,6 +66,9 @@ else
 	add_param $CONFFILE "ibrdtn.storage.engine" "storage"
 fi
 
+add_param $CONFFILE "ibrdtn.main.max_predated_timestamp" "limit_predated_timestamp"
+add_param $CONFFILE "ibrdtn.main.limit_lifetime" "limit_lifetime"
+
 add_param $CONFFILE "ibrdtn.statistic.type" "statistic_type"
 add_param $CONFFILE "ibrdtn.statistic.interval" "statistic_interval"
 add_param $CONFFILE "ibrdtn.statistic.file" "statistic_file"
