@@ -168,6 +168,16 @@ namespace dtn
 			return _blocks.getList();
 		}
 
+		dtn::data::Block& Bundle::getBlock(int index)
+		{
+			return _blocks.get(index);
+		}
+		
+		const dtn::data::Block& Bundle::getBlock(int index) const
+		{
+			return _blocks.get(index);
+		}
+
 		void Bundle::remove(const dtn::data::Block &block)
 		{
 			_blocks.remove(&block);
@@ -217,6 +227,18 @@ namespace dtn
 			return (*tmpblock);
 		}
 
+		dtn::data::Block& Bundle::push_front(dtn::data::ExtensionBlock::Factory &factory)
+		{
+			dtn::data::Block *block = factory.create();
+
+#ifdef __DEVELOPMENT_ASSERTIONS__
+			assert(block != NULL);
+#endif
+
+			_blocks.push_front(block);
+			return (*block);
+		}
+
 		dtn::data::Block& Bundle::push_back(dtn::data::ExtensionBlock::Factory &factory)
 		{
 			dtn::data::Block *block = factory.create();
@@ -264,6 +286,28 @@ namespace dtn
 			}
 
 			throw NoSuchBlockFoundException();
+		}
+
+		const Block& Bundle::BlockList::get(int index) const
+		{
+			if(index < 0 || index >= _blocks.size()){
+				throw NoSuchBlockFoundException();
+			}
+
+			std::list<refcnt_ptr<Block> >::const_iterator iter = _blocks.begin();
+			std::advance(iter, index);
+			return *((*iter).getPointer());
+		}
+
+		Block& Bundle::BlockList::get(int index)
+		{
+			if(index < 0 || index >= _blocks.size()){
+				throw NoSuchBlockFoundException();
+			}
+
+			std::list<refcnt_ptr<Block> >::iterator iter = _blocks.begin();
+			std::advance(iter, index);
+			return *((*iter).getPointer());
 		}
 
 		template<>

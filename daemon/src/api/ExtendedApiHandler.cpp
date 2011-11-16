@@ -14,6 +14,7 @@
 #include <ibrdtn/api/PlainSerializer.h>
 #include <ibrdtn/data/AgeBlock.h>
 #include <ibrdtn/utils/Utils.h>
+#include <ibrcommon/data/Base64Reader.h>
 #include "core/BundleCore.h"
 
 #ifdef WITH_COMPRESSION
@@ -120,7 +121,7 @@ namespace dtn
 							else
 							{
 								_registration.subscribe(_endpoint);
-								_stream << ClientHandler::API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
 						else
@@ -148,7 +149,7 @@ namespace dtn
 							else
 							{
 								_registration.subscribe(endpoint);
-								_stream << ClientHandler::API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
 						else if (cmd[1] == "del")
@@ -166,7 +167,7 @@ namespace dtn
 							else
 							{
 								_registration.unsubscribe(endpoint);
-								_stream << ClientHandler::API_STATUS_ACCEPTED << " OK" << std::endl;
+								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
 						else if (cmd[1] == "list")
@@ -371,10 +372,230 @@ namespace dtn
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_OK << " BUNDLE SENT" << std::endl;
 						}
+						else if (cmd[1] == "info")
+						{
+							// transfer bundle data
+							ibrcommon::MutexLock l(_write_lock);
+
+							_stream << ClientHandler::API_STATUS_OK << " BUNDLE INFO "; sayBundleID(_stream, _bundle_reg); _stream << std::endl;
+							PlainSerializer(_stream, true) << _bundle_reg;
+						}
+						else if (cmd[1] == "block")
+						{
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+							if (cmd[2] == "add")
+							{
+								PlainDeserializer::BlockInserter inserter(_bundle_reg, PlainDeserializer::BlockInserter::END);
+
+								/* parse an optional offset, where to insert the block */
+								if (cmd.size() > 3)
+								{
+									int offset;
+									istringstream ss(cmd[3]);
+
+									ss >> offset;
+									if (ss.fail()) throw ibrcommon::Exception("malformed command");
+
+									if(offset <= 0)
+									{
+										inserter = PlainDeserializer::BlockInserter(_bundle_reg, PlainDeserializer::BlockInserter::FRONT);
+									}
+									else
+									{
+										inserter = PlainDeserializer::BlockInserter(_bundle_reg, PlainDeserializer::BlockInserter::MIDDLE, offset);
+									}
+								}
+
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_CONTINUE << " BUNDLE BLOCK ADD" << std::endl;
+
+								try
+								{
+									PlainDeserializer(_stream).readBlock(inserter, _bundle_reg.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD));
+									_stream << ClientHandler::API_STATUS_OK << " BUNDLE BLOCK ADD SUCCESSFUL" << std::endl;
+								}
+								catch (const PlainDeserializer::PlainDeserializerException &ex){
+									_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " BUNDLE BLOCK ADD FAILED" << std::endl;
+								}
+							}
+							else if (cmd[2] == "del")
+							{
+								if (cmd.size() < 4) throw ibrcommon::Exception("not enough parameters");
+
+								int offset;
+								istringstream ss(cmd[3]);
+
+								ss >> offset;
+								if (ss.fail()) throw ibrcommon::Exception("malformed command");
+
+								_bundle_reg.remove(_bundle_reg.getBlock(offset));
+
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_OK << " BUNDLE BLOCK DEL SUCCESSFUL" << std::endl;
+							}
+							else
+							{
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+							}
+						}
 						else
 						{
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_BAD_REQUEST << " UNKNOWN COMMAND" << std::endl;
+						}
+					}
+					else if (cmd[0] == "payload")
+					{
+						int block_offset;
+						int cmd_index = 1;
+						dtn::data::Block& b = _bundle_reg.getBlock<dtn::data::PayloadBlock>();
+
+						if (cmd.size() < 2) throw ibrcommon::Exception("not enough parameters");
+
+						istringstream ss(cmd[1]);
+						ss >> block_offset;
+						if(!ss.fail())
+						{
+							cmd_index++;
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+							if(block_offset < 0 || block_offset >= _bundle_reg.getBlocks().size()){
+								throw ibrcommon::Exception("invalid offset");
+							}
+
+							b = _bundle_reg.getBlock(block_offset);
+						}
+
+						int cmd_remaining = cmd.size() - (cmd_index + 1);
+						if (cmd[cmd_index] == "get")
+						{
+							ibrcommon::MutexLock l(_write_lock);
+							_stream << ClientHandler::API_STATUS_OK << " PAYLOAD GET" << std::endl;
+
+							int payload_offset = 0;
+							int length = 0;
+
+							if(cmd_remaining > 0)
+							{
+
+								/* read the payload offset */
+								ss.clear(); ss.str(cmd[cmd_index+1]); ss >> payload_offset;
+								if(payload_offset < 0)
+								{
+									payload_offset = 0;
+								}
+
+								if(cmd_remaining > 1)
+								{
+									ss.clear(); ss.str(cmd[cmd_index+2]); ss >> length;
+								}
+							}
+
+							try{
+								size_t slength = 0;
+								ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
+
+								/* acquire the iostream to lock the blob */
+								ibrcommon::BLOB::iostream blob_stream = blob.iostream();
+								/* serialize the payload of the bundle into the blob */
+								b.serialize(*blob_stream, slength);
+
+								if(length <= 0 || (length + payload_offset) > slength)
+								{
+									length = slength - payload_offset;
+								}
+
+								blob_stream->ignore(payload_offset);
+
+								PlainSerializer(_stream, false).serialize(blob_stream, length);
+
+							} catch (const std::exception&) {
+								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD GET FAILED" << std::endl;
+							}
+						}
+						else if (cmd[cmd_index] == "put")
+						{
+							ibrcommon::MutexLock l(_write_lock);
+							_stream << ClientHandler::API_STATUS_CONTINUE << " PAYLOAD PUT" << std::endl;
+
+							int payload_offset = 0;
+							if(cmd_remaining > 0)
+							{
+
+								/* read the payload offset */
+								ss.clear(); ss.str(cmd[cmd_index+1]); ss >> payload_offset;
+								if(payload_offset < 0)
+								{
+									payload_offset = 0;
+								}
+							}
+
+							try
+							{
+								size_t slength = 0;
+								ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
+
+								/* acquire the iostream to lock the blob */
+								ibrcommon::BLOB::iostream blob_stream = blob.iostream();
+								/* serialize the payload of the bundle into the blob */
+								b.serialize(*blob_stream, slength);
+
+								/* move the streams put pointer to the given offset */
+								if(payload_offset < slength){
+									blob_stream->seekp(payload_offset, ios_base::beg);
+								}
+
+								/* write the new data into the blob */
+								PlainDeserializer(_stream) >> blob_stream;
+
+								/* write the result into the block */
+								b.deserialize(*blob_stream, blob_stream.size());
+
+								_stream << ClientHandler::API_STATUS_OK << " PAYLOAD PUT SUCCESSFUL" << std::endl;
+
+							} catch (const std::exception&) {
+								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD PUT FAILED" << std::endl;
+							}
+						}
+						else if (cmd[cmd_index] == "append"){
+							ibrcommon::MutexLock l(_write_lock);
+							_stream << ClientHandler::API_STATUS_CONTINUE << " PAYLOAD APPEND" << std::endl;
+
+							try {
+								size_t slength = 0;
+								ibrcommon::BLOB::Reference blob = ibrcommon::BLOB::create();
+
+								/* acquire the iostream to lock the blob */
+								ibrcommon::BLOB::iostream blob_stream = blob.iostream();
+								/* serialize old and new data into the blob */
+								b.serialize(*blob_stream, slength);
+								PlainDeserializer(_stream) >> blob_stream;
+
+								/* write the result into the payload of the block */
+								b.deserialize(*blob_stream, blob_stream.size());
+
+								_stream << ClientHandler::API_STATUS_OK << " PAYLOAD APPEND SUCCESSFUL" << std::endl;
+
+							} catch (const std::exception&) {
+								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD APPEND FAILED" << std::endl;
+							}
+
+						}
+						else if (cmd[cmd_index] == "clear"){
+
+							std::stringstream stream;
+							b.deserialize(stream, 0);
+
+							ibrcommon::MutexLock l(_write_lock);
+							_stream << ClientHandler::API_STATUS_OK << " PAYLOAD CLEAR SUCCESSFUL" << std::endl;
+							_stream << "Length: " << b.getLength() << std::endl;
+						}
+						else if (cmd[cmd_index] == "length"){
+							ibrcommon::MutexLock l(_write_lock);
+							_stream << ClientHandler::API_STATUS_OK << " PAYLOAD LENGTH" << std::endl;
+							_stream << "Length: " << b.getLength() << std::endl;
 						}
 					}
 					else
@@ -563,10 +784,18 @@ namespace dtn
 			}
 
 			// read timestamp
-			 ss.clear(); ss.str(data[start]); ss >> timestamp;
+			ss.clear(); ss.str(data[start]); ss >> timestamp;
+			if(ss.fail())
+			{
+			throw ibrcommon::Exception("malformed parameters");
+			}
 
 			// read sequence number
-			 ss.clear(); ss.str(data[start+1]); ss >> sequencenumber;
+			ss.clear(); ss.str(data[start+1]); ss >> sequencenumber;
+			if(ss.fail())
+			{
+			throw ibrcommon::Exception("malformed parameters");
+			}
 
 			// read fragment offset
 			if ((data.size() - start) > 3)
@@ -574,11 +803,15 @@ namespace dtn
 				fragment = true;
 
 				// read sequence number
-				 ss.clear(); ss.str(data[start+2]); ss >> offset;
+				ss.clear(); ss.str(data[start+2]); ss >> offset;
+				if(ss.fail())
+				{
+					throw ibrcommon::Exception("malformed parameters");
+				}
 			}
 
 			// read EID
-			 ss.clear(); dtn::data::EID eid(data[data.size() - 1]);
+			ss.clear(); dtn::data::EID eid(data[data.size() - 1]);
 
 			// construct bundle id
 			return dtn::data::BundleID(eid, timestamp, sequencenumber, fragment, offset);

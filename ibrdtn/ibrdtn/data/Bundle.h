@@ -73,6 +73,8 @@ namespace dtn
 
 				const std::set<dtn::data::EID> getEIDs() const;
 
+				Block& get(int index);
+				const Block& get(int index) const;
 				template<class T> T& get();
 				template<class T> const T& get() const;
 
@@ -94,6 +96,9 @@ namespace dtn
 			bool operator>(const Bundle& other) const;
 
 			const std::list<const dtn::data::Block*> getBlocks() const;
+
+			dtn::data::Block& getBlock(int index);
+			const dtn::data::Block& getBlock(int index) const;
 
 			template<class T>
 			T& getBlock();
@@ -117,6 +122,7 @@ namespace dtn
 			dtn::data::PayloadBlock& push_back(ibrcommon::BLOB::Reference &ref);
 			dtn::data::PayloadBlock& insert(const dtn::data::Block &before, ibrcommon::BLOB::Reference &ref);
 
+			dtn::data::Block& push_front(dtn::data::ExtensionBlock::Factory &factory);
 			dtn::data::Block& push_back(dtn::data::ExtensionBlock::Factory &factory);
 			dtn::data::Block& insert(dtn::data::ExtensionBlock::Factory &factory, const dtn::data::Block &before);
 
