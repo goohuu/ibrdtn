@@ -50,7 +50,14 @@ namespace dtn
 
 		void BinaryStreamClient::eventConnectionUp(const dtn::streams::StreamContactHeader &header)
 		{
-			if (BundleCore::local.getScheme() == dtn::data::EID::CBHE_SCHEME)
+			Registration &reg = _client.getRegistration();
+
+			if (header._localeid.isNone())
+			{
+				// create an EID based on the registration handle
+				_eid = BundleCore::local + "/" + reg.getHandle();
+			}
+			else if (BundleCore::local.getScheme() == dtn::data::EID::CBHE_SCHEME)
 			{
 				// This node is working with compressed addresses
 				// generate a number
@@ -62,9 +69,9 @@ namespace dtn
 				_eid = BundleCore::local + "/" + header._localeid.getHost() + header._localeid.getApplication();
 			}
 
-			IBRCOMMON_LOGGER_DEBUG(20) << "new client connected: " << _eid.getString() << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(20) << "new client connected, handle: " << reg.getHandle() << "; eid: "<< _eid.getString() << IBRCOMMON_LOGGER_ENDL;
 
-			_client.getRegistration().subscribe(_eid);
+			reg.subscribe(_eid);
 		}
 
 		void BinaryStreamClient::eventConnectionDown()

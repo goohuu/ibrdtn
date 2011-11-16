@@ -92,6 +92,7 @@ namespace dtn
 		class ApiServerInterface
 		{
 		public:
+			virtual ~ApiServerInterface() {};
 			virtual void processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle) = 0;
 			virtual void connectionUp(ClientHandler *conn) = 0;
 			virtual void connectionDown(ClientHandler *conn) = 0;

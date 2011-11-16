@@ -185,7 +185,7 @@ int main(int argc, char *argv[])
 	signal(SIGTERM, term);
 
 	string ping_destination = "dtn://local/echo";
-	string ping_source = "echo-client";
+	string ping_source = "";
 	int ping_size = 64;
 	unsigned int lifetime = 30;
 	bool wait_for_reply = true;

@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 {
 	bool error = false;
 	string file_destination = "dtn://local/filetransfer";
-	string file_source = "filetransfer";
+	string file_source = "";
 	unsigned int lifetime = 3600;
 	bool use_stdin = false;
 	std::string filename;

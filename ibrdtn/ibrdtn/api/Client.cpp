@@ -97,7 +97,8 @@ namespace dtn
 		void Client::connect()
 		{
 			// do a handshake
-			EID localeid(EID("api:" + _app));
+			EID localeid;
+			if (_app.length() > 0) localeid = EID("api:" + _app);
 
 			// connection flags
 			char flags = 0;

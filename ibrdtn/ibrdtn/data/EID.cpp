@@ -237,6 +237,11 @@ namespace dtn
 			return ((_scheme == DEFAULT_SCHEME) && (_ssp == "none")) || (_scheme == EID::CBHE_SCHEME);
 		}
 
+		bool EID::isNone() const
+		{
+			return (_scheme == DEFAULT_SCHEME) && (_ssp == "none");
+		}
+
 		std::pair<size_t, size_t> EID::getCompressed() const
 		{
 			size_t node = 0;

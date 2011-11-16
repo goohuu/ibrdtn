@@ -69,6 +69,12 @@ namespace dtn
 			bool isCompressable() const;
 
 			/**
+			 * Determine if this EID is null
+			 * @return True, if the EID is null
+			 */
+			bool isNone() const;
+
+			/**
 			 * Get the compressed EID as two numeric values. Both values
 			 * are set to zero if the EID is not compressable.
 			 * @return A pair of two numeric values.
