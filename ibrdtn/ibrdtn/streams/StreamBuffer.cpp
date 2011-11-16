@@ -174,9 +174,14 @@ namespace dtn
 		void StreamConnection::StreamBuffer::keepalive()
 		{
 			try {
-				ibrcommon::MutexLock l(_sendlock);
-				_stream << StreamDataSegment() << std::flush;
-				IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
+				try {
+					ibrcommon::MutexTryLock l(_sendlock);
+					_stream << StreamDataSegment() << std::flush;
+					IBRCOMMON_LOGGER_DEBUG(15) << "KEEPALIVE sent" << IBRCOMMON_LOGGER_ENDL;
+				} catch (const ibrcommon::MutexException&) {
+					// could not grab the lock - another process is sending something
+					// then we do nothing since a data frame do the same as a keepalive frame.
+				};
 			} catch (const std::exception&) {
 				// set failed bit
 				set(STREAM_FAILED);
