@@ -142,10 +142,32 @@ namespace dtn
 			bool good() const;
 
 		private:
+			class KeepaliveSender : public ibrcommon::JoinableThread
+			{
+			public:
+				KeepaliveSender(TCPConnection &connection, size_t &keepalive_timeout);
+				~KeepaliveSender();
+
+				/**
+				 * run method of the thread
+				 */
+				void run();
+
+				/**
+				 * shutdown the sender
+				 */
+				void shutdown();
+
+			private:
+				ibrcommon::Conditional _wait;
+				TCPConnection &_connection;
+				size_t &_keepalive_timeout;
+			};
+
 			class Sender : public ibrcommon::JoinableThread, public ibrcommon::Queue<dtn::data::BundleID>
 			{
 			public:
-				Sender(TCPConnection &connection, size_t &keepalive_timeout);
+				Sender(TCPConnection &connection);
 				virtual ~Sender();
 
 			protected:
@@ -155,7 +177,6 @@ namespace dtn
 
 			private:
 				TCPConnection &_connection;
-				size_t &_keepalive_timeout;
 				dtn::data::BundleID _current_transfer;
 			};
 
@@ -172,6 +193,9 @@ namespace dtn
 			// This thread gets awaiting bundles of the queue
 			// and transmit them to the peer.
 			Sender _sender;
+
+			// Keepalive sender
+			KeepaliveSender _keepalive_sender;
 
 			// handshake variables
 			dtn::data::EID _name;

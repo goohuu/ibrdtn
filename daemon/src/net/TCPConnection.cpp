@@ -22,6 +22,7 @@
 #include <ibrcommon/net/tcpclient.h>
 #include <ibrcommon/TimeMeasurement.h>
 #include <ibrcommon/net/vinterface.h>
+#include <ibrcommon/thread/Conditional.h>
 #include <ibrcommon/Logger.h>
 
 #include <iostream>
@@ -47,7 +48,7 @@ namespace dtn
 		TCPConnection::TCPConnection(TCPConvergenceLayer & tcpsrv, ibrcommon::tcpstream *stream, const dtn::data::EID & name, const size_t timeout)
 #ifdef WITH_TLS
 		 : _peer(), _node(name), _tcpstream(stream), _tlsstream(stream), _stream(*this, _tlsstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
-		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
+		   _sender(*this), _keepalive_sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
 #else
 		 : _peer(), _node(name), _tcpstream(stream), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
 		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
@@ -76,7 +77,7 @@ namespace dtn
 		TCPConnection::TCPConnection(TCPConvergenceLayer &tcpsrv, const dtn::core::Node &node, const dtn::data::EID &name, const size_t timeout)
 #ifdef WITH_TLS
 		 : _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _tlsstream(_tcpstream.get()), _stream(*this, _tlsstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
-		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
+		   _sender(*this), _keepalive_sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
 #else
 		 : _peer(), _node(node), _tcpstream(new ibrcommon::tcpclient()), _stream(*this, *_tcpstream, dtn::daemon::Configuration::getInstance().getNetwork().getTCPChunkSize()),
 		   _sender(*this, _keepalive_timeout), _name(name), _timeout(timeout), _lastack(0), _keepalive_timeout(0), _callback(tcpsrv), _flags(0)
@@ -90,6 +91,9 @@ namespace dtn
 
 		TCPConnection::~TCPConnection()
 		{
+			// join the keepalive sender thread
+			_keepalive_sender.join();
+
 			// wait until the sender thread is finished
 			_sender.join();
 		}
@@ -190,6 +194,9 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(40) << "TCPConnection::eventConnectionDown()" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
+				// shutdown the keepalive sender thread
+				_keepalive_sender.shutdown();
+
 				// stop the sender
 				_sender.stop();
 			} catch (const ibrcommon::ThreadException &ex) {
@@ -282,6 +289,9 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(60) << "TCPConnection down" << IBRCOMMON_LOGGER_ENDL;
 
 			try {
+				// shutdown the keepalive sender thread
+				_keepalive_sender.shutdown();
+
 				// shutdown the sender thread
 				_sender.stop();
 			} catch (const std::exception&) { };
@@ -352,6 +362,9 @@ namespace dtn
 
 				// start the sender
 				_sender.start();
+
+				// start keepalive sender
+				_keepalive_sender.start();
 
 				while (!_stream.eof())
 				{
@@ -464,8 +477,47 @@ namespace dtn
 			return conn;
 		}
 
-		TCPConnection::Sender::Sender(TCPConnection &connection, size_t &keepalive_timeout)
+		TCPConnection::KeepaliveSender::KeepaliveSender(TCPConnection &connection, size_t &keepalive_timeout)
 		 : _connection(connection), _keepalive_timeout(keepalive_timeout)
+		{
+
+		}
+
+		TCPConnection::KeepaliveSender::~KeepaliveSender()
+		{
+		}
+
+		void TCPConnection::KeepaliveSender::run()
+		{
+			try {
+				ibrcommon::MutexLock l(_wait);
+				while (true)
+				{
+					try {
+						_wait.wait(_keepalive_timeout);
+					} catch (const ibrcommon::Conditional::ConditionalAbortException &ex) {
+						if (ex.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+						{
+							// send a keepalive
+							_connection.keepalive();
+						}
+						else
+						{
+							throw;
+						}
+					}
+				}
+			} catch (const std::exception&) { };
+		}
+
+		void TCPConnection::KeepaliveSender::shutdown()
+		{
+			ibrcommon::MutexLock l(_wait);
+			_wait.abort();
+		}
+
+		TCPConnection::Sender::Sender(TCPConnection &connection)
+		 : _connection(connection)
 		{
 		}
 
@@ -488,50 +540,35 @@ namespace dtn
 
 				while (_connection.good())
 				{
-					try {
-						_current_transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true, _keepalive_timeout);
+					_current_transfer = ibrcommon::Queue<dtn::data::BundleID>::getnpop(true);
 
-						try {
-							// read the bundle out of the storage
-							dtn::data::Bundle bundle = storage.get(_current_transfer);
+					try {
+						// read the bundle out of the storage
+						dtn::data::Bundle bundle = storage.get(_current_transfer);
 
 #ifdef WITH_BUNDLE_SECURITY
-							const dtn::daemon::Configuration::Security::Level seclevel =
-									dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
+						const dtn::daemon::Configuration::Security::Level seclevel =
+								dtn::daemon::Configuration::getInstance().getSecurity().getLevel();
 
-							if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
-							{
-								try {
-									dtn::security::SecurityManager::getInstance().auth(bundle);
-								} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-									// sign requested, but no key is available
-									IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
-								}
-							}
-#endif
-							// send bundle
-							_connection << bundle;
-						} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
-							// send transfer aborted event
-							TransferAbortedEvent::raise(_connection._node.getEID(), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
-						}
-						
-						// unset the current transfer
-						_current_transfer = dtn::data::BundleID();
-						
-					} catch (const ibrcommon::QueueUnblockedException &ex) {
-						switch (ex.reason)
+						if (seclevel & dtn::daemon::Configuration::Security::SECURITY_LEVEL_AUTHENTICATED)
 						{
-							case ibrcommon::QueueUnblockedException::QUEUE_ERROR:
-							case ibrcommon::QueueUnblockedException::QUEUE_ABORT:
-								throw;
-							case ibrcommon::QueueUnblockedException::QUEUE_TIMEOUT:
-							{
-								// send a keepalive
-								_connection.keepalive();
+							try {
+								dtn::security::SecurityManager::getInstance().auth(bundle);
+							} catch (const dtn::security::SecurityManager::KeyMissingException&) {
+								// sign requested, but no key is available
+								IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
 							}
 						}
+#endif
+						// send bundle
+						_connection << bundle;
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
+						// send transfer aborted event
+						TransferAbortedEvent::raise(_connection._node.getEID(), _current_transfer, dtn::net::TransferAbortedEvent::REASON_BUNDLE_DELETED);
 					}
+
+					// unset the current transfer
+					_current_transfer = dtn::data::BundleID();
 
 					// idle a little bit
 					yield();
