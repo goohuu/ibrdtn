@@ -125,7 +125,7 @@ namespace dtn
 
 
 			if(!_skip_payload){
-			    try {
+				try {
 
 				_stream << std::endl;
 
@@ -134,9 +134,9 @@ namespace dtn
 				size_t slength = 0;
 				obj.serialize(b64, slength);
 				b64 << std::flush;
-			    } catch (const std::exception &ex) {
-				    std::cerr << ex.what() << std::endl;
-			    }
+				} catch (const std::exception &ex) {
+					std::cerr << ex.what() << std::endl;
+				}
 			}
 
 			_stream << std::endl;
@@ -371,7 +371,6 @@ namespace dtn
 			std::string buffer;
 
 			// read the appended newline character
-			//FIXME should the base64reader remove the newline character?
 			getline(_stream, buffer);
 			std::string::reverse_iterator iter = buffer.rbegin();
 			if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
@@ -421,7 +420,6 @@ namespace dtn
 			std::string buffer;
 
 			// read the appended newline character
-			//FIXME should the base64reader remove the newline character?
 			getline(_stream, buffer);
 			std::string::reverse_iterator iter = buffer.rbegin();
 			if ( (*iter) == '\r' ) buffer = buffer.substr(0, buffer.length() - 1);
