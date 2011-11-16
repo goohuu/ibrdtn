@@ -590,7 +590,6 @@ namespace dtn
 
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_OK << " PAYLOAD CLEAR SUCCESSFUL" << std::endl;
-							_stream << "Length: " << b.getLength() << std::endl;
 						}
 						else if (cmd[cmd_index] == "length"){
 							ibrcommon::MutexLock l(_write_lock);
