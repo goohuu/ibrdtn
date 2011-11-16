@@ -83,6 +83,8 @@ namespace dtn
 
 				const std::list<const Block*> getList() const;
 
+				size_t size() const;
+
 			private:
 				std::list<refcnt_ptr<Block> > _blocks;
 			};
@@ -130,6 +132,8 @@ namespace dtn
 			void clearBlocks();
 
 			string toString() const;
+
+			size_t blockCount() const;
 
 		private:
 			BlockList _blocks;

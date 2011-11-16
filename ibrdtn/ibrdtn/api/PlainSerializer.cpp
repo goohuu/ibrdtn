@@ -127,19 +127,19 @@ namespace dtn
 			if(!_skip_payload){
 				try {
 
-				_stream << std::endl;
+					_stream << std::endl;
 
-				// put data here
-				ibrcommon::Base64Stream b64(_stream, false, 80);
-				size_t slength = 0;
-				obj.serialize(b64, slength);
-				b64 << std::flush;
+					// put data here
+					ibrcommon::Base64Stream b64(_stream, false, 80);
+					size_t slength = 0;
+					obj.serialize(b64, slength);
+					b64 << std::flush;
 				} catch (const std::exception &ex) {
 					std::cerr << ex.what() << std::endl;
 				}
-			}
 
-			_stream << std::endl;
+				_stream << std::endl;
+			}
 
 			return (*this);
 		}
@@ -462,7 +462,6 @@ namespace dtn
 		}
 
 		dtn::data::Block& PlainDeserializer::readBlock(BlockInserter inserter, bool payload_is_adm)
-		//dtn::data::Block& PlainDeserializer::readBlock(bool payload_is_adm)
 		{
 			std::string buffer;
 			int block_type;
@@ -503,7 +502,6 @@ namespace dtn
 					if (payload_is_adm)
 					{
 						// create a temporary block
-						//dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
 						dtn::data::ExtensionBlock block;
 						block.set(dtn::data::Block::LAST_BLOCK, false);
 
@@ -522,27 +520,19 @@ namespace dtn
 
 						serializer << block;
 
-						// remove the temporary block
-						//obj.remove(block);
-
 						switch (admfield >> 4)
 						{
 							case 1:
 							{
-								//dtn::data::StatusReportBlock &block = obj.push_back<dtn::data::StatusReportBlock>();
-								//dtn::data::StatusReportBlock &block = *(new dtn::data::StatusReportBlock());
 								dtn::data::StatusReportBlock &block = inserter.insert<dtn::data::StatusReportBlock>();
 								block.set(dtn::data::Block::LAST_BLOCK, false);
 								deserializer >> block;
 								//lastblock = block.get(dtn::data::Block::LAST_BLOCK);
-								//break;
 								return block;
 							}
 
 							case 2:
 							{
-								//dtn::data::CustodySignalBlock &block = obj.push_back<dtn::data::CustodySignalBlock>();
-								//dtn::data::CustodySignalBlock &block = *(new dtn::data::CustodySignalBlock());
 								dtn::data::CustodySignalBlock &block = inserter.insert<dtn::data::CustodySignalBlock>();
 								block.set(dtn::data::Block::LAST_BLOCK, false);
 								deserializer >> block;
@@ -562,8 +552,6 @@ namespace dtn
 					}
 					else
 					{
-						//dtn::data::PayloadBlock &block = obj.push_back<dtn::data::PayloadBlock>();
-						//dtn::data::PayloadBlock &block = *(new dtn::data::PayloadBlock());
 						dtn::data::PayloadBlock &block = inserter.insert<dtn::data::PayloadBlock>();
 						block.set(dtn::data::Block::LAST_BLOCK, false);
 						(*this) >> block;
@@ -578,8 +566,6 @@ namespace dtn
 					try {
 						dtn::data::ExtensionBlock::Factory &f = dtn::data::ExtensionBlock::Factory::get((char) block_type);
 
-						//dtn::data::Block &block = obj.push_back(f);
-						//dtn::data::Block &block = *f.create();
 						dtn::data::Block &block = inserter.insert(f);
 						block.set(dtn::data::Block::LAST_BLOCK, false);
 						(*this) >> block;
@@ -588,8 +574,6 @@ namespace dtn
 						{
 							//IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 
-							// remove the block
-							//obj.remove(block);
 							throw BlockNotProcessableException();
 						}
 						return block;
@@ -599,8 +583,6 @@ namespace dtn
 					}
 					catch (const ibrcommon::Exception &ex)
 					{
-						//dtn::data::ExtensionBlock &block = obj.push_back<dtn::data::ExtensionBlock>();
-						//dtn::data::ExtensionBlock &block = *(new dtn::data::ExtensionBlock());
 						dtn::data::ExtensionBlock &block = inserter.insert<dtn::data::ExtensionBlock>();
 						block.set(dtn::data::Block::LAST_BLOCK, false);
 						(*this) >> block;
@@ -609,8 +591,6 @@ namespace dtn
 						{
 							//IBRCOMMON_LOGGER_DEBUG(5) << "unprocessable block in bundle " << obj.toString() << " has been removed" << IBRCOMMON_LOGGER_ENDL;
 
-							// remove the block
-							//obj.remove(block);
 							throw BlockNotProcessableException();
 						}
 						return block;
@@ -646,6 +626,11 @@ namespace dtn
 					return _bundle->push_back(f);
 				}
 			}
+		}
+
+		PlainDeserializer::BlockInserter::POSITION PlainDeserializer::BlockInserter::getAlignment() const
+		{
+			return _alignment;
 		}
 	}
 }

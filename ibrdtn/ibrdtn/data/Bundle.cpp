@@ -268,6 +268,16 @@ namespace dtn
 			return PrimaryBlock::toString();
 		}
 
+		size_t Bundle::blockCount() const
+		{
+			return _blocks.size();
+		}
+
+		size_t Bundle::BlockList::size() const
+		{
+			return _blocks.size();
+		}
+
 		template<>
 		CustodySignalBlock& Bundle::BlockList::get<CustodySignalBlock>()
 		{

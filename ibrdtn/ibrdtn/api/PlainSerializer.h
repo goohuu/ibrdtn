@@ -59,7 +59,6 @@ namespace dtn
 			 * @return the block that was inserted
 			 */
 			dtn::data::Block& readBlock(BlockInserter inserter, bool payload_is_adm);
-			//dtn::data::Block& readBlock(bool payload_is_adm);
 
 		private:
 			/**
@@ -85,6 +84,7 @@ namespace dtn
 
 				template <class T>
 				T& insert();
+				POSITION getAlignment() const;
 
 				dtn::data::Block &insert(dtn::data::ExtensionBlock::Factory &f);
 

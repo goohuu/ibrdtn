@@ -397,7 +397,11 @@ namespace dtn
 									ss >> offset;
 									if (ss.fail()) throw ibrcommon::Exception("malformed command");
 
-									if(offset <= 0)
+									if (offset >= _bundle_reg.blockCount())
+									{
+										inserter = PlainDeserializer::BlockInserter(_bundle_reg, PlainDeserializer::BlockInserter::END);
+									}
+									else if(offset <= 0)
 									{
 										inserter = PlainDeserializer::BlockInserter(_bundle_reg, PlainDeserializer::BlockInserter::FRONT);
 									}
@@ -412,7 +416,15 @@ namespace dtn
 
 								try
 								{
-									PlainDeserializer(_stream).readBlock(inserter, _bundle_reg.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD));
+									dtn::data::Block &block = PlainDeserializer(_stream).readBlock(inserter, _bundle_reg.get(dtn::data::Bundle::APPDATA_IS_ADMRECORD));
+									if (inserter.getAlignment() == PlainDeserializer::BlockInserter::END)
+									{
+										block.set(dtn::data::Block::LAST_BLOCK, true);
+									}
+									else
+									{
+										block.set(dtn::data::Block::LAST_BLOCK, false);
+									}
 									_stream << ClientHandler::API_STATUS_OK << " BUNDLE BLOCK ADD SUCCESSFUL" << std::endl;
 								}
 								catch (const PlainDeserializer::PlainDeserializerException &ex){
@@ -510,6 +522,8 @@ namespace dtn
 								blob_stream->ignore(payload_offset);
 
 								PlainSerializer(_stream, false).serialize(blob_stream, length);
+
+								_stream << std::endl;
 
 							} catch (const std::exception&) {
 								_stream << ClientHandler::API_STATUS_NOT_ACCEPTABLE << " PAYLOAD GET FAILED" << std::endl;
