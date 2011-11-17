@@ -302,6 +302,9 @@ namespace dtn
 							try {
 								_bundle_reg = dtn::core::BundleCore::getInstance().getStorage().get(id);
 
+								// process the bundle block (security, compression, ...)
+								dtn::core::BundleCore::processBlocks(_bundle_reg);
+
 								ibrcommon::MutexLock l(_write_lock);
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE LOADED "; sayBundleID(_stream, id); _stream << std::endl;
 							} catch (const ibrcommon::Exception&) {
