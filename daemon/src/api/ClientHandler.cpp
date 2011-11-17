@@ -12,6 +12,7 @@
 #include "api/ManagementConnection.h"
 #include "api/EventConnection.h"
 #include "api/ExtendedApiHandler.h"
+#include "api/OrderedStreamHandler.h"
 #include "core/BundleCore.h"
 #include <ibrcommon/Logger.h>
 #include <ibrdtn/utils/Utils.h>
@@ -114,6 +115,12 @@ namespace dtn
 						{
 							// switch to the extended api
 							_handler = new ExtendedApiHandler(*this, *_stream);
+							continue;
+						}
+						else if (cmd[1] == "streaming")
+						{
+							// switch to the streaming api
+							_handler = new OrderedStreamHandler(*this, *_stream);
 							continue;
 						}
 						else

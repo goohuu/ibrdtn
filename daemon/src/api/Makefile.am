@@ -17,7 +17,11 @@ api_SOURCES = \
 		ManagementConnection.h \
 		ManagementConnection.cpp \
 		EventConnection.h \
-		EventConnection.cpp
+		EventConnection.cpp \
+		OrderedStreamHandler.h \
+		OrderedStreamHandler.cpp \
+		BundleStreamBuf.h \
+		BundleStreamBuf.cpp
 		
 noinst_LTLIBRARIES = libapi.la
 libapi_la_SOURCES= $(api_SOURCES)

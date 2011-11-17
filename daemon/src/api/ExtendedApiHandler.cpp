@@ -63,11 +63,7 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
-			// remove the client from the list in ApiServer
-//			_server.connectionDown(this);
-
 			_registration.abort();
-//			_server.freeRegistration(_registration);
 
 			// close the stream
 			try {
@@ -82,9 +78,6 @@ namespace dtn
 
 		void ExtendedApiHandler::run()
 		{
-			// signal the active connection to the server
-//			_server.connectionUp(this);
-
 			_sender.start();
 
 			std::string buffer;
