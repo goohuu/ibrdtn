@@ -46,7 +46,7 @@ AC_CHECK_HEADERS([arpa/inet.h])
 AC_CHECK_HEADERS([fcntl.h])
 AC_CHECK_HEADERS([sys/ioctl.h])
 AC_CHECK_HEADERS([sys/socket.h])
-AC_CHECK_HEADER([linux/if.h], [
+AC_CHECK_HEADER([linux/types.h], [
         is_linux="yes"
 ])
 

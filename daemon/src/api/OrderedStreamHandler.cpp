@@ -26,8 +26,9 @@ namespace dtn
 	namespace api
 	{
 		OrderedStreamHandler::OrderedStreamHandler(ClientHandler &client, ibrcommon::tcpstream &stream)
-		 : ProtocolHandler(client, stream), _sender(*this), _streambuf(*this), _bundlestream(&_streambuf), _group(false), _lifetime(3600)
+		 : ProtocolHandler(client, stream), _sender(*this), _streambuf(*this), _bundlestream(&_streambuf), _group(true), _lifetime(3600)
 		{
+			_endpoint = dtn::core::BundleCore::local + "/" + client.getRegistration().getHandle();
 		}
 
 		OrderedStreamHandler::~OrderedStreamHandler()
