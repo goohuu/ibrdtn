@@ -335,16 +335,10 @@ namespace dtn
 							try {
 								// construct bundle id
 								dtn::data::BundleID id = readBundleID(cmd, 2);
+
+								// announce this bundle as delivered
 								dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
-
-								// raise bundle event
-								dtn::core::BundleEvent::raise(meta, BUNDLE_DELIVERED);
-
-								// delete it if it was a singleton
-								if (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON))
-								{
-									dtn::core::BundleCore::getInstance().getStorage().remove(id);
-								}
+								_registration.delivered(id);
 
 								ibrcommon::MutexLock l(_write_lock);
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;
