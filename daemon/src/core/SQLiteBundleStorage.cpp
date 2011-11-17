@@ -1609,7 +1609,7 @@ namespace dtn
 						ibrcommon::BLOB::Reference ref = payload.getBLOB();
 						ibrcommon::BLOB::iostream stream = ref.iostream();
 
-						const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref.getPointer());
+						const SQLiteBLOB &blob = dynamic_cast<const SQLiteBLOB&>(*ref);
 
 						// first remove the tmp file
 						tmpfile.remove();

@@ -96,8 +96,8 @@ void TestSerializer::serializer_cbhe02(void)
 	ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 	{
-		ibrcommon::MutexLock l(ref);
-		(*ref) << "0123456789";
+		ibrcommon::BLOB::iostream stream = ref.iostream();
+		(*stream) << "0123456789";
 	}
 
 	b.push_back(ref);

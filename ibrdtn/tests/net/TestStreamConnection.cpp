@@ -108,8 +108,8 @@ void TestStreamConnection::connectionUpDown()
 			ibrcommon::BLOB::Reference ref = ibrcommon::BLOB::create();
 
 			{
-				ibrcommon::MutexLock l(ref);
-				(*ref) << "Hallo Welt" << std::endl;
+				ibrcommon::BLOB::iostream stream = ref.iostream();
+				(*stream) << "Hallo Welt" << std::endl;
 
 				// create testing pattern, chunkwise to ocnserve memory
 				char pattern[2048];
@@ -121,10 +121,10 @@ void TestStreamConnection::connectionUpDown()
 				string chunk=string(pattern,2048);
 
 				while (size > 2048) {
-					(*ref) << chunk;
+					(*stream) << chunk;
 					size-=2048;
 				}
-				(*ref) << chunk.substr(0,size);
+				(*stream) << chunk.substr(0,size);
 			}
 
 			dtn::data::PayloadBlock &payload = b.push_back(ref);
