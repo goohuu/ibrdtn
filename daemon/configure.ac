@@ -219,7 +219,6 @@ AC_CONFIG_FILES([Makefile \
 	src/api/Makefile \
 	doc/Makefile \
 	man/Makefile \
-	etc/Makefile \
 	tests/Makefile \
 	tests/unittests/Makefile
 	])
