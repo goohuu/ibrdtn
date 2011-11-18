@@ -1,2 +1,4 @@
 COPYING
 etc/ibrdtn.conf.example
+scripts/dtndrive.sh
+scripts/genkey.sh
