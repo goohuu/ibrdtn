@@ -29,7 +29,8 @@ namespace dtn
 			virtual bool __cancellation();
 
 			virtual void put(dtn::data::Bundle &b);
-			virtual dtn::data::Bundle get(size_t timeout);
+			virtual dtn::data::MetaBundle get(size_t timeout = 0);
+			virtual void delivered(const dtn::data::MetaBundle &m);
 
 		private:
 			class Sender : public ibrcommon::JoinableThread

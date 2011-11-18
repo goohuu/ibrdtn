@@ -37,6 +37,11 @@ namespace dtn
 			_sender.join();
 		}
 
+		void OrderedStreamHandler::delivered(const dtn::data::MetaBundle &m)
+		{
+			_client.getRegistration().delivered(m);
+		}
+
 		void OrderedStreamHandler::put(dtn::data::Bundle &b)
 		{
 			IBRCOMMON_LOGGER_DEBUG(20) << "OrderedStreamHandler: put()" << IBRCOMMON_LOGGER_ENDL;
@@ -64,7 +69,7 @@ namespace dtn
 			dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + _client.getRegistration().getHandle(), b, true);
 		}
 
-		dtn::data::Bundle OrderedStreamHandler::get(size_t timeout)
+		dtn::data::MetaBundle OrderedStreamHandler::get(size_t timeout)
 		{
 			Registration &reg = _client.getRegistration();
 			IBRCOMMON_LOGGER_DEBUG(20) << "OrderedStreamHandler: get()" << IBRCOMMON_LOGGER_ENDL;
@@ -72,21 +77,19 @@ namespace dtn
 			while (true)
 			{
 				try {
-					dtn::data::Bundle bundle = reg.receive();
+					dtn::data::MetaBundle bundle = reg.receiveMetaBundle();
 
 					// discard bundle if they are not from the specified peer
-					if ((!_group) && (bundle._destination != _peer)) continue;
-
-					// process the bundle block (security, compression, ...)
-					dtn::core::BundleCore::processBlocks(bundle);
-
-					// set bundle as delivered
-					reg.delivered(bundle);
+					if ((!_group) && (bundle.source != _peer))
+					{
+						IBRCOMMON_LOGGER_DEBUG(30) << "OrderedStreamHandler: get(): bundle source " << bundle.source.getString() << " not expected - discard" << IBRCOMMON_LOGGER_ENDL;
+						continue;
+					}
 
 					return bundle;
 				} catch (const dtn::core::BundleStorage::NoBundleFoundException&) {
 					IBRCOMMON_LOGGER_DEBUG(30) << "OrderedStreamHandler: get(): no bundle found wait for notify" << IBRCOMMON_LOGGER_ENDL;
-					reg.wait_for_bundle();
+					reg.wait_for_bundle(timeout);
 				}
 			}
 		}
@@ -142,7 +145,7 @@ namespace dtn
 						_sender.start();
 
 						// forward data to stream buffer
-						_bundlestream << _stream.rdbuf();
+						_bundlestream << _stream.rdbuf() << std::flush;
 					}
 					else if (cmd[0] == "set")
 					{
@@ -170,19 +173,35 @@ namespace dtn
 						{
 							_peer = cmd[2];
 							_group = false;
-							_stream << ClientHandler::API_STATUS_OK << " DESTINATION SET" << std::endl;
+							_stream << ClientHandler::API_STATUS_OK << " DESTINATION CHANGED" << std::endl;
 						}
 						else if (cmd[1] == "group")
 						{
 							_peer = cmd[2];
 							_group = true;
-							_stream << ClientHandler::API_STATUS_OK << " DESTINATION GROUP SET" << std::endl;
+							_stream << ClientHandler::API_STATUS_OK << " DESTINATION GROUP CHANGED" << std::endl;
 						}
 						else if (cmd[1] == "lifetime")
 						{
 							std::stringstream ss(cmd[2]);
 							ss >> _lifetime;
-							_stream << ClientHandler::API_STATUS_OK << " LIFETIME SET" << std::endl;
+							_stream << ClientHandler::API_STATUS_OK << " LIFETIME CHANGED" << std::endl;
+						}
+						else if (cmd[1] == "chunksize")
+						{
+							size_t size = 0;
+							std::stringstream ss(cmd[2]);
+							ss >> size;
+							_streambuf.setChunkSize(size);
+							_stream << ClientHandler::API_STATUS_OK << " CHUNKSIZE CHANGED" << std::endl;
+						}
+						else if (cmd[1] == "timeout")
+						{
+							size_t timeout = 0;
+							std::stringstream ss(cmd[2]);
+							ss >> timeout;
+							_streambuf.setTimeout(timeout);
+							_stream << ClientHandler::API_STATUS_OK << " TIMEOUT CHANGED" << std::endl;
 						}
 						else
 						{
@@ -224,7 +243,7 @@ namespace dtn
 		void OrderedStreamHandler::Sender::run()
 		{
 			try {
-				_handler._stream << _handler._bundlestream.rdbuf();
+				_handler._stream << _handler._bundlestream.rdbuf() << std::flush;
 			} catch (const std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "unexpected API error! " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
