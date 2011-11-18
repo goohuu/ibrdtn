@@ -17,7 +17,7 @@ namespace dtn
 		}
 
 		StreamBlock::StreamBlock()
-		: dtn::data::Block(StreamBlock::BLOCK_TYPE), _seq(0)
+		: dtn::data::Block(StreamBlock::BLOCK_TYPE), _seq(0), _streamflags(0)
 		{
 		}
 
@@ -28,19 +28,39 @@ namespace dtn
 
 		size_t StreamBlock::getLength() const
 		{
-			return _seq.getLength();
+			return dtn::data::SDNV(_streamflags).getLength() + _seq.getLength();
 		}
 
 		std::ostream& StreamBlock::serialize(std::ostream &stream, size_t&) const
 		{
+			stream << dtn::data::SDNV(_streamflags);
 			stream << _seq;
 			return stream;
 		}
 
 		std::istream& StreamBlock::deserialize(std::istream &stream, const size_t)
 		{
+			dtn::data::SDNV flags;
+			stream >> flags; _streamflags = flags.getValue();
 			stream >> _seq;
 			return stream;
+		}
+
+		void StreamBlock::set(STREAM_FLAGS flag, const bool &value)
+		{
+			if (value)
+			{
+				_streamflags |= flag;
+			}
+			else
+			{
+				_streamflags &= ~(flag);
+			}
+		}
+
+		bool StreamBlock::get(STREAM_FLAGS flag) const
+		{
+			return (_streamflags & flag);
 		}
 
 		void StreamBlock::setSequenceNumber(size_t seq)

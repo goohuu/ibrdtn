@@ -29,6 +29,12 @@ namespace dtn
 
 			static const char BLOCK_TYPE = 242;
 
+			enum STREAM_FLAGS
+			{
+				STREAM_BEGIN = 1,
+				STREAM_END = 1 << 0x01
+			};
+
 			StreamBlock();
 			virtual ~StreamBlock();
 
@@ -39,8 +45,12 @@ namespace dtn
 			void setSequenceNumber(size_t seq);
 			size_t getSequenceNumber() const;
 
+			void set(STREAM_FLAGS flag, const bool &value);
+			bool get(STREAM_FLAGS flag) const;
+
 		private:
 			dtn::data::SDNV _seq;
+			size_t _streamflags;
 		};
 
 		/**
