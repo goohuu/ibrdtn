@@ -72,13 +72,20 @@ namespace dtn
 			}
 		}
 
-		void Registration::wait_for_bundle()
+		void Registration::wait_for_bundle(size_t timeout)
 		{
 			ibrcommon::MutexLock l(_wait_for_cond);
 
 			while (_no_more_bundles)
 			{
-				_wait_for_cond.wait();
+				if (timeout > 0)
+				{
+					_wait_for_cond.wait(timeout);
+				}
+				else
+				{
+					_wait_for_cond.wait();
+				}
 			}
 		}
 

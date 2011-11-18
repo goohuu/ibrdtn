@@ -54,7 +54,7 @@ namespace dtn
 			/**
 			 * wait for available bundle
 			 */
-			void wait_for_bundle();
+			void wait_for_bundle(size_t timeout = 0);
 
 			/**
 			 * subscribe to a end-point
