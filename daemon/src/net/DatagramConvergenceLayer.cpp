@@ -11,23 +11,8 @@
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
 
-#include <ibrcommon/net/lowpanstream.h>
-#include <ibrcommon/net/UnicastSocketLowpan.h>
-#include <ibrcommon/net/lowpansocket.h>
-
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
-#include <ibrcommon/TimeMeasurement.h>
-
-#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
-
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
-#include <iostream>
-#include <list>
 
 namespace dtn
 {
@@ -67,10 +52,19 @@ namespace dtn
 			ibrcommon::MutexLock l(_send_lock);
 
 			// forward the send request to DatagramService
+			_service.send(destination, buf, len);
+		}
+
+		void DatagramConvergenceLayer::send(const char *buf, int len)
+		{
+			// only on sender at once
+			ibrcommon::MutexLock l(_send_lock);
+
+			// forward the send request to DatagramService
 			_service.send(buf, len);
 		}
 
-		void DatagramConvergenceLayer::callback_send(DatagramConnection &connection, const std::string &destination, const char *buf, int len)
+		void DatagramConvergenceLayer::callback_send(DatagramConnection&, const std::string &destination, const char *buf, int len)
 		{
 			// forward to send method
 			send(destination, buf, len);
@@ -116,14 +110,19 @@ namespace dtn
 			return *connection;
 		}
 
-		void DatagramConvergenceLayer::remove(const DatagramConnection &conn)
+		void DatagramConvergenceLayer::connectionUp(const DatagramConnection *conn)
+		{
+			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::connectionUp: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+		}
+
+		void DatagramConvergenceLayer::connectionDown(const DatagramConnection *conn)
 		{
 			ibrcommon::MutexLock lc(_connection_lock);
 
 			std::list<DatagramConnection*>::iterator i;
 			for(i = _connections.begin(); i != _connections.end(); ++i)
 			{
-				if ((*i) == (&conn))
+				if ((*i) == conn)
 				{
 					_connections.erase(i);
 					return;
@@ -181,7 +180,7 @@ namespace dtn
 			ss << announcement;
 
 			int len = ss.str().size();
-			send("", ss.str().c_str(), len);
+			send(ss.str().c_str(), len);
 		}
 
 		void DatagramConvergenceLayer::componentRun()
@@ -221,14 +220,16 @@ namespace dtn
 					DiscoveryAgent::received(announce, 30);
 					continue;
 				}
+				else if ( header & HEADER_SEGMENT )
+				{
+					ibrcommon::MutexLock lc(_connection_lock);
 
-				ibrcommon::MutexLock lc(_connection_lock);
+					// Connection instance for this address
+					DatagramConnection& connection = getConnection(address);
 
-				// Connection instance for this address
-				DatagramConnection& connection = getConnection(address);
-
-				// Decide in which queue to write based on the src address
-				connection.queue(data+1, len-1);
+					// Decide in which queue to write based on the src address
+					connection.queue(data+1, len-1);
+				}
 
 				yield();
 			}

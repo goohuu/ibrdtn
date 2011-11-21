@@ -81,38 +81,50 @@ namespace dtn
 
 				void abort();
 
-				void close();
-
 			protected:
 				virtual int sync();
 				virtual int overflow(int = std::char_traits<char>::eof());
 				virtual int underflow();
 
 			private:
+				// buffer size and maximum message size
 				const size_t _buf_size;
 
-				bool _in_first_segment;
-				char _out_stat;
+				// state for incoming segments
+				char _in_state;
 
-				// Input buffer
-				char *in_buf_;
-				int in_buf_len;
-				bool in_buf_free;
+				// buffer for incoming data to queue
+				// the underflow method will block until
+				// this buffer contains any data
+				char *_queue_buf;
 
-				// Output buffer
-				char *out_buf_;
-				char *out2_buf_;
+				// the number of bytes available in the queue buffer
+				int _queue_buf_len;
 
-				// sequence number
+				// conditional to lock the queue buffer and the
+				// corresponding length variable
+				ibrcommon::Conditional _queue_buf_cond;
+
+				// outgoing data from the upper layer is stored
+				// here first and processed by the overflow() method
+				char *_out_buf;
+
+				// incoming data to deliver data to the upper layer
+				// is stored in this buffer by the underflow() method
+				char *_in_buf;
+
+				// next expected incoming sequence number
 				uint8_t in_seq_num_;
-				uint8_t out_seq_num_;
-				long out_seq_num_global;
 
+				// next outgoing sequence number
+				uint8_t out_seq_num_;
+
+				// this variable is set to true to shutdown
+				// this stream
 				bool _abort;
 
+				// callback to the corresponding connection object
 				DatagramConnection &_callback;
-
-				ibrcommon::Conditional in_buf_cond;
 			};
 
 			class Sender : public ibrcommon::JoinableThread

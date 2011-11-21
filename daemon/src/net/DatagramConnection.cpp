@@ -34,6 +34,8 @@ namespace dtn
 
 		void DatagramConnection::run()
 		{
+			_callback.connectionUp(this);
+
 			try {
 				while(_stream.good())
 				{
@@ -107,25 +109,36 @@ namespace dtn
 		}
 
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, size_t maxmsglen)
-		 : std::iostream(this), _buf_size(maxmsglen), _in_first_segment(true), _out_stat(SEGMENT_FIRST),
-		   in_buf_(new char[_buf_size]), in_buf_len(0), in_buf_free(true), out_buf_(new char[_buf_size+2]), out2_buf_(new char[_buf_size]),
-		   in_seq_num_(0), out_seq_num_(0), out_seq_num_global(0), _abort(false), _callback(conn)
+		 : std::iostream(this), _buf_size(maxmsglen), _in_state(SEGMENT_FIRST),
+		   _queue_buf(new char[_buf_size]), _queue_buf_len(0), _out_buf(new char[_buf_size+2]), _in_buf(new char[_buf_size]),
+		   in_seq_num_(0), out_seq_num_(0), _abort(false), _callback(conn)
 		{
-			// Initialize get pointer. This should be zero so that underflow is called upon first read.
+			// Initialize get pointer. This should be zero so that underflow
+			// is called upon first read.
 			setg(0, 0, 0);
-			setp(out_buf_ + 1, out_buf_ + _buf_size - 1);
+
+			// mark the buffer for outgoing data as free
+			// the +1 sparse the first byte in the buffer and leave room
+			// for the processing flags of the segment
+			setp(_out_buf + 1, _out_buf + _buf_size - 1);
+
+			// set the sequence number for the first outgoing segment
+			_out_buf[0] = 0x07 & out_seq_num_;
+
+			// initialize the first byte with SEGMENT_FIRST flag
+			_out_buf[0] |= SEGMENT_FIRST;
 		}
 
 		DatagramConnection::Stream::~Stream()
 		{
-			delete[] in_buf_;
-			delete[] out_buf_;
-			delete[] out2_buf_;
+			delete[] _queue_buf;
+			delete[] _out_buf;
+			delete[] _in_buf;
 		}
 
 		void DatagramConnection::Stream::queue(const char *buf, int len)
 		{
-			ibrcommon::MutexLock l(in_buf_cond);
+			ibrcommon::MutexLock l(_queue_buf_cond);
 
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::queue"<< IBRCOMMON_LOGGER_ENDL;
 
@@ -139,53 +152,76 @@ namespace dtn
 			{
 				IBRCOMMON_LOGGER(error) << "Received frame with out of bound sequence number (" << seq_num << " expected " << (int)in_seq_num_ << ")"<< IBRCOMMON_LOGGER_ENDL;
 				_abort = true;
-				in_buf_cond.signal();
+				_queue_buf_cond.signal();
 				return;
+			}
+
+			// check if this is the first segment since we expect a first segment
+			if ((_in_state & SEGMENT_FIRST) && (!(buf[0] & SEGMENT_FIRST)))
+			{
+				IBRCOMMON_LOGGER(error) << "Received frame with wrong segment mark"<< IBRCOMMON_LOGGER_ENDL;
+				_abort = true;
+				_queue_buf_cond.signal();
+				return;
+			}
+			// check if this is a second first segment without any previous last segment
+			else if ((_in_state & SEGMENT_MIDDLE) && (buf[0] & SEGMENT_FIRST))
+			{
+				IBRCOMMON_LOGGER(error) << "Received frame with wrong segment mark"<< IBRCOMMON_LOGGER_ENDL;
+				_abort = true;
+				_queue_buf_cond.signal();
+				return;
+			}
+
+			// if this is the last segment then...
+			if (buf[0] & SEGMENT_LAST)
+			{
+				// ... expect a first segment as next
+				_in_state = SEGMENT_FIRST;
+			}
+			else
+			{
+				// if this is not the last segment we expect everything
+				// but a first segment
+				_in_state = SEGMENT_MIDDLE;
 			}
 
 			// increment the sequence number
 			in_seq_num_ = (in_seq_num_ + 1) % 8;
 
-			// check if this is the right segment
-			if (_in_first_segment)
+			// wait until the buffer is free
+			while (_queue_buf_len > 0)
 			{
-				if (!(buf[0] & SEGMENT_FIRST)) return;
-				if (!(buf[0] & SEGMENT_LAST)) _in_first_segment = false;
+				_queue_buf_cond.wait();
 			}
 
-			while (!in_buf_free)
-			{
-				in_buf_cond.wait();
-			}
+			// copy the new data into the buffer, but leave out the first byte (header)
+			::memcpy(_queue_buf, buf + 1, len - 1);
 
-			memcpy(in_buf_, buf + 1, len - 1);
-			in_buf_len = len - 1;
-			in_buf_free = false;
-			in_buf_cond.signal();
+			// store the buffer length
+			_queue_buf_len = len - 1;
+
+			// notify waiting threads
+			_queue_buf_cond.signal();
 		}
 
 		void DatagramConnection::Stream::abort()
 		{
-			ibrcommon::MutexLock l(in_buf_cond);
+			ibrcommon::MutexLock l(_queue_buf_cond);
 
-			while (!in_buf_free)
+			while (_queue_buf_len > 0)
 			{
-				in_buf_cond.wait();
+				_queue_buf_cond.wait();
 			}
 
 			_abort = true;
-			in_buf_cond.signal();
-		}
-
-		void DatagramConnection::Stream::close()
-		{
-
+			_queue_buf_cond.signal();
 		}
 
 		int DatagramConnection::Stream::sync()
 		{
 			// Here we know we get the last segment. Mark it so.
-			_out_stat |= SEGMENT_LAST;
+			_out_buf[0] |= SEGMENT_LAST;
 
 			int ret = std::char_traits<char>::eq_int_type(this->overflow(
 					std::char_traits<char>::eof()), std::char_traits<char>::eof()) ? -1
@@ -193,18 +229,23 @@ namespace dtn
 
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::sync"<< IBRCOMMON_LOGGER_ENDL;
 
+			// initialize the first byte with SEGMENT_FIRST flag
+			_out_buf[0] |= SEGMENT_FIRST;
+
 			return ret;
 		}
 
 		int DatagramConnection::Stream::overflow(int c)
 		{
-			char *ibegin = out_buf_;
+			char *ibegin = _out_buf;
 			char *iend = pptr();
 
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::overflow"<< IBRCOMMON_LOGGER_ENDL;
 
-			// mark the buffer as free
-			setp(out_buf_ + 1, out_buf_ + _buf_size - 1);
+			// mark the buffer for outgoing data as free
+			// the +1 sparse the first byte in the buffer and leave room
+			// for the processing flags of the segment
+			setp(_out_buf + 1, _out_buf + _buf_size - 1);
 
 			if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 			{
@@ -221,52 +262,43 @@ namespace dtn
 				return std::char_traits<char>::not_eof(c);
 			}
 
-			//FIXME: Should we write in the segment position here?
-			out_buf_[0] = 0x07 & out_seq_num_;
-			out_buf_[0] |= _out_stat;
-
-			out_seq_num_global++;
+			// increment the sequence number for outgoing segments
 			out_seq_num_ = (out_seq_num_ + 1) % 8;
 
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream send segment " << (int)out_seq_num_ << " / " << out_seq_num_global << IBRCOMMON_LOGGER_ENDL;
-
 			// Send segment to CL, use callback interface
-			_callback.stream_send(out_buf_, bytes);
+			_callback.stream_send(_out_buf, bytes);
 
-			if (_out_stat & SEGMENT_LAST)
-			{
-				// reset outgoing status byte
-				_out_stat = SEGMENT_FIRST;
-			}
-			else
-			{
-				_out_stat = SEGMENT_MIDDLE;
-			}
+			// reset the first byte of the next segment
+			// set the sequence number for the next outgoing segment
+			_out_buf[0] = 0x07 & out_seq_num_;
 
 			return std::char_traits<char>::not_eof(c);
 		}
 
 		int DatagramConnection::Stream::underflow()
 		{
-			ibrcommon::MutexLock l(in_buf_cond);
+			ibrcommon::MutexLock l(_queue_buf_cond);
 
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::underflow"<< IBRCOMMON_LOGGER_ENDL;
 
-			while (in_buf_free)
+			while (_queue_buf_len == 0)
 			{
 				if (_abort) throw ibrcommon::Exception("stream aborted");
-				in_buf_cond.wait();
+				_queue_buf_cond.wait();
 			}
-			memcpy(out2_buf_ ,in_buf_, in_buf_len);
-			in_buf_free = true;
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::underflow in_buf_free: " << in_buf_free << IBRCOMMON_LOGGER_ENDL;
-			in_buf_cond.signal();
+
+			// copy the queue buffer to an internal buffer
+			::memcpy(_in_buf,_queue_buf, _queue_buf_len);
 
 			// Since the input buffer content is now valid (or is new)
 			// the get pointer should be initialized (or reset).
-			setg(out2_buf_, out2_buf_, out2_buf_ + in_buf_len);
+			setg(_in_buf, _in_buf, _in_buf + _queue_buf_len);
 
-			return std::char_traits<char>::not_eof((unsigned char) out2_buf_[0]);
+			// mark the queue buffer as free
+			_queue_buf_len = 0;
+			_queue_buf_cond.signal();
+
+			return std::char_traits<char>::not_eof((unsigned char) _in_buf[0]);
 		}
 
 		DatagramConnection::Sender::Sender(Stream &stream)
