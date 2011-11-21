@@ -30,6 +30,7 @@
 #include "net/UDPConvergenceLayer.h"
 #include "net/TCPConvergenceLayer.h"
 #include "net/FileConvergenceLayer.h"
+#include "net/DatagramConvergenceLayer.h"
 
 #ifdef HAVE_SQLITE
 #include "core/SQLiteBundleStorage.h"
