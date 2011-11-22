@@ -85,6 +85,21 @@ namespace dtn
 			send(destination, buf, len);
 		}
 
+		void DatagramConvergenceLayer::callback_ack(DatagramConnection&, const std::string &destination, const char *buf, int len) throw (DatagramException)
+		{
+			char tmp[_service->getMaxMessageSize()];
+
+			// add header to the segment
+			tmp[0] = HEADER_ACK;
+			::memcpy(&tmp[1], buf, len);
+
+			// only on sender at once
+			ibrcommon::MutexLock l(_send_lock);
+
+			// forward the send request to DatagramService
+			_service->send(destination, &tmp[0], len + 1);
+		}
+
 		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
 		{
 			const std::list<dtn::core::Node::URI> uri_list = node.get(_service->getProtocol());
@@ -253,6 +268,16 @@ namespace dtn
 
 					// Decide in which queue to write based on the src address
 					connection.queue(data+1, len-1);
+				}
+				else if ( header & HEADER_ACK )
+				{
+					ibrcommon::MutexLock lc(_connection_lock);
+
+					// Connection instance for this address
+					DatagramConnection& connection = getConnection(address);
+
+					// Decide in which queue to write based on the src address
+					connection.ack(data+1, len-1);
 				}
 
 				yield();

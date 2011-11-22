@@ -35,7 +35,8 @@ namespace dtn
 		{
 		public:
 			virtual ~DatagramConnectionCallback() {};
-			virtual void callback_send(DatagramConnection &connection, const std::string &destination, const char *buf, int len) = 0;
+			virtual void callback_send(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException) = 0;
+			virtual void callback_ack(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException) = 0;
 
 			virtual void connectionUp(const DatagramConnection *conn) = 0;
 			virtual void connectionDown(const DatagramConnection *conn) = 0;
@@ -65,6 +66,12 @@ namespace dtn
 			 * @param len
 			 */
 			void queue(const char *buf, int len);
+
+			/**
+			 * This method is called by the DatagramCL, if an ACK is received.
+			 * @param seq
+			 */
+			void ack(const char *buf, int len);
 
 		private:
 			class Stream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
@@ -151,6 +158,7 @@ namespace dtn
 				DatagramConnection::Stream &_stream;
 			};
 
+			void stream_send_ack(const char *buf) throw (DatagramException);
 			void stream_send(const char *buf, int len) throw (DatagramException);
 
 			DatagramConnectionCallback &_callback;
@@ -158,6 +166,9 @@ namespace dtn
 			const std::string _identifier;
 			DatagramConnection::Stream _stream;
 			DatagramConnection::Sender _sender;
+
+			ibrcommon::Conditional _ack_cond;
+			int _last_ack;
 		};
 	} /* namespace data */
 } /* namespace dtn */

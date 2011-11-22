@@ -24,7 +24,7 @@ namespace dtn
 	namespace net
 	{
 		DatagramConnection::DatagramConnection(const std::string &identifier, size_t maxmsglen, DatagramConnectionCallback &callback)
-		 : _callback(callback), _identifier(identifier), _stream(*this, maxmsglen), _sender(_stream)
+		 : _callback(callback), _identifier(identifier), _stream(*this, maxmsglen), _sender(_stream), _last_ack(-1)
 		{
 		}
 
@@ -76,6 +76,10 @@ namespace dtn
 
 		void DatagramConnection::finally()
 		{
+			{
+				ibrcommon::MutexLock l(_ack_cond);
+				_ack_cond.abort();
+			}
 			_sender.stop();
 			_sender.join();
 
@@ -106,11 +110,38 @@ namespace dtn
 		void DatagramConnection::queue(const char *buf, int len)
 		{
 			_stream.queue(buf, len);
+
+			// send ack for this message
+			stream_send_ack(buf);
+		}
+
+		void DatagramConnection::ack(const char *buf, int len)
+		{
+			if (len > 0)
+			{
+				ibrcommon::MutexLock l(_ack_cond);
+				_last_ack = (*buf) & Stream::SEQ_NUM_MASK;
+				_ack_cond.signal(true);
+				IBRCOMMON_LOGGER_DEBUG(20) << "DatagramConnection: ack received " << _last_ack << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		void DatagramConnection::stream_send_ack(const char *buf) throw (DatagramException)
+		{
+			_callback.callback_ack(*this, getIdentifier(), buf, 1);
 		}
 
 		void DatagramConnection::stream_send(const char *buf, int len) throw (DatagramException)
 		{
+			unsigned int seq = (*buf) & Stream::SEQ_NUM_MASK;
 			_callback.callback_send(*this, getIdentifier(), buf, len);
+
+			// wait here for an ACK
+			ibrcommon::MutexLock l(_ack_cond);
+			while (_last_ack != seq)
+			{
+				_ack_cond.wait();
+			}
 		}
 
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, size_t maxmsglen)
@@ -267,11 +298,11 @@ namespace dtn
 				return std::char_traits<char>::not_eof(c);
 			}
 
-			// increment the sequence number for outgoing segments
-			out_seq_num_ = (out_seq_num_ + 1) % 8;
-
 			// Send segment to CL, use callback interface
 			_callback.stream_send(_out_buf, bytes);
+
+			// increment the sequence number for outgoing segments
+			out_seq_num_ = (out_seq_num_ + 1) % 8;
 
 			// reset the first byte of the next segment
 			// set the sequence number for the next outgoing segment

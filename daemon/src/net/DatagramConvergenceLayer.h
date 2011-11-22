@@ -106,7 +106,8 @@ namespace dtn
 			{
 				HEADER_UNKOWN = 0,
 				HEADER_BROADCAST = 1,
-				HEADER_SEGMENT = 2
+				HEADER_SEGMENT = 2,
+				HEADER_ACK = 4
 			};
 
 			DatagramConvergenceLayer(DatagramService *ds);
@@ -159,6 +160,8 @@ namespace dtn
 			 * @param len
 			 */
 			void callback_send(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException);
+
+			void callback_ack(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException);
 
 			void connectionUp(const DatagramConnection *conn);
 			void connectionDown(const DatagramConnection *conn);
