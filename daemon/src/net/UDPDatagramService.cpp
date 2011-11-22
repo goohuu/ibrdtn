@@ -151,7 +151,7 @@ namespace dtn
 
 			const ibrcommon::vaddress &addr = addrs.front();
 
-			return UDPDatagramService::encode(addr.toString(), _bind_port);
+			return UDPDatagramService::encode(addr, _bind_port);
 		}
 
 		/**
@@ -172,10 +172,10 @@ namespace dtn
 			return dtn::core::Node::CONN_DGRAM_UDP;
 		}
 
-		const std::string UDPDatagramService::encode(const std::string &address, const unsigned int &port)
+		const std::string UDPDatagramService::encode(const ibrcommon::vaddress &address, const unsigned int &port)
 		{
 			std::stringstream ss;
-			ss << "ip=" << address << ";port=" << port << ";";
+			ss << "ip=" << address.toString() << ";port=" << port << ";";
 			return ss.str();
 		}
 

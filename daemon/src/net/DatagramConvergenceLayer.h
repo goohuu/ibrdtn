@@ -97,9 +97,8 @@ namespace dtn
 			virtual dtn::core::Node::Protocol getProtocol() const = 0;
 		};
 
-		class DatagramConvergenceLayer : public DiscoveryAgent, public ConvergenceLayer,
-				public dtn::daemon::IndependentComponent, public EventReceiver,
-				public DiscoveryServiceProvider, public DatagramConnectionCallback
+		class DatagramConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent,
+			public EventReceiver, public DatagramConnectionCallback
 		{
 		public:
 			enum HEADER_FLAGS
@@ -112,12 +111,6 @@ namespace dtn
 
 			DatagramConvergenceLayer(DatagramService *ds);
 			virtual ~DatagramConvergenceLayer();
-
-			/**
-			 * this method updates the given values
-			 */
-			void update(const ibrcommon::vinterface &iface, std::string &name, std::string &data)
-				throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException);
 
 			/**
 			 * Returns the protocol identifier
@@ -150,7 +143,7 @@ namespace dtn
 			virtual void componentDown();
 			bool __cancellation();
 
-			virtual void sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryService> &services);
+			void sendAnnoucement();
 
 			/**
 			 * callback send for connections
@@ -192,6 +185,8 @@ namespace dtn
 			std::list<DatagramConnection*> _connections;
 
 			bool _running;
+
+			u_int16_t _discovery_sn;
 		};
 	} /* namespace data */
 } /* namespace dtn */

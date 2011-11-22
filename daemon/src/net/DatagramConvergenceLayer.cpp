@@ -10,6 +10,7 @@
 
 #include "core/BundleCore.h"
 #include "core/TimeEvent.h"
+#include "core/NodeEvent.h"
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -21,7 +22,7 @@ namespace dtn
 	namespace net
 	{
 		DatagramConvergenceLayer::DatagramConvergenceLayer(DatagramService *ds)
-		 : DiscoveryAgent(dtn::daemon::Configuration::getInstance().getDiscovery()), _service(ds)
+		 : _service(ds), _discovery_sn(0)
 		{
 		}
 
@@ -45,19 +46,6 @@ namespace dtn
 		dtn::core::Node::Protocol DatagramConvergenceLayer::getDiscoveryProtocol() const
 		{
 			return _service->getProtocol();
-		}
-
-		void DatagramConvergenceLayer::update(const ibrcommon::vinterface &iface, std::string &name, std::string &params) throw(dtn::net::DiscoveryServiceProvider::NoServiceHereException)
-		{
-			if (iface == _service->getInterface())
-			{
-				name = _service->getServiceTag();
-				params = _service->getServiceDescription();
-			}
-			else
-			{
-				 throw dtn::net::DiscoveryServiceProvider::NoServiceHereException();
-			}
 		}
 
 		void DatagramConvergenceLayer::send(const std::string &destination, const char *buf, int len) throw (DatagramException)
@@ -181,7 +169,6 @@ namespace dtn
 			bindEvent(dtn::core::TimeEvent::className);
 			try {
 				_service->bind();
-				addService(this);
 			} catch (const std::exception &e) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "Failed to add DatagramConvergenceLayer on " << _service->getInterface().toString() << IBRCOMMON_LOGGER_ENDL;
 				IBRCOMMON_LOGGER_DEBUG(10) << "Exception: " << e.what() << IBRCOMMON_LOGGER_ENDL;
@@ -193,31 +180,16 @@ namespace dtn
 			unbindEvent(dtn::core::TimeEvent::className);
 		}
 
-		void DatagramConvergenceLayer::sendAnnoucement(const u_int16_t &sn, std::list<dtn::net::DiscoveryService> &services)
+		void DatagramConvergenceLayer::sendAnnoucement()
 		{
 			DiscoveryAnnouncement announcement(DiscoveryAnnouncement::DISCO_VERSION_01, dtn::core::BundleCore::local);
 
 			// set sequencenumber
-			announcement.setSequencenumber(sn);
+			announcement.setSequencenumber(_discovery_sn);
+			_discovery_sn++;
 
 			// clear all services
 			announcement.clearServices();
-
-			// add services
-			for (std::list<DiscoveryService>::iterator iter = services.begin(); iter != services.end(); iter++)
-			{
-				DiscoveryService &service = (*iter);
-
-				try {
-					// update service information
-					service.update(_service->getInterface());
-
-					// add service to discovery message
-					announcement.addService(service);
-				} catch (const dtn::net::DiscoveryServiceProvider::NoServiceHereException&) {
-
-				}
-			}
 
 			// serialize announcement
 			stringstream ss;
@@ -272,7 +244,26 @@ namespace dtn
 					stringstream ss;
 					ss.write(data+1, len-1);
 					ss >> announce;
-					DiscoveryAgent::received(announce, 30);
+
+					// convert the announcement into NodeEvents
+					Node n(announce.getEID());
+
+					// timeout value
+					size_t to_value = 30;
+
+					// add
+					n.add(Node::URI(Node::NODE_DISCOVERED, _service->getProtocol(), address, to_value));
+
+					const std::list<DiscoveryService> services = announce.getServices();
+					for (std::list<DiscoveryService>::const_iterator iter = services.begin(); iter != services.end(); iter++)
+					{
+						const DiscoveryService &s = (*iter);
+						n.add(Node::Attribute(Node::NODE_DISCOVERED, s.getName(), s.getParameters(), to_value));
+					}
+
+					// create and raise a new event
+					dtn::core::NodeEvent::raise(n, dtn::core::NODE_INFO_UPDATED);
+
 					continue;
 				}
 				else if ( header & HEADER_SEGMENT )
@@ -306,7 +297,7 @@ namespace dtn
 				const TimeEvent &time=dynamic_cast<const TimeEvent&>(*evt);
 				if (time.getAction() == TIME_SECOND_TICK)
 					if (time.getTimestamp() % 5 == 0)
-						timeout();
+						sendAnnoucement();
 			} catch (const std::bad_cast&)
 			{}
 		}

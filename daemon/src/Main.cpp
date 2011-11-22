@@ -436,7 +436,6 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(dgram_service);
 						core.addConvergenceLayer(dgram_cl);
 						components.push_back(dgram_cl);
-						if (ipnd != NULL) ipnd->addService(dgram_cl);
 
 						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (UDP) added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
 					} catch (const ibrcommon::Exception &ex) {

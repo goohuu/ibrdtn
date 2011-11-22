@@ -91,7 +91,7 @@ namespace dtn
 			virtual dtn::core::Node::Protocol getProtocol() const;
 
 		private:
-			static const std::string encode(const std::string &address, const unsigned int &port);
+			static const std::string encode(const ibrcommon::vaddress &address, const unsigned int &port);
 			static void decode(const std::string &identifier, std::string &address, unsigned int &port);
 
 
