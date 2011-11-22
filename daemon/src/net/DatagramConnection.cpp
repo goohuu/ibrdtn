@@ -31,6 +31,7 @@ namespace dtn
 
 		DatagramConnection::~DatagramConnection()
 		{
+			_sender.join();
 		}
 
 		void DatagramConnection::shutdown()
