@@ -52,6 +52,8 @@ namespace dtn
 			void setup();
 			void finally();
 
+			void shutdown();
+
 			const std::string& getIdentifier() const;
 
 			/**
@@ -146,16 +148,23 @@ namespace dtn
 			class Sender : public ibrcommon::JoinableThread
 			{
 			public:
-				Sender(Stream &stream);
+				Sender(DatagramConnection &conn, Stream &stream);
 				~Sender();
 
 				void run();
+				void finally();
 				bool __cancellation();
+
+				void clearQueue();
 
 				ibrcommon::Queue<ConvergenceLayer::Job> queue;
 
 			private:
+				ConvergenceLayer::Job _current_job;
 				DatagramConnection::Stream &_stream;
+
+				// callback to the corresponding connection object
+				DatagramConnection &_connection;
 			};
 
 			void stream_send_ack(const char *buf) throw (DatagramException);
@@ -169,6 +178,7 @@ namespace dtn
 
 			ibrcommon::Conditional _ack_cond;
 			int _last_ack;
+			int _wait_ack;
 		};
 	} /* namespace data */
 } /* namespace dtn */

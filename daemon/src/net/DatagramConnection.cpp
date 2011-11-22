@@ -10,6 +10,7 @@
 #include "core/BundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
+#include "routing/RequeueBundleEvent.h"
 #include "core/BundleCore.h"
 
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
@@ -24,12 +25,17 @@ namespace dtn
 	namespace net
 	{
 		DatagramConnection::DatagramConnection(const std::string &identifier, size_t maxmsglen, DatagramConnectionCallback &callback)
-		 : _callback(callback), _identifier(identifier), _stream(*this, maxmsglen), _sender(_stream), _last_ack(-1)
+		 : _callback(callback), _identifier(identifier), _stream(*this, maxmsglen), _sender(*this, _stream), _last_ack(-1), _wait_ack(-1)
 		{
 		}
 
 		DatagramConnection::~DatagramConnection()
 		{
+		}
+
+		void DatagramConnection::shutdown()
+		{
+			_stream.abort();
 		}
 
 		void DatagramConnection::run()
@@ -76,6 +82,9 @@ namespace dtn
 
 		void DatagramConnection::finally()
 		{
+			// remove this connection from the connection list
+			_callback.connectionDown(this);
+
 			{
 				ibrcommon::MutexLock l(_ack_cond);
 				_ack_cond.abort();
@@ -83,8 +92,8 @@ namespace dtn
 			_sender.stop();
 			_sender.join();
 
-			// remove this connection from the connection list
-			_callback.connectionDown(this);
+			// clear the queue
+			_sender.clearQueue();
 		}
 
 		const std::string& DatagramConnection::getIdentifier() const
@@ -120,9 +129,13 @@ namespace dtn
 			if (len > 0)
 			{
 				ibrcommon::MutexLock l(_ack_cond);
-				_last_ack = (*buf) & Stream::SEQ_NUM_MASK;
-				_ack_cond.signal(true);
-				IBRCOMMON_LOGGER_DEBUG(20) << "DatagramConnection: ack received " << _last_ack << IBRCOMMON_LOGGER_ENDL;
+				int seq = (*buf) & Stream::SEQ_NUM_MASK;
+				if (_wait_ack == seq)
+				{
+					_last_ack = seq;
+					_ack_cond.signal(true);
+					IBRCOMMON_LOGGER_DEBUG(20) << "DatagramConnection: ack received " << _last_ack << IBRCOMMON_LOGGER_ENDL;
+				}
 			}
 		}
 
@@ -133,15 +146,35 @@ namespace dtn
 
 		void DatagramConnection::stream_send(const char *buf, int len) throw (DatagramException)
 		{
-			unsigned int seq = (*buf) & Stream::SEQ_NUM_MASK;
-			_callback.callback_send(*this, getIdentifier(), buf, len);
+			_wait_ack = (*buf) & Stream::SEQ_NUM_MASK;
 
-			// wait here for an ACK
-			ibrcommon::MutexLock l(_ack_cond);
-			while (_last_ack != seq)
+			// max. 5 retries
+			for (int i = 0; i < 5; i++)
 			{
-				_ack_cond.wait();
+				// send the datagram
+				_callback.callback_send(*this, getIdentifier(), buf, len);
+
+				// set timeout to 200 ms
+				struct timespec ts;
+				ibrcommon::Conditional::gettimeout(200, &ts);
+
+				try {
+					// wait here for an ACK
+					ibrcommon::MutexLock l(_ack_cond);
+					while (_last_ack != _wait_ack)
+					{
+						_ack_cond.wait(&ts);
+					}
+
+					// success!
+					return;
+				}
+				catch (const ibrcommon::Conditional::ConditionalAbortException &e) { };
 			}
+
+			// transmission failed - abort the stream
+			IBRCOMMON_LOGGER_DEBUG(20) << "DatagramConnection::stream_send: transmission failed - abort the stream" << IBRCOMMON_LOGGER_ENDL;
+			throw DatagramException("transmission failed - abort the stream");
 		}
 
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, size_t maxmsglen)
@@ -256,7 +289,7 @@ namespace dtn
 
 		int DatagramConnection::Stream::sync()
 		{
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::sync"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::sync" << IBRCOMMON_LOGGER_ENDL;
 
 			// Here we know we get the last segment. Mark it so.
 			_out_buf[0] |= SEGMENT_LAST;
@@ -273,10 +306,12 @@ namespace dtn
 
 		int DatagramConnection::Stream::overflow(int c)
 		{
+			if (_abort) throw DatagramException("stream aborted");
+
 			char *ibegin = _out_buf;
 			char *iend = pptr();
 
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::overflow"<< IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::overflow" << IBRCOMMON_LOGGER_ENDL;
 
 			// mark the buffer for outgoing data as free
 			// the +1 sparse the first byte in the buffer and leave room
@@ -337,8 +372,8 @@ namespace dtn
 			return std::char_traits<char>::not_eof((unsigned char) _in_buf[0]);
 		}
 
-		DatagramConnection::Sender::Sender(Stream &stream)
-		 : _stream(stream)
+		DatagramConnection::Sender::Sender(DatagramConnection &conn, Stream &stream)
+		 : _stream(stream), _connection(conn)
 		{
 		}
 
@@ -351,7 +386,7 @@ namespace dtn
 			try {
 				while(_stream.good())
 				{
-					ConvergenceLayer::Job job = queue.getnpop(true);
+					_current_job = queue.getnpop(true);
 					dtn::data::DefaultSerializer serializer(_stream);
 
 					IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Sender::run"<< IBRCOMMON_LOGGER_ENDL;
@@ -359,13 +394,14 @@ namespace dtn
 					dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 					// read the bundle out of the storage
-					const dtn::data::Bundle bundle = storage.get(job._bundle);
+					const dtn::data::Bundle bundle = storage.get(_current_job._bundle);
 
 					// Put bundle into stringstream
 					serializer << bundle; _stream.flush();
 					// raise bundle event
-					dtn::net::TransferCompletedEvent::raise(job._destination, bundle);
+					dtn::net::TransferCompletedEvent::raise(_current_job._destination, bundle);
 					dtn::core::BundleEvent::raise(bundle, dtn::core::BUNDLE_FORWARDED);
+					_current_job.clear();
 				}
 				// FIXME: Exit strategy when sending on socket failed. Like destroying the connection object
 				// Also check what needs to be done when the node is not reachable (transfer requeue...)
@@ -373,6 +409,34 @@ namespace dtn
 				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Sender::run stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
 			} catch (std::exception &ex) {
 				IBRCOMMON_LOGGER_DEBUG(10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+			}
+
+			_connection.stop();
+		}
+
+		void DatagramConnection::Sender::clearQueue()
+		{
+			// requeue all bundles still queued
+			try {
+				while (true)
+				{
+					const ConvergenceLayer::Job job = queue.getnpop();
+
+					// raise transfer abort event for all bundles without an ACK
+					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
+				}
+			} catch (const ibrcommon::QueueUnblockedException&) {
+				// queue emtpy
+			}
+		}
+
+		void DatagramConnection::Sender::finally()
+		{
+			// notify the aborted transfer of the last bundle
+			if (_current_job._bundle != dtn::data::BundleID())
+			{
+				// putback job on the queue
+				queue.push(_current_job);
 			}
 		}
 

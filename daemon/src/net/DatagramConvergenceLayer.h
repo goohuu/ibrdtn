@@ -188,7 +188,7 @@ namespace dtn
 
 			ibrcommon::Mutex _send_lock;
 
-			ibrcommon::Mutex _connection_lock;
+			ibrcommon::Conditional _connection_cond;
 			std::list<DatagramConnection*> _connections;
 
 			bool _running;

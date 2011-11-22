@@ -27,6 +27,17 @@ namespace dtn
 
 		DatagramConvergenceLayer::~DatagramConvergenceLayer()
 		{
+			// wait until all connections are down
+			{
+				ibrcommon::MutexLock l(_connection_cond);
+				for(std::list<DatagramConnection*>::iterator i = _connections.begin(); i != _connections.end(); ++i)
+				{
+					(*i)->shutdown();
+				}
+
+				while (_connections.size() != 0) _connection_cond.wait();
+			}
+
 			join();
 			delete _service;
 		}
@@ -112,7 +123,7 @@ namespace dtn
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::queue"<< IBRCOMMON_LOGGER_ENDL;
 
 			// lock the connection list while working with it
-			ibrcommon::MutexLock lc(_connection_lock);
+			ibrcommon::MutexLock lc(_connection_cond);
 
 			// get a new or the existing connection for this address
 			DatagramConnection &conn = getConnection( uri.value );
@@ -135,6 +146,8 @@ namespace dtn
 			DatagramConnection *connection = new DatagramConnection(identifier, _service->getMaxMessageSize() - 1, (*this));
 
 			_connections.push_back(connection);
+			_connection_cond.signal(true);
+
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::getConnection "<< connection->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
 			connection->start();
 			return *connection;
@@ -147,14 +160,17 @@ namespace dtn
 
 		void DatagramConvergenceLayer::connectionDown(const DatagramConnection *conn)
 		{
-			ibrcommon::MutexLock lc(_connection_lock);
+			ibrcommon::MutexLock lc(_connection_cond);
 
 			std::list<DatagramConnection*>::iterator i;
 			for(i = _connections.begin(); i != _connections.end(); ++i)
 			{
 				if ((*i) == conn)
 				{
+					IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::connectionDown: " << conn->getIdentifier() << IBRCOMMON_LOGGER_ENDL;
+
 					_connections.erase(i);
+					_connection_cond.signal(true);
 					return;
 				}
 			}
@@ -261,7 +277,7 @@ namespace dtn
 				}
 				else if ( header & HEADER_SEGMENT )
 				{
-					ibrcommon::MutexLock lc(_connection_lock);
+					ibrcommon::MutexLock lc(_connection_cond);
 
 					// Connection instance for this address
 					DatagramConnection& connection = getConnection(address);
@@ -271,7 +287,7 @@ namespace dtn
 				}
 				else if ( header & HEADER_ACK )
 				{
-					ibrcommon::MutexLock lc(_connection_lock);
+					ibrcommon::MutexLock lc(_connection_cond);
 
 					// Connection instance for this address
 					DatagramConnection& connection = getConnection(address);
