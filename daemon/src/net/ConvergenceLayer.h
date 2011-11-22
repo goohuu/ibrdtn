@@ -21,8 +21,11 @@ namespace dtn
 			class Job
 			{
 			public:
+				Job();
 				Job(const dtn::data::EID &eid, const dtn::data::BundleID &b);
 				~Job();
+
+				void clear();
 
 				dtn::data::BundleID _bundle;
 				dtn::data::EID _destination;
