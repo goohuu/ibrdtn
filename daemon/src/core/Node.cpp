@@ -169,6 +169,15 @@ namespace dtn
 
 			case Node::CONN_FILE:
 				return "FILE";
+
+			case Node::CONN_DGRAM_UDP:
+				return "DGRAM:UDP";
+
+			case Node::CONN_DGRAM_ETHERNET:
+				return "DGRAM:ETHERNET";
+
+			case Node::CONN_DGRAM_LOWPAN:
+				return "DGRAM:LOWPAN";
 			}
 
 			return "unknown";

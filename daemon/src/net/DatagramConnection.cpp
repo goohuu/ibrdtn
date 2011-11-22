@@ -108,6 +108,11 @@ namespace dtn
 			_stream.queue(buf, len);
 		}
 
+		void DatagramConnection::stream_send(const char *buf, int len) throw (DatagramException)
+		{
+			_callback.callback_send(*this, getIdentifier(), buf, len);
+		}
+
 		DatagramConnection::Stream::Stream(DatagramConnection &conn, size_t maxmsglen)
 		 : std::iostream(this), _buf_size(maxmsglen), _in_state(SEGMENT_FIRST),
 		   _queue_buf(new char[_buf_size]), _queue_buf_len(0), _out_buf(new char[_buf_size+2]), _in_buf(new char[_buf_size]),
@@ -220,14 +225,14 @@ namespace dtn
 
 		int DatagramConnection::Stream::sync()
 		{
+			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::sync"<< IBRCOMMON_LOGGER_ENDL;
+
 			// Here we know we get the last segment. Mark it so.
 			_out_buf[0] |= SEGMENT_LAST;
 
 			int ret = std::char_traits<char>::eq_int_type(this->overflow(
 					std::char_traits<char>::eof()), std::char_traits<char>::eof()) ? -1
 					: 0;
-
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::sync"<< IBRCOMMON_LOGGER_ENDL;
 
 			// initialize the first byte with SEGMENT_FIRST flag
 			_out_buf[0] |= SEGMENT_FIRST;

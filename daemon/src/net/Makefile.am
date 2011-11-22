@@ -37,7 +37,9 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 				DatagramConvergenceLayer.h \
 				DatagramConnection.h \
 				DatagramConvergenceLayer.cpp \
-				DatagramConnection.cpp
+				DatagramConnection.cpp \
+				UDPDatagramService.h \
+				UDPDatagramService.cpp
 
 if LOWPAN
 net_SOURCES += LOWPANConvergenceLayer.cpp LOWPANConvergenceLayer.h LOWPANConnection.cpp LOWPANConnection.h

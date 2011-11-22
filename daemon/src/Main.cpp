@@ -31,6 +31,7 @@
 #include "net/TCPConvergenceLayer.h"
 #include "net/FileConvergenceLayer.h"
 #include "net/DatagramConvergenceLayer.h"
+#include "net/UDPDatagramService.h"
 
 #ifdef HAVE_SQLITE
 #include "core/SQLiteBundleStorage.h"
@@ -427,6 +428,22 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 					break;
 				}
 #endif
+
+				case Configuration::NetConfig::NETWORK_DGRAM_UDP:
+				{
+					try {
+						UDPDatagramService *dgram_service = new UDPDatagramService( net.interface, net.port, net.mtu );
+						DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(dgram_service);
+						core.addConvergenceLayer(dgram_cl);
+						components.push_back(dgram_cl);
+						if (ipnd != NULL) ipnd->addService(dgram_cl);
+
+						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (UDP) added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER(error) << "Failed to add Datagram ConvergenceLayer (UDP) on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
+					break;
+				}
 
 				default:
 					break;

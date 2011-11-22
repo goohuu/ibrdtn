@@ -500,7 +500,7 @@ namespace dtn
 
 				// create a address URI
 				std::stringstream ss;
-				ss << "ip=" << conf.read<std::string>(prefix + "address", "127.0.0.1") << ";port=" << conf.read<unsigned int>(prefix + "port", 4556);
+				ss << "ip=" << conf.read<std::string>(prefix + "address", "127.0.0.1") << ";port=" << conf.read<unsigned int>(prefix + "port", 4556) << ";";
 
 				dtn::core::Node::Protocol p = Node::CONN_UNDEFINED;
 
@@ -512,6 +512,9 @@ namespace dtn
 				if (protocol == "bluetooth") p = Node::CONN_BLUETOOTH;
 				if (protocol == "http") p = Node::CONN_HTTP;
 				if (protocol == "file") p = Node::CONN_FILE;
+				if (protocol == "dgram:udp") p = Node::CONN_DGRAM_UDP;
+				if (protocol == "dgram:ethernet") p = Node::CONN_DGRAM_ETHERNET;
+				if (protocol == "dgram:lowpan") p = Node::CONN_DGRAM_LOWPAN;
 
 				bool node_exists = false;
 
@@ -586,6 +589,7 @@ namespace dtn
 					if (type_name == "http") type = Configuration::NetConfig::NETWORK_HTTP;
 					if (type_name == "lowpan") type = Configuration::NetConfig::NETWORK_LOWPAN;
 					if (type_name == "file") type = Configuration::NetConfig::NETWORK_FILE;
+					if (type_name == "dgram:udp") type = Configuration::NetConfig::NETWORK_DGRAM_UDP;
 
 					switch (type)
 					{

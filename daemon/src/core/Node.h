@@ -32,7 +32,10 @@ namespace dtn
 				CONN_LOWPAN = 3,
 				CONN_BLUETOOTH = 4,
 				CONN_HTTP = 5,
-				CONN_FILE = 6
+				CONN_FILE = 6,
+				CONN_DGRAM_UDP = 7,
+				CONN_DGRAM_LOWPAN = 8,
+				CONN_DGRAM_ETHERNET = 9
 			};
 
 			/**

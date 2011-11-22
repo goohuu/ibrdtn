@@ -29,8 +29,9 @@ namespace dtn
 
 			/**
 			 * Bind to the local socket.
+			 * @throw If the bind fails, an DatagramException is thrown.
 			 */
-			virtual void bind() = 0;
+			virtual void bind() throw (DatagramException) = 0;
 
 			/**
 			 * Shutdown the socket. Unblock all calls on the socket (recv, send, etc.)
@@ -42,24 +43,27 @@ namespace dtn
 			 * @param address The destination address encoded as string.
 			 * @param buf The buffer to send.
 			 * @param length The number of available bytes in the buffer.
+			 * @throw If the transmission wasn't successful this method will throw an exception.
 			 */
-			virtual void send(const std::string &address, const char *buf, size_t length) = 0;
+			virtual void send(const std::string &address, const char *buf, size_t length) throw (DatagramException) = 0;
 
 			/**
 			 * Send the payload as datagram to all neighbors (broadcast)
 			 * @param buf The buffer to send.
 			 * @param length The number of available bytes in the buffer.
+			 * @throw If the transmission wasn't successful this method will throw an exception.
 			 */
-			virtual void send(const char *buf, size_t length) = 0;
+			virtual void send(const char *buf, size_t length) throw (DatagramException) = 0;
 
 			/**
 			 * Receive an incoming datagram.
 			 * @param buf A buffer to catch the incoming data.
 			 * @param length The length of the buffer.
 			 * @param address A buffer for the address of the sender.
+			 * @throw If the receive call failed for any reason, an DatagramException is thrown.
 			 * @return The number of received bytes.
 			 */
-			virtual size_t recvfrom(char *buf, size_t length, std::string &address) = 0;
+			virtual size_t recvfrom(char *buf, size_t length, std::string &address) throw (DatagramException) = 0;
 
 			/**
 			 * Get the maximum message size (MTU) for datagrams of this service.
@@ -105,7 +109,7 @@ namespace dtn
 				HEADER_SEGMENT = 2
 			};
 
-			DatagramConvergenceLayer(DatagramService &ds);
+			DatagramConvergenceLayer(DatagramService *ds);
 			virtual ~DatagramConvergenceLayer();
 
 			/**
@@ -154,7 +158,7 @@ namespace dtn
 			 * @param buf
 			 * @param len
 			 */
-			void callback_send(DatagramConnection &connection, const std::string &destination, const char *buf, int len);
+			void callback_send(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException);
 
 			void connectionUp(const DatagramConnection *conn);
 			void connectionDown(const DatagramConnection *conn);
@@ -168,16 +172,16 @@ namespace dtn
 			 * @param buf The buffer to send.
 			 * @param length The number of available bytes in the buffer.
 			 */
-			void send(const std::string &destination, const char *buf, int len);
+			void send(const std::string &destination, const char *buf, int len) throw (DatagramException);
 
 			/**
 			 * Send the payload as datagram to all neighbors (broadcast)
 			 * @param buf The buffer to send.
 			 * @param length The number of available bytes in the buffer.
 			 */
-			void send(const char *buf, int len);
+			void send(const char *buf, int len) throw (DatagramException);
 
-			DatagramService &_service;
+			DatagramService *_service;
 
 			ibrcommon::Mutex _send_lock;
 

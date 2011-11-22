@@ -20,6 +20,15 @@ namespace dtn
 {
 	namespace net
 	{
+		class DatagramException : public ibrcommon::Exception
+		{
+		public:
+			DatagramException(const std::string &what) : ibrcommon::Exception(what)
+			{};
+
+			virtual ~DatagramException() throw() {};
+		};
+
 		class DatagramConnection;
 
 		class DatagramConnectionCallback
@@ -142,7 +151,7 @@ namespace dtn
 				DatagramConnection::Stream &_stream;
 			};
 
-			void stream_send(const char *buf, int len);
+			void stream_send(const char *buf, int len) throw (DatagramException);
 
 			DatagramConnectionCallback &_callback;
 			bool _running;
