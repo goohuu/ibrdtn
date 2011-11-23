@@ -31,11 +31,6 @@ namespace dtn
 			// wait until all connections are down
 			{
 				ibrcommon::MutexLock l(_connection_cond);
-				for(std::list<DatagramConnection*>::iterator i = _connections.begin(); i != _connections.end(); ++i)
-				{
-					(*i)->shutdown();
-				}
-
 				while (_connections.size() != 0) _connection_cond.wait();
 			}
 
@@ -147,6 +142,15 @@ namespace dtn
 		void DatagramConvergenceLayer::componentDown()
 		{
 			unbindEvent(dtn::core::TimeEvent::className);
+
+			// shutdown all connections
+			{
+				ibrcommon::MutexLock l(_connection_cond);
+				for(std::list<DatagramConnection*>::iterator i = _connections.begin(); i != _connections.end(); ++i)
+				{
+					(*i)->shutdown();
+				}
+			}
 		}
 
 		void DatagramConvergenceLayer::sendAnnoucement()

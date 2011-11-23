@@ -53,7 +53,6 @@ namespace dtn
 				_stream.close();
 			} catch (const ibrcommon::Exception&) { };
 
-
 			return true;
 		}
 
@@ -105,6 +104,9 @@ namespace dtn
 			try {
 				// shutdown the sender thread
 				_sender.stop();
+
+				// wait until all operations are stopped
+				_sender.join();
 			} catch (const std::exception&) { };
 
 			try {
