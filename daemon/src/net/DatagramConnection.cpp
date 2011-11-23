@@ -224,7 +224,7 @@ namespace dtn
 		void DatagramConnection::Stream::queue(const char &flags, const unsigned int &seqno, const char *buf, int len)
 		{
 			ibrcommon::MutexLock l(_queue_buf_cond);
-			if (_abort) return;
+			if (_abort) throw DatagramException("stream aborted");
 
 			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::queue"<< IBRCOMMON_LOGGER_ENDL;
 
