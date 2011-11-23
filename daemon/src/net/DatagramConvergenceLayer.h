@@ -13,6 +13,7 @@
 #include "net/ConvergenceLayer.h"
 #include "net/DiscoveryAgent.h"
 #include "net/DiscoveryServiceProvider.h"
+#include "net/DatagramConnectionParameter.h"
 #include "core/Node.h"
 #include <ibrcommon/net/vinterface.h>
 
@@ -25,6 +26,12 @@ namespace dtn
 		class DatagramService
 		{
 		public:
+			enum FLOWCONTROL
+			{
+				FLOW_NONE = 0,
+				FLOW_STOPNWAIT = 1
+			};
+
 			virtual ~DatagramService() {};
 
 			/**
@@ -45,7 +52,7 @@ namespace dtn
 			 * @param length The number of available bytes in the buffer.
 			 * @throw If the transmission wasn't successful this method will throw an exception.
 			 */
-			virtual void send(const std::string &address, const char *buf, size_t length) throw (DatagramException) = 0;
+			virtual void send(const char &type, const char &flags, const unsigned int &seqno, const std::string &address, const char *buf, size_t length) throw (DatagramException) = 0;
 
 			/**
 			 * Send the payload as datagram to all neighbors (broadcast)
@@ -53,7 +60,7 @@ namespace dtn
 			 * @param length The number of available bytes in the buffer.
 			 * @throw If the transmission wasn't successful this method will throw an exception.
 			 */
-			virtual void send(const char *buf, size_t length) throw (DatagramException) = 0;
+			virtual void send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (DatagramException) = 0;
 
 			/**
 			 * Receive an incoming datagram.
@@ -63,13 +70,7 @@ namespace dtn
 			 * @throw If the receive call failed for any reason, an DatagramException is thrown.
 			 * @return The number of received bytes.
 			 */
-			virtual size_t recvfrom(char *buf, size_t length, std::string &address) throw (DatagramException) = 0;
-
-			/**
-			 * Get the maximum message size (MTU) for datagrams of this service.
-			 * @return The maximum message size as bytes.
-			 */
-			virtual size_t getMaxMessageSize() const = 0;
+			virtual size_t recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException) = 0;
 
 			/**
 			 * Get the tag for this service used in discovery messages.
@@ -95,6 +96,12 @@ namespace dtn
 			 * @return
 			 */
 			virtual dtn::core::Node::Protocol getProtocol() const = 0;
+
+			/**
+			 * Returns the parameter for the connection.
+			 * @return
+			 */
+			virtual const DatagramConnectionParameter& getParameter() const = 0;
 		};
 
 		class DatagramConvergenceLayer : public ConvergenceLayer, public dtn::daemon::IndependentComponent,
@@ -152,30 +159,15 @@ namespace dtn
 			 * @param buf
 			 * @param len
 			 */
-			void callback_send(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException);
+			void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException);
 
-			void callback_ack(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException);
+			void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException);
 
 			void connectionUp(const DatagramConnection *conn);
 			void connectionDown(const DatagramConnection *conn);
 
 		private:
 			DatagramConnection& getConnection(const std::string &identifier);
-
-			/**
-			 * Send the payload as datagram to a defined destination
-			 * @param address The destination address encoded as string.
-			 * @param buf The buffer to send.
-			 * @param length The number of available bytes in the buffer.
-			 */
-			void send(const std::string &destination, const char *buf, int len) throw (DatagramException);
-
-			/**
-			 * Send the payload as datagram to all neighbors (broadcast)
-			 * @param buf The buffer to send.
-			 * @param length The number of available bytes in the buffer.
-			 */
-			void send(const char *buf, int len) throw (DatagramException);
 
 			DatagramService *_service;
 

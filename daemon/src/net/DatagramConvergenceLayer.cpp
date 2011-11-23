@@ -48,55 +48,22 @@ namespace dtn
 			return _service->getProtocol();
 		}
 
-		void DatagramConvergenceLayer::send(const std::string &destination, const char *buf, int len) throw (DatagramException)
+		void DatagramConvergenceLayer::callback_send(DatagramConnection&, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException)
 		{
-			char tmp[_service->getMaxMessageSize()];
-
-			// add header to the segment
-			tmp[0] = HEADER_SEGMENT;
-			::memcpy(&tmp[1], buf, len);
-
 			// only on sender at once
 			ibrcommon::MutexLock l(_send_lock);
 
 			// forward the send request to DatagramService
-			_service->send(destination, &tmp[0], len + 1);
+			_service->send(HEADER_SEGMENT, flags, seqno, destination, buf, len);
 		}
 
-		void DatagramConvergenceLayer::send(const char *buf, int len) throw (DatagramException)
+		void DatagramConvergenceLayer::callback_ack(DatagramConnection&, const unsigned int &seqno, const std::string &destination) throw (DatagramException)
 		{
-			char tmp[_service->getMaxMessageSize()];
-
-			// add header to the segment
-			tmp[0] = HEADER_BROADCAST;
-			::memcpy(&tmp[1], buf, len);
-
 			// only on sender at once
 			ibrcommon::MutexLock l(_send_lock);
 
 			// forward the send request to DatagramService
-			_service->send(&tmp[0], len);
-		}
-
-		void DatagramConvergenceLayer::callback_send(DatagramConnection&, const std::string &destination, const char *buf, int len) throw (DatagramException)
-		{
-			// forward to send method
-			send(destination, buf, len);
-		}
-
-		void DatagramConvergenceLayer::callback_ack(DatagramConnection&, const std::string &destination, const char *buf, int len) throw (DatagramException)
-		{
-			char tmp[_service->getMaxMessageSize()];
-
-			// add header to the segment
-			tmp[0] = HEADER_ACK;
-			::memcpy(&tmp[1], buf, len);
-
-			// only on sender at once
-			ibrcommon::MutexLock l(_send_lock);
-
-			// forward the send request to DatagramService
-			_service->send(destination, &tmp[0], len + 1);
+			_service->send(HEADER_ACK, 0, seqno, destination, NULL, 0);
 		}
 
 		void DatagramConvergenceLayer::queue(const dtn::core::Node &node, const ConvergenceLayer::Job &job)
@@ -131,7 +98,7 @@ namespace dtn
 			}
 
 			// Connection does not exist, create one and put it into the list
-			DatagramConnection *connection = new DatagramConnection(identifier, _service->getMaxMessageSize() - 1, (*this));
+			DatagramConnection *connection = new DatagramConnection(identifier, _service->getParameter(), (*this));
 
 			_connections.push_back(connection);
 			_connection_cond.signal(true);
@@ -162,6 +129,8 @@ namespace dtn
 					return;
 				}
 			}
+
+			IBRCOMMON_LOGGER(error) << "DatagramConvergenceLayer::connectionDown: " << conn->getIdentifier() << " not found!" << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		void DatagramConvergenceLayer::componentUp()
@@ -198,7 +167,11 @@ namespace dtn
 			int len = ss.str().size();
 
 			try {
-				send(ss.str().c_str(), len);
+				// only on sender at once
+				ibrcommon::MutexLock l(_send_lock);
+
+				// forward the send request to DatagramService
+				_service->send(HEADER_BROADCAST, 0, 0, ss.str().c_str(), len);
 			} catch (const DatagramException&) {
 				// ignore any send failure
 			};
@@ -208,10 +181,12 @@ namespace dtn
 		{
 			_running = true;
 
-			size_t maxlen = _service->getMaxMessageSize();
+			size_t maxlen = _service->getParameter().max_msg_length;
 			std::string address;
+			unsigned int seqno = 0;
+			char flags = 0;
+			char type = 0;
 			char data[maxlen];
-			char header = 0;
 			size_t len = 0;
 
 			while (_running)
@@ -220,29 +195,22 @@ namespace dtn
 
 				try {
 					// Receive full frame from socket
-					len = _service->recvfrom(data, maxlen, address);
+					len = _service->recvfrom(data, maxlen, type, flags, seqno, address);
 				} catch (const DatagramException&) {
 					_running = false;
 					break;
 				}
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::componentRun" << IBRCOMMON_LOGGER_ENDL;
-
-				// We got nothing from the socket, keep reading
-				if (len == 0) continue;
-
-				// Retrieve header of frame
-				header = data[0];
-
 				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConvergenceLayer::componentRun: ADDRESS " << address << IBRCOMMON_LOGGER_ENDL;
 
 				// Check for extended header and retrieve if available
-				if (header & HEADER_BROADCAST)
+				if (type == HEADER_BROADCAST)
 				{
 					IBRCOMMON_LOGGER(notice) << "Received announcement for DatagramConvergenceLayer discovery" << IBRCOMMON_LOGGER_ENDL;
 					DiscoveryAnnouncement announce;
 					stringstream ss;
-					ss.write(data+1, len-1);
+					ss.write(data, len);
 					ss >> announce;
 
 					// convert the announcement into NodeEvents
@@ -266,17 +234,19 @@ namespace dtn
 
 					continue;
 				}
-				else if ( header & HEADER_SEGMENT )
+				else if ( type == HEADER_SEGMENT )
 				{
 					ibrcommon::MutexLock lc(_connection_cond);
 
 					// Connection instance for this address
 					DatagramConnection& connection = getConnection(address);
 
-					// Decide in which queue to write based on the src address
-					connection.queue(data+1, len-1);
+					try {
+						// Decide in which queue to write based on the src address
+						connection.queue(flags, seqno, data, len);
+					} catch (const ibrcommon::Exception&) { };
 				}
-				else if ( header & HEADER_ACK )
+				else if ( type == HEADER_ACK )
 				{
 					ibrcommon::MutexLock lc(_connection_cond);
 
@@ -284,7 +254,7 @@ namespace dtn
 					DatagramConnection& connection = getConnection(address);
 
 					// Decide in which queue to write based on the src address
-					connection.ack(data+1, len-1);
+					connection.ack(seqno);
 				}
 
 				yield();

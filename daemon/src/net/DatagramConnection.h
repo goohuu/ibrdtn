@@ -9,6 +9,7 @@
 #define DATAGRAMCONNECTION_H_
 
 #include "net/ConvergenceLayer.h"
+#include "net/DatagramConnectionParameter.h"
 #include <ibrcommon/thread/Thread.h>
 #include <ibrcommon/thread/Queue.h>
 #include <ibrcommon/thread/Conditional.h>
@@ -35,8 +36,8 @@ namespace dtn
 		{
 		public:
 			virtual ~DatagramConnectionCallback() {};
-			virtual void callback_send(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException) = 0;
-			virtual void callback_ack(DatagramConnection &connection, const std::string &destination, const char *buf, int len) throw (DatagramException) = 0;
+			virtual void callback_send(DatagramConnection &connection, const char &flags, const unsigned int &seqno, const std::string &destination, const char *buf, int len) throw (DatagramException) = 0;
+			virtual void callback_ack(DatagramConnection &connection, const unsigned int &seqno, const std::string &destination) throw (DatagramException) = 0;
 
 			virtual void connectionUp(const DatagramConnection *conn) = 0;
 			virtual void connectionDown(const DatagramConnection *conn) = 0;
@@ -45,7 +46,7 @@ namespace dtn
 		class DatagramConnection : public ibrcommon::DetachedThread
 		{
 		public:
-			DatagramConnection(const std::string &identifier, size_t maxmsglen, DatagramConnectionCallback &callback);
+			DatagramConnection(const std::string &identifier, const DatagramConnectionParameter &params, DatagramConnectionCallback &callback);
 			virtual ~DatagramConnection();
 
 			void run();
@@ -67,13 +68,13 @@ namespace dtn
 			 * @param buf
 			 * @param len
 			 */
-			void queue(const char *buf, int len);
+			void queue(const char &flags, const unsigned int &seqno, const char *buf, int len);
 
 			/**
 			 * This method is called by the DatagramCL, if an ACK is received.
 			 * @param seq
 			 */
-			void ack(const char *buf, int len);
+			void ack(const unsigned int &seqno);
 
 		private:
 			class Stream : public std::basic_streambuf<char, std::char_traits<char> >, public std::iostream
@@ -81,13 +82,12 @@ namespace dtn
 			public:
 				enum HEADER_FLAGS
 				{
-					SEGMENT_FIRST = 0x20,
-					SEGMENT_LAST = 0x10,
-					SEGMENT_MIDDLE = 0x00,
-					SEQ_NUM_MASK = 0x07
+					SEGMENT_FIRST = 0x02,
+					SEGMENT_LAST = 0x01,
+					SEGMENT_MIDDLE = 0x00
 				};
 
-				Stream(DatagramConnection &conn, size_t maxmsglen);
+				Stream(DatagramConnection &conn, const size_t maxmsglen, const unsigned int maxseqno);
 				virtual ~Stream();
 
 				/**
@@ -95,7 +95,7 @@ namespace dtn
 				 * @param buf Buffer with received data
 				 * @param len Length of the buffer
 				 */
-				void queue(const char *buf, int len);
+				void queue(const char &flags, const unsigned int &seqno, const char *buf, int len);
 
 				void abort();
 
@@ -108,8 +108,14 @@ namespace dtn
 				// buffer size and maximum message size
 				const size_t _buf_size;
 
+				// maximum count of sequence numbers
+				const unsigned int _maxseqno;
+
 				// state for incoming segments
 				char _in_state;
+
+				// out flags
+				char _out_state;
 
 				// buffer for incoming data to queue
 				// the underflow method will block until
@@ -132,10 +138,10 @@ namespace dtn
 				char *_in_buf;
 
 				// next expected incoming sequence number
-				uint8_t in_seq_num_;
+				unsigned int in_seq_num_;
 
 				// next outgoing sequence number
-				uint8_t out_seq_num_;
+				unsigned int out_seq_num_;
 
 				// this variable is set to true to shutdown
 				// this stream
@@ -167,8 +173,7 @@ namespace dtn
 				DatagramConnection &_connection;
 			};
 
-			void stream_send_ack(const char *buf) throw (DatagramException);
-			void stream_send(const char *buf, int len) throw (DatagramException);
+			void stream_send(const char &flags, const unsigned int &seqno, const char *buf, int len) throw (DatagramException);
 
 			DatagramConnectionCallback &_callback;
 			bool _running;
@@ -177,8 +182,10 @@ namespace dtn
 			DatagramConnection::Sender _sender;
 
 			ibrcommon::Conditional _ack_cond;
-			int _last_ack;
-			int _wait_ack;
+			size_t _last_ack;
+			size_t _wait_ack;
+
+			const DatagramConnectionParameter _params;
 		};
 	} /* namespace data */
 } /* namespace dtn */

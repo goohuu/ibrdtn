@@ -9,6 +9,7 @@
 #define UDPDATAGRAMSERVICE_H_
 
 #include "net/DatagramConvergenceLayer.h"
+#include "net/DatagramConnectionParameter.h"
 #include <ibrcommon/net/udpsocket.h>
 #include <ibrcommon/net/vinterface.h>
 
@@ -40,14 +41,14 @@ namespace dtn
 			 * @param buf The buffer to send.
 			 * @param length The number of available bytes in the buffer.
 			 */
-			virtual void send(const std::string &address, const char *buf, size_t length) throw (DatagramException);
+			virtual void send(const char &type, const char &flags, const unsigned int &seqno, const std::string &address, const char *buf, size_t length) throw (DatagramException);
 
 			/**
 			 * Send the payload as datagram to all neighbors (broadcast)
 			 * @param buf The buffer to send.
 			 * @param length The number of available bytes in the buffer.
 			 */
-			virtual void send(const char *buf, size_t length) throw (DatagramException);
+			virtual void send(const char &type, const char &flags, const unsigned int &seqno, const char *buf, size_t length) throw (DatagramException);
 
 			/**
 			 * Receive an incoming datagram.
@@ -57,13 +58,7 @@ namespace dtn
 			 * @throw If the receive call failed for any reason, an DatagramException is thrown.
 			 * @return The number of received bytes.
 			 */
-			virtual size_t recvfrom(char *buf, size_t length, std::string &address) throw (DatagramException);
-
-			/**
-			 * Get the maximum message size (MTU) for datagrams of this service.
-			 * @return The maximum message size as bytes.
-			 */
-			virtual size_t getMaxMessageSize() const;
+			virtual size_t recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException);
 
 			/**
 			 * Get the tag for this service used in discovery messages.
@@ -90,6 +85,12 @@ namespace dtn
 			 */
 			virtual dtn::core::Node::Protocol getProtocol() const;
 
+			/**
+			 * Returns the parameter for the connection.
+			 * @return
+			 */
+			virtual const DatagramConnectionParameter& getParameter() const;
+
 		private:
 			static const std::string encode(const ibrcommon::vaddress &address, const unsigned int &port);
 			static void decode(const std::string &identifier, std::string &address, unsigned int &port);
@@ -98,7 +99,8 @@ namespace dtn
 			const static int BROADCAST_PORT = 5551;
 			const ibrcommon::vinterface _iface;
 			const int _bind_port;
-			const size_t _mtu;
+
+			DatagramConnectionParameter _params;
 		};
 
 	} /* namespace net */
