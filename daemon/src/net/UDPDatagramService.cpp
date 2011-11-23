@@ -142,7 +142,7 @@ namespace dtn
 				address = UDPDatagramService::encode(from, port);
 
 				// copy payload to the destination buffer
-				::memcpy(buf, &tmp, ret - 2);
+				::memcpy(buf, &tmp[2], ret - 2);
 
 				IBRCOMMON_LOGGER_DEBUG(20) << "UDPDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: [" << address << "]:" << port << IBRCOMMON_LOGGER_ENDL;
 
