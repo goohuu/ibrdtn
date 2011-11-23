@@ -59,6 +59,14 @@ AC_TYPE_SIZE_T
 # Checks for library functions.
 AC_CHECK_FUNCS([gethostname socket])
 
+# Check for presence of pdfLaTeX
+AC_CHECK_PROG(PDFLATEX, pdflatex, pdflatex)
+if test -z "$PDFLATEX"; then
+  AC_MSG_WARN([Unable to create PDF version of the documentation.])
+fi
+
+AM_CONDITIONAL([HAVE_PDFLATEX], [test x$PDFLATEX = xpdflatex])
+
 PKG_CHECK_MODULES(DAEMON, libdaemon >= 0.12, [
 	use_daemon="yes"
 	AC_SUBST(DAEMON_CFLAGS)
