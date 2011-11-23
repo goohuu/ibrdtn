@@ -31,18 +31,34 @@ namespace dtn
 
 		DatagramConnection::~DatagramConnection()
 		{
+			// do not destroy this instance as long as
+			// the sender thread is running
 			_sender.join();
 		}
 
 		void DatagramConnection::shutdown()
 		{
-			_stream.abort();
+			try {
+				// abort the connection thread
+				ibrcommon::DetachedThread::stop();
+			} catch (const ibrcommon::ThreadException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "DatagramConnection::shutdown(): ThreadException (" << ex.what() << ")" << IBRCOMMON_LOGGER_ENDL;
+			}
+		}
+
+		bool DatagramConnection::__cancellation()
+		{
+			// close the stream
+			try {
+				_stream.close();
+			} catch (const ibrcommon::Exception&) { };
+
+
+			return true;
 		}
 
 		void DatagramConnection::run()
 		{
-			_callback.connectionUp(this);
-
 			try {
 				while(_stream.good())
 				{
@@ -73,20 +89,28 @@ namespace dtn
 
 		void DatagramConnection::setup()
 		{
+			_callback.connectionUp(this);
 			_sender.start();
 		}
 
 		void DatagramConnection::finally()
 		{
-			// remove this connection from the connection list
-			_callback.connectionDown(this);
+			IBRCOMMON_LOGGER_DEBUG(60) << "DatagramConnection down" << IBRCOMMON_LOGGER_ENDL;
 
-			{
+			try {
 				ibrcommon::MutexLock l(_ack_cond);
 				_ack_cond.abort();
-			}
-			_sender.stop();
-			_sender.join();
+			} catch (const std::exception&) { };
+
+			try {
+				// shutdown the sender thread
+				_sender.stop();
+			} catch (const std::exception&) { };
+
+			try {
+				// remove this connection from the connection list
+				_callback.connectionDown(this);
+			} catch (const ibrcommon::MutexException&) { };
 
 			// clear the queue
 			_sender.clearQueue();
@@ -264,7 +288,7 @@ namespace dtn
 			_queue_buf_cond.signal();
 		}
 
-		void DatagramConnection::Stream::abort()
+		void DatagramConnection::Stream::close()
 		{
 			ibrcommon::MutexLock l(_queue_buf_cond);
 
@@ -391,8 +415,11 @@ namespace dtn
 				}
 
 				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Sender::run stream destroyed"<< IBRCOMMON_LOGGER_ENDL;
+			} catch (const ibrcommon::QueueUnblockedException &ex) {
+				IBRCOMMON_LOGGER_DEBUG(50) << "DatagramConnection::Sender::run(): aborted" << IBRCOMMON_LOGGER_ENDL;
+				return;
 			} catch (std::exception &ex) {
-				IBRCOMMON_LOGGER_DEBUG(10) << "Thread died: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+				IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Sender terminated by exception: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 			}
 
 			_connection.stop();

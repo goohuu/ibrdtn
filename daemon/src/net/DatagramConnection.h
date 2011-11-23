@@ -53,6 +53,8 @@ namespace dtn
 			void setup();
 			void finally();
 
+			virtual bool __cancellation();
+
 			void shutdown();
 
 			const std::string& getIdentifier() const;
@@ -97,7 +99,11 @@ namespace dtn
 				 */
 				void queue(const char &flags, const unsigned int &seqno, const char *buf, int len);
 
-				void abort();
+				/**
+				 * Close the stream to terminate all blocking
+				 * calls on it.
+				 */
+				void close();
 
 			protected:
 				virtual int sync();
