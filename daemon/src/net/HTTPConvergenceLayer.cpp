@@ -260,7 +260,7 @@ namespace dtn
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle);
+						dtn::net::BundleReceivedEvent::raise(dtn::data::EID(), bundle, false, true);
 					} catch (const ibrcommon::Exception &ex) {
 							IBRCOMMON_LOGGER_DEBUG(10) << "http error: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}

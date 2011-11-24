@@ -179,7 +179,7 @@ namespace dtn
 #endif
 
 			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(source, bundle, true);
+			dtn::net::BundleReceivedEvent::raise(source, bundle, true, true);
 		}
 
 		const std::string ApiServer::getName() const

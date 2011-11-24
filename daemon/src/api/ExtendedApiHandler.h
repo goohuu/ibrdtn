@@ -65,8 +65,6 @@ namespace dtn
 			static void sayBundleID(ostream &stream, const dtn::data::BundleID &id);
 			static dtn::data::BundleID readBundleID(const std::vector<std::string>&, const size_t start);
 
-			void processIncomingBundle(dtn::data::Bundle &b);
-
 			Registration &_registration;
 			ibrcommon::Mutex _write_lock;
 

@@ -389,7 +389,7 @@ namespace dtn
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { }
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle);
+						dtn::net::BundleReceivedEvent::raise(_peer._localeid, bundle, false, true);
 					}
 					catch (const dtn::data::Validator::RejectedException &ex)
 					{

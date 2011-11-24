@@ -66,7 +66,7 @@ namespace dtn
 			}
 
 			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + _client.getRegistration().getHandle(), b, true);
+			dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + _client.getRegistration().getHandle(), b, true, true);
 		}
 
 		dtn::data::MetaBundle OrderedStreamHandler::get(size_t timeout)

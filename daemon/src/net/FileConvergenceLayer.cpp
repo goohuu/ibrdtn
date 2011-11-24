@@ -286,7 +286,7 @@ namespace dtn
 					} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { }
 
 					// raise default bundle received event
-					dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle);
+					dtn::net::BundleReceivedEvent::raise(n.getEID(), bundle, false, true);
 				}
 				catch (const dtn::data::Validator::RejectedException &ex)
 				{
@@ -442,7 +442,7 @@ namespace dtn
 				schl.setLimit(1);
 
 				// raise default bundle received event
-				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer);
+				dtn::net::BundleReceivedEvent::raise(bundle._destination.getNode(), answer, false, true);
 			}
 		}
 	} /* namespace net */

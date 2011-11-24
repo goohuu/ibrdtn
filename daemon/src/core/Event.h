@@ -10,6 +10,7 @@
 
 #include "core/EventReceiver.h"
 #include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/Conditional.h>
 
 namespace dtn
 {
@@ -30,11 +31,17 @@ namespace dtn
 
 		protected:
 			Event(int prio = 0);
-			static void raiseEvent(Event *evt);
+			static void raiseEvent(Event *evt, bool block_until_processed = false);
 
 		private:
-			ibrcommon::Mutex _ref_count_mutex;
+			ibrcommon::Conditional _ref_count_mutex;
 			size_t _ref_count;
+
+			// mark the event for auto deletion if the last reference is gone
+			bool _auto_delete;
+
+			// mark the event as processed
+			bool _processed;
 		};
 	}
 }

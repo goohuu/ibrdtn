@@ -58,7 +58,7 @@ namespace dtn
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(capsule._source, b);
+						dtn::net::BundleReceivedEvent::raise(capsule._source, b, false, true);
 					}
 				}
 				catch (const dtn::InvalidDataException &ex) {

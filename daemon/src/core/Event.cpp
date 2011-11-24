@@ -13,13 +13,30 @@ namespace dtn
 {
 	namespace core
 	{
-		Event::Event(int p) : prio(p) { }
+		Event::Event(int p) : prio(p), _auto_delete(true), _processed(false) { }
 		Event::~Event() {};
 
-		void Event::raiseEvent(Event *evt)
+		void Event::raiseEvent(Event *evt, bool block_until_processed)
 		{
+			if (block_until_processed)
+			{
+				evt->_auto_delete = false;
+			}
+
 			// raise the new event
 			dtn::core::EventSwitch::raiseEvent( evt );
+
+			// if this is a blocking event...
+			if (block_until_processed)
+			{
+				{
+					ibrcommon::MutexLock l(evt->_ref_count_mutex);
+					while (!evt->_processed) evt->_ref_count_mutex.wait();
+				}
+
+				// ... then delete the event here
+				delete evt;
+			}
 		}
 
 		void Event::set_ref_count(size_t c)
@@ -37,10 +54,17 @@ namespace dtn
 			}
 
 			_ref_count--;
+			_processed = (_ref_count == 0);
 
-			if (_ref_count == 0) return true;
-
-			return false;
+			if (_auto_delete)
+			{
+				return _processed;
+			}
+			else
+			{
+				_ref_count_mutex.signal(true);
+				return false;
+			}
 		}
 	}
 }

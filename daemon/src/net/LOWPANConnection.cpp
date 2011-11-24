@@ -77,7 +77,7 @@ namespace dtn
 						} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) { };
 
 						// raise default bundle received event
-						dtn::net::BundleReceivedEvent::raise(sender, bundle);
+						dtn::net::BundleReceivedEvent::raise(sender, bundle, false, true);
 
 					} catch (const dtn::InvalidDataException &ex) {
 						IBRCOMMON_LOGGER_DEBUG(10) << "Received a invalid bundle: " << ex.what() << IBRCOMMON_LOGGER_ENDL;

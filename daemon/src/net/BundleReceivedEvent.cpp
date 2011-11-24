@@ -24,10 +24,10 @@ namespace dtn
 
 		}
 
-		void BundleReceivedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local)
+		void BundleReceivedEvent::raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local, const bool &wait)
 		{
 			// raise the new event
-			dtn::core::Event::raiseEvent( new BundleReceivedEvent(peer, bundle, local) );
+			dtn::core::Event::raiseEvent( new BundleReceivedEvent(peer, bundle, local), wait );
 		}
 
 		const string BundleReceivedEvent::getName() const

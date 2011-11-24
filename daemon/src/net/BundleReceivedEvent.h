@@ -27,7 +27,7 @@ namespace dtn
 
 			static const string className;
 
-			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local = false);
+			static void raise(const dtn::data::EID &peer, const dtn::data::Bundle &bundle, const bool &local = false, const bool &wait = false);
 
 			const dtn::data::EID peer;
 			const dtn::data::Bundle bundle;

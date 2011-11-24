@@ -357,7 +357,11 @@ namespace dtn
 						}
 						else if (cmd[1] == "send")
 						{
-							processIncomingBundle(_bundle_reg);
+							// create a new sequence number
+							_bundle_reg.relabel();
+
+							// forward the bundle to the storage processing
+							_client.getAPIServer().processIncomingBundle(_endpoint, _bundle_reg);
 
 							ibrcommon::MutexLock l(_write_lock);
 							_stream << ClientHandler::API_STATUS_OK << " BUNDLE SENT" << std::endl;
@@ -685,79 +689,6 @@ namespace dtn
 			} catch (const ibrcommon::ThreadException &ex) {
 				IBRCOMMON_LOGGER_DEBUG(50) << "ClientHandler::Sender::run(): ThreadException (" << ex.what() << ") on termination" << IBRCOMMON_LOGGER_ENDL;
 			}
-		}
-
-		void ExtendedApiHandler::processIncomingBundle(dtn::data::Bundle &bundle)
-		{
-			// create a new sequence number
-			bundle.relabel();
-
-			// check address fields for "api:me", this has to be replaced
-			static const dtn::data::EID clienteid("api:me");
-
-			// set the source address to the sending EID
-			bundle._source = _endpoint;
-
-			if (bundle._destination == clienteid) bundle._destination = _endpoint;
-			if (bundle._reportto == clienteid) bundle._reportto = _endpoint;
-			if (bundle._custodian == clienteid) bundle._custodian = _endpoint;
-
-			// if the timestamp is not set, add an ageblock
-			if (bundle._timestamp == 0)
-			{
-				// check for ageblock
-				try {
-					bundle.getBlock<dtn::data::AgeBlock>();
-				} catch (const dtn::data::Bundle::NoSuchBlockFoundException&) {
-					// add a new ageblock
-					bundle.push_front<dtn::data::AgeBlock>();
-				}
-			}
-
-#ifdef WITH_COMPRESSION
-			// if the compression bit is set, then compress the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::IBRDTN_REQUEST_COMPRESSION))
-			{
-				try {
-					dtn::data::CompressedPayloadBlock::compress(bundle, dtn::data::CompressedPayloadBlock::COMPRESSION_ZLIB);
-				} catch (const ibrcommon::Exception &ex) {
-					IBRCOMMON_LOGGER(warning) << "compression of bundle failed: " << ex.what() << IBRCOMMON_LOGGER_ENDL;
-				};
-			}
-#endif
-
-#ifdef WITH_BUNDLE_SECURITY
-			// if the encrypt bit is set, then try to encrypt the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT))
-			{
-				try {
-					dtn::security::SecurityManager::getInstance().encrypt(bundle);
-
-					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_ENCRYPT, false);
-				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-					// sign requested, but no key is available
-					IBRCOMMON_LOGGER(warning) << "No key available for encrypt process." << IBRCOMMON_LOGGER_ENDL;
-				} catch (const dtn::security::SecurityManager::EncryptException&) {
-					IBRCOMMON_LOGGER(warning) << "Encryption of bundle failed." << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-
-			// if the sign bit is set, then try to sign the bundle
-			if (bundle.get(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN))
-			{
-				try {
-					dtn::security::SecurityManager::getInstance().sign(bundle);
-
-					bundle.set(dtn::data::PrimaryBlock::DTNSEC_REQUEST_SIGN, false);
-				} catch (const dtn::security::SecurityManager::KeyMissingException&) {
-					// sign requested, but no key is available
-					IBRCOMMON_LOGGER(warning) << "No key available for sign process." << IBRCOMMON_LOGGER_ENDL;
-				}
-			}
-#endif
-
-			// raise default bundle received event
-			dtn::net::BundleReceivedEvent::raise(dtn::core::BundleCore::local + getRegistration().getHandle(), bundle, true);
 		}
 
 		void ExtendedApiHandler::sayBundleID(ostream &stream, const dtn::data::BundleID &id)
