@@ -85,6 +85,8 @@ namespace dtn
 
 			ibrcommon::Conditional _queue_cond;
 			std::list<Task*> _queue;
+			std::list<Task*> _prio_queue;
+			std::list<Task*> _low_queue;
 
 			ibrcommon::Conditional _active_cond;
 			size_t _active_worker;

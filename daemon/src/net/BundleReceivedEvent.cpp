@@ -14,7 +14,7 @@ namespace dtn
 	namespace net
 	{
 		BundleReceivedEvent::BundleReceivedEvent(const dtn::data::EID &p, const dtn::data::Bundle &b, const bool &local)
-		 : peer(p), bundle(b), fromlocal(local)
+		 : Event(-1), peer(p), bundle(b), fromlocal(local)
 		{
 
 		}

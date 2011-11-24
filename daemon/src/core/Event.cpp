@@ -13,6 +13,7 @@ namespace dtn
 {
 	namespace core
 	{
+		Event::Event(int p) : prio(p) { }
 		Event::~Event() {};
 
 		void Event::raiseEvent(Event *evt)

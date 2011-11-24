@@ -9,6 +9,7 @@
 
 #include <ibrcommon/thread/MutexLock.h>
 #include "core/GlobalEvent.h"
+#include <ibrcommon/Logger.h>
 #include <stdexcept>
 #include <iostream>
 #include <typeinfo>
@@ -54,13 +55,28 @@ namespace dtn
 			// just look for an event to process
 			{
 				ibrcommon::MutexLock l(_queue_cond);
-				while (_queue.empty())
+				while (_queue.empty() && _prio_queue.empty() && _low_queue.empty())
 				{
 					_queue_cond.wait();
 				}
 
-				t = _queue.front();
-				_queue.pop_front();
+				if (!_prio_queue.empty())
+				{
+//					IBRCOMMON_LOGGER_DEBUG(1) << "process element of priority queue" << IBRCOMMON_LOGGER_ENDL;
+					t = _prio_queue.front();
+					_prio_queue.pop_front();
+				}
+				else if (!_queue.empty())
+				{
+					t = _queue.front();
+					_queue.pop_front();
+				}
+				else
+				{
+					t = _low_queue.front();
+					_low_queue.pop_front();
+				}
+
 				_queue_cond.signal(true);
 
 				ibrcommon::MutexLock la(_active_cond);
@@ -211,7 +227,11 @@ namespace dtn
 				if (global.getAction() == dtn::core::GlobalEvent::GLOBAL_SHUTDOWN)
 				{
 					// stop receiving events
-					s.componentDown();
+					try {
+						ibrcommon::MutexLock l(s._queue_cond);
+						s._running = false;
+						s._queue_cond.abort();
+					} catch (const ibrcommon::Conditional::ConditionalAbortException&) {};
 				}
 			} catch (const std::bad_cast&) { }
 
@@ -226,7 +246,19 @@ namespace dtn
 				{
 					Task *t = new Task(*iter, evt);
 					ibrcommon::MutexLock l(s._queue_cond);
-					s._queue.push_back(t);
+
+					if (evt->prio > 0)
+					{
+						s._prio_queue.push_back(t);
+					}
+					else if (evt->prio < 0)
+					{
+						s._low_queue.push_back(t);
+					}
+					else
+					{
+						s._queue.push_back(t);
+					}
 					s._queue_cond.signal();
 				}
 			} catch (const NoReceiverFoundException&) {

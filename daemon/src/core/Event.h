@@ -26,7 +26,10 @@ namespace dtn
 			void set_ref_count(size_t c);
 			bool decrement_ref_count();
 
+			const int prio;
+
 		protected:
+			Event(int prio = 0);
 			static void raiseEvent(Event *evt);
 
 		private:
