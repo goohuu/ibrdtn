@@ -44,6 +44,7 @@ net_SOURCES = 	BundleReceivedEvent.cpp \
 
 if LOWPAN
 net_SOURCES += LOWPANConvergenceLayer.cpp LOWPANConvergenceLayer.h LOWPANConnection.cpp LOWPANConnection.h
+net_SOURCES += LOWPANDatagramService.cpp LOWPANDatagramService.h
 endif
 				
 if CURL

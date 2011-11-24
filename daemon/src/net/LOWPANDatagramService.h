@@ -1,27 +1,26 @@
 /*
- * UDPDatagramService.h
+ * LOWPANDatagramService.h
  *
- *  Created on: 22.11.2011
+ *  Created on: 24.11.2011
  *      Author: morgenro
  */
 
-#ifndef UDPDATAGRAMSERVICE_H_
-#define UDPDATAGRAMSERVICE_H_
+#ifndef LOWPANDATAGRAMSERVICE_H_
+#define LOWPANDATAGRAMSERVICE_H_
 
 #include "net/DatagramConvergenceLayer.h"
 #include "net/DatagramConnectionParameter.h"
-#include <ibrcommon/net/udpsocket.h>
-#include <ibrcommon/net/vinterface.h>
+#include <ibrcommon/net/lowpansocket.h>
 
 namespace dtn
 {
 	namespace net
 	{
-		class UDPDatagramService : public dtn::net::DatagramService, protected ibrcommon::udpsocket
+		class LOWPANDatagramService : public dtn::net::DatagramService
 		{
 		public:
-			UDPDatagramService(const ibrcommon::vinterface &iface, int port, size_t mtu = 1280);
-			virtual ~UDPDatagramService();
+			LOWPANDatagramService(const ibrcommon::vinterface &iface, int panid);
+			virtual ~LOWPANDatagramService();
 
 			/**
 			 * Bind to the local socket.
@@ -91,17 +90,15 @@ namespace dtn
 			virtual const DatagramConnectionParameter& getParameter() const;
 
 		private:
-			static const std::string encode(const ibrcommon::vaddress &address, const unsigned int &port);
-			static void decode(const std::string &identifier, std::string &address, unsigned int &port);
+			static const std::string encode(const uint16_t &addr, const int &panid);
+			static void decode(const std::string &identifier, uint16_t &addr, int &panid);
 
-
-			const static int BROADCAST_PORT = 5551;
+			int _panid;
 			const ibrcommon::vinterface _iface;
-			const int _bind_port;
-
 			DatagramConnectionParameter _params;
-		};
 
+			ibrcommon::lowpansocket *_socket;
+		};
 	} /* namespace net */
 } /* namespace dtn */
-#endif /* UDPDATAGRAMSERVICE_H_ */
+#endif /* LOWPANDATAGRAMSERVICE_H_ */
