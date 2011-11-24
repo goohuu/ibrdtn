@@ -300,7 +300,7 @@ namespace dtn
 			}
 
 			_abort = true;
-			_queue_buf_cond.signal();
+			_queue_buf_cond.abort();
 		}
 
 		int DatagramConnection::Stream::sync()
@@ -439,7 +439,7 @@ namespace dtn
 					dtn::routing::RequeueBundleEvent::raise(job._destination, job._bundle);
 				}
 			} catch (const ibrcommon::QueueUnblockedException&) {
-				// queue emtpy
+				// queue empty
 			}
 		}
 
@@ -448,13 +448,17 @@ namespace dtn
 			// notify the aborted transfer of the last bundle
 			if (_current_job._bundle != dtn::data::BundleID())
 			{
-				// putback job on the queue
+				// put-back job on the queue
 				queue.push(_current_job);
 			}
+
+			// abort all blocking operations on the stream
+			_stream.close();
 		}
 
 		bool DatagramConnection::Sender::__cancellation()
 		{
+			_stream.close();
 			queue.abort();
 			return true;
 		}
