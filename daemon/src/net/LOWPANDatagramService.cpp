@@ -15,7 +15,7 @@
 
 #include <string.h>
 
-#define EXTENDED_MASK	0x08
+#define EXTENDED_MASK	0x40
 #define SEQ_NUM_MASK	0x07
 
 namespace dtn
@@ -26,7 +26,7 @@ namespace dtn
 		 : _panid(panid), _iface(iface)
 		{
 			// set connection parameters
-			_params.max_msg_length = 112;
+			_params.max_msg_length = 111;
 			_params.max_seq_numbers = 8;
 			_params.flowcontrol = DatagramConnectionParameter::FLOW_NONE;
 
@@ -90,22 +90,17 @@ namespace dtn
 				// decode destination address
 				uint16_t addr = 0;
 				int panid = 0;
+				size_t end_of_payload = length + 1;
 				LOWPANDatagramService::decode(identifier, addr, panid);
 
 				// get a lowpan peer
 				ibrcommon::lowpansocket::peer p = _socket->getPeer(addr, panid);
 
-				// extend the buffer if the len is zero (ACKs)
-				if (length == 0) length++;
-
 				// buffer for the datagram plus local address
-				char tmp[length + 3];
-
-				// set the header to zero
-				tmp[0] = 0;
+				char tmp[length + 4];
 
 				// encode the flags (4-bit) + seqno (4-bit)
-				tmp[0] = (0xf0 & (flags << 4)) | (0x0f & seqno);
+				tmp[0] = (0x30 & (flags << 4)) | (0x0f & seqno);
 
 				// Need to encode flags, type and seqno into the message
 				if (type == DatagramConvergenceLayer::HEADER_SEGMENT)
@@ -113,7 +108,7 @@ namespace dtn
 					// copy payload to the new buffer
 					::memcpy(&tmp[1], buf, length);
 				}
-				else if (type == DatagramConvergenceLayer::HEADER_BROADCAST)
+				else
 				{
 					// set datagram to extended
 					tmp[0] |= EXTENDED_MASK;
@@ -123,21 +118,16 @@ namespace dtn
 
 					// copy payload to the new buffer
 					::memcpy(&tmp[2], buf, length);
-				}
-				else
-				{
-					// set datagram to extended
-					tmp[0] |= EXTENDED_MASK;
 
-					// encode the type into the second byte
-					tmp[1] = type;
+					// payload will be one byte longer with extended header
+					end_of_payload++;
 				}
 
 				// Add own address at the end
-				memcpy(&tmp[length], &local_addr, 3);
+				memcpy(&tmp[end_of_payload], &local_addr, 2);
 
 				// send converted line
-				if (p.send(buf, length + 2) == -1)
+				if (p.send(buf, end_of_payload + 2) == -1)
 				{
 					// CL is busy
 					throw DatagramException("send on socket failed");
@@ -169,55 +159,32 @@ namespace dtn
 				_socket->getAddress(&sockaddr.addr, _iface);
 				local_addr = sockaddr.addr.short_addr;
 
-				// decode destination address
-				uint16_t addr = 0;
-
 				// get a lowpan peer
-				ibrcommon::lowpansocket::peer p = _socket->getPeer(addr, _panid);
+				ibrcommon::lowpansocket::peer p = _socket->getPeer(BROADCAST_ADDR, _panid);
 
 				// extend the buffer if the len is zero (ACKs)
 				if (length == 0) length++;
 
 				// buffer for the datagram plus local address
-				char tmp[length + 3];
+				char tmp[length + 4];
 
-				// set the header to zero
-				tmp[0] = 0;
+				// encode header: 2-bit unused, flags (2-bit) + seqno (4-bit)
+				tmp[0] = (0x30 & (flags << 4)) | (0x0f & seqno);
 
-				// encode the flags (4-bit) + seqno (4-bit)
-				tmp[0] = (0xf0 & (flags << 4)) | (0x0f & seqno);
+				// set datagram to extended
+				tmp[0] |= EXTENDED_MASK;
 
-				// Need to encode flags, type and seqno into the message
-				if (type == DatagramConvergenceLayer::HEADER_SEGMENT)
-				{
-					// copy payload to the new buffer
-					::memcpy(&tmp[1], buf, length);
-				}
-				else if (type == DatagramConvergenceLayer::HEADER_BROADCAST)
-				{
-					// set datagram to extended
-					tmp[0] |= EXTENDED_MASK;
+				// encode the type into the second byte
+				tmp[1] = type;
 
-					// encode the type into the second byte
-					tmp[1] = type;
-
-					// copy payload to the new buffer
-					::memcpy(&tmp[2], buf, length);
-				}
-				else
-				{
-					// set datagram to extended
-					tmp[0] |= EXTENDED_MASK;
-
-					// encode the type into the second byte
-					tmp[1] = type;
-				}
+				// copy payload to the new buffer
+				::memcpy(&tmp[2], buf, length);
 
 				// Add own address at the end
-				memcpy(&tmp[length], &local_addr, 3);
+				memcpy(&tmp[length+2], &local_addr, 2);
 
 				// send converted line
-				if (p.send(buf, length + 2) == -1)
+				if (p.send(buf, length + 4) == -1)
 				{
 					// CL is busy
 					throw DatagramException("send on socket failed");
@@ -238,11 +205,10 @@ namespace dtn
 		size_t LOWPANDatagramService::recvfrom(char *buf, size_t length, char &type, char &flags, unsigned int &seqno, std::string &address) throw (DatagramException)
 		{
 			try {
-				char tmp[length + 3];
-				uint16_t from = 0;
+				char tmp[length + 4];
 
 				// Receive full frame from socket
-				size_t ret = _socket->receive(tmp, length + 3);
+				size_t ret = _socket->receive(tmp, length + 4);
 
 				// decode type, flags and seqno
 				// extended mask are discovery and ACK datagrams
@@ -251,11 +217,17 @@ namespace dtn
 					// in extended frames the second byte
 					// contains the real type
 					type = tmp[1];
+
+					// copy payload to the destination buffer
+					::memcpy(buf, &tmp[2], ret - 4);
 				}
 				else
 				{
 					// no extended mask means "segment"
 					type = DatagramConvergenceLayer::HEADER_SEGMENT;
+
+					// copy payload to the destination buffer
+					::memcpy(buf, &tmp[1], ret - 3);
 				}
 
 				// first byte contains flags (4-bit) + seqno (4-bit)
@@ -263,12 +235,9 @@ namespace dtn
 				seqno = 0x0f & tmp[0];
 
 				// Retrieve sender address from the end of the frame
-				from = ((char)tmp[length-1] << 8) | tmp[length-2];
+				uint16_t from = ((char)tmp[length-1] << 8) | tmp[length-2];
 
 				address = LOWPANDatagramService::encode(from, _panid);
-
-				// copy payload to the destination buffer
-				::memcpy(buf, &tmp[0], ret - 2);
 
 				IBRCOMMON_LOGGER_DEBUG(20) << "LOWPANDatagramService::recvfrom() type: " << std::hex << (int)type << "; flags: " << std::hex << (int)flags << "; seqno: " << seqno << "; address: " << address << IBRCOMMON_LOGGER_ENDL;
 

@@ -93,6 +93,7 @@ namespace dtn
 			static const std::string encode(const uint16_t &addr, const int &panid);
 			static void decode(const std::string &identifier, uint16_t &addr, int &panid);
 
+			const static uint16_t BROADCAST_ADDR = 0;
 			int _panid;
 			const ibrcommon::vinterface _iface;
 			DatagramConnectionParameter _params;
