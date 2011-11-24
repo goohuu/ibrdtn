@@ -213,7 +213,7 @@ namespace dtn
 			// mark the buffer for outgoing data as free
 			// the +1 sparse the first byte in the buffer and leave room
 			// for the processing flags of the segment
-			setp(_out_buf, _out_buf + _buf_size);
+			setp(_out_buf, _out_buf + _buf_size - 1);
 		}
 
 		DatagramConnection::Stream::~Stream()
@@ -228,9 +228,7 @@ namespace dtn
 			ibrcommon::MutexLock l(_queue_buf_cond);
 			if (_abort) throw DatagramException("stream aborted");
 
-			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::queue"<< IBRCOMMON_LOGGER_ENDL;
-
-			IBRCOMMON_LOGGER_DEBUG(45) << "Received frame sequence number: " << seqno << IBRCOMMON_LOGGER_ENDL;
+			IBRCOMMON_LOGGER_DEBUG(10) << "DatagramConnection::Stream::queue(): Received frame sequence number: " << seqno << IBRCOMMON_LOGGER_ENDL;
 
 			// Check if the sequence number is what we expect
 			if (in_seq_num_ != seqno)
@@ -238,6 +236,11 @@ namespace dtn
 				IBRCOMMON_LOGGER(error) << "Received frame with out of bound sequence number (" << seqno << " expected " << in_seq_num_ << ")"<< IBRCOMMON_LOGGER_ENDL;
 				_abort = true;
 				_queue_buf_cond.signal();
+
+				if (flags & SEGMENT_FIRST)
+				{
+					throw DatagramException("out of bound exception - re-initiate the connection");
+				}
 				return;
 			}
 
@@ -250,7 +253,7 @@ namespace dtn
 				return;
 			}
 			// check if this is a second first segment without any previous last segment
-			else if ((_in_state & SEGMENT_MIDDLE) && (flags & SEGMENT_FIRST))
+			else if ((_in_state == SEGMENT_MIDDLE) && (flags & SEGMENT_FIRST))
 			{
 				IBRCOMMON_LOGGER(error) << "Received frame with wrong segment mark"<< IBRCOMMON_LOGGER_ENDL;
 				_abort = true;
@@ -258,9 +261,16 @@ namespace dtn
 				return;
 			}
 
+			if (flags & SEGMENT_FIRST)
+			{
+				IBRCOMMON_LOGGER_DEBUG(45) << "DatagramConnection: first segment received" << IBRCOMMON_LOGGER_ENDL;
+			}
+
 			// if this is the last segment then...
 			if (flags & SEGMENT_LAST)
 			{
+				IBRCOMMON_LOGGER_DEBUG(45) << "DatagramConnection: last segment received" << IBRCOMMON_LOGGER_ENDL;
+
 				// ... expect a first segment as next
 				_in_state = SEGMENT_FIRST;
 			}
@@ -281,10 +291,10 @@ namespace dtn
 			}
 
 			// copy the new data into the buffer, but leave out the first byte (header)
-			::memcpy(_queue_buf, buf + 1, len - 1);
+			::memcpy(_queue_buf, buf, len);
 
 			// store the buffer length
-			_queue_buf_len = len - 1;
+			_queue_buf_len = len;
 
 			// notify waiting threads
 			_queue_buf_cond.signal();
@@ -315,7 +325,7 @@ namespace dtn
 					: 0;
 
 			// initialize the first byte with SEGMENT_FIRST flag
-			_out_state |= SEGMENT_FIRST;
+			_out_state = SEGMENT_FIRST;
 
 			return ret;
 		}
@@ -332,7 +342,7 @@ namespace dtn
 			// mark the buffer for outgoing data as free
 			// the +1 sparse the first byte in the buffer and leave room
 			// for the processing flags of the segment
-			setp(_out_buf, _out_buf + _buf_size);
+			setp(_out_buf, _out_buf + _buf_size - 1);
 
 			if (!std::char_traits<char>::eq_int_type(c, std::char_traits<char>::eof()))
 			{
@@ -354,6 +364,9 @@ namespace dtn
 
 			// increment the sequence number for outgoing segments
 			out_seq_num_ = (out_seq_num_ + 1) % _maxseqno;
+
+			// set the segment state to middle
+			_out_state = SEGMENT_MIDDLE;
 
 			return std::char_traits<char>::not_eof(c);
 		}
