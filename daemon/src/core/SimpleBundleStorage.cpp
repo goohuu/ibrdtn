@@ -276,8 +276,26 @@ namespace dtn
 				// create meta data object
 				dtn::data::MetaBundle meta(bundle);
 
-				// add the bundle to the stored bundles
-				_pending_bundles[hash] = bundle;
+				// accept custody if requested
+				try {
+					dtn::data::EID custodian = BundleStorage::acceptCustody(bundle);
+
+					// container for the custody accepted bundle
+					dtn::data::Bundle ca_bundle = bundle;
+
+					// set the new custodian
+					ca_bundle._custodian = custodian;
+
+					// create meta data object
+					meta = ca_bundle;
+
+					// add the bundle to the stored bundles
+					_pending_bundles[hash] = ca_bundle;
+				} catch (const ibrcommon::Exception&) {
+					// no custody requested
+					// add the bundle to the stored bundles
+					_pending_bundles[hash] = bundle;
+				}
 
 				// increment the storage size
 				_bundle_size[meta] = bundle_size;
