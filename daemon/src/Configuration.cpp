@@ -189,7 +189,7 @@ namespace dtn
 				c = getopt_long (argc, argv, "qhDkp:vi:c:d:t:",
 						long_options, &option_index);
 #else
-				c = getopt_long (argc, argv, "qhvi:c:d:",
+				c = getopt_long (argc, argv, "qhvi:c:d:t:",
 						long_options, &option_index);
 #endif
 
