@@ -77,6 +77,7 @@ add_param $CONFFILE "ibrdtn.statistic.port" "statistic_port"
 
 add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
 add_param $CONFFILE "ibrdtn.discovery.timeout" "discovery_timeout"
+add_param $CONFFILE "ibrdtn.discovery.version" "discovery_version"
 
 add_param $CONFFILE "ibrdtn.security.level" "security_level"
 add_param $CONFFILE "ibrdtn.security.bab_key" "security_bab_default_key"
