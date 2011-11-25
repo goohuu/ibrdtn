@@ -43,6 +43,7 @@
 
 #ifdef HAVE_LOWPAN_SUPPORT
 #include "net/LOWPANConvergenceLayer.h"
+#include "net/LOWPANDatagramService.h"
 #endif
 
 #include "net/IPNDAgent.h"
@@ -425,6 +426,21 @@ void createConvergenceLayers(BundleCore &core, Configuration &conf, std::list< d
 						IBRCOMMON_LOGGER(error) << "Failed to add LOWPAN ConvergenceLayer on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
 					}
 
+					break;
+				}
+
+				case Configuration::NetConfig::NETWORK_DGRAM_LOWPAN:
+				{
+					try {
+						LOWPANDatagramService *lowpan_service = new LOWPANDatagramService( net.interface, net.port );
+						DatagramConvergenceLayer *dgram_cl = new DatagramConvergenceLayer(lowpan_service);
+						core.addConvergenceLayer(dgram_cl);
+						components.push_back(dgram_cl);
+
+						IBRCOMMON_LOGGER(info) << "Datagram ConvergenceLayer (LowPAN) added on " << net.interface.toString() << ":" << net.port << IBRCOMMON_LOGGER_ENDL;
+					} catch (const ibrcommon::Exception &ex) {
+						IBRCOMMON_LOGGER(error) << "Failed to add Datagram ConvergenceLayer (LowPAN) on " << net.interface.toString() << ": " << ex.what() << IBRCOMMON_LOGGER_ENDL;
+					}
 					break;
 				}
 #endif

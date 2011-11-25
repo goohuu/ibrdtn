@@ -590,6 +590,8 @@ namespace dtn
 					if (type_name == "lowpan") type = Configuration::NetConfig::NETWORK_LOWPAN;
 					if (type_name == "file") type = Configuration::NetConfig::NETWORK_FILE;
 					if (type_name == "dgram:udp") type = Configuration::NetConfig::NETWORK_DGRAM_UDP;
+					if (type_name == "dgram:lowpan") type = Configuration::NetConfig::NETWORK_DGRAM_LOWPAN;
+					if (type_name == "dgram:ethernet") type = Configuration::NetConfig::NETWORK_DGRAM_ETHERNET;
 
 					switch (type)
 					{
