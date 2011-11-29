@@ -902,7 +902,7 @@ namespace dtn
 				_tlsRequired = (conf.read<std::string>("security_tls_required", "no") == "yes");
 
 				/* If the clock is not in sync, SSL will fail. Accept plain connection when the clock is not sync'ed. */
-				_tlsOptionalOnBadClock = (conf.read<std::string>("security_tls_fallback_badclock", "yes") == "yes");
+				_tlsOptionalOnBadClock = (conf.read<std::string>("security_tls_fallback_badclock", "no") == "yes");
 			}
 #endif
 
