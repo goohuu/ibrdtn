@@ -11,8 +11,8 @@ namespace dtn
 {
 	namespace core
 	{
-		TimeEvent::TimeEvent(const size_t timestamp, const TimeEventAction action)
-		: m_timestamp(timestamp), m_action(action)
+		TimeEvent::TimeEvent(const size_t timestamp, const size_t unixtimestamp, const TimeEventAction action)
+		: m_timestamp(timestamp), m_unixtimestamp(unixtimestamp), m_action(action)
 		{
 
 		}
@@ -32,15 +32,20 @@ namespace dtn
 			return m_timestamp;
 		}
 
+		size_t TimeEvent::getUnixTimestamp() const
+		{
+			return m_unixtimestamp;
+		}
+
 		const std::string TimeEvent::getName() const
 		{
 			return TimeEvent::className;
 		}
 
-		void TimeEvent::raise(const size_t timestamp, const TimeEventAction action)
+		void TimeEvent::raise(const size_t timestamp, const size_t unixtimestamp, const TimeEventAction action)
 		{
 			// raise the new event
-			raiseEvent( new TimeEvent(timestamp, action) );
+			raiseEvent( new TimeEvent(timestamp, unixtimestamp, action) );
 		}
 
 		std::string TimeEvent::toString() const

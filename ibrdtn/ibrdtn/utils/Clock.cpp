@@ -120,6 +120,17 @@ namespace dtn
 			return (now.tv_sec - TIMEVAL_CONVERSION) + offset;
 		}
 
+		size_t Clock::getUnixTimestamp()
+		{
+			struct timeval now;
+			Clock::gettimeofday(&now);
+
+			// timezone
+			int offset = Clock::timezone * 3600;
+
+			return now.tv_sec + offset;
+		}
+
 		void Clock::setOffset(struct timeval &tv)
 		{
 			if (!modify_clock)

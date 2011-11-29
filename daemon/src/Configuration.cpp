@@ -900,6 +900,9 @@ namespace dtn
 
 				/* read if TLS is required */
 				_tlsRequired = (conf.read<std::string>("security_tls_required", "no") == "yes");
+
+				/* If the clock is not in sync, SSL will fail. Accept plain connection when the clock is not sync'ed. */
+				_tlsOptionalOnBadClock = (conf.read<std::string>("security_tls_fallback_badclock", "yes") == "yes");
 			}
 #endif
 
@@ -972,6 +975,8 @@ namespace dtn
 
 		bool Configuration::Security::TLSRequired() const
 		{
+			// TLS is only required, if the clock is in sync
+			if ((dtn::utils::Clock::quality == 0) && _tlsOptionalOnBadClock) return false;
 			return _tlsRequired;
 		}
 

@@ -49,14 +49,14 @@ namespace dtn
 
 			if (dtntime == 0)
 			{
-				TimeEvent::raise(dtntime, TIME_SECOND_TICK);
+				TimeEvent::raise(dtntime, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
 
 				ibrcommon::MutexLock l(*this);
 				signal(true);
 			}
 			else if (_next <= dtntime)
 			{
-				TimeEvent::raise(dtntime, TIME_SECOND_TICK);
+				TimeEvent::raise(dtntime, dtn::utils::Clock::getUnixTimestamp(), TIME_SECOND_TICK);
 				_next = dtntime + _frequency;
 
 				ibrcommon::MutexLock l(*this);

@@ -383,6 +383,7 @@ namespace dtn
 				bool _enabled;
 				bool _tlsEnabled;
 				bool _tlsRequired;
+				bool _tlsOptionalOnBadClock;
 
 			protected:
 				Security();

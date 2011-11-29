@@ -20,6 +20,7 @@ namespace dtn
 		class Clock
 		{
 		public:
+			static size_t getUnixTimestamp();
 			static size_t getTime();
 
 			static bool isExpired(const dtn::data::Bundle &b);

@@ -144,7 +144,7 @@ namespace dtn
 							size_t bl_age = (*iter).second;
 
 							// do not query again if the blacklist entry is valid
-							if (bl_age < dtn::utils::Clock::getTime())
+							if (bl_age < t.getUnixTimestamp())
 							{
 								_sync_blacklist.erase((*iter).first);
 							}
@@ -184,7 +184,7 @@ namespace dtn
 						 */
 						if (dtn::utils::Clock::quality == 0)
 						{
-							if (dtn::utils::Clock::getTime() > 0)
+							if (t.getTimestamp() > 0)
 							{
 								dtn::utils::Clock::quality = 1;
 								IBRCOMMON_LOGGER(warning) << "The local clock seems to be okay again. Expiration enabled." << IBRCOMMON_LOGGER_ENDL;
@@ -229,14 +229,14 @@ namespace dtn
 							size_t bl_age = _sync_blacklist[peer];
 
 							// do not query again if the blacklist entry is valid
-							if (bl_age > dtn::utils::Clock::getTime())
+							if (bl_age > dtn::utils::Clock::getUnixTimestamp())
 							{
 								return;
 							}
 						}
 
 						// create a new blacklist entry
-						_sync_blacklist[peer] = dtn::utils::Clock::getTime() + 60;
+						_sync_blacklist[peer] = dtn::utils::Clock::getUnixTimestamp() + 60;
 					}
 
 					// send a time sync bundle

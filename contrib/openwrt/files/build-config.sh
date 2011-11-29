@@ -88,6 +88,7 @@ add_param $CONFFILE "ibrdtn.tls.key" "security_key"
 add_param $CONFFILE "ibrdtn.tls.trustedpath" "security_trusted_ca_path"
 add_param $CONFFILE "ibrdtn.tls.required" "security_tls_required"
 add_param $CONFFILE "ibrdtn.tls.noencryption" "security_tls_disable_encryption"
+add_param $CONFFILE "ibrdtn.tls.fallback_badclock" "security_tls_fallback_badclock"
 
 add_param $CONFFILE "ibrdtn.timesync.reference" "time_reference"
 add_param $CONFFILE "ibrdtn.timesync.qot_tick" "time_qot_tick"
