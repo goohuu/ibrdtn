@@ -137,6 +137,7 @@ void print_help()
 	cout << " --abortfail     Abort after first packetloss" << endl;
 	cout << " --size          the size of the payload" << endl;
 	cout << " --count X       send X echo in a row" << endl;
+	cout << " --delay X       delay (seconds) after a successful response" << endl;
 	cout << " --lifetime <seconds> set the lifetime of outgoing bundles; default: 30" << endl;
 	cout << " --encrypt       request encryption on the bundle layer" << endl;
 	cout << " --sign          request signature on the bundle layer" << endl;
@@ -146,6 +147,8 @@ void print_help()
 size_t _received = 0, _transmitted = 0;
 float _min = 0.0, _max = 0.0, _avg = 0.0;
 ibrcommon::TimeMeasurement _runtime;
+ibrcommon::Conditional __pause;
+dtn::api::Client *__client = NULL;
 
 EID _addr;
 bool __exit = false;
@@ -171,10 +174,11 @@ void term(int signal)
 	{
 		if (!__exit)
 		{
-			print_summary();
+			ibrcommon::MutexLock l(__pause);
+			if (__client != NULL) __client->abort();
 			__exit = true;
+			__pause.abort();
 		}
-		exit(0);
 	}
 }
 
@@ -191,6 +195,7 @@ int main(int argc, char *argv[])
 	bool wait_for_reply = true;
 	bool stop_after_first_fail = false;
 	bool nonstop = true;
+	size_t interval_pause = 1;
 	size_t count = 0;
 	dtn::api::Client::COMMUNICATION_MODE mode = dtn::api::Client::MODE_BIDIRECTIONAL;
 	ibrcommon::File unixdomain;
@@ -257,6 +262,14 @@ int main(int argc, char *argv[])
 			nonstop = false;
 		}
 
+		else if (arg == "--delay" && argc > i)
+		{
+			stringstream str_delay;
+			str_delay.str( argv[i + 1] );
+			str_delay >> interval_pause;
+			i++;
+		}
+
 		else if (arg == "--lifetime" && argc > i)
 		{
 			stringstream data; data << argv[i + 1];
@@ -306,6 +319,12 @@ int main(int argc, char *argv[])
 		// Initiate a derivated client
 		EchoClient client(mode, ping_source, conn);
 
+		// set the global client pointer
+		{
+			ibrcommon::MutexLock l(__pause);
+			__client = &client;
+		}
+
 		// Connect to the server. Actually, this function initiate the
 		// stream protocol by starting the thread and sending the contact header.
 		client.connect();
@@ -349,9 +368,20 @@ int main(int argc, char *argv[])
 
 						std::cout << payload_size << " bytes from " << response.getSource().getString() << ": seq=" << reply_seq << " ttl=" << response.getLifetime() << " time=" << tm << std::endl;
 						_received++;
-					} catch (const ibrcommon::Exception &ex) {
-						std::cerr << ex.what() << std::endl;
 
+						ibrcommon::MutexLock l(__pause);
+						__pause.wait(interval_pause * 1000);
+					} catch (const ibrcommon::Conditional::ConditionalAbortException &e) {
+						if (e.reason == ibrcommon::Conditional::ConditionalAbortException::COND_TIMEOUT)
+						{
+							continue;
+						}
+						// aborted
+						break;
+					} catch (const dtn::api::ConnectionAbortedException&) {
+						// aborted... do a clean shutdown
+						break;
+					} catch (const dtn::api::ConnectionTimeoutException &ex) {
 						if (stop_after_first_fail)
 						{
 							std::cout << "No response, aborting." << std::endl;
@@ -359,8 +389,6 @@ int main(int argc, char *argv[])
 						}
 					}
 				}
-
-				if (nonstop) ::sleep(1);
 			}
 		} catch (const dtn::api::ConnectionException&) {
 			std::cerr << "Disconnected." << std::endl;
@@ -375,8 +403,8 @@ int main(int argc, char *argv[])
 	} catch (const ibrcommon::tcpclient::SocketException&) {
 		std::cerr << "Can not connect to the daemon. Does it run?" << std::endl;
 		return -1;
-	} catch (...) {
-
+	} catch (const std::exception&) {
+		std::cerr << "unknown error" << std::endl;
 	}
 
 	print_summary();
