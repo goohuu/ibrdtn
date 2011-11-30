@@ -143,6 +143,14 @@ namespace dtn
 			shutdown(StreamConnection::CONNECTION_SHUTDOWN_SIMPLE_SHUTDOWN);
 		}
 
+		void Client::abort()
+		{
+			_inqueue.abort();
+
+			// shutdown the bundle stream connection
+			shutdown(StreamConnection::CONNECTION_SHUTDOWN_ERROR);
+		}
+
 		void Client::eventConnectionDown()
 		{
 			_inqueue.abort();

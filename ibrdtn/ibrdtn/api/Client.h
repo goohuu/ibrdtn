@@ -165,6 +165,11 @@ namespace dtn
 			void close();
 
 			/**
+			 * Aborts blocking calls of getBundle()
+			 */
+			void abort();
+
+			/**
 			 * The connection down event is called by the StreamConnection object and
 			 * aborts the blocking getBundle() method. If a client is working synchonous
 			 * this method should not be overloaded!
