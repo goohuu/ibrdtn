@@ -306,12 +306,12 @@ namespace dtn
 				} catch (const ibrcommon::IOException &ex) {
 					IBRCOMMON_LOGGER(notice) << "Unable to store bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					// rais BundleEvent because we have to drop the bundle
+					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				} catch (const dtn::core::BundleStorage::StorageSizeExeededException &ex) {
 					IBRCOMMON_LOGGER(notice) << "No space left for bundle " << received.bundle.toString() << IBRCOMMON_LOGGER_ENDL;
 
-					// rais BundleEvent because we have to drop the bundle
+					// raise BundleEvent because we have to drop the bundle
 					dtn::core::BundleEvent::raise(received.bundle, dtn::core::BUNDLE_DELETED, dtn::data::StatusReportBlock::DEPLETED_STORAGE);
 				}
 

@@ -174,7 +174,7 @@ namespace dtn
 
 					// do not forward any epidemic control message
 					// this is done by the neighbor routing module
-					if (meta.source == (dtn::core::BundleCore::local + "/routing/epidemic"))
+					if (meta.source.getApplication() == "/routing/epidemic")
 					{
 						return false;
 					}
