@@ -10,8 +10,6 @@
 #include <ibrcommon/thread/MutexLock.h>
 #include <ibrcommon/TimeMeasurement.h>
 
-#include <ibrdtn/data/ScopeControlHopLimitBlock.h>
-
 #include <sys/socket.h>
 #include <stdlib.h>
 #include <stdio.h>

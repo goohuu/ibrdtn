@@ -11,7 +11,6 @@
 #include "routing/QueueBundleEvent.h"
 #include "net/TransferCompletedEvent.h"
 #include "net/TransferAbortedEvent.h"
-#include "core/BundleExpiredEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "core/Node.h"
