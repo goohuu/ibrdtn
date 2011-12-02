@@ -131,6 +131,14 @@ namespace dtn
 						return false;
 					}
 
+					// do not forward local bundles
+					if ((meta.destination.getNode() == dtn::core::BundleCore::local)
+							&& meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)
+						)
+					{
+						return false;
+					}
+
 					// check Scope Control Block - do not forward non-group bundles with hop limit <= 1
 					if ((meta.hopcount <= 1) && (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)))
 					{

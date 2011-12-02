@@ -165,15 +165,23 @@ namespace dtn
 						return false;
 					}
 
-					// check Scope Control Block - do not forward non-group bundles with hop limit <= 1
-					if ((meta.hopcount <= 1) && (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)))
+					// do not forward any epidemic control message
+					// this is done by the neighbor routing module
+					if (meta.source.getApplication() == "/routing/epidemic")
 					{
 						return false;
 					}
 
-					// do not forward any epidemic control message
-					// this is done by the neighbor routing module
-					if (meta.source.getApplication() == "/routing/epidemic")
+					// do not forward local bundles
+					if ((meta.destination.getNode() == dtn::core::BundleCore::local)
+							&& meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)
+						)
+					{
+						return false;
+					}
+
+					// check Scope Control Block - do not forward non-group bundles with hop limit <= 1
+					if ((meta.hopcount <= 1) && (meta.get(dtn::data::PrimaryBlock::DESTINATION_IS_SINGLETON)))
 					{
 						return false;
 					}
