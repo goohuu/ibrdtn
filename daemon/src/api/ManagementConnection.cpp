@@ -9,6 +9,7 @@
 #include "Configuration.h"
 #include "ManagementConnection.h"
 #include "core/BundleCore.h"
+#include "core/GlobalEvent.h"
 
 #include <ibrdtn/utils/Utils.h>
 
@@ -216,6 +217,34 @@ namespace dtn
 				{
 					ibrcommon::Logger::writeBuffer(_stream);
 					_stream << std::endl;
+				}
+				else if (cmd[0] == "core")
+				{
+					if (cmd[1] == "shutdown")
+					{
+						// send shutdown signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+					}
+					else if (cmd[1] == "reload")
+					{
+						// send reload signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
+					}
+					else if (cmd[1] == "powersave")
+					{
+						// send powersave signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_POWERSAVE);
+					}
+					else if (cmd[1] == "suspend")
+					{
+						// send suspend signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SUSPEND);
+					}
+					else if (cmd[1] == "wakeup")
+					{
+						// send wakeup signal
+						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_WAKEUP);
+					}
 				}
 				else if (cmd[0] == "bundle")
 				{

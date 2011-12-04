@@ -24,7 +24,8 @@ namespace dtn
 				GLOBAL_IDLE = 2,
 				GLOBAL_BUSY = 3,
 				GLOBAL_SUSPEND = 4,
-				GLOBAL_POWERSAVE = 5
+				GLOBAL_POWERSAVE = 5,
+				GLOBAL_WAKEUP = 6
 			};
 
 			virtual ~GlobalEvent();
