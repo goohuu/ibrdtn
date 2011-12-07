@@ -15,6 +15,7 @@
 #include <ibrcommon/net/vinterface.h>
 #include <ibrcommon/net/tcpserver.h>
 #include <ibrcommon/thread/Mutex.h>
+#include <ibrcommon/thread/Timer.h>
 
 #include <set>
 #include <list>
@@ -23,7 +24,7 @@ namespace dtn
 {
 	namespace api
 	{
-		class ApiServer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ApiServerInterface
+		class ApiServer : public dtn::daemon::IndependentComponent, public dtn::core::EventReceiver, public ApiServerInterface, public ibrcommon::TimerCallback
 		{
 		public:
 			ApiServer(const ibrcommon::File &socket);
@@ -41,6 +42,21 @@ namespace dtn
 
 			void processIncomingBundle(const dtn::data::EID &source, dtn::data::Bundle &bundle);
 
+			/**
+			 * retrieve a registration for a given handle from the ApiServers registration list
+			 * the registration is automatically set into the attached state
+			 * @param handle the handle of the registration to return
+			 * @exception Registration::AlreadyAttachedException the registration is already attached to a different client
+			 * @exception Registration::NotFoundException no registration was found for the given handle
+			 * @return the registration with the given handle
+			 */
+			Registration& getRegistration(const std::string &handle);
+
+			/**
+			 * @see ibrcommon::TimerCallback::timeout(Timer)
+			 */
+			virtual bool timeout(ibrcommon::Timer *timer);
+
 		protected:
 			bool __cancellation();
 
@@ -52,10 +68,19 @@ namespace dtn
 			void componentDown();
 
 		private:
+
+			/**
+			 * updates the timer of the _garbage_collector
+			 * @return true, if there are upcoming tasks for the _garbage_collector
+			 */
+			bool updateTimer();
+
 			ibrcommon::tcpserver _srv;
 			std::list<Registration> _registrations;
 			std::list<ClientHandler*> _connections;
 			ibrcommon::Mutex _connection_lock;
+			ibrcommon::Mutex _registration_lock;
+			ibrcommon::Timer _garbage_collector;
 		};
 	}
 }

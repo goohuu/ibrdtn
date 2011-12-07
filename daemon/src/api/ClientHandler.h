@@ -67,6 +67,12 @@ namespace dtn
 			Registration& getRegistration();
 			ApiServerInterface& getAPIServer();
 
+			/**
+			 * swaps the active registration of this client with the given one
+			 * @param reg the new registration
+			 */
+			void switchRegistration(Registration &reg);
+
 			void eventNodeAvailable(const dtn::core::Node &node);
 			void eventNodeUnavailable(const dtn::core::Node &node);
 
@@ -81,7 +87,7 @@ namespace dtn
 			void processCommand(const std::vector<std::string> &cmd);
 
 			ApiServerInterface &_srv;
-			Registration &_registration;
+			Registration *_registration;
 			ibrcommon::Mutex _write_lock;
 			ibrcommon::tcpstream *_stream;
 			dtn::data::EID _endpoint;
@@ -97,6 +103,7 @@ namespace dtn
 			virtual void connectionUp(ClientHandler *conn) = 0;
 			virtual void connectionDown(ClientHandler *conn) = 0;
 			virtual void freeRegistration(Registration &reg) = 0;
+			virtual Registration& getRegistration(const std::string &handle) = 0;
 		};
 	}
 }

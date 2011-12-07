@@ -18,6 +18,7 @@
 #include <ibrdtn/utils/Clock.h>
 #include <ibrdtn/utils/Random.h>
 #include <ibrcommon/Logger.h>
+#include <ibrcommon/thread/Timer.h>
 
 #include <limits.h>
 #include <stdint.h>
@@ -49,7 +50,8 @@ namespace dtn
 			Registration::_handles.erase(handle);
 		}
 
-		Registration::Registration() : _handle(alloc_handle())
+		Registration::Registration() :
+				_handle(alloc_handle()), _persistent(false), _detached(false)
 		{
 		}
 
@@ -328,6 +330,66 @@ namespace dtn
 		const std::string& Registration::getHandle() const
 		{
 			return _handle;
+		}
+
+		void Registration::setPersistent(size_t lifetime)
+		{
+			_expiry = lifetime + ibrcommon::Timer::get_current_time();
+			_persistent = true;
+		}
+
+		void Registration::unsetPersistent()
+		{
+			_persistent = false;
+		}
+
+		bool Registration::isPersistent()
+		{
+			if(_expiry <= ibrcommon::Timer::get_current_time())
+			{
+				_persistent = false;
+			}
+
+			return _persistent;
+		}
+
+		bool Registration::isPersistent() const
+		{
+			if(_expiry <= ibrcommon::Timer::get_current_time())
+			{
+				return false;
+			}
+
+			return _persistent;
+		}
+
+		size_t Registration::getExpireTime() const
+		{
+			if(!isPersistent()) throw NotPersistentException("Registration is not persistent.");
+
+			return _expiry;
+
+		}
+
+		void Registration::attach()
+		{
+			ibrcommon::MutexLock l(_attach_lock);
+			if(!_detached) throw AlreadyAttachedException("Registration is already attached to a client.");
+
+			_detached = false;
+		}
+
+		void Registration::detach()
+		{
+			ibrcommon::MutexLock l1(_wait_for_cond);
+			ibrcommon::MutexLock l2(_attach_lock);
+
+			_detached = true;
+
+			_queue.reset();
+			_notify_queue.reset();
+
+			_wait_for_cond.reset();
 		}
 	}
 }

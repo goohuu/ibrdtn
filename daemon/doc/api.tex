@@ -9,8 +9,6 @@
 
 \begin{document}
 
-%TODO counting starts with 0
-
 \section{Overview}
 A Command consists of multiple words on a single line and will be specified in the following format:
 \begin{quote}
@@ -114,6 +112,27 @@ dtn://abc
 \end{verbatim}
 \makebox[\textwidth]{\hrulefill}
 
+\subsubsection*{registration save <time>}
+Makes a registration persistent for a given time.
+
+The daemon responds with the API\_STATUS\_OK code, followed by the words `REGISTRATION SAVE' and a string of printable ASCII characters, that identifies the registration uniquely.
+\begin{description}
+\item[time:] The time in seconds that the registration shall be saved.
+\end{description}
+
+Example communication:\\
+\makebox[\textwidth]{\hrulefill}
+\begin{verbatim}
+registration save 60
+200 REGISTRATION SAVE pEOlcirMMTUVBZs
+\end{verbatim}
+\makebox[\textwidth]{\hrulefill}
+\subsubsection*{registration load <id>}
+Loads a persistent registration by a given ID.
+The registration can only be loaded if it is not assigned to another client.
+\begin{description}
+\item[id:] The unique ID of the registration, that was returned by `registration save'.
+\end{description}
 \subsection{neighbor}
 \subsubsection*{neighbor list}
 Sends a list with all neighbors of the DTN-Daemon.

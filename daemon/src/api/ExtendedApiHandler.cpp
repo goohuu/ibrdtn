@@ -30,19 +30,19 @@ namespace dtn
 	namespace api
 	{
 		ExtendedApiHandler::ExtendedApiHandler(ClientHandler &client, ibrcommon::tcpstream &stream)
-		 : ProtocolHandler(client, stream), _sender(*this), _registration(client.getRegistration()), _endpoint(dtn::core::BundleCore::local)
+		 : ProtocolHandler(client, stream), _sender(new Sender(*this)), _registration(&client.getRegistration()), _endpoint(dtn::core::BundleCore::local)
 		{
 		}
 
 		ExtendedApiHandler::~ExtendedApiHandler()
 		{
-			_registration.abort();
-			_sender.join();
+			_registration->abort();
+			_sender->join();
 		}
 
 		Registration& ExtendedApiHandler::getRegistration()
 		{
-			return _registration;
+			return *_registration;
 		}
 
 		bool ExtendedApiHandler::good() const{
@@ -63,7 +63,7 @@ namespace dtn
 		{
 			IBRCOMMON_LOGGER_DEBUG(60) << "ExtendedApiConnection down" << IBRCOMMON_LOGGER_ENDL;
 
-			_registration.abort();
+			_registration->abort();
 
 			// close the stream
 			try {
@@ -72,13 +72,13 @@ namespace dtn
 
 			try {
 				// shutdown the sender thread
-				_sender.stop();
+				_sender->stop();
 			} catch (const std::exception&) { };
 		}
 
 		void ExtendedApiHandler::run()
 		{
-			_sender.start();
+			_sender->start();
 
 			std::string buffer;
 			_stream << ClientHandler::API_STATUS_OK << " SWITCHED TO EXTENDED" << std::endl;
@@ -113,7 +113,7 @@ namespace dtn
 							}
 							else
 							{
-								_registration.subscribe(_endpoint);
+								_registration->subscribe(_endpoint);
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
@@ -141,7 +141,7 @@ namespace dtn
 							}
 							else
 							{
-								_registration.subscribe(endpoint);
+								_registration->subscribe(endpoint);
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
@@ -159,14 +159,14 @@ namespace dtn
 							}
 							else
 							{
-								_registration.unsubscribe(endpoint);
+								_registration->unsubscribe(endpoint);
 								_stream << ClientHandler::API_STATUS_OK << " OK" << std::endl;
 							}
 						}
 						else if (cmd[1] == "list")
 						{
 							ibrcommon::MutexLock l(_write_lock);
-							const std::set<dtn::data::EID> &list = _registration.getSubscriptions();
+							const std::set<dtn::data::EID> &list = _registration->getSubscriptions();
 
 							_stream << ClientHandler::API_STATUS_OK << " REGISTRATION LIST" << std::endl;
 							for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
@@ -174,6 +174,67 @@ namespace dtn
 								_stream << (*iter).getString() << std::endl;
 							}
 							_stream << std::endl;
+						}
+						else if (cmd[1] == "save")
+						{
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+							size_t lifetime = 0;
+							std::stringstream ss(cmd[2]);
+
+							ss >> lifetime;
+							if(ss.fail()) throw ibrcommon::Exception("malformed command");
+
+							/* make the registration persistent for a given lifetime */
+							_registration->setPersistent(lifetime);
+
+							ibrcommon::MutexLock l(_write_lock);
+							_stream << ClientHandler::API_STATUS_OK << " REGISTRATION SAVE " << _registration->getHandle() << std::endl;
+						}
+						else if (cmd[1] == "load")
+						{
+							if (cmd.size() < 3) throw ibrcommon::Exception("not enough parameters");
+
+							const std::string handle = cmd[2];
+
+							try
+							{
+								Registration& reg = _client.getAPIServer().getRegistration(handle);
+
+								/* stop the sender */
+								_registration->abort();
+								_sender->join();
+
+								/* switch the registration */
+								_registration = &reg;
+								_client.switchRegistration(reg);
+
+								/* and switch the sender */
+								Sender *old_sender = _sender;
+								try{
+									_sender = new Sender(*this);
+								}
+								catch (const std::bad_alloc &ex)
+								{
+									_sender = old_sender;
+									throw ex;
+								}
+								delete old_sender;
+								_sender->start();
+
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_OK << " REGISTRATION LOAD" << std::endl;
+							}
+							catch (const Registration::AlreadyAttachedException& ex)
+							{
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_SERVICE_UNAVAILABLE << " REGISTRATION BUSY" << std::endl;
+							}
+							catch (const Registration::NotFoundException& ex)
+							{
+								ibrcommon::MutexLock l(_write_lock);
+								_stream << ClientHandler::API_STATUS_SERVICE_UNAVAILABLE << " REGISTRATION NOT FOUND" << std::endl;
+							}
 						}
 						else
 						{
@@ -334,7 +395,7 @@ namespace dtn
 
 								// announce this bundle as delivered
 								dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
-								_registration.delivered(id);
+								_registration->delivered(id);
 
 								ibrcommon::MutexLock l(_write_lock);
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;

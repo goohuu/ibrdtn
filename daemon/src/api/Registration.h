@@ -12,6 +12,7 @@
 #include <ibrdtn/data/BundleID.h>
 #include <ibrdtn/data/BundleList.h>
 #include <ibrcommon/thread/Queue.h>
+#include <ibrcommon/thread/Mutex.h>
 #include <string>
 #include <set>
 
@@ -28,6 +29,38 @@ namespace dtn
 				NOTIFY_NEIGHBOR_AVAILABLE = 1,
 				NOTIFY_NEIGHBOR_UNAVAILABLE = 2,
 				NOTIFY_SHUTDOWN = 3
+			};
+
+			class RegistrationException : public ibrcommon::Exception
+			{
+			public:
+				RegistrationException(string what = "") throw() : Exception(what)
+				{
+				}
+			};
+
+			class AlreadyAttachedException : public RegistrationException
+			{
+			public:
+				AlreadyAttachedException(string what = "") throw() : RegistrationException(what)
+				{
+				}
+			};
+
+			class NotFoundException : public RegistrationException
+			{
+			public:
+				NotFoundException(string what = "") throw() : RegistrationException(what)
+				{
+				}
+			};
+
+			class NotPersistentException : public RegistrationException
+			{
+			public:
+				NotPersistentException(string what = "") throw() : RegistrationException(what)
+				{
+				}
 			};
 
 			/**
@@ -120,6 +153,55 @@ namespace dtn
 			 */
 			void abort();
 
+			/**
+			 * resets the underlying queues (if you want to continue
+			 * using the registration after an abort call
+			 */
+			void reset();
+
+			/**
+			 * make this registration persistent
+			 * @param lifetime the lifetime of the registration in seconds
+			 */
+			void setPersistent(size_t lifetime);
+
+			/**
+			 * remove the persistent flag of this registration
+			 */
+			void unsetPersistent();
+
+			/**
+			 * returns the persistent state of this registration
+			 * and also sets the persistent state to false, if the timer is expired
+			 * @return the persistent state
+			 */
+			bool isPersistent();
+
+			/**
+			 * returns the persistent state of this registration
+			 * @return the persistent state
+			 */
+			bool isPersistent() const;
+
+			/**
+			 * gets the expire time of this registration if it is persistent
+			 * @see ibrcommon::Timer::get_current_time()
+			 * @exception NotPersistentException the registration is not persistent
+			 * @return the expire time according to ibrcommon::Timer::get_current_time()
+			 */
+			size_t getExpireTime() const;
+
+			/**
+			 * attaches a client to this registration
+			 * @exception AlreadyAttachedException a client is already attached
+			 */
+			void attach();
+
+			/**
+			 * detaches a client from this registration
+			 */
+			void detach();
+
 		protected:
 			void underflow();
 
@@ -139,6 +221,11 @@ namespace dtn
 			static void free_handle(const std::string &handle);
 
 			static std::set<std::string> _handles;
+
+			bool _persistent;
+			bool _detached;
+			ibrcommon::Mutex _attach_lock;
+			size_t _expiry;
 		};
 	}
 }

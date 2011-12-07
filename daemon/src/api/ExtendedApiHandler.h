@@ -60,12 +60,14 @@ namespace dtn
 
 			private:
 				ExtendedApiHandler &_handler;
-			} _sender;
+			} *_sender;
 
 			static void sayBundleID(ostream &stream, const dtn::data::BundleID &id);
 			static dtn::data::BundleID readBundleID(const std::vector<std::string>&, const size_t start);
 
-			Registration &_registration;
+			void processIncomingBundle(dtn::data::Bundle &b);
+
+			Registration *_registration;
 			ibrcommon::Mutex _write_lock;
 
 			dtn::data::Bundle _bundle_reg;

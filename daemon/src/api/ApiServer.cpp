@@ -30,12 +30,12 @@ namespace dtn
 	namespace api
 	{
 		ApiServer::ApiServer(const ibrcommon::File &socket)
-		 : _srv(socket)
+		 : _srv(socket), _garbage_collector(*this, 0)
 		{
 		}
 
 		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
-		 : _srv()
+		 : _srv(), _garbage_collector(*this, 0)
 		{
 			_srv.bind(net, port);
 		}
@@ -72,13 +72,18 @@ namespace dtn
 					// send welcome banner
 					(*conn) << "IBR-DTN " << dtn::daemon::Configuration::getInstance().version() << " API 1.0" << std::endl;
 
-					ibrcommon::MutexLock l(_connection_lock);
 
-					// create a new registration
-					Registration reg; _registrations.push_back(reg);
-					IBRCOMMON_LOGGER_DEBUG(5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+					ClientHandler *obj;
+					{
+						ibrcommon::MutexLock l1(_registration_lock);
+						// create a new registration
+						Registration reg; _registrations.push_back(reg);
+						IBRCOMMON_LOGGER_DEBUG(5) << "new registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
 
-					ClientHandler *obj = new ClientHandler(*this, _registrations.back(), conn);
+						obj  = new ClientHandler(*this, _registrations.back(), conn);
+					}
+
+					ibrcommon::MutexLock l2(_connection_lock);
 					_connections.push_back(obj);
 
 					// start the client handler
@@ -182,6 +187,58 @@ namespace dtn
 			dtn::net::BundleReceivedEvent::raise(source, bundle, true, true);
 		}
 
+		Registration& ApiServer::getRegistration(const std::string &handle)
+		{
+			ibrcommon::MutexLock l(_registration_lock);
+			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+			{
+				if (*iter == handle)
+				{
+					if (iter->isPersistent()){
+						iter->attach();
+						return *iter;
+					}
+					break;
+				}
+			}
+
+			throw Registration::NotFoundException("Registration not found");
+		}
+
+		bool ApiServer::timeout(ibrcommon::Timer *timer)
+		{
+			if (timer != &_garbage_collector){
+				return false;
+			}
+
+			{
+				ibrcommon::MutexLock l(_registration_lock);
+
+				// remove non-persistent and detached registrations
+				for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end();)
+				{
+					try
+					{
+						iter->attach();
+						if(!iter->isPersistent()){
+							IBRCOMMON_LOGGER_DEBUG(5) << "release registration " << iter->getHandle() << IBRCOMMON_LOGGER_ENDL;
+							iter = _registrations.erase(iter);
+						}
+						else
+						{
+							iter->detach();
+							iter++;
+						}
+					}
+					catch(const Registration::AlreadyAttachedException &ex)
+					{
+					}
+				}
+			}
+
+			return updateTimer();
+		}
+
 		const std::string ApiServer::getName() const
 		{
 			return "ApiServer";
@@ -213,14 +270,29 @@ namespace dtn
 
 		void ApiServer::freeRegistration(Registration &reg)
 		{
-			// remove the registration
-			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+			if(reg.isPersistent())
 			{
-				if (reg == (*iter))
+				reg.detach();
+				if(updateTimer())
 				{
-					IBRCOMMON_LOGGER_DEBUG(5) << "release registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
-					_registrations.erase(iter);
-					break;
+					/* start the _garbage_collector if it is not running yet */
+					if(!_garbage_collector.isRunning()){
+						_garbage_collector.start();
+					}
+				}
+			}
+			else
+			{
+				ibrcommon::MutexLock l(_registration_lock);
+				// remove the registration
+				for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+				{
+					if (reg == (*iter))
+					{
+						IBRCOMMON_LOGGER_DEBUG(5) << "release registration " << reg.getHandle() << IBRCOMMON_LOGGER_ENDL;
+						_registrations.erase(iter);
+						break;
+					}
 				}
 			}
 		}
@@ -259,6 +331,60 @@ namespace dtn
 					}
 				}
 			} catch (const std::bad_cast&) { };
+		}
+
+		bool ApiServer::updateTimer()
+		{
+			ibrcommon::MutexLock l(_registration_lock);
+			bool ret = false;
+			size_t new_timeout = 0;
+			size_t current_time = ibrcommon::Timer::get_current_time();
+
+			// find the registration that expires next
+			for (std::list<dtn::api::Registration>::iterator iter = _registrations.begin(); iter != _registrations.end(); iter++)
+			{
+				try
+				{
+					iter->attach();
+					if(!iter->isPersistent()){
+						/* found an expired registration, trigger the timer */
+						iter->detach();
+						new_timeout = 0;
+						ret = true;
+						break;
+					}
+					else
+					{
+						size_t expire_time = iter->getExpireTime();
+						/* we dont have to check if the expire time is smaller then the current_time
+							since isPersistent() would have returned false */
+						size_t expire_timeout = expire_time - current_time;
+						iter->detach();
+
+						/* if ret is false, no persistent registration was found yet */
+						if(!ret)
+						{
+							ret = true;
+							new_timeout = expire_timeout;
+						}
+						else if(expire_timeout < new_timeout)
+						{
+							new_timeout = expire_timeout;
+						}
+					}
+				}
+				catch(const Registration::AlreadyAttachedException &ex)
+				{
+				}
+			}
+
+			if(ret)
+			{
+				/* set the new timeout only if we found a persistent registration */
+				_garbage_collector.set(new_timeout);
+			}
+
+			return ret;
 		}
 	}
 }

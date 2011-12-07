@@ -31,7 +31,7 @@ namespace dtn
 		{}
 
 		ClientHandler::ClientHandler(ApiServerInterface &srv, Registration &registration, ibrcommon::tcpstream *conn)
-		 : _srv(srv), _registration(registration), _stream(conn), _endpoint(dtn::core::BundleCore::local), _handler(NULL)
+		 : _srv(srv), _registration(&registration), _stream(conn), _endpoint(dtn::core::BundleCore::local), _handler(NULL)
 		{
 			if ( dtn::daemon::Configuration::getInstance().getNetwork().getTCPOptionNoDelay() )
 			{
@@ -46,12 +46,21 @@ namespace dtn
 
 		Registration& ClientHandler::getRegistration()
 		{
-			return _registration;
+			return *_registration;
 		}
 
 		ApiServerInterface& ClientHandler::getAPIServer()
 		{
 			return _srv;
+		}
+
+		void ClientHandler::switchRegistration(Registration &reg)
+		{
+			_registration->abort();
+
+			_srv.freeRegistration(*_registration);
+
+			_registration = &reg;
 		}
 
 		void ClientHandler::setup()
@@ -160,8 +169,8 @@ namespace dtn
 			// remove the client from the list in ApiServer
 			_srv.connectionDown(this);
 
-			_registration.abort();
-			_srv.freeRegistration(_registration);
+			_registration->abort();
+			_srv.freeRegistration(*_registration);
 
 			// close the stream
 			try {
@@ -215,7 +224,7 @@ namespace dtn
 						}
 						else
 						{
-							_registration.subscribe(_endpoint);
+							_registration->subscribe(_endpoint);
 							(*_stream) << API_STATUS_ACCEPTED << " OK" << std::endl;
 						}
 					}
@@ -243,7 +252,7 @@ namespace dtn
 						}
 						else
 						{
-							_registration.subscribe(endpoint);
+							_registration->subscribe(endpoint);
 							(*_stream) << API_STATUS_ACCEPTED << " OK" << std::endl;
 						}
 					}
@@ -261,14 +270,14 @@ namespace dtn
 						}
 						else
 						{
-							_registration.unsubscribe(endpoint);
+							_registration->unsubscribe(endpoint);
 							(*_stream) << API_STATUS_ACCEPTED << " OK" << std::endl;
 						}
 					}
 					else if (cmd[1] == "list")
 					{
 						ibrcommon::MutexLock l(_write_lock);
-						const std::set<dtn::data::EID> &list = _registration.getSubscriptions();
+						const std::set<dtn::data::EID> &list = _registration->getSubscriptions();
 
 						(*_stream) << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
 						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)
