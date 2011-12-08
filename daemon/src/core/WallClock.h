@@ -17,7 +17,7 @@ namespace dtn
 {
 	namespace core
 	{
-		class WallClock : public ibrcommon::Conditional, public dtn::daemon::IntegratedComponent, public ibrcommon::SimpleTimerCallback
+		class WallClock : public ibrcommon::Conditional, public dtn::daemon::IntegratedComponent, public ibrcommon::TimerCallback
 		{
 		public:
 			/**
@@ -34,9 +34,9 @@ namespace dtn
 
 			/**
 			 * timer callback method
-			 * @see SimpleTimerCallback::timeout()
+			 * @see TimerCallback::timeout()
 			 */
-			virtual size_t timeout(size_t identifier);
+			virtual size_t timeout(ibrcommon::Timer*);
 
 			/**
 			 * @see Component::getName()
@@ -50,7 +50,7 @@ namespace dtn
 		private:
 			size_t _frequency;
 			size_t _next;
-			ibrcommon::SimpleTimer _timer;
+			ibrcommon::Timer _timer;
 
 		};
 	}

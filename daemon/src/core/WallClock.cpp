@@ -14,9 +14,8 @@ namespace dtn
 {
 	namespace core
 	{
-		WallClock::WallClock(size_t frequency) : _frequency(frequency), _next(0), _timer(*this, 0)
+		WallClock::WallClock(size_t frequency) : _frequency(frequency), _next(0), _timer(*this, frequency)
 		{
-			_timer.set(frequency);
 		}
 
 		WallClock::~WallClock()
@@ -35,15 +34,22 @@ namespace dtn
 
 		void WallClock::componentUp()
 		{
-			_timer.start();
+			if(_timer.isRunning())
+			{
+				_timer.reset();
+			}
+			else
+			{
+				_timer.start();
+			}
 		}
 
 		void WallClock::componentDown()
 		{
-			_timer.remove();
+			_timer.pause();
 		}
 
-		size_t WallClock::timeout(size_t)
+		size_t WallClock::timeout(ibrcommon::Timer*)
 		{
 			size_t dtntime = dtn::utils::Clock::getTime();
 

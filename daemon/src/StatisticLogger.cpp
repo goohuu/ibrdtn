@@ -19,14 +19,14 @@ namespace dtn
 	namespace daemon
 	{
 		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval, std::string address, unsigned int port)
-		 : _timer(*this, 0), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
+		 : _timer(*this), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
 		   _core(dtn::core::BundleCore::getInstance()), _sock(NULL), _address(address), _port(port)
 		{
 			IBRCOMMON_LOGGER(info) << "Logging module initialized. mode = " << _type << ", interval = " << interval << IBRCOMMON_LOGGER_ENDL;
 		}
 
 		StatisticLogger::StatisticLogger(LoggerType type, unsigned int interval, ibrcommon::File file)
-		 : _timer(*this, 0), _file(file), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
+		 : _timer(*this), _file(file), _type(type), _interval(interval), _sentbundles(0), _recvbundles(0),
 		   _core(dtn::core::BundleCore::getInstance()), _sock(NULL), _address("127.0.0.1"), _port(1234)
 		{
 		}
@@ -71,7 +71,7 @@ namespace dtn
 			}
 		}
 
-		size_t StatisticLogger::timeout(size_t)
+		size_t StatisticLogger::timeout(ibrcommon::Timer*)
 		{
 			switch (_type)
 			{
@@ -108,7 +108,7 @@ namespace dtn
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::BundleEvent::className);
 
-			_timer.remove();
+			_timer.pause();
 
 			if (_type >= LOGGER_FILE_PLAIN)
 			{

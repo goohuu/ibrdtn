@@ -30,18 +30,20 @@ namespace dtn
 	namespace api
 	{
 		ApiServer::ApiServer(const ibrcommon::File &socket)
-		 : _srv(socket), _garbage_collector(*this, 0)
+		 : _srv(socket), _garbage_collector(*this)
 		{
 		}
 
 		ApiServer::ApiServer(const ibrcommon::vinterface &net, int port)
-		 : _srv(), _garbage_collector(*this, 0)
+		 : _srv(), _garbage_collector(*this)
 		{
 			_srv.bind(net, port);
 		}
 
 		ApiServer::~ApiServer()
 		{
+			_garbage_collector.stop();
+			_garbage_collector.join();
 			join();
 		}
 
@@ -56,6 +58,7 @@ namespace dtn
 			_srv.listen(5);
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::core::NodeEvent::className);
+			startGarbageCollector();
 		}
 
 		void ApiServer::componentRun()
@@ -102,6 +105,8 @@ namespace dtn
 		{
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			unbindEvent(dtn::core::NodeEvent::className);
+
+			_garbage_collector.pause();
 
 			{
 				ibrcommon::MutexLock l(_connection_lock);
@@ -205,12 +210,8 @@ namespace dtn
 			throw Registration::NotFoundException("Registration not found");
 		}
 
-		bool ApiServer::timeout(ibrcommon::Timer *timer)
+		size_t ApiServer::timeout(ibrcommon::Timer*)
 		{
-			if (timer != &_garbage_collector){
-				return false;
-			}
-
 			{
 				ibrcommon::MutexLock l(_registration_lock);
 
@@ -232,11 +233,12 @@ namespace dtn
 					}
 					catch(const Registration::AlreadyAttachedException &ex)
 					{
+						iter++;
 					}
 				}
 			}
 
-			return updateTimer();
+			return nextRegistrationExpiry();
 		}
 
 		const std::string ApiServer::getName() const
@@ -273,13 +275,7 @@ namespace dtn
 			if(reg.isPersistent())
 			{
 				reg.detach();
-				if(updateTimer())
-				{
-					/* start the _garbage_collector if it is not running yet */
-					if(!_garbage_collector.isRunning()){
-						_garbage_collector.start();
-					}
-				}
+				startGarbageCollector();
 			}
 			else
 			{
@@ -333,10 +329,27 @@ namespace dtn
 			} catch (const std::bad_cast&) { };
 		}
 
-		bool ApiServer::updateTimer()
+		void ApiServer::startGarbageCollector()
+		{
+			try
+			{
+				/* set the timeout for the GarbageCollector */
+				size_t timeout = nextRegistrationExpiry();
+				_garbage_collector.set(timeout);
+
+				/* start it, if it is not running yet */
+				if(!_garbage_collector.isRunning())
+					_garbage_collector.start();
+			}
+			catch(const ibrcommon::Timer::StopTimerException &ex)
+			{
+			}
+		}
+
+		size_t ApiServer::nextRegistrationExpiry()
 		{
 			ibrcommon::MutexLock l(_registration_lock);
-			bool ret = false;
+			bool persistentFound = false;
 			size_t new_timeout = 0;
 			size_t current_time = ibrcommon::Timer::get_current_time();
 
@@ -350,7 +363,7 @@ namespace dtn
 						/* found an expired registration, trigger the timer */
 						iter->detach();
 						new_timeout = 0;
-						ret = true;
+						persistentFound = true;
 						break;
 					}
 					else
@@ -361,10 +374,10 @@ namespace dtn
 						size_t expire_timeout = expire_time - current_time;
 						iter->detach();
 
-						/* if ret is false, no persistent registration was found yet */
-						if(!ret)
+						/* if persistentFound is false, no persistent registration was found yet */
+						if(!persistentFound)
 						{
-							ret = true;
+							persistentFound = true;
 							new_timeout = expire_timeout;
 						}
 						else if(expire_timeout < new_timeout)
@@ -378,13 +391,9 @@ namespace dtn
 				}
 			}
 
-			if(ret)
-			{
-				/* set the new timeout only if we found a persistent registration */
-				_garbage_collector.set(new_timeout);
-			}
+			if(!persistentFound) throw ibrcommon::Timer::StopTimerException();
 
-			return ret;
+			return new_timeout;
 		}
 	}
 }

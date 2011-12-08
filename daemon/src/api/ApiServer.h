@@ -53,9 +53,12 @@ namespace dtn
 			Registration& getRegistration(const std::string &handle);
 
 			/**
-			 * @see ibrcommon::TimerCallback::timeout(Timer)
+			 * Removes expired registrations.
+			 * @exception ibrcommon::Timer::StopTimerException thrown, if the GarbageCollector should be stopped
+			 * @see ibrcommon::TimerCallback::timeout(Timer*)
+			 * @return the seconds till the GarbageCollector should be triggered next
 			 */
-			virtual bool timeout(ibrcommon::Timer *timer);
+			virtual size_t timeout(ibrcommon::Timer*);
 
 		protected:
 			bool __cancellation();
@@ -70,10 +73,15 @@ namespace dtn
 		private:
 
 			/**
-			 * updates the timer of the _garbage_collector
-			 * @return true, if there are upcoming tasks for the _garbage_collector
+			 * starts the garbage collector if there are persistent registrations and it is not yet running
 			 */
-			bool updateTimer();
+			void startGarbageCollector();
+			/**
+			 * calculates when the next registration expires
+			 * @exception ibrcommon::Timer::StopTimerException if no more registrations expire
+			 * @return time in seconds until next expiry
+			 */
+			size_t nextRegistrationExpiry();
 
 			ibrcommon::tcpserver _srv;
 			std::list<Registration> _registrations;

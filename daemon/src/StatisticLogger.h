@@ -35,7 +35,7 @@ namespace dtn
 {
 	namespace daemon
 	{
-		class StatisticLogger : public IntegratedComponent, public ibrcommon::SimpleTimerCallback, public dtn::core::EventReceiver
+		class StatisticLogger : public IntegratedComponent, public ibrcommon::TimerCallback, public dtn::core::EventReceiver
 		{
 		public:
 			enum LoggerType
@@ -55,7 +55,7 @@ namespace dtn
 			void componentUp();
 			void componentDown();
 
-			size_t timeout(size_t identifier);
+			size_t timeout(ibrcommon::Timer*);
 			void raiseEvent(const dtn::core::Event *evt);
 
 			/**
@@ -72,7 +72,7 @@ namespace dtn
 
 			void writeUDPLog(ibrcommon::UnicastSocket &socket);
 
-			ibrcommon::SimpleTimer _timer;
+			ibrcommon::Timer _timer;
 			ibrcommon::File _file;
 			std::ofstream _fileout;
 			LoggerType _type;
