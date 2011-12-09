@@ -14,7 +14,7 @@
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
 #include "routing/BaseRouter.h"
-#include "routing/epidemic/EpidemicControlMessage.h"
+#include "routing/NodeHandshake.h"
 #include "routing/RequeueBundleEvent.h"
 #include <ibrdtn/data/ScopeControlHopLimitBlock.h>
 #include <ibrdtn/utils/Clock.h>
@@ -100,13 +100,13 @@ namespace dtn
 									std::list<dtn::data::MetaBundle> bundles = scan(path);
 
 									try {
-										// check if bundle is a epidemic routing bundle
-										if (sbt.job._bundle.source == (dtn::core::BundleCore::local + "/routing/epidemic"))
+										// check if bundle is a routing bundle
+										if (sbt.job._bundle.source == (dtn::core::BundleCore::local + "/routing"))
 										{
 											// read the bundle out of the storage
 											const dtn::data::Bundle bundle = storage.get(sbt.job._bundle);
 
-											if (bundle._destination == (sbt.node.getEID() + "/routing/epidemic"))
+											if (bundle._destination == (sbt.node.getEID() + "/routing"))
 											{
 												// add this bundle to the blacklist
 												{
@@ -121,7 +121,7 @@ namespace dtn
 												}
 
 												// create ECM reply
-												replyECM(bundle, bundles);
+												replyHandshake(bundle, bundles);
 
 												// raise bundle event
 												dtn::net::TransferCompletedEvent::raise(sbt.node.getEID(), bundle);
@@ -366,50 +366,51 @@ namespace dtn
 			_tasks.push(new StoreBundleTask(n, job));
 		}
 
-		void FileConvergenceLayer::replyECM(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle> &bl)
+		void FileConvergenceLayer::replyHandshake(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle> &bl)
 		{
 			// read the ecm
 			const dtn::data::PayloadBlock &p = bundle.getBlock<dtn::data::PayloadBlock>();
 			ibrcommon::BLOB::Reference ref = p.getBLOB();
-			dtn::routing::EpidemicControlMessage ecm;
+			dtn::routing::NodeHandshake request;
 
 			// locked within this region
 			{
 				ibrcommon::BLOB::iostream s = ref.iostream();
-				(*s) >> ecm;
+				(*s) >> request;
 			}
 
 			// if this is a request answer with an summary vector
-			if (ecm.type == dtn::routing::EpidemicControlMessage::ECM_QUERY_SUMMARY_VECTOR)
+			if (request.getType() == dtn::routing::NodeHandshake::HANDSHAKE_REQUEST)
 			{
 				// create a new request for the summary vector of the neighbor
-				dtn::routing::EpidemicControlMessage response_ecm;
+				dtn::routing::NodeHandshake response(dtn::routing::NodeHandshake::HANDSHAKE_RESPONSE);
 
-				// set message type
-				response_ecm.type = dtn::routing::EpidemicControlMessage::ECM_RESPONSE;
-
-				// add own summary vector to the message
-				dtn::routing::SummaryVector vec;
-
-				// add bundles in the path
-				for (std::list<dtn::data::MetaBundle>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
+				if (request.hasRequest(dtn::routing::BloomFilterSummaryVector::identifier))
 				{
-					vec.add(*iter);
-				}
+					// add own summary vector to the message
+					dtn::routing::SummaryVector vec;
 
-				// add bundles from the blacklist
-				{
-					ibrcommon::MutexLock l(_blacklist_mutex);
-					for (std::set<dtn::data::MetaBundle>::const_iterator iter = _blacklist.begin(); iter != _blacklist.end(); iter++)
+					// add bundles in the path
+					for (std::list<dtn::data::MetaBundle>::const_iterator iter = bl.begin(); iter != bl.end(); iter++)
 					{
 						vec.add(*iter);
 					}
+
+					// add bundles from the blacklist
+					{
+						ibrcommon::MutexLock l(_blacklist_mutex);
+						for (std::set<dtn::data::MetaBundle>::const_iterator iter = _blacklist.begin(); iter != _blacklist.end(); iter++)
+						{
+							vec.add(*iter);
+						}
+					}
+
+					// create an item
+					dtn::routing::BloomFilterSummaryVector *item = new dtn::routing::BloomFilterSummaryVector(vec);
+
+					// add it to the handshake
+					response.addItem(item);
 				}
-
-				response_ecm.setSummaryVector(vec);
-
-				// add own purge vector to the message
-				//response_ecm.setPurgeVector(_purge_vector);
 
 				// create a new bundle
 				dtn::data::Bundle answer;
@@ -434,7 +435,7 @@ namespace dtn
 				// serialize the request into the payload
 				{
 					ibrcommon::BLOB::iostream ios = ref.iostream();
-					(*ios) << response_ecm;
+					(*ios) << response;
 				}
 
 				// add a schl block

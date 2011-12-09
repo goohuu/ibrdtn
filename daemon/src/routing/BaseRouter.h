@@ -11,6 +11,7 @@
 #include "Component.h"
 #include "routing/NeighborDatabase.h"
 #include "routing/BundleSummary.h"
+#include "routing/NodeHandshake.h"
 #include "core/EventReceiver.h"
 #include "core/BundleStorage.h"
 
@@ -75,6 +76,10 @@ namespace dtn
 					ROUTE_CALLBACK_DELETED = 3
 				};
 
+				virtual void requestHandshake(const dtn::data::EID&, NodeHandshake&) const { };
+				virtual void responseHandshake(const dtn::data::EID&, const NodeHandshake&, NodeHandshake&) { };
+				virtual void processHandshake(const dtn::data::EID&, NodeHandshake&) { };
+
 				/**
 				 * Transfer one bundle to another node.
 				 * @throw BundleNotFoundException if the bundle do not exist.
@@ -137,6 +142,12 @@ namespace dtn
 			void addExtension(BaseRouter::Extension *extension);
 
 			/**
+			 * Returns a reference to all extensions.
+			 * @return
+			 */
+			const std::list<BaseRouter::Extension*>& getExtensions() const;
+
+			/**
 			 * method to receive new events from the EventSwitch
 			 */
 			void raiseEvent(const dtn::core::Event *evt);
@@ -163,13 +174,33 @@ namespace dtn
 			 */
 			void setKnown(const dtn::data::MetaBundle &meta);
 
+			/**
+			 * Get a vector (bloomfilter) of all known bundles.
+			 * @return
+			 */
 			const SummaryVector getSummaryVector();
+
+			/**
+			 * Get a vector (bloomfilter) of all purged bundles.
+			 * @return
+			 */
+			const SummaryVector getPurgedBundles();
+
+			/**
+			 * Add a bundle to the purge vector of this daemon.
+			 * @param meta The bundle to purge.
+			 */
+			void addPurgedBundle(const dtn::data::MetaBundle &meta);
 
 			/**
 			 * @see Component::getName()
 			 */
 			virtual const std::string getName() const;
 
+			/**
+			 * Access to the neighbor database. Where several data about the neighbors is stored.
+			 * @return
+			 */
 			NeighborDatabase& getNeighborDB();
 
 		protected:
@@ -178,7 +209,10 @@ namespace dtn
 
 		private:
 			ibrcommon::Mutex _known_bundles_lock;
-			BundleSummary _known_bundles;
+			dtn::routing::BundleSummary _known_bundles;
+
+			ibrcommon::Mutex _purged_bundles_lock;
+			dtn::routing::BundleSummary _purged_bundles;
 
 			dtn::core::BundleStorage &_storage;
 			std::list<BaseRouter::Extension*> _extensions;

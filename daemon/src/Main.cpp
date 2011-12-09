@@ -25,6 +25,7 @@
 #include "routing/NeighborRoutingExtension.h"
 #include "routing/epidemic/EpidemicRoutingExtension.h"
 #include "routing/flooding/FloodRoutingExtension.h"
+#include "routing/NodeHandshakeExtension.h"
 #include "routing/RetransmissionExtension.h"
 
 #include "net/UDPConvergenceLayer.h"
@@ -650,6 +651,7 @@ int __daemon_run(Configuration &conf)
 	}
 
 	// add standard routing modules
+	router->addExtension( new dtn::routing::NodeHandshakeExtension() );
 	router->addExtension( new dtn::routing::StaticRoutingExtension( conf.getNetwork().getStaticRoutes() ) );
 	router->addExtension( new dtn::routing::NeighborRoutingExtension() );
 	router->addExtension( new dtn::routing::RetransmissionExtension() );

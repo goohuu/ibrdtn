@@ -21,6 +21,7 @@
 #include "core/BundleEvent.h"
 #include "core/NodeEvent.h"
 #include "core/TimeEvent.h"
+#include "routing/NodeHandshakeEvent.h"
 
 #include <ibrcommon/Logger.h>
 #include <ibrcommon/thread/MutexLock.h>
@@ -128,6 +129,11 @@ namespace dtn
 			_extensions.push_back(extension);
 		}
 
+		const std::list<BaseRouter::Extension*>& BaseRouter::getExtensions() const
+		{
+			return _extensions;
+		}
+
 		void BaseRouter::componentUp()
 		{
 			bindEvent(dtn::net::TransferAbortedEvent::className);
@@ -135,6 +141,7 @@ namespace dtn
 			bindEvent(dtn::net::BundleReceivedEvent::className);
 			bindEvent(dtn::routing::QueueBundleEvent::className);
 			bindEvent(dtn::routing::RequeueBundleEvent::className);
+			bindEvent(dtn::routing::NodeHandshakeEvent::className);
 			bindEvent(dtn::core::NodeEvent::className);
 			bindEvent(dtn::core::BundleExpiredEvent::className);
 			bindEvent(dtn::core::TimeEvent::className);
@@ -164,6 +171,7 @@ namespace dtn
 			unbindEvent(dtn::net::BundleReceivedEvent::className);
 			unbindEvent(dtn::routing::QueueBundleEvent::className);
 			unbindEvent(dtn::routing::RequeueBundleEvent::className);
+			unbindEvent(dtn::routing::NodeHandshakeEvent::className);
 			unbindEvent(dtn::core::NodeEvent::className);
 			unbindEvent(dtn::core::BundleExpiredEvent::className);
 			unbindEvent(dtn::core::TimeEvent::className);
@@ -216,6 +224,18 @@ namespace dtn
 
 				// if a tranfer is completed, then release the transfer resource of the peer
 				try {
+					try {
+						// add this bundle to the purge vector if it is delivered to its destination
+						if (( event.getPeer().getNode() == event.getBundle().destination.getNode() ) && (event.getBundle().procflags & dtn::data::Bundle::DESTINATION_IS_SINGLETON))
+						{
+							IBRCOMMON_LOGGER(notice) << "singleton bundle added to purge vector: " << event.getBundle().toString() << IBRCOMMON_LOGGER_ENDL;
+
+							// add it to the purge vector
+							ibrcommon::MutexLock l(_purged_bundles_lock);
+							_purged_bundles.add(event.getBundle());
+						}
+					} catch (const dtn::core::BundleStorage::NoBundleFoundException&) { };
+
 					// lock the list of neighbors
 					ibrcommon::MutexLock l(_neighbor_database);
 					NeighborDatabase::NeighborEntry &entry = _neighbor_database.get(event.getPeer());
@@ -350,6 +370,11 @@ namespace dtn
 				}
 
 				{
+					ibrcommon::MutexLock l(_purged_bundles_lock);
+					_purged_bundles.expire(time.getTimestamp());
+				}
+
+				{
 					ibrcommon::MutexLock l(_neighbor_database);
 					_neighbor_database.expire(time.getTimestamp());
 				}
@@ -395,6 +420,18 @@ namespace dtn
 		{
 			ibrcommon::MutexLock l(_known_bundles_lock);
 			return _known_bundles.getSummaryVector();
+		}
+
+		void BaseRouter::addPurgedBundle(const dtn::data::MetaBundle &meta)
+		{
+			ibrcommon::MutexLock l(_purged_bundles_lock);
+			return _purged_bundles.add(meta);
+		}
+
+		const SummaryVector BaseRouter::getPurgedBundles()
+		{
+			ibrcommon::MutexLock l(_purged_bundles_lock);
+			return _purged_bundles.getSummaryVector();
 		}
 
 		const std::string BaseRouter::getName() const

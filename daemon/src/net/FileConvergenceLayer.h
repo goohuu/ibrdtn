@@ -69,7 +69,7 @@ namespace dtn
 				const ConvergenceLayer::Job job;
 			};
 
-			void replyECM(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle>&);
+			void replyHandshake(const dtn::data::Bundle &bundle, std::list<dtn::data::MetaBundle>&);
 
 			ibrcommon::Mutex _blacklist_mutex;
 			dtn::data::BundleList _blacklist;

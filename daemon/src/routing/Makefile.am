@@ -21,7 +21,13 @@ routing_SOURCES = BaseRouter.cpp \
 				StaticRoutingExtension.cpp \
 				StaticRoutingExtension.h \
 				SummaryVector.cpp \
-				SummaryVector.h
+				SummaryVector.h \
+				NodeHandshake.h \
+				NodeHandshake.cpp \
+				NodeHandshakeEvent.h \
+				NodeHandshakeEvent.cpp \
+				NodeHandshakeExtension.h \
+				NodeHandshakeExtension.cpp
 				
 noinst_LTLIBRARIES = librouting.la
 librouting_la_SOURCES= $(routing_SOURCES)
