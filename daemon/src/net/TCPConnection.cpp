@@ -159,20 +159,20 @@ namespace dtn
 				} catch(...){
 					if(dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
 						/* close the connection */
-						IBRCOMMON_LOGGER(warning) << "TCPConnection: TLS failed, closing the connection." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS failed, closing the connection." << IBRCOMMON_LOGGER_ENDL;
 						throw;
 					} else {
-						IBRCOMMON_LOGGER(warning) << "TCPConnection: TLS failed, continuing unauthenticated." << IBRCOMMON_LOGGER_ENDL;
+						IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS failed, continuing unauthenticated." << IBRCOMMON_LOGGER_ENDL;
 					}
 				}
 			} else {
 				/* TLS not supported by both Nodes, check if its required */
 				if(dtn::daemon::Configuration::getInstance().getSecurity().TLSRequired()){
 					/* close the connection */
-					IBRCOMMON_LOGGER(warning) << "TCPConnection: TLS not supported by both Peers. Closing the connection." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS not supported by both Peers. Closing the connection." << IBRCOMMON_LOGGER_ENDL;
 					throw ibrcommon::TLSException("TLS not supported by peer.");
 				} else if(_flags & dtn::streams::StreamContactHeader::REQUEST_TLS){
-					IBRCOMMON_LOGGER(warning) << "TCPConnection: TLS not supported by peer. Continuing without TLS." << IBRCOMMON_LOGGER_ENDL;
+					IBRCOMMON_LOGGER(notice) << "TCPConnection: TLS not supported by peer. Continuing without TLS." << IBRCOMMON_LOGGER_ENDL;
 				}
 				/* else: this node does not support TLS, should have already printed a warning */
 			}
