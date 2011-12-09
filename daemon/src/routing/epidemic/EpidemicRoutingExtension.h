@@ -38,8 +38,10 @@ namespace dtn
 			void notify(const dtn::core::Event *evt);
 			virtual void stopExtension();
 
+			/**
+			 * @see BaseRouter::requestHandshake()
+			 */
 			void requestHandshake(NodeHandshake &request) const;
-//			void responseHandshake(const NodeHandshake &request, NodeHandshake &answer) const;
 
 		protected:
 			void run();

@@ -27,8 +27,19 @@ namespace dtn
 
 			void notify(const dtn::core::Event *evt);
 
+			/**
+			 * @see BaseRouter::requestHandshake()
+			 */
 			void requestHandshake(const dtn::data::EID &destination, NodeHandshake &request) const;
+
+			/**
+			 * @see BaseRouter::responseHandshake()
+			 */
 			void responseHandshake(const dtn::data::EID &source, const NodeHandshake &request, NodeHandshake &answer);
+
+			/**
+			 * @see BaseRouter::processHandshake()
+			 */
 			void processHandshake(const dtn::data::EID &source, NodeHandshake &answer);
 
 		protected:
