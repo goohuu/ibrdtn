@@ -224,26 +224,31 @@ namespace dtn
 					{
 						// send shutdown signal
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SHUTDOWN);
+						_stream << ClientHandler::API_STATUS_OK << " SHUTDOWN" << std::endl;
 					}
 					else if (cmd[1] == "reload")
 					{
 						// send reload signal
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_RELOAD);
+						_stream << ClientHandler::API_STATUS_OK << " RELOAD" << std::endl;
 					}
 					else if (cmd[1] == "powersave")
 					{
 						// send powersave signal
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_POWERSAVE);
+						_stream << ClientHandler::API_STATUS_OK << " POWERSAVE" << std::endl;
 					}
 					else if (cmd[1] == "suspend")
 					{
 						// send suspend signal
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_SUSPEND);
+						_stream << ClientHandler::API_STATUS_OK << " SUSPEND" << std::endl;
 					}
 					else if (cmd[1] == "wakeup")
 					{
 						// send wakeup signal
 						dtn::core::GlobalEvent::raise(dtn::core::GlobalEvent::GLOBAL_WAKEUP);
+						_stream << ClientHandler::API_STATUS_OK << " WAKEUP" << std::endl;
 					}
 				}
 				else if (cmd[0] == "bundle")
