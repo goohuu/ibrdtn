@@ -395,7 +395,7 @@ namespace dtn
 
 								// announce this bundle as delivered
 								dtn::data::MetaBundle meta = dtn::core::BundleCore::getInstance().getStorage().get(id);
-								_registration->delivered(id);
+								_registration->delivered(meta);
 
 								ibrcommon::MutexLock l(_write_lock);
 								_stream << ClientHandler::API_STATUS_OK << " BUNDLE DELIVERED ACCEPTED" << std::endl;
