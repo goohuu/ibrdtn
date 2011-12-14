@@ -96,13 +96,15 @@ namespace dtn
 			return _notify_queue.getnpop(true);
 		}
 
-		bool Registration::hasSubscribed(const dtn::data::EID &endpoint) const
+		bool Registration::hasSubscribed(const dtn::data::EID &endpoint)
 		{
+			ibrcommon::MutexLock l(_endpoints_lock);
 			return (_endpoints.find(endpoint) != _endpoints.end());
 		}
 
-		const std::set<dtn::data::EID>& Registration::getSubscriptions() const
+		const std::set<dtn::data::EID> Registration::getSubscriptions()
 		{
+			ibrcommon::MutexLock l(_endpoints_lock);
 			return _endpoints;
 		}
 
@@ -260,6 +262,7 @@ namespace dtn
 			dtn::core::BundleStorage &storage = dtn::core::BundleCore::getInstance().getStorage();
 
 			// query the database for more bundles
+			ibrcommon::MutexLock l(_endpoints_lock);
 			const std::list<dtn::data::MetaBundle> list = storage.get( filter );
 
 			if (list.size() == 0)
@@ -282,8 +285,12 @@ namespace dtn
 
 		void Registration::subscribe(const dtn::data::EID &endpoint)
 		{
-			// add endpoint to the local set
-			_endpoints.insert(endpoint);
+			{
+				ibrcommon::MutexLock l(_endpoints_lock);
+
+				// add endpoint to the local set
+				_endpoints.insert(endpoint);
+			}
 
 			// trigger the search for new bundles
 			notify(NOTIFY_BUNDLE_AVAILABLE);
@@ -291,6 +298,7 @@ namespace dtn
 
 		void Registration::unsubscribe(const dtn::data::EID &endpoint)
 		{
+			ibrcommon::MutexLock l(_endpoints_lock);
 			_endpoints.erase(endpoint);
 		}
 

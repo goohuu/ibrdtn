@@ -277,7 +277,7 @@ namespace dtn
 					else if (cmd[1] == "list")
 					{
 						ibrcommon::MutexLock l(_write_lock);
-						const std::set<dtn::data::EID> &list = _registration->getSubscriptions();
+						const std::set<dtn::data::EID> list = _registration->getSubscriptions();
 
 						(*_stream) << API_STATUS_OK << " REGISTRATION LIST" << std::endl;
 						for (std::set<dtn::data::EID>::const_iterator iter = list.begin(); iter != list.end(); iter++)

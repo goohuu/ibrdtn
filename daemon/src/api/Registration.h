@@ -104,12 +104,12 @@ namespace dtn
 			 * @param endpoint
 			 * @return
 			 */
-			bool hasSubscribed(const dtn::data::EID &endpoint) const;
+			bool hasSubscribed(const dtn::data::EID &endpoint);
 
 			/**
 			 * @return A list of active subscriptions.
 			 */
-			const std::set<dtn::data::EID>& getSubscriptions() const;
+			const std::set<dtn::data::EID> getSubscriptions();
 
 			/**
 			 * compares the local handle with the given one
@@ -208,6 +208,7 @@ namespace dtn
 		private:
 			ibrcommon::Queue<dtn::data::MetaBundle> _queue;
 			const std::string _handle;
+			ibrcommon::Mutex _endpoints_lock;
 			std::set<dtn::data::EID> _endpoints;
 			dtn::data::BundleList _received_bundles;
 
