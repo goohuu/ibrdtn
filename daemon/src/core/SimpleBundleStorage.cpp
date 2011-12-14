@@ -255,6 +255,12 @@ namespace dtn
 			throw BundleStorage::NoBundleFoundException();
 		}
 
+		const std::set<dtn::data::EID> SimpleBundleStorage::getDistinctDestinations()
+		{
+			std::set<dtn::data::EID> ret;
+			return ret;
+		}
+
 		void SimpleBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
 			// get the bundle size

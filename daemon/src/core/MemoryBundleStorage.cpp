@@ -120,6 +120,21 @@ namespace dtn
 			throw BundleStorage::NoBundleFoundException();
 		}
 
+		const std::set<dtn::data::EID> MemoryBundleStorage::getDistinctDestinations()
+		{
+			std::set<dtn::data::EID> ret;
+
+			ibrcommon::MutexLock l(_bundleslock);
+
+			for (std::set<dtn::data::Bundle>::const_iterator iter = _bundles.begin(); iter != _bundles.end(); iter++)
+			{
+				const dtn::data::Bundle &bundle = (*iter);
+				ret.insert(bundle._destination);
+			}
+
+			return ret;
+		}
+
 		void MemoryBundleStorage::store(const dtn::data::Bundle &bundle)
 		{
 			ibrcommon::MutexLock l(_bundleslock);

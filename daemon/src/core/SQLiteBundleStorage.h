@@ -189,6 +189,11 @@ namespace dtn
 			 */
 			const std::list<dtn::data::MetaBundle> get(BundleFilterCallback &cb);
 
+			/**
+			 * @see BundleStorage::getDistinctDestinations()
+			 */
+			virtual const std::set<dtn::data::EID> getDistinctDestinations();
+
 #ifdef SQLITE_STORAGE_EXTENDED
 			/**
 			 * store routinginformation referring to a Bundle

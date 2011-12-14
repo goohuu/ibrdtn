@@ -96,6 +96,12 @@ namespace dtn
 			virtual const std::list<dtn::data::MetaBundle> get(BundleFilterCallback &cb) = 0;
 
 			/**
+			 * Return a set of distinct destinations for all bundles in the storage.
+			 * @return
+			 */
+			virtual const std::set<dtn::data::EID> getDistinctDestinations() = 0;
+
+			/**
 			 * This method deletes a specific bundle in the storage.
 			 * No reports will be generated here.
 			 * @param id The ID of the bundle to remove.

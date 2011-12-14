@@ -596,6 +596,12 @@ namespace dtn
 			}
 		}
 
+		const std::set<dtn::data::EID> SQLiteBundleStorage::getDistinctDestinations()
+		{
+			std::set<dtn::data::EID> ret;
+			return ret;
+		}
+
 		const std::list<dtn::data::MetaBundle> SQLiteBundleStorage::get(BundleFilterCallback &cb)
 		{
 			std::list<dtn::data::MetaBundle> ret;
