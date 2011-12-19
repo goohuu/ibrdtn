@@ -259,14 +259,17 @@ namespace dtn
 						dtn::core::BundleCore &bcore = dtn::core::BundleCore::getInstance();
 						BundleFilter filter;
 
-						_stream << ClientHandler::API_STATUS_ACCEPTED << " allocated filter" << std::endl;
+						_stream << ClientHandler::API_STATUS_OK << " BUNDLE LIST" << std::endl;
 						std::list<dtn::data::MetaBundle> blist = bcore.getStorage().get(filter);
 
 						for (std::list<dtn::data::MetaBundle>::const_iterator iter = blist.begin(); iter != blist.end(); iter++)
 						{
 							const dtn::data::MetaBundle &b = *iter;
-							_stream << b.toString() << std::endl;
+							_stream << b.toString() << ";" << b.destination.getString() << ";" << std::endl;
 						}
+
+						// last line empty
+						_stream << std::endl;
 					}
 				}
 				else
