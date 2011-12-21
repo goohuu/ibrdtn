@@ -185,6 +185,9 @@ namespace dtn
 				_tcpstream->setTimeout(header._keepalive * 2);
 			}
 
+			// enable idle timeout
+			_stream.enableIdleTimeout(header._keepalive * 4);
+
 			// raise up event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
 		}

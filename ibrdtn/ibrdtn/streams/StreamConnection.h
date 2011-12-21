@@ -176,12 +176,17 @@ namespace dtn
 			 */
 			void keepalive();
 
+			/**
+			 * enables the idle timeout thread
+			 * @param seconds
+			 */
+			void enableIdleTimeout(size_t seconds);
 
 		private:
 			/**
 			 * stream buffer class
 			 */
-			class StreamBuffer : public std::basic_streambuf<char, std::char_traits<char> >
+			class StreamBuffer : public std::basic_streambuf<char, std::char_traits<char> >, public ibrcommon::TimerCallback
 			{
 			public:
 				enum State
@@ -232,6 +237,19 @@ namespace dtn
 				 * send a keepalive
 				 */
 				void keepalive();
+
+				/**
+				 * Idle timeout timer callback
+				 * @param timer
+				 * @return
+				 */
+				size_t timeout(ibrcommon::Timer *timer);
+
+				/**
+				 * enables the idle timeout thread
+				 * @param seconds
+				 */
+				void enableIdleTimeout(size_t seconds);
 
 			protected:
 				virtual int sync();
@@ -302,6 +320,8 @@ namespace dtn
 
 				size_t _underflow_data_remain;
 				State _underflow_state;
+
+				ibrcommon::Timer _idle_timer;
 			};
 
 			void connectionTimeout();

@@ -137,5 +137,10 @@ namespace dtn
 			// call superclass
 			_callback.eventTimeout();
 		}
+
+		void StreamConnection::enableIdleTimeout(size_t seconds)
+		{
+			_buf.enableIdleTimeout(seconds);
+		}
 	}
 }

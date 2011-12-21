@@ -15,7 +15,7 @@ namespace dtn
 	{
 		StreamConnection::StreamBuffer::StreamBuffer(StreamConnection &conn, iostream &stream, const size_t buffer_size)
 			: _buffer_size(buffer_size), _statebits(STREAM_SOB), _conn(conn), in_buf_(new char[buffer_size]), out_buf_(new char[buffer_size]), _stream(stream),
-			  _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE)
+			  _recv_size(0), _underflow_data_remain(0), _underflow_state(IDLE), _idle_timer(*this, 0)
 		{
 			// Initialize get pointer.  This should be zero so that underflow is called upon first read.
 			setg(0, 0, 0);
@@ -27,6 +27,9 @@ namespace dtn
 			// clear the own buffer
 			delete [] in_buf_;
 			delete [] out_buf_;
+
+			// stop the idle timer
+			_idle_timer.stop();
 		}
 
 		bool StreamConnection::StreamBuffer::get(const StateBits bit) const
@@ -353,6 +356,9 @@ namespace dtn
 					// to reject a bundle read all remaining data of this segment
 					_stream.read(tmpbuf, readsize);
 
+					// reset idle timeout
+					_idle_timer.reset();
+
 					// adjust the remain counter
 					size -= readsize;
 				}
@@ -418,6 +424,12 @@ namespace dtn
 						_stream >> seg;
 					} catch (const ios_base::failure &ex) {
 						throw StreamErrorException("read error: " + std::string(ex.what()));
+					}
+
+					if (seg._type != StreamDataSegment::MSG_KEEPALIVE)
+					{
+						// reset idle timeout
+						_idle_timer.reset();
 					}
 
 					switch (seg._type)
@@ -581,6 +593,9 @@ namespace dtn
 
 					// here receive the data
 					_stream.read(in_buf_, readsize);
+
+					// reset idle timeout
+					_idle_timer.reset();
 				} catch (const ios_base::failure &ex) {
 					_underflow_state = IDLE;
 					throw StreamErrorException("read error: " + std::string(ex.what()));
@@ -616,6 +631,21 @@ namespace dtn
 			}
 
 			return traits_type::eof();
+		}
+
+		size_t StreamConnection::StreamBuffer::timeout(ibrcommon::Timer *timer)
+		{
+			if (__good())
+			{
+				shutdown(StreamDataSegment::MSG_SHUTDOWN_IDLE_TIMEOUT);
+			}
+			throw ibrcommon::Timer::StopTimerException();
+		}
+
+		void StreamConnection::StreamBuffer::enableIdleTimeout(size_t seconds)
+		{
+			_idle_timer.set(seconds);
+			_idle_timer.start();
 		}
 	}
 }
