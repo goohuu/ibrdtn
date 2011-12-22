@@ -9,6 +9,11 @@
 #local_uri = dtn://node.dtn
 
 #
+# specifies an additional logfile
+#
+#logfile = /var/log/ibrdtn.log
+
+#
 # timezone offset in hours
 #
 #timezone = +1
@@ -70,7 +75,7 @@
 # storage strategy. if compiled with sqlite support, you could change
 # this to sqlite to use a sql database for bundles.
 #
-#storage = simple
+#storage = default
 
 #
 # Limit the size of the storage.
@@ -171,6 +176,9 @@ net_lan0_interface = eth0			# listen on interface eth0
 # The bundles are split into chunks while they are transmitted over TCP. This
 # parameter defines the size of these chunks (1024 is the default).
 #tcp_chunksize = 1024
+#
+# The timeout for idle TCP connection in seconds. 0 = disabled
+#tcp_idle_timeout = 0
 
 
 #####################################
@@ -291,3 +299,14 @@ routing_forwarding = yes
 # announce time sync capabilities in discovery messages
 #
 #time_discovery_announcements = yes
+
+#
+# Parameters for the QoT aging process.
+#
+#time_sigma = 1.001
+#time_sync_level = 0.15
+
+#
+# Adjust the clock of the host on each sync 
+#
+#time_set_clock = no

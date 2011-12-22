@@ -186,7 +186,11 @@ namespace dtn
 			}
 
 			// enable idle timeout
-			_stream.enableIdleTimeout(header._keepalive * 4);
+			size_t _idle_timeout = dtn::daemon::Configuration::getInstance().getNetwork().getTCPIdleTimeout();
+			if (_idle_timeout > 0)
+			{
+				_stream.enableIdleTimeout(_idle_timeout);
+			}
 
 			// raise up event
 			ConnectionEvent::raise(ConnectionEvent::CONNECTION_UP, _node);
