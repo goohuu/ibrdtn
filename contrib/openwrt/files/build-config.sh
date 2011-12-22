@@ -79,6 +79,10 @@ add_param $CONFFILE "ibrdtn.discovery.address" "discovery_address"
 add_param $CONFFILE "ibrdtn.discovery.timeout" "discovery_timeout"
 add_param $CONFFILE "ibrdtn.discovery.version" "discovery_version"
 
+add_param $CONFFILE "ibrdtn.tcptuning.idle_timeout" "tcp_idle_timeout"
+add_param $CONFFILE "ibrdtn.tcptuning.nodelay" "tcp_nodelay"
+add_param $CONFFILE "ibrdtn.tcptuning.chunksize" "tcp_chunksize"
+
 add_param $CONFFILE "ibrdtn.security.level" "security_level"
 add_param $CONFFILE "ibrdtn.security.bab_key" "security_bab_default_key"
 add_param $CONFFILE "ibrdtn.security.key_path" "security_path"

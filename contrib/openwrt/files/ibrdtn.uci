@@ -114,6 +114,11 @@ config 'daemon' 'discovery'
 	option address		225.0.12.5
 #	option timeout		5
 
+config 'daemon' 'tcptuning'
+#	option 'idle_timeout'	120
+#	option 'nodelay'		yes
+#	option 'chunksize'		4096
+
 config 'network'
 	option type			tcp
 	option interface	eth0

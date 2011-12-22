@@ -174,8 +174,8 @@ net_lan0_interface = eth0			# listen on interface eth0
 #tcp_nodelay = yes
 #
 # The bundles are split into chunks while they are transmitted over TCP. This
-# parameter defines the size of these chunks (1024 is the default).
-#tcp_chunksize = 1024
+# parameter defines the size of these chunks (4096 is the default).
+#tcp_chunksize = 4096
 #
 # The timeout for idle TCP connection in seconds. 0 = disabled
 #tcp_idle_timeout = 0

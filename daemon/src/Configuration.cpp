@@ -80,7 +80,7 @@ namespace dtn
 		 : _quiet(false), _options(0), _timestamps(false) {};
 
 		Configuration::Network::Network()
-		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(1024), _default_net("lo"), _use_default_net(false), _auto_connect(0) {};
+		 : _routing("default"), _forwarding(true), _tcp_nodelay(true), _tcp_chunksize(4096), _default_net("lo"), _use_default_net(false), _auto_connect(0) {};
 
 		Configuration::Security::Security()
 		 : _enabled(false), _tlsEnabled(false), _tlsRequired(false)
@@ -645,7 +645,7 @@ namespace dtn
 			 * TCP options
 			 */
 			_tcp_nodelay = (conf.read<std::string>("tcp_nodelay", "yes") == "yes");
-			_tcp_chunksize = conf.read<unsigned int>("tcp_chunksize", 1024);
+			_tcp_chunksize = conf.read<unsigned int>("tcp_chunksize", 4096);
 			_tcp_idle_timeout = conf.read<unsigned int>("tcp_idle_timeout", 0);
 
 			/**
